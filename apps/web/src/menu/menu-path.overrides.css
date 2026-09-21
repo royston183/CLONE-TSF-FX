@@ -21,6 +21,66 @@
     0 1px 2px rgba(13, 42, 74, 0.05),
     0 10px 24px -10px rgba(13, 42, 74, 0.16),
     0 0 0 1px rgba(204, 224, 245, 0.55);
+
+  /*
+   * Day palette, re-pointed onto the sibling DSA app's values so the two consoles read as
+   * one product. The generated stylesheet declares all of these on .mp with the Material
+   * blues the legacy page shipped (--blue #1e88e5, --bg #f0f4f8, --text #0d2a4a); it may
+   * not be hand-edited, so they are shadowed here instead. Every hub component resolves
+   * its colour through these names, so nothing below needs restyling.
+   *
+   * Night is NOT repeated here: the :root[data-theme='dark'] .mp block in menu-shell.css
+   * already carries exactly the palette DSA's theme.css uses (#0d1724 page, #14212f
+   * surface, #e6eef8 ink), so dark mode already matched before this change.
+   */
+  --bg: #f4f7fb;
+  --bg2: #f3f7fc;
+  --white: #ffffff;
+  --border: #e6ebf2;
+  --border2: #dbe4ee;
+  --text: #22354c;
+  --text-sub: #4a5e76;
+  --text-muted: #67768c;
+  --blue: #1265c8;
+  /* The ink on pale fills — DSA's selected-nav colour. */
+  --blue-dark: #1766c0;
+  --blue-mid: #4688d6;
+  --blue-pale: #eaf3ff;
+  --blue-pale2: #dbe7f7;
+}
+
+/*
+ * Inter Variable ahead of the plain "Inter" the generated file asks for, so the variable
+ * face is used where it is available. main.tsx loads it; before that import the whole hub
+ * was falling through to a system sans and none of this resolved at all.
+ */
+.mp,
+.mp *,
+.mp *::before,
+.mp *::after {
+  font-family: 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+}
+
+.mp {
+  font-synthesis: none;
+}
+
+/* The brand lockup, to DSA's proportions (its .brand strong/small): a slightly larger
+ * wordmark over a smaller, wider-tracked caption. */
+.mp .brand-logo {
+  width: 32px;
+  height: 32px;
+}
+.mp .brand-text h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c3b61;
+}
+.mp .brand-text p {
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  color: #637690;
+  margin-top: 4px;
 }
 
 /* Lifted off the content so the header reads as a fixed bar rather than a white strip that

@@ -1,5 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+// Inter is the face the whole product is designed in: the generated menu-path.css asks for
+// it on every hub element, and tokens.css names it first in --font. Until this import it
+// was never actually loaded, so every screen silently fell back to a system sans.
+import '@fontsource-variable/inter'
 import { App } from './App.tsx'
 import { applyTheme, initialTheme } from './shared/theme.ts'
 

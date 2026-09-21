@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SignOutButton } from '../auth/SignOutButton.tsx'
 import { apiFetch } from '@slc/api-client'
 import { useAsync } from '@slc/api-client/react'
 import { Sidebar } from './Sidebar.tsx'
@@ -29,9 +28,16 @@ import './menu-shell.css'
  * itself — the faithful reproduction of legacy/Menu Path.html — lives in SlcStructureView.
  *
  * The header and toast markup below is still legacy-governed: the brand, brand-logo, brand-text,
- * path-switch, ps-label, status-dot, header-right and toast classes are all defined in the
- * generated, .mp-scoped menu-path.css. Anything here that looks simplifiable is most likely
- * load-bearing for the appearance — check the original before changing it.
+ * path-switch, ps-label, header-right and toast classes are all defined in the generated,
+ * .mp-scoped menu-path.css. Anything here that looks simplifiable is most likely load-bearing
+ * for the appearance — check the original before changing it.
+ *
+ * Sign-out and the connection dot used to sit in header-right. They now live at the foot of
+ * the sidebar, beside the signed-in user, matching the DSA console's shell; the theme toggle
+ * stays here because it is a display preference rather than part of the session.
+ *
+ * The brand below is the only one in the shell. DSA carries its lockup in the sidebar
+ * instead, because its topbar has none — porting that here as well would have meant two.
  */
 
 const BRAND_LOGO =
@@ -121,8 +127,6 @@ export function MenuPage({ section }: { section: HubSection }) {
         </div>
         <div className="header-right">
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <div className="status-dot" title="SAP TRM connected" />
-          <SignOutButton className="path-switch mp-signout" showIcon={false} />
         </div>
       </header>
 

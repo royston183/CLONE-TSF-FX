@@ -18,26 +18,26 @@
  */
 :root {
   /* Surfaces */
-  --bg: #f5f7f9;
+  --bg: #f4f7fb;
   --surface: #ffffff;
-  --surface-2: #f2f4f5;
-  --surface-sunken: #e8eef5;
+  --surface-2: #f3f7fc;
+  --surface-sunken: #eaf0f7;
 
   /* Ink */
-  --text: #1d2d3e;
-  --text-sub: #475e75;
-  --text-muted: #687b8d;
+  --text: #22354c;
+  --text-sub: #4a5e76;
+  --text-muted: #67768c;
 
   /* Lines */
-  --border: #d5dadd;
+  --border: #e6ebf2;
   --border-strong: #8996a1;
 
   /* Brand */
-  --blue: #0a6ed1;
-  --blue-hover: #085caf;
+  --blue: #1265c8;
+  --blue-hover: #0955b2;
   --blue-active: #004b93;
-  --blue-soft: #eaf3fc;
-  --blue-soft-2: #d1e8ff;
+  --blue-soft: #eaf3ff;
+  --blue-soft-2: #dbe7f7;
 
   /* Status */
   --green: #107e3e;
@@ -62,8 +62,11 @@
   --sidebar-w: 355px;
   --control-h: 32px;
 
-  /* Type. "72" is SAP's corporate face; the rest are the fallbacks the legacy pages used. */
-  --font: "72", "Segoe UI", Arial, sans-serif;
+  /* Type. Inter, loaded by apps/web from @fontsource-variable/inter. It is what the hub's
+     generated menu-path.css has always asked for, and what the sibling DSA app is drawn in,
+     so naming it here puts the login screen and the application chrome on the same face.
+     The rest are the fallbacks the legacy pages used. */
+  --font: 'Inter Variable', Inter, "Segoe UI", Arial, sans-serif;
   --font-mono: "72 Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   --font-size: 13px;
 
@@ -91,6 +94,10 @@ body {
   font-size: var(--font-size);
   color: var(--text);
   background: var(--bg);
+  /* Inter ships every weight as a real variable axis, so letting the browser fake bold or
+     italic on top of it only smears the glyphs. */
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,

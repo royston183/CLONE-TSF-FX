@@ -74,6 +74,13 @@
   border-color: rgba(99, 179, 237, 0.08);
 }
 
+/* The header wordmark is a literal navy — the one colour in the shell that does not resolve
+ * from a token, because the generated stylesheet hardcodes it on .brand-text h1. On a dark
+ * header it goes almost black, so it is re-pointed at the night ink. */
+:root[data-theme='dark'] .mp .brand-text h1 {
+  color: var(--text);
+}
+
 .mp-theme-toggle {
   cursor: pointer;
 }
@@ -91,12 +98,18 @@
 }
 
 /*
- * The sidebar rests as a 64px icon rail and widens to 224px on hover, or when a keyboard
+ * The sidebar rests as a 64px icon rail and widens to 242px on hover, or when a keyboard
  * user tabs into it. It stays in normal flow, so widening it pushes <main> to the right
  * rather than covering it — the content is never hidden behind the panel.
+ *
+ * 242px and the paddings below are the sibling DSA console's sidebar metrics, so the two
+ * apps' rails are the same object at both widths.
  */
 .mp-side {
   position: relative;
+  /* On the rail itself rather than on .mp-side-items, because the brand lockup above the
+   * navigation and the session block below it share the same gutter. */
+  padding: 16px 12px 0;
   /* Opens a stacking context for the rings below. position:relative alone leaves z-index
    * auto, which does NOT open one, and a z-index:-1 child would then escape and paint behind
    * the page background entirely. Same on .mp-body > main. */
@@ -159,17 +172,152 @@
  * panel would stay stuck open until you clicked elsewhere. :focus-visible only matches
  * focus the browser judges keyboard-driven, so a click collapses on leave as expected
  * while tabbing still reveals the labels.
+ *
+ * Any focusable descendant, not just .mp-side-item: the sign-out button at the foot of the
+ * rail is invisible until the rail opens, so a rule that only watched the nav links would
+ * let a keyboard user land on a control they cannot see.
  */
 .mp-side:hover,
-.mp-side:has(.mp-side-item:focus-visible) {
-  width: 224px;
+.mp-side:has(:focus-visible) {
+  width: 242px;
+}
+
+/*
+ * "Workspace" eyebrow and session footer — the rail furniture DSA's sidebar carries,
+ * reproduced here so the two consoles' shells match. DSA's brand lockup above the eyebrow
+ * is deliberately not ported: its topbar has no brand, whereas ours does, so a copy here
+ * would be the second identical logo on screen.
+ *
+ * Everything that cannot survive a 64px rail is marked .mp-side-label in the markup and so
+ * fades on exactly the rule the nav labels already use; nothing below needs its own reveal.
+ * What stays visible at rail width is the status dot and the avatar — the two things that
+ * are legible as glyphs on their own.
+ */
+.mp-side-eyebrow {
+  padding: 0 12px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .mp-side-items {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 14px 10px;
+}
+
+/*
+ * The session block. margin-top:auto pins it to the bottom of the rail whatever the
+ * navigation's height, which is why .mp-side is a flex column.
+ */
+.mp-side-foot {
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.mp-side-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The dot is .status-dot from the generated stylesheet, which gives it the teal fill, the
+ * glow and the pulse; it only needs holding at its size inside a flex row here. */
+.mp-side-status .status-dot {
+  flex-shrink: 0;
+}
+
+.mp-side-blurb {
+  margin: 6px 8px 14px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.mp-side-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.mp-side-avatar {
+  height: 30px;
+  width: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-pale);
+  color: var(--blue-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mp-side-identity {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.mp-side-identity b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-side-identity small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/*
+ * Icon-only sign-out. The label is clipped rather than removed so the button keeps an
+ * accessible name; margin-left:auto parks it against the rail's right edge.
+ */
+.mp-side-signout {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.14s ease;
+}
+
+.mp-side-signout:hover:not(:disabled) {
+  background: var(--bg2);
+  color: var(--blue-dark);
+}
+
+.mp-side-signout .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .mp-side-item {
@@ -177,12 +325,13 @@
   align-items: center;
   gap: 11px;
   /* Horizontal padding is identical at both widths so the icon never shifts sideways
-   * while the rail is animating — only the label is revealed beside it. */
-  padding: 10px 9px;
-  border-radius: 9px;
+   * while the rail is animating — only the label is revealed beside it. DSA's own
+   * `.sidebar nav button` metrics: 8px/12px on a 7px radius at 12px. */
+  padding: 8px 12px;
+  border-radius: 7px;
   border-left: 3px solid transparent;
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -217,7 +366,7 @@
 }
 
 .mp-side:hover .mp-side-label,
-.mp-side:has(.mp-side-item:focus-visible) .mp-side-label {
+.mp-side:has(:focus-visible) .mp-side-label {
   opacity: 1;
 }
 
@@ -245,16 +394,16 @@
 }
 
 .mp-side:hover .mp-side-children,
-.mp-side:has(.mp-side-item:focus-visible) .mp-side-children {
+.mp-side:has(:focus-visible) .mp-side-children {
   max-height: 240px;
 }
 
-/* Indented to where the parent's label starts — its 9px padding, 20px icon and 11px gap —
+/* Indented to where the parent's label starts — its 12px padding, 19px icon and 11px gap —
  * so a child reads as hanging off Reporting rather than as a section of its own. One step
  * down the rail's type scale, and muted until it is the open route, for the same reason. */
 .mp-side-child {
-  padding-left: 40px;
-  font-size: 12px;
+  padding-left: 42px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
@@ -745,22 +894,55 @@
   .mp-body {
     flex-direction: column;
   }
+  /*
+   * The rail itself no longer scrolls here — .mp-side-items does. If the whole strip were
+   * the scroll container, the brand would be shoved off the left edge and the session block
+   * (margin-left:auto against a box wider than the viewport) off the right, putting sign-out
+   * behind a sideways scroll. Making only the middle scroll pins both ends in view.
+   */
   .mp-side,
   .mp-side:hover,
-  .mp-side:has(.mp-side-item:focus-visible) {
+  .mp-side:has(:focus-visible) {
     width: 100%;
     flex-direction: row;
+    align-items: center;
     justify-content: flex-start;
+    padding: 0;
     border-right: 0;
     border-bottom: 1px solid var(--border);
+    overflow: visible;
+  }
+  .mp-side-items {
+    flex: 1;
+    min-width: 0;
+    flex-direction: row;
+    padding: 8px 10px;
     overflow-x: auto;
     overflow-y: hidden;
   }
-  .mp-side-items {
-    flex-direction: row;
-    padding: 8px 10px;
+  /*
+   * The rail furniture in a horizontal strip. The eyebrow and the supplementary copy go
+   * entirely — a strip has no room to spend on them — and the session block sits at the
+   * right-hand end, where the header's own controls used to.
+   */
+  .mp-side-eyebrow,
+  .mp-side-status,
+  .mp-side-blurb {
+    display: none;
   }
+  .mp-side-foot {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .mp-side-user {
+    padding: 0 10px;
+    border-top: 0;
+  }
+  /* flex-shrink:0 so the labels keep their full width and the strip scrolls past them;
+   * without it the row squeezes every item down to a truncated initial. */
   .mp-side-item {
+    flex-shrink: 0;
     padding-left: 12px;
     padding-right: 12px;
   }
@@ -772,6 +954,7 @@
    * to line up with. */
   .mp-side-children {
     flex-direction: row;
+    flex-shrink: 0;
     max-height: none;
   }
   .mp-side-child {
