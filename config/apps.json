@@ -240,6 +240,16 @@
       "services": [],
       "legacy": "legacy/view_pending_sblc_requests_allocate_bank_v8.html",
       "note": "Legacy page never called an API — no fetch, no XMLHttpRequest. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFP001",
+      "id": "fo-create-master-contract",
+      "route": "/apps/fo-create-master-contract",
+      "title": "FO: Create Master Contract",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/create-master-contract.html",
+      "note": "Legacy page never called an API — its fetch calls are commented 'Future:' placeholders and the M.O. email is only logged. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
     }
   ]
 }

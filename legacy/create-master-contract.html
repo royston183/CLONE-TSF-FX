@@ -1,0 +1,3347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create Master Contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   Design system
+   ========================================================= */
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --teal:#17BEBB;
+  --teal-tint:#E7FAF9;
+  --purple:#8E44AD;
+  --purple-tint:#F5EAFA;
+  --gray-tint:#EEF2F6;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(22,39,64,0.04), 0 4px 14px rgba(22,39,64,0.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,0.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:12.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:var(--font);}
+input,select,textarea{font-family:var(--font);}
+
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* =========================================================
+   Layout
+   ========================================================= */
+.app{
+  max-width:100%;
+  margin:0;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+
+.table-col{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 210px);
+}
+.table-col > .card{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  margin-bottom:0;
+}
+.table-col .table-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+}
+@media (max-width:1080px){
+  .table-col{
+    max-height:none;
+  }
+  .table-col .table-scroll{max-height:520px;}
+}
+
+.page-actions-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+
+/* KPI cards */
+.kpi-row{
+  display:flex;
+  gap:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.kpi-card{
+  flex:1 1 180px;
+  min-width:170px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-left:4px solid var(--primary);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);
+  padding:22px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  min-height:64px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-left-color .18s ease;
+}
+.kpi-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(22,39,64,0.08), 0 10px 22px rgba(22,39,64,0.09);
+  border-left-color:var(--primary-dark);
+}
+.kpi-card .kpi-value{
+  font-size:30px;
+  font-weight:700;
+  color:var(--primary-dark);
+  line-height:1.15;
+}
+.kpi-card .kpi-label{
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+
+.create-card{border-left-color:var(--primary);}
+.create-card .create-icon-circle{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;
+  font-weight:700;
+  line-height:1;
+  transition:background .18s ease, transform .18s ease;
+}
+.create-card .kpi-label{color:var(--text);font-weight:700;font-size:13px;}
+.create-card:hover .create-icon-circle{
+  background:var(--primary-dark);
+  transform:scale(1.08);
+}
+.create-card:hover{border-left-color:var(--primary-dark);}
+
+/* Header */
+.page-header{
+  margin-bottom:12px;
+  background:#EAF3FF;
+  border:1px solid #D7E9FF;
+  border-radius:var(--radius-md);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.page-header .logo-img{
+  height:40px;
+  width:auto;
+  max-width:120px;
+  object-fit:contain;
+  flex:none;
+}
+.page-header .logo-placeholder{
+  height:36px;
+  width:36px;
+  flex:none;
+  border-radius:8px;
+  border:1px dashed var(--border-strong);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-faint);
+}
+.page-header .header-text{display:flex;flex-direction:column;}
+
+/* Compact form rows with variable-width fields */
+.form-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin-bottom:12px;
+}
+.form-row:last-child{margin-bottom:0;}
+.form-row > .field{flex:1 1 160px;min-width:0;}
+.field.w-sm{flex:0 1 100px;}
+.field.w-sm-md{flex:0 1 124px;}
+.field.w-md{flex:0 1 154px;}
+.field.w-md-wide{flex:0 1 184px;}
+.field.w-wide{flex:1 1 190px;min-width:165px;}
+.field.w-date{flex:0 0 156px;min-width:156px;}
+.form-row.no-wrap{flex-wrap:nowrap;}
+.form-row.no-wrap > .field{min-width:0;}
+.field.fx-field{flex:1 1 0;min-width:130px;}
+
+/* 12-column responsive grid for the Create Master Contract modal.
+   Each field gets a span sized to what its value actually needs,
+   rather than forcing every field to equal width. */
+.form-grid-12{
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:10px 12px;
+  margin-bottom:14px;
+}
+.form-grid-12:last-child{margin-bottom:0;}
+.form-grid-12 > .field{min-width:0;}
+.gc-3{grid-column:span 3;}
+.gc-4{grid-column:span 4;}
+.gc-5{grid-column:span 5;}
+.gc-6{grid-column:span 6;}
+.gc-7{grid-column:span 7;}
+@media (max-width:700px){
+  .form-grid-12{grid-template-columns:repeat(6, 1fr);}
+  .gc-3{grid-column:span 3;}
+  .gc-4{grid-column:span 3;}
+  .gc-5{grid-column:span 6;}
+  .gc-6{grid-column:span 6;}
+  .gc-7{grid-column:span 6;}
+}
+@media (max-width:460px){
+  .form-grid-12{grid-template-columns:1fr;}
+  .gc-3, .gc-4, .gc-5, .gc-6, .gc-7{grid-column:span 1;}
+}
+.page-header h1{
+  font-size:19px;
+  font-weight:700;
+  margin:0 0 3px;
+  letter-spacing:-0.2px;
+}
+.page-header p{
+  margin:0;
+  color:var(--text-muted);
+  font-size:12.5px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  margin-bottom:12px;
+  overflow:visible;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  font-weight:700;
+  color:var(--primary-dark);
+  letter-spacing:0.3px;
+}
+.section-title .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;
+}
+.section-body{
+  padding:12px 16px 14px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px 14px;
+}
+.form-grid.cols-1{grid-template-columns:1fr;}
+.form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+}
+.field label{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+  line-height:1.2;
+}
+.field label .req{color:var(--error);margin-left:2px;}
+.field .hint{font-size:11px;color:var(--text-faint);}
+.field .error-msg{
+  font-size:11px;
+  color:var(--error);
+  display:none;
+  margin-top:-2px;
+}
+.field.has-error .error-msg{display:block;}
+.field.has-error input,
+.field.has-error .select-display,
+.field.has-error .dd-input{
+  border-color:var(--error) !important;
+  background:var(--error-tint);
+}
+
+.control{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 11px;
+  font-size:12.5px;
+  color:var(--text);
+  background:#fff;
+  width:100%;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.control::placeholder{color:var(--text-faint);}
+.control:hover{border-color:#AFC2D8;}
+.control:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-tint);
+}
+.control[readonly]{
+  background:var(--gray-tint);
+  color:var(--text-muted);
+  cursor:default;
+}
+.control:disabled{
+  background:var(--gray-tint);
+  color:var(--text-faint);
+  cursor:not-allowed;
+}
+
+.input-with-suffix{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.input-with-suffix .control{padding-right:58px;}
+.input-with-suffix .suffix{
+  position:absolute;
+  right:8px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--primary-dark);
+  background:var(--primary-tint);
+  padding:3px 7px;
+  border-radius:6px;
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+/* Searchable dropdown */
+.dd{position:relative;}
+.dd-input{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 32px 0 11px;
+  font-size:12.5px;
+  width:100%;
+  outline:none;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+  cursor:pointer;
+  transition:border-color .15s, box-shadow .15s;
+}
+.dd-input::placeholder{color:var(--text-faint);}
+.dd-input:hover{border-color:#AFC2D8;}
+.dd-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.dd.disabled .dd-input{background-color:var(--gray-tint);color:var(--text-faint);cursor:not-allowed;}
+
+.dd-panel{
+  position:absolute;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  min-width:200px;
+  max-height:240px;
+  overflow-y:auto;
+  z-index:210;
+  display:none;
+  padding:6px;
+}
+.dd.open .dd-panel{display:block;}
+.dd-item{
+  padding:8px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.dd-item:hover, .dd-item.active{background:var(--primary-tint);}
+.dd-item .primary-line{font-weight:600;font-size:12.5px;color:var(--text);}
+.dd-item .secondary-line{font-size:11px;color:var(--text-muted);}
+.dd-empty{padding:14px 10px;text-align:center;color:var(--text-faint);font-size:11.5px;}
+
+/* Date field */
+.date-field{position:relative;}
+.date-field .control{padding-right:34px;}
+.date-icon{
+  position:absolute;
+  right:6px;top:50%;
+  transform:translateY(-50%);
+  width:24px;height:24px;
+  border:none;background:transparent;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  color:var(--text-muted);
+  font-size:13px;
+}
+.date-icon:hover{background:var(--primary-tint);color:var(--primary);}
+.date-popup{
+  position:absolute;
+  width:250px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  z-index:210;
+  padding:10px;
+  display:none;
+}
+.date-popup.open{display:block;}
+.cal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
+.cal-head button{
+  width:24px;height:24px;border:none;background:var(--gray-tint);
+  border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);
+}
+.cal-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.cal-head .cal-title{font-weight:700;font-size:12px;}
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.cal-grid .dow{
+  text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;
+}
+.cal-grid .day{
+  text-align:center;
+  font-size:11.5px;
+  padding:6px 0;
+  border-radius:6px;
+  cursor:pointer;
+  color:var(--text);
+}
+.cal-grid .day:hover{background:var(--primary-tint);}
+.cal-grid .day.muted{color:var(--text-faint);}
+.cal-grid .day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.cal-grid .day.today:not(.selected){box-shadow:inset 0 0 0 1px var(--primary-light);}
+
+/* Buttons */
+.btn{
+  height:32px;
+  padding:0 16px;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid transparent;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:0 2px 6px rgba(31,111,235,0.25);}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-strong);}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(22,39,64,0.08);}
+.btn-danger{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-danger:hover{background:var(--error-tint);}
+.btn-ghost{background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.btn-ghost:hover{text-decoration:underline;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
+
+.actions-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:12px 16px;
+}
+
+/* Success banner */
+.success-banner{
+  display:none;
+  align-items:center;
+  gap:10px;
+  margin:0 0 12px;
+  padding:9px 14px;
+  background:var(--success-tint);
+  border:1px solid #BFE8D0;
+  border-radius:var(--radius-md);
+  color:#1E7A46;
+  font-size:12px;
+}
+.success-banner.show{display:flex;}
+.success-banner b{font-weight:700;}
+.success-banner .spacer{flex:1;}
+
+/* =========================================================
+   Master Contracts table section
+   ========================================================= */
+.table-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px 10px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+}
+.search-box{
+  position:relative;
+  flex:1 1 260px;
+  min-width:200px;
+}
+.search-box input{
+  height:32px;
+  width:100%;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;
+  font-size:12.5px;
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.search-box .icon{
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-faint);font-size:13px;
+}
+.toolbar-spacer{flex:1 0 8px;}
+.result-count{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+
+.filter-select{
+  flex:0 1 122px;
+  min-width:88px;
+  height:32px;
+  cursor:pointer;
+}
+
+.table-scroll{
+  overflow-x:auto;
+}
+table.mc-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1060px;
+}
+table.mc-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:10px 14px;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+  z-index:5;
+}
+table.mc-table thead th:hover{color:var(--primary-dark);}
+table.mc-table thead th.no-sort{cursor:default;}
+table.mc-table thead th.no-sort:hover{color:var(--text-muted);}
+table.mc-table thead th.action-col, table.mc-table td.action-col{
+  width:40px;
+  text-align:center;
+  padding-left:10px;
+  padding-right:10px;
+}
+.row-select-checkbox{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  vertical-align:middle;
+}
+table.mc-table thead th .sort-ind{
+  display:inline-block;
+  margin-left:4px;
+  font-size:9px;
+  color:var(--text-faint);
+}
+table.mc-table thead th.sorted .sort-ind{color:var(--primary);}
+table.mc-table thead th.num,
+table.mc-table td.num{text-align:right;}
+table.mc-table tbody td{
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  white-space:nowrap;
+}
+table.mc-table tbody tr{cursor:pointer;transition:background .18s ease;}
+table.mc-table tbody tr:hover{background:#F7FAFD;}
+table.mc-table tbody tr:hover .mc-link{color:var(--primary);}
+table.mc-table tbody tr.selected{background:var(--primary-tint);}
+table.mc-table tbody tr.row-new{animation:flashNew 1.8s ease-out;}
+@keyframes flashNew{
+  0%{background:#DFF3E6;}
+  100%{background:transparent;}
+}
+.mc-link{color:var(--primary-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+.mc-link:hover{text-decoration:underline;color:var(--primary);}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.status-pill .status-dot{width:6px;height:6px;border-radius:50%;}
+.status-in-use{background:var(--success-tint);color:#1E7A46;}
+.status-in-use .status-dot{background:var(--success);}
+.status-confirmed{background:var(--primary-tint);color:var(--primary-dark);}
+.status-confirmed .status-dot{background:var(--primary);}
+.status-draft{background:var(--gray-tint);color:var(--text-muted);}
+.status-draft .status-dot{background:var(--text-faint);}
+.status-pending{background:var(--warning-tint);color:#9A5300;}
+.status-pending .status-dot{background:var(--warning);}
+.status-rejected{background:var(--error-tint);color:#B4362A;}
+.status-rejected .status-dot{background:var(--error);}
+.status-settled{background:var(--teal-tint);color:#0E8785;}
+.status-settled .status-dot{background:var(--teal);}
+.status-matured{background:var(--purple-tint);color:#6C3488;}
+.status-matured .status-dot{background:var(--purple);}
+
+/* Plain-text status presentation (Master Contracts table) */
+.status-text{font-weight:600;font-size:12px;white-space:nowrap;}
+.status-text-in-use{color:var(--success);}
+.status-text-confirmed{color:var(--primary);}
+.status-text-draft{color:var(--text-muted);}
+.status-text-pending{color:var(--warning);}
+.status-text-rejected{color:var(--error);}
+.status-text-settled{color:var(--teal);}
+.status-text-matured{color:var(--purple);}
+
+.empty-state{
+  padding:40px 20px;
+  text-align:center;
+  color:var(--text-muted);
+}
+.empty-state .big{font-size:28px;margin-bottom:6px;}
+
+.table-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px 12px;
+  flex-wrap:wrap;
+  gap:10px;
+  flex:0 0 auto;
+  border-top:1px solid var(--border);
+}
+.page-size-select{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.page-size-select select{height:28px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;padding:0 6px;}
+
+.pagination{display:flex;align-items:center;gap:4px;}
+.pagination button{
+  min-width:28px;height:28px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:6px;
+  font-size:11.5px;
+  cursor:pointer;
+  color:var(--text);
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;
+}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pagination button:active:not(:disabled){transform:translateY(1px);}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(16,26,41,0.5);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-overlay.closing{display:flex;}
+.modal{
+  background:#fff;
+  border-radius:var(--radius-lg);
+  width:380px;
+  max-width:100%;
+  box-shadow:var(--shadow-pop);
+  padding:26px 24px 22px;
+  text-align:center;
+  animation:popIn .18s ease-out;
+}
+@keyframes popIn{from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.modal-overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+.modal .check-circle{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--success-tint);
+  color:var(--success);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin:0 auto 14px;
+}
+.modal h2{font-size:15.5px;margin:0 0 6px;}
+.modal p{margin:0 0 16px;color:var(--text-muted);font-size:12.5px;}
+.modal .deal-id-box{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px;
+  margin-bottom:18px;
+}
+.modal .deal-id-box .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:700;margin-bottom:4px;}
+.modal .deal-id-box .value{font-size:19px;font-weight:700;color:var(--primary-dark);letter-spacing:0.4px;}
+.modal .modal-actions{display:flex;gap:10px;}
+.modal .modal-actions .btn{flex:1;}
+
+.modal.modal-left{text-align:left;}
+.modal-head-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.modal-head-row h2{margin:0;}
+.modal-close-btn{
+  border:none;
+  background:transparent;
+  font-size:18px;
+  line-height:1;
+  color:var(--text-muted);
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:6px;
+  transition:background .15s ease, color .15s ease;
+}
+.modal-close-btn:hover{background:var(--gray-tint);color:var(--text);}
+.commodity-check-list{
+  max-height:260px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:6px;
+}
+.commodity-check-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--text);
+}
+.commodity-check-item:hover{background:var(--primary-tint);}
+.commodity-check-item input[type="checkbox"]{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  flex:none;
+}
+
+/* Scrollable detail popups (KPI detail, Master Contract detail) */
+.modal.modal-scrollable{
+  display:flex;
+  flex-direction:column;
+  max-height:92vh;
+}
+.modal.modal-scrollable .modal-head-row{flex:0 0 auto;}
+.modal.modal-scrollable .modal-body-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding-right:2px;
+}
+.modal.modal-scrollable .modal-actions{flex:0 0 auto;margin-top:14px;}
+.kpi-detail-modal{width:520px;}
+.contract-detail-modal{width:720px;}
+.child-contract-modal{width:min(860px, calc(100vw - 40px));max-width:96vw;}
+.contract-detail-actions,.child-modal-actions{flex-wrap:wrap;justify-content:flex-end;}
+.contract-detail-actions .btn,.child-modal-actions .btn{flex:0 0 auto;min-width:110px;}
+.child-parent-summary{margin-bottom:12px;padding:9px 11px;background:var(--primary-tint);border:1px solid #D7E9FF;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted);}
+.child-parent-summary b{color:var(--primary-dark);}
+.modal.modal-scrollable.create-contract-modal{
+  width:min(720px, calc(100vw - 40px));
+  max-width:96vw;
+  max-height:97vh;
+  padding:20px 22px 16px;
+}
+.create-modal-actions{
+  justify-content:flex-end;
+}
+.create-modal-actions .btn{
+  flex:0 0 auto;
+  min-width:120px;
+}
+
+.form-section{margin-bottom:14px;}
+.form-section:last-child{margin-bottom:0;}
+.form-section .section-title{
+  padding:0 0 6px;
+  border:none;
+  font-size:12.5px;
+}
+.form-section .section-body{padding:0;}
+
+/* KPI summary key/value list */
+.kv-list{display:flex;flex-direction:column;gap:1px;}
+.kv-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+}
+.kv-row:last-child{border-bottom:none;}
+.kv-row .kv-label{color:var(--text-muted);}
+.kv-row .kv-value{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.kv-row.kv-total{background:var(--primary-tint);border-radius:6px;padding:8px 10px;margin:2px 0;}
+.kv-row.kv-total .kv-label{color:var(--primary-dark);font-weight:700;}
+.kv-row.kv-total .kv-value{color:var(--primary-dark);font-size:13.5px;}
+
+/* Compact table used inside KPI list popups */
+.popup-table-wrap{
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:auto;
+  max-height:360px;
+}
+table.popup-table{width:100%;border-collapse:collapse;min-width:560px;}
+table.popup-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.3px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:8px 10px;
+  white-space:nowrap;
+}
+table.popup-table thead th.num{text-align:right;}
+table.popup-table td{
+  padding:7px 10px;
+  border-bottom:1px solid var(--border);
+  font-size:11.5px;
+  white-space:nowrap;
+}
+table.popup-table td.num{text-align:right;}
+table.popup-table tbody tr:hover{background:#F7FAFD;}
+.popup-empty{text-align:center !important;color:var(--text-faint);padding:18px !important;}
+
+/* Contract detail sections */
+.detail-section{margin-bottom:16px;}
+.detail-section:last-child{margin-bottom:0;}
+.detail-section-title{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  font-weight:700;
+  color:var(--primary-dark);
+  margin-bottom:8px;
+  padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.detail-item{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.detail-item.full{grid-column:1 / -1;}
+.detail-item .detail-label{font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.detail-item .detail-value{font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+
+/* Validation summary toast */
+.toast{
+  position:fixed;
+  bottom:22px;left:50%;
+  transform:translateX(-50%);
+  background:#2A3B4D;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:var(--radius-md);
+  font-size:12.5px;
+  box-shadow:var(--shadow-pop);
+  z-index:300;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.toast.show{display:flex;}
+.toast.error{background:#5A2420;}
+
+/* Utility */
+.mono{font-variant-numeric:tabular-nums;}
+.text-right{text-align:right;}
+.icon-btn{
+  width:34px;height:34px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);
+  font-size:14px;
+}
+.icon-btn:hover{border-color:var(--primary);color:var(--primary);}
+.icon-btn.active{background:var(--primary-tint);border-color:var(--primary);color:var(--primary);}
+
+@media (max-width:900px){
+  .form-grid{grid-template-columns:repeat(2,1fr);}
+  .filter-select{flex:1 1 130px;}
+}
+@media (max-width:600px){
+  .app{padding:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .actions-row{flex-direction:column-reverse;}
+  .actions-row .btn{width:100%;}
+}
+</style>
+<style>
+/* =========================================================
+   OTTK visual theme — CSS-ONLY override block.
+   This block is appended last so its rules win the cascade
+   over the original stylesheet above (same selectors, later
+   source order, no specificity tricks needed). Nothing in the
+   HTML or JavaScript is touched; every rule below only changes
+   how existing elements look.
+   ========================================================= */
+
+/* ---- 1. Design tokens: remap the app's CSS variables to the
+   OTTK palette. Because the entire original stylesheet is
+   built on these custom properties, this alone re-themes the
+   vast majority of components (buttons, inputs, dropdowns,
+   cards, borders, focus rings, shadows, radii, etc). ---- */
+:root{
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+
+/* ---- 2. Type scale: match OTTK's actual component sizes, not
+   just the 13px body base — OTTK sets its own explicit sizes
+   for titles, labels, meta text and table headers rather than
+   inheriting one size everywhere. ---- */
+body{ font-size:13px; }
+.control,
+.dd-input,
+.dd-item .primary-line,
+.btn,
+.search-box input{ font-size:13px; }
+.field label,
+.section-title{ font-size:13px; }
+.filter-select{ font-size:13px; }
+.page-header h1{ font-size:16px; }
+.page-header p{ font-size:15px; }
+.modal h2{ font-size:14px; }
+.kpi-card .kpi-label{ font-size:12px; }
+
+/* ---- 3. Header: remove the light-blue strip — sits flush on
+   the page background like the rest of OTTK's chrome ---- */
+.page-header{
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+}
+
+/* ---- 4. Buttons: tighter, SAP-compact padding and hover feedback ---- */
+.btn{ padding:0 12px; border-radius:var(--radius-sm); }
+.btn-secondary:hover{ box-shadow:0 1px 4px rgba(34,53,72,.1); }
+.btn-primary:hover{ box-shadow:0 2px 6px rgba(10,110,209,.22); }
+
+/* ---- 5. KPI / action cards: same OTTK panel look (white surface,
+   thin border, compact shadow, 8px radius) ---- */
+.kpi-card{ box-shadow:var(--shadow-card); }
+.kpi-card:hover{
+  box-shadow:0 4px 10px rgba(34,53,72,.1), 0 10px 22px rgba(34,53,72,.1);
+}
+
+/* ---- 6. Inputs & dropdowns: OTTK hover/focus border tone ---- */
+.control:hover,
+.dd-input:hover{ border-color:#A6B0B9; }
+
+/* ---- 7. Search box + filter selects: compact SAP sizing ---- */
+.search-box input,
+.filter-select{ border-radius:var(--radius-sm); }
+
+/* ---- 8. Table: SAP-grid look — muted uppercase header on a
+   secondary surface, tighter row padding, subtle row hover ---- */
+table.mc-table thead th{
+  background:var(--gray-tint);
+  padding:8px 10px;
+  font-size:13px;
+}
+table.mc-table tbody td{
+  padding:8px 10px;
+  font-size:14px;
+}
+table.mc-table tbody tr:hover{ background:#F7FBFF; }
+.popup-table-wrap table thead th,
+table.popup-table thead th{ background:var(--gray-tint); font-size:13px; }
+table.popup-table td{ font-size:14px; }
+table.popup-table tbody tr:hover{ background:#F7FBFF; }
+
+/* ---- 9. Status presentation: align the semantic shades used
+   for both the plain-text table status and the pill variant
+   (details popup) to the OTTK palette ---- */
+.status-text-in-use{ color:var(--success); }
+.status-text-confirmed{ color:var(--primary); }
+.status-text-pending{ color:#9B6B00; }
+.status-text-rejected{ color:var(--error); }
+.status-in-use{ color:var(--success); }
+.status-pending{ color:#9B6B00; }
+.status-rejected{ color:var(--error); }
+
+/* ---- 10. Pagination: compact square SAP-style buttons ---- */
+.pagination button{ border-radius:var(--radius-sm); }
+
+/* ---- 11. Modals / popups: OTTK modal shadow + radius (via
+   --radius-lg / --shadow-pop above) plus a matching close-icon
+   hover and success-state accent ---- */
+.modal{ border:1px solid #B9C2C9; }
+.modal .check-circle{ background:var(--success-tint); color:var(--success); }
+.modal-close-btn:hover{ background:var(--gray-tint); }
+
+/* ---- 12. Success banner + toast: OTTK green accent / dark toast ---- */
+.success-banner{ border-color:#C5E0CD; color:var(--success); }
+.toast{ background:#243B53; }
+.toast.error{ background:#4A211D; }
+
+/* ---- 13. Scrollbar + misc chrome ---- */
+::-webkit-scrollbar-thumb{ background:#B7C2CB; }
+.child-parent-summary{ border-color:#BEE0F7; }
+
+/* ---- 14. Table: lighter cell borders + subtle hover "lift" ---- */
+table.mc-table thead th{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody td{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody tr{
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.mc-table tbody tr:hover{
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF;
+  position:relative;
+  z-index:2;
+}
+table.mc-table tbody tr.selected{ background:#EAF3FC; }
+table.mc-table tbody tr.selected:hover{
+  background:#EAF3FC;
+  box-shadow:0 3px 9px rgba(10,110,209,.14);
+}
+table.mc-table tbody tr.dragging{ opacity:.5; }
+
+/* ---- 15. KPI value: neutral dark text instead of blue ---- */
+.kpi-card .kpi-value{ color:var(--text); }
+
+/* ---- 16. KPI description: small, secondary, bottom-right of the card ---- */
+.kpi-card{ position:relative; }
+.kpi-description{
+  position:absolute;
+  right:16px;
+  bottom:12px;
+  max-width:62%;
+  font-size:13px;
+  line-height:1.3;
+  color:var(--text-faint);
+  text-align:right;
+  font-weight:500;
+}
+
+/* ---- 17. Drag and drop: compact ghost label + drop-target feedback ---- */
+.drag-ghost{
+  position:fixed;
+  top:-1000px;
+  left:-1000px;
+  padding:6px 10px;
+  background:#1D2D3E;
+  color:#fff;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family:var(--font);
+  pointer-events:none;
+}
+.btn.drag-over{
+  border-color:var(--primary) !important;
+  background:var(--primary-tint) !important;
+  color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="page-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="FS logo">
+    <div class="header-text">
+      <h1>Create Master Contract</h1>
+      <p>Create and manage commodity master contracts</p>
+    </div>
+    <button class="btn btn-primary" id="createContractCard" style="margin-left:auto;">+ Create Master Contract</button>
+  </div>
+
+  <div class="kpi-row" id="cardsRow">
+    <div class="kpi-card" id="kpiCardTotal">
+      <div class="kpi-value" id="kpiTotal">0</div>
+      <div class="kpi-label">Total Master Contracts</div>
+      <div class="kpi-description">All available master contracts</div>
+    </div>
+    <div class="kpi-card" id="kpiCardInUse">
+      <div class="kpi-value" id="kpiInUse">0</div>
+      <div class="kpi-label">In Use</div>
+      <div class="kpi-description">Contracts currently being utilized</div>
+    </div>
+    <div class="kpi-card" id="kpiCardConfirmed">
+      <div class="kpi-value" id="kpiConfirmed">0</div>
+      <div class="kpi-label">Confirmed</div>
+      <div class="kpi-description">Approved and confirmed contracts</div>
+    </div>
+    <div class="kpi-card" id="kpiCardTotalAmount">
+      <div class="kpi-value" id="kpiTotalAmount">$0</div>
+      <div class="kpi-label">Total MC Amount (USD)</div>
+      <div class="kpi-description">Combined USD value of all contracts</div>
+    </div>
+  </div>
+
+  <div class="success-banner" id="successBanner">
+    <span>✓</span>
+    <span>Master Contract <b id="bannerMcNumber"></b> created successfully.</span>
+    <span class="spacer"></span>
+    <button class="btn btn-secondary btn-sm" id="btnCreateNew">Dismiss</button>
+  </div>
+
+  <div class="table-col">
+  <!-- ============ Master Contracts Table ============ -->
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>Master Contracts</div>
+
+    <div class="table-toolbar">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input id="tableSearch" placeholder="Search MC number, entity, commodity, reference...">
+      </div>
+      <select class="control filter-select" id="filterStatus" title="Status"><option value="">All statuses</option></select>
+      <select class="control filter-select" id="filterEntity" title="Origin Entity"><option value="">All entities</option></select>
+      <select class="control filter-select" id="filterFxModel" title="FX Model"><option value="">All models</option></select>
+      <select class="control filter-select" id="filterCommodity" title="Commodity"><option value="">All commodities</option></select>
+      <button class="btn btn-secondary btn-sm" id="btnResetFilters">Reset</button>
+      <button class="btn btn-secondary btn-sm" id="btnCopySelected" disabled>Copy</button>
+      <button class="btn btn-danger btn-sm" id="btnSendToMOBulk" disabled>Send to M.O.</button>
+      <div class="toolbar-spacer"></div>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="mc-table" id="mcTable">
+        <thead>
+          <tr>
+            <th class="no-sort action-col">Action</th>
+            <th data-sort="status">Status<span class="sort-ind"></span></th>
+            <th data-sort="mcNumber">MC Number<span class="sort-ind"></span></th>
+            <th data-sort="originEntity">Origin Entity<span class="sort-ind"></span></th>
+            <th data-sort="fxModelCode">FX Model<span class="sort-ind"></span></th>
+            <th data-sort="commodityName">Commodity<span class="sort-ind"></span></th>
+            <th data-sort="mcDate">MC Date<span class="sort-ind"></span></th>
+            <th class="num" data-sort="mcAmountUsd">MC Amount (USD)<span class="sort-ind"></span></th>
+            <th class="num" data-sort="exchangeRate">Exchange Rate<span class="sort-ind"></span></th>
+            <th data-sort="shipStart">Shipment Start<span class="sort-ind"></span></th>
+            <th data-sort="shipEnd">Shipment End<span class="sort-ind"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="big">📄</div>
+      No master contracts match your search or filters.
+    </div>
+
+    <div class="table-footer">
+      <div class="page-size-select">
+        Rows per page
+        <select id="pageSizeSelect">
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="20" selected>20</option>
+        </select>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+  </div>
+  <!-- /table-col -->
+
+</div>
+
+<!-- Create Master Contract Modal -->
+<div class="modal-overlay" id="createContractModal">
+  <div class="modal modal-left modal-scrollable create-contract-modal">
+    <div class="modal-head-row">
+      <h2>Create Master Contract</h2>
+      <button type="button" id="btnCreateModalClose" class="modal-close-btn" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body-scroll" id="createContractBody">
+
+      <!-- ============ Basic Selection ============ -->
+      <div class="form-section">
+        <div class="section-title"><span class="dot"></span>Basic Selection</div>
+        <div class="section-body">
+          <div class="form-grid-12">
+            <div class="field gc-6" id="field-originEntity">
+              <label>Origin Entity<span class="req">*</span></label>
+              <div class="dd" id="dd-originEntity">
+                <input class="dd-input" id="input-originEntity" placeholder="Select origin entity" autocomplete="off">
+                <input type="hidden" id="value-originEntity">
+                <div class="dd-panel" id="panel-originEntity"></div>
+              </div>
+              <div class="error-msg">Origin Entity is required.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Basic Details ============ -->
+      <div class="form-section">
+        <div class="section-title"><span class="dot"></span>Basic Details</div>
+        <div class="section-body">
+          <div class="form-grid-12">
+            <div class="field gc-4" id="field-mcDate">
+              <label>MC Date<span class="req">*</span></label>
+              <div class="date-field">
+                <input class="control" id="input-mcDate" placeholder="DD-MM-YYYY" autocomplete="off">
+                <button type="button" class="date-icon" data-target="mcDate">📅</button>
+                <div class="date-popup" id="popup-mcDate"></div>
+              </div>
+              <div class="error-msg">MC Date is required.</div>
+            </div>
+
+            <div class="field gc-4" id="field-mcAmountUsd">
+              <label>MC Amount (USD)<span class="req">*</span></label>
+              <div class="input-with-suffix">
+                <input class="control text-right" id="input-mcAmountUsd" placeholder="0.00" inputmode="decimal">
+                <span class="suffix">USD</span>
+              </div>
+              <div class="error-msg">Enter a valid amount greater than 0.</div>
+            </div>
+
+            <div class="field gc-4" id="field-exchangeRate">
+              <label>Exchange Rate<span class="req">*</span></label>
+              <input class="control text-right" id="input-exchangeRate" placeholder="0.000000" inputmode="decimal">
+              <div class="error-msg">Must be greater than 0.</div>
+            </div>
+
+            <div class="field gc-5">
+              <label>MC Reference No</label>
+              <input class="control" id="input-mcReference" placeholder="e.g. MC/OSIPL/2026/001">
+            </div>
+
+            <div class="field gc-3" id="field-tolerance">
+              <label>Tolerance %</label>
+              <input class="control text-right" id="input-tolerance" placeholder="0.000000" inputmode="decimal" value="5.000000">
+              <div class="error-msg">Cannot be negative.</div>
+            </div>
+
+            <div class="field gc-4">
+              <label>MC Amount (Origin)</label>
+              <div class="input-with-suffix">
+                <input class="control text-right" id="input-mcAmountOrigin" placeholder="0.00" readonly>
+                <span class="suffix" id="originCurrencyBadge">—</span>
+              </div>
+              <div class="hint">Auto-calculated: USD × rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Commodity Details ============ -->
+      <div class="form-section">
+        <div class="section-title"><span class="dot"></span>Commodity Details</div>
+        <div class="section-body">
+          <div class="form-grid-12">
+            <div class="field gc-5" id="field-commodity">
+              <label>Commodity<span class="req">*</span></label>
+              <div class="dd" id="dd-commodity">
+                <input class="dd-input" id="input-commodity" placeholder="Select commodity" autocomplete="off">
+                <input type="hidden" id="value-commodity">
+                <div class="dd-panel" id="panel-commodity"></div>
+              </div>
+              <div class="error-msg">Commodity is required.</div>
+            </div>
+
+            <div class="field gc-7">
+              <label>Comm. Description Long</label>
+              <div style="position:relative;">
+                <input class="control" id="input-commodityDesc" placeholder="Auto-populated" readonly style="padding-right:56px;">
+                <button type="button" id="btnEditCommodities" class="btn btn-secondary btn-sm" style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);height:24px;padding:0 8px;">Edit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Shipment Details ============ -->
+      <div class="form-section">
+        <div class="section-title"><span class="dot"></span>Shipment Details</div>
+        <div class="section-body">
+          <div class="form-grid-12">
+            <div class="field gc-3" id="field-shipStart">
+              <label>Shipment Start<span class="req">*</span></label>
+              <div class="date-field">
+                <input class="control" id="input-shipStart" placeholder="DD-MM-YYYY" autocomplete="off">
+                <button type="button" class="date-icon" data-target="shipStart">📅</button>
+                <div class="date-popup" id="popup-shipStart"></div>
+              </div>
+              <div class="error-msg">Required.</div>
+            </div>
+
+            <div class="field gc-3" id="field-shipEnd">
+              <label>Shipment End<span class="req">*</span></label>
+              <div class="date-field">
+                <input class="control" id="input-shipEnd" placeholder="DD-MM-YYYY" autocomplete="off">
+                <button type="button" class="date-icon" data-target="shipEnd">📅</button>
+                <div class="date-popup" id="popup-shipEnd"></div>
+              </div>
+              <div class="error-msg">Must be ≥ start date.</div>
+            </div>
+
+            <div class="field gc-6">
+              <label>Payment Terms</label>
+              <div class="dd" id="dd-paymentTerms">
+                <input class="dd-input" id="input-paymentTerms" placeholder="Select payment terms" autocomplete="off">
+                <input type="hidden" id="value-paymentTerms">
+                <div class="dd-panel" id="panel-paymentTerms"></div>
+              </div>
+            </div>
+
+            <div class="field gc-3">
+              <label>Payment Date</label>
+              <div class="date-field">
+                <input class="control" id="input-paymentDate" placeholder="DD-MM-YYYY" autocomplete="off">
+                <button type="button" class="date-icon" data-target="paymentDate">📅</button>
+                <div class="date-popup" id="popup-paymentDate"></div>
+              </div>
+            </div>
+
+            <div class="field gc-4">
+              <label>Port of Shipment</label>
+              <div class="dd" id="dd-portShipment">
+                <input class="dd-input" id="input-portShipment" placeholder="Select port" autocomplete="off">
+                <input type="hidden" id="value-portShipment">
+                <div class="dd-panel" id="panel-portShipment"></div>
+              </div>
+            </div>
+
+            <div class="field gc-4">
+              <label>Port of Destination</label>
+              <div class="dd" id="dd-portDestination">
+                <input class="dd-input" id="input-portDestination" placeholder="Select port" autocomplete="off">
+                <input type="hidden" id="value-portDestination">
+                <div class="dd-panel" id="panel-portDestination"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ FX Model Details ============ -->
+      <div class="form-section">
+        <div class="section-title"><span class="dot"></span>FX Model Details</div>
+        <div class="section-body">
+          <div class="form-grid-12">
+            <div class="field gc-4" id="field-fxModel">
+              <label>FX Model<span class="req">*</span></label>
+              <div class="dd" id="dd-fxModel">
+                <input class="dd-input" id="input-fxModel" placeholder="Select FX model" autocomplete="off">
+                <input type="hidden" id="value-fxModel">
+                <div class="dd-panel" id="panel-fxModel"></div>
+              </div>
+              <div class="error-msg">FX Model is required.</div>
+            </div>
+
+            <div class="field gc-3">
+              <label>Entity String</label>
+              <input class="control" id="input-entityString" placeholder="Auto-populated" readonly>
+            </div>
+
+            <div class="field gc-3">
+              <label>Currency String</label>
+              <input class="control" id="input-currencyString" placeholder="Auto-populated" readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-actions create-modal-actions">
+      <button class="btn btn-secondary" id="btnReset">Cancel</button>
+      <button class="btn btn-primary" id="btnSave">Create Master Contract</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="check-circle">✓</div>
+    <h2>Master Contract Created</h2>
+    <p>The Master Contract has been created successfully.</p>
+    <div class="deal-id-box">
+      <div class="label">Deal ID / MC Number</div>
+      <div class="value mono" id="modalDealId">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnModalDone">Close</button>
+      <button class="btn btn-danger" id="btnModalSendToMO">Send to M.O.</button>
+    </div>
+  </div>
+</div>
+
+<!-- Multiple Commodity Selection Modal -->
+<div class="modal-overlay" id="commodityModal">
+  <div class="modal modal-left" style="width:420px;">
+    <div class="modal-head-row">
+      <h2>Select Commodities</h2>
+      <button type="button" id="btnCommodityModalClose" class="modal-close-btn" aria-label="Close">×</button>
+    </div>
+    <input class="control" id="commodityModalSearch" placeholder="Search commodities..." style="margin-bottom:10px;">
+    <div id="commodityModalList" class="commodity-check-list"></div>
+    <div class="error-msg" id="commodityModalError" style="display:none;margin:8px 0 0;">Select at least one commodity.</div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-secondary" id="btnCommodityModalCancel">Cancel</button>
+      <button class="btn btn-primary" id="btnCommodityModalApply">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Detail Popup (Total / In Use / Confirmed / Total MC Amount) -->
+<div class="modal-overlay" id="kpiDetailModal">
+  <div class="modal modal-left modal-scrollable kpi-detail-modal">
+    <div class="modal-head-row">
+      <h2 id="kpiDetailTitle">KPI Detail</h2>
+      <button type="button" id="btnKpiDetailClose" class="modal-close-btn" aria-label="Close">×</button>
+    </div>
+    <div id="kpiDetailBody" class="modal-body-scroll"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnKpiDetailCloseFooter" style="width:100%;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Master Contract Detail Popup -->
+<div class="modal-overlay" id="contractDetailModal">
+  <div class="modal modal-left modal-scrollable contract-detail-modal">
+    <div class="modal-head-row">
+      <h2 id="contractDetailTitle">Master Contract Details</h2>
+      <button type="button" id="btnContractDetailClose" class="modal-close-btn" aria-label="Close">×</button>
+    </div>
+    <div id="contractDetailBody" class="modal-body-scroll"></div>
+    <div class="modal-actions contract-detail-actions">
+      <button class="btn btn-secondary" id="btnContractDetailCloseFooter">Close</button>
+      <button class="btn btn-secondary" id="btnContractDetailChildren">Child Contracts</button>
+      <button class="btn btn-secondary" id="btnContractDetailCopy">Copy</button>
+      <button class="btn btn-primary" id="btnContractDetailEdit">Edit</button>
+      <button class="btn btn-danger" id="btnContractDetailSendToMO">Send to M.O.</button>
+    </div>
+  </div>
+</div>
+
+<!-- Child Contracts Popup -->
+<div class="modal-overlay" id="childContractsModal">
+  <div class="modal modal-left modal-scrollable child-contract-modal">
+    <div class="modal-head-row">
+      <h2 id="childContractsTitle">Child Contracts</h2>
+      <button type="button" id="btnChildContractsClose" class="modal-close-btn" aria-label="Close">×</button>
+    </div>
+    <div id="childContractsBody" class="modal-body-scroll"></div>
+    <div class="modal-actions child-modal-actions">
+      <button class="btn btn-secondary" id="btnChildContractsCloseFooter">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Dummy data
+   ========================================================= */
+var originEntities = [
+  { code:'OSIPL', companyCode:'IN11', name:'Olam Agri India Pvt Ltd', currency:'INR' },
+  { code:'OTL',   companyCode:'TH10', name:'Olam (Thailand) Ltd',      currency:'THB' },
+  { code:'OVL',   companyCode:'VN10', name:'Olam Vietnam Limited',     currency:'VND' }
+];
+
+var commodities = [
+  { code:'C101', name:'Multiple Commodity', desc:'Multiple Commodity' },
+  { code:'C102', name:'WHEAT',      desc:'WHEAT' },
+  { code:'C104', name:'BARLEY',     desc:'BARLEY' },
+  { code:'C105', name:'CORN',       desc:'CORN' },
+  { code:'C106', name:'MAIZE',      desc:'MAIZE' },
+  { code:'C110', name:'RUBBER',     desc:'RUBBER' },
+  { code:'C111', name:'PALMOLEIN',  desc:'PALM OLEIN' },
+  { code:'C112', name:'SOYOIL',     desc:'SOYOIL' },
+  { code:'C114', name:'SESAME',     desc:'SESAME' },
+  { code:'C124', name:'COTTON',     desc:'COTTON' },
+  { code:'C125', name:'RICE',       desc:'RICE' },
+  { code:'C126', name:'Fertilizer', desc:'Fertilizer' },
+  { code:'C103', name:'SOYABEAN',   desc:'SOYABEAN' }
+];
+var childCommodities = commodities.filter(function(c){ return c.code !== 'C101'; });
+
+var paymentTermsList = [
+  { code:'P01', label:'P01 - 270 days from bill of lading date' },
+  { code:'P02', label:'P02 - 270 days from shipment date against the copy docs' },
+  { code:'P03', label:'P03 - 270 days from contract date' },
+  { code:'P04', label:'P04 - 360 days from bill of lading date' },
+  { code:'P05', label:'P05 - On or Before fixed date' },
+  { code:'P06', label:'P06 - On or Before due date' }
+];
+
+var ports = ['Mumbai','Mundra','Chennai','Singapore','Dubai','Rotterdam','Hamburg','Bangkok','Ho Chi Minh City'];
+
+var fxModels = [
+  { id:'M032',  code:'M032', desc:'INR Long Forward',                         entity:'OGA-DMCC-OSIPL', currency:'USD-USD-INR' },
+  { id:'M033',  code:'M033', desc:'INR-INR-INR Forward',                      entity:'OGA-OSIPL-DMCC', currency:'INR-INR-INR' },
+  { id:'M034a', code:'M034', desc:'INR - INR Staggered Call & Put Option',    entity:'OGA-OSIPL-DMCC', currency:'INR-INR-INR' },
+  { id:'M034b', code:'M034', desc:'INR - INR Staggered Call & Put Option',    entity:'OGA-OSIPL-DMCC', currency:'INR-INR-USD' },
+  { id:'M035',  code:'M035', desc:'INR-INR-Put & Call Option',                entity:'OGA-OSIPL-DMCC', currency:'INR-INR-USD' },
+  { id:'M036',  code:'M036', desc:'USD-INR-INR-Put & Call Option',            entity:'OGA-DMCC-OSIPL', currency:'USD-INR-INR' },
+  { id:'M037',  code:'M037', desc:'INR Short Forward',                       entity:'OGA-OSIPL-DMCC', currency:'INR-INR-INR' },
+  { id:'M041',  code:'M041', desc:'INR - INR Staggered Call & Put Option',    entity:'OGA-OSIPL-DMCC', currency:'INR-INR-INR' }
+];
+
+var statusMeta = {
+  'Created':         { cls:'status-draft', textCls:'status-text-draft' },
+  'Released to M.O.':{ cls:'status-pending', textCls:'status-text-pending' },
+  'In Use':          { cls:'status-in-use',  textCls:'status-text-in-use' },
+  'Confirmed':        { cls:'status-confirmed', textCls:'status-text-confirmed' },
+  'Draft':            { cls:'status-draft',  textCls:'status-text-draft' },
+  'Pending Approval':{ cls:'status-pending', textCls:'status-text-pending' },
+  'Rejected':         { cls:'status-rejected', textCls:'status-text-rejected' },
+  'Settled':          { cls:'status-settled', textCls:'status-text-settled' },
+  'Matured':          { cls:'status-matured', textCls:'status-text-matured' }
+};
+
+function findCommodity(code){ return commodities.filter(function(c){return c.code===code;})[0]; }
+function findFxModel(id){ return fxModels.filter(function(m){return m.id===id;})[0]; }
+function findEntity(code){ return originEntities.filter(function(e){return e.code===code;})[0]; }
+
+var mockContracts = [
+  mkContract(2000002728,'OSIPL','M032','C105','22-08-2026','100000','95.712000','22-08-2026','15-09-2026','In Use','MC/OSIPL/2026/728'),
+  mkContract(2000002727,'OSIPL','M034b','C125','21-09-2026','500000','90.000000','21-09-2026','15-10-2026','In Use','MC/OSIPL/2026/727'),
+  mkContract(2000002726,'OSIPL','M041','C102','21-09-2026','33055','6.000000','21-09-2026','10-10-2026','In Use','MC/OSIPL/2026/726'),
+  mkContract(2000002725,'OTL','M034a','C112','21-09-2026','22889','6.000000','21-09-2026','10-10-2026','In Use','MC/OTL/2026/725'),
+  mkContract(2000002724,'OSIPL','M041','C104','21-09-2026','48602','8.000000','21-09-2026','10-10-2026','Confirmed','MC/OSIPL/2026/724'),
+  mkContract(2000002723,'OVL','M034a','C106','21-09-2026','37391','7.000000','21-09-2026','10-10-2026','In Use','MC/OVL/2026/723'),
+  mkContract(2000002722,'OSIPL','M034a','C110','21-09-2026','20280','6.000000','21-09-2026','10-10-2026','Draft','MC/OSIPL/2026/722'),
+  mkContract(2000002719,'OSIPL','M034a','C114','19-09-2026','16763','5.000000','19-09-2026','08-10-2026','In Use','MC/OSIPL/2026/719'),
+  mkContract(2000002718,'OTL','M034a','C124','19-09-2026','34222','5.000000','19-09-2026','08-10-2026','In Use','MC/OTL/2026/718'),
+  mkContract(2000002717,'OSIPL','M032','C111','19-09-2026','30087','4.000000','19-09-2026','08-10-2026','In Use','MC/OSIPL/2026/717'),
+  mkContract(2000002716,'OSIPL','M032','C103','19-09-2026','44758','4.000000','19-09-2026','08-10-2026','In Use','MC/OSIPL/2026/716'),
+  mkContract(2000002715,'OVL','M041','C126','19-09-2026','10904','8.000000','19-09-2026','08-10-2026','Pending Approval','MC/OVL/2026/715'),
+  mkContract(2000002714,'OSIPL','M041','C105','19-09-2026','25021','9.000000','19-09-2026','08-10-2026','In Use','MC/OSIPL/2026/714'),
+  mkContract(2000002713,'OTL','M041','C102','19-09-2026','48524','4.000000','19-09-2026','08-10-2026','In Use','MC/OTL/2026/713'),
+  mkContract(2000002712,'OSIPL','M034b','C125','19-09-2026','36912','9.000000','19-09-2026','08-10-2026','In Use','MC/OSIPL/2026/712'),
+  mkContract(2000002710,'OSIPL','M041','C106','19-09-2026','18335','8.000000','19-09-2026','08-10-2026','Settled','MC/OSIPL/2026/710'),
+  mkContract(2000002709,'OVL','M034a','C104','19-09-2026','28838','10.000000','19-09-2026','08-10-2026','In Use','MC/OVL/2026/709'),
+  mkContract(2000002708,'OSIPL','M032','C110','19-09-2026','33050','10.000000','19-09-2026','08-10-2026','Matured','MC/OSIPL/2026/708'),
+  mkContract(2000002707,'OTL','M036','C103','18-09-2026','52340','6.500000','18-09-2026','05-10-2026','In Use','MC/OTL/2026/707'),
+  mkContract(2000002706,'OSIPL','M033','C125','18-09-2026','61200','5.250000','18-09-2026','05-10-2026','In Use','MC/OSIPL/2026/706'),
+  mkContract(2000002705,'OVL','M037','C106','17-09-2026','29875','7.750000','17-09-2026','04-10-2026','Confirmed','MC/OVL/2026/705'),
+  mkContract(2000002704,'OSIPL','M034a','C112','17-09-2026','44100','9.000000','17-09-2026','04-10-2026','In Use','MC/OSIPL/2026/704'),
+  mkContract(2000002703,'OTL','M035','C111','17-09-2026','38650','4.500000','17-09-2026','04-10-2026','In Use','MC/OTL/2026/703'),
+  mkContract(2000002702,'OSIPL','M041','C114','16-09-2026','19980','6.000000','16-09-2026','03-10-2026','Draft','MC/OSIPL/2026/702'),
+  mkContract(2000002701,'OVL','M034b','C124','16-09-2026','27460','8.500000','16-09-2026','03-10-2026','In Use','MC/OVL/2026/701'),
+  mkContract(2000002700,'OSIPL','M032','C102','16-09-2026','35700','4.000000','16-09-2026','03-10-2026','In Use','MC/OSIPL/2026/700'),
+  mkContract(2000002699,'OTL','M033','C126','15-09-2026','14230','5.500000','15-09-2026','02-10-2026','Pending Approval','MC/OTL/2026/699'),
+  mkContract(2000002698,'OSIPL','M034a','C103','15-09-2026','58900','9.500000','15-09-2026','02-10-2026','In Use','MC/OSIPL/2026/698'),
+  mkContract(2000002697,'OVL','M041','C110','15-09-2026','21340','7.000000','15-09-2026','02-10-2026','In Use','MC/OVL/2026/697'),
+  mkContract(2000002696,'OSIPL','M036','C105','14-09-2026','46600','8.000000','14-09-2026','01-10-2026','Rejected','MC/OSIPL/2026/696'),
+  mkContract(2000002695,'OTL','M037','C104','14-09-2026','32150','6.250000','14-09-2026','01-10-2026','In Use','MC/OTL/2026/695'),
+  mkContract(2000002694,'OSIPL','M034b','C125','14-09-2026','67300','9.750000','14-09-2026','01-10-2026','In Use','MC/OSIPL/2026/694'),
+  mkContract(2000002693,'OVL','M032','C106','13-09-2026','25480','4.750000','13-09-2026','30-09-2026','Settled','MC/OVL/2026/693'),
+  mkContract(2000002692,'OSIPL','M035','C112','13-09-2026','39900','5.000000','13-09-2026','30-09-2026','In Use','MC/OSIPL/2026/692')
+];
+
+/* A linked Deal ID blocks edit in the ABAP change flow. Keep two demo rows
+   linked so that safeguard is visible without changing the table layout. */
+mockContracts[0].linkedDealId = 'DEAL-900187';
+mockContracts[4].linkedDealId = 'DEAL-900142';
+
+function mkContract(mcNumber,entityCode,fxId,commCode,mcDate,amtUsd,rate,shipStart,shipEnd,status,ref){
+  var entity = findEntity(entityCode);
+  var comm = findCommodity(commCode);
+  var fx = findFxModel(fxId);
+  var amountUsd = parseFloat(amtUsd);
+  var exRate = parseFloat(rate);
+  return {
+    mcNumber: mcNumber,
+    status: status,
+    originEntity: entityCode,
+    originEntityName: entity.name,
+    originCurrency: entity.currency,
+    fxModelId: fxId,
+    fxModelCode: fx.code,
+    fxModelDesc: fx.desc,
+    entityString: fx.entity,
+    currencyString: fx.currency,
+    commodityCode: commCode,
+    commodityName: comm.name,
+    mcDate: mcDate,
+    mcAmountUsd: amountUsd,
+    mcAmountOrigin: Math.round(amountUsd*exRate*100)/100,
+    exchangeRate: exRate,
+    tolerance: 5,
+    reference: ref,
+    paymentTerms: 'P01',
+    paymentDate: shipEnd,
+    portShipment: 'Mumbai',
+    portDestination: 'Singapore',
+    shipStart: shipStart,
+    shipEnd: shipEnd
+  };
+}
+
+/* =========================================================
+   State
+   ========================================================= */
+var state = {
+  nextMcNumber: 2000002729,
+  contracts: mockContracts.slice(),
+  sort: { field:'mcNumber', dir:'desc' },
+  page: 1,
+  pageSize: 20,
+  search: '',
+  filters: { status:'', entity:'', fxModel:'', commodity:'' },
+  lastCreatedMcNumber: null,
+  lastCreatedContract: null,
+  selectedRow: null,
+  selectedForMO: new Set(),
+  formMode: 'create',
+  editingMcNumber: null,
+  childContractsByMc: {},
+  nextChildRef: { T1:110001, T2:220001, T3:330001 }
+};
+
+var form = {
+  originEntity: null,
+  fxModel: null,
+  commodity: null,
+  paymentTerms: null,
+  portShipment: null,
+  portDestination: null
+};
+
+var multiCommodityState = {
+  selected: []
+};
+
+/* =========================================================
+   Data / service functions (mock, replaceable with API calls)
+   ========================================================= */
+function loadContracts(){
+  // Future: return fetch('/api/master-contracts').then(r => r.json());
+  return state.contracts;
+}
+
+function saveContractToStore(contract){
+  // Future: return fetch('/api/master-contracts', {method:'POST', body: JSON.stringify(contract)});
+  state.contracts.unshift(contract);
+  return contract;
+}
+
+function generateNextMcNumber(){
+  // Future: server/database generates this
+  var n = state.nextMcNumber;
+  state.nextMcNumber += 1;
+  return n;
+}
+
+function findContractByNumber(mcNumber){
+  var list = loadContracts();
+  for(var i=0;i<list.length;i++){
+    if(String(list[i].mcNumber)===String(mcNumber)) return list[i];
+  }
+  return null;
+}
+
+function updateContractInStore(mcNumber, updatedContract){
+  // Future: return fetch('/api/master-contracts/'+mcNumber, {method:'PUT', body:JSON.stringify(updatedContract)});
+  var existing = findContractByNumber(mcNumber);
+  if(!existing) return null;
+  Object.keys(updatedContract).forEach(function(k){ existing[k] = updatedContract[k]; });
+  return existing;
+}
+
+/* ABAP-equivalent child setup: for each MC create T1/T2/T3 Sell and
+   Purchase combinations. Both sides of the same trade type share one
+   child reference, mirroring the number-range reuse in the program. */
+function createChildContractsForMaster(contract){
+  if(!contract) return [];
+  var key = String(contract.mcNumber);
+  if(state.childContractsByMc[key] && state.childContractsByMc[key].length){
+    return state.childContractsByMc[key];
+  }
+
+  var entityParts = String(contract.entityString || '').split('-').filter(function(v){ return !!v; });
+  while(entityParts.length < 3){ entityParts.push(contract.originEntity || 'ENTITY'); }
+  var e1 = entityParts[0], e2 = entityParts[1], e3 = entityParts[2];
+  var parsedDate = parseDMY(contract.mcDate);
+  var year = parsedDate ? parsedDate.getFullYear() : 2026;
+  var refs = {
+    T1: state.nextChildRef.T1++,
+    T2: state.nextChildRef.T2++,
+    T3: state.nextChildRef.T3++
+  };
+  var defs = [
+    {type:'T1S', side:'Sell', sideCode:'02', sell:e1, buy:e2, trade:'T1', desc:e1+'-'+e2+'-S'},
+    {type:'T1P', side:'Purchase', sideCode:'01', sell:e1, buy:e2, trade:'T1', desc:e2+'-'+e1+'-P'},
+    {type:'T2S', side:'Sell', sideCode:'02', sell:e2, buy:e3, trade:'T2', desc:e2+'-'+e3+'-S'},
+    {type:'T2P', side:'Purchase', sideCode:'01', sell:e2, buy:e3, trade:'T2', desc:e3+'-'+e2+'-P'},
+    {type:'T3S', side:'Sell', sideCode:'02', sell:e3, buy:e1, trade:'T3', desc:e3+'-'+e1+'-S'},
+    {type:'T3P', side:'Purchase', sideCode:'01', sell:e3, buy:e1, trade:'T3', desc:e1+'-'+e3+'-P'}
+  ];
+
+  var children = defs.map(function(d){
+    return {
+      parentMcNumber: contract.mcNumber,
+      childType: d.type,
+      childContractNo: year+' / '+contract.mcNumber+' / '+d.type,
+      childReference: refs[d.trade],
+      description: d.desc,
+      sellEntity: d.sell,
+      buyEntity: d.buy,
+      side: d.side,
+      sideCode: d.sideCode,
+      tradeType: d.trade
+    };
+  });
+  state.childContractsByMc[key] = children;
+  return children;
+}
+
+function loadChildContracts(mcNumber){
+  return state.childContractsByMc[String(mcNumber)] || [];
+}
+
+/* =========================================================
+   Email notification (mock, replaceable with a real mail API)
+   ========================================================= */
+function buildContractEmailHtml(contract){
+  var paymentTermLabel = (function(){
+    var pt = paymentTermsList.filter(function(p){ return p.code===contract.paymentTerms; })[0];
+    return pt ? pt.label : (contract.paymentTerms || '—');
+  })();
+  var commodityDescription = (contract.selectedCommodities && contract.selectedCommodities.length)
+    ? contract.selectedCommodities.map(function(code){ var cc=findCommodity(code); return cc?cc.name:code; }).join(', ')
+    : contract.commodityName;
+
+  var rows = [
+    ['Master Contract Number', contract.mcNumber],
+    ['Origin Entity', contract.originEntity + (contract.originEntityName ? ' - '+contract.originEntityName : '')],
+    ['MC Reference No', contract.reference],
+    ['MC Date', contract.mcDate],
+    ['MC Amount (USD)', formatAmount(contract.mcAmountUsd)],
+    ['MC Amount (Origin)', formatAmount(contract.mcAmountOrigin)],
+    ['Exchange Rate', formatRate(contract.exchangeRate)],
+    ['Currency', contract.originCurrency || '—'],
+    ['Tolerance %', formatRate(contract.tolerance)],
+    ['Commodity', contract.commodityName],
+    ['Commodity Description', commodityDescription],
+    ['Shipment Start Date', contract.shipStart],
+    ['Shipment End Date', contract.shipEnd],
+    ['Payment Terms', paymentTermLabel],
+    ['Payment Date', contract.paymentDate],
+    ['Port of Shipment', contract.portShipment],
+    ['Port of Destination', contract.portDestination],
+    ['FX Model', contract.fxModelCode + (contract.fxModelDesc ? ' - '+contract.fxModelDesc : '')],
+    ['Entity String', contract.entityString],
+    ['Currency String', contract.currencyString],
+    ['Status', contract.status]
+  ];
+
+  var rowsHtml = rows.map(function(r){
+    var value = (r[1]===undefined || r[1]===null || r[1]==='') ? '—' : r[1];
+    return ''
+      + '<tr>'
+      +   '<td style="padding:10px 14px;border:1px solid #E1E9F2;background:#F7FAFD;font-weight:600;color:#1D2D3E;font-size:13px;width:220px;">'+r[0]+'</td>'
+      +   '<td style="padding:10px 14px;border:1px solid #E1E9F2;color:#1D2D3E;font-size:13px;">'+value+'</td>'
+      + '</tr>';
+  }).join('');
+
+  return ''
+    + '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;border:1px solid #E1E9F2;border-radius:10px;overflow:hidden;">'
+    +   '<div style="background:#1F6FEB;color:#ffffff;padding:18px 22px;font-size:17px;font-weight:700;">Master Contract Creation Notification</div>'
+    +   '<div style="background:#ffffff;padding:22px;">'
+    +     '<p style="margin:0 0 14px;font-size:14px;color:#1D2D3E;">Dear Team,</p>'
+    +     '<p style="margin:0 0 20px;font-size:14px;color:#1D2D3E;line-height:1.5;">The Master Contract <strong>'+contract.mcNumber+'</strong> has been successfully created and is available for further processing.</p>'
+    +     '<div style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#1657C4;margin-bottom:8px;">Contract Details</div>'
+    +     '<table style="width:100%;border-collapse:collapse;">'+rowsHtml+'</table>'
+    +   '</div>'
+    + '</div>';
+}
+
+function sendMasterContractEmail(contract){
+  // Mock/API-ready email service. Recipient and the generated HTML body are
+  // fully built here so this function can later be swapped for a real call, e.g.:
+  //   return fetch('/api/notifications/email', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(payload)
+  //   });
+  var recipient = 'royston.d@fourthsignal.com';
+  var subject = 'Master Contract Creation Notification — '+contract.mcNumber;
+  var htmlBody = buildContractEmailHtml(contract);
+  var payload = { to: recipient, subject: subject, html: htmlBody };
+
+  // Mock send: logged so the generated email is inspectable during development.
+  console.log('[Mock Email Service] Master Contract creation email:', payload);
+
+  return payload;
+}
+
+/* =========================================================
+   Send to M.O. — single centralized entry point.
+   Accepts one contract or an array of contracts, sends the
+   notification email for each, and shows one confirmation
+   message. Every "Send to M.O." action in the app (new-contract
+   success popup, contract details popup, MC Number hotspot,
+   and the table's bulk toolbar action) calls this function.
+   ========================================================= */
+function sendToMO(contractOrList){
+  var list = Array.isArray(contractOrList) ? contractOrList : [contractOrList];
+  list = list.filter(Boolean);
+  if(list.length===0) return;
+
+  list.forEach(function(c){
+    sendMasterContractEmail(c);
+    // ABAP RELEASE_TO_MO updates only newly created status 01 to status 02.
+    if(c.statusCode==='01' || c.status==='Created'){
+      c.statusCode = '02';
+      c.status = 'Released to M.O.';
+    }
+  });
+
+  var msg = (list.length===1)
+    ? 'Master Contract '+list[0].mcNumber+' sent to M.O. successfully.'
+    : list.length+' Master Contracts sent to M.O. successfully.';
+  showToast(msg, false);
+}
+
+/* =========================================================
+   Utility: date parsing / formatting (dd-mm-yyyy, e.g. 23-09-2026)
+   ========================================================= */
+function parseDMY(str){
+  if(!str) return null;
+  var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(str.trim());
+  if(!m) return null;
+  var d = parseInt(m[1],10), mo = parseInt(m[2],10)-1, y = parseInt(m[3],10);
+  var dt = new Date(y, mo, d);
+  if(dt.getDate()!==d || dt.getMonth()!==mo || dt.getFullYear()!==y) return null;
+  return dt;
+}
+function formatDMY(date){
+  var d = String(date.getDate()).padStart(2,'0');
+  var m = String(date.getMonth()+1).padStart(2,'0');
+  var y = date.getFullYear();
+  return d+'-'+m+'-'+y;
+}
+function formatAmount(n){
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function formatRate(n){
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits:6, maximumFractionDigits:6});
+}
+function formatCompactUSD(n){
+  var v = Number(n) || 0;
+  var sign = v<0 ? '-' : '';
+  v = Math.abs(v);
+  if(v >= 1e9) return sign+'$'+(v/1e9).toFixed(2)+'B';
+  if(v >= 1e6) return sign+'$'+(v/1e6).toFixed(2)+'M';
+  if(v >= 1e3) return sign+'$'+(v/1e3).toFixed(0)+'K';
+  return sign+'$'+formatAmount(v);
+}
+
+/* =========================================================
+   KPIs (derived from the full mock dataset)
+   ========================================================= */
+function updateKPIs(){
+  var all = loadContracts();
+  var total = all.length;
+  var inUse = all.filter(function(c){ return c.status==='In Use'; }).length;
+  var confirmed = all.filter(function(c){ return c.status==='Confirmed'; }).length;
+  var totalAmount = all.reduce(function(sum,c){ return sum + (c.mcAmountUsd || 0); }, 0);
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiInUse').textContent = inUse;
+  document.getElementById('kpiConfirmed').textContent = confirmed;
+  document.getElementById('kpiTotalAmount').textContent = formatCompactUSD(totalAmount);
+
+  document.getElementById('kpiCardTotal').title = total+' contract'+(total===1?'':'s')+' currently available — double-click for details';
+  document.getElementById('kpiCardInUse').title = inUse+' contract'+(inUse===1?'':'s')+' currently in use — double-click for details';
+  document.getElementById('kpiCardConfirmed').title = confirmed+' confirmed contract'+(confirmed===1?'':'s')+' — double-click for details';
+  document.getElementById('kpiCardTotalAmount').title = 'Total USD value across all master contracts ('+formatAmount(totalAmount)+') — double-click for details';
+}
+
+/* =========================================================
+   Detail popups (KPI drill-down + Master Contract details)
+   Details read from the live mock dataset; Edit/Copy hand off to the shared form.
+   ========================================================= */
+function openDetailModal(overlay){
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
+}
+function closeDetailModal(overlay){
+  if(!overlay.classList.contains('open')) return;
+  overlay.classList.add('closing');
+  setTimeout(function(){
+    overlay.classList.remove('open');
+    overlay.classList.remove('closing');
+  }, 160);
+}
+function hideModalInstant(overlay){
+  overlay.classList.remove('open');
+  overlay.classList.remove('closing');
+}
+
+/* =========================================================
+   Create Master Contract modal
+   ========================================================= */
+var createContractModalEl = document.getElementById('createContractModal');
+
+function setContractFormMode(mode, contract){
+  state.formMode = mode || 'create';
+  state.editingMcNumber = state.formMode==='edit' && contract ? contract.mcNumber : null;
+
+  var title = createContractModalEl.querySelector('.modal-head-row h2');
+  var saveBtn = document.getElementById('btnSave');
+  if(state.formMode==='edit'){
+    title.textContent = 'Edit Master Contract — '+contract.mcNumber;
+    saveBtn.textContent = 'Update Master Contract';
+  } else if(state.formMode==='copy'){
+    title.textContent = 'Copy Master Contract — '+contract.mcNumber;
+    saveBtn.textContent = 'Create Master Contract';
+  } else {
+    title.textContent = 'Create Master Contract';
+    saveBtn.textContent = 'Create Master Contract';
+  }
+
+  var lockOrigin = state.formMode==='edit';
+  document.getElementById('dd-originEntity').classList.toggle('disabled', lockOrigin);
+  document.getElementById('input-originEntity').disabled = lockOrigin;
+}
+
+function closeContractFormModal(){
+  var previousMode = state.formMode;
+  closeDetailModal(createContractModalEl);
+  if(previousMode!=='create'){
+    setTimeout(function(){
+      resetForm();
+      setContractFormMode('create', null);
+    }, 170);
+  }
+}
+
+document.getElementById('createContractCard').addEventListener('click', function(){
+  if(state.formMode!=='create'){
+    resetForm();
+    setContractFormMode('create', null);
+  }
+  openDetailModal(createContractModalEl);
+});
+document.getElementById('btnCreateModalClose').addEventListener('click', closeContractFormModal);
+createContractModalEl.addEventListener('click', function(e){
+  if(e.target===createContractModalEl) closeContractFormModal();
+});
+
+function detailItem(label, valueHtml){
+  var v = (valueHtml===undefined || valueHtml===null || valueHtml==='') ? '—' : valueHtml;
+  return '<div class="detail-item"><span class="detail-label">'+label+'</span><span class="detail-value">'+v+'</span></div>';
+}
+
+function kvRow(label, value, isTotal){
+  return '<div class="kv-row'+(isTotal?' kv-total':'')+'"><span class="kv-label">'+label+'</span><span class="kv-value">'+value+'</span></div>';
+}
+
+function showKpiDetail(title, bodyHtml){
+  document.getElementById('kpiDetailTitle').textContent = title;
+  document.getElementById('kpiDetailBody').innerHTML = bodyHtml;
+  openDetailModal(document.getElementById('kpiDetailModal'));
+}
+
+function buildPopupContractsTable(list){
+  var rowsHtml = list.map(function(c){
+    return '<tr>'+
+      '<td class="mono">'+c.mcNumber+'</td>'+
+      '<td>'+c.originEntity+'</td>'+
+      '<td>'+c.fxModelCode+'</td>'+
+      '<td>'+c.commodityName+'</td>'+
+      '<td class="mono">'+c.mcDate+'</td>'+
+      '<td class="num mono">'+formatAmount(c.mcAmountUsd)+'</td>'+
+      '<td class="num mono">'+formatRate(c.exchangeRate)+'</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="popup-table-wrap"><table class="popup-table"><thead><tr>'+
+    '<th>MC Number</th><th>Origin Entity</th><th>FX Model</th><th>Commodity</th><th>MC Date</th>'+
+    '<th class="num">MC Amount (USD)</th><th class="num">Exchange Rate</th>'+
+    '</tr></thead><tbody>'+
+    (rowsHtml || '<tr><td colspan="7" class="popup-empty">No contracts found.</td></tr>')+
+    '</tbody></table></div>';
+}
+
+function openKpiTotalDetail(){
+  var all = loadContracts();
+  var counts = {};
+  all.forEach(function(c){ counts[c.status] = (counts[c.status]||0) + 1; });
+  var totalAmount = all.reduce(function(s,c){ return s+(c.mcAmountUsd||0); }, 0);
+  var html = '<div class="kv-list">'+
+    kvRow('Total Contracts', all.length, true)+
+    kvRow('In Use', counts['In Use']||0)+
+    kvRow('Confirmed', counts['Confirmed']||0)+
+    kvRow('Draft', counts['Draft']||0)+
+    kvRow('Pending Approval', counts['Pending Approval']||0)+
+    kvRow('Rejected', counts['Rejected']||0)+
+    kvRow('Settled', counts['Settled']||0)+
+    kvRow('Matured', counts['Matured']||0)+
+    kvRow('Total MC Amount', formatCompactUSD(totalAmount), true)+
+    '</div>';
+  showKpiDetail('Total Master Contracts', html);
+}
+
+function openKpiListDetail(status){
+  var list = loadContracts().filter(function(c){ return c.status===status; });
+  showKpiDetail(status+' Master Contracts ('+list.length+')', buildPopupContractsTable(list));
+}
+
+function openKpiAmountDetail(){
+  var all = loadContracts();
+  var amounts = all.map(function(c){ return c.mcAmountUsd||0; });
+  var total = amounts.reduce(function(a,b){ return a+b; }, 0);
+  var avg = all.length ? total/all.length : 0;
+  var max = amounts.length ? Math.max.apply(null, amounts) : 0;
+  var min = amounts.length ? Math.min.apply(null, amounts) : 0;
+  var html = '<div class="kv-list">'+
+    kvRow('Total Contracts', all.length)+
+    kvRow('Total MC Amount', formatCompactUSD(total), true)+
+    kvRow('Average Contract', formatCompactUSD(avg))+
+    kvRow('Largest Contract', formatCompactUSD(max))+
+    kvRow('Smallest Contract', formatCompactUSD(min))+
+    '</div>';
+  showKpiDetail('Total MC Amount (USD)', html);
+}
+
+document.getElementById('kpiCardTotal').addEventListener('dblclick', openKpiTotalDetail);
+document.getElementById('kpiCardInUse').addEventListener('dblclick', function(){ openKpiListDetail('In Use'); });
+document.getElementById('kpiCardConfirmed').addEventListener('dblclick', function(){ openKpiListDetail('Confirmed'); });
+document.getElementById('kpiCardTotalAmount').addEventListener('dblclick', openKpiAmountDetail);
+
+var kpiDetailModalEl = document.getElementById('kpiDetailModal');
+document.getElementById('btnKpiDetailClose').addEventListener('click', function(){ closeDetailModal(kpiDetailModalEl); });
+document.getElementById('btnKpiDetailCloseFooter').addEventListener('click', function(){ closeDetailModal(kpiDetailModalEl); });
+kpiDetailModalEl.addEventListener('click', function(e){ if(e.target===kpiDetailModalEl) closeDetailModal(kpiDetailModalEl); });
+
+/* =========================================================
+   Master Contract detail popup
+   ========================================================= */
+function buildContractDetailHtml(c){
+  var paymentTermLabel = (function(){
+    var pt = paymentTermsList.filter(function(p){ return p.code===c.paymentTerms; })[0];
+    return pt ? pt.label : (c.paymentTerms || '—');
+  })();
+  var meta = statusMeta[c.status] || { cls:'status-draft' };
+  var statusHtml = '<span class="status-pill '+meta.cls+'"><span class="status-dot"></span>'+c.status+'</span>';
+
+  var html = '';
+  html += '<div class="detail-section"><div class="detail-section-title">Basic Details</div><div class="detail-grid">'+
+    detailItem('Status', statusHtml)+
+    detailItem('MC Number', c.mcNumber)+
+    detailItem('Origin Entity', c.originEntity+(c.originEntityName ? ' - '+c.originEntityName : ''))+
+    detailItem('MC Date', c.mcDate)+
+    detailItem('MC Reference No', c.reference)+
+    detailItem('Child Contracts', String(loadChildContracts(c.mcNumber).length))+
+    (c.linkedDealId ? detailItem('Linked Deal ID', c.linkedDealId) : '')+
+    '</div></div>';
+
+  html += '<div class="detail-section"><div class="detail-section-title">Financial Details</div><div class="detail-grid">'+
+    detailItem('MC Amount (USD)', formatAmount(c.mcAmountUsd))+
+    detailItem('MC Amount (Origin)', formatAmount(c.mcAmountOrigin)+(c.originCurrency ? ' '+c.originCurrency : ''))+
+    detailItem('Exchange Rate', formatRate(c.exchangeRate))+
+    detailItem('Tolerance %', formatRate(c.tolerance))+
+    '</div></div>';
+
+  html += '<div class="detail-section"><div class="detail-section-title">Commodity Details</div><div class="detail-grid">'+
+    detailItem('Commodity', c.commodityName)+
+    detailItem('Commodity Code', c.commodityCode);
+  if(c.selectedCommodities && c.selectedCommodities.length){
+    var names = c.selectedCommodities.map(function(code){ var cc=findCommodity(code); return cc?cc.name:code; });
+    html += detailItem('Selected Commodities', names.join(', '));
+  }
+  html += '</div></div>';
+
+  html += '<div class="detail-section"><div class="detail-section-title">Shipment Details</div><div class="detail-grid">'+
+    detailItem('Shipment Start', c.shipStart)+
+    detailItem('Shipment End', c.shipEnd)+
+    detailItem('Payment Terms', paymentTermLabel)+
+    detailItem('Payment Date', c.paymentDate)+
+    detailItem('Port of Shipment', c.portShipment)+
+    detailItem('Port of Destination', c.portDestination)+
+    '</div></div>';
+
+  html += '<div class="detail-section"><div class="detail-section-title">FX Model Details</div><div class="detail-grid">'+
+    detailItem('FX Model', c.fxModelCode+(c.fxModelDesc ? ' - '+c.fxModelDesc : ''))+
+    detailItem('Entity String', c.entityString)+
+    detailItem('Currency String', c.currencyString)+
+    '</div></div>';
+
+  return html;
+}
+
+var currentDetailContract = null;
+function openContractDetail(c){
+  currentDetailContract = c;
+  document.getElementById('contractDetailTitle').textContent = 'Master Contract Details — '+c.mcNumber;
+  document.getElementById('contractDetailBody').innerHTML = buildContractDetailHtml(c);
+  openDetailModal(document.getElementById('contractDetailModal'));
+}
+
+function setDropdownFormValue(key, displayText, value){
+  document.getElementById('input-'+key).value = displayText || '';
+  document.getElementById('input-'+key).title = displayText || '';
+  document.getElementById('value-'+key).value = value || '';
+}
+
+function populateContractForm(c){
+  if(!c) return;
+  var entity = findEntity(c.originEntity);
+  var comm = findCommodity(c.commodityCode);
+  var fx = findFxModel(c.fxModelId);
+  var pt = paymentTermsList.filter(function(p){ return p.code===c.paymentTerms; })[0];
+
+  form.originEntity = c.originEntity || null;
+  setDropdownFormValue('originEntity', entity ? entity.code+' - '+entity.name : c.originEntity, c.originEntity);
+  document.getElementById('originCurrencyBadge').textContent = c.originCurrency || (entity ? entity.currency : '—');
+
+  form.commodity = c.commodityCode || null;
+  multiCommodityState.selected = c.selectedCommodities ? c.selectedCommodities.slice() : [];
+  setDropdownFormValue('commodity', comm ? comm.code+' - '+comm.name : c.commodityCode, c.commodityCode);
+  if(c.commodityCode==='C101'){
+    document.getElementById('btnEditCommodities').style.display='inline-flex';
+    updateMultiCommodityDescription();
+  } else {
+    document.getElementById('btnEditCommodities').style.display='none';
+    document.getElementById('input-commodityDesc').value = comm ? comm.desc : (c.commodityName || '');
+    document.getElementById('input-commodityDesc').title = '';
+  }
+
+  form.paymentTerms = c.paymentTerms || null;
+  setDropdownFormValue('paymentTerms', pt ? pt.label : (c.paymentTerms || ''), c.paymentTerms || '');
+  form.portShipment = c.portShipment || null;
+  setDropdownFormValue('portShipment', c.portShipment || '', c.portShipment || '');
+  form.portDestination = c.portDestination || null;
+  setDropdownFormValue('portDestination', c.portDestination || '', c.portDestination || '');
+
+  form.fxModel = c.fxModelId || null;
+  setDropdownFormValue('fxModel', fx ? fx.code+' - '+fx.desc : (c.fxModelCode || ''), c.fxModelId || '');
+  document.getElementById('input-entityString').value = c.entityString || (fx ? fx.entity : '');
+  document.getElementById('input-currencyString').value = c.currencyString || (fx ? fx.currency : '');
+
+  document.getElementById('input-mcDate').value = c.mcDate || '';
+  document.getElementById('input-mcAmountUsd').value = formatAmount(c.mcAmountUsd || 0);
+  document.getElementById('input-exchangeRate').value = formatRate(c.exchangeRate || 0);
+  document.getElementById('input-tolerance').value = formatRate(c.tolerance || 0);
+  document.getElementById('input-mcReference').value = c.reference || '';
+  document.getElementById('input-shipStart').value = c.shipStart || '';
+  document.getElementById('input-shipEnd').value = c.shipEnd || '';
+  document.getElementById('input-paymentDate').value = c.paymentDate || '';
+  calculateOriginAmount();
+}
+
+function openEditContract(c){
+  if(!c) return;
+  if(c.linkedDealId){
+    showToast('Master Contract '+c.mcNumber+' cannot be edited because Deal ID '+c.linkedDealId+' is already linked.', true);
+    return;
+  }
+  hideModalInstant(contractDetailModalEl);
+  resetForm();
+  populateContractForm(c);
+  setContractFormMode('edit', c);
+  openDetailModal(createContractModalEl);
+}
+
+function openCopyContract(c){
+  if(!c) return;
+  hideModalInstant(contractDetailModalEl);
+  resetForm();
+  populateContractForm(c);
+  setContractFormMode('copy', c);
+  openDetailModal(createContractModalEl);
+}
+
+function buildChildContractsHtml(parent, children){
+  var rows = children.map(function(ch){
+    return '<tr>'+
+      '<td><b>'+ch.childType+'</b></td>'+
+      '<td class="mono">'+ch.childContractNo+'</td>'+
+      '<td class="mono">'+ch.childReference+'</td>'+
+      '<td>'+ch.description+'</td>'+
+      '<td>'+ch.sellEntity+'</td>'+
+      '<td>'+ch.buyEntity+'</td>'+
+      '<td>'+ch.side+' ('+ch.sideCode+')</td>'+
+      '<td>'+ch.tradeType+'</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="child-parent-summary">Parent MC: <b>'+parent.mcNumber+'</b> &nbsp;|&nbsp; Origin: <b>'+parent.originEntity+'</b> &nbsp;|&nbsp; FX Model: <b>'+parent.fxModelCode+'</b></div>'+
+    '<div class="popup-table-wrap"><table class="popup-table" style="min-width:800px;"><thead><tr>'+
+    '<th>Child Type</th><th>Child Contract No</th><th>Child Ref</th><th>Description</th><th>Sell</th><th>Buy</th><th>Side</th><th>Trade Type</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+var childContractsModalEl = document.getElementById('childContractsModal');
+function openChildContracts(c){
+  if(!c) return;
+  var children = createChildContractsForMaster(c);
+  document.getElementById('childContractsTitle').textContent = 'Child Contracts — '+c.mcNumber;
+  document.getElementById('childContractsBody').innerHTML = buildChildContractsHtml(c, children);
+  hideModalInstant(contractDetailModalEl);
+  openDetailModal(childContractsModalEl);
+}
+
+var contractDetailModalEl = document.getElementById('contractDetailModal');
+document.getElementById('btnContractDetailClose').addEventListener('click', function(){ closeDetailModal(contractDetailModalEl); });
+document.getElementById('btnContractDetailCloseFooter').addEventListener('click', function(){ closeDetailModal(contractDetailModalEl); });
+document.getElementById('btnContractDetailChildren').addEventListener('click', function(){ if(currentDetailContract) openChildContracts(currentDetailContract); });
+document.getElementById('btnContractDetailCopy').addEventListener('click', function(){ if(currentDetailContract) openCopyContract(currentDetailContract); });
+document.getElementById('btnContractDetailEdit').addEventListener('click', function(){ if(currentDetailContract) openEditContract(currentDetailContract); });
+document.getElementById('btnContractDetailSendToMO').addEventListener('click', function(){
+  if(currentDetailContract){
+    sendToMO(currentDetailContract);
+    document.getElementById('contractDetailBody').innerHTML = buildContractDetailHtml(currentDetailContract);
+    renderTable();
+  }
+});
+contractDetailModalEl.addEventListener('click', function(e){ if(e.target===contractDetailModalEl) closeDetailModal(contractDetailModalEl); });
+
+document.getElementById('btnChildContractsClose').addEventListener('click', function(){ closeDetailModal(childContractsModalEl); });
+document.getElementById('btnChildContractsCloseFooter').addEventListener('click', function(){ closeDetailModal(childContractsModalEl); });
+childContractsModalEl.addEventListener('click', function(e){ if(e.target===childContractsModalEl) closeDetailModal(childContractsModalEl); });
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    closeDetailModal(kpiDetailModalEl);
+    closeDetailModal(contractDetailModalEl);
+    closeDetailModal(childContractsModalEl);
+    closeContractFormModal();
+  }
+});
+
+/* =========================================================
+   Searchable dropdown component
+   ========================================================= */
+/* =========================================================
+   Shared floating-panel positioning (dropdowns + date pickers)
+   Keeps the panel fully inside the nearest .modal (or the
+   viewport, if none) and flips above the field when there
+   isn't room below.
+   ========================================================= */
+function positionFloatingPanel(triggerEl, panelEl, opts){
+  opts = opts || {};
+  var margin = 8;
+  var gap = opts.gap===undefined ? 6 : opts.gap;
+  var triggerRect = triggerEl.getBoundingClientRect();
+  var boundsEl = triggerEl.closest('.modal');
+  var boundRect = boundsEl ? boundsEl.getBoundingClientRect() : { left:0, right:window.innerWidth, top:0, bottom:window.innerHeight };
+
+  if(opts.matchWidth){
+    panelEl.style.width = triggerRect.width + 'px';
+  }
+  var panelRect = panelEl.getBoundingClientRect();
+
+  var boundLeft = boundRect.left + margin;
+  var boundRight = boundRect.right - margin;
+  var boundTop = boundRect.top + margin;
+  var boundBottom = boundRect.bottom - margin;
+
+  var preferredLeft = opts.alignRight ? (triggerRect.right - panelRect.width) : triggerRect.left;
+  var maxLeft = boundRight - panelRect.width;
+  var left = preferredLeft;
+  if(maxLeft < boundLeft){
+    left = boundLeft;
+  } else {
+    if(left > maxLeft) left = maxLeft;
+    if(left < boundLeft) left = boundLeft;
+  }
+
+  var desiredTop = triggerRect.bottom + gap;
+  var fitsBelow = (desiredTop + panelRect.height) <= boundBottom;
+  var top;
+  if(fitsBelow){
+    top = desiredTop;
+  } else {
+    var aboveTop = triggerRect.top - gap - panelRect.height;
+    top = (aboveTop >= boundTop) ? aboveTop : Math.max(boundTop, boundBottom - panelRect.height);
+  }
+
+  panelEl.style.position = 'fixed';
+  panelEl.style.left = left + 'px';
+  panelEl.style.top = top + 'px';
+  panelEl.style.right = 'auto';
+  panelEl.style.bottom = 'auto';
+}
+
+function initDropdown(cfg){
+  var wrap = document.getElementById('dd-'+cfg.key);
+  var input = document.getElementById('input-'+cfg.key);
+  var hidden = document.getElementById('value-'+cfg.key);
+  var panel = document.getElementById('panel-'+cfg.key);
+
+  function renderPanel(filterText){
+    var ft = (filterText||'').toLowerCase();
+    var items = cfg.items.filter(function(it){
+      return cfg.searchText(it).toLowerCase().indexOf(ft) !== -1;
+    });
+    panel.innerHTML = '';
+    if(items.length===0){
+      var empty = document.createElement('div');
+      empty.className='dd-empty';
+      empty.textContent='No matches found';
+      panel.appendChild(empty);
+      return;
+    }
+    items.forEach(function(it){
+      var el = document.createElement('div');
+      el.className='dd-item';
+      el.innerHTML = '<span class="primary-line">'+cfg.primaryText(it)+'</span>'+
+        (cfg.secondaryText ? '<span class="secondary-line">'+cfg.secondaryText(it)+'</span>' : '');
+      el.addEventListener('click', function(){
+        selectItem(it);
+      });
+      panel.appendChild(el);
+    });
+  }
+
+  function selectItem(it){
+    input.value = cfg.displayText(it);
+    input.title = cfg.displayText(it);
+    hidden.value = cfg.valueOf(it);
+    wrap.classList.remove('open');
+    clearFieldError(cfg.key);
+    if(cfg.onSelect) cfg.onSelect(it);
+  }
+
+  function openPanel(filterText){
+    renderPanel(filterText||'');
+    wrap.classList.add('open');
+    positionFloatingPanel(wrap, panel, {matchWidth:true, gap:4});
+  }
+
+  input.addEventListener('focus', function(){
+    if(wrap.classList.contains('disabled')) return;
+    openPanel('');
+  });
+  input.addEventListener('click', function(){
+    if(wrap.classList.contains('disabled')) return;
+    openPanel('');
+  });
+  input.addEventListener('input', function(){
+    hidden.value='';
+    openPanel(input.value);
+    if(cfg.onClear) cfg.onClear();
+  });
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)){
+      wrap.classList.remove('open');
+      // if nothing selected and text doesn't match a valid item, clear text
+      if(!hidden.value){ input.value=''; }
+    }
+  });
+  document.addEventListener('scroll', function(){
+    if(wrap.classList.contains('open')) wrap.classList.remove('open');
+  }, true);
+  window.addEventListener('resize', function(){
+    if(wrap.classList.contains('open')) positionFloatingPanel(wrap, panel, {matchWidth:true, gap:4});
+  });
+
+  return { setDisabled:function(disabled){
+    wrap.classList.toggle('disabled', disabled);
+    input.disabled = disabled;
+  }};
+}
+
+initDropdown({
+  key:'originEntity',
+  items: originEntities,
+  searchText: function(e){ return e.code+' '+e.name+' '+e.companyCode; },
+  primaryText: function(e){ return e.code+' · '+e.companyCode+' · '+e.name; },
+  displayText: function(e){ return e.code+' - '+e.name; },
+  valueOf: function(e){ return e.code; },
+  onSelect: function(e){
+    form.originEntity = e.code;
+    document.getElementById('originCurrencyBadge').textContent = e.currency;
+    calculateOriginAmount();
+  }
+});
+
+initDropdown({
+  key:'commodity',
+  items: commodities,
+  searchText: function(c){ return c.code+' '+c.name; },
+  primaryText: function(c){ return c.code+' &nbsp;&nbsp; '+c.name; },
+  displayText: function(c){ return c.code+' - '+c.name; },
+  valueOf: function(c){ return c.code; },
+  onSelect: function(c){
+    form.commodity = c.code;
+    if(c.code === 'C101'){
+      document.getElementById('btnEditCommodities').style.display = 'inline-flex';
+      if(multiCommodityState.selected.length > 0){
+        updateMultiCommodityDescription();
+      } else {
+        document.getElementById('input-commodityDesc').value = '';
+        document.getElementById('input-commodityDesc').title = '';
+      }
+      openCommodityModal();
+    } else {
+      multiCommodityState.selected = [];
+      document.getElementById('btnEditCommodities').style.display = 'none';
+      document.getElementById('input-commodityDesc').value = c.desc;
+      document.getElementById('input-commodityDesc').title = '';
+    }
+    clearFieldError('commodity');
+  },
+  onClear: function(){
+    document.getElementById('input-commodityDesc').value='';
+    document.getElementById('input-commodityDesc').title='';
+    document.getElementById('btnEditCommodities').style.display='none';
+    form.commodity = null;
+  }
+});
+
+/* =========================================================
+   Multiple Commodity (C101) selection popup
+   ========================================================= */
+function renderCommodityModalList(filterText){
+  var ft = (filterText||'').toLowerCase();
+  var list = childCommodities.filter(function(c){
+    return (c.code+' '+c.name).toLowerCase().indexOf(ft) !== -1;
+  });
+  var container = document.getElementById('commodityModalList');
+  container.innerHTML = '';
+  if(list.length===0){
+    var empty = document.createElement('div');
+    empty.className = 'dd-empty';
+    empty.textContent = 'No matches found';
+    container.appendChild(empty);
+    return;
+  }
+  list.forEach(function(c){
+    var row = document.createElement('label');
+    row.className = 'commodity-check-item';
+    var checked = multiCommodityState.selected.indexOf(c.code) !== -1;
+    row.innerHTML = '<input type="checkbox" data-code="'+c.code+'"'+(checked?' checked':'')+'> <span>'+c.code+' &nbsp; '+c.name+'</span>';
+    container.appendChild(row);
+  });
+}
+
+function openCommodityModal(){
+  document.getElementById('commodityModalSearch').value = '';
+  document.getElementById('commodityModalError').style.display = 'none';
+  renderCommodityModalList('');
+  document.getElementById('commodityModal').classList.add('open');
+}
+function closeCommodityModal(){
+  document.getElementById('commodityModal').classList.remove('open');
+}
+
+function updateMultiCommodityDescription(){
+  var names = multiCommodityState.selected.map(function(code){
+    var c = findCommodity(code);
+    return c ? c.name : code;
+  });
+  var full = names.join(', ');
+  var maxShow = 3;
+  var compact = names.length > maxShow
+    ? names.slice(0, maxShow).join(', ')+' +'+(names.length-maxShow)+' more'
+    : full;
+  var descEl = document.getElementById('input-commodityDesc');
+  descEl.value = compact;
+  descEl.title = full;
+}
+
+document.getElementById('commodityModalSearch').addEventListener('input', function(e){
+  renderCommodityModalList(e.target.value);
+});
+
+document.getElementById('commodityModalList').addEventListener('change', function(e){
+  if(e.target.matches('input[type="checkbox"]')){
+    var code = e.target.getAttribute('data-code');
+    var idx = multiCommodityState.selected.indexOf(code);
+    if(e.target.checked){
+      if(idx===-1) multiCommodityState.selected.push(code);
+    } else if(idx!==-1){
+      multiCommodityState.selected.splice(idx,1);
+    }
+  }
+});
+
+document.getElementById('btnCommodityModalApply').addEventListener('click', function(){
+  if(multiCommodityState.selected.length===0){
+    document.getElementById('commodityModalError').style.display = 'block';
+    return;
+  }
+  document.getElementById('commodityModalError').style.display = 'none';
+  updateMultiCommodityDescription();
+  clearFieldError('commodity');
+  closeCommodityModal();
+});
+document.getElementById('btnCommodityModalCancel').addEventListener('click', closeCommodityModal);
+document.getElementById('btnCommodityModalClose').addEventListener('click', closeCommodityModal);
+document.getElementById('btnEditCommodities').addEventListener('click', openCommodityModal);
+
+initDropdown({
+  key:'paymentTerms',
+  items: paymentTermsList,
+  searchText: function(p){ return p.label; },
+  primaryText: function(p){ return p.label; },
+  displayText: function(p){ return p.label; },
+  valueOf: function(p){ return p.code; },
+  onSelect: function(p){ form.paymentTerms = p.code; }
+});
+
+initDropdown({
+  key:'portShipment',
+  items: ports.map(function(p){return {name:p};}),
+  searchText: function(p){ return p.name; },
+  primaryText: function(p){ return p.name; },
+  displayText: function(p){ return p.name; },
+  valueOf: function(p){ return p.name; },
+  onSelect: function(p){ form.portShipment = p.name; }
+});
+
+initDropdown({
+  key:'portDestination',
+  items: ports.map(function(p){return {name:p};}),
+  searchText: function(p){ return p.name; },
+  primaryText: function(p){ return p.name; },
+  displayText: function(p){ return p.name; },
+  valueOf: function(p){ return p.name; },
+  onSelect: function(p){ form.portDestination = p.name; }
+});
+
+initDropdown({
+  key:'fxModel',
+  items: fxModels,
+  searchText: function(m){ return m.code+' '+m.desc+' '+m.currency; },
+  primaryText: function(m){ return m.code+' - '+m.desc; },
+  secondaryText: function(m){ return 'Entity: '+m.entity+' &nbsp;|&nbsp; Currency: '+m.currency; },
+  displayText: function(m){ return m.code+' - '+m.desc; },
+  valueOf: function(m){ return m.id; },
+  onSelect: function(m){
+    form.fxModel = m.id;
+    document.getElementById('input-entityString').value = m.entity;
+    document.getElementById('input-currencyString').value = m.currency;
+  }
+});
+
+/* =========================================================
+   Custom date pickers
+   ========================================================= */
+function initDatePicker(fieldKey){
+  var input = document.getElementById('input-'+fieldKey);
+  var btn = document.querySelector('.date-icon[data-target="'+fieldKey+'"]');
+  var popup = document.getElementById('popup-'+fieldKey);
+  var wrap = input.closest('.date-field');
+  var viewDate = new Date();
+
+  function render(){
+    var selected = parseDMY(input.value);
+    if(selected) viewDate = new Date(selected.getFullYear(), selected.getMonth(), 1);
+    var year = viewDate.getFullYear(), month = viewDate.getMonth();
+    var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var firstDay = new Date(year, month, 1);
+    var startOffset = firstDay.getDay();
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var daysInPrevMonth = new Date(year, month, 0).getDate();
+    var today = new Date();
+
+    var html = '<div class="cal-head">'+
+      '<button type="button" data-nav="-1">‹</button>'+
+      '<span class="cal-title">'+monthNames[month]+' '+year+'</span>'+
+      '<button type="button" data-nav="1">›</button>'+
+      '</div><div class="cal-grid">';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d){ html+='<div class="dow">'+d+'</div>'; });
+
+    for(var i=0;i<startOffset;i++){
+      var pd = daysInPrevMonth - startOffset + 1 + i;
+      html += '<div class="day muted" data-date="prev-'+pd+'">'+pd+'</div>';
+    }
+    for(var d2=1; d2<=daysInMonth; d2++){
+      var cls='day';
+      var thisDate = new Date(year, month, d2);
+      if(selected && thisDate.getTime()===new Date(selected.getFullYear(),selected.getMonth(),selected.getDate()).getTime()) cls+=' selected';
+      if(thisDate.toDateString()===today.toDateString()) cls+=' today';
+      html += '<div class="'+cls+'" data-date="'+d2+'">'+d2+'</div>';
+    }
+    var totalCells = startOffset + daysInMonth;
+    var trailing = (7 - (totalCells % 7)) % 7;
+    for(var i2=1;i2<=trailing;i2++){
+      html += '<div class="day muted" data-date="next-'+i2+'">'+i2+'</div>';
+    }
+    html += '</div>';
+    popup.innerHTML = html;
+
+    popup.querySelectorAll('[data-nav]').forEach(function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        viewDate = new Date(year, month + parseInt(b.getAttribute('data-nav'),10), 1);
+        render();
+        positionPopup();
+      });
+    });
+    popup.querySelectorAll('.day:not(.muted)').forEach(function(dEl){
+      dEl.addEventListener('click', function(e){
+        e.stopPropagation();
+        var dayNum = parseInt(dEl.getAttribute('data-date'),10);
+        var picked = new Date(year, month, dayNum);
+        input.value = formatDMY(picked);
+        popup.classList.remove('open');
+        clearFieldError(fieldKey);
+        onDateChanged(fieldKey);
+      });
+    });
+  }
+
+  /* Keep the calendar fully inside the enclosing modal: flip above the
+     field when there isn't room below, and shift horizontally rather
+     than letting it run off the modal's left or right edge. */
+  function positionPopup(){
+    positionFloatingPanel(wrap, popup, {alignRight:true, gap:6});
+  }
+
+  function openPopup(){
+    document.querySelectorAll('.date-popup.open').forEach(function(p){
+      if(p!==popup) p.classList.remove('open');
+    });
+    popup.style.left = '';
+    popup.style.right = '';
+    popup.style.top = '';
+    popup.style.bottom = '';
+    render();
+    popup.classList.add('open');
+    positionPopup();
+  }
+  function closePopup(){ popup.classList.remove('open'); }
+  function togglePopup(e){
+    if(e) e.stopPropagation();
+    if(popup.classList.contains('open')) closePopup(); else openPopup();
+  }
+
+  btn.addEventListener('click', togglePopup);
+  input.addEventListener('click', togglePopup);
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)){
+      closePopup();
+    }
+  });
+  document.addEventListener('scroll', function(){
+    if(popup.classList.contains('open')) closePopup();
+  }, true);
+  window.addEventListener('resize', function(){
+    if(popup.classList.contains('open')) positionPopup();
+  });
+  input.addEventListener('change', function(){ onDateChanged(fieldKey); });
+  input.addEventListener('blur', function(){ onDateChanged(fieldKey); });
+}
+
+function onDateChanged(fieldKey){
+  if(fieldKey==='shipStart' || fieldKey==='shipEnd'){
+    validateShipmentDates(false);
+  }
+}
+
+['mcDate','shipStart','shipEnd','paymentDate'].forEach(initDatePicker);
+
+/* =========================================================
+   Calculations
+   ========================================================= */
+/* Reusable amount parser: handles plain numbers (with/without commas)
+   and shorthand suffixes K / M / B / L (lakh) / Cr (crore), case-insensitive.
+   Returns a Number, or NaN if the text isn't a recognizable amount. */
+var AMOUNT_MULTIPLIERS = { k:1e3, m:1e6, b:1e9, l:1e5, cr:1e7 };
+function parseAmountInput(raw){
+  if(raw===null || raw===undefined) return NaN;
+  var cleaned = String(raw).replace(/,/g,'').trim();
+  if(cleaned==='') return NaN;
+  var m = /^(-?\d+(\.\d+)?)\s*(k|m|b|l|cr)?$/i.exec(cleaned);
+  if(!m) return NaN;
+  var base = parseFloat(m[1]);
+  var suffix = (m[3]||'').toLowerCase();
+  var multiplier = suffix ? AMOUNT_MULTIPLIERS[suffix] : 1;
+  return base*multiplier;
+}
+
+/* On blur / Enter: convert shorthand (10K, 2.5M, 1Cr...) into a plain
+   formatted number. Invalid text is left untouched (never silently zeroed). */
+function commitAmountField(inputEl){
+  var raw = inputEl.value.trim();
+  if(raw==='') return;
+  var val = parseAmountInput(raw);
+  if(!isNaN(val)){
+    inputEl.value = formatAmount(val);
+  }
+}
+
+function calculateOriginAmount(){
+  var usd = parseAmountInput(document.getElementById('input-mcAmountUsd').value);
+  var rate = parseFloat(document.getElementById('input-exchangeRate').value);
+  var out = document.getElementById('input-mcAmountOrigin');
+  if(!isNaN(usd) && !isNaN(rate) && usd>0 && rate>0){
+    out.value = formatAmount(usd*rate);
+  } else {
+    out.value = '';
+  }
+}
+document.getElementById('input-mcAmountUsd').addEventListener('input', function(){
+  calculateOriginAmount();
+  clearFieldError('mcAmountUsd');
+});
+document.getElementById('input-mcAmountUsd').addEventListener('blur', function(){
+  commitAmountField(this);
+  calculateOriginAmount();
+});
+document.getElementById('input-mcAmountUsd').addEventListener('keydown', function(e){
+  if(e.key==='Enter'){
+    commitAmountField(this);
+    calculateOriginAmount();
+  }
+});
+document.getElementById('input-exchangeRate').addEventListener('input', function(){
+  calculateOriginAmount();
+  clearFieldError('exchangeRate');
+});
+
+/* =========================================================
+   Validation
+   ========================================================= */
+function setFieldError(key, show){
+  var f = document.getElementById('field-'+key);
+  if(!f) return;
+  f.classList.toggle('has-error', !!show);
+}
+function clearFieldError(key){ setFieldError(key, false); }
+
+function validateShipmentDates(showErrors){
+  var start = parseDMY(document.getElementById('input-shipStart').value);
+  var end = parseDMY(document.getElementById('input-shipEnd').value);
+  var valid = true;
+  if(end && start && end < start){
+    valid = false;
+    if(showErrors) setFieldError('shipEnd', true);
+  } else if(showErrors && document.getElementById('field-shipEnd').classList.contains('has-error')){
+    setFieldError('shipEnd', false);
+  }
+  return valid;
+}
+
+function validateForm(){
+  var valid = true;
+
+  function req(key, ok){
+    setFieldError(key, !ok);
+    if(!ok) valid = false;
+  }
+
+  req('originEntity', !!form.originEntity);
+  req('mcDate', !!parseDMY(document.getElementById('input-mcDate').value));
+
+  var usd = parseAmountInput(document.getElementById('input-mcAmountUsd').value);
+  req('mcAmountUsd', !isNaN(usd) && usd>0);
+
+  var rate = parseFloat(document.getElementById('input-exchangeRate').value);
+  req('exchangeRate', !isNaN(rate) && rate>0);
+
+  var commodityOk = !!form.commodity;
+  if(form.commodity === 'C101'){
+    commodityOk = multiCommodityState.selected.length > 0;
+  }
+  setFieldError('commodity', !commodityOk);
+  var commodityErrEl = document.querySelector('#field-commodity .error-msg');
+  if(commodityErrEl){
+    commodityErrEl.textContent = (form.commodity==='C101')
+      ? 'Select at least one commodity.'
+      : 'Commodity is required.';
+  }
+  if(!commodityOk) valid = false;
+
+  var start = parseDMY(document.getElementById('input-shipStart').value);
+  req('shipStart', !!start);
+
+  var end = parseDMY(document.getElementById('input-shipEnd').value);
+  var endOk = !!end && (!start || end>=start);
+  req('shipEnd', endOk);
+
+  var tol = document.getElementById('input-tolerance').value;
+  var tolNum = tol===''? 0 : parseFloat(tol);
+  req('tolerance', !isNaN(tolNum) && tolNum>=0);
+
+  req('fxModel', !!form.fxModel);
+
+  return valid;
+}
+
+/* =========================================================
+   Save flow
+   ========================================================= */
+document.getElementById('btnSave').addEventListener('click', function(){
+  if(!validateForm()){
+    showToast('Please fix the highlighted fields before saving.', true);
+    return;
+  }
+
+  var entity = findEntity(form.originEntity);
+  var comm = findCommodity(form.commodity);
+  var fx = findFxModel(form.fxModel);
+  var isEdit = state.formMode==='edit';
+  var isMultiCommodity = form.commodity === 'C101';
+  var existing = isEdit ? findContractByNumber(state.editingMcNumber) : null;
+  if(isEdit && !existing){
+    showToast('The selected Master Contract could not be found.', true);
+    return;
+  }
+  if(isEdit && existing.linkedDealId){
+    showToast('Master Contract '+existing.mcNumber+' cannot be edited because Deal ID '+existing.linkedDealId+' is already linked.', true);
+    return;
+  }
+
+  var mcNumber = isEdit ? existing.mcNumber : generateNextMcNumber();
+  var contract = {
+    mcNumber: mcNumber,
+    status: isEdit ? existing.status : 'Created',
+    statusCode: isEdit ? (existing.statusCode || null) : '01',
+    originEntity: entity.code,
+    originEntityName: entity.name,
+    originCurrency: entity.currency,
+    fxModelId: fx.id,
+    fxModelCode: fx.code,
+    fxModelDesc: fx.desc,
+    entityString: fx.entity,
+    currencyString: fx.currency,
+    commodityCode: comm.code,
+    commodityName: comm.name,
+    selectedCommodities: isMultiCommodity ? multiCommodityState.selected.slice() : null,
+    mcDate: document.getElementById('input-mcDate').value,
+    mcAmountUsd: parseAmountInput(document.getElementById('input-mcAmountUsd').value),
+    mcAmountOrigin: parseFloat((document.getElementById('input-mcAmountOrigin').value||'0').replace(/,/g,'')),
+    exchangeRate: parseFloat(document.getElementById('input-exchangeRate').value),
+    tolerance: parseFloat(document.getElementById('input-tolerance').value || '0'),
+    reference: document.getElementById('input-mcReference').value || ('MC/'+entity.code+'/2026/'+String(mcNumber).slice(-3)),
+    paymentTerms: form.paymentTerms || 'P01',
+    paymentDate: document.getElementById('input-paymentDate').value || document.getElementById('input-shipEnd').value,
+    portShipment: form.portShipment || 'Mumbai',
+    portDestination: form.portDestination || 'Singapore',
+    shipStart: document.getElementById('input-shipStart').value,
+    shipEnd: document.getElementById('input-shipEnd').value,
+    linkedDealId: existing ? existing.linkedDealId || null : null
+  };
+
+  if(isEdit){
+    updateContractInStore(existing.mcNumber, contract);
+    hideModalInstant(createContractModalEl);
+    showToast('Master Contract '+existing.mcNumber+' updated successfully.', false);
+    state.lastCreatedMcNumber = null;
+    renderTable();
+    resetForm();
+    setContractFormMode('create', null);
+    return;
+  }
+
+  saveContractToStore(contract);
+  createChildContractsForMaster(contract);
+  state.lastCreatedMcNumber = mcNumber;
+  state.lastCreatedContract = contract;
+
+  hideModalInstant(createContractModalEl);
+  document.getElementById('modalDealId').textContent = mcNumber;
+  document.getElementById('successModal').classList.add('open');
+});
+
+function finishCreationFlow(){
+  document.getElementById('successModal').classList.remove('open');
+  document.getElementById('bannerMcNumber').textContent = state.lastCreatedMcNumber;
+  document.getElementById('successBanner').classList.add('show');
+  state.page = 1;
+  renderTable();
+  resetForm();
+  setContractFormMode('create', null);
+}
+
+document.getElementById('btnModalDone').addEventListener('click', finishCreationFlow);
+
+document.getElementById('btnModalSendToMO').addEventListener('click', function(){
+  if(state.lastCreatedContract) sendToMO(state.lastCreatedContract);
+  finishCreationFlow();
+});
+
+document.getElementById('btnCreateNew').addEventListener('click', function(){
+  document.getElementById('successBanner').classList.remove('show');
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  resetForm();
+  closeDetailModal(createContractModalEl);
+  setContractFormMode('create', null);
+});
+
+function resetForm(){
+  form = { originEntity:null, fxModel:null, commodity:null, paymentTerms:null, portShipment:null, portDestination:null };
+  multiCommodityState.selected = [];
+  ['originEntity','commodity','paymentTerms','portShipment','portDestination','fxModel'].forEach(function(k){
+    document.getElementById('input-'+k).value = '';
+    document.getElementById('input-'+k).title = '';
+    document.getElementById('value-'+k).value = '';
+  });
+  document.getElementById('input-mcDate').value='';
+  document.getElementById('input-mcAmountUsd').value='';
+  document.getElementById('input-mcAmountOrigin').value='';
+  document.getElementById('input-exchangeRate').value='';
+  document.getElementById('input-mcReference').value='';
+  document.getElementById('input-tolerance').value='5.000000';
+  document.getElementById('input-commodityDesc').value='';
+  document.getElementById('input-commodityDesc').title='';
+  document.getElementById('btnEditCommodities').style.display='none';
+  document.getElementById('input-shipStart').value='';
+  document.getElementById('input-shipEnd').value='';
+  document.getElementById('input-paymentDate').value='';
+  document.getElementById('input-entityString').value='';
+  document.getElementById('input-currencyString').value='';
+  document.getElementById('originCurrencyBadge').textContent='—';
+  var commodityErrEl = document.querySelector('#field-commodity .error-msg');
+  if(commodityErrEl){ commodityErrEl.textContent = 'Commodity is required.'; }
+  ['originEntity','mcDate','mcAmountUsd','exchangeRate','commodity','shipStart','shipEnd','fxModel','tolerance'].forEach(clearFieldError);
+}
+
+/* =========================================================
+   Toast
+   ========================================================= */
+var toastTimer;
+function showToast(msg, isError){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
+/* =========================================================
+   Table rendering
+   ========================================================= */
+function populateFilterOptions(){
+  var statusSel = document.getElementById('filterStatus');
+  Object.keys(statusMeta).forEach(function(s){
+    var o = document.createElement('option'); o.value=s; o.textContent=s; statusSel.appendChild(o);
+  });
+  var entitySel = document.getElementById('filterEntity');
+  originEntities.forEach(function(e){
+    var o = document.createElement('option'); o.value=e.code; o.textContent=e.code+' - '+e.name; entitySel.appendChild(o);
+  });
+  var fxSel = document.getElementById('filterFxModel');
+  var seenCodes = {};
+  fxModels.forEach(function(m){
+    if(seenCodes[m.code]) return;
+    seenCodes[m.code]=true;
+    var o = document.createElement('option'); o.value=m.code; o.textContent=m.code+' - '+m.desc; fxSel.appendChild(o);
+  });
+  var commSel = document.getElementById('filterCommodity');
+  commodities.forEach(function(c){
+    var o = document.createElement('option'); o.value=c.code; o.textContent=c.code+' - '+c.name; commSel.appendChild(o);
+  });
+}
+populateFilterOptions();
+
+function getFilteredSorted(){
+  var list = loadContracts().slice();
+  var q = state.search.trim().toLowerCase();
+  if(q){
+    list = list.filter(function(c){
+      return (String(c.mcNumber)+' '+c.originEntity+' '+c.originEntityName+' '+c.commodityName+' '+c.reference+' '+c.fxModelCode)
+        .toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  if(state.filters.status) list = list.filter(function(c){ return c.status===state.filters.status; });
+  if(state.filters.entity) list = list.filter(function(c){ return c.originEntity===state.filters.entity; });
+  if(state.filters.fxModel) list = list.filter(function(c){ return c.fxModelCode===state.filters.fxModel; });
+  if(state.filters.commodity) list = list.filter(function(c){ return c.commodityCode===state.filters.commodity; });
+
+  var field = state.sort.field, dir = state.sort.dir;
+  list.sort(function(a,b){
+    var av = a[field], bv = b[field];
+    if(field==='mcDate' || field==='shipStart' || field==='shipEnd'){
+      av = parseDMY(av); bv = parseDMY(bv);
+      av = av? av.getTime():0; bv = bv? bv.getTime():0;
+    }
+    if(typeof av === 'string') av = av.toLowerCase();
+    if(typeof bv === 'string') bv = bv.toLowerCase();
+    if(av < bv) return dir==='asc' ? -1 : 1;
+    if(av > bv) return dir==='asc' ? 1 : -1;
+    return 0;
+  });
+  return list;
+}
+
+function renderTable(){
+  updateKPIs();
+  var list = getFilteredSorted();
+  var totalRows = list.length;
+  var pageCount = Math.max(1, Math.ceil(totalRows/state.pageSize));
+  if(state.page > pageCount) state.page = pageCount;
+  var startIdx = (state.page-1)*state.pageSize;
+  var pageRows = list.slice(startIdx, startIdx+state.pageSize);
+
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  document.getElementById('emptyState').style.display = totalRows===0 ? 'block' : 'none';
+  document.getElementById('mcTable').style.display = totalRows===0 ? 'none' : 'table';
+
+  pageRows.forEach(function(c){
+    var tr = document.createElement('tr');
+    if(c.mcNumber === state.lastCreatedMcNumber) tr.classList.add('row-new');
+    if(state.selectedRow === c.mcNumber) tr.classList.add('selected');
+    tr.title = 'Click to select · double-click to view contract details';
+    var meta = statusMeta[c.status] || {cls:'status-draft', textCls:'status-text-draft'};
+    var commodityTitle = (c.selectedCommodities && c.selectedCommodities.length)
+      ? ' title="'+c.selectedCommodities.map(function(code){ var cc=findCommodity(code); return cc?cc.name:code; }).join(', ')+'"'
+      : '';
+    var isChecked = state.selectedForMO.has(c.mcNumber);
+    tr.innerHTML =
+      '<td class="action-col"><input type="checkbox" class="row-select-checkbox" title="Select contract"'+(isChecked?' checked':'')+'></td>'+
+      '<td><span class="status-text '+meta.textCls+'">'+c.status+'</span></td>'+
+      '<td><span class="mc-link mono" title="Click to view contract details">'+c.mcNumber+'</span></td>'+
+      '<td>'+c.originEntity+'</td>'+
+      '<td>'+c.fxModelCode+'</td>'+
+      '<td'+commodityTitle+'>'+c.commodityName+'</td>'+
+      '<td class="mono">'+c.mcDate+'</td>'+
+      '<td class="num mono">'+formatAmount(c.mcAmountUsd)+'</td>'+
+      '<td class="num mono">'+formatRate(c.exchangeRate)+'</td>'+
+      '<td class="mono">'+c.shipStart+'</td>'+
+      '<td class="mono">'+c.shipEnd+'</td>';
+
+    /* Row is draggable only while it's the single selected row (see drag-and-drop block below). */
+    tr.draggable = (state.selectedRow === c.mcNumber);
+
+    tr.addEventListener('click', function(){
+      state.selectedRow = (state.selectedRow===c.mcNumber) ? null : c.mcNumber;
+      /* Single-click selection also drives the checkbox, matching the
+         "select a row" mental model; direct checkbox clicks (below)
+         still support independent multi-select for bulk Send to M.O. */
+      state.selectedForMO.clear();
+      if(state.selectedRow){ state.selectedForMO.add(state.selectedRow); }
+      renderTable();
+    });
+    tr.addEventListener('dblclick', function(){
+      openContractDetail(c);
+    });
+    tr.addEventListener('dragstart', function(e){
+      if(state.selectedRow !== c.mcNumber){ e.preventDefault(); return; }
+      startContractDrag(e, c, tr);
+    });
+    tr.addEventListener('dragend', function(){
+      endContractDrag(tr);
+    });
+
+    var checkboxEl = tr.querySelector('.row-select-checkbox');
+    checkboxEl.addEventListener('click', function(e){ e.stopPropagation(); });
+    checkboxEl.addEventListener('change', function(e){
+      if(e.target.checked){ state.selectedForMO.add(c.mcNumber); }
+      else { state.selectedForMO.delete(c.mcNumber); }
+      updateSendToMOBulkButton();
+    });
+
+    var mcLinkEl = tr.querySelector('.mc-link');
+    mcLinkEl.addEventListener('click', function(e){
+      e.stopPropagation();
+      openContractDetail(c);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('resultCount').textContent = totalRows + (totalRows===1 ? ' contract' : ' contracts');
+
+  renderSortIndicators();
+  renderPagination(pageCount);
+  updateSendToMOBulkButton();
+}
+
+function renderSortIndicators(){
+  document.querySelectorAll('#mcTable thead th[data-sort]').forEach(function(th){
+    var key = th.getAttribute('data-sort');
+    th.classList.toggle('sorted', key===state.sort.field);
+    var ind = th.querySelector('.sort-ind');
+    if(!ind) return;
+    if(key===state.sort.field){
+      ind.textContent = state.sort.dir==='asc' ? '▲' : '▼';
+    } else {
+      ind.textContent = '';
+    }
+  });
+}
+
+function renderPagination(pageCount){
+  var el = document.getElementById('pagination');
+  el.innerHTML = '';
+
+  var prev = document.createElement('button');
+  prev.textContent = '‹';
+  prev.disabled = state.page<=1;
+  prev.addEventListener('click', function(){ state.page--; renderTable(); });
+  el.appendChild(prev);
+
+  for(var p=1; p<=pageCount; p++){
+    (function(p){
+      var b = document.createElement('button');
+      b.textContent = p;
+      if(p===state.page) b.classList.add('active');
+      b.addEventListener('click', function(){ state.page=p; renderTable(); });
+      el.appendChild(b);
+    })(p);
+  }
+
+  var next = document.createElement('button');
+  next.textContent = '›';
+  next.disabled = state.page>=pageCount;
+  next.addEventListener('click', function(){ state.page++; renderTable(); });
+  el.appendChild(next);
+}
+
+/* sort handlers */
+document.querySelectorAll('#mcTable thead th[data-sort]').forEach(function(th){
+  th.addEventListener('click', function(){
+    var key = th.getAttribute('data-sort');
+    if(state.sort.field===key){
+      state.sort.dir = state.sort.dir==='asc' ? 'desc' : 'asc';
+    } else {
+      state.sort.field = key;
+      state.sort.dir = 'asc';
+    }
+    renderTable();
+  });
+});
+
+/* search */
+document.getElementById('tableSearch').addEventListener('input', function(e){
+  state.search = e.target.value;
+  state.page = 1;
+  renderTable();
+});
+
+/* filters (now always visible, inline with search) */
+['filterStatus','filterEntity','filterFxModel','filterCommodity'].forEach(function(id){
+  document.getElementById(id).addEventListener('change', function(e){
+    var map = { filterStatus:'status', filterEntity:'entity', filterFxModel:'fxModel', filterCommodity:'commodity' };
+    state.filters[map[id]] = e.target.value;
+    state.page = 1;
+    renderTable();
+  });
+});
+document.getElementById('btnResetFilters').addEventListener('click', function(){
+  state.filters = { status:'', entity:'', fxModel:'', commodity:'' };
+  ['filterStatus','filterEntity','filterFxModel','filterCommodity'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  renderTable();
+});
+
+/* Toolbar actions — Copy uses a single selected contract; Send to M.O. keeps bulk selection. */
+function getSelectedContractForCopy(){
+  if(state.selectedForMO.size===1){
+    var checkedMc = Array.from(state.selectedForMO)[0];
+    return findContractByNumber(checkedMc);
+  }
+  if(state.selectedForMO.size===0 && state.selectedRow){
+    return findContractByNumber(state.selectedRow);
+  }
+  return null;
+}
+function updateSendToMOBulkButton(){
+  document.getElementById('btnSendToMOBulk').disabled = state.selectedForMO.size===0;
+  document.getElementById('btnCopySelected').disabled = !getSelectedContractForCopy();
+}
+document.getElementById('btnCopySelected').addEventListener('click', function(){
+  var selected = getSelectedContractForCopy();
+  if(!selected){
+    showToast('Select one Master Contract to copy.', true);
+    return;
+  }
+  openCopyContract(selected);
+});
+document.getElementById('btnSendToMOBulk').addEventListener('click', function(){
+  if(state.selectedForMO.size===0) return;
+  var all = loadContracts();
+  var selected = all.filter(function(c){ return state.selectedForMO.has(c.mcNumber); });
+  sendToMO(selected);
+  state.selectedForMO.clear();
+  renderTable();
+});
+
+/* =========================================================
+   Drag and drop — drag the selected row onto Copy or Send to
+   M.O. Reuses the exact same functions the buttons call on
+   click (openCopyContract, sendToMO); no separate drag-only
+   logic or validation is introduced.
+   ========================================================= */
+var draggedContract = null;
+
+function startContractDrag(e, contract, rowEl){
+  draggedContract = contract;
+  rowEl.classList.add('dragging');
+  var ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = contract.mcNumber + ' — ' + contract.originEntity;
+  document.body.appendChild(ghost);
+  if(e.dataTransfer){
+    e.dataTransfer.effectAllowed = 'copy';
+    try{ e.dataTransfer.setData('text/plain', String(contract.mcNumber)); }catch(err){}
+    if(e.dataTransfer.setDragImage){ e.dataTransfer.setDragImage(ghost, 12, 14); }
+  }
+  setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+}
+function endContractDrag(rowEl){
+  draggedContract = null;
+  rowEl.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+}
+
+function wireDropTarget(btnId, onDrop){
+  var btn = document.getElementById(btnId);
+  btn.addEventListener('dragover', function(e){
+    if(!draggedContract) return;
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    btn.classList.add('drag-over');
+  });
+  btn.addEventListener('dragleave', function(){
+    btn.classList.remove('drag-over');
+  });
+  btn.addEventListener('drop', function(e){
+    e.preventDefault();
+    btn.classList.remove('drag-over');
+    if(draggedContract){ onDrop(draggedContract); }
+  });
+}
+wireDropTarget('btnCopySelected', function(contract){ openCopyContract(contract); });
+wireDropTarget('btnSendToMOBulk', function(contract){ sendToMO(contract); });
+
+/* page size */
+document.getElementById('pageSizeSelect').addEventListener('change', function(e){
+  state.pageSize = parseInt(e.target.value,10);
+  state.page = 1;
+  renderTable();
+});
+
+/* =========================================================
+   Initialization
+   ========================================================= */
+function init(){
+  document.getElementById('input-mcDate').value = '23-09-2026';
+  loadContracts().forEach(function(c){ createChildContractsForMaster(c); });
+  setContractFormMode('create', null);
+  renderTable();
+}
+init();
+</script>
+</body>
+</html>
