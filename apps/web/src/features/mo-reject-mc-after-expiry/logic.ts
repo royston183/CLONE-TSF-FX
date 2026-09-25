@@ -1,7 +1,7 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The "Future:" comments mark where the original expected an
- * API call; none exists yet, so rejections live in component state for the session.
+ * component only holds state. The calls the original left as "Future:" comments are in
+ * api.ts; these functions only change what the screen shows.
  */
 import { COLUMNS_COMPACT, COLUMNS_DEFAULT, ENTITY_MASTER, FX_MODEL_MASTER, REJECTED } from './data.ts'
 import { parseDMY } from './format.ts'
@@ -274,7 +274,7 @@ export function setPageSelection(
 
 /** The status transition itself: the listed contracts become Rejected, the rest are untouched. */
 export function rejectMasterContracts(contracts: readonly MasterContract[], mcNumbers: readonly string[]): MasterContract[] {
-  // Future: return fetch("/api/master-contracts/reject", { method:"POST", body: JSON.stringify({mcNumbers}) });
+  // The write itself (ZMC_STAT -> 13) is api.ts rejectContracts, awaited before this runs.
   const ids = new Set(mcNumbers)
   return contracts.map((c) => (ids.has(c.mcNumber) ? { ...c, status: REJECTED } : c))
 }

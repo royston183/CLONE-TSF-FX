@@ -94,4 +94,4 @@ export type Sort = { field: SortField; dir: 'asc' | 'desc' }
 
 export type DropdownOption = { value: string; code: string; sub: string }
 
-export type Toast = { id: number; message: string }
+export type Toast = { id: number; message: string; error: boolean }

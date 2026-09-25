@@ -1,8 +1,13 @@
 /**
  * Seed data, verbatim from the legacy page's "Master / reference data" and "Dummy master
- * contract data" blocks. The page never called an API: every list here stands in for an SAP
- * value help or the master-contract table behind ZSGTSFR011, and is kept in this one file so
- * swapping it for OData later touches nothing else.
+ * contract data" blocks. Every list here stands in for an SAP value help or the
+ * master-contract table behind ZSGTSFR011.
+ *
+ * They are now the fallback: api.ts replaces the master lists in place with MySQL's rows once
+ * the middleware answers (ENTITIES, FX_MODELS, COMMODITIES, PAYMENT_TERMS), and
+ * seedContracts() is only shown when it cannot be reached. A master that is registered but
+ * still empty in MySQL keeps these values; REGIONS and PORT_PAIRS have no migrated master and
+ * always stay as they are.
  */
 import { addDays, parseSeedDate } from './format.ts'
 import type {
@@ -101,7 +106,10 @@ export const STATUS_SHORT: Record<StatusValue, string> = {
   '13-Rejected by MO': 'Rejected',
 }
 
-/** Who the MO actions and edits made on this screen are recorded against. */
+/**
+ * Who the MO actions and edits made on this screen are recorded against in dummy mode. Against
+ * MySQL the signed-in user (sapUser) is written to ZCHANGED_BY and shown instead.
+ */
 export const MO_REVIEWER = 'MO_REVIEWER'
 
 /** The MC Date range the pickers open with, and return to on Reset. */
@@ -125,12 +133,18 @@ export const MC_SEED: McSeed[] = [
   { n: 2000002706, model: 'M017', status: STATUS.RELEASE, comm: 'C110', client: 'OTL_SOYABEANOIL_M017_5M', date: '05.09.2026', amtUSD: 5000000.0, exRate: 1.0, shipStartOff: 40, shipDur: 55, dealId: '' },
 ]
 
+// The seed contracts are built from the dummy masters as they were, not from whatever the
+// lists hold after MySQL's rows are swapped in: M021 or C140 are not in MySQL.
+const SEED_FX_MODELS = [...FX_MODELS]
+const SEED_COMMODITIES = [...COMMODITIES]
+const SEED_PAYMENT_TERMS = [...PAYMENT_TERMS]
+
 /** Expands MC_SEED into full rows, filling the derived and audit columns as the page did. */
 export function seedContracts(): MasterContract[] {
   const list = MC_SEED.map((s, i): MasterContract => {
-    const m = modelOf(s.model)
-    const comm = commodityOf(s.comm)
-    const pt = PAYMENT_TERMS[i % PAYMENT_TERMS.length]
+    const m = SEED_FX_MODELS.find((x) => x.code === s.model)
+    const comm = SEED_COMMODITIES.find((c) => c.code === s.comm)
+    const pt = SEED_PAYMENT_TERMS[i % SEED_PAYMENT_TERMS.length]
     const ports = PORT_PAIRS[i % PORT_PAIRS.length]
     const enteredBy = ENTERED_BY_USERS[i % ENTERED_BY_USERS.length]
     if (!m || !comm || !pt || !ports || !enteredBy) throw new Error(`seed contract ${s.n} references unknown master data`)

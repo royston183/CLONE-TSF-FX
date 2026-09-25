@@ -62,8 +62,8 @@ export function DealBreakdownModal({
                     <td className="deal-id">{d.dealId}</td>
                     <td>{d.dealDesc}</td>
                     <td>
-                      <span className={`status-chip ${DEAL_STATUS_CLASS[d.dealStat]}`}>
-                        {d.dealStat} - {DEAL_STATUS_MASTER[d.dealStat]}
+                      <span className={`status-chip ${DEAL_STATUS_CLASS[d.dealStat] ?? ''}`}>
+                        {d.dealStat} - {DEAL_STATUS_MASTER[d.dealStat] ?? ''}
                       </span>
                     </td>
                     <td>

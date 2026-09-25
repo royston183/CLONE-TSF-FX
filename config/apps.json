@@ -247,9 +247,11 @@
       "route": "/apps/fo-create-master-contract",
       "title": "FO: Create Master Contract",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/create-master-contract.html",
-      "note": "Legacy page never called an API — its fetch calls are commented 'Future:' placeholders and the M.O. email is only logged. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Reads and writes ZSGTSFTR_MAS_CON (MC number from middleware range ZSGTSFNR03/01) and ZSGTSFTR_MCCHILD through the SLC middleware; value helps from the ZSGTSFTR_* masters with the screen dummy kept for masters still empty in MySQL. The M.O. email is still only logged."
     },
     {
       "code": "ZSGTSFR011",
@@ -257,9 +259,11 @@
       "route": "/apps/mo-confirm-master-contract",
       "title": "MO: Confirm Master Contract",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/confirm-master-contract.html",
-      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Queue (ZMC_STAT 02/11) from ZSGTSFTR_MAS_CON through the SLC middleware; Confirm -> 03, Reject -> 13, Edit writes the MC. Utilization needs ZSGTSFV_FX, which is not in MySQL."
     },
     {
       "code": "ZSGTSFR049",
@@ -267,9 +271,11 @@
       "route": "/apps/mo-update-mc-expiry",
       "title": "MO: Update MC Expiry",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/master-contract-expiry.html",
-      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Reads ZSGTSFTR_MAS_CON through the SLC middleware and posts 04 -> 09 on expiry. Utilization needs ZSGTSFV_FX, which is not in MySQL."
     },
     {
       "code": "ZSGTSFR093",
@@ -277,9 +283,11 @@
       "route": "/apps/fo-mc-error-correction",
       "title": "FO: MC Error Correction",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/mc-error-correction.html",
-      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Correction queue (ZMC_STAT 11/21) from ZSGTSFTR_MAS_CON through the SLC middleware; Update -> 13 / 22, Reverse -> 12. ZSGTSFV_MC and ZSGTSFV_FX are not in MySQL."
     },
     {
       "code": "ZSGTSFR097",
@@ -287,9 +295,11 @@
       "route": "/apps/mo-reject-mc-after-expiry",
       "title": "MO: Reject MC after Expiry",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/reject-mc-after-expiry.html",
-      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Reads ZSGTSFTR_MAS_CON through the SLC middleware. Business partners and utilization need ZSGTSFV_FX, which is not in MySQL."
     },
     {
       "code": "ZSGTSFR102",
@@ -297,9 +307,11 @@
       "route": "/apps/short-straddle-deal-id",
       "title": "Create Deal ID for Short Straddle Deals",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "middleware"
+      ],
       "legacy": "legacy/deal_id_workbench.html",
-      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+      "note": "Short Straddle MCs from ZSGTSFTR_MAS_CON and their Deal IDs from ZSGTSFTR_DEALID through the SLC middleware; Create Deal ID draws from range ZSGSLCNR03/01 and moves the MC to 04. Trader (AT100) and ZSGTSFV_FX amounts stay dummy."
     }
   ]
 }

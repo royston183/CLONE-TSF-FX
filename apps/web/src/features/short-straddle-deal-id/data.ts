@@ -3,6 +3,11 @@
  * The page never called an API: every list here stands in for an SAP table the ABAP report
  * ZSGTSFR102 reads (regions, entities, the Short Straddle FX Model master, the MC and Deal ID
  * tables), and is kept in this one file so swapping it for OData later touches nothing else.
+ *
+ * api.ts now swaps ENTITIES, FX_MODELS, COMMODITIES and PAYMENT_TERMS in place for their
+ * MySQL rows (each list stays as below when MySQL has none) and overwrites STATUS_MASTER's
+ * texts where ZSGTSFTR_MC_STAT has them. REGIONS and PORT_PAIRS stay dummy. The MC and Deal
+ * ID seeds below only appear when the middleware cannot be reached.
  */
 import type { Commodity, DealStatus, Entity, FxModel, McSeed, McStatus, PaymentTerm, PortPair, Region } from './types.ts'
 
@@ -30,9 +35,10 @@ export const ENTITIES: Entity[] = [
  * SELECT ... FROM zsgtsftr_rule_bt WHERE zss EQ abap_true.
  */
 export const FX_MODELS: FxModel[] = [
-  { code: 'M050', desc: 'INR Short Straddle', entities: ['OGA', 'DMCC', 'OSIPL'], curr: ['USD', 'USD', 'INR'], entityId: 'E040', currId: 'C002' },
-  { code: 'M051', desc: 'USD Short Straddle', entities: ['OAL', 'DMCC', 'OTL'], curr: ['USD', 'USD', 'USD'], entityId: 'E041', currId: 'C003' },
-  { code: 'M052', desc: 'EUR Short Straddle', entities: ['SEDA', 'DMCC', 'OVL'], curr: ['USD', 'USD', 'EUR'], entityId: 'E042', currId: 'C006' },
+  // dealType / subType: the FX / FX1 the page always booked its Deal IDs as.
+  { code: 'M050', desc: 'INR Short Straddle', entities: ['OGA', 'DMCC', 'OSIPL'], curr: ['USD', 'USD', 'INR'], entityId: 'E040', currId: 'C002', origin: '', dealType: 'FX', subType: 'FX1' },
+  { code: 'M051', desc: 'USD Short Straddle', entities: ['OAL', 'DMCC', 'OTL'], curr: ['USD', 'USD', 'USD'], entityId: 'E041', currId: 'C003', origin: '', dealType: 'FX', subType: 'FX1' },
+  { code: 'M052', desc: 'EUR Short Straddle', entities: ['SEDA', 'DMCC', 'OVL'], curr: ['USD', 'USD', 'EUR'], entityId: 'E042', currId: 'C006', origin: '', dealType: 'FX', subType: 'FX1' },
 ]
 
 /** The original pushed C001 onto this list after the seed block; it is simply listed last here. */
@@ -85,8 +91,19 @@ export const TRADE_CODE = 'TRD-014'
 /**
  * Last number drawn from number-range object ZSGTSFNR01 (interval 01) before the seed deals
  * are numbered; the first seed deal is therefore 0000009089.
+ *
+ * Dummy mode only. Against MySQL every Deal ID comes from the middleware's range
+ * (ZSGSLCNR03/01, 8 digits) and this counter is never used.
  */
 export const INITIAL_DEAL_SEQ = 9088
+
+/**
+ * The dummy masters as they were before api.ts swapped them, so the seed contracts are
+ * always derived from the values they were written against.
+ */
+export const SEED_FX_MODELS: readonly FxModel[] = [...FX_MODELS]
+export const SEED_COMMODITIES: readonly Commodity[] = [...COMMODITIES]
+export const SEED_PAYMENT_TERMS: readonly PaymentTerm[] = [...PAYMENT_TERMS]
 
 export const MC_SEED: McSeed[] = [
   { ref: 4500001001, model: 'M050', comm: 'C102', stat: '03', amt: 8000000, exRate: 83.15, mcDate: '01.09.2026', shipStartOff: 20, shipDur: 120, moNote: '', foNote: '', deals: [] },

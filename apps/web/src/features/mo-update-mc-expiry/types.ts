@@ -39,6 +39,8 @@ export type MasterContract = {
   changedOn: string
   changeTime: string
   status: string
+  /** ZMC_STAT as stored, for rows read from MySQL; the seed rows carry only the text. */
+  statusCode?: string
 }
 
 /** "MC View Only" lets the user expire rows by hand; "MC View with Expiry Posting" expires them all. */

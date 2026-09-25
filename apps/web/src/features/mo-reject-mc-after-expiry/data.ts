@@ -1,8 +1,7 @@
 /**
  * Seed data, verbatim from the legacy page's "Dummy data" and "Reference master data" blocks.
- * The page never called an API: every list here stands in for an SAP value help or the
- * master-contract table, and is kept in this one file so swapping it for OData later touches
- * nothing else.
+ * The page never called an API. api.ts swaps the master lists below for MySQL's rows in
+ * place where the middleware has them; the seed contracts show only when it cannot be reached.
  */
 import type { Column, Entity, FxModel, MasterContract } from './types.ts'
 
@@ -138,9 +137,28 @@ export const FX_MODEL_MASTER: FxModel[] = [
   { code: 'M041', desc: 'INR - INR Staggered Call & Put Option' },
 ]
 
-export const CO_AREA_MASTER = ['CA01', 'CA02', 'CA03']
-export const MC_STATUS_MASTER = ['Expired', 'In Use', 'Confirmed by MO', 'Correction after Deal', 'Rejected']
-export const REGION_MASTER = ['South Asia', 'South East Asia']
+export const CO_AREA_MASTER: string[] = ['CA01', 'CA02', 'CA03']
+/**
+ * The selection screen's MC Status list, verbatim from the legacy page. The screen compares
+ * these labels, not codes; api.ts maps them to ZMC_STAT (09, 04, 03, 13). "Correction after
+ * Deal" names no code in any FX screen, so it stays label-only (see api.ts).
+ */
+export const MC_STATUS_MASTER: readonly string[] = ['Expired', 'In Use', 'Confirmed by MO', 'Correction after Deal', 'Rejected']
+export const REGION_MASTER: string[] = ['South Asia', 'South East Asia']
+
+// Snapshots of the dummy masters above, taken before api.ts swaps the live lists for
+// MySQL's rows, so a second load (or a remount) still has the dummy to fall back to.
+export const SEED_ENTITY_MASTER: readonly Entity[] = ENTITY_MASTER.map((e) => ({ ...e }))
+export const SEED_FX_MODEL_MASTER: readonly FxModel[] = FX_MODEL_MASTER.map((m) => ({ ...m }))
+export const SEED_CO_AREA_MASTER: readonly string[] = [...CO_AREA_MASTER]
+export const SEED_REGION_MASTER: readonly string[] = [...REGION_MASTER]
+
+/**
+ * The dummy data's CO Area follows the origin entity (every OSIPL row is CA01, OTL CA02,
+ * OVL CA03). SAP takes it from the FX model's ZSGTSFTR_RULE_BT row; while RULE_BT is empty
+ * in MySQL this is the only derivation there is.
+ */
+export const DUMMY_CO_AREA_BY_ENTITY: Readonly<Record<string, string>> = { OSIPL: 'CA01', OTL: 'CA02', OVL: 'CA03' }
 
 /** The one status this screen moves contracts into, and which it can never leave. */
 export const REJECTED = 'Rejected'

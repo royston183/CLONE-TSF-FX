@@ -1,7 +1,19 @@
 export type Region = { id: string; name: string }
 export type Entity = { code: string; name: string; region: string }
 /** A Short Straddle FX Model (ZSS = 'X'). The last entity / currency is the origin leg. */
-export type FxModel = { code: string; desc: string; entities: string[]; curr: string[]; entityId: string; currId: string }
+export type FxModel = {
+  code: string
+  desc: string
+  entities: string[]
+  curr: string[]
+  entityId: string
+  currId: string
+  /** RULE_BT ZORIGIN; '' on a dummy model, whose origin is its last entity leg. */
+  origin: string
+  /** RULE_BT ZTYPE / ZSUB_TYPE: the new Deal ID's ZDEAL_TYPE / ZSUB_TYPE key columns. */
+  dealType: string
+  subType: string
+}
 export type Commodity = { code: string; desc: string }
 export type PaymentTerm = { code: string; desc: string }
 export type PortPair = { ship: string; dest: string }

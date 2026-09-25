@@ -114,7 +114,7 @@ export function McTable({
                   />
                 </td>
                 <td className="left sticky-col sticky-2">
-                  <span className={`status-cell ${STATUS_CLASS[mc.mcStat]}`}>{statusLabel(mc.mcStat)}</span>
+                  <span className={`status-cell ${STATUS_CLASS[mc.mcStat] ?? ''}`}>{statusLabel(mc.mcStat)}</span>
                 </td>
                 <td className="left sticky-col sticky-3">
                   <button className="tbl-link" type="button" onClick={(e) => hotspot(e, () => onOpenDetail(mc.mcRef))}>

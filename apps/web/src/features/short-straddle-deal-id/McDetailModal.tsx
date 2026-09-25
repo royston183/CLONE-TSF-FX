@@ -1,7 +1,6 @@
 import { Fragment } from 'react'
-import { STATUS_MASTER } from './data.ts'
 import { fmtDate, fmtDateTime, fmtNum } from './format.ts'
-import { computeAmounts, payTermLabel } from './logic.ts'
+import { computeAmounts, payTermLabel, statusName } from './logic.ts'
 import { DetailCell, ModalHeader, Overlay } from './modal.tsx'
 import type { Deal, MasterContract } from './types.ts'
 
@@ -27,7 +26,7 @@ export function McDetailModal({
             {mc && a ? (
               <>
                 <DetailCell label="MC Ref No" value={mc.mcRef} accent />
-                <DetailCell label="MC Status" value={STATUS_MASTER[mc.mcStat]} />
+                <DetailCell label="MC Status" value={statusName(mc.mcStat)} />
                 <DetailCell label="MC Description" value={mc.mcDesc} />
                 <DetailCell label="Sell / Buy" value={mc.sellBuy === 'S' ? 'Sell' : 'Buy'} />
                 <DetailCell label="Origin Entity" value={mc.origin} />

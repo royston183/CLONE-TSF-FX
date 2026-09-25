@@ -1,8 +1,12 @@
 /**
- * Seed data, verbatim from the legacy page's reference-data and "Dummy dataset" blocks. The
- * page never called an API: every list here stands in for an SAP value help or the ALV list
- * of Master Contracts awaiting FO correction, and is kept in this one file so swapping it for
- * OData later touches nothing else.
+ * Seed data, verbatim from the legacy page's reference-data and "Dummy dataset" blocks. Every
+ * list here stands in for an SAP value help or the ALV list of Master Contracts awaiting FO
+ * correction.
+ *
+ * They are now the fallback: api.ts replaces the master lists in place with MySQL's rows once
+ * the middleware answers (a master still empty in MySQL keeps these values), and the seed
+ * rows are only shown when the middleware cannot be reached. REGION_CATALOG has no migrated
+ * master and always stays as it is.
  */
 import { compactMillions } from './format.ts'
 import type { CodeLabel, ColumnDef, ErrorRow, FxModel, OriginEntity, PaymentTerm, RawRow } from './types.ts'
@@ -81,6 +85,11 @@ export const CURRENCY_CODE_BY_STRING: Record<string, string> = {
   'USD-INR-INR': 'C012',
 }
 
+// The seed rows are built from the dummy masters as they were, not from whatever the lists
+// hold after MySQL's rows are swapped in: M034a or P01 need not exist in MySQL.
+const SEED_FX_MODELS = [...FX_MODELS]
+const SEED_PAYMENT_TERMS = [...PAYMENT_TERMS]
+
 export const findFxModel = (id: string) => FX_MODELS.find((m) => m.id === id)
 export const findEntity = (code: string) => ORIGIN_ENTITIES.find((e) => e.code === code)
 export const findPaymentTerm = (code: string) => PAYMENT_TERMS.find((p) => p.code === code)
@@ -110,7 +119,7 @@ export const RAW_ROWS: RawRow[] = [
 
 /** The original's mkErrorRow: derives model, entity, currency and description fields. */
 export function buildRow(raw: RawRow): ErrorRow {
-  const fx = findFxModel(raw.fxId)
+  const fx = SEED_FX_MODELS.find((m) => m.id === raw.fxId)
   const fxCode = fx?.code ?? raw.fxId
   const entity = fx?.entity ?? ''
   const currency = fx?.currency ?? ''
@@ -139,7 +148,7 @@ export function buildRow(raw: RawRow): ErrorRow {
     shipEnd: raw.shipEnd,
     paymentTermsCode: 'P01',
     paymentDate: raw.shipEnd,
-    ownExplanation: findPaymentTerm('P01')?.label ?? '',
+    ownExplanation: SEED_PAYMENT_TERMS.find((p) => p.code === 'P01')?.label ?? '',
     shipRegionCode: raw.shipRegion || 'PG01',
     destRegionCode: raw.destRegion || 'PG02',
     regionId: raw.region || 'R01',

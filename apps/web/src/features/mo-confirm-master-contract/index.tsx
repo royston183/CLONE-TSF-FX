@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
 import { ActionDialog } from './ActionDialog.tsx'
+import { actionMcs as writeAction, loadContracts, loadMasters, moRemark, saveEdit as writeEdit } from './api.ts'
 import { ChildContractModal } from './ChildContractModal.tsx'
 import { ContractsTable } from './ContractsTable.tsx'
-import { ENTITIES, FX_MODELS, REGIONS, seedContracts } from './data.ts'
+import { ENTITIES, FX_MODELS, REGIONS } from './data.ts'
 import { DatePicker } from './DatePicker.tsx'
 import { EditContractModal } from './EditContractModal.tsx'
 import { fmtCompactUsd, fmtNum } from './format.ts'
@@ -48,16 +52,17 @@ import type {
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const DEFAULT_SORT: Sort = { key: 'mcNumber', dir: -1 } // descending, newest first
-const ENTITY_OPTIONS = ENTITIES.slice().sort((a, b) => (a.code < b.code ? -1 : 1))
 const TOAST_MS = 3400
 const plural = (n: number) => (n === 1 ? '' : 's')
 
 /**
  * MO: Confirm Master Contract (ZSGTSFR011), converted from legacy/confirm-master-contract.html.
  *
- * The original never called an API, so this is the same UI-only screen: the MO work queue
- * lives in component state for the session. Its Refresh button reloaded the page; here it
- * remounts the screen, which restores exactly the same freshly-loaded state.
+ * The MO work queue is ZSGTSFTR_MAS_CON at status 02 / 11, read and written through the SLC
+ * middleware (api.ts): Confirm writes 03, Reject 13 with the MO remark, Edit the amount, terms
+ * and FX Model. If the middleware cannot be reached the screen runs on its dummy contracts as
+ * before and changes stay on the screen. Its Refresh button reloaded the page; here it
+ * remounts the screen, which reloads the queue.
  */
 export default function MoConfirmMasterContract() {
   const [generation, setGeneration] = useState(0)
@@ -65,7 +70,10 @@ export default function MoConfirmMasterContract() {
 }
 
 function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
-  const [contracts, setContracts] = useState<MasterContract[]>(seedContracts)
+  const [contracts, setContracts] = useState<MasterContract[]>([])
+  /** Where the queue came from; 'dummy' means writes cannot reach MySQL. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const busy = useRef(false)
 
   // Selection criteria and table
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
@@ -105,12 +113,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   const kpis = computeKpis(kpiScope)
   const paged = pageOf(rows, page, pageSize)
 
-  // Toast — the page opened with a "Ready" message.
-  const [toast, setToast] = useState<Toast>(() => ({
-    message: `Ready. ${filterContracts(contracts, DEFAULT_FILTERS, 'ALL', DEFAULT_SORT).rows.length} Master Contract(s) loaded.`,
-    kind: '',
-    show: true,
-  }))
+  // Toast — the page opened with a "Ready" message, shown here once the queue has loaded.
+  const [toast, setToast] = useState<Toast>({ message: 'Loading Master Contracts…', kind: '', show: true })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const hideToast = useCallback(() => setToast((t) => ({ ...t, kind: '', show: false })), [])
   const showToast = useCallback(
@@ -121,10 +125,28 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     },
     [hideToast],
   )
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
+  const reload = useCallback(async (signal?: AbortSignal) => {
+    const loaded = await loadContracts(signal)
+    setContracts(loaded.contracts)
+    setSource(loaded.source)
+    return loaded.contracts
+  }, [])
+
   useEffect(() => {
-    toastTimer.current = setTimeout(hideToast, TOAST_MS)
-    return () => clearTimeout(toastTimer.current)
-  }, [hideToast])
+    const controller = new AbortController()
+    loadMasters(controller.signal)
+      .then(() => reload(controller.signal))
+      .then((list) => {
+        const n = filterContracts(list, DEFAULT_FILTERS, 'ALL', DEFAULT_SORT).rows.length
+        showToast(`Ready. ${n} Master Contract(s) loaded.`, '')
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, 'error')
+      })
+    return () => controller.abort()
+  }, [reload, showToast])
 
   /**
    * What the page's applyFilters did besides filtering (which is derived here): back to page
@@ -209,20 +231,39 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     openActionDialog(action, selected, 'bulk')
   }
 
-  const doAction = () => {
+  const doAction = async () => {
+    if (busy.current) return
     const mcs = pendingScope === 'bulk' ? selected : contracts.filter((mc) => mc.mcNumber === pendingScope)
     if (!isActionValid(pendingAction, remark)) {
       setRemarkError(true) // keep the dialog open until a remark is entered
       return
     }
     const numbers = mcs.map((mc) => mc.mcNumber)
-    setContracts((all) => applyMcAction(all, numbers, pendingAction, remark, new Date()))
+    const action = pendingAction
+    if (source === 'mysql') {
+      // ZMC_STAT 03 / 13 (and ZMO_REMARKS on a rejection), one update per MC.
+      busy.current = true
+      let changedBy: string
+      try {
+        changedBy = await writeAction(numbers, action, remark)
+      } catch (error) {
+        showToast(messageOf(error), 'error')
+        // Whatever did move is re-read, so the queue never shows a status MySQL lacks.
+        await reload().catch(() => undefined)
+        return
+      } finally {
+        busy.current = false
+      }
+      setContracts((all) => applyMcAction(all, numbers, action, moRemark(remark), new Date(), changedBy))
+    } else {
+      setContracts((all) => applyMcAction(all, numbers, action, remark, new Date()))
+    }
     setChecked((s) => {
       const next = new Set(s)
       for (const n of numbers) next.delete(n)
       return next
     })
-    const t = actionToast(pendingAction, mcs)
+    const t = actionToast(action, mcs)
     showToast(t.message, t.kind)
     actionModal.close()
     childModal.close()
@@ -294,13 +335,25 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     editModal.open()
   }
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
+    if (busy.current) return
     const current = editMc ? contracts.find((m) => m.mcNumber === editMc.mcNumber) : undefined
     if (!current || !isActionable(current)) {
       editModal.close()
       return
     }
-    const updated = applyEdit(current, editValues, new Date())
+    let updated = applyEdit(current, editValues, new Date())
+    if (source === 'mysql') {
+      busy.current = true
+      try {
+        updated = { ...updated, changedBy: await writeEdit(updated) }
+      } catch (error) {
+        showToast(`Master Contract ${current.mcNumber} was not updated: ${messageOf(error)}`, 'error')
+        return
+      } finally {
+        busy.current = false
+      }
+    }
     setContracts((all) => all.map((m) => (m.mcNumber === updated.mcNumber ? updated : m)))
     editModal.close()
     showToast('Master Contract Updated Successfully', 'success')
@@ -308,6 +361,11 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   }
 
   // ------------------------------------------------------------------ render
+
+  // Per render: ENTITIES and FX_MODELS are swapped for MySQL's rows once they load. RULE_BT
+  // can hold a model under more than one currency string; the filter is by code, so once each.
+  const entityOptions = ENTITIES.slice().sort((a, b) => (a.code < b.code ? -1 : 1))
+  const modelOptions = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
 
   const kpiCards: Array<{ key: StatusFilter; cls: string; val: number; lbl: string; help: string }> = [
     { key: 'ALL', cls: 'k-total', val: kpis.total, lbl: 'Total Master Contracts', help: 'Contracts currently awaiting MO review' },
@@ -367,6 +425,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
             <div className="panel-title-left">
               <span className="dot-bullet" />
               <h2>Master Contracts</h2>
+              <SourceNote source={source} />
             </div>
           </div>
 
@@ -427,7 +486,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
                   <label htmlFor="f-entity">Origin Entity</label>
                   <select id="f-entity" value={filters.entity} onChange={(e) => setFilter({ entity: e.target.value })}>
                     <option value="ALL">All entities</option>
-                    {ENTITY_OPTIONS.map((ent) => (
+                    {entityOptions.map((ent) => (
                       <option key={ent.code} value={ent.code}>
                         {ent.code} - {ent.name}
                       </option>
@@ -449,7 +508,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
                   <label htmlFor="f-model">FX Model</label>
                   <select id="f-model" value={filters.model} onChange={(e) => setFilter({ model: e.target.value })}>
                     <option value="ALL">All models</option>
-                    {FX_MODELS.map((m) => (
+                    {modelOptions.map((m) => (
                       <option key={m.code} value={m.code}>
                         {m.code} - {m.desc}
                       </option>
@@ -599,4 +658,15 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       />
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

@@ -199,7 +199,8 @@ export function CorrectionModal({
                     searchText={(r) => `${r.code} ${r.label}`}
                     primaryText={(r) => `${r.code} — ${r.label}`}
                     displayText={portDisplay}
-                    placeholder="Select region"
+                    // A stored ZPOS no port group matches stays visible (and is kept on Update).
+                    placeholder={row?.shipPortText || 'Select region'}
                     onSelect={(r) => {
                       onChange({ portShipment: r.code })
                       onPick({ portShipment: r.code })
@@ -216,7 +217,7 @@ export function CorrectionModal({
                     searchText={(r) => `${r.code} ${r.label}`}
                     primaryText={(r) => `${r.code} — ${r.label}`}
                     displayText={portDisplay}
-                    placeholder="Select region"
+                    placeholder={row?.destPortText || 'Select region'}
                     onSelect={(r) => {
                       onChange({ portDestination: r.code })
                       onPick({ portDestination: r.code })
@@ -265,6 +266,8 @@ export function CorrectionModal({
                 <textarea
                   className="control"
                   placeholder="Explain the correction made, for Mid-Office's review..."
+                  // ZSGTSFTR_MAS_CON.ZFO_REMARKS is CHAR 80.
+                  maxLength={80}
                   value={form.foRemarks}
                   onChange={(e) => {
                     onChange({ foRemarks: e.target.value })
