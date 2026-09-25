@@ -250,6 +250,56 @@
       "services": [],
       "legacy": "legacy/create-master-contract.html",
       "note": "Legacy page never called an API — its fetch calls are commented 'Future:' placeholders and the M.O. email is only logged. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFR011",
+      "id": "mo-confirm-master-contract",
+      "route": "/apps/mo-confirm-master-contract",
+      "title": "MO: Confirm Master Contract",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/confirm-master-contract.html",
+      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFR049",
+      "id": "mo-update-mc-expiry",
+      "route": "/apps/mo-update-mc-expiry",
+      "title": "MO: Update MC Expiry",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/master-contract-expiry.html",
+      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFR093",
+      "id": "fo-mc-error-correction",
+      "route": "/apps/fo-mc-error-correction",
+      "title": "FO: MC Error Correction",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/mc-error-correction.html",
+      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFR097",
+      "id": "mo-reject-mc-after-expiry",
+      "route": "/apps/mo-reject-mc-after-expiry",
+      "title": "MO: Reject MC after Expiry",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/reject-mc-after-expiry.html",
+      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
+    },
+    {
+      "code": "ZSGTSFR102",
+      "id": "short-straddle-deal-id",
+      "route": "/apps/short-straddle-deal-id",
+      "title": "Create Deal ID for Short Straddle Deals",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/deal_id_workbench.html",
+      "note": "Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
     }
   ]
 }
