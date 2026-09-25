@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CHILD_COMMODITIES } from './data.ts'
+import { childCommodities } from './data.ts'
 import { Overlay, type Modal } from './modal.tsx'
 
 /** Picks the commodities behind C101 "Multiple Commodity". */
@@ -27,7 +27,7 @@ export function CommodityModal({
   }, [isOpen])
 
   const ft = search.toLowerCase()
-  const list = CHILD_COMMODITIES.filter((c) => `${c.code} ${c.name}`.toLowerCase().includes(ft))
+  const list = childCommodities().filter((c) => `${c.code} ${c.name}`.toLowerCase().includes(ft))
 
   const toggle = (code: string, checked: boolean) =>
     setDraft((d) => (checked ? (d.includes(code) ? d : [...d, code]) : d.filter((x) => x !== code)))

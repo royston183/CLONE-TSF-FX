@@ -1,7 +1,11 @@
 export type OriginEntity = { code: string; companyCode: string; name: string; currency: string }
 export type Commodity = { code: string; name: string; desc: string }
 export type PaymentTerm = { code: string; label: string }
-export type FxModel = { id: string; code: string; desc: string; entity: string; currency: string }
+/**
+ * `entityId` / `currId` are ZSGTSFTR_RULE_BT's ZENT_ID / ZCURR_ID, written to the MC. The
+ * dummy models carry none; api.ts resolves them.
+ */
+export type FxModel = { id: string; code: string; desc: string; entity: string; currency: string; entityId?: string; currId?: string }
 export type StatusMeta = { cls: string; textCls: string }
 
 export type MasterContract = {

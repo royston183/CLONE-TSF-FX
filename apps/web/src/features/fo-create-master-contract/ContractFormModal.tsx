@@ -2,7 +2,7 @@ import { CommodityModal } from './CommodityModal.tsx'
 import {
   COMMODITIES,
   FX_MODELS,
-  MULTI_COMMODITY,
+  isMultiCommodity,
   ORIGIN_ENTITIES,
   PAYMENT_TERMS,
   PORTS,
@@ -18,7 +18,6 @@ import { Overlay, useModal, type Modal } from './modal.tsx'
 import { SearchDropdown } from './SearchDropdown.tsx'
 import type { FieldErrors, FieldKey, FormMode, FormValues } from './types.ts'
 
-const PORT_ITEMS = PORTS.map((name) => ({ name }))
 const NBSP = ' '
 
 /**
@@ -50,8 +49,10 @@ export function ContractFormModal({
   onSave: () => void
 }) {
   const commodityModal = useModal()
+  // Built per render: PORTS is swapped for ZSGTSFTR_PORTGRP's rows once they load.
+  const portItems = PORTS.map((name) => ({ name }))
 
-  const set = (patch: Partial<FormValues>, clear?: FieldKey) => {
+  const set =(patch: Partial<FormValues>, clear?: FieldKey) => {
     onChange(patch)
     if (clear) onClearError(clear)
   }
@@ -67,7 +68,7 @@ export function ContractFormModal({
   const entity = findEntity(values.originEntity)
   const fx = findFxModel(values.fxModel)
   const desc = commodityDescription(values)
-  const isMulti = values.commodity === MULTI_COMMODITY
+  const isMulti = isMultiCommodity(values.commodity)
 
   return (
     <>
@@ -218,7 +219,7 @@ export function ContractFormModal({
                       displayText={(c) => `${c.code} - ${c.name}`}
                       placeholder="Select commodity"
                       onSelect={(c) => {
-                        if (c.code === MULTI_COMMODITY) {
+                        if (isMultiCommodity(c.code)) {
                           set({ commodity: c.code }, 'commodity')
                           commodityModal.open()
                         } else {
@@ -317,8 +318,8 @@ export function ContractFormModal({
                   <div className="field gc-4">
                     <label>Port of Shipment</label>
                     <SearchDropdown
-                      items={PORT_ITEMS}
-                      selected={PORT_ITEMS.find((p) => p.name === values.portShipment)}
+                      items={portItems}
+                      selected={portItems.find((p) => p.name === values.portShipment)}
                       keyOf={(p) => p.name}
                       searchText={(p) => p.name}
                       primaryText={(p) => p.name}
@@ -332,8 +333,8 @@ export function ContractFormModal({
                   <div className="field gc-4">
                     <label>Port of Destination</label>
                     <SearchDropdown
-                      items={PORT_ITEMS}
-                      selected={PORT_ITEMS.find((p) => p.name === values.portDestination)}
+                      items={portItems}
+                      selected={portItems.find((p) => p.name === values.portDestination)}
                       keyOf={(p) => p.name}
                       searchText={(p) => p.name}
                       primaryText={(p) => p.name}

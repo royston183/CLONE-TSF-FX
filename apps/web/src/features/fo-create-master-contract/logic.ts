@@ -4,8 +4,9 @@
  * API call; none exists yet, so contracts live in component state for the session.
  */
 import {
+  DEFAULT_TOLERANCE,
   EMAIL_RECIPIENT,
-  MULTI_COMMODITY,
+  isMultiCommodity,
   findCommodity,
   findEntity,
   findFxModel,
@@ -98,7 +99,7 @@ export function blankForm(mcDate = ''): FormValues {
     mcAmountUsd: '',
     exchangeRate: '',
     mcReference: '',
-    tolerance: '5.000000',
+    tolerance: DEFAULT_TOLERANCE.T01.toFixed(6),
     commodity: null,
     selectedCommodities: [],
     shipStart: '',
@@ -145,7 +146,7 @@ export function commodityNames(codes: readonly string[]): string[] {
 
 /** "Comm. Description Long": the commodity's description, or up to three picked names. */
 export function commodityDescription(values: FormValues): { value: string; title: string } {
-  if (values.commodity === MULTI_COMMODITY) {
+  if (isMultiCommodity(values.commodity)) {
     const names = commodityNames(values.selectedCommodities)
     const full = names.join(', ')
     const maxShow = 3
@@ -172,7 +173,7 @@ export function validateForm(values: FormValues): { valid: boolean; errors: Fiel
 
   req(
     'commodity',
-    values.commodity === MULTI_COMMODITY ? values.selectedCommodities.length > 0 : !!values.commodity,
+    isMultiCommodity(values.commodity) ? values.selectedCommodities.length > 0 : !!values.commodity,
   )
 
   const start = parseDMY(values.shipStart)
@@ -197,7 +198,7 @@ export function buildContract(values: FormValues, mcNumber: number, existing: Ma
   const comm = findCommodity(values.commodity)
   const fx = findFxModel(values.fxModel)
   if (!entity || !comm || !fx) throw new Error('buildContract called with an unvalidated form')
-  const isMulti = values.commodity === MULTI_COMMODITY
+  const isMulti = isMultiCommodity(values.commodity)
 
   return {
     mcNumber,
