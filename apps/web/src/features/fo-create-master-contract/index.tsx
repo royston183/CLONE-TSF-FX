@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { createContract, loadContracts, loadMasters, releaseContracts, saveChildren, updateContract } from './api.ts'
 import { ChildContractsModal } from './ChildContractsModal.tsx'
 import { ContractDetailModal } from './ContractDetailModal.tsx'
 import { ContractFormModal } from './ContractFormModal.tsx'
@@ -13,7 +17,6 @@ import {
   INITIAL_MC_DATE,
   ORIGIN_ENTITIES,
   STATUS_META,
-  seedContracts,
 } from './data.ts'
 import { formatAmount, formatCompactUSD } from './format.ts'
 import { KpiDetailModal, type KpiKind } from './KpiDetailModal.tsx'
@@ -24,7 +27,6 @@ import {
   filterSortContracts,
   formFromContract,
   releaseToMO,
-  seedChildStore,
   sendMasterContractEmail,
   totalAmount,
   validateForm,
@@ -51,23 +53,23 @@ import type {
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const NO_FILTERS: Filters = { status: '', entity: '', fxModel: '', commodity: '' }
-const FX_FILTER_OPTIONS = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
 const plural = (n: number) => (n === 1 ? '' : 's')
 
 /**
  * FO: Create Master Contract (ZSGTSFP001), converted from legacy/create-master-contract.html.
  *
- * The original never called an API — its fetch calls are commented "Future:" placeholders —
- * so this is the same UI-only screen: contracts, child contracts and the MC number range live
- * in component state for the session, and "Send to M.O." logs its email instead of sending.
+ * Contracts live in ZSGTSFTR_MAS_CON and their children in ZSGTSFTR_MCCHILD, both through the
+ * SLC middleware (api.ts), and the MC number comes from the middleware's range. If the
+ * middleware cannot be reached the screen runs on its dummy contracts as before and changes
+ * stay on the screen. "Send to M.O." still logs its email instead of sending one.
  */
 export default function FoCreateMasterContract() {
-  const [seed] = useState(() => {
-    const contracts = seedContracts()
-    return { contracts, children: seedChildStore(contracts, FIRST_CHILD_REFS) }
-  })
-  const [contracts, setContracts] = useState<MasterContract[]>(seed.contracts)
-  const [childStore, setChildStore] = useState<ChildStore>(seed.children)
+  const [contracts, setContracts] = useState<MasterContract[]>([])
+  const [childStore, setChildStore] = useState<ChildStore>({ byMc: {}, nextRef: { ...FIRST_CHILD_REFS } })
+  /** Where the contract list came from; 'dummy' means writes cannot reach MySQL. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const busy = useRef(false)
+  // Dummy mode only: with the middleware down there is no range to draw a number from.
   const nextMcNumber = useRef(FIRST_NEW_MC_NUMBER)
 
   // Table
@@ -120,6 +122,23 @@ export default function FoCreateMasterContract() {
     [],
   )
 
+  const reload = useCallback(async (signal?: AbortSignal) => {
+    const loaded = await loadContracts(signal)
+    setContracts(loaded.contracts)
+    setChildStore(loaded.children)
+    setSource(loaded.source)
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadMasters(controller.signal)
+      .then(() => reload(controller.signal))
+      .catch((error: unknown) => {
+        if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, true)
+      })
+    return () => controller.abort()
+  }, [reload, showToast])
+
   const findContract = (mc: number | null) => (mc === null ? undefined : contracts.find((c) => c.mcNumber === mc))
 
   // ------------------------------------------------------------------ form flow
@@ -164,7 +183,8 @@ export default function FoCreateMasterContract() {
     openPrefilled(c, 'edit')
   }
 
-  const save = () => {
+  const save = async () => {
+    if (busy.current) return
     const { valid, errors } = validateForm(formValues)
     setFormErrors(errors)
     if (!valid) {
@@ -182,8 +202,18 @@ export default function FoCreateMasterContract() {
         showToast(`Master Contract ${existing.mcNumber} cannot be edited because Deal ID ${existing.linkedDealId} is already linked.`, true)
         return
       }
-      // Future: PUT /api/master-contracts/{mcNumber}
       const updated = buildContract(formValues, existing.mcNumber, existing)
+      if (source === 'mysql') {
+        busy.current = true
+        try {
+          await updateContract(updated)
+        } catch (error) {
+          showToast(`Master Contract ${existing.mcNumber} was not updated: ${messageOf(error)}`, true)
+          return
+        } finally {
+          busy.current = false
+        }
+      }
       setContracts((list) => list.map((c) => (c.mcNumber === existing.mcNumber ? { ...c, ...updated } : c)))
       formModal.hide()
       showToast(`Master Contract ${existing.mcNumber} updated successfully.`, false)
@@ -192,11 +222,33 @@ export default function FoCreateMasterContract() {
       return
     }
 
-    // Future: the server generates the number and POST /api/master-contracts stores it.
-    const mcNumber = nextMcNumber.current++
+    let mcNumber: number
+    if (source === 'mysql') {
+      // The middleware draws the number from ZSGTSFTR_MAS_CON's range; nothing is picked here.
+      busy.current = true
+      try {
+        mcNumber = await createContract(buildContract(formValues, 0, null))
+      } catch (error) {
+        busy.current = false
+        showToast(`The Master Contract was not created: ${messageOf(error)}`, true)
+        return
+      }
+    } else {
+      mcNumber = nextMcNumber.current++
+    }
     const contract = buildContract(formValues, mcNumber, null)
+    const { store, children } = ensureChildContracts(childStore, contract)
+    if (source === 'mysql') {
+      try {
+        await saveChildren(children, contract)
+      } catch (error) {
+        showToast(`Master Contract ${mcNumber} was created, but its child contracts were not saved: ${messageOf(error)}`, true)
+      } finally {
+        busy.current = false
+      }
+    }
     setContracts((list) => [contract, ...list])
-    setChildStore((store) => ensureChildContracts(store, contract).store)
+    setChildStore(store)
     setLastCreatedMc(mcNumber)
     formModal.hide()
     successModal.open()
@@ -212,8 +264,18 @@ export default function FoCreateMasterContract() {
   // ------------------------------------------------------------------ send to M.O.
 
   /** The one entry point for every Send to M.O. button: email each, then release. */
-  const sendToMO = (list: MasterContract[]) => {
+  const sendToMO = async (list: MasterContract[]) => {
     if (list.length === 0) return
+    if (source === 'mysql') {
+      try {
+        await releaseContracts(list)
+      } catch (error) {
+        showToast(messageOf(error), true)
+        // Whatever did move is re-read, so the table never shows a status MySQL lacks.
+        await reload().catch(() => undefined)
+        return
+      }
+    }
     for (const c of list) sendMasterContractEmail(c)
     const released = new Set(list.map((c) => c.mcNumber))
     setContracts((all) => all.map((c) => (released.has(c.mcNumber) ? releaseToMO(c) : c)))
@@ -348,6 +410,8 @@ export default function FoCreateMasterContract() {
 
   // ------------------------------------------------------------------ KPIs
 
+  // Per render: FX_MODELS is swapped for ZSGTSFTR_RULE_BT's rows once they load.
+  const fxFilterOptions = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
   const inUse = contracts.filter((c) => c.status === 'In Use').length
   const confirmed = contracts.filter((c) => c.status === 'Confirmed').length
   const total = totalAmount(contracts)
@@ -426,6 +490,7 @@ export default function FoCreateMasterContract() {
             <div className="section-title">
               <span className="dot" />
               Master Contracts
+              <SourceNote source={source} />
             </div>
 
             <div className="table-toolbar">
@@ -458,7 +523,7 @@ export default function FoCreateMasterContract() {
                 title="FX Model"
                 all="All models"
                 value={filters.fxModel}
-                options={FX_FILTER_OPTIONS.map((m) => [m.code, `${m.code} - ${m.desc}`])}
+                options={fxFilterOptions.map((m) => [m.code, `${m.code} - ${m.desc}`])}
                 onChange={(v) => setFilter('fxModel', v)}
               />
               <FilterSelect
@@ -600,6 +665,17 @@ export default function FoCreateMasterContract() {
       <div className={`toast${toast ? ' show' : ''}${toast?.error ? ' error' : ''}`}>{toast?.message}</div>
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }
 
 function FilterSelect({

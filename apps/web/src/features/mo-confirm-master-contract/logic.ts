@@ -1,7 +1,7 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The page never called an API — Confirm, Reject and Update
- * only changed its in-memory table — so contracts live in component state for the session.
+ * component only holds state. The writes they stand for (Confirm, Reject, Update) go to
+ * ZSGTSFTR_MAS_CON through api.ts first; these then apply the same change to the table.
  */
 import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, FX_MODELS, MO_REVIEWER, STATUS, STATUS_KEY, STATUS_SHORT, entityOf, modelOf } from './data.ts'
 import { fmtDate, fmtDateTime, fmtNum, parseAmountShorthand, safeParseDate } from './format.ts'
@@ -233,6 +233,7 @@ export const isActionValid = (action: McAction, remark: string) => action !== 'r
 /**
  * Confirms or rejects the given contracts: new status, changed by/on stamped, and for a
  * rejection the remark becomes the MO Remark. Either status takes them out of the queue.
+ * `changedBy` is who ZCHANGED_BY was written as (api.ts actionMcs); MO_REVIEWER in dummy mode.
  */
 export function applyMcAction(
   contracts: MasterContract[],
@@ -240,15 +241,15 @@ export function applyMcAction(
   action: McAction,
   remark: string,
   now: Date,
+  changedBy: string = MO_REVIEWER,
 ): MasterContract[] {
   const targets = new Set(mcNumbers)
-  // Future: POST the confirmation / rejection to the ZSGTSFR011 service.
   return contracts.map((mc) =>
     targets.has(mc.mcNumber)
       ? {
           ...mc,
           status: action === 'confirm' ? STATUS.CONFIRMED : STATUS.REJECTED,
-          changedBy: MO_REVIEWER,
+          changedBy,
           changedOn: now,
           moRemarks: action === 'reject' ? remark.trim() : mc.moRemarks,
         }
@@ -278,11 +279,11 @@ export type EditValues = { amount: string; paymentTerms: string; fxModel: string
  * Mirrors ZSGTSF_RMC_DETAIL_EDIT (dynpro 9001): the amount, payment terms and FX Model are
  * written back, and the entity and currency strings are re-derived from the model (the SELECT
  * SINGLE against zsgtsftr_rule_bt). An unknown model keeps the contract's current one.
+ * api.ts toEditColumns turns the result into the MAS_CON columns written.
  */
-export function applyEdit(mc: MasterContract, values: EditValues, now: Date): MasterContract {
+export function applyEdit(mc: MasterContract, values: EditValues, now: Date, changedBy: string = MO_REVIEWER): MasterContract {
   const newAmt = parseAmountShorthand(values.amount)
   const model = modelOf(values.fxModel) ?? modelOf(mc.fxModel)
-  // Future: PUT the edited Master Contract to the ZSGTSFR011 service.
   return {
     ...mc,
     amtUSD: newAmt,
@@ -300,7 +301,7 @@ export function applyEdit(mc: MasterContract, values: EditValues, now: Date): Ma
         }
       : {}),
     amtOrigin: newAmt * mc.exRate,
-    changedBy: MO_REVIEWER,
+    changedBy,
     changedOn: now,
   }
 }

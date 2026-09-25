@@ -1,8 +1,17 @@
 export type OriginEntity = { code: string; companyCode: string; name: string; currency: string }
-export type FxModel = { id: string; code: string; desc: string; entity: string; currency: string }
+/**
+ * An FX model as the dropdowns and rows name it. `id` is unique per model and currency string
+ * (the dummy's M034a / M034b); entityId / currId are ZSGTSFTR_RULE_BT's ZENT_ID / ZCURR_ID
+ * when the model came from MySQL.
+ */
+export type FxModel = { id: string; code: string; desc: string; entity: string; currency: string; entityId?: string; currId?: string }
 export type PaymentTerm = { code: string; label: string }
-/** A port / region group (PG01..PG14) or a business region (R01..R09): both are code + label. */
-export type CodeLabel = { code: string; label: string }
+/**
+ * A port / region group (PG01..PG14) or a business region (R01..R09): both are code + label.
+ * A port group read from ZSGTSFTR_PORTGRP also carries ZPORT_GRP_DESC as `desc`, the final
+ * port description the program writes to ZPOS / ZPOD.
+ */
+export type CodeLabel = { code: string; label: string; desc?: string }
 
 export type McStatus = 'correction' | 'resubmitted' | 'reversed'
 
@@ -56,6 +65,12 @@ export type ErrorRow = {
   foRemarks: string
   mcAmendedDate: string
   status: McStatus
+  /**
+   * ZPOS / ZPOD as stored, kept only when no port group's description matches it, so the
+   * text stays visible (and is written back unchanged) instead of turning into '—'.
+   */
+  shipPortText?: string
+  destPortText?: string
   /**
    * ABAP status code. '21' lifts the one-month cutoff on MC Amended Date; any other value
    * (and a missing one, read as '11') applies it. The seed rows carry none.

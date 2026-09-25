@@ -44,19 +44,23 @@ export function eligibleIds(contracts: readonly MasterContract[], keyDate: Date)
 }
 
 /**
- * saveExpiryUpdate: the listed contracts become Expired.
- * Future: POST /api/master-contracts/expire with { mcNumbers }.
+ * saveExpiryUpdate: the listed contracts become Expired on the screen. With MySQL behind it
+ * the caller has already moved them 04 -> 09 (api.ts expireOnMysql); a row read from MySQL
+ * keeps its code in step with the text.
  */
 export function expireContracts(contracts: readonly MasterContract[], mcNumbers: readonly string[]): MasterContract[] {
   const ids = new Set(mcNumbers)
-  return contracts.map((c) => (ids.has(c.mcNumber) ? { ...c, status: 'Expired' } : c))
+  return contracts.map((c) =>
+    ids.has(c.mcNumber) ? { ...c, status: 'Expired', ...(c.statusCode === undefined ? {} : { statusCode: '09' }) } : c,
+  )
 }
 
 /**
  * loadScreenData once the Key Date is valid. "MC View Only" lists the eligible contracts;
  * "MC View with Expiry Posting" runs the batch job (postExpiryProcess) on them first and lists
  * the contracts it expired. `rowIds` are MC numbers, so later expiries show up in the table.
- * Future: GET /api/master-contracts.
+ * `contracts` is ZSGTSFTR_MAS_CON as read once on mount (api.ts loadContracts); the Key Date
+ * and status filter stays here, on the screen, so it is unchanged.
  */
 export function loadScreen(
   contracts: readonly MasterContract[],

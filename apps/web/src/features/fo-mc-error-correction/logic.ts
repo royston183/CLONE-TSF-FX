@@ -1,11 +1,11 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The original never called an API; corrections and reversals
- * change component state for the session only.
+ * component only holds state. Nothing here talks to the middleware: api.ts writes a correction
+ * or reversal to ZSGTSFTR_MAS_CON first, and these functions then change the row on screen.
  */
 import { COLUMN_DEFS, findBizRegion, findEntity, findPaymentTerm, findRegion } from './data.ts'
 import { formatAmount, formatDMY, formatRate, parseDMY, parseLooseAmount } from './format.ts'
-import type { ColumnKey, CorrectionForm, ErrorRow, FieldErrors, Filters, McStatus, Picks, Sort } from './types.ts'
+import type { CodeLabel, ColumnKey, CorrectionForm, ErrorRow, FieldErrors, Filters, McStatus, Picks, Sort } from './types.ts'
 
 // ---------------------------------------------------------------- filters
 
@@ -33,9 +33,18 @@ export const STATUS_TEXT_CLASS: Record<McStatus, string> = {
   reversed: 'status-text-reversed',
 }
 
-export function portText(regionCode: string): string {
+/**
+ * The final port description a port group turns into, which ZSGTSF_MC_ERROR_CORR writes to
+ * ZPOS / ZPOD: ZSGTSFTR_PORTGRP.ZPORT_GRP_DESC, or — for a dummy group, which has none — the
+ * legacy page's own wording.
+ */
+export const portDescription = (group: CodeLabel): string =>
+  group.desc || `Any Port(s) in ${group.label} or any other port(s)`
+
+/** A port cell: the group's description, else the stored ZPOS / ZPOD text no group matched. */
+export function portText(regionCode: string, stored?: string): string {
   const r = findRegion(regionCode)
-  return r ? `Any Port(s) in ${r.label} or any other port(s)` : '—'
+  return r ? portDescription(r) : stored || '—'
 }
 
 /**
@@ -52,7 +61,7 @@ export function cellText(row: ErrorRow, key: ColumnKey): string {
     case 'mcBalAmt':
       return formatAmount(row.mcBalAmt)
     case 'regionId':
-      return `${row.regionId} - ${findBizRegion(row.regionId)?.label ?? ''}`
+      return row.regionId ? `${row.regionId} - ${findBizRegion(row.regionId)?.label ?? ''}` : ''
     case 'mcAmt':
       return formatAmount(row.mcAmt)
     case 'exRate':
@@ -60,9 +69,9 @@ export function cellText(row: ErrorRow, key: ColumnKey): string {
     case 'commodityText':
       return row.specificCommodity ? row.commodityText : ''
     case 'portShipment':
-      return portText(row.shipRegionCode)
+      return portText(row.shipRegionCode, row.shipPortText)
     case 'portDestination':
-      return portText(row.destRegionCode)
+      return portText(row.destRegionCode, row.destPortText)
     case 'utilization':
       return formatAmount(row.utilization)
     case 'moRemarks':
@@ -223,7 +232,7 @@ export function validateCorrection(
  * Mid-Office. A dropdown the user cleared by typing falls back to its last pick.
  */
 export function applyCorrection(row: ErrorRow, form: CorrectionForm, picks: Picks): ErrorRow {
-  // Future: POST the correction to SAP (ZSGTSFR093) and let it set the status.
+  // The row on screen only: api.ts's correctionColumns turns the result into the MAS_CON write.
   const mcAmt = parseLooseAmount(form.amountUsd)
   const exRate = parseFloat(form.exRate)
   const paymentTermsCode = picks.paymentTerms || row.paymentTermsCode

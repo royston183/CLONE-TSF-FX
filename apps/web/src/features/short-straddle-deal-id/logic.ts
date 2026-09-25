@@ -2,17 +2,20 @@
  * The page's business rules, lifted out of the legacy script as pure functions so the
  * component only holds state. The original never called an API: the ABAP report's reads and
  * updates (sub_get_data, GEN_NO_DEAL, UPDATE_DEAL_ID, USER_COMMAND_9000) were simulated in
- * memory, and so they are here — contracts, deals and the Deal ID number range live in
- * component state for the session.
+ * memory. They still compute the screen's next state here; api.ts writes that state to
+ * MySQL first when the middleware is up, and the Deal ID number range below is used only
+ * when it is not.
  */
 import {
   CANCELLED_DEAL_STATUS,
-  COMMODITIES,
   DOC_SOURCE,
   ENTITIES,
   FX_MODELS,
   PAYMENT_TERMS,
   PORT_PAIRS,
+  SEED_COMMODITIES,
+  SEED_FX_MODELS,
+  SEED_PAYMENT_TERMS,
   STATUS_MASTER,
   TRADE_CODE,
   TRADER_NAME,
@@ -42,13 +45,14 @@ export const DEAL_CREATOR = 'SIDDHI.P'
 export const entityOf = (code: string): Entity | undefined => ENTITIES.find((e) => e.code === code)
 export const modelOf = (code: string): FxModel | undefined => FX_MODELS.find((m) => m.code === code)
 export const payTermOf = (code: string): PaymentTerm | undefined => PAYMENT_TERMS.find((p) => p.code === code)
-const commodityDesc = (code: string) => COMMODITIES.find((c) => c.code === code)?.desc ?? ''
 
 /** The origin is the last leg of the model's entity string (e.g. OSIPL in OGA-DMCC-OSIPL). */
-export const originOf = (m: FxModel): string => m.entities.at(-1) ?? ''
+export const originOf = (m: FxModel): string => m.origin || (m.entities.at(-1) ?? '')
 export const originCurrencyOf = (m: FxModel): string => m.curr.at(-1) ?? ''
 
-export const statusLabel = (code: McStatus): string => `${code} - ${STATUS_MASTER[code]}`
+/** MC_STAT's text for a code; the bare code for one this screen has no text for. */
+export const statusName = (code: McStatus): string => STATUS_MASTER[code] ?? code
+export const statusLabel = (code: McStatus): string => `${code} - ${statusName(code)}`
 export const payTermLabel = (code: string): string => `${code} - ${payTermOf(code)?.desc ?? ''}`
 
 // ---------------------------------------------------------------- Deal ID number range
@@ -79,16 +83,17 @@ export function buildSeed(
   let seq = initialSeq
 
   seed.forEach((s, idx) => {
-    const m = modelOf(s.model)
+    // The seed is derived from the dummy masters it was written against, never MySQL's.
+    const m = SEED_FX_MODELS.find((x) => x.code === s.model)
     if (!m) return
     const origin = originOf(m)
     const mcDate = parseDMY(s.mcDate)
     const shipStart = addDays(mcDate, s.shipStartOff)
     const shipEnd = addDays(shipStart, s.shipDur)
     const currOrigin = originCurrencyOf(m)
-    const pt = PAYMENT_TERMS[idx % PAYMENT_TERMS.length]
+    const pt = SEED_PAYMENT_TERMS[idx % SEED_PAYMENT_TERMS.length]
     const ports = PORT_PAIRS[idx % PORT_PAIRS.length]
-    const cDesc = commodityDesc(s.comm)
+    const cDesc = SEED_COMMODITIES.find((c) => c.code === s.comm)?.desc ?? ''
     const reversed = s.stat === '21'
 
     contracts.push({
@@ -255,7 +260,7 @@ export const canCreateOrReverse = (mc: MasterContract | undefined): boolean =>
 
 export function selectionInfo(mc: MasterContract | undefined): string {
   if (!mc) return 'Select a row to enable Create Deal ID / Reverse MC'
-  return `Selected MC ${mc.mcRef} (${STATUS_MASTER[mc.mcStat]}) — drag the row onto a button, or click it`
+  return `Selected MC ${mc.mcRef} (${statusName(mc.mcStat)}) — drag the row onto a button, or click it`
 }
 
 // ---------------------------------------------------------------- Edit MC (dynpro 9001)
@@ -315,8 +320,9 @@ export function createDeal(
     dealDesc: model
       ? dealDescription(mc.origin, mc.shipStart.getFullYear(), model)
       : `${TRADER_NAME}_${mc.origin}_${mc.shipStart.getFullYear()}/${mc.entityDesc}`,
-    dealType: 'FX',
-    subType: 'FX1',
+    // The model's RULE_BT ZTYPE / ZSUB_TYPE; the dummy models carry the FX / FX1 the page used.
+    dealType: model ? model.dealType : 'FX',
+    subType: model ? model.subType : 'FX1',
     model: mc.fxModel,
     sDate: mc.shipStart,
     eDate: mc.shipEnd,

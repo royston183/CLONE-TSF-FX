@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadContracts, loadMasters, rejectContracts, rejectKeys } from './api.ts'
 import { ContractsTable, isInteractiveTarget } from './ContractsTable.tsx'
 import { CO_AREA_MASTER, ENTITY_MASTER, FX_MODEL_MASTER, MC_STATUS_MASTER, REGION_MASTER, seedContracts } from './data.ts'
 import { DateField } from './DateField.tsx'
@@ -46,8 +50,6 @@ import type {
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const DEFAULT_CRITERIA_MESSAGE = 'Please enter a valid Master Contract Date From and To.'
-const ENTITY_OPTIONS: DropdownOption[] = ENTITY_MASTER.map((e) => ({ value: e.code, code: e.code, sub: e.name }))
-const FX_OPTIONS: DropdownOption[] = FX_MODEL_MASTER.map((f) => ({ value: f.code, code: f.code, sub: f.desc }))
 const FILTER_FIELDS: Array<[keyof Filters, string, string]> = [
   ['originEntity', 'fOriginEntity', 'Origin Entity'],
   ['fxModel', 'fFxModel', 'FX Model'],
@@ -62,12 +64,21 @@ type DragState = { anchorId: string; lastHoverId: string; droppedOnReject: boole
 /**
  * MO: Reject MC after Expiry (ZSGTSFR097), converted from legacy/reject-mc-after-expiry.html.
  *
- * The original never called an API — its fetch calls are commented "Future:" placeholders —
- * so this is the same UI-only screen: a selection screen picks Master Contracts by MC date
- * range, and the rejections made from the result grid live in component state for the session.
+ * View Contracts reads ZSGTSFTR_MAS_CON through the SLC middleware (api.ts) with the
+ * selection criteria, and Reject moves the selected contracts to status 13 there. If the
+ * middleware cannot be reached the screen runs on its dummy contracts as before and
+ * rejections stay on the screen.
  */
 export default function MoRejectMcAfterExpiry() {
-  const [contracts, setContracts] = useState<MasterContract[]>(seedContracts)
+  const [contracts, setContracts] = useState<MasterContract[]>([])
+  /** Where the loaded contracts came from; 'dummy' means writes cannot reach MySQL. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  // Dummy mode keeps one table for the session, so its rejections survive a new selection.
+  const dummyTable = useRef<MasterContract[] | null>(null)
+  const masters = useRef<Promise<unknown>>(Promise.resolve())
+  const [, setMastersLoaded] = useState(false)
+  const selection = useRef<AbortController | null>(null)
+  const busy = useRef(false)
 
   // Selection screen
   const [form, setForm] = useState<CriteriaForm>(BLANK_CRITERIA_FORM)
@@ -103,9 +114,9 @@ export default function MoRejectMcAfterExpiry() {
     setToasts((list) => list.filter((t) => t.id !== id))
   }, [])
   const showToast = useCallback(
-    (message: string) => {
+    (message: string, error = false) => {
       const id = nextToastId.current++
-      setToasts((list) => [...list, { id, message }])
+      setToasts((list) => [...list, { id, message, error }])
       toastTimers.current.set(
         id,
         setTimeout(() => dismissToast(id), 5000),
@@ -119,6 +130,20 @@ export default function MoRejectMcAfterExpiry() {
       for (const t of timers.values()) clearTimeout(t)
     }
   }, [])
+
+  // The value helps load once; View Contracts waits for them, since the rows are mapped with them.
+  useEffect(() => {
+    const controller = new AbortController()
+    masters.current = loadMasters(controller.signal)
+      .then(() => setMastersLoaded(true))
+      .catch((error: unknown) => {
+        if (!isAbort(error)) showToast(`Could not load the value helps: ${messageOf(error)}`, true)
+      })
+    return () => {
+      controller.abort()
+      selection.current?.abort()
+    }
+  }, [showToast])
 
   // Drag and drop
   const rootRef = useRef<HTMLDivElement>(null)
@@ -144,12 +169,35 @@ export default function MoRejectMcAfterExpiry() {
   const pageRows = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
   const columns = currentColumns(criteria.layout)
   const filterCount = activeFilterCount(filters)
+  // Per render: the master lists are swapped for MySQL's rows once they load.
+  const entityOptions: DropdownOption[] = ENTITY_MASTER.map((e) => ({ value: e.code, code: e.code, sub: e.name }))
+  const fxOptions: DropdownOption[] = FX_MODEL_MASTER.map((f) => ({ value: f.code, code: f.code, sub: f.desc }))
 
   // ------------------------------------------------------------------ selection screen
 
   const setField = <K extends keyof CriteriaForm>(key: K, value: CriteriaForm[K]) => setForm((f) => ({ ...f, [key]: value }))
 
-  const viewContracts = () => {
+  /** Reads the contracts for the criteria: MySQL's answer, or the session's dummy table. */
+  const select = useCallback(async (applied: Criteria): Promise<MasterContract[] | null> => {
+    selection.current?.abort()
+    const controller = new AbortController()
+    selection.current = controller
+    setSource('loading')
+    try {
+      await masters.current
+      const loaded = await loadContracts(applied, controller.signal)
+      if (controller.signal.aborted) return null
+      const list = loaded.source === 'mysql' ? loaded.contracts : (dummyTable.current ??= seedContracts())
+      setContracts(list)
+      setSource(loaded.source)
+      return list
+    } catch (error) {
+      if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, true)
+      return null
+    }
+  }, [showToast])
+
+  const viewContracts = async () => {
     const result = validateCriteria(form.mcDateFrom, form.mcDateTo)
     if (!result.ok) {
       setCriteriaError(result.error)
@@ -160,8 +208,10 @@ export default function MoRejectMcAfterExpiry() {
     const applied = applyCriteria(form, result.from, result.to)
     setForm(applied.form)
     setCriteria(applied.criteria)
-    // Future: return fetch("/api/master-contracts").then(r => r.json());
-    setRowIds(getCriteriaRows(contracts, applied.criteria).map((c) => c.mcNumber))
+    const list = await select(applied.criteria)
+    if (!list) return
+    // The middleware applied what it could; the screen's own rules run over its answer too.
+    setRowIds(getCriteriaRows(list, applied.criteria).map((c) => c.mcNumber))
     setSelected(new Set())
     setPage(1)
     setSearch('')
@@ -215,11 +265,35 @@ export default function MoRejectMcAfterExpiry() {
   // The ids are left in place while the popup animates out; the next open replaces them.
   const cancelConfirm = confirmModal.close
 
-  const confirmReject = () => {
-    setContracts((list) => rejectMasterContracts(list, pendingIds))
+  const confirmReject = async () => {
+    if (busy.current) return
+    const ids = pendingIds
+    if (source === 'mysql') {
+      busy.current = true
+      try {
+        await rejectContracts(rejectKeys(contracts, ids))
+      } catch (error) {
+        showToast(messageOf(error), true)
+        confirmModal.close()
+        // Whatever did move is re-read, so the grid never shows a status MySQL lacks.
+        const list = await select(criteria)
+        if (list) {
+          setRowIds(getCriteriaRows(list, criteria).map((c) => c.mcNumber))
+          setSelected(new Set())
+        }
+        return
+      } finally {
+        busy.current = false
+      }
+    } else if (source === 'dummy' && dummyTable.current) {
+      dummyTable.current = rejectMasterContracts(dummyTable.current, ids)
+    } else {
+      return
+    }
+    setContracts((list) => rejectMasterContracts(list, ids))
     setSelected(new Set())
     confirmModal.close()
-    showToast(rejectToastText(pendingIds))
+    showToast(rejectToastText(ids))
   }
 
   // ------------------------------------------------------------------ drag-range selection
@@ -354,7 +428,7 @@ export default function MoRejectMcAfterExpiry() {
                   id="originEntityInput"
                   label="Origin Entity"
                   value={form.originEntity}
-                  options={ENTITY_OPTIONS}
+                  options={entityOptions}
                   onChange={(v) => setField('originEntity', v)}
                 />
                 <PlainSelect
@@ -368,7 +442,7 @@ export default function MoRejectMcAfterExpiry() {
                   id="fxModelInput"
                   label="FX Model"
                   value={form.fxModel}
-                  options={FX_OPTIONS}
+                  options={fxOptions}
                   onChange={(v) => setField('fxModel', v)}
                 />
                 <PlainSelect
@@ -478,6 +552,7 @@ export default function MoRejectMcAfterExpiry() {
               <span className="result-count" id="resultCount">
                 Showing <b>{pageRows.length}</b> of <b>{filtered.length}</b> contract{filtered.length === 1 ? '' : 's'}
               </span>
+              <SourceNote source={source} />
             </div>
             <div className="toolbar-right">
               <span className="result-count" id="selCount" style={{ display: selected.size > 0 ? 'inline' : 'none' }}>
@@ -608,9 +683,20 @@ export default function MoRejectMcAfterExpiry() {
       <div className="toast-wrap" id="toastWrap">
         {toasts.map((t) => (
           <div key={t.id} className="toast">
-            <svg className="toast-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <svg
+              className="toast-icon"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              style={t.error ? { color: 'var(--error)' } : undefined}
+            >
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M8 12.5L10.7 15L16 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              {t.error ? (
+                <path d="M12 7.5V13M12 16.5V16.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              ) : (
+                <path d="M8 12.5L10.7 15L16 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              )}
             </svg>
             <span>{t.message}</span>
             <button className="toast-close" aria-label="Dismiss" onClick={() => dismissToast(t.id)}>
@@ -621,6 +707,17 @@ export default function MoRejectMcAfterExpiry() {
       </div>
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }
 
 function PlainSelect({

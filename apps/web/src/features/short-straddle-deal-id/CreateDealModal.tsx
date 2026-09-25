@@ -19,21 +19,25 @@ export function CreateDealModal({
   open: boolean
   contract: MasterContract | undefined
   amount: string
-  /** The last number drawn from ZSGTSFNR01, so the preview can show the next one. */
-  lastDealSeq: number
+  /**
+   * The last number drawn from the dummy ZSGTSFNR01 counter, so the preview can show the next
+   * one; null against MySQL, where the middleware's range issues the number on Create.
+   */
+  lastDealSeq: number | null
   onAmountChange: (value: string) => void
   onClose: () => void
   onCreate: () => void
 }) {
   const model = mc ? modelOf(mc.fxModel) : undefined
+  const [range, interval] = lastDealSeq === null ? ['ZSGSLCNR03', '01'] : ['ZSGTSFNR01', '01']
   return (
     <Overlay id="deal-overlay" open={open} onClose={onClose}>
       <div className="modal-card" style={{ maxWidth: 560 }}>
         <ModalHeader title="Create Deal ID" subtitle={mc ? `MC ${mc.mcRef} - ${mc.mcDesc}` : ''} onClose={onClose} />
         <div className="modal-body">
           <div className="hint" style={{ marginBottom: 14 }}>
-            Booking a Deal ID against this Master Contract runs the ABAP number-range object <code>ZSGTSFNR01</code>{' '}
-            (interval <code>01</code>) to mint the next Deal ID, links it to this MC Ref No, and moves the Master Contract to
+            Booking a Deal ID against this Master Contract runs the ABAP number-range object <code>{range}</code>{' '}
+            (interval <code>{interval}</code>) to mint the next Deal ID, links it to this MC Ref No, and moves the Master Contract to
             status <b>04 – Deal ID Created (In-Use)</b>.
           </div>
           <div className="filter-bar" style={{ marginBottom: 14 }}>
@@ -67,8 +71,11 @@ export function CreateDealModal({
               <>
                 <DetailCell label="Trader" value={`${TRADER_NAME} (${TRADE_CODE})`} />
                 <DetailCell label="Deal Description" value={dealDescription(mc.origin, mc.shipStart.getFullYear(), model)} accent />
-                <DetailCell label="Deal Type / Sub Type" value="FX / FX1" />
-                <DetailCell label="Next Deal ID (Nr. Range ZSGTSFNR01)" value={nextDealId(lastDealSeq)} />
+                <DetailCell label="Deal Type / Sub Type" value={`${model.dealType} / ${model.subType}`} />
+                <DetailCell
+                  label={`Next Deal ID (Nr. Range ${range})`}
+                  value={lastDealSeq === null ? 'Issued by the number range on Create' : nextDealId(lastDealSeq)}
+                />
               </>
             ) : null}
           </div>

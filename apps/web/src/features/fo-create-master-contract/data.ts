@@ -1,7 +1,10 @@
 /**
- * Seed data, verbatim from the legacy page's "Dummy data" block. The page never called an
- * API: every list here stands in for an SAP value help or the master-contract table, and is
- * kept in this one file so swapping it for OData later touches nothing else.
+ * Seed data, verbatim from the legacy page's "Dummy data" block. Every list here stands in
+ * for an SAP value help or the master-contract table.
+ *
+ * They are now the fallback: api.ts replaces the master lists in place with MySQL's rows
+ * once the middleware answers, and seedContracts() is only shown when it cannot be reached.
+ * A master that is registered but still empty in MySQL keeps these values.
  */
 import type { Commodity, FxModel, MasterContract, OriginEntity, PaymentTerm, StatusMeta } from './types.ts'
 
@@ -13,6 +16,12 @@ export const ORIGIN_ENTITIES: OriginEntity[] = [
 
 /** C101 is not a commodity but "several": picking it opens the child-commodity picker. */
 export const MULTI_COMMODITY = 'C101'
+
+/**
+ * ZSGTSFTR_COMODIT names "several" C001 (Multi-Commodity), not C101 as the legacy seed did,
+ * so both mean the child-commodity picker.
+ */
+export const isMultiCommodity = (code: string | null | undefined): boolean => code === MULTI_COMMODITY || code === 'C001'
 
 export const COMMODITIES: Commodity[] = [
   { code: 'C101', name: 'Multiple Commodity', desc: 'Multiple Commodity' },
@@ -30,7 +39,8 @@ export const COMMODITIES: Commodity[] = [
   { code: 'C103', name: 'SOYABEAN', desc: 'SOYABEAN' },
 ]
 
-export const CHILD_COMMODITIES = COMMODITIES.filter((c) => c.code !== MULTI_COMMODITY)
+/** Every commodity but the "several" code itself: what the child-commodity picker offers. */
+export const childCommodities = () => COMMODITIES.filter((c) => !isMultiCommodity(c.code))
 
 export const PAYMENT_TERMS: PaymentTerm[] = [
   { code: 'P01', label: 'P01 - 270 days from bill of lading date' },
@@ -42,6 +52,18 @@ export const PAYMENT_TERMS: PaymentTerm[] = [
 ]
 
 export const PORTS = ['Mumbai', 'Mundra', 'Chennai', 'Singapore', 'Dubai', 'Rotterdam', 'Hamburg', 'Bangkok', 'Ho Chi Minh City']
+
+/**
+ * ZCURR_ID for a currency string. There is no currency-string master in MySQL, so this is the
+ * mapping the legacy error-correction screen carried (from the SAP screenshots). Only used for
+ * dummy FX models; a model read from ZSGTSFTR_RULE_BT brings its own ZCURR_ID.
+ */
+export const CURRENCY_ID_BY_STRING: Record<string, string> = {
+  "INR-INR-INR": "C001",
+  "USD-USD-INR": "C002",
+  "INR-INR-USD": "C003",
+  "USD-INR-INR": "C012",
+}
 
 export const FX_MODELS: FxModel[] = [
   { id: 'M032', code: 'M032', desc: 'INR Long Forward', entity: 'OGA-DMCC-OSIPL', currency: 'USD-USD-INR' },
@@ -77,10 +99,22 @@ export const INITIAL_MC_DATE = '23-09-2026'
 /** Where the (mock) creation email is addressed. */
 export const EMAIL_RECIPIENT = 'royston.d@fourthsignal.com'
 
+/**
+ * Tolerance % a new contract starts with: ZSGTSFTR_TOLR's T01, which api.ts loads. 5 is the
+ * legacy page's value, kept while TOLR is empty in MySQL.
+ */
+export const DEFAULT_TOLERANCE = { T01: 5 }
+
 export const findCommodity = (code: string | null | undefined) => COMMODITIES.find((c) => c.code === code)
 export const findFxModel = (id: string | null | undefined) => FX_MODELS.find((m) => m.id === id)
 export const findEntity = (code: string | null | undefined) => ORIGIN_ENTITIES.find((e) => e.code === code)
 export const findPaymentTerm = (code: string | null | undefined) => PAYMENT_TERMS.find((p) => p.code === code)
+
+// The seed contracts are built from the dummy masters as they were, not from whatever the
+// lists hold after MySQL's rows are swapped in: C101 or M034a are not in MySQL.
+const SEED_ENTITIES = [...ORIGIN_ENTITIES]
+const SEED_COMMODITIES = [...COMMODITIES]
+const SEED_FX_MODELS = [...FX_MODELS]
 
 function mkContract(
   mcNumber: number,
@@ -95,9 +129,9 @@ function mkContract(
   status: string,
   ref: string,
 ): MasterContract {
-  const entity = findEntity(entityCode)
-  const comm = findCommodity(commCode)
-  const fx = findFxModel(fxId)
+  const entity = SEED_ENTITIES.find((e) => e.code === entityCode)
+  const comm = SEED_COMMODITIES.find((c) => c.code === commCode)
+  const fx = SEED_FX_MODELS.find((m) => m.id === fxId)
   if (!entity || !comm || !fx) throw new Error(`seed contract ${mcNumber} references unknown master data`)
   const amountUsd = parseFloat(amtUsd)
   const exRate = parseFloat(rate)

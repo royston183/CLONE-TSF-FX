@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { sapUser } from '../../shared/fx/sap.ts'
+import { bookDeal, loadContracts, loadMasters, markInUse, reverseContract, saveEdit as saveEditToMysql } from './api.ts'
 import { CreateDealModal } from './CreateDealModal.tsx'
-import { ENTITIES, FX_MODELS, INITIAL_DEAL_SEQ, MC_SEED, REGIONS, STATUS_CODES, STATUS_MASTER } from './data.ts'
+import { ENTITIES, FX_MODELS, INITIAL_DEAL_SEQ, REGIONS, STATUS_CODES, STATUS_MASTER } from './data.ts'
 import { DealBreakdownModal } from './DealBreakdownModal.tsx'
 import { EditMcModal } from './EditMcModal.tsx'
 import { fmtNum, toISO } from './format.ts'
 import {
   applyEdit,
   applyFilters,
-  buildSeed,
   canCreateOrReverse,
   computeKpis,
   createDeal,
@@ -41,16 +45,19 @@ import type {
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const PAGE_SIZES = [8, 15, 25, 50]
-const SORTED_ENTITIES = [...ENTITIES].sort((a, b) => (a.code < b.code ? -1 : 1))
 const noFilters = (): Filters => ({ search: '', asOf: toISO(new Date()), status: 'ALL', entity: 'ALL', region: 'ALL', model: 'ALL' })
 
 /**
  * RMC List – Deal ID Creation (Short Straddle), SAP transaction ZSGTSFR102, converted from
  * legacy/deal_id_workbench.html.
  *
+ * Master Contracts, Deal IDs and the masters come from MySQL through the SLC middleware
+ * (api.ts); Create Deal ID, Edit MC and Reverse MC write there first, and the Deal ID number
+ * comes from the middleware's range. If the middleware cannot be reached the screen runs on
+ * its dummy data as before and changes stay on the screen.
+ *
  * The original's Refresh button reloaded the page to restore its dummy data; here it remounts
- * the workbench, which does the same: seed data, filters and the Deal ID number range all
- * start over.
+ * the workbench, which reloads everything and resets the filters.
  */
 export default function ShortStraddleDealId() {
   const [generation, setGeneration] = useState(0)
@@ -58,20 +65,16 @@ export default function ShortStraddleDealId() {
 }
 
 function Workbench({ onRefresh }: { onRefresh: () => void }) {
-  // The page never called an API: the ABAP report's SELECTs are simulated by this seed, and
-  // every update below (Deal ID booking, reversal, edit) lives in component state.
-  const [init] = useState(() => {
-    const seed = buildSeed(MC_SEED, INITIAL_DEAL_SEQ)
-    const filters = noFilters()
-    return { ...seed, filters, loaded: applyFilters(seed.contracts, filters).filtered.length }
-  })
-  const [contracts, setContracts] = useState<MasterContract[]>(init.contracts)
-  const [deals, setDeals] = useState<Deal[]>(init.deals)
-  /** Last number drawn from number-range object ZSGTSFNR01. */
-  const [lastDealSeq, setLastDealSeq] = useState(init.lastSeq)
+  const [contracts, setContracts] = useState<MasterContract[]>([])
+  const [deals, setDeals] = useState<Deal[]>([])
+  /** Where the contracts came from; 'dummy' means writes cannot reach MySQL. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const busy = useRef(false)
+  /** Dummy mode only: the last number drawn from number-range object ZSGTSFNR01. */
+  const [lastDealSeq, setLastDealSeq] = useState(INITIAL_DEAL_SEQ)
 
   // Table
-  const [filters, setFilters] = useState<Filters>(init.filters)
+  const [filters, setFilters] = useState<Filters>(noFilters)
   const [selected, setSelected] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
@@ -89,12 +92,8 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
   const [reverseError, setReverseError] = useState(false)
   const closeModal = useCallback(() => setOpenModal(null), [])
 
-  // Toast — the page greets with how many contracts it loaded.
-  const [toast, setToast] = useState<Toast>(() => ({
-    message: `Ready. ${init.loaded} Master Contract(s) loaded.`,
-    kind: '',
-    show: true,
-  }))
+  // Toast — the page greets with how many contracts it loaded, once they have loaded.
+  const [toast, setToast] = useState<Toast>({ message: '', kind: '', show: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const hideToast = useCallback(() => setToast((t) => ({ message: t.message, kind: '', show: false })), [])
   const showToast = useCallback(
@@ -105,10 +104,24 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     },
     [hideToast],
   )
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
   useEffect(() => {
-    toastTimer.current = setTimeout(hideToast, 3600)
-    return () => clearTimeout(toastTimer.current)
-  }, [hideToast])
+    const controller = new AbortController()
+    loadMasters(controller.signal)
+      .then(() => loadContracts(controller.signal))
+      .then((loaded) => {
+        setContracts(loaded.contracts)
+        setDeals(loaded.deals)
+        setLastDealSeq(loaded.lastSeq)
+        setSource(loaded.source)
+        showToast(`Ready. ${applyFilters(loaded.contracts, noFilters()).filtered.length} Master Contract(s) loaded.`, '')
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, 'error')
+      })
+    return () => controller.abort()
+  }, [showToast])
 
   // Drag and drop
   const [draggingRef, setDraggingRef] = useState<number | null>(null)
@@ -187,14 +200,27 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     setOpenModal('edit')
   }
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
+    if (busy.current) return
     const mc = findMc(editRef)
     if (!mc) {
       closeModal()
       return
     }
-    // Future: the MC update the ABAP screen performs on Update (dynpro 9001).
-    const updated = applyEdit(mc, editForm, new Date())
+    // The MC update the ABAP screen performs on Update (dynpro 9001).
+    let updated = applyEdit(mc, editForm, new Date())
+    if (source === 'mysql') {
+      busy.current = true
+      try {
+        await saveEditToMysql(updated)
+        updated = { ...updated, changedBy: (await sapUser()) || updated.changedBy }
+      } catch (error) {
+        showToast(`Master Contract ${mc.mcRef} was not updated: ${messageOf(error)}`, 'error')
+        return
+      } finally {
+        busy.current = false
+      }
+    }
     const next = contracts.map((c) => (c.mcRef === mc.mcRef ? updated : c))
     setContracts(next)
     closeModal()
@@ -208,11 +234,54 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     setOpenModal('deal')
   }
 
-  const submitDeal = () => {
+  const submitDeal = async () => {
+    if (busy.current) return
     const mc = findMc(dealRef)
     if (!mc) return
-    // Future: GEN_NO_DEAL draws from ZSGTSFNR01 and UPDATE_DEAL_ID stores the deal server-side.
-    const r = createDeal(mc, dealAmount, lastDealSeq, new Date())
+    const now = new Date()
+    if (source === 'mysql') {
+      // GEN_NO_DEAL: the middleware draws the Deal ID from ZSGSLCNR03/01 — the local counter
+      // is not used. UPDATE_DEAL_ID then moves the MC to 04.
+      const draft = createDeal(mc, dealAmount, lastDealSeq, now).deal
+      busy.current = true
+      let deal: Deal
+      try {
+        const booked = await bookDeal(draft, mc)
+        const user = await sapUser()
+        // A blank ZTRD_CODE (no ZSGTRMTR_TRADER row for this user) keeps the dummy on screen.
+        deal = { ...draft, dealId: booked.dealId, tradeCode: booked.tradeCode || draft.tradeCode, createdBy: user || draft.createdBy }
+      } catch (error) {
+        busy.current = false
+        showToast(`The Deal ID was not created: ${messageOf(error)}`, 'error')
+        return
+      }
+      let failure: string | null = null
+      try {
+        await markInUse(mc)
+      } catch (error) {
+        failure = messageOf(error)
+      } finally {
+        busy.current = false
+      }
+      const user = await sapUser()
+      const next =
+        failure === null
+          ? contracts.map((c) => (c.mcRef === mc.mcRef ? { ...c, mcStat: '04' as const, changedBy: user || c.changedBy, changedOn: now } : c))
+          : contracts
+      setContracts(next)
+      setDeals((list) => [...list, deal])
+      closeModal()
+      if (failure === null) showToast(`Deal ID ${deal.dealId} created successfully and linked to MC ${mc.mcRef}.`, 'success')
+      else
+        showToast(
+          `Deal ID ${deal.dealId} was created and linked to MC ${mc.mcRef}, but the Master Contract could not be moved to status 04 (Deal ID Created): ${failure}`,
+          'error',
+        )
+      refilter(next, filters)
+      return
+    }
+    // Dummy mode: the number comes from the screen's own ZSGTSFNR01 counter, as before.
+    const r = createDeal(mc, dealAmount, lastDealSeq, now)
     const next = contracts.map((c) => (c.mcRef === mc.mcRef ? r.contract : c))
     setContracts(next)
     setDeals((list) => [...list, r.deal])
@@ -229,7 +298,8 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     setOpenModal('reverse')
   }
 
-  const submitReverse = () => {
+  const submitReverse = async () => {
+    if (busy.current) return
     const mc = findMc(reverseRef)
     if (!mc) return
     if (!validateReverseRemark(reverseRemark)) {
@@ -237,8 +307,21 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
       showToast('Please enter remarks.', '')
       return
     }
-    // Future: USER_COMMAND_9000 writes status 21 and the remark back to the MC table.
-    const next = contracts.map((c) => (c.mcRef === mc.mcRef ? reverseMc(c, reverseRemark, new Date()) : c))
+    // USER_COMMAND_9000 writes status 21 and the remark back to the MC table.
+    let reversed = reverseMc(mc, reverseRemark, new Date())
+    if (source === 'mysql') {
+      busy.current = true
+      try {
+        await reverseContract(mc, reverseRemark)
+        reversed = { ...reversed, changedBy: (await sapUser()) || reversed.changedBy }
+      } catch (error) {
+        showToast(`Master Contract ${mc.mcRef} was not reversed: ${messageOf(error)}`, 'error')
+        return
+      } finally {
+        busy.current = false
+      }
+    }
+    const next = contracts.map((c) => (c.mcRef === mc.mcRef ? reversed : c))
     setContracts(next)
     closeModal()
     showToast(`Master Contract ${mc.mcRef} reversed successfully.`, 'error')
@@ -292,6 +375,8 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
   })
 
   const statusFilter = filters.status
+  // Per render: ENTITIES is swapped for ZSGTSFTR_COMP's rows once they load.
+  const sortedEntities = [...ENTITIES].sort((a, b) => (a.code < b.code ? -1 : 1))
 
   return (
     <div className="ssdid">
@@ -304,7 +389,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
           </div>
         </div>
         <div className="head-actions">
-          <button className="btn-outline" type="button" title="Reload dummy data" onClick={onRefresh}>
+          <button className="btn-outline" type="button" title="Reload the Master Contracts" onClick={onRefresh}>
             ↻ Refresh
           </button>
           <SignOutButton className="btn-outline" />
@@ -340,6 +425,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
             <div className="panel-title-left">
               <span className="dot-bullet" />
               <h2>Master Contracts (Short Straddle)</h2>
+              <SourceNote source={source} />
             </div>
             <span className="badge-blue" id="result-count-badge">
               {total} contract{total === 1 ? '' : 's'}
@@ -410,7 +496,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
                   <label htmlFor="ssdid-f-entity">Origin Entity</label>
                   <select id="ssdid-f-entity" value={filters.entity} onChange={(e) => setFilter('entity', e.target.value)}>
                     <option value="ALL">All entities</option>
-                    {SORTED_ENTITIES.map((en) => (
+                    {sortedEntities.map((en) => (
                       <option key={en.code} value={en.code}>
                         {en.code} - {en.name}
                       </option>
@@ -564,7 +650,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
         open={openModal === 'deal'}
         contract={findMc(dealRef)}
         amount={dealAmount}
-        lastDealSeq={lastDealSeq}
+        lastDealSeq={source === 'mysql' ? null : lastDealSeq}
         onAmountChange={setDealAmount}
         onClose={closeModal}
         onCreate={submitDeal}
@@ -583,4 +669,15 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
       />
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

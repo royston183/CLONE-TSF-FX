@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadMasters, loadQueue, reverseMc, submitCorrection } from './api.ts'
 import { CorrectionModal } from './CorrectionModal.tsx'
-import { FX_MODELS, ORIGIN_ENTITIES, REGION_CATALOG, buildFreshDataset } from './data.ts'
+import { FX_MODELS, ORIGIN_ENTITIES, REGION_CATALOG } from './data.ts'
 import { DateField } from './DateField.tsx'
 import {
   applyCorrection,
@@ -40,8 +44,6 @@ import type {
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const DEFAULT_SORT: Sort = { field: 'mcRef', dir: 'desc' }
-/** The FX model filter lists each code once, keyed by the first model id carrying it. */
-const FX_FILTER_OPTIONS = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
 const EMPTY_FORM: CorrectionForm = {
   amendedDate: '',
   amountUsd: '',
@@ -61,13 +63,16 @@ const records = (n: number) => `${n}${n === 1 ? ' record' : ' records'}`
  * FO: MC Error Correction (ZSGTSFR093), converted from legacy/mc-error-correction.html — the
  * page titled "FO: MC Error/Amendment".
  *
- * Front Office sees the Master Contracts Mid-Office rejected, corrects one (Update &
- * Resubmit to MO) or reverses it. The original never called an API, so this is the same
- * UI-only screen: the rows live in component state for the session and Refresh restores the
- * seed data.
+ * Front Office sees the Master Contracts Mid-Office sent back (ZSGTSFTR_MAS_CON at status 11
+ * or 21, through the SLC middleware — api.ts), corrects one (Update & Resubmit to MO: 11 -> 13,
+ * 21 -> 22) or reverses it (-> 12), and Refresh re-reads the queue. If the middleware cannot
+ * be reached the screen runs on its seed rows as before and changes stay on the screen.
  */
 export default function FoMcErrorCorrection() {
-  const [dataset, setDataset] = useState<ErrorRow[]>(buildFreshDataset)
+  const [dataset, setDataset] = useState<ErrorRow[]>([])
+  /** Where the rows came from; 'dummy' means writes cannot reach MySQL. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const busy = useRef(false)
 
   // Table
   const [filters, setFilters] = useState<Filters>(() => defaultFilters())
@@ -109,7 +114,24 @@ export default function FoMcErrorCorrection() {
     [],
   )
 
-  const findRow = (ref: number | null) => (ref === null ? undefined : dataset.find((r) => r.mcRef === ref))
+  /** Masters first (the row mapping reads them), then the queue. */
+  const reload = useCallback(async (signal?: AbortSignal) => {
+    await loadMasters(signal)
+    const loaded = await loadQueue(signal)
+    setDataset(loaded.rows)
+    setSource(loaded.source)
+    return loaded.source
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    reload(controller.signal).catch((error: unknown) => {
+      if (!isAbort(error)) showToast(`Could not load the correction queue: ${messageOf(error)}`, 'error')
+    })
+    return () => controller.abort()
+  }, [reload, showToast])
+
+  const findRow =(ref: number | null) => (ref === null ? undefined : dataset.find((r) => r.mcRef === ref))
 
   /** The original's renderList(flashRef): the row that just changed flashes green once. */
   const flash = (ref: number) => {
@@ -138,13 +160,28 @@ export default function FoMcErrorCorrection() {
     showToast('Filters cleared.')
   }
 
-  const refresh = () => {
-    // Future: re-read the correction queue from SAP instead of restoring the seed rows.
-    setDataset(buildFreshDataset())
+  const refresh = async () => {
+    if (busy.current) return
+    busy.current = true
+    let loaded: MasterSource
+    try {
+      // Re-reads ZSGTSFTR_MAS_CON; the seed rows come back only if the middleware is down.
+      loaded = await reload()
+    } catch (error) {
+      showToast(`Could not reload the correction queue: ${messageOf(error)}`, 'error')
+      return
+    } finally {
+      busy.current = false
+    }
     clearFiltersAndSearch()
     setSort(DEFAULT_SORT)
     setSelectedRef(null)
-    showToast('Hard reset — all Master Contracts restored to their original state.', 'warn')
+    showToast(
+      loaded === 'mysql'
+        ? 'Correction queue reloaded from MySQL.'
+        : 'Hard reset — the middleware could not be reached, so the dummy Master Contracts were restored.',
+      'warn',
+    )
   }
 
   // ------------------------------------------------------------------ correction flow
@@ -179,7 +216,8 @@ export default function FoMcErrorCorrection() {
   const commitAmendedDate = (value: string) =>
     setErrors((e) => ({ ...e, amendedDate: !isAmendedDateValid(value, editingRow?.abapStatus) }))
 
-  const update = () => {
+  const update = async () => {
+    if (busy.current) return
     const { valid, errors: found } = validateCorrection(form, editingRow?.abapStatus)
     setErrors(found)
     if (!valid) {
@@ -187,7 +225,19 @@ export default function FoMcErrorCorrection() {
       return
     }
     if (!editingRow) return
-    const updated = applyCorrection(editingRow, form, picks)
+    // editingRow is the MC as read from MAS_CON — the original state ZSGTSFV_MC would give.
+    let updated = applyCorrection(editingRow, form, picks)
+    if (source === 'mysql') {
+      busy.current = true
+      try {
+        updated = { ...updated, abapStatus: await submitCorrection(updated) }
+      } catch (error) {
+        showToast(`Master Contract ${updated.mcRef} was not updated: ${messageOf(error)}`, 'error')
+        return
+      } finally {
+        busy.current = false
+      }
+    }
     setDataset((list) => list.map((r) => (r.mcRef === updated.mcRef ? updated : r)))
     correctionModal.close()
     showToast(`Master Contract ${updated.mcRef} updated and resubmitted to Mid-Office.`)
@@ -208,11 +258,22 @@ export default function FoMcErrorCorrection() {
     setPendingReverseRef(null)
   }
 
-  const confirmReverse = () => {
+  const confirmReverse = async () => {
+    if (busy.current) return
     const row = findRow(pendingReverseRef)
     if (row) {
-      // Future: post the reversal to SAP.
-      setDataset((list) => list.map((r) => (r.mcRef === row.mcRef ? reverseRow(r) : r)))
+      if (source === 'mysql') {
+        busy.current = true
+        try {
+          await reverseMc(row)
+        } catch (error) {
+          showToast(`Master Contract ${row.mcRef} was not reversed: ${messageOf(error)}`, 'error')
+          return
+        } finally {
+          busy.current = false
+        }
+      }
+      setDataset((list) => list.map((r) => (r.mcRef === row.mcRef ? { ...reverseRow(r), abapStatus: '12' } : r)))
       showToast(`Master Contract ${row.mcRef} reversed successfully.`, 'warn')
       flash(row.mcRef)
     }
@@ -249,6 +310,9 @@ export default function FoMcErrorCorrection() {
 
   const selectedRow = findRow(selectedRef)
   const actionable = canAct(selectedRow)
+  // Per render: FX_MODELS is swapped for ZSGTSFTR_RULE_BT's rows once they load. The filter
+  // lists each code once, keyed by the first model id carrying it.
+  const fxFilterOptions = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
 
   return (
     <div className="fomcec">
@@ -271,6 +335,7 @@ export default function FoMcErrorCorrection() {
           <div className="section-title">
             <span className="dot" />
             Master Contracts <span className="title-count">{records(dataset.length)}</span>
+            <SourceNote source={source} />
           </div>
 
           <div className="table-toolbar toolbar-flat">
@@ -352,7 +417,7 @@ export default function FoMcErrorCorrection() {
               title="FX Model"
               all="All models"
               value={filters.fxModel}
-              options={FX_FILTER_OPTIONS.map((m) => [m.id, `${m.code} - ${m.desc}`])}
+              options={fxFilterOptions.map((m) => [m.id, `${m.code} - ${m.desc}`])}
               onChange={(v) => setFilter('fxModel', v)}
             />
             <button type="button" className="btn btn-secondary btn-sm" id="btnResetFilters" onClick={resetFilters}>
@@ -375,7 +440,15 @@ export default function FoMcErrorCorrection() {
               />
             ) : null}
           </div>
-          {totalRows === 0 ? <div className="empty-state">No Master Contracts match your search or filters.</div> : null}
+          {totalRows === 0 ? (
+            <div className="empty-state">
+              {source === 'loading'
+                ? 'Loading Master Contracts…'
+                : dataset.length === 0
+                  ? 'No Master Contracts are awaiting FO correction.'
+                  : 'No Master Contracts match your search or filters.'}
+            </div>
+          ) : null}
 
           <div className="table-footer">
             <div className="page-size-select">
@@ -459,6 +532,17 @@ export default function FoMcErrorCorrection() {
       <div className={`toast${toast ? ' show' : ''}${toast?.kind ? ` ${toast.kind}` : ''}`}>{toast?.message}</div>
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }
 
 function FilterSelect({
