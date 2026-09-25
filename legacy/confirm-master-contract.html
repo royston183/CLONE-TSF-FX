@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MO: Confirm Master Contract</title>
+<style>
+:root{
+  --bg:#eef2f8;
+  --surface:#ffffff;
+  --border:#e5e9f2;
+  --border-soft:#eef1f6;
+  --ink:#101828;
+  --ink-soft:#344054;
+  --muted:#667085;
+  --muted-2:#98a2b3;
+  --blue:#2f6fed;
+  --blue-dark:#1d4fd1;
+  --blue-pale:#eaf1ff;
+  --green:#16a34a;
+  --green-pale:#e7f8ee;
+  --amber:#d97706;
+  --amber-pale:#fef3e2;
+  --red:#dc2626;
+  --red-pale:#fdeaea;
+  --grey-dot:#98a2b3;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  --shadow-md:0 4px 12px rgba(16,24,40,.06);
+  --header-h:auto;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:"Inter",Arial,Helvetica,sans-serif;}
+body{background:var(--bg);color:var(--ink);font-size:13.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#c6cedb;border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:#a7b2c3;}
+
+/* ---------- page head ---------- */
+.page-head{
+  display:flex;align-items:center;gap:14px;padding:16px 24px;background:var(--blue-pale);
+  border-bottom:1px solid #dbe6fb;
+}
+.head-icon{height:42px;width:auto;flex-shrink:0;object-fit:contain;}
+.title-wrap{min-width:0;flex:1;}
+.page-title{font-size:19px;font-weight:800;color:var(--ink);line-height:1.25;}
+.page-subtitle{font-size:12.5px;color:var(--muted);margin-top:1px;}
+.head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.btn-outline{
+  min-height:36px;padding:0 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--blue);color:var(--blue);transition:all .15s;
+}
+.btn-outline:hover{background:var(--blue);color:#fff;}
+.btn-icon{
+  width:36px;height:36px;padding:0;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:all .15s;
+}
+.btn-icon:hover{border-color:var(--blue);color:var(--blue);}
+
+main{max-width:none;margin:0;padding:20px 24px 60px;}
+
+/* ---------- explain banner ---------- */
+.explain{
+  background:var(--amber-pale);border:1px solid #f5d9a8;border-radius:var(--radius-md);padding:11px 14px;
+  font-size:12px;color:#7a4b00;margin-bottom:16px;line-height:1.6;
+}
+.explain b{color:#5c3800;}
+.term-def{border-bottom:1px dotted #b98a3c;cursor:help;}
+
+/* ---------- KPI / stat cards ---------- */
+.kpi-head{display:flex;align-items:center;gap:8px;margin:2px 0 10px;}
+.kpi-toggle{
+  width:22px;height:22px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);
+  cursor:pointer;font-size:10px;color:var(--muted);
+}
+.kpi-toggle.collapsed span{display:inline-block;transform:rotate(-90deg);}
+.kpi-head-title{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2);}
+.metrics-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+.metrics-grid.kpi-hidden{display:none;}
+.metric-card{
+  position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .12s;
+}
+.metric-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.metric-card.active{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-pale);}
+.metric-card::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:4px;border-radius:4px;}
+.metric-inner{padding:18px 18px 16px 30px;}
+.metric-val{font-size:1.8rem;font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--ink);margin-bottom:4px;}
+.metric-lbl{font-size:12.5px;color:var(--muted);font-weight:500;}
+.k-total::before{background:var(--blue);}
+.k-pending::before{background:var(--amber);}
+.k-errcorr::before{background:#7c3aed;}
+.k-confirmed::before{background:#5b8def;}
+.k-inuse::before{background:var(--green);}
+.k-rejected::before{background:var(--red);}
+
+/* ---------- panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px;}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+}
+.panel-title-left{display:flex;align-items:center;gap:9px;}
+.dot-bullet{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.panel-title h2{font-size:14.5px;font-weight:700;color:var(--ink);}
+
+.section-label{
+  font-size:11px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;font-weight:700;
+  margin:16px 0 9px;display:flex;align-items:center;gap:10px;
+}
+.section-label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border-soft);}
+
+/* ---------- search bar row ---------- */
+.search-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.search-box{
+  flex:0 1 480px;max-width:480px;position:relative;display:flex;align-items:center;
+}
+.search-box .icon{position:absolute;left:13px;font-size:14px;color:var(--muted-2);pointer-events:none;}
+.search-box input{
+  width:100%;height:42px;padding:0 14px 0 38px;border:1px solid var(--border);border-radius:var(--radius-md);
+  background:var(--surface);font-size:13px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.search-box input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.search-meta{font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+
+
+/* ---------- single-line Master Contract toolbar ---------- */
+.master-toolbar{
+  display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;margin-bottom:16px;
+  overflow-x:auto;overflow-y:visible;padding:8px 2px 10px;
+}
+.master-toolbar .search-box{flex:0 0 150px;max-width:150px;min-width:150px;}
+.master-toolbar .search-box input{height:38px;border-radius:var(--radius-sm);font-size:12.5px;}
+.master-toolbar #filter-panel-body{
+  display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;min-width:max-content;
+}
+.master-toolbar #filter-panel-body.collapsed{display:none;}
+.master-toolbar #filter-panel-body .filter-bar{
+  display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;margin:0;
+}
+.master-toolbar #filter-panel-body .filter-field{gap:6px;}
+.master-toolbar #filter-panel-body .filter-field label{font-size:11.5px;}
+.master-toolbar #filter-panel-body .filter-field select{width:96px;height:38px;padding-left:10px;padding-right:25px;font-size:11.5px;background-position:right 8px center;}
+.master-toolbar #filter-panel-body .filter-field.entity-filter select{width:108px;}
+.master-toolbar #filter-panel-body .status-filter .seg{height:38px;padding:0 7px;font-size:11px;}
+.master-toolbar #filter-panel-body .date-range{gap:6px;}
+.master-toolbar #filter-panel-body .date-range span{font-size:10.5px;}
+.master-toolbar #filter-panel-body .dp input{width:98px;height:38px;padding-left:9px;padding-right:26px;font-size:11px;}
+.master-toolbar #filter-panel-body .dp-btn{right:3px;font-size:12px;}
+.master-toolbar #filter-panel-body .filter-reset-wrap{gap:6px;}
+.master-toolbar #filter-panel-body .filter-spacer-label{font-size:11px;}
+.master-toolbar #filter-panel-body .filter-reset{height:38px;padding:0 10px;font-size:11.5px;}
+.master-toolbar #filter-panel-body .common-actions{
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding:0;border-top:none;margin:0 0 0 4px;
+}
+.master-toolbar #filter-panel-body .common-btn{height:38px;padding:0 10px;font-size:11.5px;white-space:nowrap;}
+.master-toolbar #filter-panel-body .selected-count{font-size:11.5px;white-space:nowrap;margin-left:0;}
+
+/* ---------- filter bar ---------- */
+.filter-bar{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.filter-field{display:flex;flex-direction:column;gap:6px;}
+.filter-field label{font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+.filter-field input,.filter-field select{
+  height:38px;padding:0 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--ink);font-size:12.5px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;min-width:0;
+}
+.filter-field input{width:170px;}
+.filter-field select{width:170px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2398a2b3'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:28px;
+}
+.filter-field input:hover,.filter-field select:hover{border-color:#b9c6dc;}
+.filter-field input:focus,.filter-field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.date-range{display:flex;align-items:center;gap:6px;}
+.date-range span{font-size:11.5px;color:var(--muted);}
+.dp{position:relative;display:inline-flex;align-items:center;}
+.dp input{width:126px;padding-right:30px;cursor:pointer;background:var(--surface);}
+.dp-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;line-height:1;}
+.dp-btn:hover{color:var(--blue-dark);}
+.dp-popup{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:236px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:0 14px 32px rgba(16,24,40,.2);padding:10px 12px 12px;display:none;
+}
+.dp-popup.open{display:block;}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-head button{background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);padding:3px 9px;border-radius:var(--radius-sm);}
+.dp-head button:hover{background:var(--blue-pale);color:var(--blue-dark);}
+.dp-month-label{font-size:12px;font-weight:700;color:var(--ink);}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-dow{font-size:9.5px;font-weight:700;color:var(--muted-2);text-align:center;padding:4px 0;}
+.dp-day{font-size:11.5px;text-align:center;padding:6px 0;border-radius:var(--radius-sm);cursor:pointer;color:var(--ink-soft);}
+.dp-day:hover{background:var(--blue-pale);color:var(--blue-dark);}
+.dp-day.muted{color:var(--muted-2);opacity:.4;cursor:default;}
+.dp-day.muted:hover{background:none;color:var(--muted-2);}
+.dp-day.selected{background:var(--blue);color:#fff;font-weight:700;}
+.dp-day.today:not(.selected){border:1px solid var(--blue);}
+.filter-reset-wrap{display:flex;flex-direction:column;gap:6px;}
+.filter-spacer-label{font-size:12px;font-weight:600;color:transparent;user-select:none;}
+.filter-reset{
+  background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);border-radius:var(--radius-sm);
+  height:38px;padding:0 16px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.filter-reset:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+
+.seg-group{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+.seg{
+  padding:0 13px;height:38px;font-size:12px;font-weight:600;border:none;background:var(--surface);color:var(--ink-soft);
+  cursor:pointer;transition:all .15s;border-right:1px solid var(--border);white-space:nowrap;
+}
+.seg:last-child{border-right:none;}
+.seg:hover:not(.active){background:#f4f7fd;}
+.seg.active{background:var(--blue);color:#fff;}
+
+.filter-panel-body{}
+.filter-panel-body.collapsed{display:none;}
+
+/* ---------- common actions bar ---------- */
+.common-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--border-soft);}
+.common-btn{border-radius:var(--radius-sm);height:36px;padding:0 15px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .15s;}
+.common-btn.approve{background:var(--green-pale);color:var(--green);border-color:#bfead1;}
+.common-btn.approve:hover:not(:disabled){background:var(--green);color:#fff;}
+.common-btn.reject{background:var(--red-pale);color:var(--red);border-color:#f4c2c2;}
+.common-btn.reject:hover:not(:disabled){background:var(--red);color:#fff;}
+.common-btn:disabled{opacity:.4;cursor:not-allowed;}
+.selected-count{font-size:12px;font-weight:600;color:var(--muted);margin-left:2px;}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;}
+.list-table th,.list-table td{white-space:nowrap;padding:12px 12px;text-align:right;}
+.list-table thead th{
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);
+  border-bottom:1px solid var(--border);background:transparent;
+}
+.list-table thead th:first-child{text-align:center;}
+.list-table thead th.left{text-align:left;}
+.list-table thead th.sortable{cursor:pointer;user-select:none;}
+.list-table thead th.sortable:hover{color:var(--blue-dark);}
+.list-table thead th.sortable .arrow{font-size:9px;margin-left:3px;color:var(--blue);}
+.list-table tbody td{text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
+.list-table tbody td:first-child{text-align:center;}
+.list-table tbody td.left{text-align:left;}
+.list-table tbody tr:last-child td{border-bottom:none;}
+.list-table tbody tr:hover td{background:#f7faff;}
+.list-table tbody tr.row-checked td{background:#fff8ea !important;}
+.num{font-variant-numeric:tabular-nums;}
+.empty-row td{text-align:center !important;color:var(--muted);padding:30px 12px;font-style:italic;}
+
+/* Keep checkbox / status / MC number visible while scrolling this wide a table */
+.sticky-col{position:sticky;background:var(--surface);z-index:2;box-shadow:none;}
+.sticky-1{left:0;width:40px;min-width:40px;}
+.sticky-2{left:40px;width:150px;min-width:150px;}
+.sticky-3{left:190px;width:120px;min-width:120px;box-shadow:2px 0 4px rgba(16,24,40,.06);}
+.list-table thead th.sticky-col{z-index:3;background:var(--surface);}
+tbody tr:hover .sticky-col{background:#f7faff;}
+tbody tr.row-checked .sticky-col{background:#fff8ea;}
+
+/* status dot + label (replaces pill background) */
+.status-cell{display:inline-flex;align-items:center;gap:7px;font-weight:700;white-space:nowrap;}
+.status-cell .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.st-pending{color:var(--muted);}
+.st-pending .dot{background:var(--amber);}
+.st-errcorr{color:#6d28d9;}
+.st-errcorr .dot{background:#7c3aed;}
+.st-confirmed{color:var(--ink);}
+.st-confirmed .dot{background:#5b8def;}
+.st-inuse{color:var(--ink);}
+.st-inuse .dot{background:var(--green);}
+.st-rejected{color:var(--red);}
+.st-rejected .dot{background:var(--red);}
+
+.tbl-link{color:var(--blue);font-weight:700;text-decoration:none;cursor:pointer;transition:color .15s;background:none;border:none;font-size:12.5px;padding:0;}
+.tbl-link:hover{color:var(--blue-dark);text-decoration:underline;}
+.deal-id{color:var(--green);font-weight:700;}
+.muted-dash{color:var(--muted-2);}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+.badge-blue{background:var(--blue-pale);color:var(--blue-dark);border:1px solid #c7dbfb;}
+
+/* ---------- pager ---------- */
+.pager{display:flex;align-items:center;justify-content:space-between;padding-top:14px;margin-top:6px;border-top:1px solid var(--border-soft);flex-wrap:wrap;gap:10px;}
+.pager-info{font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;}
+.pager-info strong{color:var(--ink);}
+.pager-controls{display:flex;align-items:center;gap:5px;}
+.pager-btn{
+  min-width:32px;height:32px;padding:0 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);
+  color:var(--ink-soft);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
+}
+.pager-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue-dark);}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed;}
+.pager-btn.active{background:var(--blue-dark);border-color:var(--blue-dark);color:#fff;}
+.pager-size{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:7px;}
+.pager-size select{
+  font-size:12px;height:32px;padding:0 26px 0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2398a2b3'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color:var(--ink-soft);cursor:pointer;-webkit-appearance:none;
+}
+
+/* ---------- note ---------- */
+.note{margin-top:14px;padding:11px 14px;background:#f6f9ff;border:1px solid #dbe6fb;border-radius:var(--radius-sm);font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+.note strong{color:var(--blue-dark);font-weight:700;}
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+/* Nested confirmation must sit above the MC child-contract modal. */
+#action-overlay{z-index:1200;}
+.modal-card{
+  background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 20px 50px rgba(16,24,40,.25);border:1px solid var(--border);
+  max-width:640px;width:100%;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-header{background:var(--blue-pale);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid #dbe6fb;}
+.modal-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:#fff;border:1px solid #c7dbfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:var(--blue-dark);}
+.modal-header-text{flex:1;min-width:0;}
+.modal-title{font-size:15px;font-weight:800;color:var(--ink);line-height:1.3;}
+.modal-subtitle{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.modal-close{background:#fff;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-body{padding:18px;overflow-y:auto;background:var(--surface);}
+.modal-footer{padding:14px 18px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;align-items:center;gap:10px;background:#fbfcfe;}
+.btn-cancel{background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;min-height:36px;padding:0 16px;border-radius:var(--radius-sm);transition:all .15s;}
+.btn-cancel:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.btn-confirm{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:var(--radius-sm);min-height:36px;padding:0 18px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;}
+.btn-confirm:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+.btn-confirm.is-reject{background:var(--red);border-color:var(--red);}
+.btn-confirm.is-reject:hover{background:#b91c1c;border-color:#b91c1c;}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;margin-bottom:16px;background:var(--surface);}
+.detail-cell{padding:10px 13px;border-bottom:1px solid var(--border-soft);border-right:1px solid var(--border-soft);}
+.detail-cell:nth-child(even){border-right:none;}
+.detail-lbl{font-size:10.5px;font-weight:600;color:var(--muted);margin-bottom:3px;}
+.detail-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;word-break:break-word;}
+.detail-val.accent{color:var(--blue-dark);}
+
+.entity-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:6px;}
+.entity-flow .ent-chip{background:var(--blue-pale);border:1px solid #c7dbfb;color:var(--blue-dark);padding:6px 13px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:700;}
+.entity-flow .arrow{color:var(--muted-2);font-size:14px;}
+
+/* ---------- toast ---------- */
+.zfac-toast{
+  position:fixed;bottom:24px;right:24px;transform:translateY(12px);max-width:360px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:13px 16px;border-radius:var(--radius-md);
+  box-shadow:0 12px 30px rgba(16,24,40,.18);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;text-align:left;
+}
+.zfac-toast.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.zfac-toast.error{background:var(--red-pale);border-color:#f4c2c2;color:var(--red);}
+.zfac-toast.success{background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+
+kbd{background:#f1f3f8;border:1px solid #d7dde6;border-radius:4px;padding:0 5px;font-size:10.5px;font-family:inherit;}
+.hint{font-size:11px;color:var(--muted);line-height:1.5;}
+.rowaction-btn{
+  border:1px solid var(--border);background:var(--surface);color:var(--blue-dark);border-radius:var(--radius-sm);
+  padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.rowaction-btn:hover{background:var(--blue-pale);border-color:var(--blue);}
+
+@media (max-width:1279px){ .metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+@media (max-width:999px){ .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:799px){
+  .search-box{flex:1 1 100%;max-width:none;}
+  .metrics-grid{grid-template-columns:1fr;}
+  .filter-field input,.filter-field select{width:100%;}
+  .detail-grid{grid-template-columns:1fr;}
+  .detail-cell:nth-child(even){border-right:1px solid var(--border-soft);}
+}
+
+
+/* =========================================================
+   Create Master Contract application alignment
+   Mirrors the shared application design system without
+   changing the Confirm Master Contract business behavior.
+   ========================================================= */
+:root{
+  --bg:#F4F8FC;
+  --surface:#FFFFFF;
+  --border:#E1E9F2;
+  --border-soft:#EEF2F6;
+  --ink:#1D2D3E;
+  --ink-soft:#1D2D3E;
+  --muted:#5C7085;
+  --muted-2:#8CA0B3;
+  --blue:#1F6FEB;
+  --blue-dark:#1657C4;
+  --blue-pale:#EAF2FF;
+  --green:#27AE60;
+  --green-pale:#E8F8EF;
+  --amber:#FF8A00;
+  --amber-pale:#FFF3E4;
+  --red:#E74C3C;
+  --red-pale:#FDEAE8;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-md:0 8px 28px rgba(22,39,64,.16);
+}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-size:12.5px;
+  line-height:1.5;
+}
+::-webkit-scrollbar-thumb{background:#C7D4E2;}
+
+/* Header now follows the Create Master Contract page header. */
+.page-head{
+  margin:.3rem .2rem 12px;
+  padding:10px 16px;
+  background:#EAF3FF;
+  border:1px solid #D7E9FF;
+  border-radius:var(--radius-md);
+  gap:12px;
+}
+.head-icon{height:40px;max-width:120px;}
+.page-title{font-size:19px;font-weight:700;letter-spacing:-.2px;color:var(--ink);}
+.page-subtitle{font-size:12.5px;color:var(--muted);margin-top:0;}
+.btn-icon{width:34px;height:34px;border-color:#CBD9E8;color:var(--muted);}
+
+main{padding:0 .2rem .5rem;}
+
+/* KPI cards use the same white-card language as the Create screen. */
+.kpi-head{margin:0 0 8px 2px;}
+.kpi-toggle{border-color:#CBD9E8;background:#fff;}
+.kpi-head-title{font-size:11.5px;color:var(--muted);letter-spacing:.04em;}
+.metrics-grid{gap:12px;margin-bottom:14px;}
+.metric-card{
+  border:1px solid var(--border);
+  border-left:4px solid var(--blue);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow);
+}
+.metric-card::before{display:none;}
+.metric-card:hover{box-shadow:0 4px 10px rgba(22,39,64,.08),0 10px 22px rgba(22,39,64,.09);transform:translateY(-2px);}
+.metric-card.active{border-color:var(--blue);border-left-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.metric-inner{padding:18px 18px 16px;}
+.metric-val{font-size:30px;font-weight:700;color:var(--blue-dark);}
+.metric-lbl{font-size:12.5px;font-weight:600;color:var(--muted);}
+.k-pending{border-left-color:var(--blue);}
+.k-errcorr{border-left-color:var(--blue);}
+.k-confirmed{border-left-color:var(--blue);}
+.k-inuse{border-left-color:var(--blue);}
+.k-rejected{border-left-color:var(--blue);}
+
+/* Main table card and title mirror .card + .section-title. */
+.panel{
+  padding:0;
+  margin-bottom:12px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+  overflow:visible;
+}
+.panel-title{
+  margin:0;
+  padding:10px 16px;
+  min-height:42px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:nowrap;
+}
+.panel-title-left{gap:8px;}
+.dot-bullet{width:6px;height:6px;background:var(--blue);}
+.panel-title h2{font-size:12px;font-weight:700;color:var(--blue-dark);letter-spacing:.3px;}
+.badge-blue{
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  padding:0;
+  font-size:11.5px;
+  font-weight:500;
+}
+
+/* Selection area: roomier spacing, but still one desktop row. */
+.master-toolbar{
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  flex-wrap:nowrap;
+  margin:0;
+  padding:16px 16px 15px;
+  overflow-x:auto;
+  overflow-y:visible;
+  border-bottom:1px solid var(--border);
+}
+.master-toolbar .search-box{
+  flex:0 0 245px;
+  min-width:245px;
+  max-width:245px;
+}
+.search-box .icon{left:10px;font-size:13px;color:var(--muted-2);}
+.master-toolbar .search-box input,
+.search-box input{
+  height:32px;
+  padding:0 11px 0 30px;
+  border:1px solid #CBD9E8;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  color:var(--ink);
+}
+.search-box input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.master-toolbar #filter-panel-body{
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  min-width:max-content;
+}
+.master-toolbar #filter-panel-body .filter-bar{
+  gap:12px;
+  align-items:flex-end;
+}
+.master-toolbar #filter-panel-body .filter-field{gap:4px;}
+.master-toolbar #filter-panel-body .filter-field label,
+.filter-field label{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--muted);
+}
+.filter-field input,.filter-field select{
+  height:32px;
+  border-color:#CBD9E8;
+  font-size:12.5px;
+  color:var(--ink);
+  padding-left:10px;
+}
+.master-toolbar #filter-panel-body .filter-field select{height:32px;font-size:12.5px;width:122px;padding-left:10px;padding-right:28px;background-position:right 10px center;}
+.master-toolbar #filter-panel-body .filter-field.entity-filter select{width:138px;}
+.master-toolbar #filter-panel-body .status-filter .seg{height:32px;padding:0 12px;font-size:11.5px;}
+.seg-group{border-color:#CBD9E8;border-radius:var(--radius-sm);}
+.seg{height:32px;border-right-color:#CBD9E8;color:var(--ink);background:#fff;font-size:11.5px;font-weight:600;}
+.seg:hover:not(.active){background:var(--blue-pale);color:var(--blue-dark);}
+.seg.active{background:var(--blue);color:#fff;}
+.master-toolbar #filter-panel-body .date-range{gap:8px;}
+.master-toolbar #filter-panel-body .date-range span{font-size:11px;color:var(--muted);}
+.master-toolbar #filter-panel-body .dp input{width:112px;height:32px;padding-left:9px;padding-right:28px;font-size:11.5px;border-color:#CBD9E8;}
+.master-toolbar #filter-panel-body .dp-btn{right:4px;font-size:12px;color:var(--muted);}
+.master-toolbar #filter-panel-body .filter-reset-wrap{gap:4px;}
+.master-toolbar #filter-panel-body .filter-spacer-label{font-size:11.5px;}
+.master-toolbar #filter-panel-body .filter-reset{
+  height:32px;
+  padding:0 14px;
+  border-color:#CBD9E8;
+  color:var(--ink);
+  font-size:11.5px;
+  background:#fff;
+}
+.master-toolbar #filter-panel-body .filter-reset:hover{border-color:var(--blue);color:var(--blue);background:#fff;box-shadow:0 1px 4px rgba(22,39,64,.08);}
+.master-toolbar #filter-panel-body .common-actions{
+  gap:10px;
+  margin-left:2px;
+}
+.master-toolbar #filter-panel-body .common-btn{
+  height:32px;
+  padding:0 14px;
+  border-radius:var(--radius-sm);
+  font-size:11.5px;
+  font-weight:600;
+}
+.master-toolbar #filter-panel-body .common-btn.approve{background:var(--blue);color:#fff;border-color:var(--blue);}
+.master-toolbar #filter-panel-body .common-btn.approve:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.master-toolbar #filter-panel-body .common-btn.reject{background:#fff;color:var(--red);border-color:#F3C6C0;}
+.master-toolbar #filter-panel-body .common-btn.reject:hover:not(:disabled){background:var(--red-pale);}
+.master-toolbar #filter-panel-body .common-btn:disabled{opacity:.45;}
+.master-toolbar #filter-panel-body .selected-count{font-size:11.5px;color:var(--muted);font-weight:500;margin-left:0;}
+
+/* Date popup matches the Create screen calendar. */
+.dp-popup{width:250px;border-color:var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);padding:10px;}
+.dp-head{margin-bottom:8px;}
+.dp-head button{width:24px;height:24px;padding:0;border-radius:6px;background:#EEF2F6;color:var(--ink);}
+.dp-head button:hover{background:var(--blue-pale);color:var(--blue);}
+.dp-month-label{font-size:12px;color:var(--ink);}
+.dp-dow{font-size:10px;color:var(--muted-2);}
+.dp-day{font-size:11.5px;padding:6px 0;border-radius:6px;color:var(--ink);}
+.dp-day:hover{background:var(--blue-pale);color:var(--ink);}
+.dp-day.selected{background:var(--blue);color:#fff;}
+.dp-day.today:not(.selected){border:1px solid #6FA8FF;}
+
+/* Table styling follows the Create screen. */
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+table{font-size:12px;}
+#mc-table{width:max-content;min-width:100%;}
+.list-table th,.list-table td{padding:9px 14px;}
+.list-table thead th{
+  position:sticky;
+  top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  color:var(--muted);
+  font-weight:700;
+  z-index:3;
+}
+.list-table thead th.sortable:hover{color:var(--blue-dark);}
+.list-table thead th.sortable .arrow{color:var(--muted-2);}
+.list-table tbody td{font-size:12px;color:var(--ink);border-bottom:1px solid var(--border);}
+.list-table tbody tr:hover td{background:#F7FAFD;}
+.list-table tbody tr.row-checked td{background:var(--blue-pale)!important;}
+.sticky-col{background:#fff;}
+.list-table thead th.sticky-col{background:#F7FAFD;}
+tbody tr:hover .sticky-col{background:#F7FAFD;}
+tbody tr.row-checked .sticky-col{background:var(--blue-pale);}
+
+/* Horizontal-scroll fix: fixed columns must always paint above scrolling cells. */
+#mc-table .sticky-col{
+  position:sticky!important;
+  z-index:8;
+  background:#fff;
+}
+#mc-table thead th{z-index:3;}
+#mc-table thead th.sticky-col{
+  position:sticky!important;
+  top:0;
+  z-index:30!important;
+  background:#F7FAFD!important;
+}
+#mc-table .sticky-1{left:0!important;width:40px;min-width:40px;max-width:40px;}
+#mc-table .sticky-2{left:40px!important;width:150px;min-width:150px;max-width:150px;}
+#mc-table .sticky-3{left:190px!important;width:124px;min-width:124px;max-width:124px;box-shadow:3px 0 5px rgba(22,39,64,.08);}
+#mc-table tbody tr:hover .sticky-col{background:#F7FAFD!important;}
+#mc-table tbody tr.row-checked .sticky-col{background:var(--blue-pale)!important;}
+.tbl-link{color:var(--blue-dark);font-size:12px;font-weight:700;}
+.tbl-link:hover{color:var(--blue);}
+
+/* Plain text status: no dots before status labels. */
+.status-cell{display:inline;font-size:12px;font-weight:600;white-space:nowrap;}
+.status-cell .dot{display:none!important;}
+.st-pending{color:var(--amber);}
+.st-errcorr{color:#8E44AD;}
+.st-confirmed{color:var(--blue);}
+.st-inuse{color:var(--green);}
+.st-rejected{color:var(--red);}
+
+/* Footer/pagination language from the Create screen. */
+.pager{padding:10px 16px 12px;margin:0;border-top:1px solid var(--border);}
+.pager-info,.pager-size{font-size:11.5px;color:var(--muted);}
+.pager-size select{height:28px;border-color:#CBD9E8;border-radius:6px;font-size:11.5px;}
+.pager-btn{min-width:28px;height:28px;border-color:#CBD9E8;border-radius:6px;font-size:11.5px;color:var(--ink);}
+.pager-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);}
+.pager-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+/* Modal treatment aligned to the same application. */
+.modal-overlay{background:rgba(16,26,41,.5);}
+.modal-card{border-color:var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);}
+.modal-header{background:#fff;border-bottom:1px solid var(--border);padding:14px 18px;}
+.modal-icon{background:var(--blue-pale);border-color:#D7E9FF;color:var(--blue-dark);}
+.modal-title{font-size:15.5px;color:var(--ink);}
+.modal-subtitle{font-size:12px;color:var(--muted);}
+.modal-body{background:#fff;}
+.modal-footer{background:#fff;border-top:1px solid var(--border);}
+.btn-cancel{height:32px;min-height:32px;border-color:#CBD9E8;color:var(--ink);font-size:12.5px;font-weight:600;}
+.btn-confirm{height:32px;min-height:32px;background:var(--blue);border-color:var(--blue);font-size:12.5px;font-weight:600;}
+.btn-confirm:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+.btn-confirm.is-reject{background:#fff;color:var(--red);border-color:#F3C6C0;}
+.btn-confirm.is-reject:hover{background:var(--red-pale);border-color:#F3C6C0;}
+
+/* Child-contract modal actions match the main Confirm / Reject controls. */
+.child-modal-footer{justify-content:flex-end;}
+.child-quick-actions{display:flex;align-items:center;gap:8px;}
+.child-quick-actions .common-btn{
+  height:32px;
+  padding:0 14px;
+  border-radius:var(--radius-sm);
+  font-size:11.5px;
+  font-weight:600;
+}
+.child-quick-actions .common-btn.approve{background:var(--blue);color:#fff;border-color:var(--blue);}
+.child-quick-actions .common-btn.approve:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.child-quick-actions .common-btn.reject{background:#fff;color:var(--red);border-color:#F3C6C0;}
+.child-quick-actions .common-btn.reject:hover:not(:disabled){background:var(--red-pale);}
+
+@media (max-width:1200px){
+  .master-toolbar{padding-bottom:12px;}
+}
+
+
+/* =========================================================
+   Unified Treasury UI — visual alignment with the existing
+   Create MC / Error Correction application.
+   Business behavior is intentionally unchanged.
+   ========================================================= */
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --purple:#8E44AD;
+  --gray-tint:#EEF2F6;
+  --radius-lg:10px;
+  --radius-md:8px;
+  --radius-sm:6px;
+  --shadow-card:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+
+  /* aliases retained for the original component CSS */
+  --surface:var(--card);
+  --ink:var(--text);
+  --ink-soft:var(--text);
+  --muted:var(--text-muted);
+  --muted-2:var(--text-faint);
+  --blue:var(--primary);
+  --blue-dark:var(--primary-dark);
+  --blue-pale:var(--primary-tint);
+  --green:var(--success);
+  --green-pale:var(--success-tint);
+  --amber:var(--warning);
+  --amber-pale:var(--warning-tint);
+  --red:var(--error);
+  --red-pale:var(--error-tint);
+  --border-soft:var(--gray-tint);
+  --shadow:var(--shadow-card);
+  --shadow-md:var(--shadow-pop);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:12px;
+  line-height:1.5;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:var(--font);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* Header — same white card language used on Error Correction. */
+.page-head{
+  margin:.3rem .2rem 12px;
+  padding:11px 16px;
+  min-height:64px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:none;
+}
+.head-icon{height:40px;width:auto;max-width:110px;object-fit:contain;flex:none;}
+.title-wrap{display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.page-title{font-size:20px;font-weight:700;letter-spacing:-.2px;line-height:1.2;color:var(--text);}
+.page-subtitle{margin-top:2px;font-size:12.5px;color:var(--text-muted);line-height:1.35;}
+.head-actions{margin-left:auto;}
+.btn-icon{
+  width:34px;height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:#fff;color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .15s,color .15s,background .15s;
+}
+.btn-icon:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-tint);}
+
+main{max-width:none;margin:0;padding:0 .2rem .5rem;}
+
+/* Overview / KPI area */
+.kpi-head{display:flex;align-items:center;gap:7px;margin:0 2px 8px;}
+.kpi-toggle{
+  width:24px;height:24px;border:1px solid var(--border-strong);background:#fff;border-radius:var(--radius-sm);
+  cursor:pointer;color:var(--text-muted);font-size:10px;display:flex;align-items:center;justify-content:center;
+}
+.kpi-toggle:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-tint);}
+.kpi-head-title{font-size:11.5px;font-weight:700;letter-spacing:.25px;text-transform:none;color:var(--text-muted);}
+.metrics-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.metric-card{
+  position:relative;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .12s;
+}
+.metric-card::before{
+  content:"";display:block!important;position:absolute!important;left:0!important;right:0!important;top:0!important;bottom:auto!important;
+  width:auto!important;height:3px!important;border-radius:0!important;background:var(--primary)!important;
+}
+.metric-card:hover{border-color:#D3DFEC;box-shadow:0 4px 14px rgba(22,39,64,.09);transform:translateY(-1px);}
+.metric-card.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-tint);}
+.metric-inner{padding:13px 15px 12px!important;}
+.metric-val{font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.2px;color:var(--primary-dark);margin-bottom:4px;}
+.metric-lbl{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Main table card */
+.panel{
+  margin:0 0 12px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);overflow:visible;padding:0;
+}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:0;padding:11px 16px;
+  border-bottom:1px solid var(--border);flex-wrap:nowrap;
+}
+.panel-title-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.dot-bullet{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.panel-title h2{margin:0;font-size:14px;font-weight:700;color:var(--primary-dark);letter-spacing:.15px;}
+.badge-blue{padding:0;background:transparent;border:0;border-radius:0;color:var(--text-muted);font-size:11.5px;font-weight:500;}
+
+/* Selection/search/actions — compact and wrap-safe instead of a horizontal strip. */
+.master-toolbar{
+  display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);align-items:end;gap:12px;
+  margin:0;padding:12px 16px;border-bottom:1px solid var(--border);overflow:visible;
+}
+.master-toolbar .search-box{position:relative;display:flex;align-items:center;flex:none;min-width:0;max-width:none;width:100%;}
+.search-box .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;color:var(--text-faint);pointer-events:none;}
+.master-toolbar .search-box input,.search-box input{
+  width:100%;height:36px;padding:0 11px 0 32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:#fff;color:var(--text);font-size:12.5px;outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.search-box input::placeholder{color:var(--text-faint);}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.master-toolbar #filter-panel-body{
+  display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;min-width:0;width:100%;
+}
+.master-toolbar #filter-panel-body.collapsed{display:none;}
+.master-toolbar #filter-panel-body .filter-bar{
+  display:flex;align-items:flex-end;gap:10px;flex:1 1 620px;min-width:0;flex-wrap:wrap;margin:0;
+}
+.filter-field,.master-toolbar #filter-panel-body .filter-field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.filter-field label,.master-toolbar #filter-panel-body .filter-field label{
+  font-size:11.5px;font-weight:600;color:var(--text-muted);line-height:1.25;white-space:nowrap;
+}
+.filter-field input,.filter-field select,.master-toolbar #filter-panel-body .filter-field select{
+  height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background-color:#fff;color:var(--text);
+  font-size:12px;outline:none;transition:border-color .15s,box-shadow .15s;padding-left:10px;
+}
+.filter-field input:hover,.filter-field select:hover{border-color:#AFC2D8;}
+.filter-field input:focus,.filter-field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.master-toolbar #filter-panel-body .filter-field select{width:112px;padding-right:28px;background-position:right 9px center;}
+.master-toolbar #filter-panel-body .filter-field.entity-filter select{width:130px;}
+.seg-group{display:inline-flex;height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;background:#fff;}
+.seg,.master-toolbar #filter-panel-body .status-filter .seg{
+  height:34px;padding:0 10px;border:0;border-right:1px solid var(--border-strong);background:#fff;color:var(--text);
+  font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.seg:last-child{border-right:0;}
+.seg:hover:not(.active){background:var(--primary-tint);color:var(--primary-dark);}
+.seg.active{background:var(--primary);color:#fff;}
+.date-range{display:flex;align-items:center;gap:6px;}
+.date-range span{font-size:11px;color:var(--text-faint);}
+.master-toolbar #filter-panel-body .dp input{width:106px;height:36px;padding:0 28px 0 9px;font-size:11.5px;border-color:var(--border-strong);}
+.dp-btn{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--text-muted);padding:4px;display:flex;cursor:pointer;}
+.dp-btn:hover{color:var(--primary);}
+.filter-reset-wrap,.master-toolbar #filter-panel-body .filter-reset-wrap{gap:5px;}
+.filter-spacer-label{font-size:11.5px!important;color:transparent!important;}
+.filter-reset,.master-toolbar #filter-panel-body .filter-reset{
+  height:36px;padding:0 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;
+  color:var(--text);font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.filter-reset:hover{border-color:var(--primary);color:var(--primary);background:#fff;}
+.master-toolbar #filter-panel-body .common-actions{
+  display:flex;align-items:center;gap:8px;flex:0 0 auto;flex-wrap:nowrap;margin:0;padding:0;border:0;
+}
+.common-btn,.master-toolbar #filter-panel-body .common-btn{
+  height:36px;padding:0 14px;border-radius:var(--radius-sm);font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .15s,border-color .15s,color .15s,opacity .15s;
+}
+.common-btn.approve,.master-toolbar #filter-panel-body .common-btn.approve{background:var(--primary);color:#fff;border:1px solid var(--primary);}
+.common-btn.approve:hover:not(:disabled){background:var(--primary-dark);border-color:var(--primary-dark);}
+.common-btn.reject,.master-toolbar #filter-panel-body .common-btn.reject{background:#fff;color:var(--error);border:1px solid #F3C6C0;}
+.common-btn.reject:hover:not(:disabled){background:var(--error-tint);}
+.common-btn:disabled{opacity:.42;cursor:not-allowed;}
+.selected-count{font-size:11.5px;font-weight:500;color:var(--text-muted);margin-left:2px;white-space:nowrap;}
+
+/* Calendar */
+.dp-popup{width:250px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-pop);padding:10px;z-index:250;}
+.dp-head{margin-bottom:8px;}
+.dp-head button{width:26px;height:26px;padding:0;border:0;background:var(--gray-tint);border-radius:6px;color:var(--text);}
+.dp-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.dp-month-label{font-size:12.5px;font-weight:700;color:var(--text);}
+.dp-dow{font-size:10px;color:var(--text-faint);font-weight:700;}
+.dp-day{font-size:11.5px;padding:6px 0;border-radius:6px;color:var(--text);}
+.dp-day:hover{background:var(--primary-tint);color:var(--text);}
+.dp-day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.dp-day.today:not(.selected){border:1px solid var(--primary-light);}
+
+/* Table — same compact ALV-like treatment as the rest of the app. */
+.table-wrap{width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
+#mc-table{width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;}
+.list-table th,.list-table td{padding:9px 12px;white-space:nowrap;}
+.list-table thead th{
+  position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;
+  font-size:11.5px;font-weight:600;letter-spacing:0;text-transform:none;z-index:5;
+}
+.list-table thead th.sortable:hover{color:var(--primary-dark);}
+.list-table thead th.sortable .arrow{font-size:9px;color:var(--text-faint);}
+.list-table tbody td{border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text);}
+.list-table tbody tr{transition:background .15s;}
+.list-table tbody tr:hover td{background:#F7FAFD;}
+.list-table tbody tr.row-checked td{background:var(--primary-tint)!important;}
+#mc-table .sticky-col{position:sticky!important;z-index:8;background:#fff!important;}
+#mc-table thead th.sticky-col{z-index:30!important;background:#F1F3F6!important;}
+#mc-table .sticky-1{left:0!important;width:40px;min-width:40px;max-width:40px;text-align:center;}
+#mc-table .sticky-2{left:40px!important;width:160px;min-width:160px;max-width:160px;}
+#mc-table .sticky-3{left:200px!important;width:126px;min-width:126px;max-width:126px;box-shadow:4px 0 6px -4px rgba(22,39,64,.18);}
+#mc-table tbody tr:hover .sticky-col{background:#F7FAFD!important;}
+#mc-table tbody tr.row-checked .sticky-col{background:var(--primary-tint)!important;}
+.tbl-link{color:var(--primary-dark);font-size:12.5px;font-weight:700;background:none;border:0;padding:0;cursor:pointer;}
+.tbl-link:hover{color:var(--primary);text-decoration:underline;}
+.status-cell{display:inline;font-size:12.5px;font-weight:700;white-space:nowrap;}
+.status-cell .dot{display:none!important;}
+.st-pending{color:var(--warning);}.st-errcorr{color:var(--purple);}.st-confirmed{color:var(--primary);}.st-inuse{color:var(--success);}.st-rejected{color:var(--error);}
+.deal-id{color:var(--success);font-weight:700;}
+.rowaction-btn{
+  height:30px;padding:0 11px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;
+  color:var(--primary-dark);font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.rowaction-btn:hover{border-color:var(--primary);background:var(--primary-tint);color:var(--primary);}
+
+/* Footer */
+.pager{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:10px 16px 12px;margin:0;
+  border-top:1px solid var(--border);background:#fff;
+}
+.pager-size{justify-self:start;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+.pager-size select{height:32px;border:1px solid var(--border-strong);border-radius:6px;background-color:#fff;color:var(--text);font-size:12px;}
+.pager-controls{justify-self:center;display:flex;align-items:center;gap:4px;}
+.pager-btn{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text);font-size:12px;}
+.pager-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pager-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.pager-info{justify-self:end;font-size:12px;color:var(--text-muted);white-space:nowrap;}
+.pager-info strong{color:var(--text);font-weight:700;}
+.note{
+  margin:0;padding:10px 16px 12px;background:#FAFCFE;border:0;border-top:1px solid var(--border);border-radius:0 0 var(--radius-lg) var(--radius-lg);
+  font-size:11.5px;color:var(--text-muted);line-height:1.55;
+}
+.note strong{color:var(--primary-dark);font-weight:700;}
+
+/* Modals — consistent with the Error Correction popup. */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,26,41,.5);padding:24px 20px;align-items:center;justify-content:center;z-index:1000;}
+#action-overlay{z-index:1200;}
+.modal-card{
+  width:100%;max-height:92vh;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-pop);overflow:hidden;display:flex;flex-direction:column;
+}
+.modal-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border);}
+.modal-icon{display:none!important;}
+.modal-header-text{min-width:0;flex:1;}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.25;}
+.modal-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.modal-close{
+  width:30px;height:30px;border:0;background:transparent;border-radius:6px;color:var(--text-muted);font-size:19px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.modal-close:hover{background:var(--gray-tint);color:var(--text);}
+.modal-body{padding:16px 18px;background:#fff;overflow-y:auto;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);background:#fff;display:flex;justify-content:flex-end;gap:8px;}
+.btn-cancel,.btn-confirm{
+  height:36px;min-height:36px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;cursor:pointer;
+}
+.btn-cancel{background:#fff;border:1px solid var(--border-strong);color:var(--text);}
+.btn-cancel:hover{border-color:var(--primary);color:var(--primary);background:#fff;}
+.btn-confirm{background:var(--primary);border:1px solid var(--primary);color:#fff;}
+.btn-confirm:hover{background:var(--primary-dark);border-color:var(--primary-dark);}
+.btn-confirm.is-reject{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-confirm.is-reject:hover{background:var(--error-tint);border-color:#F3C6C0;}
+.section-label{
+  margin:14px 0 8px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.1px;text-transform:none;color:var(--primary-dark);
+}
+.section-label::before{width:6px;height:6px;border-radius:50%;background:var(--primary);}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border);}
+.detail-grid{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:#fff;margin-bottom:12px;}
+.detail-cell{padding:9px 12px;border-color:var(--border);}
+.detail-lbl{font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px;}
+.detail-val{font-size:12.5px;font-weight:600;color:var(--text);}
+.detail-val.accent{color:var(--primary-dark);}
+.entity-flow .ent-chip{padding:6px 11px;background:var(--primary-tint);border:1px solid #D7E9FF;color:var(--primary-dark);border-radius:var(--radius-sm);font-size:12px;font-weight:700;}
+.entity-flow .arrow{color:var(--text-faint);}
+#edit-overlay .filter-bar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px!important;margin-bottom:6px!important;}
+#edit-overlay .filter-field{width:auto!important;}
+#edit-overlay .filter-field input,#edit-overlay .filter-field select{width:100%!important;height:36px!important;}
+.hint{font-size:11.5px;color:var(--text-muted);line-height:1.5;}
+kbd{background:var(--gray-tint);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10.5px;}
+.child-quick-actions{display:flex;align-items:center;gap:8px;}
+.child-quick-actions .common-btn{height:36px;padding:0 14px;border-radius:var(--radius-sm);font-size:11.5px;font-weight:600;}
+
+.zfac-toast{
+  bottom:22px;right:22px;max-width:360px;background:#fff;color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);font-size:12.5px;padding:11px 14px;
+}
+.zfac-toast.error{background:var(--error-tint);border-color:#F3C6C0;color:var(--error);}
+.zfac-toast.success{background:var(--success-tint);border-color:#BFE6CE;color:var(--success);}
+
+@media (max-width:1350px){
+  .metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .master-toolbar{grid-template-columns:230px minmax(0,1fr);}
+}
+@media (max-width:980px){
+  .master-toolbar{grid-template-columns:1fr;align-items:stretch;}
+  .master-toolbar #filter-panel-body{align-items:flex-end;}
+  .master-toolbar #filter-panel-body .common-actions{width:100%;justify-content:flex-start;}
+  .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #edit-overlay .filter-bar{grid-template-columns:1fr;}
+}
+@media (max-width:640px){
+  .page-head{margin:.2rem;padding:10px 12px;}
+  .page-title{font-size:18px;}
+  .metrics-grid{grid-template-columns:1fr;}
+  .master-toolbar{padding:12px;}
+  .pager{grid-template-columns:1fr;justify-items:center;text-align:center;}
+  .pager-size,.pager-controls,.pager-info{justify-self:center;}
+  .detail-grid{grid-template-columns:1fr;}
+}
+
+
+
+/* =========================================================
+   Reference-aligned Create Master Contract top section
+   + row-click selection and drag-to-action interaction.
+   ========================================================= */
+.page-head{
+  margin:0 3px 10px;
+  min-height:62px;
+  padding:9px 12px;
+  background:#F3F6FA;
+  border:1px solid #D8DEE7;
+  border-radius:0;
+  box-shadow:none;
+}
+.head-icon{width:38px;height:38px;max-width:38px;object-fit:contain;background:#fff;}
+.page-title{font-size:16px;font-weight:700;color:#102A43;letter-spacing:0;}
+.page-subtitle{font-size:11.5px;color:#365B7D;margin-top:4px;}
+.head-actions{align-self:flex-start;margin-top:0;}
+.btn-icon{width:30px;height:30px;border-color:#C8D2DE;border-radius:4px;background:#fff;}
+main{padding:0 3px 8px;}
+
+/* The reference has no separate "Overview" strip. */
+.kpi-head{display:none!important;}
+.metrics-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px;
+  margin:0 0 14px;
+}
+.metric-card{
+  min-height:106px;
+  border:1px solid #D1D9E2;
+  border-left:4px solid var(--primary)!important;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(18,38,63,.12);
+  overflow:hidden;
+}
+.metric-card::before{display:none!important;}
+.metric-card:hover{transform:none;border-color:#C7D3E0;box-shadow:0 3px 8px rgba(18,38,63,.13);}
+.metric-card.active{border-color:#B9CBE0;border-left-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(31,111,235,.10);}
+.metric-inner{position:relative;min-height:104px;padding:20px 20px 13px!important;}
+.metric-val{font-size:30px;font-weight:700;line-height:1;color:#102A43;margin-bottom:12px;}
+.metric-lbl{font-size:11.5px;font-weight:700;color:#214B72;max-width:55%;white-space:normal;overflow:visible;}
+.metric-help{
+  position:absolute;right:14px;bottom:12px;max-width:46%;
+  font-size:9.5px;line-height:1.25;text-align:right;color:#5F7891;font-weight:400;
+}
+
+.panel{border:1px solid #D1D9E2;border-radius:12px;box-shadow:none;margin-bottom:8px;}
+.panel-title{min-height:39px;padding:9px 16px;border-bottom:1px solid #D1D9E2;}
+.dot-bullet{width:6px;height:6px;background:var(--primary);}
+.panel-title h2{font-size:11.5px;font-weight:700;color:#075BAE;}
+
+/* One compact toolbar like the supplied Create Master Contract screen. */
+.master-toolbar{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex-wrap:nowrap!important;
+  padding:12px 16px!important;
+  overflow:visible!important;
+  border-bottom:1px solid #DCE3EA;
+}
+.master-toolbar .search-box{flex:1 1 520px!important;min-width:280px!important;max-width:none!important;}
+.master-toolbar .search-box input{height:32px!important;border-radius:4px!important;border-color:#9FAEBD!important;font-size:12px!important;}
+.master-toolbar #filter-panel-body{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;width:auto!important;
+}
+.master-toolbar #filter-panel-body .filter-bar{
+  display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;flex-wrap:nowrap!important;min-width:0!important;
+}
+.master-toolbar .filter-field label,.master-toolbar .filter-spacer-label{display:none!important;}
+.master-toolbar .filter-field select,
+.master-toolbar #filter-panel-body .filter-field select,
+.master-toolbar #filter-panel-body .filter-field.entity-filter select{
+  width:122px!important;height:32px!important;border-radius:4px!important;border-color:#9FAEBD!important;font-size:11.5px!important;
+  color:#16324F!important;background-color:#fff!important;
+}
+.master-toolbar #filter-panel-body .status-filter select{width:122px!important;}
+.master-toolbar #filter-panel-body .filter-field.entity-filter select{width:122px!important;}
+.master-toolbar #filter-panel-body .dp input{
+  width:102px!important;height:32px!important;border-radius:4px!important;border-color:#9FAEBD!important;font-size:11px!important;
+}
+.master-toolbar #filter-panel-body .filter-reset{
+  height:32px!important;padding:0 14px!important;border-radius:4px!important;border-color:#9FAEBD!important;font-size:11.5px!important;font-weight:700!important;
+}
+.master-toolbar #filter-panel-body .common-actions{
+  display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;margin-left:0!important;
+}
+.master-toolbar #filter-panel-body .common-btn{
+  height:32px!important;padding:0 14px!important;border-radius:4px!important;font-size:11.5px!important;font-weight:700!important;
+}
+.selected-count{font-size:10.5px;color:#5C7085;max-width:190px;line-height:1.2;white-space:normal;}
+#result-count-badge{margin-left:8px;white-space:nowrap;font-size:10.5px;color:#365B7D;font-weight:500;}
+
+/* Row selection behaves like a selectable workbench row. */
+#mc-table tbody tr.actionable-row{cursor:pointer;}
+#mc-table tbody tr.actionable-row.row-checked{cursor:grab;}
+#mc-table tbody tr.actionable-row.row-checked:active{cursor:grabbing;}
+#mc-table tbody tr.row-checked td{background:#EAF2FF!important;}
+#mc-table tbody tr.row-checked td:first-child{box-shadow:inset 3px 0 0 var(--primary);}
+#mc-table tbody tr.dragging-row{opacity:.48;}
+#mc-table tbody tr.dragging-row td{background:#DDEBFF!important;}
+
+/* Confirm / Reject become explicit drop targets while a selected row is dragged. */
+.drag-target{position:relative;}
+body.row-dragging .drag-target:not(:disabled){
+  box-shadow:0 0 0 2px rgba(31,111,235,.13);
+  transform:translateY(-1px);
+}
+body.row-dragging .drag-target:not(:disabled)::after{
+  content:"Drop here";
+  position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);
+  padding:3px 7px;border-radius:4px;background:#102A43;color:#fff;font-size:9px;font-weight:600;white-space:nowrap;z-index:80;
+}
+.drag-target.drag-over:not(:disabled){
+  transform:translateY(-2px) scale(1.03)!important;
+  box-shadow:0 0 0 3px rgba(31,111,235,.20),0 7px 18px rgba(18,38,63,.16)!important;
+}
+#btn-reject-sel.drag-over:not(:disabled){box-shadow:0 0 0 3px rgba(231,76,60,.18),0 7px 18px rgba(18,38,63,.16)!important;}
+
+@media (max-width:1500px){
+  .master-toolbar{flex-wrap:wrap!important;}
+  .master-toolbar .search-box{flex:1 1 100%!important;}
+  .master-toolbar #filter-panel-body{width:100%!important;flex-wrap:wrap!important;}
+  .master-toolbar #filter-panel-body .filter-bar{flex-wrap:wrap!important;}
+  .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media (max-width:760px){
+  .metrics-grid{grid-template-columns:1fr!important;}
+  .metric-help{position:static;max-width:none;text-align:left;margin-top:7px;}
+  .metric-lbl{max-width:none;}
+}
+
+
+
+/* =========================================================
+   RMC / FO application alignment
+   Visual-only pass. Existing confirmation, rejection,
+   multi-select, drag/drop and modal logic is unchanged.
+   ========================================================= */
+:root{
+  --rmc-bg:#F3F5F7;
+  --rmc-border:#D8DDE2;
+  --rmc-border-strong:#A8B5C2;
+  --rmc-text:#1D2D3E;
+  --rmc-muted:#5C7085;
+  --rmc-blue:#0A6ED1;
+  --rmc-blue-dark:#0854A0;
+}
+html,body{background:var(--rmc-bg)!important;}
+body{color:var(--rmc-text)!important;font-size:13px!important;overflow-x:hidden!important;}
+main{max-width:none!important;margin:0!important;padding:0!important;}
+
+/* Full-width white application header, matching the latest RMC / FO screens. */
+.page-head{
+  margin:0!important;padding:8px 16px!important;min-height:58px!important;
+  display:flex!important;align-items:center!important;gap:12px!important;
+  background:#fff!important;border:0!important;border-bottom:1px solid var(--rmc-border)!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+.page-head .head-icon{width:32px!important;height:40px!important;max-width:32px!important;object-fit:contain!important;background:transparent!important;flex:none!important;}
+.page-head .title-wrap{display:flex!important;justify-content:center!important;min-width:0!important;}
+.page-head .page-title{font-size:18px!important;font-weight:700!important;color:#142A3D!important;letter-spacing:-.1px!important;line-height:1.25!important;}
+.page-head .page-subtitle{display:none!important;}
+.page-head .head-actions{margin-left:auto!important;display:flex!important;align-items:center!important;gap:8px!important;}
+.btn-outline{
+  display:inline-flex!important;align-items:center!important;gap:7px!important;height:38px!important;
+  padding:0 14px!important;border:1px solid #9AAABC!important;border-radius:4px!important;
+  background:#fff!important;color:#425B72!important;font-size:12.5px!important;font-weight:600!important;
+  cursor:pointer!important;white-space:nowrap!important;box-shadow:none!important;
+}
+.btn-outline:hover{background:#F4F6F8!important;border-color:#7F93A7!important;color:#20364A!important;}
+.btn-back{color:#425B72!important;}
+
+/* Keep the original Confirmation KPIs, styled to match the latest RMC workbench. */
+.kpi-head{display:none!important;}
+.metrics-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:10px!important;
+  margin:14px 16px 12px!important;
+}
+.metric-card{
+  min-height:88px!important;
+  background:#fff!important;
+  border:1px solid var(--rmc-border)!important;
+  border-left:3px solid var(--rmc-blue)!important;
+  border-radius:7px!important;
+  box-shadow:0 1px 2px rgba(34,53,72,.08)!important;
+  overflow:hidden!important;
+}
+.metric-card::before{display:none!important;}
+.metric-card:hover{transform:none!important;box-shadow:0 2px 5px rgba(34,53,72,.10)!important;}
+.metric-card.active{border-color:#B9C6D1!important;border-left-color:var(--rmc-blue)!important;box-shadow:0 0 0 2px rgba(10,110,209,.08)!important;}
+.metric-inner{position:relative!important;min-height:88px!important;padding:14px 16px 12px!important;}
+.metric-val{font-size:25px!important;font-weight:700!important;line-height:1!important;color:#142A3D!important;margin:0!important;}
+.metric-lbl{
+  position:absolute!important;left:16px!important;bottom:12px!important;margin:0!important;
+  max-width:78%!important;font-size:11.5px!important;font-weight:700!important;line-height:1.25!important;
+  color:#365B7D!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+}
+.metric-help{display:none!important;}
+@media (max-width:1100px){.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
+@media (max-width:640px){.metrics-grid{grid-template-columns:1fr!important;margin:10px!important;}}
+
+/* Flat white workbench panel. */
+.panel{
+  margin:14px 16px 12px!important;padding:0!important;background:#fff!important;
+  border:1px solid var(--rmc-border)!important;border-radius:8px!important;
+  box-shadow:0 1px 3px rgba(34,53,72,.08)!important;overflow:visible!important;
+}
+.panel-title{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;
+  min-height:45px!important;margin:0!important;padding:10px 12px!important;background:#fff!important;
+  border-bottom:1px solid var(--rmc-border)!important;flex-wrap:nowrap!important;
+}
+.panel-title-left{display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;}
+.dot-bullet{display:none!important;}
+.panel-title h2{margin:0!important;font-size:13.5px!important;font-weight:700!important;color:#1D2D3E!important;letter-spacing:0!important;}
+.badge-blue,#result-count-badge{background:transparent!important;border:0!important;padding:0!important;color:#6A7F93!important;font-size:11.5px!important;font-weight:500!important;}
+
+/* Toolbar: same compact, flat RMC treatment. */
+.master-toolbar.toolbar-flat{
+  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important;
+  margin:0!important;padding:8px 12px!important;background:#fff!important;
+  border-bottom:1px solid var(--rmc-border)!important;overflow-x:auto!important;overflow-y:visible!important;
+}
+/* Let the nested filter body participate in the toolbar so actions can sit before search visually. */
+.master-toolbar.toolbar-flat #filter-panel-body{
+  order:3!important;display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;min-width:0!important;
+}
+.master-toolbar.toolbar-flat #filter-panel-body.collapsed{display:none!important;}
+.master-toolbar.toolbar-flat .common-actions{
+  order:1!important;display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;
+  padding:0!important;margin:0!important;border:0!important;flex-wrap:nowrap!important;
+}
+.master-toolbar.toolbar-flat .search-box{order:2!important;flex:0 0 200px!important;min-width:150px!important;max-width:none!important;}
+.master-toolbar.toolbar-flat #filter-panel-body .filter-bar{
+  order:3!important;display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;
+  flex-wrap:nowrap!important;margin:0!important;min-width:max-content!important;
+}
+.master-toolbar.toolbar-flat .filter-field{gap:0!important;}
+.master-toolbar.toolbar-flat .filter-field label,.master-toolbar.toolbar-flat .filter-spacer-label{display:none!important;}
+.master-toolbar.toolbar-flat .search-box input{
+  height:34px!important;padding:0 10px 0 31px!important;border:1px solid var(--rmc-border-strong)!important;
+  border-radius:4px!important;background:#fff!important;box-shadow:none!important;font-size:13px!important;color:#20364A!important;
+}
+.master-toolbar.toolbar-flat .search-box input:focus,
+.master-toolbar.toolbar-flat select:focus,
+.master-toolbar.toolbar-flat .dp input:focus{border-color:var(--rmc-blue)!important;box-shadow:0 0 0 1px var(--rmc-blue)!important;outline:none!important;}
+.master-toolbar.toolbar-flat .filter-field select{
+  width:110px!important;height:34px!important;padding-left:9px!important;padding-right:26px!important;
+  border:1px solid var(--rmc-border-strong)!important;border-radius:4px!important;background-color:#fff!important;
+  color:#20364A!important;font-size:12.5px!important;box-shadow:none!important;
+}
+.master-toolbar.toolbar-flat .filter-field.entity-filter select{width:118px!important;}
+.master-toolbar.toolbar-flat .date-range{display:flex!important;align-items:center!important;gap:6px!important;}
+.master-toolbar.toolbar-flat .date-range::before{
+  content:'MC Date';font-size:11.5px;font-weight:700;color:#526D82;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;
+}
+.master-toolbar.toolbar-flat .date-range span{font-size:11.5px!important;color:#6A7F93!important;}
+.master-toolbar.toolbar-flat .dp input{
+  width:108px!important;height:34px!important;padding:0 27px 0 9px!important;
+  border:1px solid var(--rmc-border-strong)!important;border-radius:4px!important;background:#fff!important;
+  color:#20364A!important;font-size:12px!important;box-shadow:none!important;
+}
+.master-toolbar.toolbar-flat .filter-reset{
+  height:34px!important;padding:0 12px!important;border:1px solid var(--rmc-border-strong)!important;
+  border-radius:4px!important;background:#fff!important;color:#425B72!important;font-size:12.5px!important;font-weight:600!important;
+}
+.master-toolbar.toolbar-flat .filter-reset:hover{background:#F4F6F8!important;border-color:#7F93A7!important;color:#20364A!important;}
+.master-toolbar.toolbar-flat .common-btn{
+  height:34px!important;padding:0 13px!important;border-radius:4px!important;font-size:12.5px!important;font-weight:600!important;box-shadow:none!important;
+}
+.master-toolbar.toolbar-flat .common-btn.approve{background:#fff!important;color:var(--rmc-blue)!important;border:1px solid var(--rmc-border-strong)!important;}
+.master-toolbar.toolbar-flat .common-btn.approve:hover:not(:disabled){background:#F4F6F8!important;border-color:var(--rmc-blue)!important;color:var(--rmc-blue)!important;}
+.master-toolbar.toolbar-flat .common-btn.reject{background:#fff!important;color:#C43D32!important;border:1px solid var(--rmc-border-strong)!important;}
+.master-toolbar.toolbar-flat .common-btn.reject:hover:not(:disabled){background:#FDEAEA!important;border-color:#C43D32!important;}
+.master-toolbar.toolbar-flat .common-btn:disabled{opacity:.42!important;}
+.master-toolbar.toolbar-flat .selected-count{font-size:12px!important;color:#6A7F93!important;font-weight:500!important;white-space:nowrap!important;}
+.master-toolbar.toolbar-flat #result-count-badge{font-size:11.5px!important;white-space:nowrap!important;}
+.master-toolbar.toolbar-flat > #result-count-badge{order:4!important;margin-left:auto!important;flex:0 0 auto!important;}
+
+/* Neutral ALV grid with the same visible cell lines as RMC / FO. */
+.table-wrap{width:100%!important;max-width:100%!important;overflow:auto!important;background:#fff!important;-webkit-overflow-scrolling:touch!important;}
+#mc-table{width:max-content!important;min-width:100%!important;border-collapse:separate!important;border-spacing:0!important;background:#fff!important;font-size:13px!important;}
+.list-table th,.list-table td{padding:8px 11px!important;white-space:nowrap!important;}
+.list-table thead th{
+  position:sticky!important;top:0!important;background:#F1F3F4!important;color:#425E77!important;
+  font-size:12.5px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important;
+  border-bottom:1px solid #D8DDE2!important;border-right:1px solid #E1E5E9!important;z-index:5!important;
+}
+.list-table thead th:last-child{border-right:0!important;}
+.list-table tbody td{
+  background:#fff!important;color:#16324A!important;font-size:13px!important;
+  border-bottom:1px solid #E3E7EA!important;border-right:1px solid #E6EAED!important;
+}
+.list-table tbody td:last-child{border-right:0!important;}
+.list-table tbody tr:hover td{background:#F7F9FA!important;}
+.list-table tbody tr.row-checked td{background:#EAF3FC!important;}
+#mc-table .sticky-col{position:sticky!important;z-index:8!important;background:#fff!important;}
+#mc-table thead th.sticky-col{z-index:30!important;background:#F1F3F4!important;}
+#mc-table .sticky-1{left:0!important;width:40px!important;min-width:40px!important;max-width:40px!important;}
+#mc-table .sticky-2{left:40px!important;width:160px!important;min-width:160px!important;max-width:160px!important;}
+#mc-table .sticky-3{left:200px!important;width:126px!important;min-width:126px!important;max-width:126px!important;box-shadow:4px 0 6px -4px rgba(22,39,64,.18)!important;}
+#mc-table tbody tr:hover .sticky-col{background:#F7F9FA!important;}
+#mc-table tbody tr.row-checked .sticky-col{background:#EAF3FC!important;}
+#mc-table tbody tr.row-checked td:first-child{box-shadow:inset 3px 0 0 var(--rmc-blue)!important;}
+.tbl-link{color:#0064D9!important;font-size:13px!important;font-weight:700!important;}
+.tbl-link:hover{color:#004A9F!important;text-decoration:underline!important;}
+.status-cell{font-size:13px!important;font-weight:700!important;}
+.status-cell .dot{display:none!important;}
+
+/* Keep drag/drop feedback unchanged functionally, but visually consistent. */
+#mc-table tbody tr.actionable-row{cursor:pointer!important;}
+#mc-table tbody tr.actionable-row.row-checked{cursor:grab!important;}
+#mc-table tbody tr.actionable-row.row-checked:active{cursor:grabbing!important;}
+#mc-table tbody tr.dragging-row{opacity:.48!important;}
+#mc-table tbody tr.dragging-row td{background:#DDEBFF!important;}
+body.row-dragging .drag-target:not(:disabled){box-shadow:0 0 0 2px rgba(10,110,209,.18)!important;}
+.drag-target.drag-over:not(:disabled){box-shadow:0 0 0 3px rgba(10,110,209,.22),0 7px 18px rgba(18,38,63,.15)!important;}
+#btn-reject-sel.drag-target.drag-over:not(:disabled){box-shadow:0 0 0 3px rgba(196,61,50,.20),0 7px 18px rgba(18,38,63,.15)!important;}
+
+/* Footer / pagination. */
+.pager{
+  display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;gap:10px!important;
+  min-height:42px!important;padding:7px 11px!important;margin:0!important;background:#fff!important;
+  border-top:1px solid var(--rmc-border)!important;
+}
+.pager-size{justify-self:start!important;font-size:12px!important;color:#6A7F93!important;}
+.pager-size select{height:28px!important;border:1px solid #D4DAE0!important;border-radius:4px!important;background:#fff!important;color:#20364A!important;font-size:12px!important;}
+.pager-controls{justify-self:center!important;}
+.pager-btn{
+  min-width:28px!important;height:28px!important;padding:0 6px!important;border:1px solid #DDE2E6!important;border-radius:4px!important;
+  background:#fff!important;color:#526D82!important;font-size:12px!important;box-shadow:none!important;
+}
+.pager-btn:hover:not(:disabled){background:#F4F6F8!important;border-color:#BCC7D1!important;color:#20364A!important;}
+.pager-btn.active{background:#fff!important;border-color:#B7C2CC!important;color:#20364A!important;font-weight:700!important;}
+.pager-info{justify-self:end!important;font-size:12px!important;color:#6A7F93!important;}
+.note{margin:0!important;padding:9px 11px 10px!important;background:#FAFBFC!important;border:0!important;border-top:1px solid var(--rmc-border)!important;border-radius:0 0 8px 8px!important;font-size:12px!important;color:#5C7085!important;}
+.note strong{color:#20364A!important;}
+
+/* Flat modal treatment shared by the RMC / FO screens. */
+.modal-overlay{background:rgba(26,42,58,.42)!important;}
+.modal-card{border:1px solid var(--rmc-border)!important;border-radius:8px!important;box-shadow:0 10px 28px rgba(26,42,58,.20)!important;}
+.modal-header{padding:12px 16px!important;background:#fff!important;border-bottom:1px solid var(--rmc-border)!important;}
+.modal-icon{display:none!important;}
+.modal-title{font-size:15px!important;font-weight:700!important;color:#1D2D3E!important;}
+.modal-subtitle{font-size:12.5px!important;color:#5C7085!important;}
+.modal-close{border:0!important;background:transparent!important;border-radius:4px!important;color:#5C7085!important;font-size:19px!important;}
+.modal-close:hover{background:#EEF2F4!important;color:#1D2D3E!important;}
+.modal-body{padding:15px 16px!important;background:#fff!important;}
+.modal-footer{padding:10px 16px!important;background:#fff!important;border-top:1px solid var(--rmc-border)!important;}
+.btn-cancel,.btn-confirm{height:34px!important;min-height:34px!important;border-radius:4px!important;font-size:12.5px!important;font-weight:600!important;}
+.btn-cancel{background:#fff!important;border:1px solid var(--rmc-border-strong)!important;color:#20364A!important;}
+.btn-cancel:hover{background:#F4F6F8!important;border-color:#7F93A7!important;color:#20364A!important;}
+.btn-confirm{background:var(--rmc-blue)!important;border:1px solid var(--rmc-blue)!important;color:#fff!important;}
+.btn-confirm:hover{background:var(--rmc-blue-dark)!important;border-color:var(--rmc-blue-dark)!important;}
+.btn-confirm.is-reject{background:#fff!important;color:#C43D32!important;border-color:#E5AAA4!important;}
+.btn-confirm.is-reject:hover{background:#FDEAEA!important;border-color:#C43D32!important;}
+.section-label{font-size:13px!important;color:#1D2D3E!important;}
+.section-label::before{display:none!important;}
+.detail-grid{border-color:var(--rmc-border)!important;border-radius:4px!important;}
+.detail-cell{border-color:#E3E7EA!important;padding:9px 11px!important;}
+.detail-lbl{font-size:11.5px!important;color:#6A7F93!important;}
+.detail-val{font-size:13px!important;color:#1D2D3E!important;}
+.filter-field input,.filter-field select{font-size:12.5px!important;}
+.hint{font-size:12px!important;}
+.child-quick-actions .common-btn{height:34px!important;border-radius:4px!important;font-size:12.5px!important;font-weight:600!important;}
+
+@media (max-width:1250px){
+  .master-toolbar.toolbar-flat{flex-wrap:wrap!important;overflow-x:visible!important;}
+  .master-toolbar.toolbar-flat .common-actions{order:1!important;}
+  .master-toolbar.toolbar-flat .search-box{order:2!important;flex:1 1 260px!important;}
+  .master-toolbar.toolbar-flat #filter-panel-body{order:3!important;flex:1 1 100%!important;}
+  .master-toolbar.toolbar-flat #filter-panel-body .filter-bar{flex-wrap:wrap!important;}
+}
+@media (max-width:760px){
+  .page-head{padding:8px 10px!important;}
+  .panel{margin:10px!important;}
+  .pager{grid-template-columns:1fr!important;justify-items:center!important;text-align:center!important;}
+  .pager-size,.pager-controls,.pager-info{justify-self:center!important;}
+}
+
+</style>
+</head>
+<body>
+
+  <div class="page-head">
+    <button class="btn-outline btn-back" title="Back" onclick="history.length>1?history.back():null">&#8592; Back</button>
+    <img class="head-icon" src="data:image/png;base64,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" alt="Company logo"/>
+    <div class="title-wrap">
+      <div class="page-title">MO: Confirm Master Contract</div>
+      <div class="page-subtitle">Review Master Contracts released by Front Office, then confirm or reject them</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn-outline" title="Reload data" onclick="location.reload()">&#8635; Refresh</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="kpi-head">
+      <button class="kpi-toggle" id="kpi-toggle" onclick="toggleKpis()"><span id="kpi-caret">&#9662;</span></button>
+      <div class="kpi-head-title">Overview</div>
+    </div>
+    <div class="metrics-grid" id="kpi-grid"></div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Master Contracts</h2></div>
+      </div>
+
+      <div class="master-toolbar toolbar-flat">
+          <div class="common-actions">
+            <button class="common-btn approve drag-target" id="btn-confirm-sel" disabled
+              onclick="askBulkAction('confirm')"
+              ondragover="allowActionDrop(event)" ondragenter="enterActionDrop(event)"
+              ondragleave="leaveActionDrop(event)" ondrop="dropRowOnAction(event,'confirm')"
+              title="Confirm selected contracts, or drag any selected row here">Confirm</button>
+            <button class="common-btn reject drag-target" id="btn-reject-sel" disabled
+              onclick="askBulkAction('reject')"
+              ondragover="allowActionDrop(event)" ondragenter="enterActionDrop(event)"
+              ondragleave="leaveActionDrop(event)" ondrop="dropRowOnAction(event,'reject')"
+              title="Reject selected contracts, or drag any selected row here">Reject</button>
+            <span class="selected-count" id="selected-count">0 selected</span>
+          </div>
+        <div class="search-box">
+          <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <input id="f-search" type="text" placeholder="Search MC number, entity, commodity, reference..." oninput="applyFilters()"/>
+        </div>
+        <div class="filter-panel-body" id="filter-panel-body">
+          <div class="filter-bar">
+            <div class="filter-field status-filter">
+              <label for="f-status">Status</label>
+              <select id="f-status" onchange="setStatusFilter(this.value)">
+                <option value="ALL">All statuses</option>
+                <option value="RELEASE">Release to MO</option>
+                <option value="ERRCORR">Error Correction</option>
+              </select>
+            </div>
+            <div class="filter-field entity-filter">
+              <label for="f-entity">Origin Entity</label>
+              <select id="f-entity" onchange="applyFilters()"><option value="ALL">All entities</option></select>
+            </div>
+            <div class="filter-field">
+              <label for="f-region">Region</label>
+              <select id="f-region" onchange="applyFilters()"><option value="ALL">All regions</option></select>
+            </div>
+            <div class="filter-field">
+              <label for="f-model">FX Model</label>
+              <select id="f-model" onchange="applyFilters()"><option value="ALL">All models</option></select>
+            </div>
+            <div class="filter-field">
+              <label>MC Date</label>
+              <div class="date-range">
+                <div class="dp">
+                  <input id="f-date-from" type="text" value="01-01-2026" readonly="readonly" onclick="toggleDatePicker('f-date-from')"/>
+                  <button type="button" class="dp-btn" onclick="toggleDatePicker('f-date-from')" aria-label="Open calendar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                  <div class="dp-popup" id="dp-popup-from"></div>
+                </div>
+                <span>to</span>
+                <div class="dp">
+                  <input id="f-date-to" type="text" value="31-12-2026" readonly="readonly" onclick="toggleDatePicker('f-date-to')"/>
+                  <button type="button" class="dp-btn" onclick="toggleDatePicker('f-date-to')" aria-label="Open calendar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                  <div class="dp-popup" id="dp-popup-to"></div>
+                </div>
+              </div>
+            </div>
+            <div class="filter-reset-wrap">
+              <span class="filter-spacer-label">Action</span>
+              <button class="filter-reset" onclick="resetFilters()">Reset</button>
+            </div>
+          </div>
+
+
+        </div>
+        <span class="badge badge-blue" id="result-count-badge">0 contracts</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="list-table" id="mc-table">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-1"><input type="checkbox" id="chk-all" onclick="toggleSelectAll(this.checked)" title="Select all pending rows"/></th>
+              <th class="left sticky-col sticky-2">Status</th>
+              <th class="left sortable sticky-col sticky-3" onclick="sortBy('mcNumber')">MC Number <span class="arrow" id="sort-mcNumber"></span></th>
+              <th class="left">Created MC</th>
+              <th class="left" title="A Deal ID is only assigned once a Master Contract is Confirmed and an FX Deal is booked against it. Confirmed contracts leave this queue, so it always shows blank here.">Deal ID</th>
+              <th class="left">Origin Entity</th>
+              <th class="left">Entity ID</th>
+              <th class="left">Entity String</th>
+              <th class="left sortable" onclick="sortBy('fxModel')">FX Model <span class="arrow" id="sort-fxModel"></span></th>
+              <th class="left">Model Description</th>
+              <th class="left">GT Commodity</th>
+              <th class="left">Comm Desc</th>
+              <th class="sortable" onclick="sortBy('mcDate')">MC Date <span class="arrow" id="sort-mcDate"></span></th>
+              <th class="sortable" onclick="sortBy('amtUSD')">MC Amt (USD) <span class="arrow" id="sort-amtUSD"></span></th>
+              <th>MC Amt (Origin)</th>
+              <th class="left">Curr1</th>
+              <th>Exchange Rate</th>
+              <th class="left">Currency ID</th>
+              <th class="left">Currency String</th>
+              <th class="left">Payment Terms</th>
+              <th>Payment Date</th>
+              <th>Shipment Start</th>
+              <th>Shipment End</th>
+              <th class="left">Port of Shipment</th>
+              <th class="left">Port of Destination</th>
+              <th>Utilized Amt</th>
+              <th class="left">MO Remarks</th>
+              <th class="left">FO Remarks</th>
+              <th class="left">Entered By</th>
+              <th class="left">Entered On</th>
+              <th class="left">Changed By</th>
+              <th class="left">Changed On</th>
+              <th class="left">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mc-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager">
+        <div class="pager-size">
+          <span>Rows per page</span>
+          <select id="pager-size" onchange="changePageSize()">
+            <option value="8">8</option>
+            <option value="15" selected="selected">15</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="pager-controls" id="pager-controls"></div>
+        <div class="pager-info" id="pager-info"></div>
+      </div>
+      <div class="note">
+        <strong>Note:</strong> This queue only ever shows Master Contracts still awaiting MO action &mdash;
+        <em>Release to MO</em> or <em>Error Correction</em>. Both are treated the same way: select one or more using
+        the checkboxes, then use Confirm/Reject Selected above to act on all of them at once. Once a contract is
+        Confirmed or Rejected it leaves this list entirely, which is also why <strong>Deal ID</strong> is always
+        blank here - a Deal ID can only be assigned after Confirmation. Click any <strong>MC Number</strong> to open
+        its child-contract breakdown; from there you can also confirm or reject a single contract. Click a column
+        heading to sort.
+      </div>
+    </div>
+  </main>
+
+<div class="zfac-toast" id="toast"></div>
+
+<!-- ======================= BULK CONFIRM / REJECT DIALOG ======================= -->
+<div class="modal-overlay" id="action-overlay" onclick="overlayClick(event,'action-overlay')">
+  <div class="modal-card" style="max-width:460px;">
+    <div class="modal-header">
+      <div class="modal-icon" id="action-icon">&#10003;</div>
+      <div class="modal-header-text">
+        <div class="modal-title" id="action-title">Confirm Master Contract(s)</div>
+        <div class="modal-subtitle" id="action-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('action-overlay')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="action-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('action-overlay')">Cancel</button>
+      <button class="btn-confirm" id="action-confirm-btn" onclick="doBulkAction()">Yes, proceed</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= CHILD CONTRACT MODAL ======================= -->
+<div class="modal-overlay" id="child-overlay" onclick="overlayClick(event,'child-overlay')">
+  <div class="modal-card" style="max-width:860px;">
+    <div class="modal-header">
+      <div class="modal-icon">&#9707;</div>
+      <div class="modal-header-text">
+        <div class="modal-title">MC: View Child Contract List</div>
+        <div class="modal-subtitle" id="child-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('child-overlay')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="child-detail-grid"></div>
+
+      <div class="section-label">Entity String Flow</div>
+      <div class="entity-flow" id="child-entity-flow"></div>
+
+      <div class="section-label">Child Contracts (Trade Legs)</div>
+      <div class="table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th class="left">Trade Type</th>
+              <th class="left">Seller</th>
+              <th class="left">Buyer</th>
+              <th class="left">MC Child Ref.</th>
+              <th class="left">P/S</th>
+              <th class="left">MC Description</th>
+              <th>MC Amount(USD)</th>
+              <th>Bal Amt(USD)</th>
+              <th>Planned Inv Amt</th>
+              <th class="left">Inv Curr</th>
+            </tr>
+          </thead>
+          <tbody id="child-tbody"></tbody>
+        </table>
+      </div>
+      <div class="note" id="child-note"></div>
+    </div>
+    <div class="modal-footer child-modal-footer">
+      <button class="btn-cancel" onclick="closeModal('child-overlay')">Close</button>
+      <div id="child-quick-actions" class="child-quick-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= EDIT MASTER CONTRACT MODAL ======================= -->
+<div class="modal-overlay" id="edit-overlay" onclick="overlayClick(event,'edit-overlay')">
+  <div class="modal-card" style="max-width:640px;">
+    <div class="modal-header">
+      <div class="modal-icon">&#9998;</div>
+      <div class="modal-header-text">
+        <div class="modal-title">Edit Master Contract</div>
+        <div class="modal-subtitle" id="edit-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('edit-overlay')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="edit-locked-note"></div>
+
+      <div class="section-label">Editable Fields</div>
+      <div class="filter-bar" style="margin-bottom:6px;">
+        <div class="filter-field" style="width:180px;">
+          <label for="edit-amount">MC Amount (USD)</label>
+          <input id="edit-amount" type="text" onblur="editAmountBlur()"/>
+        </div>
+        <div class="filter-field" style="width:220px;">
+          <label for="edit-payterms">Payment Terms</label>
+          <select id="edit-payterms"></select>
+        </div>
+        <div class="filter-field" style="width:220px;">
+          <label for="edit-model">FX Model</label>
+          <select id="edit-model" onchange="editModelChanged()"></select>
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:14px;">Tip: type a shorthand amount like <kbd>5M</kbd> (5 million) or <kbd>250T</kbd> (250 thousand) and it will be converted automatically, just like the SAP amount field.</div>
+
+      <div class="section-label">Derived From FX Model (read-only)</div>
+      <div class="detail-grid" id="edit-detail-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('edit-overlay')">Cancel</button>
+      <button class="btn-confirm" id="edit-update-btn" onclick="saveEdit()">Update</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   MASTER / REFERENCE DATA
+   ========================================================================= */
+
+var REGIONS = [
+  {id:"R01", name:"South-East Asia"},
+  {id:"R02", name:"China"},
+  {id:"R03", name:"United States of America"},
+  {id:"R04", name:"Middle East & Africa"},
+  {id:"R05", name:"Europe"},
+  {id:"R06", name:"United Kingdom"},
+  {id:"R07", name:"Latin America"},
+  {id:"R08", name:"Brazil"},
+  {id:"R09", name:"Canada"}
+];
+
+var ENTITIES = [
+  {code:"AMBER", cocode:"KY10", name:"Amber Foods Limited",        region:"R04", origin:false},
+  {code:"DMCC",  cocode:"AE13", name:"Olam International DMCC",    region:"R04", origin:false},
+  {code:"OAL",   cocode:"US40", name:"Olam Global Agri Americas",  region:"R03", origin:false},
+  {code:"OGA",   cocode:"SG03", name:"Olam Global Agri Pte. Ltd",  region:"R01", origin:false},
+  {code:"OGAT",  cocode:"SG39", name:"Olam Global Agri Treasury",  region:"R01", origin:false},
+  {code:"OSIPL", cocode:"IN11", name:"Olam Agri India Pvt Ltd",    region:"R01", origin:true},
+  {code:"OSL",   cocode:"CN10", name:"Olam Shanghai Limited",      region:"R02", origin:false},
+  {code:"OTL",   cocode:"TH10", name:"Olam (Thailand) Ltd",        region:"R01", origin:true},
+  {code:"OVL",   cocode:"VN10", name:"Olam Vietnam Limited",       region:"R01", origin:true},
+  {code:"PAN",   cocode:"AE11", name:"Panasia International FZE",  region:"R04", origin:false},
+  {code:"SEDA",  cocode:"ES12", name:"SEDA OUTSPAN IBERIA S.L.U",  region:"R05", origin:false}
+];
+
+/* Each FX Model pre-sets the 3-entity chain (Entity String) and the
+   currency each leg settles in (Currency String) - the "route" every
+   deal booked under this model will follow. */
+var FX_MODELS = [
+  {code:"M021", desc:"INR Long Forward",                    entities:["OGA","DMCC","OSIPL"], curr:["USD","USD","INR"], entityId:"E015", currId:"C002"},
+  {code:"M032", desc:"INR Long Forward",                    entities:["OGA","DMCC","OSIPL"], curr:["USD","USD","INR"], entityId:"E015", currId:"C002"},
+  {code:"M034", desc:"INR - INR Staggered Call & Put Option",entities:["OGA","DMCC","OSIPL"], curr:["USD","USD","INR"], entityId:"E026", currId:"C002"},
+  {code:"M041", desc:"INR Short Forward",                   entities:["OGAT","DMCC","OSIPL"],curr:["USD","USD","INR"], entityId:"E017", currId:"C002"},
+  {code:"M017", desc:"USD Long Forward",                    entities:["OAL","DMCC","OTL"],   curr:["USD","USD","USD"], entityId:"E016", currId:"C003"},
+  {code:"M025", desc:"EUR Long Forward",                    entities:["SEDA","DMCC","OVL"],  curr:["USD","USD","EUR"], entityId:"E018", currId:"C006"}
+];
+
+var COMMODITIES = [
+  {code:"C102", desc:"WHEAT"},
+  {code:"C125", desc:"RICE"},
+  {code:"C001", desc:"Multi-Commodity"},
+  {code:"C110", desc:"SOYABEAN OIL"},
+  {code:"C140", desc:"SUGAR"}
+];
+
+/* Reference masters for the extra ALV columns (Payment Terms, Ports, audit trail) */
+var PAYMENT_TERMS = [
+  {code:"P01", desc:"30 days from B/L date"},
+  {code:"P05", desc:"Advance payment"},
+  {code:"P07", desc:"60 days from B/L date"}
+];
+var PORT_PAIRS = [
+  {ship:"Any Port(s) in Vietnam or any other port(s)",            dest:"Any Port(s) in Europe or any other port(s)"},
+  {ship:"Any Port(s) in Africa, Europe or any other port(s)",     dest:"Any Port(s) in Belgium, Netherlands or any other port(s)"},
+  {ship:"Any Port(s) in India or any other port(s)",              dest:"Any Port(s) in Middle East or any other port(s)"},
+  {ship:"Any Port(s) in Thailand or any other port(s)",           dest:"Any Port(s) in China or any other port(s)"}
+];
+var ENTERED_BY_USERS = ["TINAKSHAYM", "AERAHULY"];
+
+var STATUS = {
+  RELEASE:   "02-Release to MO",
+  ERRCORR:   "11-Error Correction",
+  CONFIRMED: "03-Confirmed by MO",
+  INUSE:     "04-In-Use",
+  REJECTED:  "13-Rejected by MO"
+};
+var STATUS_KEY = {
+  "02-Release to MO":"RELEASE", "11-Error Correction":"ERRCORR",
+  "03-Confirmed by MO":"CONFIRMED", "04-In-Use":"INUSE", "13-Rejected by MO":"REJECTED"
+};
+var STATUS_SHORT = {
+  "02-Release to MO":"Release to MO", "11-Error Correction":"Error Correction",
+  "03-Confirmed by MO":"Confirmed", "04-In-Use":"In Use", "13-Rejected by MO":"Rejected"
+};
+/* This transaction's work queue only ever surfaces Master Contracts still awaiting
+   MO action: freshly released (Release to MO) or bounced back for correction
+   (Error Correction). A Deal ID can only ever be assigned once an MC is Confirmed
+   and an FX Deal is booked against it - since Confirmed/In-Use records never
+   appear in this queue, no visible row here will ever carry a Deal ID. Once MO
+   confirms or rejects a contract it leaves this queue entirely (matches the
+   ABAP: those statuses are no longer '02' or '11', so they fall outside scope). */
+var QUEUE_STATUSES = [STATUS.RELEASE, STATUS.ERRCORR];
+function isInQueueScope(mc){ return QUEUE_STATUSES.indexOf(mc.status) !== -1; }
+/* Both statuses in this queue are actionable the same way: selectable via
+   checkbox, confirmable or rejectable in bulk, and offered both quick actions
+   in the child-contract modal. There is no special-cased "confirm only" path -
+   Error Correction follows exactly the same logic as Release to MO. */
+function isActionable(mc){ return mc.status === STATUS.RELEASE || mc.status === STATUS.ERRCORR; }
+
+function entityOf(code){ for (var i=0;i<ENTITIES.length;i++) if (ENTITIES[i].code===code) return ENTITIES[i]; return null; }
+function modelOf(code){ for (var i=0;i<FX_MODELS.length;i++) if (FX_MODELS[i].code===code) return FX_MODELS[i]; return null; }
+function commodityOf(code){ for (var i=0;i<COMMODITIES.length;i++) if (COMMODITIES[i].code===code) return COMMODITIES[i]; return null; }
+
+function fmtNum(n){
+  var neg = n<0; n = Math.abs(n);
+  var parts = n.toFixed(2).split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (neg?"-":"") + parts[0] + "." + parts[1];
+}
+var MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(d){
+  var dd = String(d.getDate()).padStart(2,"0");
+  var mm = String(d.getMonth()+1).padStart(2,"0");
+  return dd + "-" + mm + "-" + d.getFullYear();
+}
+function fmtDateTime(d, timeStr){
+  return d ? (fmtDate(d) + (timeStr ? " " + timeStr : "")) : "";
+}
+function parseDate(s){
+  var p = s.split(".");
+  return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+}
+function addDays(d, n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+
+/* =========================================================================
+   DUMMY MASTER CONTRACT DATA
+   ========================================================================= */
+var MC_SEED = [
+  {n:2000002729, model:"M032", status:STATUS.ERRCORR,  comm:"C102", client:"OSIPL_WHEAT_M032_100M", date:"01.09.2026", amtUSD:100000000.00, exRate:90.0, shipStartOff:14, shipDur:120, dealId:"", moNote:"Shipping window overlaps an existing Master Contract on the same vessel slot - please revise."},
+  {n:2000002728, model:"M032", status:STATUS.ERRCORR,  comm:"C125", client:"OSIPL_RICE_M032_0.1M",  date:"22.08.2026", amtUSD:100000.00,    exRate:95.7112,shipStartOff:31, shipDur:730, dealId:"", moNote:"Commodity code does not match the description on the supporting contract - please correct."},
+  {n:2000002727, model:"M032", status:STATUS.ERRCORR,  comm:"C001", client:"OSIPL_Multi-Commodity_M032_500M",date:"21.09.2026", amtUSD:500000000.00, exRate:90.0, shipStartOff:25, shipDur:460, dealId:"", moNote:"Amount exceeds the pre-approved credit line for this entity - please confirm limit approval."},
+  {n:2000002725, model:"M034", status:STATUS.ERRCORR,  comm:"C001", client:"OSIPL_Multi-Commodity_M034_33K", date:"21.09.2026", amtUSD:33055.00,  exRate:4.0, shipStartOff:25, shipDur:26, dealId:"", moNote:"Exchange rate looks stale versus today's market - please re-quote and resubmit."},
+  {n:2000002724, model:"M034", status:STATUS.ERRCORR,  comm:"C001", client:"OSIPL_Multi-Commodity_M034_22K", date:"21.09.2026", amtUSD:22889.00,  exRate:6.0, shipStartOff:25, shipDur:26, dealId:"", moNote:"Origin entity does not match the FX Model's configured entity string - please align."},
+  {n:2000002704, model:"M025", status:STATUS.ERRCORR,  comm:"C140", client:"OVL_SUGAR_M025_2M",       date:"03.09.2026", amtUSD:2000000.00, exRate:0.92,shipStartOff:60, shipDur:90, dealId:"", moNote:"Port of destination is not in the approved list for this trade lane - please revise."},
+  {n:2000002715, model:"M041", status:STATUS.RELEASE,  comm:"C001", client:"OSIPL_Multi-Commodity_M041_10K", date:"19.09.2026", amtUSD:10904.00,  exRate:8.0, shipStartOff:25, shipDur:25, dealId:""},
+  {n:2000002714, model:"M041", status:STATUS.RELEASE,  comm:"C001", client:"OSIPL_Multi-Commodity_M041_25K", date:"19.09.2026", amtUSD:25021.00,  exRate:9.0, shipStartOff:25, shipDur:25, dealId:""},
+  {n:2000002713, model:"M041", status:STATUS.RELEASE,  comm:"C001", client:"OSIPL_Multi-Commodity_M041_48K", date:"19.09.2026", amtUSD:48524.00,  exRate:9.0, shipStartOff:25, shipDur:25, dealId:""},
+  {n:2000002706, model:"M017", status:STATUS.RELEASE,  comm:"C110", client:"OTL_SOYABEANOIL_M017_5M",  date:"05.09.2026", amtUSD:5000000.00, exRate:1.0, shipStartOff:40, shipDur:55, dealId:""}
+];
+
+var MASTER_CONTRACTS = MC_SEED.map(function(s, i){
+  var m = modelOf(s.model);
+  var origin = m.entities[m.entities.length-1];
+  var mcDate = parseDate(s.date);
+  var shipStart = addDays(mcDate, s.shipStartOff);
+  var shipEnd = addDays(shipStart, s.shipDur);
+  var currOrigin = m.curr[m.curr.length-1];
+  var amtOrigin = s.amtUSD * s.exRate;
+
+  var pt = PAYMENT_TERMS[i % PAYMENT_TERMS.length];
+  var ports = PORT_PAIRS[i % PORT_PAIRS.length];
+  var enteredBy = ENTERED_BY_USERS[i % ENTERED_BY_USERS.length];
+  var enteredOn = addDays(mcDate, -((i*3) % 6));
+  var entryTime = String(8 + (i % 14)).padStart(2,"0") + ":" + String((i*7) % 60).padStart(2,"0") + ":" + String((i*13) % 60).padStart(2,"0");
+
+  return {
+    mcNumber: s.n,
+    mcReference: "MC/" + origin + "/2026/" + String(s.n).slice(-3),
+    dealId: s.dealId,
+    fxModel: s.model,
+    modelDesc: m.desc,
+    entities: m.entities,
+    entityId: m.entityId,
+    currChain: m.curr,
+    currId: m.currId,
+    status: s.status,
+    mcDescription: s.client,
+    mcDate: mcDate,
+    originEntity: origin,
+    commodityCode: s.comm,
+    commodityDesc: commodityOf(s.comm).desc,
+    amtUSD: s.amtUSD,
+    amtOrigin: amtOrigin,
+    currOrigin: currOrigin,
+    exRate: s.exRate,
+    shipStart: shipStart,
+    shipEnd: shipEnd,
+    balUSD: s.amtUSD,
+    utilizedAmt: 0,
+    paymentTerms: pt.code,
+    paymentDate: addDays(shipEnd, 30),
+    portOfShipment: ports.ship,
+    portOfDestination: ports.dest,
+    moRemarks: s.moNote || "",
+    foRemarks: "",
+    enteredBy: enteredBy,
+    enteredOn: enteredOn,
+    entryTime: entryTime,
+    changedBy: "",
+    changedOn: null
+  };
+});
+
+/* Seeded Error Correction rows already carry a reason (moNote) - back-fill who
+   sent them back and when, so the audit trail looks realistic without waiting
+   for a live action. */
+(function(){
+  MASTER_CONTRACTS.filter(function(mc){ return mc.status === STATUS.ERRCORR; }).forEach(function(mc, idx){
+    mc.changedBy = idx % 2 === 0 ? "TINAKSHAYM" : "AERAHULY";
+    mc.changedOn = addDays(mc.mcDate, 2 + idx);
+  });
+})();
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+var filteredMCs = [];
+var checkedSet = {};          /* mcNumber -> true, for actionable MO-review rows */
+var statusFilter = "ALL";
+var sortKey = "mcNumber";
+var sortDir = -1;
+var pageSize = 15;
+var pageIndex = 1;
+var pendingAction = null;     /* "confirm" | "reject" */
+var pendingScope = null;      /* "bulk" | mcNumber (single, from the child modal) */
+var editingMcNumber = null;   /* MC currently open in the Edit Master Contract modal */
+
+var $ = function(id){ return document.getElementById(id); };
+
+/* =========================================================================
+   INIT DROPDOWNS
+   ========================================================================= */
+function initDropdowns(){
+  var entSel = $("f-entity");
+  ENTITIES.slice().sort(function(a,b){ return a.code<b.code?-1:1; }).forEach(function(e){
+    var o = document.createElement("option"); o.value = e.code; o.textContent = e.code + " - " + e.name; entSel.appendChild(o);
+  });
+  var regSel = $("f-region");
+  REGIONS.forEach(function(r){
+    var o = document.createElement("option"); o.value = r.id; o.textContent = r.id + " - " + r.name; regSel.appendChild(o);
+  });
+  var modSel = $("f-model");
+  FX_MODELS.forEach(function(m){
+    var o = document.createElement("option"); o.value = m.code; o.textContent = m.code + " - " + m.desc; modSel.appendChild(o);
+  });
+}
+
+/* =========================================================================
+   KPI / STAT CARDS
+   ========================================================================= */
+function computeKpis(list){
+  var counts = {RELEASE:0, ERRCORR:0};
+  var totalUSD = 0;
+  list.forEach(function(mc){ counts[STATUS_KEY[mc.status]]++; totalUSD += mc.amtUSD; });
+  return {total:list.length, counts:counts, totalUSD:totalUSD};
+}
+function fmtCompactUsd(n){
+  if (n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+  if (n >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
+  if (n >= 1e3) return "$" + (n/1e3).toFixed(1) + "K";
+  return "$" + n.toFixed(0);
+}
+function renderKpis(list){
+  var k = computeKpis(list);
+  var cards = [
+    {key:"ALL",     cls:"k-total",   val:k.total,          lbl:"Total Master Contracts", help:"Contracts currently awaiting MO review"},
+    {key:"RELEASE", cls:"k-pending", val:k.counts.RELEASE, lbl:"Release to MO", help:"New contracts released by Front Office"},
+    {key:"ERRCORR", cls:"k-errcorr", val:k.counts.ERRCORR, lbl:"Error Correction", help:"Corrected contracts returned for MO review"}
+  ];
+  $("kpi-grid").innerHTML = cards.map(function(c){
+    var active = statusFilter === c.key ? " active" : "";
+    return '<div class="metric-card ' + c.cls + active + '" onclick="setStatusFilter(\'' + c.key + '\')">' +
+      '<div class="metric-inner">' +
+        '<div class="metric-val">' + c.val + '</div>' +
+        '<div class="metric-lbl">' + c.lbl + '</div>' +
+        '<div class="metric-help">' + c.help + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join("") +
+  '<div class="metric-card k-total" style="cursor:default;" onclick="event.stopPropagation()">' +
+    '<div class="metric-inner">' +
+      '<div class="metric-val">' + fmtCompactUsd(k.totalUSD) + '</div>' +
+      '<div class="metric-lbl">Total MC Amount (USD)</div>' +
+      '<div class="metric-help">Combined USD value of contracts in this queue</div>' +
+    '</div>' +
+  '</div>';
+}
+window.toggleKpis = function(){
+  var grid = $("kpi-grid");
+  var hidden = grid.classList.toggle("kpi-hidden");
+  $("kpi-toggle").classList.toggle("collapsed", hidden);
+};
+window.toggleFilterPanel = function(){
+  $("filter-panel-body").classList.toggle("collapsed");
+};
+
+/* =========================================================================
+   FILTERING
+   ========================================================================= */
+window.setStatusFilter = function(key){
+  statusFilter = key;
+  var statusSelect = $("f-status");
+  if (statusSelect) statusSelect.value = key;
+  document.querySelectorAll("#status-seg .seg").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-status") === key);
+  });
+  applyFilters();
+};
+
+/* Fields shared by every filter EXCEPT status. Kept separate so KPI totals
+   can be computed "as if status were All" while the table itself still
+   honours the active status filter - see applyFilters() below. */
+function matchesNonStatusFilters(mc, p){
+  if (mc.mcDate < p.from || mc.mcDate > p.to) return false;
+  if (p.entity !== "ALL" && mc.originEntity !== p.entity) return false;
+  if (p.region !== "ALL"){
+    var ent = entityOf(mc.originEntity);
+    if (!ent || ent.region !== p.region) return false;
+  }
+  if (p.model !== "ALL" && mc.fxModel !== p.model) return false;
+  if (p.q){
+    /* Search every visible data column exactly as it is rendered in the table. */
+    var hay = [
+      STATUS_SHORT[mc.status],
+      mc.mcNumber,
+      mc.mcReference,
+      mc.dealId,
+      mc.originEntity,
+      mc.entityId,
+      mc.entities.join("-"),
+      mc.fxModel,
+      mc.modelDesc,
+      mc.commodityCode,
+      mc.commodityDesc,
+      fmtDate(mc.mcDate),
+      fmtNum(mc.amtUSD),
+      fmtNum(mc.amtOrigin),
+      mc.currOrigin,
+      mc.exRate.toFixed(6),
+      mc.currId,
+      mc.currChain.join("-"),
+      mc.paymentTerms,
+      fmtDate(mc.paymentDate),
+      fmtDate(mc.shipStart),
+      fmtDate(mc.shipEnd),
+      mc.portOfShipment,
+      mc.portOfDestination,
+      fmtNum(mc.utilizedAmt),
+      mc.moRemarks,
+      mc.foRemarks,
+      mc.enteredBy,
+      fmtDateTime(mc.enteredOn, mc.entryTime),
+      mc.changedBy,
+      mc.changedOn ? fmtDate(mc.changedOn) : ""
+    ].join(" ").toLowerCase();
+    if (hay.indexOf(p.q) === -1) return false;
+  }
+  return true;
+}
+
+window.applyFilters = function(){
+  var p = {
+    from: safeParseDate($("f-date-from").value) || new Date(1900,0,1),
+    to: safeParseDate($("f-date-to").value) || new Date(2999,0,1),
+    entity: $("f-entity").value,
+    region: $("f-region").value,
+    model: $("f-model").value,
+    q: $("f-search").value.trim().toLowerCase()
+  };
+
+  /* Everything matching date/entity/region/model/search AND still in this
+     queue's scope (Release to MO or Error Correction), regardless of which of
+     those two the status filter is set to - this is the pool the KPI cards
+     summarise, so switching the status filter never zeroes out the other card.
+     Confirmed/In-Use/Rejected Master Contracts never appear here at all: once
+     MO actions a contract it leaves this work queue for good. */
+  var kpiScopeMCs = MASTER_CONTRACTS.filter(function(mc){ return isInQueueScope(mc) && matchesNonStatusFilters(mc, p); });
+
+  /* The table itself still narrows down by the active status filter on top of that. */
+  filteredMCs = kpiScopeMCs.filter(function(mc){
+    return statusFilter === "ALL" || STATUS_KEY[mc.status] === statusFilter;
+  });
+
+  /* drop stale checkbox state for rows no longer visible/eligible */
+  Object.keys(checkedSet).forEach(function(k){
+    var mc = MASTER_CONTRACTS.find(function(m){ return String(m.mcNumber) === k; });
+    if (!mc || !isActionable(mc)) delete checkedSet[k];
+  });
+
+  pageIndex = 1;
+  sortRows();
+  renderKpis(kpiScopeMCs);
+  renderTable();
+  updateCommonActions();
+};
+
+window.resetFilters = function(){
+  $("f-search").value = "";
+  $("f-entity").value = "ALL";
+  $("f-region").value = "ALL";
+  $("f-model").value = "ALL";
+  $("f-date-from").value = "01-01-2026";
+  $("f-date-to").value = "31-12-2026";
+  setStatusFilter("ALL");
+};
+
+function safeParseDate(s){
+  if (!s) return null;
+  var m = s.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+  var day = parseInt(m[1],10), monthIdx = parseInt(m[2],10)-1, year = parseInt(m[3],10);
+  if (monthIdx < 0 || monthIdx > 11 || day < 1 || day > 31) return null;
+  var d = new Date(year, monthIdx, day);
+  if (d.getFullYear() !== year || d.getMonth() !== monthIdx || d.getDate() !== day) return null;
+  return d;
+}
+
+/* =========================================================================
+   CUSTOM DATE PICKER (dd-mm-yyyy)
+   A native <input type="date"> can't be forced to show dd-mm-yyyy while
+   keeping its calendar, so this is a small self-contained popup calendar;
+   whatever day is clicked is written back in dd-mm-yyyy and triggers a filter.
+   ========================================================================= */
+var DOW_LABELS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+var dpViewMonth = {}; /* fieldId -> Date (first-of-month currently displayed) */
+
+function dpPopupId(fieldId){ return "dp-popup-" + (fieldId === "f-date-from" ? "from" : "to"); }
+function daysInMonth(y, m){ return new Date(y, m+1, 0).getDate(); }
+
+function renderCalendar(fieldId){
+  var view = dpViewMonth[fieldId];
+  var y = view.getFullYear(), m = view.getMonth();
+  var firstDow = new Date(y, m, 1).getDay();
+  var totalDays = daysInMonth(y, m);
+  var prevMonthDays = daysInMonth(y, m === 0 ? 11 : m - 1);
+  var selected = safeParseDate($(fieldId).value);
+  var today = new Date();
+
+  var cells = [];
+  for (var i = 0; i < firstDow; i++){
+    cells.push('<div class="dp-day muted">' + (prevMonthDays - firstDow + 1 + i) + '</div>');
+  }
+  for (var d = 1; d <= totalDays; d++){
+    var cls = "dp-day";
+    var isSel = selected && selected.getFullYear()===y && selected.getMonth()===m && selected.getDate()===d;
+    var isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
+    if (isSel) cls += " selected"; else if (isToday) cls += " today";
+    cells.push('<div class="' + cls + '" onclick="event.stopPropagation();pickDate(\'' + fieldId + '\',' + y + ',' + m + ',' + d + ')">' + d + '</div>');
+  }
+  var trailing = (7 - (cells.length % 7)) % 7;
+  for (var n = 1; n <= trailing; n++){ cells.push('<div class="dp-day muted">' + n + '</div>'); }
+
+  $(dpPopupId(fieldId)).innerHTML =
+    '<div class="dp-head">' +
+      '<button type="button" onclick="event.stopPropagation();shiftMonth(\'' + fieldId + '\',-1)">&lsaquo;</button>' +
+      '<span class="dp-month-label">' + MONTH_ABBR[m] + ' ' + y + '</span>' +
+      '<button type="button" onclick="event.stopPropagation();shiftMonth(\'' + fieldId + '\',1)">&rsaquo;</button>' +
+    '</div>' +
+    '<div class="dp-grid">' + DOW_LABELS.map(function(dw){ return '<div class="dp-dow">' + dw + '</div>'; }).join("") + cells.join("") + '</div>';
+}
+window.toggleDatePicker = function(fieldId){
+  var openId = dpPopupId(fieldId);
+  var willOpen = !$(openId).classList.contains("open");
+  $("dp-popup-from").classList.remove("open");
+  $("dp-popup-to").classList.remove("open");
+  if (willOpen){
+    var current = safeParseDate($(fieldId).value) || new Date();
+    dpViewMonth[fieldId] = new Date(current.getFullYear(), current.getMonth(), 1);
+    renderCalendar(fieldId);
+    $(openId).classList.add("open");
+  }
+};
+window.shiftMonth = function(fieldId, delta){
+  var view = dpViewMonth[fieldId];
+  dpViewMonth[fieldId] = new Date(view.getFullYear(), view.getMonth() + delta, 1);
+  renderCalendar(fieldId);
+};
+window.pickDate = function(fieldId, y, m, d){
+  $(fieldId).value = fmtDate(new Date(y, m, d));
+  $(dpPopupId(fieldId)).classList.remove("open");
+  applyFilters();
+};
+document.addEventListener("click", function(e){
+  var path = typeof e.composedPath === "function" ? e.composedPath() : [e.target];
+  var insideDp = path.some(function(node){ return node && node.classList && node.classList.contains("dp"); });
+  if (!insideDp){
+    var pf = document.getElementById("dp-popup-from"), pt = document.getElementById("dp-popup-to");
+    if (pf) pf.classList.remove("open");
+    if (pt) pt.classList.remove("open");
+  }
+});
+
+window.runExecute = function(){
+  applyFilters();
+  setStatus("Selection executed. " + filteredMCs.length + " Master Contract(s) found.", "info");
+};
+
+/* =========================================================================
+   SORTING
+   ========================================================================= */
+window.sortBy = function(key){
+  if (sortKey === key) sortDir = -sortDir; else { sortKey = key; sortDir = 1; }
+  sortRows();
+  renderTable();
+  document.querySelectorAll(".list-table thead .arrow").forEach(function(el){ el.textContent = ""; });
+  var arrowEl = $("sort-" + key);
+  if (arrowEl) arrowEl.textContent = sortDir === 1 ? "\u25B2" : "\u25BC";
+};
+function sortRows(){
+  filteredMCs.sort(function(a,b){
+    var av = a[sortKey], bv = b[sortKey];
+    if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return 1 * sortDir;
+    return 0;
+  });
+}
+
+/* =========================================================================
+   TABLE / PAGER RENDER
+   ========================================================================= */
+function statusCell(status){
+  var key = STATUS_KEY[status];
+  var cls = key === "CONFIRMED" ? "st-confirmed" : key === "INUSE" ? "st-inuse" : key === "REJECTED" ? "st-rejected" : key === "ERRCORR" ? "st-errcorr" : "st-pending";
+  return '<span class="status-cell ' + cls + '">' + STATUS_SHORT[status] + '</span>';
+}
+function renderTable(){
+  $("result-count-badge").textContent = filteredMCs.length + " contract" + (filteredMCs.length===1?"":"s");
+
+  var totalPages = Math.max(1, Math.ceil(filteredMCs.length / pageSize));
+  if (pageIndex > totalPages) pageIndex = totalPages;
+  var startIdx = (pageIndex - 1) * pageSize;
+  var pageRows = filteredMCs.slice(startIdx, startIdx + pageSize);
+
+  if (!pageRows.length){
+    $("mc-tbody").innerHTML = '<tr class="empty-row"><td colspan="33">No Master Contracts match the selection criteria.</td></tr>';
+  } else {
+    $("mc-tbody").innerHTML = pageRows.map(function(mc){
+      var eligible = isActionable(mc);
+      var checked = !!checkedSet[mc.mcNumber];
+      return '<tr class="' + (eligible?"actionable-row ":"") + (checked?"row-checked":"") + '" ' +
+        'aria-selected="' + (checked?"true":"false") + '" ' +
+        'draggable="' + (eligible && checked ? "true" : "false") + '" ' +
+        'onclick="selectRowFromClick(event,' + mc.mcNumber + ')" ' +
+        'ondragstart="beginRowDrag(event,' + mc.mcNumber + ')" ondragend="endRowDrag(event)">' +
+        '<td class="sticky-col sticky-1"><input type="checkbox" ' + (eligible?"":"disabled") + ' ' + (checked?"checked":"") +
+          ' onclick="toggleRowCheck(' + mc.mcNumber + ', this.checked)" title="' + (eligible?"Select for bulk action":"This Master Contract cannot be selected for bulk action in its current status") + '"/></td>' +
+        '<td class="left sticky-col sticky-2">' + statusCell(mc.status) + '</td>' +
+        '<td class="left sticky-col sticky-3"><button class="tbl-link" onclick="openChild(' + mc.mcNumber + ')">' + mc.mcNumber + '</button></td>' +
+        '<td class="left">' + mc.mcReference + '</td>' +
+        '<td class="left">' + (mc.dealId ? '<span class="deal-id">' + mc.dealId + '</span>' : '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + mc.originEntity + '</td>' +
+        '<td class="left">' + mc.entityId + '</td>' +
+        '<td class="left">' + mc.entities.join("-") + '</td>' +
+        '<td class="left">' + mc.fxModel + '</td>' +
+        '<td class="left">' + mc.modelDesc + '</td>' +
+        '<td class="left">' + mc.commodityCode + '</td>' +
+        '<td class="left">' + mc.commodityDesc + '</td>' +
+        '<td>' + fmtDate(mc.mcDate) + '</td>' +
+        '<td class="num">' + fmtNum(mc.amtUSD) + '</td>' +
+        '<td class="num">' + fmtNum(mc.amtOrigin) + '</td>' +
+        '<td class="left">' + mc.currOrigin + '</td>' +
+        '<td class="num">' + mc.exRate.toFixed(6) + '</td>' +
+        '<td class="left">' + mc.currId + '</td>' +
+        '<td class="left">' + mc.currChain.join("-") + '</td>' +
+        '<td class="left">' + mc.paymentTerms + '</td>' +
+        '<td>' + fmtDate(mc.paymentDate) + '</td>' +
+        '<td>' + fmtDate(mc.shipStart) + '</td>' +
+        '<td>' + fmtDate(mc.shipEnd) + '</td>' +
+        '<td class="left">' + mc.portOfShipment + '</td>' +
+        '<td class="left">' + mc.portOfDestination + '</td>' +
+        '<td class="num">' + fmtNum(mc.utilizedAmt) + '</td>' +
+        '<td class="left">' + (mc.moRemarks || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + (mc.foRemarks || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + mc.enteredBy + '</td>' +
+        '<td class="left">' + fmtDateTime(mc.enteredOn, mc.entryTime) + '</td>' +
+        '<td class="left">' + (mc.changedBy || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + (mc.changedOn ? fmtDate(mc.changedOn) : '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left"><button class="rowaction-btn" onclick="openEdit(' + mc.mcNumber + ')">Edit</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  var allEligible = pageRows.filter(function(mc){ return isActionable(mc); });
+  $("chk-all").checked = allEligible.length > 0 && allEligible.every(function(mc){ return checkedSet[mc.mcNumber]; });
+  $("chk-all").disabled = allEligible.length === 0;
+
+  renderPager(totalPages);
+}
+function renderPager(totalPages){
+  var total = filteredMCs.length;
+  var startIdx = total ? (pageIndex - 1) * pageSize + 1 : 0;
+  var endIdx = Math.min(total, pageIndex * pageSize);
+  $("pager-info").innerHTML = total ? ('Showing <strong>' + startIdx + '-' + endIdx + '</strong> of <strong>' + total + '</strong>') : "No records";
+
+  var html = "";
+  html += '<button class="pager-btn" ' + (pageIndex<=1?"disabled":"") + ' onclick="goToPage(1)">&laquo;</button>';
+  html += '<button class="pager-btn" ' + (pageIndex<=1?"disabled":"") + ' onclick="goToPage(' + (pageIndex-1) + ')">&lsaquo;</button>';
+  var lo = Math.max(1, pageIndex-2), hi = Math.min(totalPages, pageIndex+2);
+  for (var p=lo;p<=hi;p++){
+    html += '<button class="pager-btn ' + (p===pageIndex?"active":"") + '" onclick="goToPage(' + p + ')">' + p + '</button>';
+  }
+  html += '<button class="pager-btn" ' + (pageIndex>=totalPages?"disabled":"") + ' onclick="goToPage(' + (pageIndex+1) + ')">&rsaquo;</button>';
+  html += '<button class="pager-btn" ' + (pageIndex>=totalPages?"disabled":"") + ' onclick="goToPage(' + totalPages + ')">&raquo;</button>';
+  $("pager-controls").innerHTML = html;
+}
+window.goToPage = function(p){ pageIndex = p; renderTable(); };
+window.changePageSize = function(){ pageSize = parseInt($("pager-size").value, 10) || 15; pageIndex = 1; renderTable(); };
+
+/* =========================================================================
+   ROW / BULK SELECTION
+   ========================================================================= */
+window.toggleRowCheck = function(mcNumber, isChecked){
+  if (isChecked) checkedSet[mcNumber] = true; else delete checkedSet[mcNumber];
+  renderTable();
+  updateCommonActions();
+};
+window.toggleSelectAll = function(isChecked){
+  var startIdx = (pageIndex - 1) * pageSize;
+  filteredMCs.slice(startIdx, startIdx + pageSize).forEach(function(mc){
+    if (isActionable(mc)){
+      if (isChecked) checkedSet[mc.mcNumber] = true; else delete checkedSet[mc.mcNumber];
+    }
+  });
+  renderTable();
+  updateCommonActions();
+};
+function getCheckedMcs(){
+  return Object.keys(checkedSet).map(function(k){ return MASTER_CONTRACTS.find(function(m){ return String(m.mcNumber)===k; }); }).filter(Boolean);
+}
+function updateCommonActions(){
+  var n = getCheckedMcs().length;
+  $("btn-confirm-sel").disabled = n === 0;
+  $("btn-reject-sel").disabled = n === 0;
+  $("selected-count").textContent = n ? (n + " selected · drag any selected row to Confirm or Reject") : "0 selected";
+}
+
+/* Click anywhere on an actionable table row to select/deselect it. Interactive
+   controls inside the row keep their existing behavior and do not toggle it. */
+window.selectRowFromClick = function(event, mcNumber){
+  if (event && event.target && event.target.closest && event.target.closest("button,input,a,select,textarea,label")) return;
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  if (!mc || !isActionable(mc)) return;
+  if (checkedSet[mcNumber]) delete checkedSet[mcNumber]; else checkedSet[mcNumber] = true;
+  renderTable();
+  updateCommonActions();
+};
+
+var draggedMcNumber = null;
+var draggedMcNumbers = [];
+window.beginRowDrag = function(event, mcNumber){
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  if (!mc || !isActionable(mc) || !checkedSet[mcNumber]){
+    if (event) event.preventDefault();
+    return false;
+  }
+
+  /* Dragging any selected row carries the complete current selection. */
+  var selectedMcs = getCheckedMcs().filter(isActionable);
+  draggedMcNumber = mcNumber;
+  draggedMcNumbers = selectedMcs.map(function(item){ return item.mcNumber; });
+
+  if (event && event.dataTransfer){
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggedMcNumbers.join(","));
+  }
+  document.body.classList.add("row-dragging");
+  if (event && event.currentTarget) event.currentTarget.classList.add("dragging-row");
+};
+window.endRowDrag = function(event){
+  draggedMcNumber = null;
+  draggedMcNumbers = [];
+  document.body.classList.remove("row-dragging");
+  document.querySelectorAll(".drag-target.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+  if (event && event.currentTarget) event.currentTarget.classList.remove("dragging-row");
+};
+window.allowActionDrop = function(event){
+  if (!draggedMcNumbers.length) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+};
+window.enterActionDrop = function(event){
+  if (!draggedMcNumbers.length) return;
+  event.preventDefault();
+  if (event.currentTarget) event.currentTarget.classList.add("drag-over");
+};
+window.leaveActionDrop = function(event){
+  if (event.currentTarget) event.currentTarget.classList.remove("drag-over");
+};
+window.dropRowOnAction = function(event, action){
+  event.preventDefault();
+
+  /* Use the full selection captured when the drag started. This means dragging
+     one row from a multi-selection confirms/rejects all selected contracts. */
+  var selectedNumbers = draggedMcNumbers.slice();
+  if (!selectedNumbers.length && event.dataTransfer){
+    selectedNumbers = String(event.dataTransfer.getData("text/plain") || "")
+      .split(",")
+      .map(function(value){ return parseInt(value, 10); })
+      .filter(function(value){ return !isNaN(value); });
+  }
+
+  document.body.classList.remove("row-dragging");
+  document.querySelectorAll(".drag-target.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+  draggedMcNumber = null;
+  draggedMcNumbers = [];
+
+  var mcs = selectedNumbers.map(function(mcNumber){
+    return MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  }).filter(function(mc){ return mc && isActionable(mc); });
+
+  if (!mcs.length) return;
+  openActionDialog(action, mcs, "bulk");
+};
+
+/* =========================================================================
+   BULK CONFIRM / REJECT DIALOG
+   ========================================================================= */
+window.askBulkAction = function(action){
+  var mcs = getCheckedMcs();
+  if (!mcs.length) return;
+  openActionDialog(action, mcs, "bulk");
+};
+function openActionDialog(action, mcs, scope){
+  pendingAction = action;
+  pendingScope = scope;
+  var isReject = action === "reject";
+  $("action-icon").textContent = isReject ? "\u2717" : "\u2713";
+  $("action-icon").style.color = isReject ? "#dc2626" : "#1d4fd1";
+  $("action-title").textContent = (isReject ? "Reject" : "Confirm") + " Master Contract" + (mcs.length>1?"s":"");
+  $("action-subtitle").textContent = mcs.length + " contract" + (mcs.length>1?"s":"") + " selected";
+  $("action-body").innerHTML = '<div class="detail-grid">' + mcs.slice(0,8).map(function(mc){
+    return '<div class="detail-cell"><div class="detail-lbl">MC ' + mc.mcNumber + '</div><div class="detail-val accent">' + mc.mcDescription + '</div></div>';
+  }).join("") + '</div>' +
+  (mcs.length>8 ? '<div class="note">...and ' + (mcs.length-8) + ' more.</div>' : '') +
+  '<div class="note">Are you sure you want to <strong>' + (isReject?"reject":"confirm") + '</strong> ' + (mcs.length>1?"these Master Contracts":"this Master Contract") + '?</div>' +
+  (isReject ?
+    '<div class="filter-field" style="width:100%;margin-top:12px;">' +
+      '<label for="action-remark">Rejection Remark <span style="color:var(--red);">*</span></label>' +
+      '<textarea id="action-remark" rows="3" placeholder="Why is this Master Contract being rejected? This is recorded as the MO Remark." ' +
+      'oninput="clearRemarkError()" ' +
+      'style="width:100%;resize:vertical;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12.5px;font-family:inherit;color:var(--ink);"></textarea>' +
+      '<div id="action-remark-error" style="display:none;color:var(--red);font-size:11px;font-weight:600;margin-top:4px;">Please fill the MO Remarks and Update.</div>' +
+    '</div>'
+    : '');
+  var btn = $("action-confirm-btn");
+  btn.textContent = "Yes, " + (isReject?"reject":"confirm");
+  btn.className = "btn-confirm" + (isReject ? " is-reject" : "");
+  $("action-overlay").classList.add("open");
+}
+function clearRemarkError(){
+  var remarkEl = $("action-remark");
+  var errEl = $("action-remark-error");
+  if (remarkEl) remarkEl.style.borderColor = "var(--border)";
+  if (errEl) errEl.style.display = "none";
+}
+window.clearRemarkError = clearRemarkError;
+window.doBulkAction = function(){
+  var mcs;
+  if (pendingScope === "bulk") mcs = getCheckedMcs();
+  else mcs = MASTER_CONTRACTS.filter(function(m){ return m.mcNumber === pendingScope; });
+
+  var remark = "";
+  if (pendingAction === "reject"){
+    var remarkEl = $("action-remark");
+    remark = remarkEl ? remarkEl.value.trim() : "";
+    if (!remark){
+      if (remarkEl) remarkEl.style.borderColor = "var(--red)";
+      var errEl = $("action-remark-error");
+      if (errEl) errEl.style.display = "block";
+      return; /* keep the dialog open until a remark is entered */
+    }
+  }
+
+  var now = new Date();
+  mcs.forEach(function(mc){
+    mc.status = pendingAction === "confirm" ? STATUS.CONFIRMED : STATUS.REJECTED;
+    mc.changedBy = "MO_REVIEWER";
+    mc.changedOn = now;
+    if (pendingAction === "reject") mc.moRemarks = remark;
+    delete checkedSet[mc.mcNumber];
+  });
+
+  var verb = pendingAction === "confirm" ? "confirmed" : "rejected";
+  var label = mcs.length === 1 ? ("Master Contract " + mcs[0].mcNumber) : (mcs.length + " Master Contracts");
+  setStatus(label + " " + verb + " successfully.", pendingAction === "confirm" ? "success" : "error");
+
+  closeModal("action-overlay");
+  closeModal("child-overlay");
+  applyFilters();
+};
+
+/* =========================================================================
+   CHILD CONTRACT MODAL
+   ========================================================================= */
+window.openChild = function(mcNumber){
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  if (!mc) return;
+  renderChildModal(mc);
+  $("child-overlay").classList.add("open");
+};
+function renderChildModal(mc){
+  $("child-subtitle").textContent = "MC " + mc.mcNumber + " \u2013 " + mc.mcDescription;
+
+  $("child-detail-grid").innerHTML =
+    '<div class="detail-cell"><div class="detail-lbl">Master Contract</div><div class="detail-val accent">' + mc.mcNumber + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Status</div><div class="detail-val">' + statusCell(mc.status) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Created MC</div><div class="detail-val">' + mc.mcReference + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Entity ID</div><div class="detail-val">' + mc.entityId + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Contract Amt</div><div class="detail-val">USD ' + fmtNum(mc.amtUSD) + ' / ' + mc.currOrigin + ' ' + fmtNum(mc.amtOrigin) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Exchange Rate</div><div class="detail-val">' + mc.exRate.toFixed(6) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Commodity</div><div class="detail-val">' + mc.commodityCode + ' - ' + mc.commodityDesc + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">MC Date</div><div class="detail-val">' + fmtDate(mc.mcDate) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Ship Window</div><div class="detail-val">' + fmtDate(mc.shipStart) + ' \u2013 ' + fmtDate(mc.shipEnd) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Currency String</div><div class="detail-val">' + mc.currChain.join("-") + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Payment Terms</div><div class="detail-val">' + mc.paymentTerms + ' \u2013 due ' + fmtDate(mc.paymentDate) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Ports</div><div class="detail-val">' + mc.portOfShipment + ' \u2192 ' + mc.portOfDestination + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Entered By / On</div><div class="detail-val">' + mc.enteredBy + ', ' + fmtDateTime(mc.enteredOn, mc.entryTime) + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Changed By / On</div><div class="detail-val">' + (mc.changedBy ? (mc.changedBy + ', ' + fmtDate(mc.changedOn)) : '<span class="muted-dash">&ndash; not yet changed</span>') + '</div></div>' +
+    (mc.moRemarks ? '<div class="detail-cell"><div class="detail-lbl">MO Remarks</div><div class="detail-val" style="color:var(--red);">' + mc.moRemarks + '</div></div>' : '');
+
+  $("child-entity-flow").innerHTML = mc.entities.map(function(e,i){
+    return (i>0 ? '<span class="arrow">&rarr;</span>' : "") + '<span class="ent-chip">' + e + '</span>';
+  }).join("");
+
+  var ents = mc.entities;
+  var rows = [];
+  var contractBase = 3100000000 + mc.mcNumber % 900000;
+  for (var i=0;i<ents.length-1;i++){
+    var t = "T" + (i+1);
+    var seller = ents[i], buyer = ents[i+1];
+    var isLastLeg = (i === ents.length-2);
+    var legCurr = isLastLeg ? mc.currOrigin : "USD";
+    var legAmt = isLastLeg ? mc.amtOrigin : mc.amtUSD;
+    var contractRef = contractBase + i*1000;
+    var planned = mc.status === STATUS.INUSE ? legAmt : 0;
+    rows.push({t:t, seller:seller, buyer:buyer, ref:contractRef, ps:"Sale", desc:seller+"-"+buyer+"-S", amt:mc.amtUSD, bal:mc.amtUSD, planned:planned, curr:legCurr});
+    rows.push({t:t, seller:seller, buyer:buyer, ref:contractRef, ps:"Purchase", desc:buyer+"-"+seller+"-P", amt:mc.amtUSD, bal:mc.amtUSD, planned:planned, curr:legCurr});
+  }
+  $("child-tbody").innerHTML = rows.map(function(r){
+    return "<tr>" +
+      '<td class="left">' + r.t + "</td>" +
+      '<td class="left">' + r.seller + "</td>" +
+      '<td class="left">' + r.buyer + "</td>" +
+      '<td class="left">' + r.ref + "</td>" +
+      '<td class="left">' + r.ps + "</td>" +
+      '<td class="left">' + r.desc + "</td>" +
+      '<td class="num">' + fmtNum(r.amt) + "</td>" +
+      '<td class="num">' + fmtNum(r.bal) + "</td>" +
+      '<td class="num">' + (r.planned ? fmtNum(r.planned) : '<span class="muted-dash">not yet raised</span>') + "</td>" +
+      '<td class="left">' + r.curr + "</td>" +
+    "</tr>";
+  }).join("");
+
+  $("child-note").innerHTML = mc.status === STATUS.INUSE
+    ? "<strong>Note:</strong> This MC already has Deal ID <span class='deal-id'>" + mc.dealId + "</span> assigned, so planned invoice amounts are populated per leg."
+    : "<strong>Note:</strong> No FX Deal has been booked against this MC yet, so planned invoice amounts are not yet raised.";
+
+  var quick = $("child-quick-actions");
+  if (isActionable(mc)){
+    quick.innerHTML =
+      '<button class="common-btn approve" onclick="quickAction(\'confirm\', ' + mc.mcNumber + ')">Confirm this MC</button>' +
+      '<button class="common-btn reject" onclick="quickAction(\'reject\', ' + mc.mcNumber + ')">Reject this MC</button>';
+  } else {
+    quick.innerHTML = "";
+  }
+}
+window.quickAction = function(action, mcNumber){
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  if (!mc) return;
+  openActionDialog(action, [mc], mcNumber);
+};
+
+/* =========================================================================
+   EDIT MASTER CONTRACT MODAL
+   Mirrors the ABAP screen ZSGTSF_RMC_DETAIL_EDIT (dynpro 9001):
+   - Amount, Payment Terms and FX Model are editable; FX Model is offered
+     only from models configured for this MC's origin entity (WHERE zorigin = ...).
+   - Entity ID/String, Currency ID/String and Model Description are re-derived
+     read-only the moment a model is picked (the SELECT SINGLE against
+     zsgtsftr_rule_bt in module STATUS_9001).
+   - Once status is 03 or beyond, every field is locked (module MODIFY_SCR_9001:
+     "IF gs_data-zmc_stat >= '03' ... screen-input = 0").
+   - The amount field accepts an "M"/"T" shorthand (module AMT_CONVERT1, via
+     AMOUNT_STRING_CONVERT) and reformats with thousands separators on blur.
+   ========================================================================= */
+function candidateModelsForOrigin(originEntity){
+  return FX_MODELS.filter(function(m){ return m.entities[m.entities.length-1] === originEntity; });
+}
+function renderEditDerivedFields(modelCode){
+  var m = modelOf(modelCode);
+  if (!m) return;
+  $("edit-detail-grid").innerHTML =
+    '<div class="detail-cell"><div class="detail-lbl">Entity ID</div><div class="detail-val">' + m.entityId + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Entity String</div><div class="detail-val">' + m.entities.join("-") + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Currency ID</div><div class="detail-val">' + m.currId + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Currency String</div><div class="detail-val">' + m.curr.join("-") + '</div></div>' +
+    '<div class="detail-cell"><div class="detail-lbl">Model Description</div><div class="detail-val">' + m.desc + '</div></div>';
+}
+function renderEditModal(mc){
+  /* Release to MO and Error Correction are both MO-review states.
+     Error Correction means Front Office has corrected the contract and
+     returned it to MO, so the same fields must remain editable. */
+  var editable = isActionable(mc);
+  $("edit-subtitle").textContent = "MC " + mc.mcNumber + " \u2013 " + mc.mcDescription;
+
+  var lockedMsg = '<strong>Read-only:</strong> this Master Contract is already <strong>' + STATUS_SHORT[mc.status] + '</strong>, so its ' +
+    'fields can no longer be changed here - the SAP screen locks inputs once the contract is outside the MO review queue.';
+  $("edit-locked-note").innerHTML = editable ? "" :
+    '<div class="note" style="border-color:#f5c99a;background:var(--amber-pale);color:#7a4b00;margin-bottom:14px;">' + lockedMsg + '</div>';
+
+  var amountInput = $("edit-amount");
+  amountInput.value = fmtNum(mc.amtUSD);
+  amountInput.disabled = !editable;
+
+  var paySel = $("edit-payterms");
+  paySel.innerHTML = PAYMENT_TERMS.map(function(p){
+    return '<option value="' + p.code + '"' + (p.code===mc.paymentTerms?" selected":"") + '>' + p.code + ' \u2013 ' + p.desc + '</option>';
+  }).join("");
+  paySel.disabled = !editable;
+
+  var modelSel = $("edit-model");
+  var candidates = candidateModelsForOrigin(mc.originEntity);
+  modelSel.innerHTML = candidates.map(function(m){
+    return '<option value="' + m.code + '"' + (m.code===mc.fxModel?" selected":"") + '>' + m.code + ' \u2013 ' + m.desc + '</option>';
+  }).join("");
+  modelSel.disabled = !editable;
+
+  renderEditDerivedFields(mc.fxModel);
+  $("edit-update-btn").style.display = editable ? "" : "none";
+}
+window.openEdit = function(mcNumber){
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === mcNumber; });
+  if (!mc) return;
+  editingMcNumber = mcNumber;
+  renderEditModal(mc);
+  $("edit-overlay").classList.add("open");
+};
+window.editModelChanged = function(){
+  renderEditDerivedFields($("edit-model").value);
+};
+function parseAmountShorthand(str){
+  if (!str) return 0;
+  str = String(str).trim().replace(/,/g, "");
+  var m = str.match(/^([\d.]+)\s*([MT])$/i);
+  if (m){
+    var num = parseFloat(m[1]);
+    return m[2].toUpperCase() === "M" ? num * 1e6 : num * 1e3;
+  }
+  var plain = parseFloat(str);
+  return isNaN(plain) ? 0 : plain;
+}
+window.editAmountBlur = function(){
+  var input = $("edit-amount");
+  input.value = fmtNum(parseAmountShorthand(input.value));
+};
+window.saveEdit = function(){
+  var mc = MASTER_CONTRACTS.find(function(m){ return m.mcNumber === editingMcNumber; });
+  if (!mc || !isActionable(mc)){ closeModal("edit-overlay"); return; }
+
+  var newAmt = parseAmountShorthand($("edit-amount").value);
+  var newModel = modelOf($("edit-model").value) || modelOf(mc.fxModel);
+  var newPayTerms = $("edit-payterms").value;
+
+  mc.amtUSD = newAmt;
+  mc.balUSD = newAmt;
+  mc.paymentTerms = newPayTerms;
+  mc.fxModel = newModel.code;
+  mc.modelDesc = newModel.desc;
+  mc.entities = newModel.entities;
+  mc.entityId = newModel.entityId;
+  mc.currChain = newModel.curr;
+  mc.currId = newModel.currId;
+  mc.currOrigin = newModel.curr[newModel.curr.length-1];
+  mc.amtOrigin = newAmt * mc.exRate;
+  mc.changedBy = "MO_REVIEWER";
+  mc.changedOn = new Date();
+
+  closeModal("edit-overlay");
+  setStatus("Master Contract Updated Successfully", "success");
+  applyFilters();
+};
+
+/* =========================================================================
+   MODAL PLUMBING
+   ========================================================================= */
+window.closeModal = function(id){ $(id).classList.remove("open"); };
+window.overlayClick = function(ev, id){ if (ev.target && ev.target.id === id) closeModal(id); };
+
+/* =========================================================================
+   TOAST STATUS
+   ========================================================================= */
+var toastTimer = null;
+function setStatus(msg, kind){
+  var t = $("toast");
+  t.textContent = msg;
+  t.className = "zfac-toast show" + (kind ? " " + kind : "");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = "zfac-toast"; }, 3400);
+}
+
+/* =========================================================================
+   KEYBOARD SHORTCUTS
+   ========================================================================= */
+document.addEventListener("keydown", function(e){
+  if (e.key === "F8"){ e.preventDefault(); runExecute(); }
+  if (e.key === "Escape"){
+    closeModal("action-overlay"); closeModal("child-overlay"); closeModal("edit-overlay");
+    var pf = $("dp-popup-from"), pt = $("dp-popup-to");
+    if (pf) pf.classList.remove("open");
+    if (pt) pt.classList.remove("open");
+  }
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function init(){
+  initDropdowns();
+  applyFilters(); /* default sortKey="mcNumber", sortDir=-1 (descending, newest first) */
+  var arrowEl = $("sort-mcNumber");
+  if (arrowEl) arrowEl.textContent = "\u25BC";
+  setStatus("Ready. " + filteredMCs.length + " Master Contract(s) loaded.", "");
+}
+init();
+
+})();
+</script>
+</body>
+</html>

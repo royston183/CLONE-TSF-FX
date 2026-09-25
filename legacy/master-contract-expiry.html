@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Contract Expiry</title>
+<style>
+/* =========================================================
+   DESIGN SYSTEM
+   ========================================================= */
+:root{
+  --bg:#f5f7f9;
+  --card:#ffffff;
+  --surface-2:#f2f4f5;
+  --text:#1d2d3e;
+  --text-muted:#475e75;
+  --text-faint:#687b8d;
+  --border:#d5dadd;
+  --border-strong:#8996a1;
+  --blue:#0a6ed1;
+  --blue-hover:#085caf;
+  --blue-soft:#eaf3fc;
+  --blue2:#4b9fe1;
+  --success:#107e3e;
+  --success-soft:#e4f5e9;
+  --warning:#9a6b00;
+  --warning-soft:#fff4cc;
+  --error:#bb0000;
+  --error-soft:#fbe4e4;
+  --teal:#17BEBB;
+  --purple:#8E44AD;
+  --radius-lg:6px;
+  --radius-md:6px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 10px 32px rgba(16,38,58,.22);
+  --row-h:38px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"72","Segoe UI",Arial,sans-serif;
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--blue2);color:#fff;}
+button{font-family:inherit;}
+input,select{font-family:inherit;font-size:inherit;color:var(--text);}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.app-shell{
+  width:100%;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+
+.page-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+}
+.page-header .logo-img{
+  height:36px;
+  width:auto;
+  max-width:110px;
+  object-fit:contain;
+  flex:none;
+}
+.page-header .titles{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.page-header h1{
+  font-size:16px;
+  font-weight:700;
+  margin:0;
+  color:var(--text);
+}
+.header-actions{
+  display:flex;
+  gap:8px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  padding:16px 18px;
+}
+.card + .card{margin-top:14px;}
+.card-title{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+  margin:0 0 12px 0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.card-title .req-note{
+  font-weight:400;
+  color:var(--text-faint);
+  font-size:11px;
+}
+
+/* =========================================================
+   COMPONENTS — form fields
+   ========================================================= */
+.selection-row{
+  display:flex;
+  align-items:flex-start;
+  gap:28px;
+  flex-wrap:wrap;
+}
+.selection-col{
+  display:flex;
+  flex-direction:column;
+  min-width:220px;
+}
+.selection-col-basic{flex:0 0 auto;}
+.selection-col-posting{flex:1 1 auto;}
+.selection-divider{
+  align-self:stretch;
+  width:1px;
+  background:var(--border);
+  margin:2px 0;
+}
+@media (max-width:760px){
+  .selection-divider{display:none;}
+}
+
+.field-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:22px;
+  align-items:flex-start;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:180px;
+}
+.field label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-muted);
+}
+.field label .req{
+  color:var(--error);
+  margin-left:2px;
+}
+.control{
+  height:32px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 10px;
+  background:#fff;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+  width:180px;
+}
+.control:hover{border-color:var(--border-strong);}
+.control:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 1px var(--blue);
+}
+.control.invalid{
+  border-color:var(--error);
+  box-shadow:0 0 0 1px var(--error);
+}
+.field-error{
+  font-size:12px;
+  color:var(--error);
+  display:none;
+}
+.field-error.show{display:block;}
+
+.date-field{position:relative;}
+.date-field .control{width:170px;}
+.date-icon-btn{
+  display:none;
+  position:absolute;
+  right:5px;
+  top:50%;
+  transform:translateY(-50%);
+  width:24px;
+  height:24px;
+  border:none;
+  background:transparent;
+  border-radius:6px;
+  cursor:pointer;
+  align-items:center;
+  justify-content:center;
+  color:var(--text-muted);
+  font-size:13px;
+}
+.date-icon-btn:hover{background:var(--blue-soft); color:var(--blue);}
+
+.calendar-pop{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  z-index:60;
+  width:248px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  padding:10px;
+  display:none;
+}
+.calendar-pop.open{display:block;}
+.cal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+.cal-head .cal-title{font-weight:700; font-size:12px;}
+.cal-nav{
+  width:22px;height:22px;border:none;background:transparent;
+  border-radius:6px;cursor:pointer;color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;
+}
+.cal-nav:hover{background:var(--blue-soft); color:var(--blue);}
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.cal-dow{
+  font-size:10px;
+  color:var(--text-faint);
+  text-align:center;
+  font-weight:700;
+  padding:2px 0 4px;
+}
+.cal-day{
+  height:26px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+  font-size:11.5px;
+  cursor:pointer;
+  color:var(--text);
+}
+.cal-day:hover{background:var(--blue-soft); color:var(--blue);}
+.cal-day.muted{color:var(--text-faint);}
+.cal-day.today{border:1px solid var(--blue2);}
+.cal-day.selected{background:var(--blue); color:#fff; font-weight:700;}
+
+/* radios */
+.radio-group{
+  display:flex;
+  gap:10px;
+}
+.radio-opt{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  font-size:13px;
+  color:var(--text);
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid transparent;
+  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.radio-opt:has(input[type=radio]:checked){
+  background:var(--surface-2);
+  border-color:var(--border);
+  box-shadow:0 1px 3px rgba(34,53,72,.08);
+}
+.radio-opt input[type=radio]{
+  appearance:none;
+  -webkit-appearance:none;
+  width:16px;height:16px;
+  border:1.5px solid var(--border-strong);
+  border-radius:50%;
+  position:relative;
+  cursor:pointer;
+  outline:none;
+  flex-shrink:0;
+  transition:border-color .12s;
+}
+.radio-opt input[type=radio]:checked{border-color:var(--blue);}
+.radio-opt input[type=radio]:checked::after{
+  content:'';
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--blue);
+}
+.radio-opt .opt-label{font-weight:600;}
+.radio-opt .opt-sub{color:var(--text-faint); font-size:12px; margin-top:1px;}
+.radio-opt-inner{display:flex;flex-direction:column;}
+
+/* buttons */
+.btn{
+  height:32px;
+  padding:0 16px;
+  border-radius:var(--radius-sm);
+  border:1px solid transparent;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn-primary{background:var(--blue); color:#fff; border-color:var(--blue);}
+.btn-primary:hover:not(:disabled){background:var(--blue-hover); border-color:var(--blue-hover); box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.btn-secondary{background:#fff; color:var(--text-muted); border-color:var(--border-strong);}
+.btn-secondary:hover:not(:disabled){border-color:var(--blue); color:var(--blue); box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.btn-danger{background:var(--error); color:#fff;}
+.btn-danger:hover:not(:disabled){background:#960000;}
+.btn-ghost{background:transparent; color:var(--text-muted); border-color:transparent;}
+.btn-ghost:hover:not(:disabled){background:var(--surface-2);}
+.btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.btn-sm{height:28px; padding:0 12px; font-size:11.5px;}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+.table-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.toolbar-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.search-box{
+  position:relative;
+  width:280px;
+}
+.search-box input{
+  width:100%;
+  height:32px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 10px 0 30px;
+  outline:none;
+  background:#fff;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.search-box input:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 1px var(--blue);
+}
+.search-box svg{
+  position:absolute;
+  left:9px; top:50%;
+  transform:translateY(-50%);
+  color:var(--text-faint);
+}
+.result-count{
+  font-size:13px;
+  color:var(--text-muted);
+}
+.result-count b{color:var(--text);}
+.toolbar-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.rpp-select{
+  height:32px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 8px;
+  background:#fff;
+  font-size:13px;
+}
+
+.table-wrap{
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:auto;
+  max-height:560px;
+  background:#fff;
+}
+table.data-table{
+  border-collapse:separate;
+  border-spacing:0;
+  width:100%;
+  min-width:980px;
+}
+table.data-table thead th{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:var(--surface-2);
+  border-bottom:1px solid var(--border);
+  padding:0 10px;
+  height:38px;
+  text-align:left;
+  font-size:15px;
+  font-weight:700;
+  color:var(--text-muted);
+  letter-spacing:.15px;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+}
+table.data-table thead th.no-sort{cursor:default;}
+table.data-table thead th .th-inner{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+table.data-table thead th .sort-ind{
+  font-size:9px;
+  color:var(--text-faint);
+  width:10px;
+}
+table.data-table thead th.sorted .sort-ind{color:var(--blue);}
+table.data-table thead th:first-child{border-top-left-radius:var(--radius-md);}
+table.data-table thead th:last-child{border-top-right-radius:var(--radius-md);}
+
+table.data-table tbody td{
+  height:var(--row-h);
+  padding:0 10px;
+  border-bottom:1px solid var(--border);
+  font-size:15px;
+  font-weight:400;
+  color:var(--text);
+  white-space:nowrap;
+}
+table.data-table tbody tr{
+  background:#fff;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.data-table tbody tr:hover{
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF;
+  position:relative;
+  z-index:2;
+}
+table.data-table tbody tr.row-selected{background:var(--blue-soft);}
+table.data-table tbody tr.row-selected:hover{
+  background:var(--blue-soft);
+  box-shadow:0 3px 9px rgba(10,110,209,.14);
+}
+table.data-table tbody tr.dragging{opacity:.5;}
+table.data-table tbody tr.drag-range-selected{background:var(--blue-soft);}
+table.data-table tbody tr.drag-range-hover{box-shadow:inset 0 0 0 1px var(--blue);}
+table.data-table tbody tr:last-child td{border-bottom:none;}
+
+.col-action{width:38px; text-align:center;}
+.col-status{width:96px;}
+.col-num{text-align:right;}
+.num-cell{text-align:right; font-variant-numeric:tabular-nums;}
+.date-cell{font-variant-numeric:tabular-nums; color:var(--text-muted);}
+
+.mc-link{
+  color:var(--blue);
+  font-weight:600;
+  cursor:pointer;
+  background:none;
+  border:none;
+  padding:0;
+  font-size:15px;
+  font-family:inherit;
+}
+.mc-link:hover{text-decoration:underline;}
+
+.status-text{font-weight:700;}
+.status-inuse{color:var(--success);}
+.status-confirmed{color:var(--blue);}
+.status-expired{color:var(--error);}
+.status-pending{color:var(--warning);}
+.status-active{color:var(--success);}
+.status-settled{color:var(--text-muted);}
+.status-draft{color:var(--text-faint);}
+.status-matured{color:var(--purple);}
+.status-rejected{color:var(--error);}
+
+.chk{
+  width:15px;height:15px;
+  accent-color:var(--blue);
+  cursor:pointer;
+}
+
+/* empty / validation states */
+.empty-state{
+  padding:64px 24px;
+  text-align:center;
+  color:var(--text-muted);
+}
+.empty-state svg{color:var(--border-strong); margin-bottom:12px;}
+.empty-state .es-title{font-weight:700; color:var(--text); font-size:13.5px; margin-bottom:4px;}
+.empty-state .es-sub{font-size:12px; color:var(--text-faint);}
+
+.hint-banner{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background:var(--blue-soft);
+  border:1px solid #CFE1FB;
+  color:#154E9E;
+  border-radius:var(--radius-md);
+  padding:10px 12px;
+  font-size:13px;
+  margin-bottom:14px;
+}
+.hint-banner.warn{
+  background:var(--warning-soft);
+  border-color:#FFE0B8;
+  color:#9A5300;
+}
+.hint-banner.success{
+  background:var(--success-soft);
+  border-color:#BFE9CF;
+  color:#1E7A45;
+}
+.hint-banner b{font-weight:700;}
+
+/* pagination */
+.pagination-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:12px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.pg-btns{display:flex; align-items:center; gap:4px;}
+.pg-btn{
+  min-width:28px;
+  height:28px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  font-size:11.5px;
+  color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  padding:0 6px;
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;
+}
+.pg-btn:hover:not(:disabled){border-color:var(--blue); color:var(--blue);}
+.pg-btn:active:not(:disabled){transform:translateY(1px);}
+.pg-btn.active{background:var(--blue); border-color:var(--blue); color:#fff; font-weight:700;}
+.pg-btn:disabled{opacity:.4; cursor:not-allowed;}
+
+/* =========================================================
+   DRAG AND DROP
+   Selected row(s) can be dragged onto Expiry Update. Ghost is a
+   compact label (not the full row); reuses the same visual
+   language as Create Master Contract's drag-and-drop feature.
+   ========================================================= */
+.drag-ghost{
+  position:fixed;
+  top:-1000px;
+  left:-1000px;
+  padding:6px 10px;
+  background:#1D2D3E;
+  color:#fff;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family:inherit;
+  pointer-events:none;
+}
+.expiry-drag-over{
+  background:var(--blue) !important;
+  color:#fff !important;
+  border-color:var(--blue) !important;
+  box-shadow:0 0 0 3px rgba(10,110,209,.15);
+  transform:translateY(-1px);
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,26,38,.42);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.overlay.open{display:flex; animation:overlayFadeIn .2s ease-out;}
+.overlay.closing{display:flex; animation:overlayFadeOut .16s ease-in forwards;}
+@keyframes overlayFadeIn{from{background:rgba(15,26,38,0);}to{background:rgba(15,26,38,.42);}}
+@keyframes overlayFadeOut{from{background:rgba(15,26,38,.42);}to{background:rgba(15,26,38,0);}}
+.modal{
+  background:#fff;
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-pop);
+  width:420px;
+  max-width:100%;
+  overflow:hidden;
+  animation:popIn .28s cubic-bezier(.22,1.1,.36,1);
+}
+@keyframes popIn{
+  0%{transform:scale(.9) translateY(10px); opacity:0;}
+  60%{transform:scale(1.015) translateY(0); opacity:1;}
+  100%{transform:scale(1) translateY(0); opacity:1;}
+}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.96) translateY(4px);opacity:0;}}
+.overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+.modal.modal-lg{width:860px;}
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#fff,#fafbfc);
+}
+.modal-header h3{margin:0; font-size:14px; font-weight:700;}
+.modal:not(.modal-lg) .modal-header h3{font-size:16px;}
+.modal-close{
+  width:26px;height:26px;
+  border:none;
+  background:transparent;
+  border-radius:50%;
+  cursor:pointer;
+  color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s ease, color .15s ease;
+}
+.modal-close:hover{background:var(--surface-2); color:var(--text);}
+.modal-body{
+  padding:18px;
+  max-height:70vh;
+  overflow-y:auto;
+}
+.modal-body p{margin:0 0 4px; font-size:13px; color:var(--text);}
+.modal-body .muted{color:var(--text-muted); font-size:12px;}
+.modal:not(.modal-lg) .modal-body p{font-size:15.5px;}
+.modal:not(.modal-lg) .modal-body .muted{font-size:14px; font-weight:400;}
+.modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+  background:var(--surface-2);
+}
+.modal-footer .btn{font-size:15px;}
+
+.confirm-icon{
+  width:52px;height:52px;
+  border-radius:50%;
+  background:var(--warning-soft);
+  color:var(--warning);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;
+  box-shadow:0 0 0 6px rgba(154,107,0,.08);
+  animation:confirmIconPop .32s cubic-bezier(.22,1.1,.36,1) .05s both;
+}
+@keyframes confirmIconPop{
+  0%{transform:scale(.5); opacity:0;}
+  70%{transform:scale(1.08); opacity:1;}
+  100%{transform:scale(1); opacity:1;}
+}
+
+/* details popup */
+.details-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.detail-section{
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px 14px;
+  background:var(--surface-2);
+}
+.detail-section h4{
+  margin:0 0 10px;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.detail-row{
+  display:flex;
+  justify-content:space-between;
+  padding:4px 0;
+  border-bottom:1px dashed var(--border);
+  font-size:13px;
+  gap:10px;
+}
+.detail-row:last-child{border-bottom:none;}
+.detail-row .dl{color:var(--text-muted);}
+.detail-row .dv{font-weight:600; color:var(--text); text-align:right;}
+
+/* toast */
+.toast-wrap{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:400;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.toast{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#fff;
+  border:1px solid #BFE9CF;
+  border-left:4px solid var(--success);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  padding:11px 14px;
+  font-size:13px;
+  color:var(--text);
+  min-width:280px;
+  max-width:380px;
+  animation:toastIn .18s ease-out;
+}
+@keyframes toastIn{
+  from{opacity:0; transform:translateY(-6px);}
+  to{opacity:1; transform:translateY(0);}
+}
+.toast .toast-icon{color:var(--success); flex-shrink:0;}
+.toast .toast-close{
+  margin-left:auto;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--text-faint);
+}
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+.flex{display:flex;}
+.gap-8{gap:8px;}
+.mt-4{margin-top:4px;}
+.mb-0{margin-bottom:0;}
+.sr-only{
+  position:absolute; width:1px;height:1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap;
+}
+@media (max-width:900px){
+  .details-grid{grid-template-columns:1fr;}
+  .field-row{flex-direction:column; gap:14px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="FS logo">
+    <div class="titles">
+      <h1>Master Contract Expiry</h1>
+    </div>
+  </div>
+
+  <!-- BASIC SELECTION + POSTING SELECTION -->
+  <div class="card">
+    <div class="selection-row">
+      <div class="selection-col selection-col-basic">
+        <p class="card-title">Basic Selection</p>
+        <div class="field-row">
+          <div class="field date-field">
+            <label for="keyDateInput">Key Date<span class="req">*</span></label>
+            <input class="control" id="keyDateInput" type="text" placeholder="DD-MM-YYYY" maxlength="10" autocomplete="off">
+            <button class="date-icon-btn" id="keyDateIconBtn" type="button" aria-label="Open calendar">📅</button>
+            <div class="calendar-pop" id="keyDateCal"></div>
+            <span class="field-error" id="keyDateError">Please enter Key Date.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="selection-divider"></div>
+
+      <div class="selection-col selection-col-posting">
+        <p class="card-title">Posting Selection</p>
+        <div class="radio-group" id="postingSelection">
+          <label class="radio-opt">
+            <input type="radio" name="postingMode" value="view" checked>
+            <span class="radio-opt-inner">
+              <span class="opt-label">MC View Only</span>
+              <span class="opt-sub">View and manually update expiry</span>
+            </span>
+          </label>
+          <label class="radio-opt">
+            <input type="radio" name="postingMode" value="post">
+            <span class="radio-opt-inner">
+              <span class="opt-label">MC View with Expiry Posting</span>
+              <span class="opt-sub">Automatically expire all eligible contracts</span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS CARD -->
+  <div class="card" id="resultsCard" style="margin-top:14px; display:none;">
+
+    <div id="autoPostBanner" class="hint-banner success" style="display:none;"></div>
+
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search MC Number, Reference, Entity, Commodity, Status...">
+        </div>
+        <span class="result-count" id="resultCount"></span>
+      </div>
+      <div class="toolbar-right">
+        <span class="result-count" id="selCount" style="display:none;"></span>
+        <button class="btn btn-primary" id="expiryUpdateBtn" disabled>Expiry Update</button>
+        <select class="rpp-select" id="rppSelect" title="Rows per page">
+          <option value="10">10 / page</option>
+          <option value="15">15 / page</option>
+          <option value="20" selected>20 / page</option>
+          <option value="25">25 / page</option>
+          <option value="50">50 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap" id="tableWrap">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr id="tableHeadRow"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination-bar" id="paginationBar"></div>
+  </div>
+
+  <div class="card" id="emptyKeyDateCard" style="margin-top:14px;">
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9.5H21" stroke="currentColor" stroke-width="1.6"/><path d="M8 3V6.5M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div class="es-title">Enter a Key Date to begin</div>
+      <div class="es-sub">Select a posting mode above and enter the Key Date to load eligible Master Contracts.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONFIRM EXPIRY MODAL (shared by manual selection and MC View with Expiry Posting) -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Confirm Expiry Update</h3>
+      <button class="modal-close" id="confirmCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1" fill="currentColor"/><path d="M10.6 3.9L2.7 18.1C2.2 19 2.9 20 3.9 20H20.1C21.1 20 21.8 19 21.3 18.1L13.4 3.9C12.9 3 11.1 3 10.6 3.9Z" stroke="currentColor" stroke-width="1.8"/></svg>
+      </div>
+      <p style="font-weight:700; font-size:15.5px;" id="confirmHeading">Expire selected Master Contract(s)?</p>
+      <p class="muted" id="confirmSubtext">This will update the status of the selected Master Contract(s) to Expired. This action cannot be undone in this session.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmExpireBtn">Expire</button>
+    </div>
+  </div>
+</div>
+
+<!-- MC DETAILS MODAL -->
+<div class="overlay" id="detailsOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="detailsTitle">Master Contract Details</h3>
+      <button class="modal-close" id="detailsCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="details-grid" id="detailsGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="detailsFooterCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =========================================================
+   DUMMY DATA
+   ========================================================= */
+var mockMasterContracts = [
+  { mcNumber:"2000001235", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.011154M", mcDescription:"Wheat procurement forward cover", mcDate:"07-12-2025", seller:"UAE Trading LLC", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:11154.00, currency:"USD", mcAmountOrigin:66924.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C102", commodity:"WHEAT", commodityDescription:"WHEAT", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:3000.00, balanceAmount:8154.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-12-2025", entryTime:"21:05:15", changedBy:"TINAKSHAYM", changedOn:"07-12-2025", changeTime:"21:05:51", status:"In Use" },
+  { mcNumber:"2000001237", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.032777M", mcDescription:"Barley shipment financing", mcDate:"07-12-2025", seller:"Horizon Holdings", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:32777.00, currency:"USD", mcAmountOrigin:196662.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C104", commodity:"BARLEY", commodityDescription:"BARLEY", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:3000.00, balanceAmount:29777.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-12-2025", entryTime:"21:14:54", changedBy:"TINAKSHAYM", changedOn:"07-12-2025", changeTime:"21:15:29", status:"In Use" },
+  { mcNumber:"2000001238", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.045429M", mcDescription:"Corn export contract cover", mcDate:"07-12-2025", seller:"Apex Treasury Services", buyer:"UAE Trading LLC", originEntity:"OSIPL", mcAmount:45429.00, currency:"USD", mcAmountOrigin:136287.00, originCurrency:"INR", exchangeRate:3.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C105", commodity:"CORN", commodityDescription:"CORN", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P02", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:2000.00, balanceAmount:43429.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-12-2025", entryTime:"21:18:08", changedBy:"TINAKSHAYM", changedOn:"07-12-2025", changeTime:"21:18:44", status:"In Use" },
+  { mcNumber:"2000001239", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.01278M", mcDescription:"Maize origination facility", mcDate:"07-12-2025", seller:"Global Commodities Pte Ltd", buyer:"Horizon Holdings", originEntity:"OSIPL", mcAmount:12780.00, currency:"USD", mcAmountOrigin:38340.00, originCurrency:"INR", exchangeRate:3.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C106", commodity:"MAIZE", commodityDescription:"MAIZE", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P03", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:0.00, balanceAmount:12780.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-12-2025", entryTime:"21:21:22", changedBy:"TINAKSHAYM", changedOn:"07-12-2025", changeTime:"21:21:57", status:"In Use" },
+  { mcNumber:"2000001240", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.049915M", mcDescription:"Rubber long forward cover", mcDate:"07-12-2025", seller:"Meridian International", buyer:"Apex Treasury Services", originEntity:"OSIPL", mcAmount:49915.00, currency:"USD", mcAmountOrigin:199660.00, originCurrency:"INR", exchangeRate:4.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C110", commodity:"RUBBER", commodityDescription:"RUBBER", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:0.00, balanceAmount:49915.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-12-2025", entryTime:"21:23:37", changedBy:"TINAKSHAYM", changedOn:"07-12-2025", changeTime:"21:24:12", status:"In Use" },
+  { mcNumber:"2000001241", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.048539M", mcDescription:"Palm olein trade finance line", mcDate:"07-12-2025", seller:"UAE Trading LLC", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:48539.00, currency:"USD", mcAmountOrigin:194156.00, originCurrency:"INR", exchangeRate:4.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C111", commodity:"PALMOLEIN", commodityDescription:"PALM OLEIN", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P04", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-12-2025", utilization:0.00, balanceAmount:48539.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"08-12-2025", entryTime:"02:09:39", changedBy:"TINAKSHAYM", changedOn:"08-12-2025", changeTime:"02:10:14", status:"In Use" },
+  { mcNumber:"2000001242", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.012218M", mcDescription:"Soyoil hedge facility", mcDate:"07-12-2025", seller:"Horizon Holdings", buyer:"UAE Trading LLC", originEntity:"OSIPL", mcAmount:12218.00, currency:"USD", mcAmountOrigin:97744.00, originCurrency:"INR", exchangeRate:8.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"08-12-2025", utilization:2500.00, balanceAmount:16539.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"08-12-2025", entryTime:"02:11:31", changedBy:"TINAKSHAYM", changedOn:"08-12-2025", changeTime:"02:12:06", status:"In Use" },
+  { mcNumber:"2000001243", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.019039M", mcDescription:"Sesame seed export cover", mcDate:"07-12-2025", seller:"Apex Treasury Services", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:19039.00, currency:"USD", mcAmountOrigin:76156.00, originCurrency:"INR", exchangeRate:4.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P05", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"08-12-2025", utilization:2500.00, balanceAmount:36461.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"08-12-2025", entryTime:"02:15:16", changedBy:"TINAKSHAYM", changedOn:"08-12-2025", changeTime:"02:15:53", status:"In Use" },
+  { mcNumber:"2000001245", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.015278M", mcDescription:"Cotton procurement forward", mcDate:"07-12-2025", seller:"Meridian International", buyer:"Apex Treasury Services", originEntity:"OSIPL", mcAmount:15278.00, currency:"USD", mcAmountOrigin:122224.00, originCurrency:"INR", exchangeRate:8.0000, shipmentStart:"01-01-2026", shipmentEnd:"01-01-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P06", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"08-12-2025", utilization:2500.00, balanceAmount:12778.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"08-12-2025", entryTime:"02:20:56", changedBy:"TINAKSHAYM", changedOn:"08-12-2025", changeTime:"02:21:33", status:"In Use" },
+  { mcNumber:"2000002688", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.022459M", mcDescription:"Rice staggered call & put cover", mcDate:"24-08-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OSIPL", mcAmount:22459.00, currency:"USD", mcAmountOrigin:134754.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"24-08-2026", shipmentEnd:"18-09-2026", gtCommodity:"C125", commodity:"RICE", commodityDescription:"RICE", entityId:"E026", entityString:"OGA-OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P03", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Rotterdam, Netherlands", createdMC:"24-08-2026", utilization:0.00, balanceAmount:22459.00, days:12, moRemarks:"Awaiting shipment docs", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"24-08-2026", entryTime:"11:04:02", changedBy:"TINAKSHAYM", changedOn:"24-08-2026", changeTime:"11:05:10", status:"In Use" },
+  { mcNumber:"2000002708", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.033050M", mcDescription:"Wheat long forward — Q4 cover", mcDate:"19-09-2026", seller:"Global Commodities Pte Ltd", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:33050.00, currency:"USD", mcAmountOrigin:330500.00, originCurrency:"INR", exchangeRate:10.0000, shipmentStart:"19-09-2026", shipmentEnd:"14-10-2026", gtCommodity:"C102", commodity:"WHEAT", commodityDescription:"WHEAT", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P04", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Singapore", createdMC:"19-09-2026", utilization:0.00, balanceAmount:33050.00, days:21, moRemarks:"", foRemarks:"Confirmed with buyer", enteredBy:"TINAKSHAYM", enteredOn:"19-09-2026", entryTime:"09:41:00", changedBy:"TINAKSHAYM", changedOn:"19-09-2026", changeTime:"09:41:44", status:"In Use" },
+  { mcNumber:"2000002716", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.044758M", mcDescription:"Soyabean long forward hedge", mcDate:"19-09-2026", seller:"Apex Treasury Services", buyer:"UAE Trading LLC", originEntity:"OSIPL", mcAmount:44758.00, currency:"USD", mcAmountOrigin:179032.00, originCurrency:"INR", exchangeRate:4.0000, shipmentStart:"19-09-2026", shipmentEnd:"14-10-2026", gtCommodity:"C103", commodity:"SOYABEAN", commodityDescription:"SOYABEAN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P02", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Singapore", createdMC:"19-09-2026", utilization:0.00, balanceAmount:44758.00, days:21, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"19-09-2026", entryTime:"09:44:12", changedBy:"TINAKSHAYM", changedOn:"19-09-2026", changeTime:"09:45:03", status:"In Use" },
+  { mcNumber:"2000002719", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.016763M", mcDescription:"Fertilizer import staggered cover", mcDate:"19-09-2026", seller:"Horizon Holdings", buyer:"Apex Treasury Services", originEntity:"OSIPL", mcAmount:16763.00, currency:"USD", mcAmountOrigin:83815.00, originCurrency:"INR", exchangeRate:5.0000, shipmentStart:"19-09-2026", shipmentEnd:"14-10-2026", gtCommodity:"C126", commodity:"FERTILIZER", commodityDescription:"Fertilizer", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Rotterdam, Netherlands", createdMC:"19-09-2026", utilization:0.00, balanceAmount:16763.00, days:21, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"19-09-2026", entryTime:"09:47:29", changedBy:"TINAKSHAYM", changedOn:"19-09-2026", changeTime:"09:48:01", status:"In Use" },
+  { mcNumber:"2000002723", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.037391M", mcDescription:"Cotton staggered call & put cover", mcDate:"21-09-2026", seller:"Meridian International", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:37391.00, currency:"USD", mcAmountOrigin:261737.00, originCurrency:"INR", exchangeRate:7.0000, shipmentStart:"21-09-2026", shipmentEnd:"16-10-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-USD", paymentTerms:"P03", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Rotterdam, Netherlands", createdMC:"21-09-2026", utilization:0.00, balanceAmount:37391.00, days:23, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"21-09-2026", entryTime:"10:02:19", changedBy:"TINAKSHAYM", changedOn:"21-09-2026", changeTime:"10:02:55", status:"In Use" },
+  { mcNumber:"2000002725", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.022889M", mcDescription:"Sesame staggered call & put cover", mcDate:"21-09-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OSIPL", mcAmount:22889.00, currency:"USD", mcAmountOrigin:137334.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"21-09-2026", shipmentEnd:"16-10-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-USD", paymentTerms:"P04", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Rotterdam, Netherlands", createdMC:"21-09-2026", utilization:0.00, balanceAmount:22889.00, days:23, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"21-09-2026", entryTime:"10:05:47", changedBy:"TINAKSHAYM", changedOn:"21-09-2026", changeTime:"10:06:18", status:"In Use" },
+  { mcNumber:"2000002727", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity", mcDescription:"Barley long forward cover", mcDate:"21-09-2026", seller:"Apex Treasury Services", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:500000.00, currency:"USD", mcAmountOrigin:45000000.00, originCurrency:"INR", exchangeRate:90.0000, shipmentStart:"21-09-2026", shipmentEnd:"16-10-2026", gtCommodity:"C104", commodity:"BARLEY", commodityDescription:"BARLEY", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Singapore", createdMC:"21-09-2026", utilization:0.00, balanceAmount:500000.00, days:23, moRemarks:"Large ticket - FO review", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"21-09-2026", entryTime:"10:08:33", changedBy:"TINAKSHAYM", changedOn:"21-09-2026", changeTime:"10:09:02", status:"In Use" },
+  { mcNumber:"2000002728", client:"OSIPL", mcReferenceNo:"OSIPL_RICE_M032_0.1M", mcDescription:"Rice long forward cover", mcDate:"22-08-2026", seller:"Horizon Holdings", buyer:"UAE Trading LLC", originEntity:"OSIPL", mcAmount:100000.00, currency:"USD", mcAmountOrigin:9500000.00, originCurrency:"INR", exchangeRate:95.7112, shipmentStart:"22-08-2026", shipmentEnd:"01-01-2026", gtCommodity:"C125", commodity:"RICE", commodityDescription:"RICE", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P05", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Singapore", createdMC:"22-08-2026", utilization:0.00, balanceAmount:100000.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"22-08-2026", entryTime:"08:22:10", changedBy:"TINAKSHAYM", changedOn:"22-08-2026", changeTime:"08:22:58", status:"In Use" },
+  { mcNumber:"2000001246", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.009800M", mcDescription:"Maize hedge — closed out", mcDate:"05-11-2025", seller:"Global Commodities Pte Ltd", buyer:"Horizon Holdings", originEntity:"OSIPL", mcAmount:9800.00, currency:"USD", mcAmountOrigin:58800.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"01-12-2025", shipmentEnd:"20-12-2025", gtCommodity:"C106", commodity:"MAIZE", commodityDescription:"MAIZE", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"05-11-2025", utilization:9800.00, balanceAmount:0.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"05-11-2025", entryTime:"14:02:03", changedBy:"TINAKSHAYM", changedOn:"21-12-2025", changeTime:"09:11:40", status:"Settled" },
+  { mcNumber:"2000001247", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.021400M", mcDescription:"Soyoil option cover — rejected", mcDate:"02-12-2025", seller:"Apex Treasury Services", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:21400.00, currency:"USD", mcAmountOrigin:171200.00, originCurrency:"INR", exchangeRate:8.0000, shipmentStart:"10-12-2025", shipmentEnd:"31-12-2025", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P02", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Rotterdam, Netherlands", createdMC:"02-12-2025", utilization:0.00, balanceAmount:21400.00, days:0, moRemarks:"Credit limit exceeded", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"02-12-2025", entryTime:"16:40:12", changedBy:"TINAKSHAYM", changedOn:"03-12-2025", changeTime:"08:15:22", status:"Rejected" },
+  { mcNumber:"2000001248", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.038000M", mcDescription:"Cotton short forward — matured", mcDate:"15-10-2025", seller:"UAE Trading LLC", buyer:"Apex Treasury Services", originEntity:"OSIPL", mcAmount:38000.00, currency:"USD", mcAmountOrigin:266000.00, originCurrency:"INR", exchangeRate:7.0000, shipmentStart:"20-10-2025", shipmentEnd:"25-11-2025", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P06", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Singapore", createdMC:"15-10-2025", utilization:38000.00, balanceAmount:0.00, days:0, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"15-10-2025", entryTime:"11:30:00", changedBy:"TINAKSHAYM", changedOn:"26-11-2025", changeTime:"09:00:00", status:"Matured" },
+  { mcNumber:"2000001249", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.014200M", mcDescription:"Sesame draft contract", mcDate:"18-09-2026", seller:"Meridian International", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:14200.00, currency:"USD", mcAmountOrigin:85200.00, originCurrency:"INR", exchangeRate:6.0000, shipmentStart:"25-09-2026", shipmentEnd:"20-10-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"18-09-2026", utilization:0.00, balanceAmount:14200.00, days:0, moRemarks:"Not yet submitted for approval", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"18-09-2026", entryTime:"12:00:00", changedBy:"TINAKSHAYM", changedOn:"18-09-2026", changeTime:"12:00:00", status:"Draft" },
+  { mcNumber:"2000002730", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.037657M", mcDescription:"Wheat INR cover", mcDate:"10-08-2026", seller:"Horizon Holdings", buyer:"Global Commodities Pte Ltd", originEntity:"OVL", mcAmount:49978.86, currency:"USD", mcAmountOrigin:386681.44, originCurrency:"INR", exchangeRate:7.7369, shipmentStart:"14-08-2026", shipmentEnd:"05-09-2026", gtCommodity:"C102", commodity:"WHEAT", commodityDescription:"WHEAT", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P02", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Santos, Brazil", createdMC:"10-08-2026", utilization:9995.77, balanceAmount:39983.09, days:16, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"10-08-2026", entryTime:"14:02:01", changedBy:"TINAKSHAYM", changedOn:"10-08-2026", changeTime:"14:02:01", status:"In Use" },
+  { mcNumber:"2000002731", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.037221M", mcDescription:"Wheat INR cover", mcDate:"24-07-2026", seller:"Global Commodities Pte Ltd", buyer:"Meridian International", originEntity:"OVL", mcAmount:41588.14, currency:"USD", mcAmountOrigin:360402.82, originCurrency:"INR", exchangeRate:8.666, shipmentStart:"25-07-2026", shipmentEnd:"07-09-2026", gtCommodity:"C102", commodity:"WHEAT", commodityDescription:"WHEAT", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P03", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"24-07-2026", utilization:0.0, balanceAmount:41588.14, days:3, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"24-07-2026", entryTime:"14:21:17", changedBy:"TINAKSHAYM", changedOn:"24-07-2026", changeTime:"14:21:17", status:"In Use" },
+  { mcNumber:"2000002732", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.090070M", mcDescription:"Soyoil INR cover", mcDate:"14-08-2026", seller:"Horizon Holdings", buyer:"Apex Treasury Services", originEntity:"OSIPL", mcAmount:54006.31, currency:"USD", mcAmountOrigin:437888.56, originCurrency:"INR", exchangeRate:8.1081, shipmentStart:"17-08-2026", shipmentEnd:"09-09-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P03", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Santos, Brazil", createdMC:"14-08-2026", utilization:10801.26, balanceAmount:43205.05, days:18, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"14-08-2026", entryTime:"09:35:18", changedBy:"KARTHIKS", changedOn:"14-08-2026", changeTime:"09:35:18", status:"In Use" },
+  { mcNumber:"2000002733", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.057520M", mcDescription:"Soyabean INR cover", mcDate:"11-08-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OSIPL", mcAmount:56753.11, currency:"USD", mcAmountOrigin:514489.64, originCurrency:"INR", exchangeRate:9.0654, shipmentStart:"14-08-2026", shipmentEnd:"11-09-2026", gtCommodity:"C103", commodity:"SOYABEAN", commodityDescription:"SOYABEAN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P03", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Santos, Brazil", portOfDestination:"Jebel Ali, UAE", createdMC:"11-08-2026", utilization:5675.31, balanceAmount:51077.8, days:6, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"11-08-2026", entryTime:"18:53:23", changedBy:"TINAKSHAYM", changedOn:"11-08-2026", changeTime:"18:53:23", status:"In Use" },
+  { mcNumber:"2000002734", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.039021M", mcDescription:"Soyabean INR cover", mcDate:"12-08-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OVL", mcAmount:17313.94, currency:"USD", mcAmountOrigin:97931.11, originCurrency:"INR", exchangeRate:5.6562, shipmentStart:"17-08-2026", shipmentEnd:"13-09-2026", gtCommodity:"C103", commodity:"SOYABEAN", commodityDescription:"SOYABEAN", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Rotterdam, Netherlands", createdMC:"12-08-2026", utilization:3462.79, balanceAmount:13851.15, days:25, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"12-08-2026", entryTime:"13:53:49", changedBy:"TINAKSHAYM", changedOn:"12-08-2026", changeTime:"13:53:49", status:"In Use" },
+  { mcNumber:"2000002735", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.079644M", mcDescription:"Soyoil INR cover", mcDate:"20-08-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OTL", mcAmount:20119.71, currency:"USD", mcAmountOrigin:130669.47, originCurrency:"INR", exchangeRate:6.4946, shipmentStart:"22-08-2026", shipmentEnd:"15-09-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P03", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Santos, Brazil", createdMC:"20-08-2026", utilization:2011.97, balanceAmount:18107.74, days:23, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"20-08-2026", entryTime:"10:15:47", changedBy:"KARTHIKS", changedOn:"20-08-2026", changeTime:"10:15:47", status:"In Use" },
+  { mcNumber:"2000002736", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.064333M", mcDescription:"Soyoil INR cover", mcDate:"24-08-2026", seller:"Apex Treasury Services", buyer:"Horizon Holdings", originEntity:"OVL", mcAmount:37043.0, currency:"USD", mcAmountOrigin:134703.17, originCurrency:"INR", exchangeRate:3.6364, shipmentStart:"25-08-2026", shipmentEnd:"17-09-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P05", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Santos, Brazil", createdMC:"24-08-2026", utilization:0.0, balanceAmount:37043.0, days:2, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"24-08-2026", entryTime:"18:10:50", changedBy:"KARTHIKS", changedOn:"24-08-2026", changeTime:"18:10:50", status:"In Use" },
+  { mcNumber:"2000002737", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.065985M", mcDescription:"Soyoil USD-INR-Put cover", mcDate:"04-08-2026", seller:"Apex Treasury Services", buyer:"Horizon Holdings", originEntity:"OVL", mcAmount:46776.15, currency:"USD", mcAmountOrigin:177838.24, originCurrency:"INR", exchangeRate:3.8019, shipmentStart:"06-08-2026", shipmentEnd:"19-09-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P02", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Jebel Ali, UAE", createdMC:"04-08-2026", utilization:9355.23, balanceAmount:37420.92, days:14, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"04-08-2026", entryTime:"18:21:07", changedBy:"ROYSTOND", changedOn:"04-08-2026", changeTime:"18:21:07", status:"In Use" },
+  { mcNumber:"2000002738", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.079697M", mcDescription:"Soyabean INR cover", mcDate:"12-08-2026", seller:"Horizon Holdings", buyer:"Global Commodities Pte Ltd", originEntity:"OVL", mcAmount:57619.56, currency:"USD", mcAmountOrigin:293231.7, originCurrency:"INR", exchangeRate:5.0891, shipmentStart:"13-08-2026", shipmentEnd:"21-09-2026", gtCommodity:"C103", commodity:"SOYABEAN", commodityDescription:"SOYABEAN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P05", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Jebel Ali, UAE", createdMC:"12-08-2026", utilization:11523.91, balanceAmount:46095.65, days:29, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"12-08-2026", entryTime:"10:23:48", changedBy:"TINAKSHAYM", changedOn:"12-08-2026", changeTime:"10:23:48", status:"In Use" },
+  { mcNumber:"2000002739", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.020226M", mcDescription:"Rice INR cover", mcDate:"27-08-2026", seller:"Apex Treasury Services", buyer:"UAE Trading LLC", originEntity:"OTL", mcAmount:58087.15, currency:"USD", mcAmountOrigin:512427.41, originCurrency:"INR", exchangeRate:8.8217, shipmentStart:"27-08-2026", shipmentEnd:"23-09-2026", gtCommodity:"C125", commodity:"RICE", commodityDescription:"RICE", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P06", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Singapore", createdMC:"27-08-2026", utilization:2904.36, balanceAmount:55182.79, days:15, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"27-08-2026", entryTime:"11:56:36", changedBy:"TINAKSHAYM", changedOn:"27-08-2026", changeTime:"11:56:36", status:"In Use" },
+  { mcNumber:"2000002740", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.097039M", mcDescription:"Cotton INR cover", mcDate:"26-08-2026", seller:"Global Commodities Pte Ltd", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:23108.23, currency:"USD", mcAmountOrigin:210446.65, originCurrency:"INR", exchangeRate:9.107, shipmentStart:"30-08-2026", shipmentEnd:"25-09-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P06", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Rotterdam, Netherlands", createdMC:"26-08-2026", utilization:2310.82, balanceAmount:20797.41, days:11, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"26-08-2026", entryTime:"11:45:19", changedBy:"ROYSTOND", changedOn:"26-08-2026", changeTime:"11:45:19", status:"In Use" },
+  { mcNumber:"2000002741", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.016716M", mcDescription:"Cotton USD-INR-Put cover", mcDate:"19-08-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OTL", mcAmount:27270.88, currency:"USD", mcAmountOrigin:194119.58, originCurrency:"INR", exchangeRate:7.1182, shipmentStart:"20-08-2026", shipmentEnd:"27-09-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P02", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Jebel Ali, UAE", createdMC:"19-08-2026", utilization:0.0, balanceAmount:27270.88, days:2, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"19-08-2026", entryTime:"08:04:45", changedBy:"KARTHIKS", changedOn:"19-08-2026", changeTime:"08:04:45", status:"In Use" },
+  { mcNumber:"2000002742", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M032_0.033957M", mcDescription:"Palmolein INR cover", mcDate:"19-08-2026", seller:"Meridian International", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:20211.5, currency:"USD", mcAmountOrigin:79354.39, originCurrency:"INR", exchangeRate:3.9262, shipmentStart:"22-08-2026", shipmentEnd:"29-09-2026", gtCommodity:"C111", commodity:"PALMOLEIN", commodityDescription:"PALM OLEIN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-USD-INR", paymentTerms:"P01", fxModel:"M032", modelDescription:"INR Long Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"19-08-2026", utilization:4042.3, balanceAmount:16169.2, days:3, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"19-08-2026", entryTime:"11:50:30", changedBy:"ROYSTOND", changedOn:"19-08-2026", changeTime:"11:50:30", status:"In Use" },
+  { mcNumber:"2000002743", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.041591M", mcDescription:"Palmolein USD-INR-Put cover", mcDate:"07-09-2026", seller:"Apex Treasury Services", buyer:"Meridian International", originEntity:"OTL", mcAmount:46381.78, currency:"USD", mcAmountOrigin:458678.7, originCurrency:"INR", exchangeRate:9.8892, shipmentStart:"10-09-2026", shipmentEnd:"01-10-2026", gtCommodity:"C111", commodity:"PALMOLEIN", commodityDescription:"PALM OLEIN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P02", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Any Port(s) in Belgium, Netherlands or any other port(s)", portOfDestination:"Jebel Ali, UAE", createdMC:"07-09-2026", utilization:0.0, balanceAmount:46381.78, days:6, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-09-2026", entryTime:"13:51:55", changedBy:"TINAKSHAYM", changedOn:"07-09-2026", changeTime:"13:51:55", status:"In Use" },
+  { mcNumber:"2000002744", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.010934M", mcDescription:"Sesame INR cover", mcDate:"15-08-2026", seller:"Apex Treasury Services", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:22238.97, currency:"USD", mcAmountOrigin:210445.15, originCurrency:"INR", exchangeRate:9.4629, shipmentStart:"19-08-2026", shipmentEnd:"03-10-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P01", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"15-08-2026", utilization:2223.9, balanceAmount:20015.07, days:29, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"15-08-2026", entryTime:"09:03:41", changedBy:"KARTHIKS", changedOn:"15-08-2026", changeTime:"09:03:41", status:"In Use" },
+  { mcNumber:"2000002745", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.081845M", mcDescription:"Corn INR cover", mcDate:"01-09-2026", seller:"Apex Treasury Services", buyer:"Meridian International", originEntity:"OTL", mcAmount:59439.24, currency:"USD", mcAmountOrigin:246821.44, originCurrency:"INR", exchangeRate:4.1525, shipmentStart:"03-09-2026", shipmentEnd:"05-10-2026", gtCommodity:"C105", commodity:"CORN", commodityDescription:"CORN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P06", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"01-09-2026", utilization:0.0, balanceAmount:59439.24, days:22, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"01-09-2026", entryTime:"15:18:27", changedBy:"KARTHIKS", changedOn:"01-09-2026", changeTime:"15:18:27", status:"In Use" },
+  { mcNumber:"2000002746", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.029635M", mcDescription:"Corn USD-INR-Put cover", mcDate:"16-09-2026", seller:"Horizon Holdings", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:49937.02, currency:"USD", mcAmountOrigin:171119.19, originCurrency:"INR", exchangeRate:3.4267, shipmentStart:"16-09-2026", shipmentEnd:"07-10-2026", gtCommodity:"C105", commodity:"CORN", commodityDescription:"CORN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P01", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"16-09-2026", utilization:2496.85, balanceAmount:47440.17, days:30, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"16-09-2026", entryTime:"17:30:32", changedBy:"KARTHIKS", changedOn:"16-09-2026", changeTime:"17:30:32", status:"In Use" },
+  { mcNumber:"2000002747", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.063948M", mcDescription:"Barley INR cover", mcDate:"08-09-2026", seller:"UAE Trading LLC", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:31015.21, currency:"USD", mcAmountOrigin:297473.08, originCurrency:"INR", exchangeRate:9.5912, shipmentStart:"12-09-2026", shipmentEnd:"09-10-2026", gtCommodity:"C104", commodity:"BARLEY", commodityDescription:"BARLEY", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P06", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Any Port(s) in Belgium, Netherlands or any other port(s)", portOfDestination:"Rotterdam, Netherlands", createdMC:"08-09-2026", utilization:6203.04, balanceAmount:24812.17, days:18, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"08-09-2026", entryTime:"17:02:39", changedBy:"TINAKSHAYM", changedOn:"08-09-2026", changeTime:"17:02:39", status:"In Use" },
+  { mcNumber:"2000002748", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.082792M", mcDescription:"Cotton INR cover", mcDate:"05-09-2026", seller:"Horizon Holdings", buyer:"Global Commodities Pte Ltd", originEntity:"OTL", mcAmount:21605.1, currency:"USD", mcAmountOrigin:124672.23, originCurrency:"INR", exchangeRate:5.7705, shipmentStart:"07-09-2026", shipmentEnd:"11-10-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P01", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Any Port(s) in Belgium, Netherlands or any other port(s)", portOfDestination:"Santos, Brazil", createdMC:"05-09-2026", utilization:1080.25, balanceAmount:20524.85, days:2, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"05-09-2026", entryTime:"09:00:29", changedBy:"KARTHIKS", changedOn:"05-09-2026", changeTime:"09:00:29", status:"In Use" },
+  { mcNumber:"2000002749", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.078329M", mcDescription:"Maize INR cover", mcDate:"05-09-2026", seller:"Horizon Holdings", buyer:"Global Commodities Pte Ltd", originEntity:"OVL", mcAmount:58118.4, currency:"USD", mcAmountOrigin:324690.07, originCurrency:"INR", exchangeRate:5.5867, shipmentStart:"09-09-2026", shipmentEnd:"13-10-2026", gtCommodity:"C106", commodity:"MAIZE", commodityDescription:"MAIZE", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P01", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Jebel Ali, UAE", createdMC:"05-09-2026", utilization:0.0, balanceAmount:58118.4, days:21, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"05-09-2026", entryTime:"12:39:51", changedBy:"KARTHIKS", changedOn:"05-09-2026", changeTime:"12:39:51", status:"In Use" },
+  { mcNumber:"2000002750", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.035685M", mcDescription:"Rubber INR cover", mcDate:"15-09-2026", seller:"UAE Trading LLC", buyer:"Horizon Holdings", originEntity:"OVL", mcAmount:58713.62, currency:"USD", mcAmountOrigin:481269.67, originCurrency:"INR", exchangeRate:8.1969, shipmentStart:"17-09-2026", shipmentEnd:"15-10-2026", gtCommodity:"C110", commodity:"RUBBER", commodityDescription:"RUBBER", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P06", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Jebel Ali, UAE", createdMC:"15-09-2026", utilization:0.0, balanceAmount:58713.62, days:20, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"15-09-2026", entryTime:"17:13:45", changedBy:"ROYSTOND", changedOn:"15-09-2026", changeTime:"17:13:45", status:"In Use" },
+  { mcNumber:"2000002751", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.066912M", mcDescription:"Cotton INR cover", mcDate:"02-09-2026", seller:"Horizon Holdings", buyer:"UAE Trading LLC", originEntity:"OTL", mcAmount:55272.84, currency:"USD", mcAmountOrigin:182875.72, originCurrency:"INR", exchangeRate:3.3086, shipmentStart:"03-09-2026", shipmentEnd:"17-10-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P05", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"02-09-2026", utilization:2763.64, balanceAmount:52509.2, days:22, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"02-09-2026", entryTime:"18:16:10", changedBy:"KARTHIKS", changedOn:"02-09-2026", changeTime:"18:16:10", status:"In Use" },
+  { mcNumber:"2000002752", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.056795M", mcDescription:"Cotton USD-INR-Put cover", mcDate:"11-09-2026", seller:"UAE Trading LLC", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:39098.65, currency:"USD", mcAmountOrigin:345718.08, originCurrency:"INR", exchangeRate:8.8422, shipmentStart:"12-09-2026", shipmentEnd:"19-10-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P01", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Any Port(s) in Belgium, Netherlands or any other port(s)", portOfDestination:"Rotterdam, Netherlands", createdMC:"11-09-2026", utilization:7819.73, balanceAmount:31278.92, days:28, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"11-09-2026", entryTime:"14:08:02", changedBy:"ROYSTOND", changedOn:"11-09-2026", changeTime:"14:08:02", status:"In Use" },
+  { mcNumber:"2000002753", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.063040M", mcDescription:"Maize INR cover", mcDate:"07-09-2026", seller:"Global Commodities Pte Ltd", buyer:"UAE Trading LLC", originEntity:"OVL", mcAmount:58395.68, currency:"USD", mcAmountOrigin:341299.39, originCurrency:"INR", exchangeRate:5.8446, shipmentStart:"08-09-2026", shipmentEnd:"21-10-2026", gtCommodity:"C106", commodity:"MAIZE", commodityDescription:"MAIZE", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Santos, Brazil", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"07-09-2026", utilization:11679.14, balanceAmount:46716.54, days:5, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"07-09-2026", entryTime:"11:55:10", changedBy:"TINAKSHAYM", changedOn:"07-09-2026", changeTime:"11:55:10", status:"In Use" },
+  { mcNumber:"2000002754", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M041_0.038219M", mcDescription:"Soyoil INR cover", mcDate:"25-09-2026", seller:"Global Commodities Pte Ltd", buyer:"Apex Treasury Services", originEntity:"OVL", mcAmount:29804.88, currency:"USD", mcAmountOrigin:97494.74, originCurrency:"INR", exchangeRate:3.2711, shipmentStart:"26-09-2026", shipmentEnd:"23-10-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OSIPL-DMCC", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M041", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Jebel Ali, UAE", createdMC:"25-09-2026", utilization:2980.49, balanceAmount:26824.39, days:21, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"25-09-2026", entryTime:"15:22:19", changedBy:"TINAKSHAYM", changedOn:"25-09-2026", changeTime:"15:22:19", status:"In Use" },
+  { mcNumber:"2000002755", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.085099M", mcDescription:"Palmolein USD-INR-Put cover", mcDate:"17-10-2026", seller:"UAE Trading LLC", buyer:"Apex Treasury Services", originEntity:"OTL", mcAmount:30781.67, currency:"USD", mcAmountOrigin:303753.52, originCurrency:"INR", exchangeRate:9.868, shipmentStart:"17-10-2026", shipmentEnd:"16-11-2026", gtCommodity:"C111", commodity:"PALMOLEIN", commodityDescription:"PALM OLEIN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P03", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Santos, Brazil", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"17-10-2026", utilization:6156.33, balanceAmount:24625.34, days:1, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"17-10-2026", entryTime:"09:56:16", changedBy:"TINAKSHAYM", changedOn:"17-10-2026", changeTime:"09:56:16", status:"Confirmed" },
+  { mcNumber:"2000002756", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.099027M", mcDescription:"Soyoil INR cover", mcDate:"13-10-2026", seller:"Horizon Holdings", buyer:"Meridian International", originEntity:"OTL", mcAmount:14591.81, currency:"USD", mcAmountOrigin:135652.76, originCurrency:"INR", exchangeRate:9.2965, shipmentStart:"13-10-2026", shipmentEnd:"10-11-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P06", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"13-10-2026", utilization:0.0, balanceAmount:14591.81, days:30, moRemarks:"", foRemarks:"", enteredBy:"KARTHIKS", enteredOn:"13-10-2026", entryTime:"14:00:33", changedBy:"KARTHIKS", changedOn:"13-10-2026", changeTime:"14:00:33", status:"Confirmed" },
+  { mcNumber:"2000002757", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.047752M", mcDescription:"Palmolein INR cover", mcDate:"13-11-2026", seller:"UAE Trading LLC", buyer:"Apex Treasury Services", originEntity:"OTL", mcAmount:45813.09, currency:"USD", mcAmountOrigin:177406.61, originCurrency:"INR", exchangeRate:3.8724, shipmentStart:"15-11-2026", shipmentEnd:"21-12-2026", gtCommodity:"C111", commodity:"PALMOLEIN", commodityDescription:"PALM OLEIN", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P05", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Any Port(s) in Africa, Europe or any other port(s)", portOfDestination:"Santos, Brazil", createdMC:"13-11-2026", utilization:2290.65, balanceAmount:43522.44, days:4, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"13-11-2026", entryTime:"18:26:20", changedBy:"ROYSTOND", changedOn:"13-11-2026", changeTime:"18:26:20", status:"Confirmed" },
+  { mcNumber:"2000002758", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.066905M", mcDescription:"Fertilizer USD-INR-Put cover", mcDate:"10-10-2026", seller:"Global Commodities Pte Ltd", buyer:"Apex Treasury Services", originEntity:"OTL", mcAmount:55522.33, currency:"USD", mcAmountOrigin:284668.54, originCurrency:"INR", exchangeRate:5.1271, shipmentStart:"14-10-2026", shipmentEnd:"16-11-2026", gtCommodity:"C126", commodity:"FERTILIZER", commodityDescription:"Fertilizer", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P04", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Singapore", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"10-10-2026", utilization:0.0, balanceAmount:55522.33, days:21, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"10-10-2026", entryTime:"17:41:20", changedBy:"ROYSTOND", changedOn:"10-10-2026", changeTime:"17:41:20", status:"Pending Approval" },
+  { mcNumber:"2000002759", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.028313M", mcDescription:"Sesame INR cover", mcDate:"03-10-2026", seller:"Global Commodities Pte Ltd", buyer:"UAE Trading LLC", originEntity:"OVL", mcAmount:45839.67, currency:"USD", mcAmountOrigin:336224.81, originCurrency:"INR", exchangeRate:7.3348, shipmentStart:"04-10-2026", shipmentEnd:"17-11-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P01", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Santos, Brazil", portOfDestination:"Any Port(s) in Belgium, Netherlands or any other port(s)", createdMC:"03-10-2026", utilization:0.0, balanceAmount:45839.67, days:1, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"03-10-2026", entryTime:"18:19:14", changedBy:"TINAKSHAYM", changedOn:"03-10-2026", changeTime:"18:19:14", status:"Pending Approval" },
+  { mcNumber:"2000002760", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.022970M", mcDescription:"Rice USD-INR-Put cover", mcDate:"17-10-2026", seller:"Apex Treasury Services", buyer:"Meridian International", originEntity:"OSIPL", mcAmount:19082.81, currency:"USD", mcAmountOrigin:150267.59, originCurrency:"INR", exchangeRate:7.8745, shipmentStart:"18-10-2026", shipmentEnd:"19-11-2026", gtCommodity:"C125", commodity:"RICE", commodityDescription:"RICE", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P04", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Any Port(s) in Belgium, Netherlands or any other port(s)", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"17-10-2026", utilization:1908.28, balanceAmount:17174.53, days:7, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"17-10-2026", entryTime:"10:41:44", changedBy:"TINAKSHAYM", changedOn:"17-10-2026", changeTime:"10:41:44", status:"Draft" },
+  { mcNumber:"2000002761", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M037_0.089301M", mcDescription:"Sesame INR cover", mcDate:"05-10-2026", seller:"Meridian International", buyer:"Global Commodities Pte Ltd", originEntity:"OSIPL", mcAmount:15600.33, currency:"USD", mcAmountOrigin:97541.06, originCurrency:"INR", exchangeRate:6.2525, shipmentStart:"09-10-2026", shipmentEnd:"15-11-2026", gtCommodity:"C114", commodity:"SESAME", commodityDescription:"SESAME", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-USD-USD", paymentTerms:"P06", fxModel:"M037", modelDescription:"INR Short Forward", portOfShipment:"Jebel Ali, UAE", portOfDestination:"Any Port(s) in Africa, Europe or any other port(s)", createdMC:"05-10-2026", utilization:3120.07, balanceAmount:12480.26, days:28, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"05-10-2026", entryTime:"13:48:57", changedBy:"ROYSTOND", changedOn:"05-10-2026", changeTime:"13:48:57", status:"Draft" },
+  { mcNumber:"2000002762", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.066654M", mcDescription:"Cotton USD-INR-Put cover", mcDate:"19-10-2026", seller:"Global Commodities Pte Ltd", buyer:"Meridian International", originEntity:"OTL", mcAmount:50851.28, currency:"USD", mcAmountOrigin:451508.52, originCurrency:"INR", exchangeRate:8.879, shipmentStart:"23-10-2026", shipmentEnd:"06-12-2026", gtCommodity:"C124", commodity:"COTTON", commodityDescription:"COTTON", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P01", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Singapore", portOfDestination:"Santos, Brazil", createdMC:"19-10-2026", utilization:2542.56, balanceAmount:48308.72, days:22, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"19-10-2026", entryTime:"15:40:15", changedBy:"ROYSTOND", changedOn:"19-10-2026", changeTime:"15:40:15", status:"Rejected" },
+  { mcNumber:"2000002763", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M034_0.063496M", mcDescription:"Rubber INR cover", mcDate:"28-10-2026", seller:"Horizon Holdings", buyer:"UAE Trading LLC", originEntity:"OTL", mcAmount:21181.9, currency:"USD", mcAmountOrigin:166438.9, originCurrency:"INR", exchangeRate:7.8576, shipmentStart:"31-10-2026", shipmentEnd:"22-11-2026", gtCommodity:"C110", commodity:"RUBBER", commodityDescription:"RUBBER", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"INR-INR-INR", paymentTerms:"P01", fxModel:"M034", modelDescription:"INR - INR Staggered Call & Put Option", portOfShipment:"Rotterdam, Netherlands", portOfDestination:"Santos, Brazil", createdMC:"28-10-2026", utilization:0.0, balanceAmount:21181.9, days:6, moRemarks:"", foRemarks:"", enteredBy:"ROYSTOND", enteredOn:"28-10-2026", entryTime:"14:21:34", changedBy:"ROYSTOND", changedOn:"28-10-2026", changeTime:"14:21:34", status:"Settled" },
+  { mcNumber:"2000002764", client:"OSIPL", mcReferenceNo:"OSIPL_Multi-Commodity_M036_0.072993M", mcDescription:"Soyoil USD-INR-Put cover", mcDate:"20-11-2026", seller:"UAE Trading LLC", buyer:"Meridian International", originEntity:"OVL", mcAmount:61736.27, currency:"USD", mcAmountOrigin:314256.14, originCurrency:"INR", exchangeRate:5.0903, shipmentStart:"24-11-2026", shipmentEnd:"27-12-2026", gtCommodity:"C112", commodity:"SOYOIL", commodityDescription:"SOYOIL", entityId:"E026", entityString:"OGA-DMCC-OSIPL", currencyString:"USD-INR-INR", paymentTerms:"P02", fxModel:"M036", modelDescription:"USD-INR-Put & Call Option", portOfShipment:"Singapore", portOfDestination:"Jebel Ali, UAE", createdMC:"20-11-2026", utilization:6173.63, balanceAmount:55562.64, days:8, moRemarks:"", foRemarks:"", enteredBy:"TINAKSHAYM", enteredOn:"20-11-2026", entryTime:"16:51:38", changedBy:"TINAKSHAYM", changedOn:"20-11-2026", changeTime:"16:51:38", status:"Matured" },
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+var state = {
+  keyDate: null,            // Date object
+  postingMode: "view",      // "view" | "post"
+  loaded: false,
+  rows: [],                 // filtered eligible rows currently shown (working copy)
+  selectedIds: {},           // mcNumber -> true
+  search: "",
+  sortField: "mcNumber",
+  sortDir: "asc",
+  page: 1,
+  rowsPerPage: 20,
+  postedCount: 0
+};
+
+var COLUMNS_VIEW = [
+  { key:"action", label:"", sortable:false, cls:"col-action" },
+  { key:"status", label:"Status", sortable:true, cls:"col-status" },
+  { key:"mcNumber", label:"MC Number", sortable:true },
+  { key:"mcReferenceNo", label:"MC Reference No", sortable:true },
+  { key:"originEntity", label:"Origin Entity", sortable:true },
+  { key:"mcDescription", label:"MC Description", sortable:true },
+  { key:"mcDate", label:"MC Date", sortable:true },
+  { key:"mcAmount", label:"MC Amount", sortable:true, num:true },
+  { key:"currency", label:"Currency", sortable:true },
+  { key:"exchangeRate", label:"Exchange Rate", sortable:true, num:true },
+  { key:"shipmentStart", label:"Shipment Start", sortable:true },
+  { key:"shipmentEnd", label:"Shipment End", sortable:true }
+];
+
+var COLUMNS_POST = COLUMNS_VIEW.filter(function(c){ return c.key !== "action"; });
+
+/* =========================================================
+   DATA / SERVICE FUNCTIONS  (mock now, swappable for REST later)
+   ========================================================= */
+function loadMasterContracts(){
+  // Future: return fetch("/api/master-contracts").then(r => r.json());
+  return mockMasterContracts;
+}
+
+function saveExpiryUpdate(mcNumbers){
+  // Future: return fetch("/api/master-contracts/expire", { method:"POST", body: JSON.stringify({mcNumbers}) });
+  var contracts = loadMasterContracts();
+  mcNumbers.forEach(function(num){
+    var c = contracts.find(function(x){ return x.mcNumber === num; });
+    if(c) c.status = "Expired";
+  });
+  return true;
+}
+
+function postExpiryProcess(mcNumbers){
+  // Simulates the "MC View with Expiry Posting" batch job
+  return saveExpiryUpdate(mcNumbers);
+}
+
+/* =========================================================
+   CALCULATIONS
+   ========================================================= */
+function parseDMY(str){
+  if(!str) return null;
+  var parts = str.split("-");
+  if(parts.length !== 3) return null;
+  var d = parseInt(parts[0],10), m = parseInt(parts[1],10), y = parseInt(parts[2],10);
+  if(isNaN(d) || isNaN(m) || isNaN(y)) return null;
+  var dt = new Date(y, m-1, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d) return null;
+  return dt;
+}
+function formatDMY(dt){
+  if(!dt) return "";
+  var d = String(dt.getDate()).padStart(2,"0");
+  var m = String(dt.getMonth()+1).padStart(2,"0");
+  var y = dt.getFullYear();
+  return d + "-" + m + "-" + y;
+}
+function formatAmount(n){
+  if(n === null || n === undefined || isNaN(n)) return "";
+  return Number(n).toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function formatRate(n){
+  if(n === null || n === undefined || isNaN(n)) return "";
+  return Number(n).toLocaleString("en-US", { minimumFractionDigits:4, maximumFractionDigits:4 }) + "%";
+}
+function isEligibleForExpiry(contract, keyDate){
+  if(contract.status !== "In Use") return false;
+  var endDate = parseDMY(contract.shipmentEnd);
+  if(!endDate) return false;
+  return endDate.getTime() <= keyDate.getTime();
+}
+
+/* =========================================================
+   DATE PICKER COMPONENT
+   ========================================================= */
+function buildDatePicker(inputEl, iconBtnEl, popEl, onSelect){
+  var viewDate = new Date();
+  var selected = null;
+
+  function render(){
+    var y = viewDate.getFullYear(), m = viewDate.getMonth();
+    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var first = new Date(y,m,1);
+    var startOffset = first.getDay();
+    var daysInMonth = new Date(y,m+1,0).getDate();
+    var daysInPrevMonth = new Date(y,m,0).getDate();
+    var html = '<div class="cal-head">' +
+      '<button type="button" class="cal-nav" data-nav="-1">&#8249;</button>' +
+      '<span class="cal-title">' + monthNames[m] + ' ' + y + '</span>' +
+      '<button type="button" class="cal-nav" data-nav="1">&#8250;</button>' +
+      '</div><div class="cal-grid">';
+    ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(function(d){ html += '<div class="cal-dow">'+d+'</div>'; });
+
+    var todayStr = formatDMY(new Date());
+    var cellsBefore = startOffset;
+    for(var i=cellsBefore;i>0;i--){
+      html += '<div class="cal-day muted">'+(daysInPrevMonth-i+1)+'</div>';
+    }
+    for(var d=1; d<=daysInMonth; d++){
+      var thisDate = new Date(y,m,d);
+      var dmy = formatDMY(thisDate);
+      var cls = "cal-day";
+      if(dmy === todayStr) cls += " today";
+      if(selected && dmy === formatDMY(selected)) cls += " selected";
+      html += '<div class="'+cls+'" data-date="'+dmy+'">'+d+'</div>';
+    }
+    var totalCells = cellsBefore + daysInMonth;
+    var trailing = (7 - (totalCells % 7)) % 7;
+    for(var t=1;t<=trailing;t++){
+      html += '<div class="cal-day muted">'+t+'</div>';
+    }
+    html += '</div>';
+    popEl.innerHTML = html;
+
+    popEl.querySelectorAll('.cal-nav').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        viewDate.setMonth(viewDate.getMonth() + parseInt(btn.getAttribute('data-nav'),10));
+        render();
+      });
+    });
+    popEl.querySelectorAll('.cal-day[data-date]').forEach(function(cell){
+      cell.addEventListener('click', function(e){
+        e.stopPropagation();
+        var dmy = cell.getAttribute('data-date');
+        selected = parseDMY(dmy);
+        inputEl.value = dmy;
+        close();
+        onSelect(dmy);
+      });
+    });
+  }
+
+  function open(){
+    var cur = parseDMY(inputEl.value);
+    if(cur){ viewDate = new Date(cur.getFullYear(), cur.getMonth(), 1); selected = cur; }
+    render();
+    popEl.classList.add('open');
+  }
+  function close(){ popEl.classList.remove('open'); }
+  function toggle(){ popEl.classList.contains('open') ? close() : open(); }
+
+  iconBtnEl.addEventListener('click', function(e){ e.stopPropagation(); toggle(); });
+  inputEl.addEventListener('focus', open);
+  document.addEventListener('click', function(e){
+    if(!popEl.contains(e.target) && e.target !== inputEl && e.target !== iconBtnEl){
+      close();
+    }
+  });
+  return { open: open, close: close, setSelected: function(dt){ selected = dt; } };
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+var keyDateInput = document.getElementById('keyDateInput');
+var keyDateIconBtn = document.getElementById('keyDateIconBtn');
+var keyDateCal = document.getElementById('keyDateCal');
+var keyDateError = document.getElementById('keyDateError');
+var resultsCard = document.getElementById('resultsCard');
+var emptyKeyDateCard = document.getElementById('emptyKeyDateCard');
+var autoPostBanner = document.getElementById('autoPostBanner');
+var tableHeadRow = document.getElementById('tableHeadRow');
+var tableBody = document.getElementById('tableBody');
+var tableWrap = document.getElementById('tableWrap');
+var paginationBar = document.getElementById('paginationBar');
+var resultCount = document.getElementById('resultCount');
+var selCountEl = document.getElementById('selCount');
+var expiryUpdateBtn = document.getElementById('expiryUpdateBtn');
+var searchInput = document.getElementById('searchInput');
+var rppSelect = document.getElementById('rppSelect');
+
+function currentColumns(){
+  return state.postingMode === 'view' ? COLUMNS_VIEW : COLUMNS_POST;
+}
+
+function statusClass(status){
+  switch(status){
+    case "In Use": return "status-inuse";
+    case "Confirmed": return "status-confirmed";
+    case "Expired": return "status-expired";
+    case "Pending Approval": return "status-pending";
+    case "Active": return "status-active";
+    case "Settled": return "status-settled";
+    case "Draft": return "status-draft";
+    case "Matured": return "status-matured";
+    case "Rejected": return "status-rejected";
+    default: return "";
+  }
+}
+
+function renderHeader(){
+  var cols = currentColumns();
+  var html = "";
+  cols.forEach(function(col){
+    if(col.key === "action"){
+      html += '<th class="no-sort ' + (col.cls||'') + '">' +
+        '<input type="checkbox" class="chk" id="selectAllChk" title="Select all">' +
+        '</th>';
+      return;
+    }
+    var sortedCls = state.sortField === col.key ? "sorted" : "";
+    var arrow = "";
+    if(state.sortField === col.key){
+      arrow = state.sortDir === "asc" ? "&#9650;" : "&#9660;";
+    }
+    html += '<th class="' + (col.cls||'') + ' ' + (col.sortable ? '' : 'no-sort') + ' ' + sortedCls + '" data-key="' + col.key + '" data-sortable="' + (col.sortable?1:0) + '">' +
+      '<span class="th-inner">' + col.label + (col.sortable ? '<span class="sort-ind">'+arrow+'</span>' : '') + '</span>' +
+    '</th>';
+  });
+  tableHeadRow.innerHTML = html;
+
+  if(state.postingMode === 'view'){
+    var selectAllChk = document.getElementById('selectAllChk');
+    if(selectAllChk){
+      selectAllChk.addEventListener('change', function(){
+        var pageRows = getPageRows();
+        pageRows.forEach(function(r){
+          if(selectAllChk.checked) state.selectedIds[r.mcNumber] = true;
+          else delete state.selectedIds[r.mcNumber];
+        });
+        renderTable();
+      });
+    }
+  }
+  tableHeadRow.querySelectorAll('th[data-sortable="1"]').forEach(function(th){
+    th.addEventListener('click', function(){
+      var key = th.getAttribute('data-key');
+      if(state.sortField === key){
+        state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        state.sortField = key;
+        state.sortDir = "asc";
+      }
+      renderTable();
+    });
+  });
+}
+
+function getFilteredSortedRows(){
+  var rows = state.rows.slice();
+  var q = state.search.trim().toLowerCase();
+  if(q){
+    rows = rows.filter(function(r){
+      return (r.mcNumber+"").toLowerCase().indexOf(q) > -1 ||
+             (r.mcReferenceNo||"").toLowerCase().indexOf(q) > -1 ||
+             (r.originEntity||"").toLowerCase().indexOf(q) > -1 ||
+             (r.commodity||"").toLowerCase().indexOf(q) > -1 ||
+             (r.mcDescription||"").toLowerCase().indexOf(q) > -1 ||
+             (r.status||"").toLowerCase().indexOf(q) > -1;
+    });
+  }
+  var field = state.sortField, dir = state.sortDir === "asc" ? 1 : -1;
+  rows.sort(function(a,b){
+    var av = a[field], bv = b[field];
+    if(field === "mcDate" || field === "shipmentStart" || field === "shipmentEnd"){
+      av = parseDMY(av); bv = parseDMY(bv);
+      av = av ? av.getTime() : 0; bv = bv ? bv.getTime() : 0;
+    } else if(typeof av === "number" && typeof bv === "number"){
+      // numeric already
+    } else {
+      av = (av||"").toString().toLowerCase();
+      bv = (bv||"").toString().toLowerCase();
+    }
+    if(av < bv) return -1*dir;
+    if(av > bv) return 1*dir;
+    return 0;
+  });
+  return rows;
+}
+
+function getPageRows(){
+  var rows = getFilteredSortedRows();
+  var start = (state.page-1) * state.rowsPerPage;
+  return rows.slice(start, start + state.rowsPerPage);
+}
+
+function renderTable(){
+  renderHeader();
+  var allFiltered = getFilteredSortedRows();
+  var totalPages = Math.max(1, Math.ceil(allFiltered.length / state.rowsPerPage));
+  if(state.page > totalPages) state.page = totalPages;
+  var pageRows = getPageRows();
+  var cols = currentColumns();
+
+  resultCount.innerHTML = 'Showing <b>' + pageRows.length + '</b> of <b>' + allFiltered.length + '</b> contract' + (allFiltered.length===1?'':'s');
+
+  if(allFiltered.length === 0){
+    tableBody.innerHTML = '';
+    var wrap = document.getElementById('tableWrap');
+    wrap.innerHTML = '<div class="empty-state">' +
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M9 12H15M9 16H15M9 8H15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="4" y="4" width="16" height="17" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>' +
+      '<div class="es-title">No Master Contracts found for the selected Key Date.</div>' +
+      '<div class="es-sub">Try a different Key Date or review the posting selection.</div>' +
+      '</div>';
+    paginationBar.innerHTML = '';
+    updateSelectionUI();
+    return;
+  } else {
+    var wrap2 = document.getElementById('tableWrap');
+    if(!document.getElementById('dataTable')){
+      wrap2.innerHTML = '<table class="data-table" id="dataTable"><thead><tr id="tableHeadRow"></tr></thead><tbody id="tableBody"></tbody></table>';
+      tableHeadRow = document.getElementById('tableHeadRow');
+      tableBody = document.getElementById('tableBody');
+      renderHeader();
+    }
+  }
+
+  var rowsHtml = "";
+  pageRows.forEach(function(r){
+    var selected = !!state.selectedIds[r.mcNumber];
+    rowsHtml += '<tr class="' + (selected ? 'row-selected' : '') + '" data-id="' + r.mcNumber + '" draggable="' + (selected ? 'true' : 'false') + '">';
+    cols.forEach(function(col){
+      if(col.key === "action"){
+        rowsHtml += '<td class="col-action"><input type="checkbox" class="chk row-chk" data-id="' + r.mcNumber + '" ' + (selected?'checked':'') + (r.status!=="In Use"?' disabled':'') + '></td>';
+        return;
+      }
+      if(col.key === "status"){
+        rowsHtml += '<td class="col-status"><span class="status-text ' + statusClass(r.status) + '">' + r.status + '</span></td>';
+        return;
+      }
+      if(col.key === "mcNumber"){
+        rowsHtml += '<td><button class="mc-link" data-id="' + r.mcNumber + '">' + r.mcNumber + '</button></td>';
+        return;
+      }
+      if(col.key === "mcAmount"){
+        rowsHtml += '<td class="num-cell">' + formatAmount(r.mcAmount) + '</td>';
+        return;
+      }
+      if(col.key === "exchangeRate"){
+        rowsHtml += '<td class="num-cell">' + Number(r.exchangeRate).toFixed(4) + '</td>';
+        return;
+      }
+      if(col.key === "mcDate" || col.key === "shipmentStart" || col.key === "shipmentEnd"){
+        rowsHtml += '<td class="date-cell">' + r[col.key] + '</td>';
+        return;
+      }
+      rowsHtml += '<td>' + (r[col.key] !== undefined ? r[col.key] : "") + '</td>';
+    });
+    rowsHtml += '</tr>';
+  });
+  tableBody.innerHTML = rowsHtml;
+
+  tableBody.querySelectorAll('.mc-link').forEach(function(btn){
+    btn.addEventListener('click', function(){ openDetails(btn.getAttribute('data-id')); });
+  });
+  tableBody.querySelectorAll('.row-chk').forEach(function(chk){
+    chk.addEventListener('change', function(){
+      var id = chk.getAttribute('data-id');
+      if(chk.checked) state.selectedIds[id] = true; else delete state.selectedIds[id];
+      var tr = chk.closest('tr');
+      tr.classList.toggle('row-selected', chk.checked);
+      tr.draggable = chk.checked;
+      updateSelectionUI();
+    });
+  });
+
+  renderPagination(totalPages);
+  updateSelectionUI();
+}
+
+function renderPagination(totalPages){
+  var html = '<div class="pg-btns">';
+  html += '<button class="pg-btn" id="pgPrev" ' + (state.page<=1?'disabled':'') + '>&#8249;</button>';
+  var maxButtons = 6;
+  var startP = Math.max(1, state.page - 2);
+  var endP = Math.min(totalPages, startP + maxButtons - 1);
+  startP = Math.max(1, endP - maxButtons + 1);
+  for(var p=startP; p<=endP; p++){
+    html += '<button class="pg-btn ' + (p===state.page?'active':'') + '" data-page="' + p + '">' + p + '</button>';
+  }
+  html += '<button class="pg-btn" id="pgNext" ' + (state.page>=totalPages?'disabled':'') + '>&#8250;</button>';
+  html += '</div><span class="result-count">Page ' + state.page + ' of ' + totalPages + '</span>';
+  paginationBar.innerHTML = html;
+
+  var prevBtn = document.getElementById('pgPrev');
+  var nextBtn = document.getElementById('pgNext');
+  if(prevBtn) prevBtn.addEventListener('click', function(){ if(state.page>1){ state.page--; renderTable(); } });
+  if(nextBtn) nextBtn.addEventListener('click', function(){ if(state.page<totalPages){ state.page++; renderTable(); } });
+  paginationBar.querySelectorAll('.pg-btn[data-page]').forEach(function(btn){
+    btn.addEventListener('click', function(){ state.page = parseInt(btn.getAttribute('data-page'),10); renderTable(); });
+  });
+}
+
+function updateSelectionUI(){
+  var count = Object.keys(state.selectedIds).length;
+  if(state.postingMode === 'view'){
+    expiryUpdateBtn.style.display = 'inline-flex';
+    expiryUpdateBtn.disabled = count === 0;
+    if(count > 0){
+      selCountEl.style.display = 'inline';
+      selCountEl.textContent = count + ' selected';
+    } else {
+      selCountEl.style.display = 'none';
+    }
+  } else {
+    expiryUpdateBtn.style.display = 'none';
+    selCountEl.style.display = 'none';
+  }
+}
+
+/* =========================================================
+   ROW SELECTION + DRAG-RANGE SELECTION (MC View Only)
+   Single click toggles a row into/out of the same state.selectedIds
+   used by the checkboxes and by Expiry Update, so every selection
+   path (checkbox, row click, drag-range) stays perfectly in sync.
+   Listeners are delegated once onto the stable #tableWrap container
+   so re-rendering the table body never creates duplicate handlers.
+   ========================================================= */
+function findRowContract(id){
+  return state.rows.find(function(r){ return r.mcNumber === id; });
+}
+
+function isInteractiveTarget(target){
+  return !!target.closest('.row-chk, .mc-link, button, input, select, a, .chk');
+}
+
+function toggleRowSelection(id){
+  var c = findRowContract(id);
+  if(!c || c.status !== "In Use") return;
+  var willSelect = !state.selectedIds[id];
+  if(willSelect) state.selectedIds[id] = true; else delete state.selectedIds[id];
+  var tr = tableBody.querySelector('tr[data-id="' + id + '"]');
+  if(tr){
+    tr.classList.toggle('row-selected', willSelect);
+    tr.draggable = willSelect;
+    var chk = tr.querySelector('.row-chk');
+    if(chk && !chk.disabled) chk.checked = willSelect;
+  }
+  updateSelectionUI();
+}
+
+/* ---- Drag selection state ----
+   Hovering a row's checkbox/status column during a drag toggles
+   that row through the same toggleRowSelection() a click uses, so
+   an already-selected row is unselected the moment you hover it
+   again, and an unselected row becomes selected — the same rule
+   as a plain click, just applied as you sweep across rows. The
+   anchor row (the one you picked up) stays selected for the
+   duration of the drag so it's never dropped from its own carry. */
+var dragState = null;
+
+function startRowDrag(e, anchorId, trEl){
+  dragState = {
+    anchorId: anchorId,
+    lastHoverId: anchorId,
+    droppedOnExpiry: false
+  };
+
+  trEl.classList.add('dragging');
+
+  var count = Object.keys(state.selectedIds).length;
+  var label = count > 1 ? (count + ' Master Contracts selected') : ('MC ' + anchorId);
+  var ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = label;
+  document.body.appendChild(ghost);
+  if(e.dataTransfer){
+    e.dataTransfer.effectAllowed = 'move';
+    try{ e.dataTransfer.setData('text/plain', anchorId); }catch(err){}
+    if(e.dataTransfer.setDragImage){ e.dataTransfer.setDragImage(ghost, 12, 14); }
+  }
+  setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+}
+
+function endRowDrag(){
+  if(!dragState) return;
+  var droppedOnExpiry = dragState.droppedOnExpiry;
+
+  var draggedTr = tableBody.querySelector('tr.dragging');
+  if(draggedTr) draggedTr.classList.remove('dragging');
+  tableBody.querySelectorAll('.drag-range-hover').forEach(function(tr){
+    tr.classList.remove('drag-range-hover');
+  });
+
+  dragState = null;
+
+  if(droppedOnExpiry){
+    openExpiryConfirm();
+  }
+}
+
+/* ---- Delegated interaction listeners (attached once) ---- */
+tableWrap.addEventListener('click', function(e){
+  if(state.postingMode !== 'view') return;
+  var tr = e.target.closest('tr[data-id]');
+  if(!tr || isInteractiveTarget(e.target)) return;
+  toggleRowSelection(tr.getAttribute('data-id'));
+});
+
+tableWrap.addEventListener('dblclick', function(e){
+  var tr = e.target.closest('tr[data-id]');
+  if(!tr) return;
+  openDetails(tr.getAttribute('data-id'));
+});
+
+tableWrap.addEventListener('dragstart', function(e){
+  if(state.postingMode !== 'view'){ e.preventDefault(); return; }
+  var tr = e.target.closest('tr[data-id]');
+  if(!tr || isInteractiveTarget(e.target)){ e.preventDefault(); return; }
+  var id = tr.getAttribute('data-id');
+  if(!state.selectedIds[id]){ e.preventDefault(); return; }
+  startRowDrag(e, id, tr);
+});
+
+tableWrap.addEventListener('dragover', function(e){
+  if(!dragState) return;
+  var tr = e.target.closest('tr[data-id]');
+  if(!tr) return;
+  if(!e.target.closest('.col-action, .col-status')) return;
+  var id = tr.getAttribute('data-id');
+  if(id === dragState.lastHoverId) return;
+  dragState.lastHoverId = id;
+
+  tableBody.querySelectorAll('.drag-range-hover').forEach(function(t){
+    t.classList.remove('drag-range-hover');
+  });
+  tr.classList.add('drag-range-hover');
+
+  if(id !== dragState.anchorId){
+    toggleRowSelection(id);
+  }
+});
+
+tableWrap.addEventListener('dragend', function(){
+  endRowDrag();
+});
+
+/* ---- Expiry Update button as a drop target ---- */
+expiryUpdateBtn.addEventListener('dragover', function(e){
+  if(!dragState) return;
+  e.preventDefault();
+  if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  expiryUpdateBtn.classList.add('expiry-drag-over');
+});
+expiryUpdateBtn.addEventListener('dragleave', function(){
+  expiryUpdateBtn.classList.remove('expiry-drag-over');
+});
+expiryUpdateBtn.addEventListener('drop', function(e){
+  e.preventDefault();
+  expiryUpdateBtn.classList.remove('expiry-drag-over');
+  if(dragState) dragState.droppedOnExpiry = true;
+});
+
+/* =========================================================
+   VALIDATION
+   ========================================================= */
+function validateKeyDate(){
+  var val = keyDateInput.value.trim();
+  if(!val){
+    keyDateInput.classList.add('invalid');
+    keyDateError.classList.add('show');
+    return null;
+  }
+  var dt = parseDMY(val);
+  if(!dt){
+    keyDateInput.classList.add('invalid');
+    keyDateError.textContent = "Enter a valid date in DD-MM-YYYY format.";
+    keyDateError.classList.add('show');
+    return null;
+  }
+  keyDateInput.classList.remove('invalid');
+  keyDateError.classList.remove('show');
+  return dt;
+}
+
+/* =========================================================
+   CORE FLOW
+   ========================================================= */
+function loadScreenData(){
+  var dt = validateKeyDate();
+  if(!dt){
+    resultsCard.style.display = 'none';
+    emptyKeyDateCard.style.display = 'block';
+    return;
+  }
+  state.keyDate = dt;
+  var contracts = loadMasterContracts();
+  var eligible = contracts.filter(function(c){ return isEligibleForExpiry(c, dt); });
+
+  state.selectedIds = {};
+  state.page = 1;
+  state.search = "";
+  searchInput.value = "";
+  state.sortField = "mcNumber";
+  state.sortDir = "asc";
+
+  if(state.postingMode === 'post'){
+    var ids = eligible.map(function(c){ return c.mcNumber; });
+    if(ids.length > 0){
+      postExpiryProcess(ids);
+    }
+    var refreshed = loadMasterContracts();
+    state.rows = refreshed.filter(function(c){ return ids.indexOf(c.mcNumber) > -1; });
+    autoPostBanner.style.display = ids.length ? 'flex' : 'none';
+    if(ids.length){
+      autoPostBanner.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<span><b>Expiry posting completed</b> for Key Date ' + formatDMY(dt) + '. ' +
+        (ids.length===1 ? '1 Master Contract' : ids.length + ' Master Contracts') + ' expired successfully.</span>';
+    }
+  } else {
+    state.rows = eligible.slice();
+    autoPostBanner.style.display = 'none';
+  }
+
+  emptyKeyDateCard.style.display = 'none';
+  resultsCard.style.display = 'block';
+  renderTable();
+}
+
+function reevaluateMode(){
+  loadScreenData();
+}
+
+/* =========================================================
+   EVENT HANDLING
+   ========================================================= */
+keyDateInput.addEventListener('input', function(){
+  var v = keyDateInput.value.replace(/[^\d]/g,'');
+  var out = '';
+  if(v.length > 0) out = v.substring(0,2);
+  if(v.length >= 3) out += '-' + v.substring(2,4);
+  if(v.length >= 5) out += '-' + v.substring(4,8);
+  keyDateInput.value = out;
+});
+keyDateInput.addEventListener('blur', function(){
+  if(keyDateInput.value.trim()){
+    var dt = parseDMY(keyDateInput.value.trim());
+    if(dt){ keyDateInput.classList.remove('invalid'); keyDateError.classList.remove('show'); loadScreenData(); }
+  }
+});
+keyDateInput.addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ loadScreenData(); }
+});
+
+buildDatePicker(keyDateInput, keyDateIconBtn, keyDateCal, function(){
+  loadScreenData();
+});
+
+document.querySelectorAll('input[name="postingMode"]').forEach(function(radio){
+  radio.addEventListener('click', function(e){
+    if(radio.value !== 'post' || state.postingMode === 'post') return;
+    if(!state.keyDate) return;
+    var contracts = loadMasterContracts();
+    var eligible = contracts.filter(function(c){ return isEligibleForExpiry(c, state.keyDate); });
+    e.preventDefault();
+    radio.checked = false;
+    if(eligible.length === 0){
+      showToast('No Master Contracts are eligible for expiry for the selected Key Date.');
+      return;
+    }
+    openBatchExpiryConfirm(eligible.map(function(c){ return c.mcNumber; }), radio);
+  });
+  radio.addEventListener('change', function(){
+    state.postingMode = radio.value;
+    if(state.keyDate){ reevaluateMode(); }
+  });
+});
+
+searchInput.addEventListener('input', function(){
+  state.search = searchInput.value;
+  state.page = 1;
+  renderTable();
+});
+
+rppSelect.addEventListener('change', function(){
+  state.rowsPerPage = parseInt(rppSelect.value,10);
+  state.page = 1;
+  renderTable();
+});
+
+/* Expiry confirmation flow — shared by BOTH:
+   - manual mode: user checks/selects rows, clicks Expiry Update
+   - batch mode: user selects "MC View with Expiry Posting"
+   Both converge on the SAME confirmOverlay modal and the SAME
+   existing expiry processing functions (saveExpiryUpdate /
+   postExpiryProcess). expiryConfirmMode only decides which id
+   list and which copy to show; nothing is expired until the
+   user presses the modal's existing Expire button. */
+var confirmOverlay = document.getElementById('confirmOverlay');
+var confirmHeading = document.getElementById('confirmHeading');
+var confirmSubtext = document.getElementById('confirmSubtext');
+var pendingIds = [];
+var expiryConfirmMode = 'manual'; // 'manual' | 'batch'
+var pendingPostingRadio = null;   // the "MC View with Expiry Posting" radio, checked only on confirm
+
+function closeOverlayAnimated(overlayEl, cb){
+  overlayEl.classList.add('closing');
+  setTimeout(function(){
+    overlayEl.classList.remove('open');
+    overlayEl.classList.remove('closing');
+    if(cb) cb();
+  }, 160);
+}
+
+function resetConfirmToManualCopy(){
+  confirmHeading.textContent = 'Expire selected Master Contract(s)?';
+}
+
+function openExpiryConfirm(){
+  expiryConfirmMode = 'manual';
+  pendingPostingRadio = null;
+  pendingIds = Object.keys(state.selectedIds);
+  if(pendingIds.length === 0) return;
+  resetConfirmToManualCopy();
+  confirmSubtext.textContent = pendingIds.length === 1
+    ? 'Master Contract ' + pendingIds[0] + ' will be updated from In Use to Expired.'
+    : pendingIds.length + ' selected Master Contracts will be updated from In Use to Expired.';
+  confirmOverlay.classList.add('open');
+}
+
+function openBatchExpiryConfirm(eligibleIds, radioEl){
+  expiryConfirmMode = 'batch';
+  pendingPostingRadio = radioEl;
+  pendingIds = eligibleIds;
+  var n = pendingIds.length;
+  confirmHeading.textContent = n === 1 ? 'Expire eligible Master Contract?' : 'Expire all eligible Master Contracts?';
+  confirmSubtext.textContent = n === 1
+    ? '1 Master Contract is eligible for expiry based on the selected Key Date. This contract will be updated to Expired.'
+    : n + ' Master Contracts are eligible for expiry based on the selected Key Date. These contracts will be updated to Expired.';
+  confirmOverlay.classList.add('open');
+}
+
+expiryUpdateBtn.addEventListener('click', openExpiryConfirm);
+
+function closeConfirm(){ closeOverlayAnimated(confirmOverlay); }
+
+function cancelConfirm(){
+  closeConfirm();
+  pendingIds = [];
+  pendingPostingRadio = null;
+  expiryConfirmMode = 'manual';
+  resetConfirmToManualCopy();
+}
+document.getElementById('confirmCancelBtn').addEventListener('click', cancelConfirm);
+document.getElementById('confirmCloseBtn').addEventListener('click', cancelConfirm);
+confirmOverlay.addEventListener('click', function(e){ if(e.target === confirmOverlay) cancelConfirm(); });
+
+document.getElementById('confirmExpireBtn').addEventListener('click', function(){
+  if(expiryConfirmMode === 'batch'){
+    if(pendingPostingRadio){ pendingPostingRadio.checked = true; }
+    pendingPostingRadio = null;
+    state.postingMode = 'post';
+    closeConfirm();
+    reevaluateMode(); // existing pipeline: postExpiryProcess(ids) + table refresh + banner
+    pendingIds = [];
+    expiryConfirmMode = 'manual';
+    resetConfirmToManualCopy();
+    return;
+  }
+
+  saveExpiryUpdate(pendingIds);
+  // reflect in local working rows
+  state.rows.forEach(function(r){
+    if(pendingIds.indexOf(r.mcNumber) > -1) r.status = "Expired";
+  });
+  var count = pendingIds.length;
+  state.selectedIds = {};
+  closeConfirm();
+  renderTable();
+  showToast(count === 1
+    ? 'Master Contract ' + pendingIds[0] + ' expired successfully.'
+    : count + ' Master Contracts expired successfully.');
+  pendingIds = [];
+});
+
+/* Details modal */
+var detailsOverlay = document.getElementById('detailsOverlay');
+var detailsGrid = document.getElementById('detailsGrid');
+var detailsTitle = document.getElementById('detailsTitle');
+
+function detailRow(label, value){
+  return '<div class="detail-row"><span class="dl">' + label + '</span><span class="dv">' + (value !== undefined && value !== null && value !== "" ? value : '—') + '</span></div>';
+}
+
+function openDetails(mcNumber){
+  var contracts = loadMasterContracts();
+  var c = contracts.find(function(x){ return x.mcNumber === mcNumber; });
+  if(!c) return;
+  detailsTitle.textContent = 'Master Contract ' + c.mcNumber;
+
+  var html = '';
+  html += '<div class="detail-section"><h4>Basic Details</h4>' +
+    detailRow('Status', '<span class="status-text ' + statusClass(c.status) + '">' + c.status + '</span>') +
+    detailRow('MC Number', c.mcNumber) +
+    detailRow('MC Reference No', c.mcReferenceNo) +
+    detailRow('MC Description', c.mcDescription) +
+    detailRow('MC Date', c.mcDate) +
+    detailRow('Client', c.client) +
+    detailRow('Seller', c.seller) +
+    detailRow('Buyer', c.buyer) +
+    detailRow('Origin Entity', c.originEntity) +
+    '</div>';
+
+  html += '<div class="detail-section"><h4>Financial Details</h4>' +
+    detailRow('MC Amount', formatAmount(c.mcAmount) + ' ' + c.currency) +
+    detailRow('MC Amount (Origin)', formatAmount(c.mcAmountOrigin) + ' ' + c.originCurrency) +
+    detailRow('Exchange Rate', Number(c.exchangeRate).toFixed(4)) +
+    detailRow('Utilization', formatAmount(c.utilization)) +
+    detailRow('Balance Amount', formatAmount(c.balanceAmount)) +
+    detailRow('Entity ID', c.entityId) +
+    detailRow('Entity String', c.entityString) +
+    detailRow('Currency String', c.currencyString) +
+    '</div>';
+
+  html += '<div class="detail-section"><h4>Commodity Details</h4>' +
+    detailRow('GT Commodity', c.gtCommodity) +
+    detailRow('Commodity', c.commodity) +
+    detailRow('Commodity Description', c.commodityDescription) +
+    '</div>';
+
+  html += '<div class="detail-section"><h4>Shipment Details</h4>' +
+    detailRow('Shipment Start', c.shipmentStart) +
+    detailRow('Shipment End', c.shipmentEnd) +
+    detailRow('Payment Terms', c.paymentTerms) +
+    detailRow('Port of Shipment', c.portOfShipment) +
+    detailRow('Port of Destination', c.portOfDestination) +
+    '</div>';
+
+  html += '<div class="detail-section"><h4>FX Model Details</h4>' +
+    detailRow('FX Model', c.fxModel) +
+    detailRow('Model Description', c.modelDescription) +
+    '</div>';
+
+  var eligibleNow = state.keyDate ? isEligibleForExpiry(c, state.keyDate) : false;
+  html += '<div class="detail-section"><h4>Expiry Information</h4>' +
+    detailRow('Days Outstanding', c.days) +
+    detailRow('Eligible for Selected Key Date', state.keyDate ? (eligibleNow || c.status === "Expired" ? 'Yes' : 'No') : '—') +
+    detailRow('MO Remarks', c.moRemarks) +
+    detailRow('FO Remarks', c.foRemarks) +
+    detailRow('Created MC', c.createdMC) +
+    detailRow('Entered By / On', c.enteredBy + ' — ' + c.enteredOn + ' ' + c.entryTime) +
+    detailRow('Changed By / On', c.changedBy + ' — ' + c.changedOn + ' ' + c.changeTime) +
+    '</div>';
+
+  detailsGrid.innerHTML = html;
+  detailsOverlay.classList.add('open');
+}
+function closeDetails(){ closeOverlayAnimated(detailsOverlay); }
+document.getElementById('detailsCloseBtn').addEventListener('click', closeDetails);
+document.getElementById('detailsFooterCloseBtn').addEventListener('click', closeDetails);
+detailsOverlay.addEventListener('click', function(e){ if(e.target === detailsOverlay) closeDetails(); });
+
+/* Toast */
+var toastWrap = document.getElementById('toastWrap');
+function showToast(msg){
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<svg class="toast-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M8 12.5L10.7 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+    '<span>' + msg + '</span>' +
+    '<button class="toast-close" aria-label="Dismiss">&times;</button>';
+  toastWrap.appendChild(el);
+  el.querySelector('.toast-close').addEventListener('click', function(){ el.remove(); });
+  setTimeout(function(){ if(el.parentNode) el.remove(); }, 5000);
+}
+
+/* Escape key closes modals */
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    cancelConfirm();
+    closeDetails();
+    keyDateCal.classList.remove('open');
+  }
+});
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+(function init(){
+  emptyKeyDateCard.style.display = 'block';
+  resultsCard.style.display = 'none';
+  updateSelectionUI();
+})();
+</script>
+</body>
+</html>

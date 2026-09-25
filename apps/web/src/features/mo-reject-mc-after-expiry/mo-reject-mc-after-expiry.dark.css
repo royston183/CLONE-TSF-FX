@@ -1,0 +1,79 @@
+/* Night mode for mo-reject-mc-after-expiry, derived from mo-reject-mc-after-expiry.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mormc {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mormc input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mormc select,
+:root[data-theme='dark'] .mormc textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc {
+  --bg: #0d1724;
+  --card: #14212f;
+  --surface-2: #1b2b3d;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --blue-soft: #17304a;
+  --success-soft: #14321f;
+  --warning-soft: #3a2a12;
+  --error-soft: #3a1b1e;
+}
+:root[data-theme='dark'] .mormc .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .calendar-pop {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .search-box input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .rpp-select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .table-wrap {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc table.data-table tbody tr {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc table.data-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mormc .hint-banner {
+  border: 1px solid #2d4a6b;
+  color: #6fa3ec;
+}
+:root[data-theme='dark'] .mormc .hint-banner.warn {
+  border-color: #5a4220;
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .mormc .hint-banner.success {
+  border-color: #26543a;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .mormc .pg-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mormc .modal-header {
+  background: linear-gradient(180deg,#14212f,#1b2b3d);
+}
+:root[data-theme='dark'] .mormc .toast {
+  background: #14212f;
+  border: 1px solid #26543a;
+}
+:root[data-theme='dark'] .mormc .sdd-pop {
+  background: #14212f;
+}

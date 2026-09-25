@@ -1,0 +1,76 @@
+/* Night mode for mo-update-mc-expiry, derived from mo-update-mc-expiry.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .moume {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .moume input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .moume select,
+:root[data-theme='dark'] .moume textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume {
+  --bg: #0d1724;
+  --card: #14212f;
+  --surface-2: #1b2b3d;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --blue-soft: #17304a;
+  --success-soft: #14321f;
+  --warning-soft: #3a2a12;
+  --error-soft: #3a1b1e;
+}
+:root[data-theme='dark'] .moume .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .calendar-pop {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .search-box input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .rpp-select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .table-wrap {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume table.data-table tbody tr {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume table.data-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .moume .hint-banner {
+  border: 1px solid #2d4a6b;
+  color: #6fa3ec;
+}
+:root[data-theme='dark'] .moume .hint-banner.warn {
+  border-color: #5a4220;
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .moume .hint-banner.success {
+  border-color: #26543a;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .moume .pg-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .moume .modal-header {
+  background: linear-gradient(180deg,#14212f,#1b2b3d);
+}
+:root[data-theme='dark'] .moume .toast {
+  background: #14212f;
+  border: 1px solid #26543a;
+}

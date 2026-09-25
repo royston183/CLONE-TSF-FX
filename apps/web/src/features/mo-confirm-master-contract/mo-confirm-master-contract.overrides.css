@@ -1,0 +1,38 @@
+/*
+ * The only deviations from the generated legacy stylesheet, and why.
+ *
+ * mo-confirm-master-contract.legacy.css is produced by tools/scope-css.mjs from
+ * legacy/confirm-master-contract.html and cannot be hand-edited — anything written there is
+ * lost on the next run. Rules that must differ live here instead, scoped under .mocmc and
+ * imported after the generated sheets so they win on order alone.
+ */
+
+/*
+ * Drop-target hint while a selected row is dragged. The legacy page put a "row-dragging"
+ * class on <body>; scoped, those rules became ".mocmc body.row-dragging ..." and can never
+ * match, since the app root is not the body. The class now goes on the .mocmc root, so the
+ * same declarations are restated against it: the later RMC pass's box-shadow (which replaced
+ * the first one with !important) and the "Drop here" label. The box-shadow skips .drag-over
+ * so the hovered button keeps the stronger ring the generated sheet gives it.
+ */
+.mocmc.row-dragging .drag-target:not(:disabled) {
+  transform: translateY(-1px);
+}
+.mocmc.row-dragging .drag-target:not(:disabled):not(.drag-over) {
+  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.18) !important;
+}
+.mocmc.row-dragging .drag-target:not(:disabled)::after {
+  content: "Drop here";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #102A43;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 80;
+}
