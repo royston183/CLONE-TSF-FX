@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX Deal Confirmation - FX&amp;Options</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+:root{
+  --bg:#f5f7f9;
+  --surface:#ffffff;
+  --surface-2:#f2f4f5;
+
+  --text:#1d2d3e;
+  --sub:#475e75;
+  --muted:#687b8d;
+
+  --blue:#0a6ed1;
+  --blue-hover:#085caf;
+  --blue-soft:#eaf3fc;
+
+  --border:#d5dadd;
+  --border-strong:#8996a1;
+
+  --green:#107e3e;
+  --green-soft:#e6f4ec;
+  --warning:#e9730c;
+  --warning-soft:#fdf0e4;
+  --error:#bb0000;
+  --error-soft:#fbe9e9;
+
+  --radius-sm:4px;
+  --radius-md:6px;
+  --radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(29,45,62,.08);
+  --shadow-md:0 3px 9px rgba(34,53,72,.10);
+  --shadow-lg:0 8px 28px rgba(29,45,62,.18);
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"72","Segoe UI",Arial,sans-serif;
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+
+::selection{background:var(--blue-soft);color:var(--text);}
+
+button, input, select, textarea{
+  font-family:inherit;
+  font-size:13px;
+  color:var(--text);
+}
+
+::-webkit-scrollbar{height:10px;width:10px;}
+::-webkit-scrollbar-track{background:var(--surface-2);}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:var(--sub);}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app{
+  padding-left:.2rem;
+  padding-right:.2rem;
+  padding-bottom:2.5rem;
+  max-width:100%;
+}
+
+.app-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+.fs-logo{
+  width:20px;
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  margin-right:2px;
+}
+.fs-logo .bar{
+  height:7px;
+  border-radius:5px;
+}
+.fs-logo .bar1{width:20px;background:#c62128;}
+.fs-logo .bar2{width:15px;background:#f0b31a;}
+.fs-logo .bar3{width:10px;background:#1e8e4f;}
+.fs-logo .bar4{width:7px;height:7px;border-radius:50%;background:#8a8d92;}
+.app-title{
+  font-size:19px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:.1px;
+  line-height:1.25;
+}
+.app-title small{
+  display:block;
+  font-size:12.5px;
+  font-weight:400;
+  color:var(--muted);
+  letter-spacing:.1px;
+  margin-top:2px;
+}
+
+main{
+  padding:14px 14px 0 14px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+}
+
+.card-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  user-select:none;
+}
+.card-header h2{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+}
+.card-header .collapse-icon{
+  color:var(--sub);
+  transition:transform .18s ease;
+  font-size:11px;
+}
+.card.collapsed .collapse-icon{transform:rotate(-90deg);}
+.card.collapsed .card-body{display:none;}
+
+.card-body{padding:16px;}
+
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px 18px;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+.field.span-2{grid-column:span 2;}
+.field label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--sub);
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.field label .req{color:var(--error);}
+
+.field-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.field-row .to-label{font-size:12px;color:var(--muted);flex:0 0 auto;}
+
+.input, select.input{
+  height:32px;
+  padding:0 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--text);
+  width:100%;
+  transition:border-color .12s ease, box-shadow .12s ease;
+}
+.input:hover{border-color:var(--border-strong);}
+.input:focus{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px var(--blue-soft);
+}
+.input::placeholder{color:var(--muted);}
+.input[disabled], .input[readonly]{
+  background:var(--surface-2);
+  color:var(--muted);
+  cursor:not-allowed;
+}
+textarea.input{
+  height:auto;
+  min-height:64px;
+  padding:8px 10px;
+  resize:vertical;
+}
+
+/* Combobox */
+.combo{position:relative;}
+.combo .input{cursor:text;}
+.combo-caret{
+  position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;font-size:10px;
+}
+.combo-panel{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  max-height:230px;overflow-y:auto;
+  z-index:80;
+  display:none;
+}
+.combo.open .combo-panel{display:block;}
+.combo-option{
+  padding:7px 12px;
+  cursor:pointer;
+  font-size:13px;
+  color:var(--text);
+  display:flex;flex-direction:column;gap:1px;
+}
+.combo-option:hover, .combo-option.active{background:var(--blue-soft);}
+.combo-option .opt-sub{font-size:11px;color:var(--muted);}
+.combo-empty{padding:10px 12px;font-size:12px;color:var(--muted);}
+
+/* Date field */
+.date-field{position:relative;}
+.date-icon-btn{
+  position:absolute;right:4px;top:4px;
+  width:24px;height:24px;
+  border:none;background:transparent;
+  color:var(--sub);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:4px;
+}
+.date-icon-btn:hover{background:var(--surface-2);color:var(--blue);}
+.date-field .input{padding-right:30px;}
+
+.calendar-pop{
+  position:absolute;top:calc(100% + 4px);left:0;
+  width:250px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  z-index:90;
+  padding:10px;
+  display:none;
+}
+.calendar-pop.open{display:block;}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cal-head button{
+  border:none;background:var(--surface-2);color:var(--sub);
+  width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;
+}
+.cal-head button:hover{background:var(--blue-soft);color:var(--blue);}
+.cal-title{font-size:13px;font-weight:700;color:var(--text);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-dow{font-size:10px;color:var(--muted);text-align:center;padding:3px 0;font-weight:700;}
+.cal-day{
+  font-size:12px;text-align:center;padding:5px 0;border-radius:4px;cursor:pointer;color:var(--text);
+}
+.cal-day:hover{background:var(--blue-soft);}
+.cal-day.muted{color:var(--muted);}
+.cal-day.today{border:1px solid var(--blue);}
+.cal-day.selected{background:var(--blue);color:#fff;font-weight:700;}
+
+/* Radio */
+.radio-group{display:flex;gap:20px;align-items:center;padding-top:2px;}
+.radio-opt{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--text);}
+.radio-opt input{display:none;}
+.radio-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:1.5px solid var(--border-strong);
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;
+  transition:border-color .12s ease;
+}
+.radio-dot::after{
+  content:'';width:8px;height:8px;border-radius:50%;background:var(--blue);
+  transform:scale(0);transition:transform .12s ease;
+}
+.radio-opt input:checked + .radio-dot{border-color:var(--blue);}
+.radio-opt input:checked + .radio-dot::after{transform:scale(1);}
+
+/* Checkbox */
+.checkbox{
+  width:16px;height:16px;border:1.5px solid var(--border-strong);border-radius:3px;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  background:var(--surface);cursor:pointer;
+}
+.checkbox.checked{background:var(--blue);border-color:var(--blue);}
+.checkbox.checked::after{content:'\2713';color:#fff;font-size:11px;font-weight:700;}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  height:32px;
+  padding:0 14px;
+  border-radius:var(--radius-sm);
+  border:1.5px solid transparent;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:background .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-hover);}
+.btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border-strong);}
+.btn-secondary:hover{background:var(--surface-2);border-color:var(--text);}
+.btn-outline-blue{background:var(--surface);color:var(--blue);border-color:var(--blue);}
+.btn-outline-blue:hover{background:var(--blue-soft);}
+.btn-warning{background:var(--warning);color:#fff;}
+.btn-warning:hover{background:#cf6409;}
+.btn-danger{background:var(--surface);color:var(--error);border-color:var(--error);}
+.btn-danger:hover{background:var(--error-soft);}
+.btn-solid-danger{background:var(--error);color:#fff;}
+.btn-solid-danger:hover{background:#960000;}
+.btn-ghost{background:transparent;color:var(--sub);border-color:transparent;}
+.btn-ghost:hover{background:var(--surface-2);}
+.btn:disabled{
+  background:var(--surface-2) !important;
+  color:var(--muted) !important;
+  border-color:var(--border) !important;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.btn-sm{height:28px;padding:0 10px;font-size:12px;}
+.btn-icon{width:32px;padding:0;justify-content:center;}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+}
+.search-box{
+  position:relative;
+  flex:1 1 260px;
+  min-width:220px;
+  max-width:420px;
+}
+.search-box input{padding-left:32px;}
+.search-box .icon{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:13px;pointer-events:none;
+}
+.deal-count{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:600;
+  margin-left:auto;
+  white-space:nowrap;
+}
+.toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.toolbar-actions .spacer{width:1px;height:20px;background:var(--border);margin:0 2px;}
+
+.filter-panel{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface-2);
+  display:none;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:flex-end;
+}
+.filter-panel.open{display:flex;}
+.filter-panel .field{min-width:150px;flex:1 1 150px;}
+.filter-panel .field-actions{display:flex;gap:8px;flex:0 0 auto;padding-bottom:1px;}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table-wrap{
+  overflow-x:auto;
+  overflow-y:visible;
+}
+table.deals-table{
+  border-collapse:separate;
+  border-spacing:0;
+  width:100%;
+  min-width:2400px;
+}
+table.deals-table thead th{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:var(--surface-2);
+  color:var(--sub);
+  font-size:13px;
+  font-weight:600;
+  text-align:left;
+  padding:9px 12px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+}
+table.deals-table thead th.no-sort{cursor:default;}
+table.deals-table thead th .th-inner{display:flex;align-items:center;gap:5px;}
+table.deals-table thead th .sort-arrow{font-size:9px;color:var(--muted);}
+table.deals-table thead th.sorted .sort-arrow{color:var(--blue);}
+table.deals-table thead th.col-select{width:38px;text-align:center;}
+table.deals-table thead th.num{text-align:right;}
+
+table.deals-table tbody td{
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:400;
+  color:var(--text);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+table.deals-table tbody td.num{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+table.deals-table tbody td.col-select{text-align:center;cursor:pointer;}
+table.deals-table.dragging{user-select:none;-webkit-user-select:none;}
+table.deals-table tbody tr{
+  cursor:pointer;
+  background:var(--surface);
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.deals-table tbody tr:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-md);
+  position:relative;
+  z-index:2;
+}
+table.deals-table tbody tr.selected{background:var(--blue-soft);}
+table.deals-table tbody tr.selected:hover{background:var(--blue-soft);}
+
+.status-text{font-weight:600;}
+.status-unmatched{color:var(--sub);}
+.status-correction{color:var(--error);}
+.status-matched{color:var(--green);}
+
+.empty-row td{
+  text-align:center;
+  padding:48px 16px;
+  color:var(--muted);
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 16px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.pagination-info{font-size:12px;color:var(--muted);}
+.pagination-controls{display:flex;align-items:center;gap:6px;}
+.page-btn{
+  min-width:28px;height:28px;padding:0 8px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  font-size:12px;
+  color:var(--sub);
+  font-weight:600;
+}
+.page-btn:hover{background:var(--surface-2);border-color:var(--border-strong);}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.page-btn:disabled{cursor:not-allowed;opacity:.4;}
+.page-size-select{
+  display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+}
+.page-size-select select{height:28px;padding:0 6px;}
+
+/* ============================================================
+   EMPTY / LOADING STATES
+   ============================================================ */
+.state-block{
+  padding:56px 24px;
+  text-align:center;
+}
+.state-block .state-icon{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--blue-soft);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px auto;font-size:22px;
+}
+.state-block h3{margin:0 0 6px 0;font-size:14px;color:var(--text);}
+.state-block p{margin:0;font-size:12px;color:var(--muted);max-width:360px;margin-left:auto;margin-right:auto;}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+.modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(29,45,62,.42);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:16px;
+}
+.modal-backdrop.open{display:flex;}
+.modal{
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  width:420px;
+  max-width:100%;
+  max-height:88vh;
+  display:flex;
+  flex-direction:column;
+  animation:modalIn .16s ease;
+}
+.modal.modal-wide{width:480px;}
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(8px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+}
+.modal-header h3{margin:0;font-size:14px;font-weight:700;color:var(--text);}
+.modal-close{
+  border:none;background:transparent;color:var(--muted);
+  width:26px;height:26px;border-radius:4px;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:var(--surface-2);color:var(--text);}
+.modal-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 18px;border-top:1px solid var(--border);
+}
+.modal-info-strip{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:10px 12px;
+  font-size:12px;
+  color:var(--sub);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.modal-info-strip .row{display:flex;justify-content:space-between;gap:10px;}
+.modal-info-strip .row span:first-child{color:var(--muted);}
+.modal-info-strip .row span:last-child{font-weight:600;color:var(--text);}
+.field-error{font-size:11px;color:var(--error);display:none;}
+.field.has-error .input{border-color:var(--error);}
+.field.has-error .field-error{display:block;}
+
+/* success/info modal */
+.status-modal .modal-body{text-align:center;padding:26px 22px 8px 22px;}
+.status-modal .status-icon{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px auto;font-size:24px;color:#fff;
+}
+.status-modal .status-icon.success{background:var(--green);}
+.status-modal .status-icon.info{background:var(--blue);}
+.status-modal h3{margin:0 0 8px 0;font-size:14px;color:var(--text);}
+.status-modal p{margin:0 0 6px 0;font-size:12px;color:var(--sub);}
+.status-modal .modal-footer{justify-content:center;}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-container{
+  position:fixed;
+  bottom:20px;right:20px;
+  display:flex;flex-direction:column;gap:8px;
+  z-index:300;
+}
+.toast{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--green);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  padding:11px 14px;
+  min-width:260px;
+  max-width:340px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  animation:toastIn .18s ease;
+}
+.toast.error{border-left-color:var(--error);}
+.toast .toast-icon{font-size:15px;color:var(--green);flex:0 0 auto;margin-top:1px;}
+.toast.error .toast-icon{color:var(--error);}
+.toast .toast-text{font-size:12px;color:var(--text);line-height:1.4;}
+.toast .toast-text b{display:block;font-size:12.5px;margin-bottom:2px;}
+@keyframes toastIn{
+  from{opacity:0;transform:translateX(16px);}
+  to{opacity:1;transform:translateX(0);}
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.hidden{display:none !important;}
+.badge{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:20px;
+  font-size:11px;font-weight:700;
+  background:var(--blue-soft);color:var(--blue);
+}
+.spin{animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media (max-width:900px){
+  .form-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+  .toolbar{flex-direction:column;align-items:stretch;}
+  .deal-count{margin-left:0;}
+  .search-box{max-width:none;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="app-header">
+    <div class="fs-logo">
+      <span class="bar bar1"></span>
+      <span class="bar bar2"></span>
+      <span class="bar bar3"></span>
+      <span class="bar bar4"></span>
+    </div>
+    <div class="app-title">FX Deal Confirmation - FX&amp;Options
+      <small>Review, match and release FX &amp; Options deal confirmations</small>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== BASIC SELECTION ===================== -->
+    <section class="card" id="selectionCard">
+      <div class="card-header" id="selectionCardHeader">
+        <h2>Basic Selection</h2>
+        <span class="collapse-icon">&#9660;</span>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>Company Code <span class="req">*</span></label>
+            <div class="field-row">
+              <div class="combo" id="companyCodeCombo">
+                <input class="input" id="companyCodeInput" placeholder="Select ..." autocomplete="off">
+                <span class="combo-caret">&#9662;</span>
+                <div class="combo-panel" id="companyCodePanel"></div>
+              </div>
+              <span class="to-label">to</span>
+              <div class="combo" id="companyCodeToCombo">
+                <input class="input" id="companyCodeToInput" placeholder="Select ..." autocomplete="off">
+                <span class="combo-caret">&#9662;</span>
+                <div class="combo-panel" id="companyCodeToPanel"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Upto Blotter Date <span class="req">*</span></label>
+            <div class="date-field" id="blotterDateField">
+              <input class="input" id="blotterDateInput" placeholder="dd-mm-yyyy" autocomplete="off">
+              <button type="button" class="date-icon-btn" id="blotterDateIcon">&#128197;</button>
+              <div class="calendar-pop" id="blotterCalendar"></div>
+            </div>
+            <span class="field-error" id="blotterDateError">Upto Blotter Date is required.</span>
+          </div>
+
+          <div class="field">
+            <label>Trader Name</label>
+            <div class="combo" id="traderCombo">
+              <input class="input" id="traderInput" placeholder="Select ..." autocomplete="off">
+              <span class="combo-caret">&#9662;</span>
+              <div class="combo-panel" id="traderPanel"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Layout</label>
+            <input class="input" id="layoutInput" placeholder="Select ...">
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:16px;">
+          <div class="field">
+            <label>Display Type</label>
+            <div class="radio-group" id="displayTypeGroup">
+              <label class="radio-opt">
+                <input type="radio" name="displayType" value="FX" checked>
+                <span class="radio-dot"></span> FX
+              </label>
+              <label class="radio-opt">
+                <input type="radio" name="displayType" value="Options">
+                <span class="radio-dot"></span> Options
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;display:flex;gap:10px;">
+          <button class="btn btn-primary" id="viewDealsBtn">View Deals</button>
+          <button class="btn btn-secondary" id="resetSelectionBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== EMPTY STATE (before execute) ===================== -->
+    <section class="card" id="preExecuteState">
+      <div class="state-block">
+        <div class="state-icon">&#128269;</div>
+        <h3>Enter selection criteria to begin</h3>
+        <p>Choose Company Code, Upto Blotter Date and Display Type to load deals.</p>
+      </div>
+    </section>
+
+    <!-- ===================== RESULTS ===================== -->
+    <section class="card hidden" id="resultsCard">
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="icon">&#128269;</span>
+          <input class="input" id="searchInput" placeholder="Search Deal ID, Transaction, Bank, Trader, Status...">
+        </div>
+        <button class="btn btn-secondary" id="filterToggleBtn">&#9776; Filters</button>
+        <div class="deal-count" id="dealCountLabel">0 deals</div>
+      </div>
+
+      <div class="filter-panel" id="filterPanel">
+        <div class="field">
+          <label>Company Code</label>
+          <select class="input" id="filterCoCode"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Transaction Type</label>
+          <select class="input" id="filterTxnType"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Partner / Bank</label>
+          <select class="input" id="filterPartner"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Trader</label>
+          <select class="input" id="filterTrader"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Currency 1</label>
+          <select class="input" id="filterCcy1"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Currency 2</label>
+          <select class="input" id="filterCcy2"><option value="">All</option></select>
+        </div>
+        <div class="field">
+          <label>Transaction Status</label>
+          <select class="input" id="filterStatus"><option value="">All</option></select>
+        </div>
+        <div class="field-actions">
+          <button class="btn btn-secondary btn-sm" id="clearFiltersBtn">Clear Filters</button>
+        </div>
+      </div>
+
+      <div class="toolbar" style="border-bottom:1px solid var(--border);">
+        <div class="toolbar-actions">
+          <button class="btn btn-outline-blue" id="matchReleaseBtn" disabled>&#10003; Match &amp; Release</button>
+          <button class="btn btn-danger" id="correctionBtn" disabled>&#9888; Correction Required</button>
+          <span class="spacer"></span>
+          <button class="btn btn-secondary" id="refreshBtn"><span id="refreshIcon">&#8635;</span> Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="deals-table" id="dealsTable">
+          <thead>
+            <tr id="tableHeadRow"></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <div class="pagination-info" id="paginationInfo">Showing 0-0 of 0 deals</div>
+        <div class="pagination-controls" id="paginationControls"></div>
+        <div class="page-size-select">
+          <span>Rows per page</span>
+          <select id="pageSizeSelect">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MATCH & RELEASE MODAL ===================== -->
+<div class="modal-backdrop" id="matchReleaseBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Match &amp; Release</h3>
+      <button class="modal-close" data-close="matchReleaseBackdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-strip">
+        <div class="row"><span>Deal ID</span><span id="mrDealId">-</span></div>
+        <div class="row"><span>Partner</span><span id="mrPartner">-</span></div>
+      </div>
+      <div class="field">
+        <label>Cover No</label>
+        <input class="input" id="mrCoverNo" readonly>
+      </div>
+      <div class="field">
+        <label>External Ref</label>
+        <input class="input" id="mrExternalRef" placeholder="Enter external reference">
+      </div>
+      <div class="field">
+        <label>Internal Ref</label>
+        <input class="input" id="mrInternalRef" placeholder="Enter internal reference">
+      </div>
+      <div class="field">
+        <label>MO Remarks</label>
+        <textarea class="input" id="mrRemarks" placeholder="Enter remarks"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-close="matchReleaseBackdrop">Cancel</button>
+      <button class="btn btn-primary" id="mrConfirmBtn">Match &amp; Release</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CORRECTION REQUIRED MODAL ===================== -->
+<div class="modal-backdrop" id="correctionBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Correction Required</h3>
+      <button class="modal-close" data-close="correctionBackdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-strip">
+        <div class="row"><span>Deal ID</span><span id="crDealId">-</span></div>
+        <div class="row"><span>Partner</span><span id="crPartner">-</span></div>
+      </div>
+      <div class="field">
+        <label>Cover No</label>
+        <input class="input" id="crCoverNo" readonly>
+      </div>
+      <div class="field has-error" id="crRemarksField">
+        <label>MO Remarks <span class="req">*</span></label>
+        <textarea class="input" id="crRemarks" placeholder="Enter reason for correction"></textarea>
+        <span class="field-error">MO Remarks is required.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-close="correctionBackdrop">Cancel</button>
+      <button class="btn btn-solid-danger" id="crConfirmBtn">Correction Required</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== STATUS / SUCCESS MODAL ===================== -->
+<div class="modal-backdrop" id="statusBackdrop">
+  <div class="modal status-modal">
+    <div class="modal-header">
+      <h3 id="statusModalTitle">&nbsp;</h3>
+      <button class="modal-close" data-close="statusBackdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="status-icon success" id="statusIcon">&#10003;</div>
+      <h3 id="statusHeading">Success</h3>
+      <p id="statusMessage"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" data-close="statusBackdrop">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DUMMY DATA
+   ============================================================ */
+var COMPANY_CODES = ["SG03","AE13","AE11"];
+
+var COMPANY_INFO = {
+  SG03:{ companyName:"SG03 - Olam Global Agri Pte. Ltd.", group:"G03 - TSF - SEA", profitCenter:"SG032003 - TSF-FX", businessArea:"0254 - OLAM (THAILAND) LIMITED" },
+  AE13:{ companyName:"AE13 - Olam Agri Gulf FZE",         group:"G05 - TSF - MEA", profitCenter:"AE132001 - TSF-FX", businessArea:"0512 - OLAM AGRI UAE LIMITED" },
+  AE11:{ companyName:"AE11 - Olam Agri India Pvt Ltd",    group:"G02 - TSF - India", profitCenter:"AE112004 - TSF-FX", businessArea:"0330 - OLAM AGRI INDIA LIMITED" }
+};
+
+var PARTNERS = [
+  {code:"0660000645", name:"DBS BANK LTD"},
+  {code:"0660000683", name:"J.P. Morgan Chase Bank"},
+  {code:"0660000680", name:"STANDARD CHARTERED BANK SINGAPORE"},
+  {code:"0660000806", name:"CITIBANK"},
+  {code:"0660012172", name:"BARCLAYS BANK PLC"},
+  {code:"0660012173", name:"JPMORGAN CHASE BANK NA SINGAPORE"}
+];
+
+var TXN_TYPES = [
+  {code:"619", desc:"Forward-TSF"},
+  {code:"609", desc:"Settlement Spot - TSF"},
+  {code:"604", desc:"Spot- Exercise Option TSF"},
+  {code:"631", desc:"NDF-TSF"},
+  {code:"605", desc:"Spot- TSF"}
+];
+
+var TRADERS = [
+  {code:"C27", name:"Akshay Mohnot", shortName:"Akshay M"},
+  {code:"C33", name:"Pooja Pednekar", shortName:"Pooja P"},
+  {code:"C28", name:"Nidhi Singh", shortName:"Nidhi S"},
+  {code:"V12", name:"CHARUTHA V", shortName:"CHARUTHA V"}
+];
+
+var CCY_PAIRS = [
+  ["USD","THB"], ["USD","INR"], ["USD","EUR"], ["SGD","USD"], ["USD","AED"]
+];
+
+var STATUSES = ["FO->MO: Unmatched", "MO->FO: Correction Required", "Matched & Released"];
+
+var FIXED_DEAL_IDS = [
+  "1100000999","1100000959","1100000941","1100000916","1100000843",
+  "1100000564","1100000562","1100000554","1100000916","1100000912",
+  "1100000832","1100000830","1100000829","1100000560","1100000558",
+  "1100000552","1100000548"
+];
+
+var SAMPLE_REMARKS = ["Incorrect fixing date","Wrong value date","Rate mismatch with bank confirmation","Please verify counterparty account","Amount does not match SWIFT confirmation"];
+
+function pad(n){ return n < 10 ? "0"+n : ""+n; }
+function fmtDate(d){ return pad(d.getDate())+"-"+pad(d.getMonth()+1)+"-"+d.getFullYear(); }
+function parseDDMMYYYY(s){
+  if(!s) return null;
+  var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s.trim());
+  if(!m) return null;
+  var d = new Date(parseInt(m[3],10), parseInt(m[2],10)-1, parseInt(m[1],10));
+  if(isNaN(d.getTime())) return null;
+  return d;
+}
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function randomFrom(arr){ return arr[randInt(0,arr.length-1)]; }
+function randomDate(startYear,endYear){
+  var y = randInt(startYear,endYear);
+  var mo = randInt(0,11);
+  var da = randInt(1,28);
+  return new Date(y,mo,da);
+}
+function addDays(d,days){ var nd = new Date(d.getTime()); nd.setDate(nd.getDate()+days); return nd; }
+function fmtAmount(n){
+  var neg = n < 0;
+  var abs = Math.abs(n);
+  var parts = abs.toFixed(2).split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  var out = parts.join(".");
+  return neg ? out + "-" : out;
+}
+
+var dealSeq = 1;
+function nextTransactionRef(){
+  var ref = "6205000" + String(1000000 + dealSeq).slice(1);
+  dealSeq++;
+  return ref;
+}
+
+function buildDeal(dealType, idOverride){
+  var coCode = randomFrom(COMPANY_CODES);
+  var info = COMPANY_INFO[coCode];
+  var partner = randomFrom(PARTNERS);
+  var txnType = dealType === "Options" ? {code:"604", desc:"Spot- Exercise Option TSF"} : randomFrom(TXN_TYPES.filter(function(t){return t.code !== "604";}));
+  var pair = randomFrom(CCY_PAIRS);
+  var bs1 = randomFrom(["Buy","Sell"]);
+  var bs2 = bs1 === "Buy" ? "Sell" : "Buy";
+  var amt1 = randInt(1000, 50000000) + Math.random();
+  var rate = pair[1] === "THB" ? (30 + Math.random()*6) : (pair[1] === "INR" ? (80 + Math.random()*15) : (0.85 + Math.random()*0.3));
+  var amt2 = amt1 * rate;
+  var tradeDate = randomDate(2024,2026);
+  var fixingDate = addDays(tradeDate, randInt(30,400));
+  var valueDate = addDays(fixingDate, randInt(0,2));
+  var trader = randomFrom(TRADERS);
+  // Newly generated deals always start in the open MO queue (Unmatched or
+  // Correction Required). "Matched & Released" is only reached through the
+  // Match & Release action, at which point the deal leaves this queue.
+  var status = Math.random() < 0.8 ? STATUSES[0] : STATUSES[1];
+  var moRemark = "";
+  var foRemark = "";
+  if(status === STATUSES[1]) moRemark = randomFrom(SAMPLE_REMARKS);
+
+  return {
+    id: idOverride || String(1100000000 + randInt(100,999999)),
+    dealType: dealType,
+    coCode: coCode,
+    transaction: nextTransactionRef(),
+    partnerCode: partner.code,
+    partnerName: partner.code + " - " + partner.name,
+    txnTypeCode: txnType.code,
+    txnTypeDesc: txnType.code + " - " + txnType.desc,
+    tradeDate: tradeDate,
+    buySell1: bs1,
+    currency1: pair[0],
+    amount1: bs1 === "Sell" ? -amt1 : amt1,
+    buySell2: bs2,
+    currency2: pair[1],
+    amount2: bs2 === "Sell" ? -amt2 : amt2,
+    fixingDate: fixingDate,
+    valueDate: valueDate,
+    allInRate: rate,
+    status: status,
+    traderCode: trader.code,
+    traderName: trader.code + " - " + trader.name,
+    traderShort: trader.shortName,
+    groupDesc: info.group,
+    companyName: info.companyName,
+    profitCenterDesc: info.profitCenter,
+    businessAreaDesc: info.businessArea,
+    accounting: "1000 - Trade",
+    assignment: Math.random() < 0.3 ? "FXALL" : "",
+    fixRefId: "",
+    foRemark: foRemark,
+    moRemark: moRemark
+  };
+}
+
+function generateDeals(){
+  var deals = [];
+  FIXED_DEAL_IDS.forEach(function(id, idx){
+    deals.push(buildDeal(idx % 5 === 0 ? "Options" : "FX", id));
+  });
+  for(var i=0;i<38;i++){
+    deals.push(buildDeal(Math.random() < 0.22 ? "Options" : "FX"));
+  }
+  return deals;
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var appData = {
+  deals: [],
+  dropdowns:{
+    companyCodes: COMPANY_CODES,
+    traders: TRADERS,
+    txnTypes: TXN_TYPES,
+    partners: PARTNERS
+  }
+};
+
+var state = {
+  currentView: "selection",
+  selectedIds: new Set(),
+  page: 1,
+  pageSize: 20,
+  search: "",
+  filters: { coCode:"", txnType:"", partner:"", trader:"", ccy1:"", ccy2:"", status:"" },
+  sort: { key: null, dir: "asc" },
+  selection: { companyCode:"", companyCodeTo:"", blotterDate:"", trader:"", layout:"", displayType:"FX" },
+  calendarMonth: new Date().getMonth(),
+  calendarYear: new Date().getFullYear()
+};
+
+/* ============================================================
+   DATA / SERVICE FUNCTIONS  (mock -> future API layer)
+   ============================================================ */
+function loadDeals(){
+  return appData.deals;
+}
+function saveDealUpdate(dealId, updates){
+  var deal = appData.deals.find(function(d){ return d.id === dealId; });
+  if(deal) Object.assign(deal, updates);
+  return deal;
+}
+function matchReleaseDeal(dealId, externalRef, internalRef, remarks){
+  return saveDealUpdate(dealId, { status:"Matched & Released", moRemark: remarks || "" });
+}
+function markCorrectionRequired(dealId, remarks){
+  return saveDealUpdate(dealId, { status:"MO->FO: Correction Required", moRemark: remarks });
+}
+function refreshDeals(){
+  // In a real integration this would re-fetch from the API.
+  // For the standalone demo we simply re-render current in-memory data.
+  return appData.deals;
+}
+
+/* ============================================================
+   COLUMN DEFINITIONS
+   ============================================================ */
+var COLUMNS = [
+  { key:"select", label:"", noSort:true, width:"38px" },
+  { key:"id", label:"Deal ID", sortable:true },
+  { key:"coCode", label:"CoCode", sortable:true },
+  { key:"transaction", label:"Transaction", sortable:true },
+  { key:"partnerName", label:"Partner Name", sortable:true },
+  { key:"txnTypeDesc", label:"Transaction Type Description" },
+  { key:"tradeDate", label:"Trade Date", sortable:true, type:"date" },
+  { key:"buySell1", label:"Buy/Sell 1" },
+  { key:"currency1", label:"Currency 1", sortable:true },
+  { key:"amount1", label:"Amount 1", sortable:true, type:"amount" },
+  { key:"buySell2", label:"Buy/Sell 2" },
+  { key:"currency2", label:"Currency 2" },
+  { key:"amount2", label:"Amount 2", type:"amount" },
+  { key:"fixingDate", label:"Fixing Date", sortable:true, type:"date" },
+  { key:"valueDate", label:"Value Date", sortable:true, type:"date" },
+  { key:"allInRate", label:"All in Rate", type:"rate" },
+  { key:"status", label:"Txn Status Desc", sortable:true },
+  { key:"traderName", label:"Trader Name", sortable:true },
+  { key:"groupDesc", label:"Group Description" },
+  { key:"companyName", label:"Company Name" },
+  { key:"profitCenterDesc", label:"Profit Center Description" },
+  { key:"businessAreaDesc", label:"Business Area Description" },
+  { key:"accounting", label:"Accounting" },
+  { key:"assignment", label:"Assignment" },
+  { key:"traderShort", label:"Trader" },
+  { key:"fixRefId", label:"Fix.Ref.ID" },
+  { key:"foRemark", label:"FO Remark" },
+  { key:"moRemark", label:"MO Remark" }
+];
+
+/* ============================================================
+   DOM REFERENCES
+   ============================================================ */
+var $ = function(id){ return document.getElementById(id); };
+
+/* ============================================================
+   COMBOBOX COMPONENT
+   ============================================================ */
+function setupCombo(comboId, inputId, panelId, options, onSelect, renderOption){
+  var combo = $(comboId), input = $(inputId), panel = $(panelId);
+
+  function renderPanel(filterText){
+    var ft = (filterText || "").toLowerCase();
+    var filtered = options.filter(function(o){
+      return o.searchText.toLowerCase().indexOf(ft) !== -1;
+    });
+    panel.innerHTML = "";
+    if(filtered.length === 0){
+      var empty = document.createElement("div");
+      empty.className = "combo-empty";
+      empty.textContent = "No matches found";
+      panel.appendChild(empty);
+      return;
+    }
+    filtered.forEach(function(o){
+      var el = document.createElement("div");
+      el.className = "combo-option";
+      el.innerHTML = renderOption(o);
+      el.addEventListener("click", function(){
+        input.value = o.display;
+        combo.classList.remove("open");
+        onSelect(o);
+      });
+      panel.appendChild(el);
+    });
+  }
+
+  input.addEventListener("focus", function(){
+    combo.classList.add("open");
+    renderPanel(input.value);
+  });
+  input.addEventListener("input", function(){
+    combo.classList.add("open");
+    renderPanel(input.value);
+    onSelect(null, input.value);
+  });
+  document.addEventListener("click", function(e){
+    if(!combo.contains(e.target)) combo.classList.remove("open");
+  });
+}
+
+var companyOptions = COMPANY_CODES.map(function(c){
+  return { code:c, display:c, searchText:c + " " + COMPANY_INFO[c].companyName, sub: COMPANY_INFO[c].companyName };
+});
+setupCombo("companyCodeCombo","companyCodeInput","companyCodePanel", companyOptions, function(o){
+  state.selection.companyCode = o ? o.code : "";
+}, function(o){ return "<div>"+o.code+"</div><div class='opt-sub'>"+o.sub+"</div>"; });
+
+setupCombo("companyCodeToCombo","companyCodeToInput","companyCodeToPanel", companyOptions, function(o){
+  state.selection.companyCodeTo = o ? o.code : "";
+}, function(o){ return "<div>"+o.code+"</div><div class='opt-sub'>"+o.sub+"</div>"; });
+
+var traderOptions = TRADERS.map(function(t){
+  return { code:t.code, display: t.code + " - " + t.name, searchText: t.code + " " + t.name, sub: "" };
+});
+setupCombo("traderCombo","traderInput","traderPanel", traderOptions, function(o){
+  state.selection.trader = o ? o.code : "";
+}, function(o){ return "<div>"+o.display+"</div>"; });
+
+/* ============================================================
+   CUSTOM CALENDAR
+   ============================================================ */
+var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DOW = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+
+function renderCalendar(){
+  var cal = $("blotterCalendar");
+  var y = state.calendarYear, m = state.calendarMonth;
+  var today = new Date();
+  var selected = parseDDMMYYYY($("blotterDateInput").value);
+
+  var html = '<div class="cal-head">' +
+    '<button type="button" id="calPrev">&#8249;</button>' +
+    '<div class="cal-title">'+MONTH_NAMES[m]+' '+y+'</div>' +
+    '<button type="button" id="calNext">&#8250;</button>' +
+    '</div><div class="cal-grid">';
+
+  DOW.forEach(function(d){ html += '<div class="cal-dow">'+d+'</div>'; });
+
+  var firstDay = new Date(y,m,1).getDay();
+  var daysInMonth = new Date(y,m+1,0).getDate();
+  var prevDays = new Date(y,m,0).getDate();
+
+  for(var i=0;i<firstDay;i++){
+    html += '<div class="cal-day muted">'+(prevDays - firstDay + i + 1)+'</div>';
+  }
+  for(var d2=1; d2<=daysInMonth; d2++){
+    var cls = "cal-day";
+    var thisDate = new Date(y,m,d2);
+    if(thisDate.toDateString() === today.toDateString()) cls += " today";
+    if(selected && thisDate.toDateString() === selected.toDateString()) cls += " selected";
+    html += '<div class="'+cls+'" data-day="'+d2+'">'+d2+'</div>';
+  }
+  var totalCells = firstDay + daysInMonth;
+  var trailing = (7 - (totalCells % 7)) % 7;
+  for(var t=1;t<=trailing;t++){
+    html += '<div class="cal-day muted">'+t+'</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+
+  $("calPrev").addEventListener("click", function(e){
+    e.stopPropagation();
+    state.calendarMonth--;
+    if(state.calendarMonth < 0){ state.calendarMonth = 11; state.calendarYear--; }
+    renderCalendar();
+  });
+  $("calNext").addEventListener("click", function(e){
+    e.stopPropagation();
+    state.calendarMonth++;
+    if(state.calendarMonth > 11){ state.calendarMonth = 0; state.calendarYear++; }
+    renderCalendar();
+  });
+  cal.querySelectorAll(".cal-day:not(.muted)").forEach(function(el){
+    el.addEventListener("click", function(e){
+      e.stopPropagation();
+      var day = parseInt(el.getAttribute("data-day"),10);
+      var picked = new Date(state.calendarYear, state.calendarMonth, day);
+      $("blotterDateInput").value = fmtDate(picked);
+      state.selection.blotterDate = fmtDate(picked);
+      $("blotterCalendar").classList.remove("open");
+      clearFieldError("blotterDateField","blotterDateError");
+    });
+  });
+}
+
+function toggleCalendar(){
+  var cal = $("blotterCalendar");
+  cal.classList.toggle("open");
+  if(cal.classList.contains("open")){
+    var existing = parseDDMMYYYY($("blotterDateInput").value);
+    if(existing){ state.calendarMonth = existing.getMonth(); state.calendarYear = existing.getFullYear(); }
+    renderCalendar();
+  }
+}
+$("blotterDateIcon").addEventListener("click", function(e){ e.stopPropagation(); toggleCalendar(); });
+$("blotterDateInput").addEventListener("focus", function(){
+  if(!$("blotterCalendar").classList.contains("open")) toggleCalendar();
+});
+$("blotterDateInput").addEventListener("input", function(){
+  state.selection.blotterDate = $("blotterDateInput").value;
+  clearFieldError("blotterDateField","blotterDateError");
+});
+document.addEventListener("click", function(e){
+  if(!$("blotterDateField").contains(e.target)) $("blotterCalendar").classList.remove("open");
+});
+
+function clearFieldError(fieldId, errId){
+  $(fieldId).classList.remove("has-error");
+}
+
+/* ============================================================
+   SELECTION CARD COLLAPSE
+   ============================================================ */
+$("selectionCardHeader").addEventListener("click", function(){
+  $("selectionCard").classList.toggle("collapsed");
+});
+
+/* ============================================================
+   VALIDATION + VIEW DEALS
+   ============================================================ */
+$("viewDealsBtn").addEventListener("click", function(){
+  var valid = true;
+  if(!state.selection.blotterDate || !parseDDMMYYYY(state.selection.blotterDate)){
+    $("blotterDateField").classList.add("has-error");
+    valid = false;
+  } else {
+    $("blotterDateField").classList.remove("has-error");
+  }
+  if(!valid) return;
+
+  var dt = document.querySelector('input[name="displayType"]:checked');
+  state.selection.displayType = dt ? dt.value : "FX";
+  state.selection.layout = $("layoutInput").value;
+
+  state.page = 1;
+  state.selectedIds.clear();
+  state.currentView = "results";
+  $("preExecuteState").classList.add("hidden");
+  $("resultsCard").classList.remove("hidden");
+  $("selectionCard").classList.add("collapsed");
+  populateFilterOptions();
+  renderTable();
+});
+
+$("resetSelectionBtn").addEventListener("click", function(){
+  state.selection = { companyCode:"", companyCodeTo:"", blotterDate:"", trader:"", layout:"", displayType:"FX" };
+  $("companyCodeInput").value = "";
+  $("companyCodeToInput").value = "";
+  $("blotterDateInput").value = "";
+  $("traderInput").value = "";
+  $("layoutInput").value = "";
+  document.querySelector('input[name="displayType"][value="FX"]').checked = true;
+  $("blotterDateField").classList.remove("has-error");
+  $("resultsCard").classList.add("hidden");
+  $("preExecuteState").classList.remove("hidden");
+  state.currentView = "selection";
+});
+
+/* ============================================================
+   FILTER PANEL
+   ============================================================ */
+$("filterToggleBtn").addEventListener("click", function(){
+  $("filterPanel").classList.toggle("open");
+});
+
+function populateFilterOptions(){
+  fillSelect("filterCoCode", COMPANY_CODES.map(function(c){ return {value:c,label:c}; }));
+  fillSelect("filterTxnType", TXN_TYPES.map(function(t){ return {value:t.code, label:t.code+" - "+t.desc}; }));
+  fillSelect("filterPartner", PARTNERS.map(function(p){ return {value:p.code, label:p.code+" - "+p.name}; }));
+  fillSelect("filterTrader", TRADERS.map(function(t){ return {value:t.code, label:t.code+" - "+t.name}; }));
+  var ccySet = {};
+  appData.deals.forEach(function(d){ ccySet[d.currency1]=true; ccySet[d.currency2]=true; });
+  var ccyList = Object.keys(ccySet).sort().map(function(c){ return {value:c,label:c}; });
+  fillSelect("filterCcy1", ccyList);
+  fillSelect("filterCcy2", ccyList);
+  fillSelect("filterStatus", STATUSES.filter(function(s){ return s !== "Matched & Released"; }).map(function(s){ return {value:s,label:s}; }));
+}
+function fillSelect(id, items){
+  var sel = $(id);
+  var current = sel.value;
+  sel.innerHTML = '<option value="">All</option>';
+  items.forEach(function(it){
+    var opt = document.createElement("option");
+    opt.value = it.value; opt.textContent = it.label;
+    sel.appendChild(opt);
+  });
+  sel.value = current || "";
+}
+
+["filterCoCode","filterTxnType","filterPartner","filterTrader","filterCcy1","filterCcy2","filterStatus"].forEach(function(id){
+  $(id).addEventListener("change", function(){
+    state.filters.coCode = $("filterCoCode").value;
+    state.filters.txnType = $("filterTxnType").value;
+    state.filters.partner = $("filterPartner").value;
+    state.filters.trader = $("filterTrader").value;
+    state.filters.ccy1 = $("filterCcy1").value;
+    state.filters.ccy2 = $("filterCcy2").value;
+    state.filters.status = $("filterStatus").value;
+    state.page = 1;
+    renderTable();
+  });
+});
+$("clearFiltersBtn").addEventListener("click", function(){
+  state.filters = { coCode:"", txnType:"", partner:"", trader:"", ccy1:"", ccy2:"", status:"" };
+  ["filterCoCode","filterTxnType","filterPartner","filterTrader","filterCcy1","filterCcy2","filterStatus"].forEach(function(id){ $(id).value = ""; });
+  state.page = 1;
+  renderTable();
+});
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+$("searchInput").addEventListener("input", function(){
+  state.search = $("searchInput").value;
+  state.page = 1;
+  renderTable();
+});
+
+/* ============================================================
+   FILTER + SORT + PAGINATE
+   ============================================================ */
+function getFilteredDeals(){
+  var displayType = state.selection.displayType;
+  // Once a deal has been Matched & Released it is complete and leaves the
+  // MO action queue, so it no longer appears (and can no longer receive a
+  // further Match & Release / Correction Required action).
+  var list = appData.deals.filter(function(d){ return d.dealType === displayType && d.status !== "Matched & Released"; });
+
+  if(state.selection.companyCode){
+    if(state.selection.companyCodeTo){
+      var codes = COMPANY_CODES.filter(function(c){
+        return c >= state.selection.companyCode && c <= state.selection.companyCodeTo;
+      });
+      list = list.filter(function(d){ return codes.indexOf(d.coCode) !== -1; });
+    } else {
+      list = list.filter(function(d){ return d.coCode === state.selection.companyCode; });
+    }
+  }
+  if(state.selection.trader){
+    list = list.filter(function(d){ return d.traderCode === state.selection.trader; });
+  }
+
+  var f = state.filters;
+  if(f.coCode) list = list.filter(function(d){ return d.coCode === f.coCode; });
+  if(f.txnType) list = list.filter(function(d){ return d.txnTypeCode === f.txnType; });
+  if(f.partner) list = list.filter(function(d){ return d.partnerCode === f.partner; });
+  if(f.trader) list = list.filter(function(d){ return d.traderCode === f.trader; });
+  if(f.ccy1) list = list.filter(function(d){ return d.currency1 === f.ccy1; });
+  if(f.ccy2) list = list.filter(function(d){ return d.currency2 === f.ccy2; });
+  if(f.status) list = list.filter(function(d){ return d.status === f.status; });
+
+  if(state.search){
+    var q = state.search.toLowerCase();
+    list = list.filter(function(d){
+      return (d.id+" "+d.transaction+" "+d.partnerName+" "+d.traderName+" "+d.status+" "+d.coCode+" "+d.txnTypeDesc)
+        .toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  if(state.sort.key){
+    var key = state.sort.key, dir = state.sort.dir === "asc" ? 1 : -1;
+    var col = COLUMNS.find(function(c){ return c.key === key; });
+    list = list.slice().sort(function(a,b){
+      var va = a[key], vb = b[key];
+      if(col && col.type === "date"){ va = va.getTime(); vb = vb.getTime(); }
+      if(typeof va === "string") va = va.toLowerCase();
+      if(typeof vb === "string") vb = vb.toLowerCase();
+      if(va < vb) return -1*dir;
+      if(va > vb) return 1*dir;
+      return 0;
+    });
+  }
+  return list;
+}
+
+/* ============================================================
+   RENDER TABLE HEAD
+   ============================================================ */
+function renderTableHead(){
+  var row = $("tableHeadRow");
+  row.innerHTML = "";
+  COLUMNS.forEach(function(col){
+    var th = document.createElement("th");
+    if(col.key === "select"){
+      th.className = "col-select no-sort";
+      th.innerHTML = "";
+      row.appendChild(th);
+      return;
+    }
+    var isNum = col.type === "amount" || col.type === "rate";
+    th.className = (isNum ? "num " : "") + (col.sortable ? "" : "no-sort") + (state.sort.key === col.key ? " sorted" : "");
+    var arrow = "";
+    if(col.sortable){
+      arrow = state.sort.key === col.key ? (state.sort.dir === "asc" ? "&#9650;" : "&#9660;") : "&#8693;";
+    }
+    th.innerHTML = '<div class="th-inner"><span>'+col.label+'</span>' + (col.sortable ? '<span class="sort-arrow">'+arrow+'</span>' : '') + '</div>';
+    if(col.sortable){
+      th.addEventListener("click", function(){
+        if(state.sort.key === col.key){
+          state.sort.dir = state.sort.dir === "asc" ? "desc" : "asc";
+        } else {
+          state.sort.key = col.key;
+          state.sort.dir = "asc";
+        }
+        renderTable();
+      });
+    }
+    row.appendChild(th);
+  });
+}
+
+/* ============================================================
+   RENDER TABLE BODY
+   ============================================================ */
+function statusClass(status){
+  if(status === "MO->FO: Correction Required") return "status-correction";
+  if(status === "Matched & Released") return "status-matched";
+  return "status-unmatched";
+}
+
+// Rows currently rendered on the page, in display order. Used to resolve
+// row indices for the checkbox-column drag-range selection.
+var currentPageItems = [];
+
+function renderTable(){
+  renderTableHead();
+  var filtered = getFilteredDeals();
+  var total = filtered.length;
+  var totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+  if(state.page > totalPages) state.page = totalPages;
+  var startIdx = (state.page - 1) * state.pageSize;
+  var pageItems = filtered.slice(startIdx, startIdx + state.pageSize);
+  currentPageItems = pageItems;
+
+  $("dealCountLabel").textContent = total + (total === 1 ? " deal" : " deals");
+
+  var tbody = $("tableBody");
+  tbody.innerHTML = "";
+
+  if(pageItems.length === 0){
+    var tr = document.createElement("tr");
+    tr.className = "empty-row";
+    var td = document.createElement("td");
+    td.colSpan = COLUMNS.length;
+    td.innerHTML = '<div class="state-icon" style="margin:0 auto 10px auto;">&#128203;</div><div style="font-weight:600;color:var(--text);margin-bottom:4px;">No deals found</div><div style="color:var(--muted);font-size:12px;">No FX or Option deals match the selected criteria.</div>';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    pageItems.forEach(function(deal, rowIndex){
+      var tr = document.createElement("tr");
+      tr.dataset.id = deal.id;
+      var isSelected = state.selectedIds.has(deal.id);
+      if(isSelected) tr.classList.add("selected");
+
+      COLUMNS.forEach(function(col){
+        var td = document.createElement("td");
+        if(col.key === "select"){
+          td.className = "col-select";
+          var cb = document.createElement("span");
+          cb.className = "checkbox" + (isSelected ? " checked" : "");
+          td.appendChild(cb);
+
+          // Range-drag selection: mousedown starts a drag anchored at this
+          // row; dragging over other checkbox cells extends/collapses a
+          // contiguous selection range, matching the drag-select behavior
+          // on the other screens. A plain click (no movement) simply
+          // toggles this single row.
+          td.addEventListener("mousedown", function(e){
+            e.preventDefault();
+            startDrag(rowIndex, deal.id);
+          });
+          td.addEventListener("mouseenter", function(){
+            if(isDragging) dragOver(rowIndex);
+          });
+
+          tr.appendChild(td);
+          return;
+        }
+        var isNum = col.type === "amount" || col.type === "rate";
+        td.className = isNum ? "num" : "";
+        var val;
+        if(col.type === "date"){
+          val = fmtDate(deal[col.key]);
+        } else if(col.type === "amount"){
+          val = fmtAmount(deal[col.key]);
+        } else if(col.type === "rate"){
+          val = deal[col.key].toFixed(6);
+        } else if(col.key === "status"){
+          td.innerHTML = '<span class="status-text '+statusClass(deal.status)+'">'+deal.status+'</span>';
+          tr.appendChild(td);
+          return;
+        } else {
+          val = deal[col.key] || "";
+        }
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+
+      // Clicking anywhere on the row outside the checkbox column keeps the
+      // original single-row "normal" behavior: it replaces the selection
+      // with just this row (or clears it if this was the only row selected).
+      tr.addEventListener("click", function(e){
+        if(e.target.closest(".col-select")) return;
+        if(state.selectedIds.size === 1 && state.selectedIds.has(deal.id)){
+          state.selectedIds.clear();
+        } else {
+          state.selectedIds = new Set([deal.id]);
+        }
+        renderTable();
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  renderPagination(total, totalPages, startIdx, pageItems.length);
+  updateActionButtons();
+}
+
+/* ============================================================
+   CHECKBOX-COLUMN DRAG RANGE SELECTION
+   ============================================================ */
+var isDragging = false;
+var dragAnchorIndex = null;
+var dragMode = "select";
+
+function startDrag(rowIndex, dealId){
+  isDragging = true;
+  dragAnchorIndex = rowIndex;
+  dragMode = state.selectedIds.has(dealId) ? "deselect" : "select";
+  $("dealsTable").classList.add("dragging");
+  applyDragRange(rowIndex, rowIndex);
+}
+function dragOver(rowIndex){
+  applyDragRange(dragAnchorIndex, rowIndex);
+}
+function applyDragRange(fromIndex, toIndex){
+  var lo = Math.min(fromIndex, toIndex);
+  var hi = Math.max(fromIndex, toIndex);
+  for(var i = lo; i <= hi; i++){
+    var deal = currentPageItems[i];
+    if(!deal) continue;
+    if(dragMode === "select") state.selectedIds.add(deal.id);
+    else state.selectedIds.delete(deal.id);
+  }
+  refreshRowVisuals();
+}
+function refreshRowVisuals(){
+  var tbody = $("tableBody");
+  Array.prototype.forEach.call(tbody.querySelectorAll("tr[data-id]"), function(tr){
+    var sel = state.selectedIds.has(tr.dataset.id);
+    tr.classList.toggle("selected", sel);
+    var cb = tr.querySelector(".checkbox");
+    if(cb) cb.classList.toggle("checked", sel);
+  });
+  updateActionButtons();
+}
+document.addEventListener("mouseup", function(){
+  if(isDragging){
+    isDragging = false;
+    dragAnchorIndex = null;
+    $("dealsTable").classList.remove("dragging");
+  }
+});
+
+function renderPagination(total, totalPages, startIdx, shownCount){
+  var info = $("paginationInfo");
+  if(total === 0){
+    info.textContent = "Showing 0-0 of 0 deals";
+  } else {
+    info.textContent = "Showing " + (startIdx+1) + "-" + (startIdx+shownCount) + " of " + total + " deals";
+  }
+
+  var controls = $("paginationControls");
+  controls.innerHTML = "";
+
+  var prevBtn = document.createElement("button");
+  prevBtn.className = "page-btn";
+  prevBtn.textContent = "<";
+  prevBtn.disabled = state.page <= 1;
+  prevBtn.addEventListener("click", function(){ state.page--; renderTable(); });
+  controls.appendChild(prevBtn);
+
+  var maxButtons = 5;
+  var startPage = Math.max(1, state.page - 2);
+  var endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  startPage = Math.max(1, endPage - maxButtons + 1);
+
+  for(var p = startPage; p <= endPage; p++){
+    (function(pn){
+      var btn = document.createElement("button");
+      btn.className = "page-btn" + (pn === state.page ? " active" : "");
+      btn.textContent = pn;
+      btn.addEventListener("click", function(){ state.page = pn; renderTable(); });
+      controls.appendChild(btn);
+    })(p);
+  }
+
+  var nextBtn = document.createElement("button");
+  nextBtn.className = "page-btn";
+  nextBtn.textContent = ">";
+  nextBtn.disabled = state.page >= totalPages;
+  nextBtn.addEventListener("click", function(){ state.page++; renderTable(); });
+  controls.appendChild(nextBtn);
+}
+
+$("pageSizeSelect").addEventListener("change", function(){
+  state.pageSize = parseInt($("pageSizeSelect").value, 10);
+  state.page = 1;
+  renderTable();
+});
+
+/* ============================================================
+   ACTION BUTTONS
+   ============================================================ */
+function updateActionButtons(){
+  var hasSelection = state.selectedIds.size > 0;
+  $("matchReleaseBtn").disabled = !hasSelection;
+  $("correctionBtn").disabled = !hasSelection;
+}
+
+function getSelectedDeals(){
+  return appData.deals.filter(function(d){ return state.selectedIds.has(d.id); });
+}
+
+/* ============================================================
+   MATCH & RELEASE MODAL
+   ============================================================ */
+$("matchReleaseBtn").addEventListener("click", function(){
+  var deals = getSelectedDeals();
+  if(deals.length === 0) return;
+  if(deals.length === 1){
+    $("mrDealId").textContent = deals[0].id;
+    $("mrPartner").textContent = deals[0].partnerName;
+    $("mrCoverNo").value = deals[0].transaction;
+  } else {
+    $("mrDealId").textContent = deals.length + " deals selected";
+    $("mrPartner").textContent = deals.map(function(d){ return d.id; }).join(", ");
+    $("mrCoverNo").value = deals.length + " deals selected";
+  }
+  $("mrExternalRef").value = "";
+  $("mrInternalRef").value = "";
+  $("mrRemarks").value = "";
+  openModal("matchReleaseBackdrop");
+});
+
+$("mrConfirmBtn").addEventListener("click", function(){
+  var deals = getSelectedDeals();
+  if(deals.length === 0) return;
+  var externalRef = $("mrExternalRef").value, internalRef = $("mrInternalRef").value, remarks = $("mrRemarks").value;
+  deals.forEach(function(deal){
+    matchReleaseDeal(deal.id, externalRef, internalRef, remarks);
+  });
+  state.selectedIds.clear();
+  closeModal("matchReleaseBackdrop");
+  renderTable();
+  populateFilterOptions();
+  var msg = deals.length === 1
+    ? "Deal " + deals[0].id + " matched and released successfully."
+    : deals.length + " deals matched and released successfully.";
+  showToast("success", "Matched & Released", msg);
+});
+
+/* ============================================================
+   CORRECTION REQUIRED MODAL
+   ============================================================ */
+$("correctionBtn").addEventListener("click", function(){
+  var deals = getSelectedDeals();
+  if(deals.length === 0) return;
+  if(deals.length === 1){
+    $("crDealId").textContent = deals[0].id;
+    $("crPartner").textContent = deals[0].partnerName;
+    $("crCoverNo").value = deals[0].transaction;
+  } else {
+    $("crDealId").textContent = deals.length + " deals selected";
+    $("crPartner").textContent = deals.map(function(d){ return d.id; }).join(", ");
+    $("crCoverNo").value = deals.length + " deals selected";
+  }
+  $("crRemarks").value = "";
+  $("crRemarksField").classList.remove("has-error");
+  openModal("correctionBackdrop");
+});
+
+$("crConfirmBtn").addEventListener("click", function(){
+  var deals = getSelectedDeals();
+  if(deals.length === 0) return;
+  var remarks = $("crRemarks").value.trim();
+  if(!remarks){
+    $("crRemarksField").classList.add("has-error");
+    return;
+  }
+  deals.forEach(function(deal){
+    markCorrectionRequired(deal.id, remarks);
+  });
+  state.selectedIds.clear();
+  closeModal("correctionBackdrop");
+  renderTable();
+  populateFilterOptions();
+  var crMsg = deals.length === 1
+    ? "Deal " + deals[0].id + " was sent back to FO for correction."
+    : deals.length + " deals were sent back to FO for correction.";
+  showToast("error", "Correction Requested", crMsg);
+});
+$("crRemarks").addEventListener("input", function(){
+  if($("crRemarks").value.trim()) $("crRemarksField").classList.remove("has-error");
+});
+
+/* ============================================================
+   REFRESH
+   ============================================================ */
+$("refreshBtn").addEventListener("click", function(){
+  var icon = $("refreshIcon");
+  icon.classList.add("spin");
+  $("refreshBtn").disabled = true;
+  setTimeout(function(){
+    refreshDeals();
+    populateFilterOptions();
+    renderTable();
+    icon.classList.remove("spin");
+    $("refreshBtn").disabled = false;
+    showStatusModal("success", "Deals Refreshed", "All FX & Options deals have been refreshed successfully.");
+  }, 550);
+});
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal(id){ $(id).classList.add("open"); }
+function closeModal(id){ $(id).classList.remove("open"); }
+
+document.querySelectorAll("[data-close]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    closeModal(btn.getAttribute("data-close"));
+  });
+});
+document.querySelectorAll(".modal-backdrop").forEach(function(bd){
+  bd.addEventListener("click", function(e){
+    if(e.target === bd) closeModal(bd.id);
+  });
+});
+
+function showStatusModal(type, heading, message){
+  var icon = $("statusIcon");
+  icon.className = "status-icon " + (type === "error" ? "info" : "success");
+  icon.innerHTML = type === "error" ? "&#9888;" : "&#10003;";
+  $("statusHeading").textContent = heading;
+  $("statusMessage").textContent = message;
+  $("statusModalTitle").textContent = heading;
+  openModal("statusBackdrop");
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function showToast(type, title, message){
+  var container = $("toastContainer");
+  var toast = document.createElement("div");
+  toast.className = "toast" + (type === "error" ? " error" : "");
+  toast.innerHTML = '<span class="toast-icon">' + (type === "error" ? "&#9888;" : "&#10003;") + '</span>' +
+    '<div class="toast-text"><b>' + title + '</b>' + message + '</div>';
+  container.appendChild(toast);
+  setTimeout(function(){
+    toast.style.transition = "opacity .25s ease";
+    toast.style.opacity = "0";
+    setTimeout(function(){ toast.remove(); }, 260);
+  }, 3800);
+}
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+function init(){
+  appData.deals = generateDeals();
+  populateFilterOptions();
+}
+init();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,620 @@
+/* Original stylesheet of fx-deal-confirmation.html, scoped under .mo-fx-deal-confirmation.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+.mo-fx-deal-confirmation {
+  --bg:#f5f7f9;
+  --surface:#ffffff;
+  --surface-2:#f2f4f5;
+
+  --text:#1d2d3e;
+  --sub:#475e75;
+  --muted:#687b8d;
+
+  --blue:#0a6ed1;
+  --blue-hover:#085caf;
+  --blue-soft:#eaf3fc;
+
+  --border:#d5dadd;
+  --border-strong:#8996a1;
+
+  --green:#107e3e;
+  --green-soft:#e6f4ec;
+  --warning:#e9730c;
+  --warning-soft:#fdf0e4;
+  --error:#bb0000;
+  --error-soft:#fbe9e9;
+
+  --radius-sm:4px;
+  --radius-md:6px;
+  --radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(29,45,62,.08);
+  --shadow-md:0 3px 9px rgba(34,53,72,.10);
+  --shadow-lg:0 8px 28px rgba(29,45,62,.18);
+}
+.mo-fx-deal-confirmation *, .mo-fx-deal-confirmation {box-sizing:border-box;}
+.mo-fx-deal-confirmation {height:100%;}
+.mo-fx-deal-confirmation {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"72","Segoe UI",Arial,sans-serif;
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.mo-fx-deal-confirmation ::selection {background:var(--blue-soft);color:var(--text);}
+.mo-fx-deal-confirmation button, .mo-fx-deal-confirmation input, .mo-fx-deal-confirmation select, .mo-fx-deal-confirmation textarea {
+  font-family:inherit;
+  font-size:13px;
+  color:var(--text);
+}
+.mo-fx-deal-confirmation ::-webkit-scrollbar {height:10px;width:10px;}
+.mo-fx-deal-confirmation ::-webkit-scrollbar-track {background:var(--surface-2);}
+.mo-fx-deal-confirmation ::-webkit-scrollbar-thumb {background:var(--border-strong);border-radius:10px;}
+.mo-fx-deal-confirmation ::-webkit-scrollbar-thumb:hover {background:var(--sub);}
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.mo-fx-deal-confirmation .app {
+  padding-left:.2rem;
+  padding-right:.2rem;
+  padding-bottom:2.5rem;
+  max-width:100%;
+}
+.mo-fx-deal-confirmation .app-header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+.mo-fx-deal-confirmation .fs-logo {
+  width:20px;
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  margin-right:2px;
+}
+.mo-fx-deal-confirmation .fs-logo .bar {
+  height:7px;
+  border-radius:5px;
+}
+.mo-fx-deal-confirmation .fs-logo .bar1 {width:20px;background:#c62128;}
+.mo-fx-deal-confirmation .fs-logo .bar2 {width:15px;background:#f0b31a;}
+.mo-fx-deal-confirmation .fs-logo .bar3 {width:10px;background:#1e8e4f;}
+.mo-fx-deal-confirmation .fs-logo .bar4 {width:7px;height:7px;border-radius:50%;background:#8a8d92;}
+.mo-fx-deal-confirmation .app-title {
+  font-size:19px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:.1px;
+  line-height:1.25;
+}
+.mo-fx-deal-confirmation .app-title small {
+  display:block;
+  font-size:12.5px;
+  font-weight:400;
+  color:var(--muted);
+  letter-spacing:.1px;
+  margin-top:2px;
+}
+.mo-fx-deal-confirmation main {
+  padding:14px 14px 0 14px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.mo-fx-deal-confirmation .card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+}
+.mo-fx-deal-confirmation .card-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  user-select:none;
+}
+.mo-fx-deal-confirmation .card-header h2 {
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+}
+.mo-fx-deal-confirmation .card-header .collapse-icon {
+  color:var(--sub);
+  transition:transform .18s ease;
+  font-size:11px;
+}
+.mo-fx-deal-confirmation .card.collapsed .collapse-icon {transform:rotate(-90deg);}
+.mo-fx-deal-confirmation .card.collapsed .card-body {display:none;}
+.mo-fx-deal-confirmation .card-body {padding:16px;}
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+.mo-fx-deal-confirmation .form-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px 18px;
+}
+.mo-fx-deal-confirmation .field {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+.mo-fx-deal-confirmation .field.span-2 {grid-column:span 2;}
+.mo-fx-deal-confirmation .field label {
+  font-size:12px;
+  font-weight:600;
+  color:var(--sub);
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.mo-fx-deal-confirmation .field label .req {color:var(--error);}
+.mo-fx-deal-confirmation .field-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.mo-fx-deal-confirmation .field-row .to-label {font-size:12px;color:var(--muted);flex:0 0 auto;}
+.mo-fx-deal-confirmation .input, .mo-fx-deal-confirmation select.input {
+  height:32px;
+  padding:0 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--text);
+  width:100%;
+  transition:border-color .12s ease, box-shadow .12s ease;
+}
+.mo-fx-deal-confirmation .input:hover {border-color:var(--border-strong);}
+.mo-fx-deal-confirmation .input:focus {
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px var(--blue-soft);
+}
+.mo-fx-deal-confirmation .input::placeholder {color:var(--muted);}
+.mo-fx-deal-confirmation .input[disabled], .mo-fx-deal-confirmation .input[readonly] {
+  background:var(--surface-2);
+  color:var(--muted);
+  cursor:not-allowed;
+}
+.mo-fx-deal-confirmation textarea.input {
+  height:auto;
+  min-height:64px;
+  padding:8px 10px;
+  resize:vertical;
+}
+/* Combobox */
+.mo-fx-deal-confirmation .combo {position:relative;}
+.mo-fx-deal-confirmation .combo .input {cursor:text;}
+.mo-fx-deal-confirmation .combo-caret {
+  position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;font-size:10px;
+}
+.mo-fx-deal-confirmation .combo-panel {
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  max-height:230px;overflow-y:auto;
+  z-index:80;
+  display:none;
+}
+.mo-fx-deal-confirmation .combo.open .combo-panel {display:block;}
+.mo-fx-deal-confirmation .combo-option {
+  padding:7px 12px;
+  cursor:pointer;
+  font-size:13px;
+  color:var(--text);
+  display:flex;flex-direction:column;gap:1px;
+}
+.mo-fx-deal-confirmation .combo-option:hover, .mo-fx-deal-confirmation .combo-option.active {background:var(--blue-soft);}
+.mo-fx-deal-confirmation .combo-option .opt-sub {font-size:11px;color:var(--muted);}
+.mo-fx-deal-confirmation .combo-empty {padding:10px 12px;font-size:12px;color:var(--muted);}
+/* Date field */
+.mo-fx-deal-confirmation .date-field {position:relative;}
+.mo-fx-deal-confirmation .date-icon-btn {
+  position:absolute;right:4px;top:4px;
+  width:24px;height:24px;
+  border:none;background:transparent;
+  color:var(--sub);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:4px;
+}
+.mo-fx-deal-confirmation .date-icon-btn:hover {background:var(--surface-2);color:var(--blue);}
+.mo-fx-deal-confirmation .date-field .input {padding-right:30px;}
+.mo-fx-deal-confirmation .calendar-pop {
+  position:absolute;top:calc(100% + 4px);left:0;
+  width:250px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  z-index:90;
+  padding:10px;
+  display:none;
+}
+.mo-fx-deal-confirmation .calendar-pop.open {display:block;}
+.mo-fx-deal-confirmation .cal-head {display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.mo-fx-deal-confirmation .cal-head button {
+  border:none;background:var(--surface-2);color:var(--sub);
+  width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;
+}
+.mo-fx-deal-confirmation .cal-head button:hover {background:var(--blue-soft);color:var(--blue);}
+.mo-fx-deal-confirmation .cal-title {font-size:13px;font-weight:700;color:var(--text);}
+.mo-fx-deal-confirmation .cal-grid {display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.mo-fx-deal-confirmation .cal-dow {font-size:10px;color:var(--muted);text-align:center;padding:3px 0;font-weight:700;}
+.mo-fx-deal-confirmation .cal-day {
+  font-size:12px;text-align:center;padding:5px 0;border-radius:4px;cursor:pointer;color:var(--text);
+}
+.mo-fx-deal-confirmation .cal-day:hover {background:var(--blue-soft);}
+.mo-fx-deal-confirmation .cal-day.muted {color:var(--muted);}
+.mo-fx-deal-confirmation .cal-day.today {border:1px solid var(--blue);}
+.mo-fx-deal-confirmation .cal-day.selected {background:var(--blue);color:#fff;font-weight:700;}
+/* Radio */
+.mo-fx-deal-confirmation .radio-group {display:flex;gap:20px;align-items:center;padding-top:2px;}
+.mo-fx-deal-confirmation .radio-opt {display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--text);}
+.mo-fx-deal-confirmation .radio-opt input {display:none;}
+.mo-fx-deal-confirmation .radio-dot {
+  width:16px;height:16px;border-radius:50%;
+  border:1.5px solid var(--border-strong);
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;
+  transition:border-color .12s ease;
+}
+.mo-fx-deal-confirmation .radio-dot::after {
+  content:'';width:8px;height:8px;border-radius:50%;background:var(--blue);
+  transform:scale(0);transition:transform .12s ease;
+}
+.mo-fx-deal-confirmation .radio-opt input:checked + .radio-dot {border-color:var(--blue);}
+.mo-fx-deal-confirmation .radio-opt input:checked + .radio-dot::after {transform:scale(1);}
+/* Checkbox */
+.mo-fx-deal-confirmation .checkbox {
+  width:16px;height:16px;border:1.5px solid var(--border-strong);border-radius:3px;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  background:var(--surface);cursor:pointer;
+}
+.mo-fx-deal-confirmation .checkbox.checked {background:var(--blue);border-color:var(--blue);}
+.mo-fx-deal-confirmation .checkbox.checked::after {content:'\2713';color:#fff;font-size:11px;font-weight:700;}
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.mo-fx-deal-confirmation .btn {
+  height:32px;
+  padding:0 14px;
+  border-radius:var(--radius-sm);
+  border:1.5px solid transparent;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  transition:background .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease;
+}
+.mo-fx-deal-confirmation .btn:active {transform:translateY(1px);}
+.mo-fx-deal-confirmation .btn-primary {background:var(--blue);color:#fff;}
+.mo-fx-deal-confirmation .btn-primary:hover {background:var(--blue-hover);}
+.mo-fx-deal-confirmation .btn-secondary {background:var(--surface);color:var(--text);border-color:var(--border-strong);}
+.mo-fx-deal-confirmation .btn-secondary:hover {background:var(--surface-2);border-color:var(--text);}
+.mo-fx-deal-confirmation .btn-outline-blue {background:var(--surface);color:var(--blue);border-color:var(--blue);}
+.mo-fx-deal-confirmation .btn-outline-blue:hover {background:var(--blue-soft);}
+.mo-fx-deal-confirmation .btn-warning {background:var(--warning);color:#fff;}
+.mo-fx-deal-confirmation .btn-warning:hover {background:#cf6409;}
+.mo-fx-deal-confirmation .btn-danger {background:var(--surface);color:var(--error);border-color:var(--error);}
+.mo-fx-deal-confirmation .btn-danger:hover {background:var(--error-soft);}
+.mo-fx-deal-confirmation .btn-solid-danger {background:var(--error);color:#fff;}
+.mo-fx-deal-confirmation .btn-solid-danger:hover {background:#960000;}
+.mo-fx-deal-confirmation .btn-ghost {background:transparent;color:var(--sub);border-color:transparent;}
+.mo-fx-deal-confirmation .btn-ghost:hover {background:var(--surface-2);}
+.mo-fx-deal-confirmation .btn:disabled {
+  background:var(--surface-2) !important;
+  color:var(--muted) !important;
+  border-color:var(--border) !important;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.mo-fx-deal-confirmation .btn-sm {height:28px;padding:0 10px;font-size:12px;}
+.mo-fx-deal-confirmation .btn-icon {width:32px;padding:0;justify-content:center;}
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.mo-fx-deal-confirmation .toolbar {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 16px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+}
+.mo-fx-deal-confirmation .search-box {
+  position:relative;
+  flex:1 1 260px;
+  min-width:220px;
+  max-width:420px;
+}
+.mo-fx-deal-confirmation .search-box input {padding-left:32px;}
+.mo-fx-deal-confirmation .search-box .icon {
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:13px;pointer-events:none;
+}
+.mo-fx-deal-confirmation .deal-count {
+  font-size:12px;
+  color:var(--muted);
+  font-weight:600;
+  margin-left:auto;
+  white-space:nowrap;
+}
+.mo-fx-deal-confirmation .toolbar-actions {display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.mo-fx-deal-confirmation .toolbar-actions .spacer {width:1px;height:20px;background:var(--border);margin:0 2px;}
+.mo-fx-deal-confirmation .filter-panel {
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface-2);
+  display:none;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:flex-end;
+}
+.mo-fx-deal-confirmation .filter-panel.open {display:flex;}
+.mo-fx-deal-confirmation .filter-panel .field {min-width:150px;flex:1 1 150px;}
+.mo-fx-deal-confirmation .filter-panel .field-actions {display:flex;gap:8px;flex:0 0 auto;padding-bottom:1px;}
+/* ============================================================
+   TABLE
+   ============================================================ */
+.mo-fx-deal-confirmation .table-wrap {
+  overflow-x:auto;
+  overflow-y:visible;
+}
+.mo-fx-deal-confirmation table.deals-table {
+  border-collapse:separate;
+  border-spacing:0;
+  width:100%;
+  min-width:2400px;
+}
+.mo-fx-deal-confirmation table.deals-table thead th {
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:var(--surface-2);
+  color:var(--sub);
+  font-size:13px;
+  font-weight:600;
+  text-align:left;
+  padding:9px 12px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+}
+.mo-fx-deal-confirmation table.deals-table thead th.no-sort {cursor:default;}
+.mo-fx-deal-confirmation table.deals-table thead th .th-inner {display:flex;align-items:center;gap:5px;}
+.mo-fx-deal-confirmation table.deals-table thead th .sort-arrow {font-size:9px;color:var(--muted);}
+.mo-fx-deal-confirmation table.deals-table thead th.sorted .sort-arrow {color:var(--blue);}
+.mo-fx-deal-confirmation table.deals-table thead th.col-select {width:38px;text-align:center;}
+.mo-fx-deal-confirmation table.deals-table thead th.num {text-align:right;}
+.mo-fx-deal-confirmation table.deals-table tbody td {
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:400;
+  color:var(--text);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.mo-fx-deal-confirmation table.deals-table tbody td.num {
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.mo-fx-deal-confirmation table.deals-table tbody td.col-select {text-align:center;cursor:pointer;}
+.mo-fx-deal-confirmation table.deals-table.dragging {user-select:none;-webkit-user-select:none;}
+.mo-fx-deal-confirmation table.deals-table tbody tr {
+  cursor:pointer;
+  background:var(--surface);
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.mo-fx-deal-confirmation table.deals-table tbody tr:hover {
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-md);
+  position:relative;
+  z-index:2;
+}
+.mo-fx-deal-confirmation table.deals-table tbody tr.selected {background:var(--blue-soft);}
+.mo-fx-deal-confirmation table.deals-table tbody tr.selected:hover {background:var(--blue-soft);}
+.mo-fx-deal-confirmation .status-text {font-weight:600;}
+.mo-fx-deal-confirmation .status-unmatched {color:var(--sub);}
+.mo-fx-deal-confirmation .status-correction {color:var(--error);}
+.mo-fx-deal-confirmation .status-matched {color:var(--green);}
+.mo-fx-deal-confirmation .empty-row td {
+  text-align:center;
+  padding:48px 16px;
+  color:var(--muted);
+}
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.mo-fx-deal-confirmation .pagination-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 16px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.mo-fx-deal-confirmation .pagination-info {font-size:12px;color:var(--muted);}
+.mo-fx-deal-confirmation .pagination-controls {display:flex;align-items:center;gap:6px;}
+.mo-fx-deal-confirmation .page-btn {
+  min-width:28px;height:28px;padding:0 8px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  font-size:12px;
+  color:var(--sub);
+  font-weight:600;
+}
+.mo-fx-deal-confirmation .page-btn:hover {background:var(--surface-2);border-color:var(--border-strong);}
+.mo-fx-deal-confirmation .page-btn.active {background:var(--blue);color:#fff;border-color:var(--blue);}
+.mo-fx-deal-confirmation .page-btn:disabled {cursor:not-allowed;opacity:.4;}
+.mo-fx-deal-confirmation .page-size-select {
+  display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+}
+.mo-fx-deal-confirmation .page-size-select select {height:28px;padding:0 6px;}
+/* ============================================================
+   EMPTY / LOADING STATES
+   ============================================================ */
+.mo-fx-deal-confirmation .state-block {
+  padding:56px 24px;
+  text-align:center;
+}
+.mo-fx-deal-confirmation .state-block .state-icon {
+  width:52px;height:52px;border-radius:50%;
+  background:var(--blue-soft);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px auto;font-size:22px;
+}
+.mo-fx-deal-confirmation .state-block h3 {margin:0 0 6px 0;font-size:14px;color:var(--text);}
+.mo-fx-deal-confirmation .state-block p {margin:0;font-size:12px;color:var(--muted);max-width:360px;margin-left:auto;margin-right:auto;}
+/* ============================================================
+   MODALS
+   ============================================================ */
+.mo-fx-deal-confirmation .modal-backdrop {
+  position:fixed;inset:0;
+  background:rgba(29,45,62,.42);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:16px;
+}
+.mo-fx-deal-confirmation .modal-backdrop.open {display:flex;}
+.mo-fx-deal-confirmation .modal {
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  width:420px;
+  max-width:100%;
+  max-height:88vh;
+  display:flex;
+  flex-direction:column;
+  animation:mo-fx-deal-confirmation-modalIn .16s ease;
+}
+.mo-fx-deal-confirmation .modal.modal-wide {width:480px;}
+@keyframes mo-fx-deal-confirmation-modalIn {
+  from{opacity:0;transform:translateY(8px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.mo-fx-deal-confirmation .modal-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+}
+.mo-fx-deal-confirmation .modal-header h3 {margin:0;font-size:14px;font-weight:700;color:var(--text);}
+.mo-fx-deal-confirmation .modal-close {
+  border:none;background:transparent;color:var(--muted);
+  width:26px;height:26px;border-radius:4px;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+}
+.mo-fx-deal-confirmation .modal-close:hover {background:var(--surface-2);color:var(--text);}
+.mo-fx-deal-confirmation .modal-body {padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.mo-fx-deal-confirmation .modal-footer {
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 18px;border-top:1px solid var(--border);
+}
+.mo-fx-deal-confirmation .modal-info-strip {
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:10px 12px;
+  font-size:12px;
+  color:var(--sub);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.mo-fx-deal-confirmation .modal-info-strip .row {display:flex;justify-content:space-between;gap:10px;}
+.mo-fx-deal-confirmation .modal-info-strip .row span:first-child {color:var(--muted);}
+.mo-fx-deal-confirmation .modal-info-strip .row span:last-child {font-weight:600;color:var(--text);}
+.mo-fx-deal-confirmation .field-error {font-size:11px;color:var(--error);display:none;}
+.mo-fx-deal-confirmation .field.has-error .input {border-color:var(--error);}
+.mo-fx-deal-confirmation .field.has-error .field-error {display:block;}
+/* success/info modal */
+.mo-fx-deal-confirmation .status-modal .modal-body {text-align:center;padding:26px 22px 8px 22px;}
+.mo-fx-deal-confirmation .status-modal .status-icon {
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px auto;font-size:24px;color:#fff;
+}
+.mo-fx-deal-confirmation .status-modal .status-icon.success {background:var(--green);}
+.mo-fx-deal-confirmation .status-modal .status-icon.info {background:var(--blue);}
+.mo-fx-deal-confirmation .status-modal h3 {margin:0 0 8px 0;font-size:14px;color:var(--text);}
+.mo-fx-deal-confirmation .status-modal p {margin:0 0 6px 0;font-size:12px;color:var(--sub);}
+.mo-fx-deal-confirmation .status-modal .modal-footer {justify-content:center;}
+/* ============================================================
+   TOAST
+   ============================================================ */
+.mo-fx-deal-confirmation .toast-container {
+  position:fixed;
+  bottom:20px;right:20px;
+  display:flex;flex-direction:column;gap:8px;
+  z-index:300;
+}
+.mo-fx-deal-confirmation .toast {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--green);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);
+  padding:11px 14px;
+  min-width:260px;
+  max-width:340px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  animation:mo-fx-deal-confirmation-toastIn .18s ease;
+}
+.mo-fx-deal-confirmation .toast.error {border-left-color:var(--error);}
+.mo-fx-deal-confirmation .toast .toast-icon {font-size:15px;color:var(--green);flex:0 0 auto;margin-top:1px;}
+.mo-fx-deal-confirmation .toast.error .toast-icon {color:var(--error);}
+.mo-fx-deal-confirmation .toast .toast-text {font-size:12px;color:var(--text);line-height:1.4;}
+.mo-fx-deal-confirmation .toast .toast-text b {display:block;font-size:12.5px;margin-bottom:2px;}
+@keyframes mo-fx-deal-confirmation-toastIn {
+  from{opacity:0;transform:translateX(16px);}
+  to{opacity:1;transform:translateX(0);}
+}
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.mo-fx-deal-confirmation .hidden {display:none !important;}
+.mo-fx-deal-confirmation .badge {
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:20px;
+  font-size:11px;font-weight:700;
+  background:var(--blue-soft);color:var(--blue);
+}
+.mo-fx-deal-confirmation .spin {animation:mo-fx-deal-confirmation-spin .6s linear infinite;display:inline-block;}
+@keyframes mo-fx-deal-confirmation-spin {to{transform:rotate(360deg);}}
+@media (max-width:900px) {
+.mo-fx-deal-confirmation .form-grid {grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+.mo-fx-deal-confirmation .toolbar {flex-direction:column;align-items:stretch;}
+.mo-fx-deal-confirmation .deal-count {margin-left:0;}
+.mo-fx-deal-confirmation .search-box {max-width:none;}
+}

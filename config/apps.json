@@ -312,6 +312,56 @@
       ],
       "legacy": "legacy/deal_id_workbench.html",
       "note": "Short Straddle MCs from ZSGTSFTR_MAS_CON and their Deal IDs from ZSGTSFTR_DEALID through the SLC middleware; Create Deal ID draws from range ZSGSLCNR03/01 and moves the MC to 04. Trader (AT100) and ZSGTSFV_FX amounts stay dummy."
+    },
+    {
+      "code": "ZSGTSFP008",
+      "id": "fx-blotter",
+      "route": "/apps/fx-blotter",
+      "title": "DE6: TSF FX Blotter",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-deal-blotter.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFR052",
+      "id": "fo-fx-error-correction",
+      "route": "/apps/fo-fx-error-correction",
+      "title": "EC2: TSF FO Error Correction - FX & Options",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-fo-error-correction.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFR002",
+      "id": "mo-update-bank-reference",
+      "route": "/apps/mo-update-bank-reference",
+      "title": "Update Bank Reference for FX Deals",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/deal-id-mo-confirmation.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFR024",
+      "id": "mo-fx-deal-confirmation",
+      "route": "/apps/mo-fx-deal-confirmation",
+      "title": "TSF MO Deal Confirmation - FX & Options",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-deal-confirmation.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFR026",
+      "id": "mo-confirm-ndf-fixing",
+      "route": "/apps/mo-confirm-ndf-fixing",
+      "title": "TSF MO - Confirm NDF Fixing",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/confirm-ndf-fixing.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     }
   ]
 }

@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Deal ID: MO Confirmation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --purple:#8E44AD;
+  --orange:#C2660C;
+  --orange-tint:#FEF1E4;
+  --gray-tint:#EEF2F6;
+  --radius-lg:10px;
+  --radius-md:8px;
+  --radius-sm:6px;
+  --shadow-card:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font);font-size:12px;line-height:1.5;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:var(--font);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- header ---------- */
+.page-head{
+  margin:.6rem .6rem 12px;padding:11px 16px;min-height:64px;display:flex;align-items:center;gap:12px;
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+}
+.head-logo{height:44px;width:auto;max-width:60px;object-fit:contain;flex:none;}
+.title-wrap{display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.page-title{font-size:19px;font-weight:700;letter-spacing:-.2px;line-height:1.2;color:var(--text);display:flex;align-items:center;gap:8px;}
+.page-title .tcode{font-size:11px;font-weight:700;color:var(--text-faint);border:1px solid var(--border-strong);border-radius:5px;padding:2px 6px;letter-spacing:.3px;}
+.page-subtitle{margin-top:2px;font-size:12px;color:var(--text-muted);line-height:1.35;}
+.head-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.btn-icon{
+  width:34px;height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;
+  color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.btn-icon:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-tint);}
+
+main{max-width:none;margin:0;padding:0 .6rem 40px;}
+
+/* ---------- toolbar buttons (shared) ---------- */
+.tb-btn{
+  height:34px;padding:0 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border-strong);background:#fff;color:var(--text);display:inline-flex;align-items:center;gap:6px;
+  transition:background .15s,border-color .15s,color .15s,opacity .15s;white-space:nowrap;
+}
+.tb-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.tb-btn:disabled{opacity:.4;cursor:not-allowed;}
+.tb-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.tb-btn.primary:hover:not(:disabled){background:var(--primary-dark);border-color:var(--primary-dark);color:#fff;}
+.tb-btn.danger{background:#fff;border-color:#F3C6C0;color:var(--error);}
+.tb-btn.danger:hover:not(:disabled){background:var(--error-tint);}
+.tb-btn .ico{font-size:13px;}
+
+/* ---------- panels ---------- */
+.panel{margin:0 0 12px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:visible;}
+.panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.panel-title-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.dot-bullet{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.panel-title h2{font-size:14px;font-weight:700;color:var(--primary-dark);letter-spacing:.15px;}
+.panel-count{font-size:11.5px;font-weight:500;color:var(--text-muted);}
+.panel-body{padding:14px 16px;}
+
+/* ---------- Deal ID selection screen ---------- */
+.list-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.search-box{position:relative;display:flex;align-items:center;flex:0 1 320px;min-width:220px;}
+.search-box svg{position:absolute;left:10px;color:var(--text-faint);pointer-events:none;}
+.search-box input{width:100%;height:36px;padding:0 11px 0 32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:12.5px;outline:none;}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.filter-field{display:flex;flex-direction:column;gap:4px;}
+.filter-field label{font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;}
+.filter-field select{
+  height:36px;padding:0 26px 0 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238CA0B3'/%3E%3C/svg%3E") no-repeat right 9px center;
+  color:var(--text);font-size:12px;cursor:pointer;-webkit-appearance:none;min-width:150px;
+}
+.filter-field select:focus{border-color:var(--primary);}
+.filter-reset{height:36px;padding:0 14px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:11.5px;font-weight:600;cursor:pointer;align-self:flex-end;}
+.filter-reset:hover{border-color:var(--primary);color:var(--primary);}
+
+.table-wrap{width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
+table{width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;}
+.list-table th,.list-table td{padding:9px 12px;white-space:nowrap;}
+.list-table thead th{position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size:11px;font-weight:700;z-index:5;text-align:left;}
+.list-table tbody td{border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.list-table tbody tr{transition:background .12s;cursor:pointer;}
+.list-table tbody tr:hover td{background:#F7FAFD;}
+.sticky-col{position:sticky!important;z-index:3;background:#fff;}
+.list-table thead th.sticky-col{z-index:20!important;background:#F1F3F6!important;}
+.sticky-1{left:0;width:150px;min-width:150px;box-shadow:3px 0 5px -3px rgba(22,39,64,.15);}
+tbody tr:hover .sticky-col{background:#F7FAFD!important;}
+
+.deal-link{color:var(--success);font-weight:700;background:none;border:0;padding:0;cursor:pointer;font-size:12.5px;}
+.deal-link:hover{text-decoration:underline;}
+.mc-link{color:var(--primary-dark);font-weight:700;}
+.inv-text{color:var(--orange);font-weight:700;}
+.status-cell{font-weight:700;white-space:nowrap;}
+.st-01{color:var(--warning);}
+.st-02{color:var(--primary);}
+.st-03{color:var(--success);}
+.st-30{color:var(--error);}
+.empty-row td{text-align:center!important;color:var(--text-muted);padding:30px 12px;font-style:italic;}
+
+.pager{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:10px 16px 12px;border-top:1px solid var(--border);background:#fff;}
+.pager-size{justify-self:start;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+.pager-size select{height:30px;border:1px solid var(--border-strong);border-radius:6px;background-color:#fff;color:var(--text);font-size:12px;padding:0 8px;}
+.pager-controls{justify-self:center;display:flex;align-items:center;gap:4px;}
+.pager-btn{min-width:30px;height:30px;padding:0 8px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text);font-size:12px;cursor:pointer;}
+.pager-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pager-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed;}
+.pager-info{justify-self:end;font-size:12px;color:var(--text-muted);white-space:nowrap;}
+.pager-info strong{color:var(--text);font-weight:700;}
+
+/* ---------- glossary strip ---------- */
+.glossary{display:flex;flex-wrap:wrap;gap:8px 18px;padding:11px 16px;background:var(--primary-tint);border:1px solid #D7E9FF;border-radius:var(--radius-md);margin:0 0 14px;font-size:11.5px;color:#123E8C;line-height:1.55;}
+.glossary b{color:var(--primary-dark);}
+.glossary span{white-space:nowrap;}
+
+/* ---------- detail screen ---------- */
+#detail-view{display:none;}
+.back-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.back-btn{height:34px;padding:0 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.back-btn:hover{border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.detail-heading{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.detail-heading h1{font-size:17px;font-weight:800;color:var(--text);}
+.detail-heading .deal-badge{font-size:13px;font-weight:800;color:var(--success);}
+
+.action-bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+
+.info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;}
+.info-cell{padding:11px 16px;border-right:1px solid var(--border-soft,var(--border));border-bottom:1px solid var(--border-soft,var(--border));}
+.info-cell:nth-child(4n){border-right:none;}
+.info-lbl{font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+.info-val{font-size:13px;font-weight:700;color:var(--text);}
+.info-val.accent{color:var(--primary-dark);}
+.info-val.green{color:var(--success);}
+.info-val.orange{color:var(--orange);}
+.info-val.muted{color:var(--text-muted);font-weight:600;}
+.info-val .flow-arrow{color:var(--text-faint);font-weight:400;margin:0 4px;}
+
+.section-note{padding:10px 16px;background:#FAFCFE;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-muted);line-height:1.6;}
+.section-note strong{color:var(--primary-dark);}
+.section-note.gap-note{background:var(--warning-tint);color:#7A4B00;border-top:1px solid #F5D9A8;}
+.section-note.gap-note strong{color:#5C3800;}
+
+.grid-mini-table{width:100%;border-collapse:collapse;}
+.grid-mini-table td, .grid-mini-table th{padding:8px 10px;font-size:11.5px;text-align:left;font-weight:700;white-space:nowrap;}
+.grid-mini-table thead th{background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size:11px;}
+.grid-mini-table thead tr.pl-subhead th{background:#F7F9FB;font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);}
+.grid-mini-table tbody td{border-bottom:1px solid var(--border);font-weight:400;color:var(--text);}
+.grid-mini-table .num,.grid-mini-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.grid-mini-table thead th.leg-head{text-align:center;}
+.leg-tag{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:5px;font-size:10.5px;font-weight:800;}
+.leg-d1{background:var(--primary-tint);color:var(--primary-dark);}
+.leg-d2{background:var(--orange-tint);color:var(--orange);}
+.leg-t{background:var(--success-tint);color:var(--success);}
+.buy-tag{color:var(--success);font-weight:700;}
+.sell-tag{color:var(--error);font-weight:700;}
+.ex-rate-input{width:96px;height:30px;padding:0 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;text-align:right;}
+.ex-rate-input:disabled{background:var(--gray-tint);color:var(--text-muted);border-color:var(--border);}
+.ex-rate-input:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-tint);}
+.famt{color:var(--error);}
+.lamt{color:var(--success);}
+.pl-row td{font-weight:700;background:#FAFCFE;}
+.calc-btn{height:30px;padding:0 12px;border-radius:6px;font-size:11px;font-weight:700;background:var(--primary);border:1px solid var(--primary);color:#fff;cursor:pointer;}
+.calc-btn:hover{background:var(--primary-dark);}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,26,41,.5);padding:24px 20px;display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .18s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+#confirm-overlay{z-index:1300;}
+.modal-card{width:100%;max-width:620px;max-height:92vh;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);overflow:hidden;display:flex;flex-direction:column;}
+.modal-card.wide{max-width:760px;}
+.modal-card.narrow{max-width:440px;}
+.modal-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border);}
+.modal-header-text{min-width:0;flex:1;}
+.modal-title{font-size:15.5px;font-weight:700;color:var(--text);line-height:1.25;}
+.modal-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.modal-close{width:30px;height:30px;border:0;background:transparent;border-radius:6px;color:var(--text-muted);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.modal-close:hover{background:var(--gray-tint);color:var(--text);}
+.modal-body{padding:16px 18px;background:#fff;overflow-y:auto;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);background:#fff;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+.btn-cancel,.btn-confirm{height:36px;min-height:36px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;cursor:pointer;}
+.btn-cancel{background:#fff;border:1px solid var(--border-strong);color:var(--text);}
+.btn-cancel:hover{border-color:var(--primary);color:var(--primary);}
+.btn-confirm{background:var(--primary);border:1px solid var(--primary);color:#fff;}
+.btn-confirm:hover{background:var(--primary-dark);border-color:var(--primary-dark);}
+.btn-confirm.is-reject{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-confirm.is-reject:hover{background:var(--error-tint);}
+.btn-confirm:disabled{opacity:.45;cursor:not-allowed;}
+
+.detail-grid{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:#fff;margin-bottom:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+.detail-cell{padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+.detail-cell:nth-child(2n){border-right:none;}
+.detail-lbl{font-size:10.5px;font-weight:600;color:var(--text-muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px;}
+.detail-val{font-size:12.5px;font-weight:700;color:var(--text);}
+
+.form-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.form-field label{font-size:11.5px;font-weight:700;color:var(--text-muted);}
+.form-field select,.form-field input{height:36px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:12.5px;color:var(--text);}
+.form-field select:focus,.form-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.form-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+
+.warn-box{padding:10px 12px;border-radius:8px;background:var(--warning-tint);border:1px solid #F5D9A8;color:#7A4B00;font-size:11.5px;line-height:1.6;margin-bottom:12px;}
+.warn-box strong{color:#5C3800;}
+.err-box{padding:10px 12px;border-radius:8px;background:var(--error-tint);border:1px solid #F3C6C0;color:#7A241C;font-size:11.5px;line-height:1.6;margin-bottom:12px;}
+
+/* ---------- toast ---------- */
+.zfac-toast{
+  position:fixed;bottom:22px;right:22px;max-width:360px;background:#fff;color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);font-size:12.5px;padding:11px 14px;z-index:2000;
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s;
+}
+.zfac-toast.show{opacity:1;transform:translateY(0);}
+.zfac-toast.success{border-color:#BFEAD1;background:var(--success-tint);color:#155724;}
+.zfac-toast.error{background:var(--error-tint);border-color:#F3C6C0;color:var(--error);}
+
+@media (max-width:1100px){
+  .info-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .info-cell:nth-child(4n){border-right:1px solid var(--border);}
+  .info-cell:nth-child(2n){border-right:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <img class="head-logo" src="data:image/png;base64,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" alt="Logo"/>
+  <div class="title-wrap">
+    <div class="page-title">Deal ID: MO Confirmation </div>
+    <div class="page-subtitle">Trade &amp; Structured Finance — assign a booked FX Deal to a Master Contract and confirm it</div>
+  </div>
+  <div class="head-actions">
+    <button class="btn-icon" title="Help" onclick="toggleGlossary()">?</button>
+    <button class="btn-icon" title="Refresh" onclick="goHome(true)">&#8635;</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============================= DEAL ID SELECTION SCREEN ============================= -->
+  <div id="list-view">
+
+    <div id="glossary-box" class="glossary">
+      <span><b>MC</b> = Master Contract (commodity, quantity &amp; shipping window agreed with a counterparty)</span>
+      <span><b>Deal ID</b> = the link key created once an FX Deal is assigned to an MC</span>
+      <span><b>D1 / D2</b> = the two offsetting FX Deal legs booked for a Deal ID</span>
+      <span><b>T1 / T2 / T3</b> = the trade-invoice legs generated along the Entity String</span>
+      <span><b>Entity String</b> = the chain of Olam entities the trade physically flows through, e.g. OGA&rarr;DMCC&rarr;OSIPL</span>
+      <span><b>All-in Rate</b> = the blended spot+swap FX rate applied to a deal leg</span>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Open Deal IDs</h2></div>
+        <span class="panel-count" id="deal-count">10 records</span>
+      </div>
+      <div class="list-toolbar">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="deal-search" type="text" placeholder="Search Deal ID, MC Ref, Model, Trader…" oninput="renderDealList()"/>
+        </div>
+        <div class="filter-field">
+          <label>Status</label>
+          <select id="f-status" onchange="renderDealList()">
+            <option value="">All statuses</option>
+            <option value="01">01 - Not Confirmed</option>
+            <option value="02">02 - Confirmed by MO</option>
+            <option value="03">03 - In Use</option>
+            <option value="30">30 - Cancelled</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>FX Model</label>
+          <select id="f-model" onchange="renderDealList()"><option value="">All models</option></select>
+        </div>
+        <div class="filter-field">
+          <label>Origin Entity</label>
+          <select id="f-origin" onchange="renderDealList()"><option value="">All entities</option></select>
+        </div>
+        <button class="filter-reset" onclick="resetFilters()">Reset</button>
+      </div>
+      <div class="table-wrap">
+        <table class="list-table" id="deal-table">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-1">Deal ID</th>
+              <th>Status</th>
+              <th>MC Reference No</th>
+              <th>FX Model</th>
+              <th>Model Description</th>
+              <th>Trader</th>
+              <th>Deal Start</th>
+              <th>Deal End</th>
+              <th>Ship Start</th>
+              <th>Ship End</th>
+              <th>Entity String</th>
+              <th>Currency String</th>
+              <th>Origin</th>
+            </tr>
+          </thead>
+          <tbody id="deal-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <div class="pager-size">Rows per page
+          <select id="page-size" onchange="pageSizeChanged()">
+            <option>8</option><option selected>15</option><option>25</option><option>50</option>
+          </select>
+        </div>
+        <div class="pager-controls" id="pager-controls"></div>
+        <div class="pager-info" id="pager-info"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= DEAL ID DETAIL SCREEN ============================= -->
+  <div id="detail-view">
+    <div class="back-row">
+      <button class="back-btn" onclick="goHome(false)">&larr; Back to Deal ID list</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="detail-heading">
+          <h1>Deal ID: MO Confirmation</h1>
+          <span class="deal-badge" id="dt-dealid"></span>
+        </div>
+      </div>
+
+      <div class="action-bar" id="dt-actionbar"></div>
+
+      <div class="info-grid" id="dt-infogrid"></div>
+
+      <div class="section-note gap-note" id="dt-gapnote"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>FX Deals (D1 / D2 legs booked with the trader)</h2></div>
+      </div>
+      <div class="table-wrap">
+        <table class="grid-mini-table" id="fx-table" style="width:100%;">
+          <thead><tr>
+            <th class="list-table th">Leg</th><th>CoCode</th><th>Trade Date</th><th>Buy/Sell</th><th>Currency 1</th><th>Amount 1</th>
+            <th>Buy/Sell</th><th>Currency 2</th><th>Amount 2</th><th>All-in Rate</th><th>Value Date</th><th>Partner</th><th>Txn Type</th>
+          </tr></thead>
+          <tbody id="fx-tbody"></tbody>
+        </table>
+      </div>
+      <div class="section-note">This shows the two market-facing FX Deals (<strong>D1</strong> and <strong>D2</strong>) that were booked by the trader and assigned to this Master Contract. They offset each other's currency exposure and lock in the FX spread as risk-free margin.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Deal ID: Planned Trade Invoices</h2></div>
+        <button class="calc-btn" onclick="calculateInvoices()">&#8635; Calculate</button>
+      </div>
+      <div class="table-wrap">
+        <table class="grid-mini-table" id="inv-table" style="width:100%;">
+          <thead><tr>
+            <th>Inv TRM Ref No</th><th>Trade Type</th><th>Deal Type</th><th>Sell (from)</th><th>Buy (to)</th>
+            <th>MC Ref (Sell)</th><th>MC Ref (Buy)</th><th>Amount</th><th>Exchange Rate</th><th>Invoice Amount</th><th>Inv Currency</th>
+          </tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+      <div class="section-note">Only generated once shipment happens and a <strong>Bill of Lading</strong> (the shipping document proving goods were loaded) is attached to this Deal ID. One invoice leg is created per step of the Entity String &mdash; <strong>T1, T2, T3</strong>. Exchange rates are editable before confirmation; use <strong>Calculate</strong> to refresh invoice amounts and the P&amp;L below.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Deal ID: Planned P&amp;L</h2></div>
+      </div>
+      <div class="table-wrap">
+        <table class="grid-mini-table" id="pl-table" style="width:100%;">
+          <thead><tr id="pl-head"></tr></thead>
+          <tbody id="pl-tbody"></tbody>
+        </table>
+      </div>
+      <div class="section-note">
+        <span class="famt" style="font-weight:700;">Red</span> = foreign-currency leg amount. <span class="lamt" style="font-weight:700;">Green</span> = local (invoice) currency amount.
+        The <strong>P&amp;L</strong> row is the trade markup profit realised across the Entity String, on top of the FX spread profit already locked in by the D1/D2 pair.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ============ MODAL: Change / Confirm ============ -->
+<div class="modal-overlay" id="confirm-modal" onclick="overlayClick(event,'confirm-modal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">MO Confirmation</div>
+        <div class="modal-subtitle" id="cf-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('confirm-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="cf-detailgrid"></div>
+      <div id="cf-warn"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn-confirm" id="cf-confirm-btn" onclick="doConfirmDeal()">Confirm Deal ID</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Premium Adjustment ============ -->
+<div class="modal-overlay" id="premium-modal" onclick="overlayClick(event,'premium-modal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Premium Adjustment</div>
+        <div class="modal-subtitle">Adjust the option premium rate used for the D2 leg's invoicing</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('premium-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="pm-detailgrid"></div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Premium Amount</label>
+          <input type="text" id="pm-amt" disabled/>
+        </div>
+        <div class="form-field">
+          <label>Adjusted Rate (IRate)</label>
+          <input type="text" id="pm-rate" placeholder="e.g. 88.4500000"/>
+        </div>
+      </div>
+      <div class="warn-box">Applying an adjusted rate re-prices the <strong>D2</strong> invoice leg (T2) only. Use <strong>Calculate</strong> on the Trade Invoices grid afterwards to refresh the invoice amounts and P&amp;L.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('premium-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="applyPremiumAdjustment()">Apply Adjustment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Edit Deal Pair ============ -->
+<div class="modal-overlay" id="editpair-modal" onclick="overlayClick(event,'editpair-modal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Edit Deal Pair</div>
+        <div class="modal-subtitle">Re-point a leg of this Deal ID to a different, already-booked FX transaction</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('editpair-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Leg to re-assign</label>
+        <select id="ep-leg" onchange="renderEditPairCandidates()"></select>
+      </div>
+      <div class="detail-grid" id="ep-currentgrid"></div>
+      <div class="form-field">
+        <label>Matching open transactions (same CoCode / txn type / value date / buy-sell / currency / amount)</label>
+        <select id="ep-candidate"></select>
+      </div>
+      <div class="hint" style="font-size:11.5px;color:var(--text-muted);">Only transactions that exactly match this leg's booking criteria are offered, so the swap is always risk-neutral.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('editpair-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="applyEditPair()">Update Deal Pair</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Cancel Deal ID ============ -->
+<div class="modal-overlay" id="cancel-modal" onclick="overlayClick(event,'cancel-modal')">
+  <div class="modal-card narrow">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Cancel Deal ID</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('cancel-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="err-box">Cancelling <strong id="cn-dealid"></strong> removes it from this Master Contract permanently. Any planned invoices linked to it are deleted. This cannot be undone.</div>
+      <p style="font-size:12.5px;">Are you sure you want to cancel this Deal ID?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('cancel-modal')">Keep Deal ID</button>
+      <button class="btn-confirm is-reject" onclick="doCancelDeal()">Yes, Cancel Deal ID</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Reverse Confirmation ============ -->
+<div class="modal-overlay" id="reverse-modal" onclick="overlayClick(event,'reverse-modal')">
+  <div class="modal-card narrow">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Reverse MO Confirmation</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('reverse-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">This sends <strong id="rv-dealid"></strong> back to <strong>01 - Not Confirmed</strong> and deletes any planned trade-invoice data captured for it.</div>
+      <p style="font-size:12.5px;">Reverse the confirmation for this Deal ID?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('reverse-modal')">No</button>
+      <button class="btn-confirm is-reject" onclick="doReverseConfirm()">Yes, Reverse</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DMS ============ -->
+<div class="modal-overlay" id="dms-modal" onclick="overlayClick(event,'dms-modal')">
+  <div class="modal-card narrow">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Document Management (DMS)</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('dms-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;line-height:1.7;">No documents are attached to this Deal ID yet. Once the shipment's Bill of Lading is available, the Trade Flow team attaches it here &mdash; that attachment is what links a physical shipment to this specific Deal ID for invoicing.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('dms-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="zfac-toast" id="toast"></div>
+
+<script>
+(function(){
+
+/* =========================================================================
+   REFERENCE DATA
+   Mirrors tables ZSGTSFTR_RULE_BT (FX Models), ZSGTSFTR_ENT_STR (Entity
+   Strings), ZSGTSFTR_CUR_STR (Currency Strings) and ZSGTSFTR_COMP (TSF
+   entities / company codes) shown in the SAP value-help screens.
+   ========================================================================= */
+var COMPANIES = {
+  OGA:{name:"Olam Global Agri Pte. Ltd.",co:"SG03"},
+  DMCC:{name:"Olam International DMCC",co:"AE13"},
+  OSIPL:{name:"Olam Agri India Pvt Ltd",co:"IN11"},
+  OTL:{name:"Olam (Thailand) Ltd",co:"TH10"},
+  OVL:{name:"Olam Vietnam Limited",co:"VN10"},
+  SEDA:{name:"SEDA Outspan Iberia S.L.U",co:"ES12"},
+  PAN:{name:"Panasia International FZE",co:"AE11"},
+  OSL:{name:"Olam Shanghai Limited",co:"CN10"},
+  OAL:{name:"Olam Global Agri Americas",co:"US40"}
+};
+
+var ENTITY_STRINGS = {
+  E014:["OGA","OSIPL","DMCC"],
+  E015:["OGA","DMCC","OSIPL"],
+  E026:["OGA","OSIPL","DMCC"],
+  E033:["OGA","DMCC","OTL"]
+};
+var CURR_STRINGS = {
+  C001:["INR","INR","INR"],
+  C002:["USD","USD","INR"],
+  C003:["INR","INR","USD"],
+  C012:["USD","INR","INR"],
+  C013:["INR","USD","USD"]
+};
+
+var FX_MODELS = {
+  M032:{desc:"INR Long Forward",subType:"FX1",entityId:"E015",currId:"C002"},
+  M033:{desc:"INR-INR-INR Forward",subType:"FX1",entityId:"E015",currId:"C001"},
+  M034:{desc:"INR \u2013 INR Staggered Call &amp; Put Option",subType:"FX2",entityId:"E015",currId:"C003"},
+  M035:{desc:"INR-INR-Put &amp; Call Option",subType:"FX2",entityId:"E014",currId:"C003"},
+  M036:{desc:"USD-INR-INR-Put &amp; Call Option",subType:"FX2",entityId:"E015",currId:"C012"},
+  M037:{desc:"INR Short Forward",subType:"FX1",entityId:"E015",currId:"C013"},
+  M041:{desc:"INR \u2013 INR Staggered Call &amp; Put Option",subType:"FX2",entityId:"E026",currId:"C001"}
+};
+
+var STATUS_DESC = {"01":"Not Confirmed","02":"Confirmed by MO","03":"In Use","30":"Cancelled"};
+
+function entStr(id){ return (ENTITY_STRINGS[id]||["-","-","-"]).join(" \u2192 "); }
+function currStr(id){ return (CURR_STRINGS[id]||["-","-","-"]).join("-"); }
+function fmtNum(n){
+  if (n===undefined || n===null || isNaN(n)) return "0.00";
+  var neg = n<0; n = Math.abs(n);
+  var s = n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  return (neg?"-":"") + s;
+}
+function fmtRate(n){ return (n===undefined||n===null||isNaN(n)) ? "0.0000000" : n.toFixed(7); }
+function fmtDate(d){
+  var dd = String(d.getDate()).padStart(2,"0"), mm=String(d.getMonth()+1).padStart(2,"0"), yy=d.getFullYear();
+  return dd+"."+mm+"."+yy;
+}
+function addDays(base,days){ var d=new Date(base); d.setDate(d.getDate()+days); return d; }
+
+/* =========================================================================
+   SAMPLE DEAL IDS
+   Each Deal ID represents an FX Deal (D1/D2 legs) assigned to a Master
+   Contract. Trade invoices (T1/T2/T3) and P&L are derived from the Entity
+   String, Currency String and FX legs, mirroring FORM INVOICE_PLAN /
+   FORM ALV_DATA_3 in the ABAP source.
+   ========================================================================= */
+var today = new Date();
+function mkDate(offsetDays){ return addDays(today, offsetDays); }
+
+var RAW_DEALS = [
+  { dealId:"1100000564", mcRef:"2000000184", model:"M041", trader:"D_OSIPL", status:"01",
+    dealStart:mkDate(-40), dealEnd:mkDate(220), shipStart:mkDate(30), shipEnd:mkDate(240),
+    origin:"OSIPL", allInRate:88.475000, notional:20000000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000565", mcRef:"2000002727", model:"M032", trader:"T_ADRIEL", status:"02",
+    dealStart:mkDate(-95), dealEnd:mkDate(10), shipStart:mkDate(-20), shipEnd:mkDate(15),
+    origin:"OSIPL", allInRate:90.711200, notional:5000000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000566", mcRef:"2000002728", model:"M032", trader:"T_HARSHADA", status:"03",
+    dealStart:mkDate(-150), dealEnd:mkDate(-3), shipStart:mkDate(-60), shipEnd:mkDate(-2),
+    origin:"OSIPL", allInRate:95.711200, notional:100000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000567", mcRef:"2000002723", model:"M034", trader:"K_RAMASAMY", status:"01",
+    dealStart:mkDate(-12), dealEnd:mkDate(300), shipStart:mkDate(45), shipEnd:mkDate(310),
+    origin:"OSIPL", allInRate:87.000000, notional:7391000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000568", mcRef:"2000002717", model:"M032", trader:"D_OSIPL", status:"02",
+    dealStart:mkDate(-70), dealEnd:mkDate(40), shipStart:mkDate(-10), shipEnd:mkDate(45),
+    origin:"OSIPL", allInRate:89.500000, notional:30087000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000569", mcRef:"2000002713", model:"M041", trader:"S_KHANVILKAR", status:"01",
+    dealStart:mkDate(-5), dealEnd:mkDate(260), shipStart:mkDate(55), shipEnd:mkDate(280),
+    origin:"OSIPL", allInRate:88.900000, notional:48524000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000570", mcRef:"2000002710", model:"M037", trader:"A_KAMATH", status:"02",
+    dealStart:mkDate(-30), dealEnd:mkDate(70), shipStart:mkDate(5), shipEnd:mkDate(80),
+    origin:"OSIPL", allInRate:83.200000, notional:18335000, curr1:"INR", curr2:"USD" },
+  { dealId:"1100000571", mcRef:"2000002708", model:"M032", trader:"K_RAMASAMY", status:"30",
+    dealStart:mkDate(-200), dealEnd:mkDate(-40), shipStart:mkDate(-120), shipEnd:mkDate(-35),
+    origin:"OSIPL", allInRate:91.200000, notional:28838000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000572", mcRef:"2000002702", model:"M036", trader:"D_OSIPL", status:"01",
+    dealStart:mkDate(-2), dealEnd:mkDate(180), shipStart:mkDate(20), shipEnd:mkDate(190),
+    origin:"OSIPL", allInRate:1.000000, notional:12450000, curr1:"USD", curr2:"INR" },
+  { dealId:"1100000573", mcRef:"2000002719", model:"M034", trader:"S_KHANVILKAR", status:"03",
+    dealStart:mkDate(-260), dealEnd:mkDate(-80), shipStart:mkDate(-200), shipEnd:mkDate(-75),
+    origin:"OSIPL", allInRate:86.300000, notional:16763000, curr1:"USD", curr2:"INR" }
+];
+
+var PARTNER_BANK = "0660012173 \u2014 JPMORGAN CHASE BANK NA SINGAPORE";
+
+/* Build the working deal objects: FX legs, invoice legs, P&L, all derived
+   from the model / entity string / currency string, matching FORM
+   DEAL_ID_ALV, FORM INVOICE_PLAN and FORM ALV_DATA_3. */
+var DEALS = RAW_DEALS.map(function(r){
+  var model = FX_MODELS[r.model];
+  var entChain = ENTITY_STRINGS[model.entityId];   // [E1,E2,E3]
+  var currChain = CURR_STRINGS[model.currId];      // [C1,C2,C3]
+
+  // D1: OGA <-> DMCC (or entity1 <-> entity2), D2: DMCC <-> OSIPL (entity2 <-> entity3)
+  var amt1 = r.notional, amt2 = r.notional / r.allInRate;
+  if (r.curr1 !== "USD"){ var t = amt1; amt1 = amt2; amt2 = t; }
+
+  var fxLegs = [
+    { leg:"D1", coCode:COMPANIES[entChain[0]].co, tradeDate:r.dealStart, buy1:"Buy", curr1:r.curr1, amt1:amt1,
+      buy2:"Sell", curr2:r.curr2, amt2:amt2, rate:r.allInRate, valueDate:r.dealEnd, partner:PARTNER_BANK,
+      txnType:"619 \u2013 Forward-TSF" },
+    { leg:"D2", coCode:COMPANIES[entChain[2]].co, tradeDate:r.dealStart, buy1:"Sell", curr1:r.curr1, amt1:amt1,
+      buy2:"Buy", curr2:r.curr2, amt2:amt2, rate:r.allInRate, valueDate:r.dealEnd, partner:PARTNER_BANK,
+      txnType: model.subType==="FX2" ? "649 \u2013 Option - TSF" : "619 \u2013 Forward-TSF" }
+  ];
+
+  // Trade markup baked in on the middle leg (DMCC), a small % of notional.
+  var markupPct = 0.0020; // 0.20% baked in on the DMCC leg, parked profit
+  var localAmt = Math.abs(r.curr1==="USD" ? amt2 : amt1); // INR-side (or local) amount
+  var t1Amt = localAmt;
+  var t2Amt = localAmt * (1+markupPct);
+  var t3Amt = localAmt * (1+markupPct);
+
+  var invLegs = [
+    { ref:r.dealId+"-T1", type:"T1", dealType:"D1", sell:entChain[0], buy:entChain[1], mcSell:entChain[0]+"-"+entChain[1]+"-S", mcBuy:entChain[1]+"-"+entChain[0]+"-P", amt:t1Amt, rate:r.allInRate, curr:r.curr2==="INR"?"INR":r.curr1 },
+    { ref:r.dealId+"-T2", type:"T2", dealType:"D2", sell:entChain[1], buy:entChain[2], mcSell:entChain[1]+"-"+entChain[2]+"-S", mcBuy:entChain[2]+"-"+entChain[1]+"-P", amt:t2Amt, rate:r.allInRate, curr:r.curr2==="INR"?"INR":r.curr1 },
+    { ref:r.dealId+"-T3", type:"T3", dealType:"D2", sell:entChain[2], buy:entChain[0], mcSell:entChain[2]+"-"+entChain[0]+"-S", mcBuy:entChain[0]+"-"+entChain[2]+"-P", amt:t3Amt, rate:r.allInRate, curr:r.curr2==="INR"?"INR":r.curr1 }
+  ];
+  invLegs.forEach(function(l){ l.invAmt = l.amt * l.rate; });
+
+  return {
+    dealId:r.dealId, mcRef:r.mcRef, model:r.model, modelDesc:model.desc, subType:model.subType,
+    entityId:model.entityId, entChain:entChain, currId:model.currId, currChain:currChain,
+    trader:r.trader, status:r.status, dealStart:r.dealStart, dealEnd:r.dealEnd,
+    shipStart:r.shipStart, shipEnd:r.shipEnd, origin:r.origin,
+    fxLegs:fxLegs, invLegs:invLegs, premiumRate:null, editHistory:[]
+  };
+});
+
+var page = 1;
+var currentDealId = null;
+
+/* =========================================================================
+   DEAL ID LIST
+   ========================================================================= */
+function populateFilterOptions(){
+  var modelSel = document.getElementById("f-model");
+  Object.keys(FX_MODELS).sort().forEach(function(m){
+    var o = document.createElement("option"); o.value=m; o.textContent = m+" \u2013 "+FX_MODELS[m].desc.replace(/&amp;/g,"&");
+    modelSel.appendChild(o);
+  });
+  var originSel = document.getElementById("f-origin");
+  var origins = Array.from(new Set(DEALS.map(function(d){return d.origin;}))).sort();
+  origins.forEach(function(o){
+    var opt = document.createElement("option"); opt.value=o; opt.textContent = o + " \u2013 " + (COMPANIES[o]?COMPANIES[o].name:o);
+    originSel.appendChild(opt);
+  });
+}
+
+function filteredDeals(){
+  var q = document.getElementById("deal-search").value.trim().toLowerCase();
+  var st = document.getElementById("f-status").value;
+  var md = document.getElementById("f-model").value;
+  var og = document.getElementById("f-origin").value;
+  return DEALS.filter(function(d){
+    if (st && d.status!==st) return false;
+    if (md && d.model!==md) return false;
+    if (og && d.origin!==og) return false;
+    if (q){
+      var hay = [d.dealId,d.mcRef,d.model,d.modelDesc,d.trader,entStr(d.entityId),currStr(d.currId),d.origin].join(" ").toLowerCase();
+      if (hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+}
+
+window.renderDealList = function(){
+  page = 1;
+  drawDealPage();
+};
+window.pageSizeChanged = function(){ page = 1; drawDealPage(); };
+
+function drawDealPage(){
+  var all = filteredDeals();
+  document.getElementById("deal-count").textContent = all.length + " record" + (all.length===1?"":"s");
+  var size = parseInt(document.getElementById("page-size").value,10);
+  var totalPages = Math.max(1, Math.ceil(all.length/size));
+  if (page>totalPages) page = totalPages;
+  var start = (page-1)*size, slice = all.slice(start,start+size);
+
+  var tbody = document.getElementById("deal-tbody");
+  if (!slice.length){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="13">No Deal IDs match the current filters.</td></tr>';
+  } else {
+    tbody.innerHTML = slice.map(function(d){
+      return '<tr onclick="openDeal(\''+d.dealId+'\')">'+
+        '<td class="sticky-col sticky-1"><button class="deal-link" onclick="event.stopPropagation();openDeal(\''+d.dealId+'\')">'+d.dealId+'</button></td>'+
+        '<td class="status-cell st-'+d.status+'">'+d.status+' - '+STATUS_DESC[d.status]+'</td>'+
+        '<td class="mc-link">'+d.mcRef+'</td>'+
+        '<td>'+d.model+'</td>'+
+        '<td>'+d.modelDesc+'</td>'+
+        '<td>'+d.trader+'</td>'+
+        '<td>'+fmtDate(d.dealStart)+'</td>'+
+        '<td>'+fmtDate(d.dealEnd)+'</td>'+
+        '<td>'+fmtDate(d.shipStart)+'</td>'+
+        '<td>'+fmtDate(d.shipEnd)+'</td>'+
+        '<td>'+entStr(d.entityId)+'</td>'+
+        '<td>'+currStr(d.currId)+'</td>'+
+        '<td>'+d.origin+'</td>'+
+      '</tr>';
+    }).join("");
+  }
+
+  // pager controls
+  var pc = document.getElementById("pager-controls");
+  var btns = '<button class="pager-btn" '+(page<=1?'disabled':'')+' onclick="gotoPage(1)">\u00AB</button>';
+  btns += '<button class="pager-btn" '+(page<=1?'disabled':'')+' onclick="gotoPage('+(page-1)+')">\u2039</button>';
+  for (var p=1;p<=totalPages;p++){
+    if (totalPages>7 && Math.abs(p-page)>2 && p!==1 && p!==totalPages){
+      if (p===2||p===totalPages-1) btns += '<span style="padding:0 4px;color:var(--text-faint);">\u2026</span>';
+      continue;
+    }
+    btns += '<button class="pager-btn '+(p===page?'active':'')+'" onclick="gotoPage('+p+')">'+p+'</button>';
+  }
+  btns += '<button class="pager-btn" '+(page>=totalPages?'disabled':'')+' onclick="gotoPage('+(page+1)+')">\u203A</button>';
+  btns += '<button class="pager-btn" '+(page>=totalPages?'disabled':'')+' onclick="gotoPage('+totalPages+')">\u00BB</button>';
+  pc.innerHTML = btns;
+
+  document.getElementById("pager-info").innerHTML = all.length
+    ? 'Showing <strong>'+(start+1)+'\u2013'+Math.min(start+size,all.length)+'</strong> of <strong>'+all.length+'</strong>'
+    : 'Showing 0 of 0';
+}
+window.gotoPage = function(p){ page = p; drawDealPage(); };
+window.resetFilters = function(){
+  document.getElementById("deal-search").value = "";
+  document.getElementById("f-status").value = "";
+  document.getElementById("f-model").value = "";
+  document.getElementById("f-origin").value = "";
+  renderDealList();
+};
+window.toggleGlossary = function(){
+  var g = document.getElementById("glossary-box");
+  g.style.display = (g.style.display==="none") ? "flex" : "none";
+};
+
+/* =========================================================================
+   DEAL ID DETAIL SCREEN
+   ========================================================================= */
+function findDeal(id){ return DEALS.filter(function(d){return d.dealId===id;})[0]; }
+
+window.openDeal = function(id){
+  currentDealId = id;
+  document.getElementById("list-view").style.display = "none";
+  document.getElementById("detail-view").style.display = "block";
+  renderDetail();
+  window.scrollTo(0,0);
+};
+window.goHome = function(refreshToast){
+  currentDealId = null;
+  document.getElementById("detail-view").style.display = "none";
+  document.getElementById("list-view").style.display = "block";
+  document.getElementById("deal-search").value = "";
+  document.getElementById("f-status").value = "";
+  document.getElementById("f-model").value = "";
+  document.getElementById("f-origin").value = "";
+  page = 1;
+  drawDealPage();
+  if (refreshToast) setStatus("Refreshed. "+DEALS.length+" Deal ID(s) loaded.", "");
+};
+
+window.renderDetail = function(){
+  var d = findDeal(currentDealId);
+  if (!d) return goHome(false);
+
+  document.getElementById("dt-dealid").textContent = d.dealId;
+
+  // action bar
+  var canEdit = (d.status==="01");
+  var canReverse = (d.status==="02"||d.status==="03");
+  var ab = document.getElementById("dt-actionbar");
+  ab.innerHTML =
+    '<button class="tb-btn primary" '+(d.status==="30"?"disabled":"")+' onclick="openConfirmModal()"><span class="ico">\u2713</span> '+(d.status==="01"?"Change / Confirm":"View Confirmation")+'</button>'+
+    '<button class="tb-btn" '+(d.status==="30"?"disabled":"")+' onclick="openPremiumModal()"><span class="ico">%</span> Premium Adjustment</button>'+
+    '<button class="tb-btn" '+(d.status==="30"?"disabled":"")+' onclick="openEditPairModal()"><span class="ico">\u21C6</span> Edit Deal Pair</button>'+
+    '<button class="tb-btn danger" '+(d.status==="30"?"disabled":"")+' onclick="openCancelModal()"><span class="ico">\u2715</span> Cancel Deal ID</button>'+
+    (canReverse ? '<button class="tb-btn danger" onclick="openReverseModal()"><span class="ico">\u21B6</span> Reverse Confirmation</button>' : '')+
+    '<button class="tb-btn" onclick="openDmsModal()"><span class="ico">\uD83D\uDCCE</span> DMS</button>'+
+    '<button class="tb-btn" onclick="renderDetail()"><span class="ico">\u21BB</span> Refresh</button>';
+
+  // info grid
+  var ig = document.getElementById("dt-infogrid");
+  ig.innerHTML =
+    infoCell("Deal ID", d.dealId, "green") +
+    infoCell("MC Reference No", d.mcRef, "accent") +
+    infoCell("FX Model", d.model+" \u2013 "+d.modelDesc, "") +
+    infoCell("Trader", d.trader, "") +
+    infoCell("Deal Start Date", fmtDate(d.dealStart), "") +
+    infoCell("Deal End Date", fmtDate(d.dealEnd), "") +
+    infoCell("Ship Start Date", fmtDate(d.shipStart), "") +
+    infoCell("Ship End Date", fmtDate(d.shipEnd), "") +
+    infoCell("Entity String", entChainHtml(d.entChain), "") +
+    infoCell("Currency String", d.currChain.join(" \u2192 "), "") +
+    infoCell("Deal ID Status", d.status+" - "+STATUS_DESC[d.status], d.status==="30"?"":(d.status==="01"?"muted":"green")) +
+    infoCell("Origin Entity", d.origin+" \u2013 "+(COMPANIES[d.origin]?COMPANIES[d.origin].name:""), "");
+
+  var gapNote = document.getElementById("dt-gapnote");
+  var daysToShip = Math.round((d.shipStart - today)/86400000);
+  if (d.status==="01" && daysToShip>0){
+    gapNote.style.display = "block";
+    gapNote.innerHTML = "<strong>Waiting on shipment.</strong> This Deal ID is booked and assigned, but shipment isn't due to start for "+daysToShip+" more day(s). Nothing changes in the system for this Deal ID during that gap except a monthly mark-to-market (MTM) valuation of the open FX position &mdash; no invoices exist yet.";
+  } else if (d.status==="01"){
+    gapNote.style.display = "block";
+    gapNote.innerHTML = "<strong>Ready to confirm.</strong> The shipping window has opened. Once the Bill of Lading is attached by the Trade Flow team, Trade Invoices T1/T2/T3 will be generated for this Deal ID.";
+  } else {
+    gapNote.style.display = "none";
+  }
+
+  renderFxTable(d);
+  renderInvTable(d);
+  renderPlTable(d);
+}
+function infoCell(lbl,val,cls){
+  return '<div class="info-cell"><div class="info-lbl">'+lbl+'</div><div class="info-val'+(cls?" "+cls:"")+'">'+val+'</div></div>';
+}
+function entChainHtml(chain){
+  return chain.map(function(e){return e;}).join('<span class="flow-arrow">\u2192</span>');
+}
+
+function renderFxTable(d){
+  var tbody = document.getElementById("fx-tbody");
+  tbody.innerHTML = d.fxLegs.map(function(l){
+    return '<tr>'+
+      '<td><span class="leg-tag '+(l.leg==="D1"?"leg-d1":"leg-d2")+'">'+l.leg+'</span></td>'+
+      '<td>'+l.coCode+'</td><td>'+fmtDate(l.tradeDate)+'</td>'+
+      '<td><span class="'+(l.buy1==="Buy"?"buy-tag":"sell-tag")+'">'+l.buy1+'</span></td><td>'+l.curr1+'</td><td class="num">'+fmtNum(l.amt1)+'</td>'+
+      '<td><span class="'+(l.buy2==="Buy"?"buy-tag":"sell-tag")+'">'+l.buy2+'</span></td><td>'+l.curr2+'</td><td class="num">'+fmtNum(l.amt2)+'</td>'+
+      '<td class="num">'+fmtRate(l.rate)+'</td><td>'+fmtDate(l.valueDate)+'</td><td>'+l.partner+'</td><td>'+l.txnType+'</td>'+
+    '</tr>';
+  }).join("");
+}
+
+function renderInvTable(d){
+  var tbody = document.getElementById("inv-tbody");
+  var editable = (d.status==="01");
+  if (!d.invLegs.length){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">No invoices yet &mdash; waiting for the Bill of Lading to be attached to this Deal ID.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = d.invLegs.map(function(l,idx){
+    return '<tr>'+
+      '<td class="inv-text">'+l.ref+'</td>'+
+      '<td><span class="leg-tag leg-t">'+l.type+'</span></td>'+
+      '<td><span class="leg-tag '+(l.dealType==="D1"?"leg-d1":"leg-d2")+'">'+l.dealType+'</span></td>'+
+      '<td>'+l.sell+'</td><td>'+l.buy+'</td><td>'+l.mcSell+'</td><td>'+l.mcBuy+'</td>'+
+      '<td class="num">'+fmtNum(l.amt)+'</td>'+
+      '<td class="num"><input class="ex-rate-input" data-idx="'+idx+'" value="'+fmtRate(l.rate)+'" '+(editable?"":"disabled")+' onchange="invRateChanged(this)"/></td>'+
+      '<td class="num">'+fmtNum(l.invAmt)+'</td><td>'+l.curr+'</td>'+
+    '</tr>';
+  }).join("");
+}
+window.invRateChanged = function(inputEl){
+  var d = findDeal(currentDealId);
+  var idx = parseInt(inputEl.getAttribute("data-idx"),10);
+  var v = parseFloat(inputEl.value.replace(/,/g,""));
+  if (isNaN(v) || v<=0){ setStatus("Exchange rate must be a positive number.", "error"); renderInvTable(d); return; }
+  d.invLegs[idx].rate = v;
+  renderInvTable(d);
+};
+window.calculateInvoices = function(){
+  var d = findDeal(currentDealId);
+  if (!d) return;
+  d.invLegs.forEach(function(l){ l.invAmt = l.amt * l.rate; });
+  renderInvTable(d);
+  renderPlTable(d);
+  setStatus("Invoice amounts and P&L recalculated.", "success");
+};
+
+function renderPlTable(d){
+  var thead = document.getElementById("pl-table").querySelector("thead");
+  var legLabels = d.invLegs.map(function(l){ return l.sell+"\u2192"+l.buy; });
+  var row1 = '<tr><th rowspan="2" style="vertical-align:bottom;">Type</th>' + legLabels.map(function(lb,i){
+    return '<th colspan="2" class="leg-head">'+lb+' <span style="font-weight:400;color:var(--text-faint);">(T'+(i+1)+')</span></th>';
+  }).join("") + '</tr>';
+  var row2 = '<tr class="pl-subhead">' + legLabels.map(function(){
+    return '<th class="num">Foreign</th><th class="num">Local</th>';
+  }).join("") + '</tr>';
+  thead.innerHTML = row1 + row2;
+
+  var invByType = {}; d.invLegs.forEach(function(l){ invByType[l.type]=l; });
+
+  function rowFor(typeLabel, buildCells, extraCls){
+    var cells = d.invLegs.map(function(l){ return buildCells(l); });
+    return '<tr class="'+(extraCls||"")+'"><td>'+typeLabel+'</td>'+cells.map(function(c){
+      return '<td class="num famt">'+c.famt+'</td><td class="num lamt">'+c.lamt+'</td>';
+    }).join("")+'</tr>';
+  }
+
+  var saleRow = rowFor("Sale", function(l){ return {famt:fmtNum(l.amt), lamt:fmtNum(l.invAmt)}; });
+  var purchaseRow = rowFor("Purchase", function(l){ return {famt:fmtNum(-l.amt), lamt:fmtNum(-l.invAmt)}; });
+
+  var totalMarkup = 0;
+  d.invLegs.forEach(function(l,i){
+    if (i>0){ totalMarkup += (l.invAmt - d.invLegs[0].invAmt); }
+  });
+  var plRow = rowFor("P&amp;L (trade markup)", function(l,i){ return {famt:"", lamt:""}; }, "pl-row");
+  // Fill only the last column with the total markup for readability.
+  var plCellsHtml = d.invLegs.map(function(l,i){
+    if (i===d.invLegs.length-1){
+      return '<td class="num famt"></td><td class="num lamt">'+fmtNum(totalMarkup)+'</td>';
+    }
+    return '<td class="num famt"></td><td class="num lamt"></td>';
+  }).join("");
+  var plRowHtml = '<tr class="pl-row"><td>P&amp;L (trade markup)</td>'+plCellsHtml+'</tr>';
+
+  document.getElementById("pl-tbody").innerHTML = saleRow + purchaseRow + plRowHtml;
+}
+
+/* =========================================================================
+   MODAL: Change / Confirm (ABAP screen 9001)
+   ========================================================================= */
+window.openConfirmModal = function(){
+  var d = findDeal(currentDealId);
+  document.getElementById("cf-subtitle").textContent = "Deal ID "+d.dealId+" \u2013 MC "+d.mcRef;
+  document.getElementById("cf-detailgrid").innerHTML =
+    dgCell("Deal ID", d.dealId) + dgCell("MC Reference No", d.mcRef) +
+    dgCell("FX Model", d.model+" \u2013 "+d.modelDesc) + dgCell("Deal ID Status", d.status+" - "+STATUS_DESC[d.status]) +
+    dgCell("Deal Start Date", fmtDate(d.dealStart)) + dgCell("Deal End Date", fmtDate(d.dealEnd)) +
+    dgCell("Ship Start Date", fmtDate(d.shipStart)) + dgCell("Ship End Date", fmtDate(d.shipEnd)) +
+    dgCell("Entity String", d.entChain.join(" \u2192 ")) + dgCell("Currency String", d.currChain.join(" \u2192 "));
+
+  var warn = document.getElementById("cf-warn");
+  var btn = document.getElementById("cf-confirm-btn");
+  if (d.status==="30"){
+    warn.innerHTML = '<div class="err-box">This Deal ID has been cancelled and can no longer be confirmed.</div>';
+    btn.style.display = "none";
+  } else if (d.status!=="01"){
+    warn.innerHTML = '<div class="warn-box">This Deal ID is already <strong>'+STATUS_DESC[d.status]+'</strong>. Use <strong>Reverse Confirmation</strong> from the toolbar if it needs to be reopened.</div>';
+    btn.style.display = "none";
+  } else {
+    warn.innerHTML = '<div class="warn-box">Confirming locks in the D1/D2 FX legs against this Master Contract and sets the Deal ID to <strong>02 - Confirmed by MO</strong>. This cannot be edited afterwards except via Premium Adjustment or Edit Deal Pair.</div>';
+    btn.style.display = "";
+  }
+  document.getElementById("confirm-modal").classList.add("open");
+};
+function dgCell(lbl,val){ return '<div class="detail-cell"><div class="detail-lbl">'+lbl+'</div><div class="detail-val">'+val+'</div></div>'; }
+
+window.doConfirmDeal = function(){
+  var d = findDeal(currentDealId);
+  if (!d || d.status!=="01") { closeModal("confirm-modal"); return; }
+  d.status = "02";
+  closeModal("confirm-modal");
+  renderDetail();
+  setStatus("Deal ID "+d.dealId+" confirmed by MO.", "success");
+};
+
+/* =========================================================================
+   MODAL: Premium Adjustment (ABAP screen 9003)
+   ========================================================================= */
+window.openPremiumModal = function(){
+  var d = findDeal(currentDealId);
+  document.getElementById("pm-detailgrid").innerHTML =
+    dgCell("Deal ID", d.dealId) + dgCell("FX Model", d.model) +
+    dgCell("D2 Leg Strike / Rate", fmtRate(d.fxLegs[1].rate)) + dgCell("Current Premium Rate", d.premiumRate?fmtRate(d.premiumRate):"\u2013 (not adjusted)");
+  document.getElementById("pm-amt").value = fmtNum(d.invLegs.length>1 ? d.invLegs[1].amt : 0);
+  document.getElementById("pm-rate").value = d.premiumRate ? d.premiumRate.toFixed(7) : "";
+  document.getElementById("premium-modal").classList.add("open");
+};
+window.applyPremiumAdjustment = function(){
+  var d = findDeal(currentDealId);
+  var v = parseFloat(document.getElementById("pm-rate").value);
+  if (isNaN(v) || v<=0){ setStatus("Enter a valid adjusted rate first.", "error"); return; }
+  d.premiumRate = v;
+  if (d.invLegs.length>1){ d.invLegs[1].rate = v; d.invLegs[1].invAmt = d.invLegs[1].amt * v; }
+  closeModal("premium-modal");
+  renderDetail();
+  setStatus("Premium adjustment applied to the D2 (T2) invoice leg.", "success");
+};
+
+/* =========================================================================
+   MODAL: Edit Deal Pair (ABAP screen 9004)
+   ========================================================================= */
+var EP_ALT_TXNS = {
+  D1:[
+    {rfha:"0500011234", desc:"Alt Forward booked 2 days earlier, same amount"},
+    {rfha:"0500011291", desc:"Alt Forward booked same day, partner: HSBC Singapore"}
+  ],
+  D2:[
+    {rfha:"0500011455", desc:"Alt Option booked same day, same strike"},
+    {rfha:"0500011488", desc:"Alt Option booked same day, DBS Bank Ltd"}
+  ]
+};
+window.openEditPairModal = function(){
+  var d = findDeal(currentDealId);
+  var legSel = document.getElementById("ep-leg");
+  legSel.innerHTML = d.fxLegs.map(function(l,i){ return '<option value="'+i+'">'+l.leg+' \u2013 '+l.curr1+'/'+l.curr2+' '+fmtNum(l.amt1)+'</option>'; }).join("");
+  renderEditPairCandidates();
+  document.getElementById("editpair-modal").classList.add("open");
+};
+window.renderEditPairCandidates = function(){
+  var d = findDeal(currentDealId);
+  var idx = parseInt(document.getElementById("ep-leg").value||"0",10);
+  var l = d.fxLegs[idx];
+  document.getElementById("ep-currentgrid").innerHTML =
+    dgCell("CoCode", l.coCode) + dgCell("Value Date", fmtDate(l.valueDate)) +
+    dgCell("Buy/Sell", l.buy1+" "+l.curr1) + dgCell("Amount", fmtNum(l.amt1)) +
+    dgCell("Txn Type", l.txnType) + dgCell("All-in Rate", fmtRate(l.rate));
+  var cands = EP_ALT_TXNS[l.leg] || [];
+  var candSel = document.getElementById("ep-candidate");
+  candSel.innerHTML = cands.length
+    ? cands.map(function(c){ return '<option value="'+c.rfha+'">'+c.rfha+' \u2013 '+c.desc+'</option>'; }).join("")
+    : '<option value="">No matching open transactions found</option>';
+};
+window.applyEditPair = function(){
+  var d = findDeal(currentDealId);
+  var idx = parseInt(document.getElementById("ep-leg").value,10);
+  var rfha = document.getElementById("ep-candidate").value;
+  if (!rfha){ setStatus("No alternate transaction selected.", "error"); return; }
+  d.editHistory.push({leg:d.fxLegs[idx].leg, newRfha:rfha, at:new Date()});
+  closeModal("editpair-modal");
+  setStatus(d.fxLegs[idx].leg+" leg re-pointed to transaction "+rfha+".", "success");
+};
+
+/* =========================================================================
+   MODAL: Cancel Deal ID (ABAP screen 9005)
+   ========================================================================= */
+window.openCancelModal = function(){
+  var d = findDeal(currentDealId);
+  document.getElementById("cn-dealid").textContent = d.dealId;
+  document.getElementById("cancel-modal").classList.add("open");
+};
+window.doCancelDeal = function(){
+  var d = findDeal(currentDealId);
+  d.status = "30";
+  closeModal("cancel-modal");
+  renderDetail();
+  setStatus("Deal ID "+d.dealId+" has been cancelled.", "success");
+};
+
+/* =========================================================================
+   MODAL: Reverse MO Confirmation
+   ========================================================================= */
+window.openReverseModal = function(){
+  var d = findDeal(currentDealId);
+  document.getElementById("rv-dealid").textContent = d.dealId;
+  document.getElementById("reverse-modal").classList.add("open");
+};
+window.doReverseConfirm = function(){
+  var d = findDeal(currentDealId);
+  d.status = "01";
+  d.premiumRate = null;
+  closeModal("reverse-modal");
+  renderDetail();
+  setStatus("Confirmation for Deal ID "+d.dealId+" reversed to 01 - Not Confirmed.", "success");
+};
+
+/* =========================================================================
+   MODAL: DMS
+   ========================================================================= */
+window.openDmsModal = function(){ document.getElementById("dms-modal").classList.add("open"); };
+
+/* =========================================================================
+   MODAL PLUMBING / TOAST
+   ========================================================================= */
+window.closeModal = function(id){ document.getElementById(id).classList.remove("open"); };
+window.overlayClick = function(ev,id){ if (ev.target && ev.target.id===id) closeModal(id); };
+document.addEventListener("keydown", function(e){
+  if (e.key==="Escape"){
+    ["confirm-modal","premium-modal","editpair-modal","cancel-modal","reverse-modal","dms-modal"].forEach(closeModal);
+  }
+});
+
+var toastTimer = null;
+function setStatus(msg,kind){
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "zfac-toast show" + (kind?(" "+kind):"");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className="zfac-toast"; }, 3600);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+populateFilterOptions();
+drawDealPage();
+setStatus("Ready. "+DEALS.length+" Deal ID(s) loaded.", "");
+
+})();
+</script>
+</body>
+</html>

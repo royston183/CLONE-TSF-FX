@@ -11,9 +11,8 @@ import type { MenuNode, MenuTile } from '../types.ts'
  * all — and it is fetched here rather than in MenuPage because this is the only section that
  * reads it; the hub's other five pages should not pull it down.
  *
- * None of these transactions has a converted screen behind it yet. They are still tiles
- * rather than a list, because launching one is what will eventually happen, and until then
- * config/apps.json has no entry for the code and the launcher says so in a toast.
+ * Only some of these transactions have a converted screen behind them. A tile whose code has
+ * an entry in config/apps.json launches it; for the rest the launcher says so in a toast.
  */
 export function FxStructureView({ onLaunch, onToast, scrollToTop }: {
   onLaunch: (tile: MenuTile) => void
@@ -25,7 +24,7 @@ export function FxStructureView({ onLaunch, onToast, scrollToTop }: {
   return (
     <MenuBrowser
       title="FX Structure"
-      sub="Master contract, front office, mid office and settlement transactions from the SAP FX menu. None of them is converted yet — the tiles are the map, not the applications."
+      sub="Master contract, front office, mid office and settlement transactions from the SAP FX menu. Tiles with a converted screen open it; the rest are not built yet."
       groups={menu.data ?? []}
       onLaunch={onLaunch}
       onToast={onToast}

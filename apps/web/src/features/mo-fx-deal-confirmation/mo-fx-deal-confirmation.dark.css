@@ -1,0 +1,29 @@
+/* Night mode for mo-fx-deal-confirmation, derived from mo-fx-deal-confirmation.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mo-fx-deal-confirmation {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mo-fx-deal-confirmation input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mo-fx-deal-confirmation select,
+:root[data-theme='dark'] .mo-fx-deal-confirmation textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-fx-deal-confirmation {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --surface-2: #1b2b3d;
+  --text: #e6eef8;
+  --sub: #a9c2dd;
+  --muted: #7f9bb8;
+  --blue-soft: #17304a;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --green-soft: #14321f;
+  --warning-soft: #3a2a12;
+  --error-soft: #3a1b1e;
+}

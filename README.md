@@ -43,7 +43,7 @@ or when a keyboard user tabs into it — to reach nine sections:
 | Overview | `/overview` | KPIs, exposure and volume charts, recent activity. **Placeholder figures — nothing here is read from SAP.** |
 | Master Data | `/master-data` | Reference-data tiles. **Placeholders — nothing is wired behind them.** |
 | Trade Flows | `/trade-flows` | The `Trade Flows` group from `config/menu.json`, promoted out of the menu path |
-| FX Structure | `/fx-structure` | The SAP FX menu tree from `config/fx-menu.json` — master contract, front office, mid office and settlement. **The transactions are listed, none is converted yet.** |
+| FX Structure | `/fx-structure` | The SAP FX menu tree from `config/fx-menu.json` — master contract, front office, mid office and settlement. **Tiles with an entry in `config/apps.json` open their converted screen; the rest say they are not built yet.** |
 | SLC Structure | `/` | The menu path itself: the tile and folder tree from `config/menu.json` that launches every application |
 | XLC-CRP Structure | `/xlc-crp-structure` | Stub |
 | ICFS Structure | `/icfs-structure` | Stub |
