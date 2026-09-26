@@ -1,0 +1,207 @@
+/* Night mode for tsf-ndf-fixing, derived from tsf-ndf-fixing.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .tsf-ndf-fixing {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .tsf-ndf-fixing select,
+:root[data-theme='dark'] .tsf-ndf-fixing textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing {
+  --bg: #0d1724;
+  --card: #14212f;
+  --line: #2a3d52;
+  --line2: #16243a;
+  --text: #e6eef8;
+  --muted: #7f9bb8;
+  --soft: #17304a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .topbar {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .back {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .subtitle {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status-dot {
+  border: 2px solid #26543a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.warn {
+  color: #ffa75c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.danger {
+  color: #ec786f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.ghost:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .req {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .control {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .calbtn {
+  border-left: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .helper {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .toolbar {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .filter-control {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .square {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .table-wrap::-webkit-scrollbar-thumb {
+  border: 3px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .table-wrap::-webkit-scrollbar-track {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th,
+:root[data-theme='dark'] .tsf-ndf-fixing td {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th:first-child {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing td:first-child {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th:nth-child(2) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing td:nth-child(2) {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td:first-child,
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td:nth-child(2) {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td:first-child,
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td:nth-child(2) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .link {
+  color: #5cadff;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.pending {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.released {
+  color: #74e774;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.correction {
+  color: #ffa35c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.error {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .footer {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .pagebtn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .pagebtn.active {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .x {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .deal-strip {
+  background: #1b2b3d;
+  border: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .mini b {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .mini span {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .readonly {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-foot {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .error-msg {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .calendar {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .cal-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .cal-head button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .day.muted {
+  color: #7f9bb8;
+}

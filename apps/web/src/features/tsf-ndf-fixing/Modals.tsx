@@ -1,0 +1,394 @@
+import type { ReactNode } from 'react'
+import { money, rate } from './format.ts'
+import { FIXING_REFERENCES } from './data.ts'
+import type { NdfDeal } from './types.ts'
+
+function SummaryStrip({ deal }: { deal: NdfDeal }) {
+  return (
+    <div className="deal-strip">
+      <div className="mini">
+        <b>Transaction No</b>
+        <span>{deal.id}</span>
+      </div>
+      <div className="mini">
+        <b>Company Code</b>
+        <span>{deal.company}</span>
+      </div>
+      <div className="mini">
+        <b>Currency Pair</b>
+        <span>{deal.pair}</span>
+      </div>
+      <div className="mini">
+        <b>Forward Rate</b>
+        <span>{rate(deal.fwd)}</span>
+      </div>
+    </div>
+  )
+}
+
+function Overlay({ show, onBackdrop, children }: { show: boolean; onBackdrop: () => void; children: ReactNode }) {
+  return (
+    <div
+      className={`overlay${show ? ' show' : ''}`}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onBackdrop()
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+export function NdfFixModal({
+  open,
+  deal,
+  fixRate,
+  fixRef,
+  foRemarks,
+  invalidRate,
+  invalidRef,
+  onFixRateChange,
+  onFixRefChange,
+  onFoRemarksChange,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  deal: NdfDeal | null
+  fixRate: string
+  fixRef: string
+  foRemarks: string
+  invalidRate: boolean
+  invalidRef: boolean
+  onFixRateChange: (v: string) => void
+  onFixRefChange: (v: string) => void
+  onFoRemarksChange: (v: string) => void
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!deal) return null
+  const fix = parseFloat(fixRate)
+  const cashSettlement = fixRate && isFinite(fix) ? money((deal.fwd - fix) * deal.amt1) : ''
+  return (
+    <Overlay show={open} onBackdrop={onClose}>
+      <div className="modal">
+        <div className="modal-head">
+          <h2>NDF Rate Fixing</h2>
+          <button className="x" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="modal-body">
+          <SummaryStrip deal={deal} />
+          <div className="form-grid">
+            <div className="field">
+              <label>Fixing Date</label>
+              <input className="control readonly" readOnly value={deal.date} />
+            </div>
+            <div className={`field${invalidRate ? ' invalid' : ''}`}>
+              <label>
+                Fixing Rate <span className="req">*</span>
+              </label>
+              <input
+                className="control num"
+                inputMode="decimal"
+                placeholder="Enter fixing rate"
+                value={fixRate}
+                onChange={(e) => onFixRateChange(e.target.value)}
+              />
+              <div className="error-msg">Fixing Rate is required.</div>
+            </div>
+            <div className="field">
+              <label>Cash Settlement</label>
+              <input className="control readonly num" readOnly value={cashSettlement} />
+            </div>
+            <div className={`field${invalidRef ? ' invalid' : ''}`}>
+              <label>
+                Fixing Reference <span className="req">*</span>
+              </label>
+              <select className="control" value={fixRef} onChange={(e) => onFixRefChange(e.target.value)}>
+                <option value="">Select fixing reference</option>
+                {FIXING_REFERENCES.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+              <div className="error-msg">Fixing Reference is required.</div>
+            </div>
+            <div className="field full">
+              <label>FO Remarks</label>
+              <textarea
+                className="control"
+                placeholder="Enter FO remarks"
+                maxLength={200}
+                value={foRemarks}
+                onChange={(e) => onFoRemarksChange(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn primary" onClick={onConfirm}>
+            Save Fixing
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+export function MatchReleaseModal({
+  open,
+  deal,
+  ref: refValue,
+  remarks,
+  invalidRef,
+  invalidRemarks,
+  onRefChange,
+  onRemarksChange,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  deal: NdfDeal | null
+  ref: string
+  remarks: string
+  invalidRef: boolean
+  invalidRemarks: boolean
+  onRefChange: (v: string) => void
+  onRemarksChange: (v: string) => void
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!deal) return null
+  return (
+    <Overlay show={open} onBackdrop={onClose}>
+      <div className="modal">
+        <div className="modal-head">
+          <h2>Match &amp; Release</h2>
+          <button className="x" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="modal-body">
+          <SummaryStrip deal={deal} />
+          <div className="form-grid">
+            <div className="field">
+              <label>Fixing Date</label>
+              <input className="control readonly" readOnly value={deal.date} />
+            </div>
+            <div className="field">
+              <label>NDF Value</label>
+              <input className="control readonly num" readOnly value={money(deal.ndf)} />
+            </div>
+            <div className={`field full${invalidRef ? ' invalid' : ''}`}>
+              <label>
+                Fixing Reference <span className="req">*</span>
+              </label>
+              <input
+                className="control"
+                placeholder="Enter fixing reference"
+                maxLength={100}
+                value={refValue}
+                onChange={(e) => onRefChange(e.target.value)}
+              />
+              <div className="error-msg">Fixing Reference is required.</div>
+            </div>
+            <div className={`field full${invalidRemarks ? ' invalid' : ''}`}>
+              <label>
+                Remarks <span className="req">*</span>
+              </label>
+              <textarea
+                className="control"
+                placeholder="Enter remarks"
+                maxLength={200}
+                value={remarks}
+                onChange={(e) => onRemarksChange(e.target.value)}
+              />
+              <div className="error-msg">Remarks are required.</div>
+            </div>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn primary" onClick={onConfirm}>
+            Confirm &amp; Release
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+export function CorrectionModal({
+  open,
+  deal,
+  remarks,
+  invalidRemarks,
+  onRemarksChange,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  deal: NdfDeal | null
+  remarks: string
+  invalidRemarks: boolean
+  onRemarksChange: (v: string) => void
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!deal) return null
+  return (
+    <Overlay show={open} onBackdrop={onClose}>
+      <div className="modal">
+        <div className="modal-head">
+          <h2>Correction Required</h2>
+          <button className="x" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="modal-body">
+          <SummaryStrip deal={deal} />
+          <div className="form-grid">
+            <div className="field">
+              <label>Fixing Date</label>
+              <input className="control readonly" readOnly value={deal.date} />
+            </div>
+            <div className="field">
+              <label>NDF Value</label>
+              <input className="control readonly num" readOnly value={money(deal.ndf)} />
+            </div>
+            <div className={`field full${invalidRemarks ? ' invalid' : ''}`}>
+              <label>
+                MO Remarks <span className="req">*</span>
+              </label>
+              <textarea
+                className="control"
+                placeholder="Enter MO remarks"
+                maxLength={200}
+                value={remarks}
+                onChange={(e) => onRemarksChange(e.target.value)}
+              />
+              <div className="error-msg">MO Remarks are required.</div>
+            </div>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn warn" onClick={onConfirm}>
+            Send for Correction
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+export function ViewTxnModal({ open, deal, onClose }: { open: boolean; deal: NdfDeal | null; onClose: () => void }) {
+  if (!deal) return null
+  return (
+    <Overlay show={open} onBackdrop={onClose}>
+      <div className="modal">
+        <div className="modal-head">
+          <h2>View Transaction</h2>
+          <button className="x" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="modal-body">
+          <SummaryStrip deal={deal} />
+          <div className="form-grid">
+            <div className="field">
+              <label>Trader</label>
+              <input className="control readonly" readOnly value={deal.trader} />
+            </div>
+            <div className="field">
+              <label>Buy / Sell</label>
+              <input className="control readonly" readOnly value={deal.side} />
+            </div>
+            <div className="field">
+              <label>Currency 1</label>
+              <input className="control readonly" readOnly value={deal.c1} />
+            </div>
+            <div className="field">
+              <label>Amount 1</label>
+              <input className="control readonly num" readOnly value={money(deal.amt1)} />
+            </div>
+            <div className="field">
+              <label>Currency 2</label>
+              <input className="control readonly" readOnly value={deal.c2} />
+            </div>
+            <div className="field">
+              <label>Amount 2</label>
+              <input className="control readonly num" readOnly value={money(deal.amt2)} />
+            </div>
+            <div className="field">
+              <label>Original Spot</label>
+              <input className="control readonly num" readOnly value={rate(deal.spot)} />
+            </div>
+            <div className="field">
+              <label>Swap</label>
+              <input className="control readonly num" readOnly value={rate(deal.swap)} />
+            </div>
+            <div className="field">
+              <label>Forward Rate</label>
+              <input className="control readonly num" readOnly value={rate(deal.fwd)} />
+            </div>
+            <div className="field">
+              <label>Fixing Date</label>
+              <input className="control readonly" readOnly value={deal.date} />
+            </div>
+            <div className="field">
+              <label>NDF Value</label>
+              <input className="control readonly num" readOnly value={money(deal.ndf)} />
+            </div>
+            <div className="field">
+              <label>Status</label>
+              <input className="control readonly" readOnly value={deal.status} />
+            </div>
+            <div className="field full">
+              <label>Fixing Reference</label>
+              <input className="control readonly" readOnly value={deal.ref || '—'} />
+            </div>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn primary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+export function RefreshModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Overlay show={open} onBackdrop={onClose}>
+      <div className="modal small">
+        <div className="modal-head">
+          <h2>Refresh</h2>
+          <button className="x" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="modal-body" style={{ textAlign: 'center', padding: '28px 26px' }}>
+          <div style={{ fontSize: 32, color: '#188918', marginBottom: 10 }}>✓</div>
+          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 7 }}>Screen refreshed successfully</div>
+          <div className="note">All NDF deals, search, filters, sorting and row selection have been reset.</div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn primary" onClick={onClose}>
+            OK
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}

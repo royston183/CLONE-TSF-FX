@@ -41,4 +41,5 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'mo-update-bank-reference': lazy(() => import('./mo-update-bank-reference/index.tsx')),
   'mo-fx-deal-confirmation': lazy(() => import('./mo-fx-deal-confirmation/index.tsx')),
   'mo-confirm-ndf-fixing': lazy(() => import('./mo-confirm-ndf-fixing/index.tsx')),
+  'tsf-ndf-fixing': lazy(() => import('./tsf-ndf-fixing/index.tsx')),
 }
