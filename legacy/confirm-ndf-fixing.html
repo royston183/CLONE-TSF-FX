@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirm NDF Fixing</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+:root{
+  --bg:#f8fafc;
+  --surface:#ffffff;
+  --surface-2:#f1f5f9;
+
+  --text:#0f172a;
+  --sub:#64748b;
+  --muted:#94a3b8;
+
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --blue-soft:#eff6ff;
+
+  --border:#e2e8f0;
+  --border-strong:#cbd5e1;
+
+  --green:#16a34a;
+  --green-soft:#f0fdf4;
+  --warning:#b45309;
+  --warning-soft:#fffbeb;
+  --error:#dc2626;
+  --error-soft:#fef2f2;
+}
+
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  font-size:13px;
+  -webkit-font-smoothing:antialiased;
+}
+button, input, select, textarea{ font-family:inherit; font-size:13px; color:inherit; }
+.hidden{ display:none !important; }
+
+/* ---------- Layout ---------- */
+.app{
+  padding-left:.2rem;
+  padding-right:.2rem;
+  padding-bottom:2rem;
+  max-width:none;
+}
+
+/* ---------- Header ---------- */
+.app-header{
+  display:flex;
+  align-items:center;
+  gap:.65rem;
+  padding:.9rem .6rem;
+}
+.fs-logo{
+  width:30px; height:42px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.fs-logo svg{ width:100%; height:100%; display:block; }
+.app-title{
+  font-size:17px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-.1px;
+}
+.app-subtitle{
+  font-size:12.5px;
+  color:var(--sub);
+  font-weight:400;
+  margin-top:1px;
+}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:1rem 1.1rem;
+  margin:0 .35rem .7rem .35rem;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.card-title{
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+  margin:0 0 .7rem 0;
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+}
+.card-title .badge-count{
+  font-size:11px;
+  font-weight:600;
+  color:var(--muted);
+}
+
+/* ---------- Form fields ---------- */
+.field-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.85rem;
+  align-items:flex-end;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:.3rem;
+  min-width:150px;
+}
+.field.w-company{ min-width:190px; }
+.field.w-date{ min-width:170px; }
+.field.w-amount{ min-width:160px; }
+.field.w-trader{ min-width:210px; }
+.field.w-layout{ min-width:130px; }
+.field.field-btn{ min-width:0; }
+.field.field-btn .btn-spacer{ height:17px; }
+.field label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--sub);
+}
+.field label .req{ color:var(--error); margin-left:2px; }
+
+.input, .text-input{
+  height:34px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface);
+  padding:0 .6rem;
+  outline:none;
+  transition:border-color .12s ease, box-shadow .12s ease;
+  width:100%;
+}
+.input:hover, .text-input:hover{ border-color:var(--border-strong); }
+.input:focus, .text-input:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,.14);
+}
+.input.error{ border-color:var(--error); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
+.input.right{ text-align:right; font-variant-numeric:tabular-nums; }
+
+.company-code-row{ display:flex; align-items:center; gap:.4rem; }
+.company-code-row .to-label{ font-size:11px; color:var(--muted); font-weight:600; }
+.company-code-row .to-input{ width:70px; }
+
+.validation-msg{
+  font-size:11.5px;
+  color:var(--error);
+  font-weight:600;
+  margin-top:2px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.validation-msg::before{ content:"⚠"; font-size:11px; }
+
+/* ---------- Searchable dropdown ---------- */
+.dropdown-wrap{ position:relative; }
+.dropdown-panel{
+  position:absolute;
+  top:calc(100% + 4px);
+  left:0;
+  min-width:100%;
+  max-height:240px;
+  overflow-y:auto;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  box-shadow:0 8px 22px rgba(29,45,62,.14);
+  z-index:60;
+  padding:4px 0;
+}
+.dropdown-item{
+  padding:.45rem .7rem;
+  cursor:pointer;
+  font-size:12.5px;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.dropdown-item:hover, .dropdown-item.active{ background:var(--blue-soft); }
+.dropdown-item .primary{ font-weight:600; color:var(--text); }
+.dropdown-item .secondary{ font-size:11px; color:var(--muted); }
+.dropdown-empty{ padding:.6rem .7rem; font-size:12px; color:var(--muted); }
+
+/* ---------- Calendar ---------- */
+.calendar-popup{
+  position:absolute;
+  top:calc(100% + 4px);
+  left:0;
+  width:260px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:0 10px 26px rgba(29,45,62,.16);
+  z-index:60;
+  padding:.6rem;
+}
+.cal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:.5rem;
+}
+.cal-header .cal-title{ font-size:12.5px; font-weight:700; color:var(--text); }
+.cal-nav-btn{
+  width:24px; height:24px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:5px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--sub);
+}
+.cal-nav-btn:hover{ background:var(--surface-2); border-color:var(--border-strong); }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-dow{ font-size:10.5px; font-weight:700; color:var(--muted); text-align:center; padding:2px 0; }
+.cal-day{
+  font-size:12px;
+  text-align:center;
+  padding:5px 0;
+  border-radius:5px;
+  cursor:pointer;
+  color:var(--text);
+}
+.cal-day:hover{ background:var(--blue-soft); }
+.cal-day.muted{ color:#c3ccd3; }
+.cal-day.today{ box-shadow:inset 0 0 0 1px var(--blue); }
+.cal-day.selected{ background:var(--blue); color:#fff; font-weight:700; }
+
+/* ---------- Buttons ---------- */
+.btn{
+  height:34px;
+  padding:0 1rem;
+  border-radius:8px;
+  border:1px solid transparent;
+  font-weight:600;
+  font-size:13px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  transition:background .12s ease, border-color .12s ease, transform .1s ease, box-shadow .12s ease;
+  white-space:nowrap;
+}
+.btn:active{ transform:translateY(1px); }
+.btn-primary{ background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 1px 2px rgba(37,99,235,.25); }
+.btn-primary:hover{ background:var(--blue-hover); border-color:var(--blue-hover); }
+.btn-secondary{ background:var(--surface); border-color:var(--border-strong); color:var(--text); }
+.btn-secondary:hover{ background:var(--surface-2); }
+.btn-danger{ background:var(--surface); border-color:var(--border-strong); color:var(--error); }
+.btn-danger:hover{ background:var(--error-soft); border-color:var(--error); }
+.btn:disabled{
+  background:var(--surface-2) !important;
+  border-color:var(--border) !important;
+  color:#b2bcc9 !important;
+  cursor:not-allowed;
+  box-shadow:none !important;
+}
+.btn-icon{ padding:0; width:32px; justify-content:center; }
+.btn .spin{ display:inline-block; }
+.btn .spin.spinning{ animation:spin .6s linear; }
+@keyframes spin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+
+.selection-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:.75rem;
+}
+
+/* ---------- Results toolbar ---------- */
+.results-card{ margin:0 .35rem .9rem .35rem; }
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.6rem;
+  margin-bottom:.6rem;
+}
+.search-box{
+  position:relative;
+  flex:1 1 320px;
+  min-width:240px;
+}
+.search-box input{
+  height:34px;
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:0 .6rem 0 2rem;
+  outline:none;
+  background:var(--surface);
+}
+.search-box input:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.14); }
+.search-box .icon{
+  position:absolute; left:.55rem; top:50%; transform:translateY(-50%);
+  color:var(--muted); pointer-events:none;
+}
+.toolbar-spacer{ flex:1 1 auto; }
+.filter-toggle{
+  display:inline-flex; align-items:center; gap:.35rem;
+}
+.filter-toggle .count-pill{
+  background:var(--blue); color:#fff; font-size:10.5px; font-weight:700;
+  border-radius:8px; padding:0 6px; min-width:16px; text-align:center;
+}
+
+.action-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.55rem;
+  margin-bottom:.65rem;
+}
+.results-meta{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+}
+.action-row-spacer{ flex:1 1 auto; }
+/* ---------- Filter panel ---------- */
+.filter-panel{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:.75rem .85rem;
+  margin-bottom:.65rem;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.65rem;
+  align-items:flex-end;
+}
+.filter-panel .field{ min-width:150px; }
+.filter-panel select{
+  height:34px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface);
+  padding:0 .5rem;
+  width:100%;
+}
+.filter-actions{ display:flex; gap:.5rem; margin-left:auto; }
+
+/* ---------- Table ---------- */
+.table-wrap{
+  border:1px solid var(--border);
+  border-radius:7px;
+  overflow:auto;
+  max-height:560px;
+  position:relative;
+}
+table.ndf-table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:2500px;
+}
+table.ndf-table thead th{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#ffffff;
+  color:var(--sub);
+  font-size:11px;
+  font-weight:600;
+  text-align:left;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  padding:.6rem .6rem;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+}
+table.ndf-table thead th:hover{ background:var(--surface-2); }
+table.ndf-table thead th.no-sort{ cursor:default; }
+table.ndf-table thead th.no-sort:hover{ background:#ffffff; }
+table.ndf-table thead th .th-inner{ display:flex; align-items:center; gap:4px; }
+table.ndf-table thead th .sort-arrow{ font-size:10px; color:var(--muted); }
+table.ndf-table thead th.sorted .sort-arrow{ color:var(--blue); }
+table.ndf-table thead th.col-select{ width:40px; min-width:40px; }
+table.ndf-table thead th.num{ text-align:right; }
+
+table.ndf-table tbody td{
+  padding:.55rem .6rem;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+  font-weight:400;
+  color:var(--text);
+  white-space:nowrap;
+}
+table.ndf-table tbody td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+table.ndf-table tbody tr{
+  background:#fff;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.ndf-table tbody tr:hover{
+  transform:translateY(-1px);
+  box-shadow:0 3px 9px rgba(15,23,42,.08);
+  position:relative;
+  z-index:2;
+}
+table.ndf-table tbody tr.selected{ background:var(--blue-soft); }
+table.ndf-table tbody tr.selected:hover{ background:#e0ecfe; }
+.chk{ width:15px; height:15px; accent-color:var(--blue); cursor:pointer; }
+
+.status-text{ font-weight:600; white-space:nowrap; }
+.status-unmatched{ color:var(--text); }
+.status-correction{ color:var(--error); }
+.status-released{ color:var(--green); }
+.remark-text{ color:var(--muted); font-style:italic; }
+.remark-text.correction{ color:var(--error); font-style:normal; font-weight:500; }
+
+/* ---------- Empty states ---------- */
+.empty-state{
+  padding:3rem 1rem;
+  text-align:center;
+}
+.empty-state .icon{ font-size:30px; margin-bottom:.5rem; color:#c3ccd3; }
+.empty-state .title{ font-size:14px; font-weight:700; color:var(--text); margin-bottom:.3rem; }
+.empty-state .desc{ font-size:12.5px; color:var(--muted); max-width:420px; margin:0 auto; }
+
+/* ---------- Pagination ---------- */
+.pagination-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:.75rem;
+  flex-wrap:wrap;
+  gap:.5rem;
+}
+.rows-per-page{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  font-size:12.5px;
+  color:var(--sub);
+  font-weight:500;
+}
+.rows-per-page select{
+  height:30px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:var(--surface);
+  padding:0 .5rem;
+}
+.pagination{
+  display:flex;
+  align-items:center;
+  gap:.3rem;
+}
+.pg-btn{
+  min-width:30px;
+  height:30px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--sub);
+  padding:0 .5rem;
+}
+.pg-btn:hover:not(:disabled){ background:var(--surface-2); border-color:var(--border-strong); }
+.pg-btn.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+.pg-btn:disabled{ color:var(--muted); cursor:not-allowed; opacity:.5; }
+
+/* ---------- Modals ---------- */
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(29,45,62,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:200;
+  opacity:0;
+  animation:fadeIn .15s ease forwards;
+}
+@keyframes fadeIn{ to{ opacity:1; } }
+.modal{
+  background:var(--surface);
+  border-radius:9px;
+  width:480px;
+  max-width:92vw;
+  box-shadow:0 20px 50px rgba(29,45,62,.28);
+  transform:translateY(8px) scale(.98);
+  opacity:0;
+  animation:modalIn .18s ease forwards;
+  max-height:88vh;
+  display:flex;
+  flex-direction:column;
+}
+@keyframes modalIn{ to{ transform:translateY(0) scale(1); opacity:1; } }
+.modal.modal-sm{ width:420px; }
+.modal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.9rem 1.1rem;
+  border-bottom:1px solid var(--border);
+}
+.modal-header h3{ margin:0; font-size:14px; font-weight:700; color:var(--text); }
+.modal-close{
+  border:none; background:transparent; cursor:pointer;
+  color:var(--muted); font-size:18px; line-height:1;
+  padding:2px 6px; border-radius:4px;
+}
+.modal-close:hover{ background:var(--surface-2); color:var(--text); }
+.modal-body{ padding:1rem 1.1rem; overflow-y:auto; }
+.modal-footer{
+  display:flex; justify-content:flex-end; gap:.55rem;
+  padding:.85rem 1.1rem;
+  border-top:1px solid var(--border);
+}
+.deal-summary{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:.65rem .8rem;
+  margin-bottom:.9rem;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.4rem .8rem;
+}
+.deal-summary .ds-item .ds-label{ font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+.deal-summary .ds-item .ds-value{ font-size:12.5px; color:var(--text); font-weight:600; margin-top:1px; }
+.modal-body .field{ margin-bottom:.75rem; min-width:0; }
+.modal-body textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:.5rem .6rem;
+  resize:vertical;
+  min-height:72px;
+  outline:none;
+}
+.modal-body textarea:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.14); }
+.modal-body textarea.error{ border-color:var(--error); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
+
+.info-modal .modal-body{ text-align:center; padding:1.5rem 1.3rem 1rem; }
+.info-modal .info-icon{
+  width:46px; height:46px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto .7rem;
+  font-size:22px; font-weight:700;
+}
+.info-modal.success .info-icon{ background:var(--green-soft); color:var(--green); }
+.info-modal.warn .info-icon{ background:var(--warning-soft); color:var(--warning); }
+.info-modal .info-title{ font-size:14px; font-weight:700; color:var(--text); margin-bottom:.35rem; }
+.info-modal .info-desc{ font-size:12.5px; color:var(--sub); line-height:1.5; }
+.info-modal .modal-footer{ justify-content:center; }
+
+/* scrollbar */
+.table-wrap::-webkit-scrollbar{ height:10px; width:10px; }
+.table-wrap::-webkit-scrollbar-track{ background:var(--surface-2); }
+.table-wrap::-webkit-scrollbar-thumb{ background:#c3ccd3; border-radius:6px; }
+.table-wrap::-webkit-scrollbar-thumb:hover{ background:var(--border-strong); }
+
+@media (max-width:900px){
+  .field-row{ flex-direction:column; align-items:stretch; }
+  .field{ min-width:0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HEADER ============ -->
+  <div class="app-header">
+    <div class="fs-logo">
+      <svg viewBox="0 0 88 132" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="88" height="30" rx="15" fill="#C62127"/>
+        <circle cx="15" cy="15" r="15" fill="#931B1D"/>
+        <rect x="0" y="34" width="63" height="30" rx="15" fill="#F0B31A"/>
+        <circle cx="15" cy="49" r="15" fill="#CF9B2B"/>
+        <rect x="0" y="68" width="45" height="30" rx="15" fill="#138842"/>
+        <circle cx="15" cy="83" r="15" fill="#12592F"/>
+        <circle cx="15" cy="117" r="14.5" fill="#818286"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title">Confirm NDF Fixing</div>
+      <div class="app-subtitle">Treasury &middot; MO Confirmation</div>
+    </div>
+  </div>
+
+  <!-- ============ BASIC SELECTION ============ -->
+  <div class="card">
+    <div class="card-title">Basic Selection</div>
+    <div class="field-row">
+
+      <div class="field w-company">
+        <label>Company Code<span class="req">*</span></label>
+        <div class="company-code-row">
+          <div class="dropdown-wrap" style="flex:1;">
+            <input type="text" id="companyCodeInput" class="input" placeholder="Select company code" autocomplete="off">
+            <div id="companyCodePanel" class="dropdown-panel hidden"></div>
+          </div>
+          <span class="to-label">to</span>
+          <div class="dropdown-wrap">
+            <input type="text" id="companyCodeToInput" class="input to-input" placeholder="Optional" autocomplete="off">
+            <div id="companyCodeToPanel" class="dropdown-panel hidden"></div>
+          </div>
+        </div>
+        <div id="companyCodeError" class="validation-msg hidden">Company Code is required.</div>
+      </div>
+
+      <div class="field w-date">
+        <label>Fixing Date<span class="req">*</span></label>
+        <div class="dropdown-wrap">
+          <input type="text" id="fixingDateInput" class="input" placeholder="dd-mm-yyyy" autocomplete="off">
+          <div id="fixingCalendar" class="calendar-popup hidden"></div>
+        </div>
+        <div id="fixingDateError" class="validation-msg hidden">Fixing Date is required.</div>
+      </div>
+
+      <div class="field w-amount">
+        <label>NDF Value</label>
+        <input type="text" id="ndfValueInput" class="input right" placeholder="0.00">
+      </div>
+
+      <div class="field w-trader">
+        <label>Trader Name</label>
+        <div class="dropdown-wrap">
+          <input type="text" id="traderInput" class="input" placeholder="Select..." autocomplete="off">
+          <div id="traderPanel" class="dropdown-panel hidden"></div>
+        </div>
+      </div>
+
+      <div class="field w-layout">
+        <label>Layout</label>
+        <input type="text" id="layoutInput" class="input" placeholder="Default">
+      </div>
+
+      <div class="field field-btn">
+        <div class="btn-spacer"></div>
+        <button class="btn btn-primary" id="viewDealsBtn">View Deals</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div class="card results-card" id="resultsCard">
+
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#687b8d" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="#687b8d" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" id="searchInput" placeholder="Search Deal ID, Transaction, Partner, Trader, Status...">
+      </div>
+      <button class="btn btn-secondary filter-toggle" id="filterToggleBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M7 12H17M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Filter
+        <span class="count-pill hidden" id="filterCountPill">0</span>
+      </button>
+    </div>
+
+    <div class="filter-panel hidden" id="filterPanel">
+      <div class="field"><label>Company Code</label><select id="fCompanyCode"><option value="">All</option></select></div>
+      <div class="field"><label>Business Area</label><select id="fBusinessArea"><option value="">All</option></select></div>
+      <div class="field"><label>TSF Entity</label><select id="fTsfEntity"><option value="">All</option></select></div>
+      <div class="field"><label>Transaction Type</label><select id="fTxnType"><option value="">All</option></select></div>
+      <div class="field"><label>Partner</label><select id="fPartner"><option value="">All</option></select></div>
+      <div class="field"><label>Trader</label><select id="fTrader"><option value="">All</option></select></div>
+      <div class="field"><label>Currency 1</label><select id="fCurrency1"><option value="">All</option></select></div>
+      <div class="field"><label>Currency 2</label><select id="fCurrency2"><option value="">All</option></select></div>
+      <div class="field"><label>Transaction Status</label><select id="fStatus"><option value="">All</option></select></div>
+      <div class="field"><label>Fixing Date</label><select id="fFixingDate"><option value="">All</option></select></div>
+      <div class="filter-actions">
+        <button class="btn btn-secondary" id="clearFiltersBtn">Clear Filters</button>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-primary" id="matchReleaseBtn" disabled>Match &amp; Release</button>
+      <button class="btn btn-danger" id="correctionBtn" disabled>Correction Required</button>
+      <button class="btn btn-secondary btn-icon" id="refreshBtn" title="Refresh">
+        <svg class="spin" id="refreshIcon" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 11A8 8 0 1 0 18.5 15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5V11H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="action-row-spacer"></div>
+      <span class="results-meta" id="resultsMeta">Showing 0 of 0 deals</span>
+    </div>
+
+    <div id="tableRegion">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <div class="title">Enter selection criteria to begin</div>
+        <div class="desc">Select Company Code and Fixing Date to load NDF fixing deals.</div>
+      </div>
+    </div>
+
+    <div class="pagination-bar hidden" id="paginationBar">
+      <div class="rows-per-page">
+        Rows per page
+        <select id="pageSizeSelect">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <div class="pagination" id="paginationControls"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ============ MATCH & RELEASE MODAL ============ -->
+<div class="modal-overlay hidden" id="matchReleaseOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Match &amp; Release</h3>
+      <button class="modal-close" data-close="matchReleaseOverlay">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="deal-summary" id="mrDealSummary"></div>
+      <div class="field">
+        <label>Deal / Cover No</label>
+        <input type="text" id="mrDealCover" class="input" readonly>
+      </div>
+      <div class="field">
+        <label>External Ref</label>
+        <input type="text" id="mrExternalRef" class="input" placeholder="Enter external reference">
+      </div>
+      <div class="field">
+        <label>Internal Ref</label>
+        <input type="text" id="mrInternalRef" class="input" placeholder="Enter internal reference">
+      </div>
+      <div class="field">
+        <label>MO Remarks</label>
+        <textarea id="mrRemarks" placeholder="Enter remarks (optional)"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-close="matchReleaseOverlay">Cancel</button>
+      <button class="btn btn-primary" id="mrConfirmBtn">Match &amp; Release</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CORRECTION REQUIRED MODAL ============ -->
+<div class="modal-overlay hidden" id="correctionOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3>Correction Required</h3>
+      <button class="modal-close" data-close="correctionOverlay">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="deal-summary" id="crDealSummary"></div>
+      <div class="field">
+        <label>Deal / Cover No</label>
+        <input type="text" id="crDealCover" class="input" readonly>
+      </div>
+      <div class="field">
+        <label>MO Remarks<span class="req">*</span></label>
+        <textarea id="crRemarks" placeholder="e.g. Incorrect fixing rate"></textarea>
+        <div id="crRemarksError" class="validation-msg hidden">MO Remarks is required.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-close="correctionOverlay">Cancel</button>
+      <button class="btn btn-danger" id="crConfirmBtn">Correction Required</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ INFO / SUCCESS MODAL ============ -->
+<div class="modal-overlay hidden" id="infoOverlay">
+  <div class="modal modal-sm info-modal success" id="infoModal">
+    <div class="modal-body">
+      <div class="info-icon" id="infoIcon">✓</div>
+      <div class="info-title" id="infoTitle">Success</div>
+      <div class="info-desc" id="infoDesc">Done.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="infoOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DUMMY DATA
+   ============================================================ */
+var COMPANY_CODES = ["SG03","AE13","AE11"];
+
+var BUSINESS_AREAS = [
+  { code:"SG01", name:"Singapore Trading" },
+  { code:"AE01", name:"UAE Trading" },
+  { code:"AE02", name:"Abu Dhabi Treasury" }
+];
+
+var TSF_ENTITIES = ["OSIPL","OTL","OVL"];
+
+var PARTNERS = [
+  { code:"0660000645", name:"DBS BANK LTD" },
+  { code:"0660000683", name:"J.P. Morgan Chase Bank" },
+  { code:"0660000680", name:"STANDARD CHARTERED BANK SINGAPORE" },
+  { code:"0660000806", name:"CITIBANK" },
+  { code:"0660012172", name:"BARCLAYS BANK PLC" }
+];
+
+var TRADERS = [
+  { code:"C27", name:"Akshay Mohnot" },
+  { code:"C33", name:"Pooja Pednekar" },
+  { code:"C28", name:"Nidhi Singh" },
+  { code:"V12", name:"CHARUTHA V" }
+];
+
+var CCY_PAIRS = ["INR","THB","IDR","PHP","KRW","CNY"];
+
+var STATUSES = ["FO->MO: Unmatched","MO->FO: Correction Required","Matched & Released"];
+
+var TXN_TYPE_DESC = "631 - NDF-TSF";
+
+var FIXING_DATE_POOL = ["28-09-2027","30-09-2027","15-10-2027","31-10-2027","29-11-2027"];
+
+/* ---------- deterministic pseudo-random ---------- */
+var _seed = 88172645;
+function rnd(){
+  _seed ^= _seed << 13; _seed ^= _seed >>> 17; _seed ^= _seed << 5;
+  return ((_seed < 0 ? ~_seed + 1 : _seed) % 100000) / 100000;
+}
+function rndInt(min, max){ return Math.floor(rnd() * (max - min + 1)) + min; }
+function pick(arr){ return arr[rndInt(0, arr.length - 1)]; }
+
+/* ---------- date helpers ---------- */
+function parseDMY(str){
+  var p = str.split("-");
+  return new Date(parseInt(p[2],10), parseInt(p[1],10) - 1, parseInt(p[0],10));
+}
+function formatDMY(d){
+  var dd = String(d.getDate()).padStart(2,"0");
+  var mm = String(d.getMonth()+1).padStart(2,"0");
+  var yyyy = d.getFullYear();
+  return dd + "-" + mm + "-" + yyyy;
+}
+function addDays(d, days){
+  var nd = new Date(d.getTime());
+  nd.setDate(nd.getDate() + days);
+  return nd;
+}
+function formatAmount(n){
+  return n.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function parseAmountInput(str){
+  if(!str) return null;
+  str = str.trim().toUpperCase().replace(/,/g,"");
+  var mult = 1;
+  if(str.endsWith("CR")){ mult = 10000000; str = str.slice(0,-2); }
+  else if(str.endsWith("K")){ mult = 1000; str = str.slice(0,-1); }
+  else if(str.endsWith("M")){ mult = 1000000; str = str.slice(0,-1); }
+  var n = parseFloat(str);
+  if(isNaN(n)) return null;
+  return n * mult;
+}
+
+/* ---------- generate NDF deals ---------- */
+function buildDeal(idx, coCode, fixingDateStr, status){
+  var ba = pick(BUSINESS_AREAS);
+  var tsf = pick(TSF_ENTITIES);
+  var partner = pick(PARTNERS);
+  var trader = pick(TRADERS);
+  var ccy2 = pick(CCY_PAIRS);
+
+  var fixingDate = parseDMY(fixingDateStr);
+  var tradeDate = addDays(fixingDate, -rndInt(120, 420));
+  var valueDate = addDays(fixingDate, rndInt(1,3));
+
+  var amount1 = rndInt(50, 5000) * 1000 + rndInt(0,99)*10;
+  var rateBase = { INR:83, THB:34, IDR:15600, PHP:56, KRW:1330, CNY:7.15 }[ccy2] || 50;
+  var rate = +(rateBase * (0.97 + rnd()*0.06)).toFixed(4);
+  var amount2 = +(amount1 * rate).toFixed(2);
+
+  var dealId = "11" + String(rndInt(10000000, 99999999));
+  var transaction = "50000" + String(rndInt(10000,99999));
+  var mcRef = "20000" + String(rndInt(10000,99999));
+
+  return {
+    id: "d" + idx,
+    transaction: transaction,
+    coCode: coCode,
+    busArea: ba.code,
+    tradeDate: formatDMY(tradeDate),
+    tsfEntity: tsf,
+    txnTypeDesc: TXN_TYPE_DESC,
+    partnerName: partner.name,
+    partnerCode: partner.code,
+    buySell2: rnd() < 0.5 ? "Buy" : "Sell",
+    currency2: ccy2,
+    amount2: amount2,
+    currency1: "USD",
+    amount1: amount1,
+    allInRate: rate,
+    txnStatus: status,
+    fixingDate: fixingDateStr,
+    ndfValue: amount1,
+    valueDate: formatDMY(valueDate),
+    dealId: dealId,
+    mcReference: mcRef,
+    businessArea: ba.name,
+    trader: trader.name,
+    traderCode: trader.code,
+    accounting: rnd() < 0.7 ? "Not Posted" : "Posted",
+    externalRef: status === "Matched & Released" ? "EXT-" + rndInt(10000,99999) : "",
+    foRemark: "",
+    moRemark: status === "MO->FO: Correction Required" ? pick(["Incorrect fixing rate","Please correct the fixing date","Rate mismatch with counterparty confirmation","Value date discrepancy noted"]) : ""
+  };
+}
+
+function generateNdfDeals(){
+  // Guarantee every Company Code x Fixing Date x Status combination has at least
+  // one record, so any Basic Selection / filter combo used for testing returns data.
+  var deals = [];
+  var idx = 0;
+  COMPANY_CODES.forEach(function(coCode){
+    FIXING_DATE_POOL.forEach(function(fixingDateStr){
+      STATUSES.forEach(function(status){
+        deals.push(buildDeal(idx, coCode, fixingDateStr, status));
+        idx++;
+      });
+    });
+  });
+  // extra random records layered on top for realistic volume/variety
+  var extra = 15;
+  for(var i=0;i<extra;i++){
+    var coCode = pick(COMPANY_CODES);
+    var fixingDateStr = pick(FIXING_DATE_POOL);
+    var status = pick(STATUSES);
+    deals.push(buildDeal(idx, coCode, fixingDateStr, status));
+    idx++;
+  }
+  return deals;
+}
+
+/* ============================================================
+   APPLICATION STATE
+   ============================================================ */
+var appData = {
+  deals: [],
+  currentUser: { name: "Royston D" }
+};
+
+var state = {
+  currentView: "selection",
+  selectedDealId: null,
+  page: 1,
+  pageSize: 20,
+  filters: {},
+  search: "",
+  sortField: null,
+  sortDir: "asc",
+  dealsLoaded: false,
+  filteredCache: [],
+  processedIds: {},
+  selection: { companyCode: "", companyCodeTo: "", fixingDate: "", ndfValue: "", trader: "" }
+};
+
+/* ============================================================
+   DATA / SERVICE FUNCTIONS  (mock layer -> later replace with API calls)
+   ============================================================ */
+function loadNdfDeals(){
+  // simulate GET /api/ndf-deals
+  return appData.deals;
+}
+
+function saveNdfDeal(updatedDeal){
+  // simulate PATCH /api/ndf-deals/{id}
+  for(var i=0;i<appData.deals.length;i++){
+    if(appData.deals[i].id === updatedDeal.id){
+      appData.deals[i] = updatedDeal;
+      break;
+    }
+  }
+}
+
+function matchReleaseNdfDeal(dealId, externalRef, internalRef, moRemarks){
+  var deal = appData.deals.find(function(d){ return d.id === dealId; });
+  if(!deal) return null;
+  deal.txnStatus = "Matched & Released";
+  deal.externalRef = externalRef || deal.externalRef;
+  deal.internalRef = internalRef || "";
+  deal.moRemark = moRemarks || deal.moRemark;
+  saveNdfDeal(deal);
+  return deal;
+}
+
+function markNdfCorrectionRequired(dealId, moRemarks){
+  var deal = appData.deals.find(function(d){ return d.id === dealId; });
+  if(!deal) return null;
+  deal.txnStatus = "MO->FO: Correction Required";
+  deal.moRemark = moRemarks;
+  saveNdfDeal(deal);
+  return deal;
+}
+
+function refreshNdfDeals(){
+  // simulate re-fetch; session edits are preserved (no data reset)
+  return appData.deals;
+}
+
+function filterNdfDeals(criteria){
+  var all = loadNdfDeals();
+  var cc = (criteria.companyCode || "").trim().toUpperCase();
+  var ccTo = (criteria.companyCodeTo || "").trim().toUpperCase();
+  var fd = (criteria.fixingDate || "").trim();
+  return all.filter(function(d){
+    if(cc && ccTo){
+      if(d.coCode < cc || d.coCode > ccTo) return false;
+    } else if(cc){
+      if(d.coCode.toUpperCase() !== cc) return false;
+    }
+    if(fd && d.fixingDate !== fd) return false;
+    if(criteria.ndfValue){
+      var v = parseAmountInput(criteria.ndfValue);
+      if(v !== null && Math.abs(d.ndfValue - v) > (v*0.15)) return false;
+    }
+    if(criteria.trader && d.traderCode !== criteria.trader) return false;
+    return true;
+  });
+}
+
+/* ============================================================
+   INITIALISATION
+   ============================================================ */
+function init(){
+  appData.deals = generateNdfDeals();
+  populateStaticDropdowns();
+  bindSelectionFieldEvents();
+  bindToolbarEvents();
+  bindModalEvents();
+  populateFilterOptions();
+}
+
+/* ============================================================
+   BASIC SELECTION — searchable dropdowns & calendar
+   ============================================================ */
+function populateStaticDropdowns(){
+  // handled dynamically on focus/input for company code + trader
+}
+
+function renderDropdownList(panelEl, items, onSelect, inputEl){
+  panelEl.innerHTML = "";
+  if(items.length === 0){
+    var empty = document.createElement("div");
+    empty.className = "dropdown-empty";
+    empty.textContent = "No matches found";
+    panelEl.appendChild(empty);
+    return;
+  }
+  items.forEach(function(item){
+    var row = document.createElement("div");
+    row.className = "dropdown-item";
+    row.innerHTML = '<span class="primary">'+item.primary+'</span>' + (item.secondary ? '<span class="secondary">'+item.secondary+'</span>' : '');
+    row.addEventListener("click", function(){
+      onSelect(item);
+      panelEl.classList.add("hidden");
+    });
+    panelEl.appendChild(row);
+  });
+}
+
+function setupSearchableDropdown(inputEl, panelEl, dataFn, onSelect){
+  function openWithFilter(){
+    var q = inputEl.value.trim().toLowerCase();
+    var items = dataFn().filter(function(it){
+      return !q || it.primary.toLowerCase().indexOf(q) > -1 || (it.secondary && it.secondary.toLowerCase().indexOf(q) > -1);
+    });
+    renderDropdownList(panelEl, items, onSelect, inputEl);
+    panelEl.classList.remove("hidden");
+  }
+  inputEl.addEventListener("focus", openWithFilter);
+  inputEl.addEventListener("input", openWithFilter);
+  document.addEventListener("click", function(e){
+    if(!panelEl.contains(e.target) && e.target !== inputEl){
+      panelEl.classList.add("hidden");
+    }
+  });
+}
+
+function bindSelectionFieldEvents(){
+  // Company Code
+  var ccInput = document.getElementById("companyCodeInput");
+  var ccPanel = document.getElementById("companyCodePanel");
+  setupSearchableDropdown(ccInput, ccPanel, function(){
+    return COMPANY_CODES.map(function(c){ return { primary:c }; });
+  }, function(item){
+    ccInput.value = item.primary;
+    state.selection.companyCode = item.primary;
+    clearFieldError("companyCodeInput","companyCodeError");
+  });
+  ccInput.addEventListener("input", function(){ state.selection.companyCode = ccInput.value.trim(); });
+  ccInput.addEventListener("blur", function(){
+    ccInput.value = ccInput.value.trim().toUpperCase();
+    state.selection.companyCode = ccInput.value;
+  });
+
+  var ccToInput = document.getElementById("companyCodeToInput");
+  var ccToPanel = document.getElementById("companyCodeToPanel");
+  setupSearchableDropdown(ccToInput, ccToPanel, function(){
+    return COMPANY_CODES.map(function(c){ return { primary:c }; });
+  }, function(item){
+    ccToInput.value = item.primary;
+    state.selection.companyCodeTo = item.primary;
+  });
+  ccToInput.addEventListener("input", function(){ state.selection.companyCodeTo = ccToInput.value.trim(); });
+  ccToInput.addEventListener("blur", function(){
+    ccToInput.value = ccToInput.value.trim().toUpperCase();
+    state.selection.companyCodeTo = ccToInput.value;
+  });
+
+  // Trader
+  var trInput = document.getElementById("traderInput");
+  var trPanel = document.getElementById("traderPanel");
+  setupSearchableDropdown(trInput, trPanel, function(){
+    return TRADERS.map(function(t){ return { primary: t.code + " - " + t.name, code:t.code }; });
+  }, function(item){
+    trInput.value = item.primary;
+    state.selection.trader = item.code;
+  });
+  trInput.addEventListener("input", function(){
+    if(trInput.value.trim() === "") state.selection.trader = "";
+  });
+
+  // NDF Value formatting
+  var ndfInput = document.getElementById("ndfValueInput");
+  ndfInput.addEventListener("blur", function(){
+    var v = parseAmountInput(ndfInput.value);
+    if(v !== null){ ndfInput.value = formatAmount(v); }
+    state.selection.ndfValue = ndfInput.value;
+  });
+
+  // Fixing date calendar
+  var fdInput = document.getElementById("fixingDateInput");
+  var fdCal = document.getElementById("fixingCalendar");
+  var calState = { view: new Date(2027,8,1) };
+
+  function renderCalendar(){
+    var y = calState.view.getFullYear(), m = calState.view.getMonth();
+    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var first = new Date(y,m,1);
+    var startDow = first.getDay();
+    var daysInMonth = new Date(y,m+1,0).getDate();
+    var daysInPrevMonth = new Date(y,m,0).getDate();
+    var today = new Date();
+    var selectedDate = fdInput.value ? parseDMY(fdInput.value) : null;
+
+    var html = '<div class="cal-header">' +
+      '<button type="button" class="cal-nav-btn" id="calPrev">&#8249;</button>' +
+      '<span class="cal-title">'+monthNames[m]+' '+y+'</span>' +
+      '<button type="button" class="cal-nav-btn" id="calNext">&#8250;</button>' +
+      '</div><div class="cal-grid">';
+    ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(function(d){ html += '<div class="cal-dow">'+d+'</div>'; });
+
+    for(var i=0;i<startDow;i++){
+      html += '<div class="cal-day muted">'+(daysInPrevMonth - startDow + i + 1)+'</div>';
+    }
+    for(var day=1; day<=daysInMonth; day++){
+      var cls = "cal-day";
+      var d = new Date(y,m,day);
+      if(d.toDateString() === today.toDateString()) cls += " today";
+      if(selectedDate && d.toDateString() === selectedDate.toDateString()) cls += " selected";
+      html += '<div class="'+cls+'" data-day="'+day+'">'+day+'</div>';
+    }
+    var totalCells = startDow + daysInMonth;
+    var remaining = (7 - (totalCells % 7)) % 7;
+    for(var j=1;j<=remaining;j++){
+      html += '<div class="cal-day muted">'+j+'</div>';
+    }
+    html += '</div>';
+    fdCal.innerHTML = html;
+
+    fdCal.querySelector("#calPrev").addEventListener("click", function(e){
+      e.stopPropagation();
+      calState.view = new Date(y, m-1, 1);
+      renderCalendar();
+    });
+    fdCal.querySelector("#calNext").addEventListener("click", function(e){
+      e.stopPropagation();
+      calState.view = new Date(y, m+1, 1);
+      renderCalendar();
+    });
+    fdCal.querySelectorAll(".cal-day:not(.muted)").forEach(function(el){
+      el.addEventListener("click", function(){
+        var dnum = parseInt(el.getAttribute("data-day"),10);
+        var chosen = new Date(y,m,dnum);
+        fdInput.value = formatDMY(chosen);
+        state.selection.fixingDate = fdInput.value;
+        clearFieldError("fixingDateInput","fixingDateError");
+        fdCal.classList.add("hidden");
+      });
+    });
+  }
+
+  fdInput.addEventListener("focus", function(){
+    if(fdInput.value){ calState.view = parseDMY(fdInput.value); }
+    renderCalendar();
+    fdCal.classList.remove("hidden");
+  });
+  fdInput.addEventListener("input", function(){
+    state.selection.fixingDate = fdInput.value;
+    clearFieldError("fixingDateInput","fixingDateError");
+  });
+  document.addEventListener("click", function(e){
+    if(!fdCal.contains(e.target) && e.target !== fdInput){
+      fdCal.classList.add("hidden");
+    }
+  });
+
+  document.getElementById("viewDealsBtn").addEventListener("click", handleViewDeals);
+}
+
+function clearFieldError(inputId, errorId){
+  document.getElementById(inputId).classList.remove("error");
+  document.getElementById(errorId).classList.add("hidden");
+}
+
+/* ============================================================
+   VALIDATION + VIEW DEALS
+   ============================================================ */
+function isValidDMY(str){
+  var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(str);
+  if(!m) return false;
+  var dd = parseInt(m[1],10), mm = parseInt(m[2],10), yyyy = parseInt(m[3],10);
+  if(mm < 1 || mm > 12) return false;
+  var daysInMonth = new Date(yyyy, mm, 0).getDate();
+  if(dd < 1 || dd > daysInMonth) return false;
+  return true;
+}
+
+function ensureDataForCriteria(coCode, fixingDateStr){
+  // Guarantees that whatever Company Code + Fixing Date the user tests with,
+  // at least a handful of deals (covering all three statuses) exist for it.
+  var ccUpper = coCode.trim().toUpperCase();
+  var already = appData.deals.some(function(d){
+    return d.coCode.toUpperCase() === ccUpper && d.fixingDate === fixingDateStr;
+  });
+  if(already) return;
+  var n = rndInt(3,5);
+  for(var i=0;i<n;i++){
+    var status = STATUSES[i % STATUSES.length];
+    appData.deals.push(buildDeal(appData.deals.length + rndInt(1000,999999), ccUpper, fixingDateStr, status));
+  }
+}
+
+function handleViewDeals(){
+  var valid = true;
+  var cc = state.selection.companyCode.trim();
+  var ccTo = state.selection.companyCodeTo.trim();
+  var fd = state.selection.fixingDate.trim();
+
+  if(!cc){
+    document.getElementById("companyCodeInput").classList.add("error");
+    document.getElementById("companyCodeError").classList.remove("hidden");
+    document.getElementById("companyCodeError").textContent = "Company Code is required.";
+    valid = false;
+  } else {
+    clearFieldError("companyCodeInput","companyCodeError");
+  }
+
+  if(!fd){
+    document.getElementById("fixingDateInput").classList.add("error");
+    document.getElementById("fixingDateError").classList.remove("hidden");
+    document.getElementById("fixingDateError").textContent = "Fixing Date is required.";
+    valid = false;
+  } else if(!isValidDMY(fd)){
+    document.getElementById("fixingDateInput").classList.add("error");
+    document.getElementById("fixingDateError").classList.remove("hidden");
+    document.getElementById("fixingDateError").textContent = "Enter a valid date as dd-mm-yyyy.";
+    valid = false;
+  } else {
+    clearFieldError("fixingDateInput","fixingDateError");
+  }
+
+  if(!valid) return;
+
+  // normalize company code casing so it matches consistently everywhere
+  cc = cc.toUpperCase();
+  state.selection.companyCode = cc;
+  document.getElementById("companyCodeInput").value = cc;
+
+  if(!ccTo){
+    ensureDataForCriteria(cc, fd);
+  }
+
+  state.dealsLoaded = true;
+  state.page = 1;
+  state.selectedDealId = null;
+  applyFiltersAndRender();
+}
+
+/* ============================================================
+   FILTER PANEL OPTIONS
+   ============================================================ */
+function populateFilterOptions(){
+  fillSelect("fCompanyCode", COMPANY_CODES.map(function(c){ return {v:c, t:c}; }));
+  fillSelect("fBusinessArea", BUSINESS_AREAS.map(function(b){ return {v:b.name, t:b.name}; }));
+  fillSelect("fTsfEntity", TSF_ENTITIES.map(function(t){ return {v:t, t:t}; }));
+  fillSelect("fTxnType", [{v:TXN_TYPE_DESC, t:TXN_TYPE_DESC}]);
+  fillSelect("fPartner", PARTNERS.map(function(p){ return {v:p.name, t:p.name}; }));
+  fillSelect("fTrader", TRADERS.map(function(t){ return {v:t.name, t:t.name}; }));
+  fillSelect("fCurrency1", ["USD"].map(function(c){ return {v:c, t:c}; }));
+  fillSelect("fCurrency2", CCY_PAIRS.map(function(c){ return {v:c, t:c}; }));
+  fillSelect("fStatus", STATUSES.map(function(s){ return {v:s, t:s}; }));
+  fillSelect("fFixingDate", FIXING_DATE_POOL.map(function(d){ return {v:d, t:d}; }));
+}
+function fillSelect(id, opts){
+  var sel = document.getElementById(id);
+  opts.forEach(function(o){
+    var el = document.createElement("option");
+    el.value = o.v; el.textContent = o.t;
+    sel.appendChild(el);
+  });
+}
+
+/* ============================================================
+   TOOLBAR EVENTS: search / filter toggle / actions / pagination
+   ============================================================ */
+function bindToolbarEvents(){
+  document.getElementById("searchInput").addEventListener("input", function(e){
+    state.search = e.target.value;
+    state.page = 1;
+    applyFiltersAndRender();
+  });
+
+  document.getElementById("filterToggleBtn").addEventListener("click", function(){
+    document.getElementById("filterPanel").classList.toggle("hidden");
+  });
+
+  ["fCompanyCode","fBusinessArea","fTsfEntity","fTxnType","fPartner","fTrader","fCurrency1","fCurrency2","fStatus","fFixingDate"].forEach(function(id){
+    document.getElementById(id).addEventListener("change", function(){
+      state.page = 1;
+      applyFiltersAndRender();
+    });
+  });
+
+  document.getElementById("clearFiltersBtn").addEventListener("click", function(){
+    ["fCompanyCode","fBusinessArea","fTsfEntity","fTxnType","fPartner","fTrader","fCurrency1","fCurrency2","fStatus","fFixingDate"].forEach(function(id){
+      document.getElementById(id).value = "";
+    });
+    state.page = 1;
+    applyFiltersAndRender();
+  });
+
+  document.getElementById("pageSizeSelect").addEventListener("change", function(e){
+    state.pageSize = parseInt(e.target.value,10);
+    state.page = 1;
+    renderTable();
+  });
+
+  document.getElementById("refreshBtn").addEventListener("click", handleRefresh);
+  document.getElementById("matchReleaseBtn").addEventListener("click", openMatchReleaseModal);
+  document.getElementById("correctionBtn").addEventListener("click", openCorrectionModal);
+}
+
+function getActiveFilters(){
+  return {
+    companyCode: document.getElementById("fCompanyCode").value,
+    businessArea: document.getElementById("fBusinessArea").value,
+    tsfEntity: document.getElementById("fTsfEntity").value,
+    txnType: document.getElementById("fTxnType").value,
+    partner: document.getElementById("fPartner").value,
+    trader: document.getElementById("fTrader").value,
+    currency1: document.getElementById("fCurrency1").value,
+    currency2: document.getElementById("fCurrency2").value,
+    status: document.getElementById("fStatus").value,
+    fixingDate: document.getElementById("fFixingDate").value
+  };
+}
+
+function countActiveFilters(f){
+  var n = 0;
+  Object.keys(f).forEach(function(k){ if(f[k]) n++; });
+  return n;
+}
+
+/* ============================================================
+   RENDER: apply base selection + filters + search, then table
+   ============================================================ */
+function applyFiltersAndRender(){
+  if(!state.dealsLoaded) return;
+
+  var criteria = {
+    companyCode: state.selection.companyCode,
+    companyCodeTo: state.selection.companyCodeTo,
+    fixingDate: state.selection.fixingDate,
+    ndfValue: state.selection.ndfValue,
+    trader: state.selection.trader
+  };
+  var results = filterNdfDeals(criteria);
+  results = results.filter(function(d){ return !state.processedIds[d.id]; });
+
+  var f = getActiveFilters();
+  var filterCount = countActiveFilters(f);
+  var pill = document.getElementById("filterCountPill");
+  if(filterCount > 0){ pill.textContent = filterCount; pill.classList.remove("hidden"); }
+  else { pill.classList.add("hidden"); }
+
+  if(f.companyCode) results = results.filter(function(d){ return d.coCode === f.companyCode; });
+  if(f.businessArea) results = results.filter(function(d){ return d.businessArea === f.businessArea; });
+  if(f.tsfEntity) results = results.filter(function(d){ return d.tsfEntity === f.tsfEntity; });
+  if(f.txnType) results = results.filter(function(d){ return d.txnTypeDesc === f.txnType; });
+  if(f.partner) results = results.filter(function(d){ return d.partnerName === f.partner; });
+  if(f.trader) results = results.filter(function(d){ return d.trader === f.trader; });
+  if(f.currency1) results = results.filter(function(d){ return d.currency1 === f.currency1; });
+  if(f.currency2) results = results.filter(function(d){ return d.currency2 === f.currency2; });
+  if(f.status) results = results.filter(function(d){ return d.txnStatus === f.status; });
+  if(f.fixingDate) results = results.filter(function(d){ return d.fixingDate === f.fixingDate; });
+
+  var q = state.search.trim().toLowerCase();
+  if(q){
+    results = results.filter(function(d){
+      return [d.transaction,d.dealId,d.coCode,d.businessArea,d.partnerName,d.txnTypeDesc,d.trader,d.currency1,d.currency2,d.txnStatus,d.mcReference,d.externalRef].join(" ").toLowerCase().indexOf(q) > -1;
+    });
+  }
+
+  if(state.sortField){
+    var field = state.sortField, dir = state.sortDir === "asc" ? 1 : -1;
+    results = results.slice().sort(function(a,b){
+      var av = a[field], bv = b[field];
+      if(typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      var da, db;
+      if(field === "tradeDate" || field === "fixingDate" || field === "valueDate"){
+        da = parseDMY(av); db = parseDMY(bv);
+        return (da - db) * dir;
+      }
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  state.filteredCache = results;
+  renderTable();
+}
+
+var SORTABLE_FIELDS = ["transaction","coCode","tradeDate","partnerName","amount1","amount2","ndfValue","allInRate","fixingDate","valueDate","dealId","trader","txnStatus"];
+
+var COLUMNS = [
+  { key:"select", label:"", sortable:false, cls:"col-select" },
+  { key:"transaction", label:"Transaction", sortable:true },
+  { key:"coCode", label:"CoCode", sortable:true },
+  { key:"busArea", label:"Bus. Area", sortable:false },
+  { key:"tradeDate", label:"Trade Date", sortable:true },
+  { key:"tsfEntity", label:"TSF Entity", sortable:false },
+  { key:"txnTypeDesc", label:"Transaction Type Desc", sortable:false },
+  { key:"partnerName", label:"Partner Name", sortable:true },
+  { key:"buySell2", label:"Buy/Sell 2", sortable:false },
+  { key:"currency2", label:"Currency 2", sortable:false },
+  { key:"amount2", label:"Amount 2", sortable:true, num:true },
+  { key:"currency1", label:"Currency 1", sortable:false },
+  { key:"amount1", label:"Amount 1", sortable:true, num:true },
+  { key:"allInRate", label:"All in Rate", sortable:true, num:true },
+  { key:"txnStatus", label:"Txn Status", sortable:true },
+  { key:"fixingDate", label:"Fixing Date", sortable:true },
+  { key:"ndfValue", label:"NDF Value", sortable:true, num:true },
+  { key:"valueDate", label:"Value Date", sortable:true },
+  { key:"dealId", label:"Deal ID", sortable:true },
+  { key:"mcReference", label:"MC Reference", sortable:false },
+  { key:"businessArea", label:"Business Area", sortable:false },
+  { key:"trader", label:"Trader", sortable:true },
+  { key:"accounting", label:"Accounting", sortable:false },
+  { key:"externalRef", label:"External Ref.", sortable:false },
+  { key:"foRemark", label:"FO Remark", sortable:false },
+  { key:"moRemark", label:"MO Remark", sortable:false }
+];
+
+function statusClass(status){
+  if(status === "Matched & Released") return "status-released";
+  if(status === "MO->FO: Correction Required") return "status-correction";
+  return "status-unmatched";
+}
+
+function renderTable(){
+  var region = document.getElementById("tableRegion");
+  var paginationBar = document.getElementById("paginationBar");
+  var meta = document.getElementById("resultsMeta");
+
+  if(!state.dealsLoaded){
+    region.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><div class="title">Enter selection criteria to begin</div><div class="desc">Select Company Code and Fixing Date to load NDF fixing deals.</div></div>';
+    paginationBar.classList.add("hidden");
+    meta.textContent = "Showing 0 of 0 deals";
+    updateActionButtons();
+    return;
+  }
+
+  var results = state.filteredCache;
+
+  if(results.length === 0){
+    region.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="title">No NDF Fixing Deals Found</div><div class="desc">No deals match the selected Company Code, Fixing Date and optional filters.</div></div>';
+    paginationBar.classList.add("hidden");
+    meta.textContent = "Showing 0 of 0 deals";
+    updateActionButtons();
+    return;
+  }
+
+  var totalPages = Math.max(1, Math.ceil(results.length / state.pageSize));
+  if(state.page > totalPages) state.page = totalPages;
+  var startIdx = (state.page - 1) * state.pageSize;
+  var pageItems = results.slice(startIdx, startIdx + state.pageSize);
+
+  meta.textContent = "Showing " + (startIdx+1) + "\u2013" + Math.min(startIdx+pageItems.length, results.length) + " of " + results.length + " deals";
+
+  var html = '<div class="table-wrap"><table class="ndf-table"><thead><tr>';
+  COLUMNS.forEach(function(col){
+    if(col.key === "select"){
+      html += '<th class="col-select no-sort"></th>';
+      return;
+    }
+    var sortableCls = col.sortable ? "" : " no-sort";
+    var sortedCls = state.sortField === col.key ? " sorted" : "";
+    var numCls = col.num ? " num" : "";
+    var arrow = "";
+    if(col.sortable){
+      arrow = '<span class="sort-arrow">' + (state.sortField === col.key ? (state.sortDir === "asc" ? "\u25B2" : "\u25BC") : "\u2195") + '</span>';
+    }
+    html += '<th class="'+sortableCls+sortedCls+numCls+'" data-field="'+col.key+'" data-sortable="'+col.sortable+'"><span class="th-inner">'+col.label+arrow+'</span></th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  pageItems.forEach(function(d){
+    var selectedCls = d.id === state.selectedDealId ? " selected" : "";
+    html += '<tr data-id="'+d.id+'" class="'+selectedCls.trim()+'">';
+    COLUMNS.forEach(function(col){
+      if(col.key === "select"){
+        html += '<td class="col-select"><input type="checkbox" class="chk" '+(d.id === state.selectedDealId ? "checked" : "")+' data-id="'+d.id+'"></td>';
+        return;
+      }
+      var val;
+      var cellCls = col.num ? " num" : "";
+      if(col.key === "txnStatus"){
+        val = '<span class="status-text '+statusClass(d.txnStatus)+'">'+d.txnStatus+'</span>';
+      } else if(col.key === "moRemark"){
+        val = d.moRemark ? '<span class="remark-text '+(d.txnStatus === "MO->FO: Correction Required" ? "correction" : "")+'">'+d.moRemark+'</span>' : '<span class="remark-text">&mdash;</span>';
+      } else if(col.key === "foRemark"){
+        val = d.foRemark ? d.foRemark : '<span class="remark-text">&mdash;</span>';
+      } else if(col.key === "externalRef"){
+        val = d.externalRef ? d.externalRef : '<span class="remark-text">&mdash;</span>';
+      } else if(col.num){
+        val = formatAmount(d[col.key]);
+      } else {
+        val = d[col.key];
+      }
+      html += '<td class="'+cellCls+'">'+val+'</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  region.innerHTML = html;
+
+  // header sort binding
+  region.querySelectorAll("thead th[data-sortable='true']").forEach(function(th){
+    th.addEventListener("click", function(){
+      var field = th.getAttribute("data-field");
+      if(state.sortField === field){
+        state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        state.sortField = field;
+        state.sortDir = "asc";
+      }
+      applyFiltersAndRender();
+    });
+  });
+
+  // row selection binding
+  region.querySelectorAll("tbody tr").forEach(function(tr){
+    tr.addEventListener("click", function(e){
+      var id = tr.getAttribute("data-id");
+      selectDeal(id);
+    });
+  });
+
+  paginationBar.classList.remove("hidden");
+  renderPagination(totalPages);
+  updateActionButtons();
+}
+
+function selectDeal(id){
+  state.selectedDealId = (state.selectedDealId === id) ? id : id;
+  // single-select semantics: clicking a different row selects the new row
+  state.selectedDealId = id;
+  renderTable();
+}
+
+function updateActionButtons(){
+  var hasSelection = !!state.selectedDealId;
+  document.getElementById("matchReleaseBtn").disabled = !hasSelection;
+  document.getElementById("correctionBtn").disabled = !hasSelection;
+}
+
+function renderPagination(totalPages){
+  var controls = document.getElementById("paginationControls");
+  var html = '';
+  html += '<button class="pg-btn" id="pgPrev" '+(state.page===1?"disabled":"")+'>&#8249;</button>';
+  var maxButtons = 5;
+  var start = Math.max(1, state.page - Math.floor(maxButtons/2));
+  var end = Math.min(totalPages, start + maxButtons - 1);
+  start = Math.max(1, end - maxButtons + 1);
+  for(var p=start;p<=end;p++){
+    html += '<button class="pg-btn '+(p===state.page?"active":"")+'" data-page="'+p+'">'+p+'</button>';
+  }
+  html += '<button class="pg-btn" id="pgNext" '+(state.page===totalPages?"disabled":"")+'>&#8250;</button>';
+  controls.innerHTML = html;
+
+  controls.querySelectorAll("[data-page]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.page = parseInt(btn.getAttribute("data-page"),10);
+      renderTable();
+    });
+  });
+  var prevBtn = document.getElementById("pgPrev");
+  var nextBtn = document.getElementById("pgNext");
+  if(prevBtn) prevBtn.addEventListener("click", function(){ if(state.page>1){ state.page--; renderTable(); } });
+  if(nextBtn) nextBtn.addEventListener("click", function(){ if(state.page<totalPages){ state.page++; renderTable(); } });
+}
+
+/* ============================================================
+   REFRESH
+   ============================================================ */
+function handleRefresh(){
+  var icon = document.getElementById("refreshIcon");
+  icon.classList.add("spinning");
+  setTimeout(function(){ icon.classList.remove("spinning"); }, 620);
+
+  refreshNdfDeals();
+  if(state.dealsLoaded){
+    applyFiltersAndRender();
+  }
+
+  setTimeout(function(){
+    showInfoModal({
+      variant:"success",
+      title:"Deals Refreshed",
+      desc:"All NDF fixing deals have been refreshed successfully."
+    });
+  }, 300);
+}
+
+/* ============================================================
+   MODALS: Match & Release / Correction Required / Info
+   ============================================================ */
+function getSelectedDeal(){
+  return appData.deals.find(function(d){ return d.id === state.selectedDealId; });
+}
+
+function renderDealSummary(container, deal){
+  container.innerHTML =
+    '<div class="ds-item"><div class="ds-label">Deal ID</div><div class="ds-value">'+deal.dealId+'</div></div>' +
+    '<div class="ds-item"><div class="ds-label">Transaction</div><div class="ds-value">'+deal.transaction+'</div></div>' +
+    '<div class="ds-item"><div class="ds-label">Partner</div><div class="ds-value">'+deal.partnerName+'</div></div>' +
+    '<div class="ds-item"><div class="ds-label">Currency Pair</div><div class="ds-value">'+deal.currency1+' / '+deal.currency2+'</div></div>' +
+    '<div class="ds-item"><div class="ds-label">Fixing Date</div><div class="ds-value">'+deal.fixingDate+'</div></div>' +
+    '<div class="ds-item"><div class="ds-label">NDF Value</div><div class="ds-value">'+formatAmount(deal.ndfValue)+'</div></div>';
+}
+
+function openMatchReleaseModal(){
+  var deal = getSelectedDeal();
+  if(!deal) return;
+  renderDealSummary(document.getElementById("mrDealSummary"), deal);
+  document.getElementById("mrDealCover").value = deal.dealId;
+  document.getElementById("mrExternalRef").value = deal.externalRef || "";
+  document.getElementById("mrInternalRef").value = deal.internalRef || "";
+  document.getElementById("mrRemarks").value = "";
+  openModal("matchReleaseOverlay");
+}
+
+function openCorrectionModal(){
+  var deal = getSelectedDeal();
+  if(!deal) return;
+  renderDealSummary(document.getElementById("crDealSummary"), deal);
+  document.getElementById("crDealCover").value = deal.dealId;
+  document.getElementById("crRemarks").value = "";
+  document.getElementById("crRemarks").classList.remove("error");
+  document.getElementById("crRemarksError").classList.add("hidden");
+  openModal("correctionOverlay");
+}
+
+function openModal(id){ document.getElementById(id).classList.remove("hidden"); }
+function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
+
+function bindModalEvents(){
+  document.querySelectorAll("[data-close]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      closeModal(btn.getAttribute("data-close"));
+    });
+  });
+  document.querySelectorAll(".modal-overlay").forEach(function(ov){
+    ov.addEventListener("click", function(e){
+      if(e.target === ov) closeModal(ov.id);
+    });
+  });
+
+  document.getElementById("mrConfirmBtn").addEventListener("click", function(){
+    var deal = getSelectedDeal();
+    if(!deal) return;
+    var extRef = document.getElementById("mrExternalRef").value.trim();
+    var intRef = document.getElementById("mrInternalRef").value.trim();
+    var remarks = document.getElementById("mrRemarks").value.trim();
+    matchReleaseNdfDeal(deal.id, extRef, intRef, remarks);
+    state.processedIds[deal.id] = true;
+    state.selectedDealId = null;
+    closeModal("matchReleaseOverlay");
+    applyFiltersAndRender();
+    showInfoModal({
+      variant:"success",
+      title:"NDF Fixing Confirmed",
+      desc:"Deal " + deal.dealId + " was matched and released successfully."
+    });
+  });
+
+  document.getElementById("crConfirmBtn").addEventListener("click", function(){
+    var deal = getSelectedDeal();
+    if(!deal) return;
+    var remarksEl = document.getElementById("crRemarks");
+    var remarks = remarksEl.value.trim();
+    if(!remarks){
+      remarksEl.classList.add("error");
+      document.getElementById("crRemarksError").classList.remove("hidden");
+      return;
+    }
+    markNdfCorrectionRequired(deal.id, remarks);
+    state.processedIds[deal.id] = true;
+    state.selectedDealId = null;
+    closeModal("correctionOverlay");
+    applyFiltersAndRender();
+    showInfoModal({
+      variant:"warn",
+      title:"Correction Requested",
+      desc:"The selected NDF deal has been sent back to FO for correction."
+    });
+  });
+
+  document.getElementById("infoOkBtn").addEventListener("click", function(){
+    closeModal("infoOverlay");
+  });
+}
+
+function showInfoModal(opts){
+  var modal = document.getElementById("infoModal");
+  modal.classList.remove("success","warn");
+  modal.classList.add(opts.variant === "warn" ? "warn" : "success");
+  document.getElementById("infoIcon").textContent = opts.variant === "warn" ? "!" : "\u2713";
+  document.getElementById("infoTitle").textContent = opts.title;
+  document.getElementById("infoDesc").textContent = opts.desc;
+  openModal("infoOverlay");
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+init();
+</script>
+</body>
+</html>

@@ -36,4 +36,9 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'fo-mc-error-correction': lazy(() => import('./fo-mc-error-correction/index.tsx')),
   'mo-reject-mc-after-expiry': lazy(() => import('./mo-reject-mc-after-expiry/index.tsx')),
   'short-straddle-deal-id': lazy(() => import('./short-straddle-deal-id/index.tsx')),
+  'fx-blotter': lazy(() => import('./fx-blotter/index.tsx')),
+  'fo-fx-error-correction': lazy(() => import('./fo-fx-error-correction/index.tsx')),
+  'mo-update-bank-reference': lazy(() => import('./mo-update-bank-reference/index.tsx')),
+  'mo-fx-deal-confirmation': lazy(() => import('./mo-fx-deal-confirmation/index.tsx')),
+  'mo-confirm-ndf-fixing': lazy(() => import('./mo-confirm-ndf-fixing/index.tsx')),
 }

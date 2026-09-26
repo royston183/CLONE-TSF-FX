@@ -1,0 +1,72 @@
+/* Night mode for fo-fx-error-correction, derived from fo-fx-error-correction.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .fo-fx-error-correction {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .fo-fx-error-correction input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .fo-fx-error-correction select,
+:root[data-theme='dark'] .fo-fx-error-correction textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-fx-error-correction {
+  --white: #14212f;
+  --bg-page: #1b2b3d;
+  --border: #2a3d52;
+  --border-soft: #1b2b3d;
+  --text: #e6eef8;
+  --primary-tint: #17304a;
+  --success-tint: #113330;
+  --warning-tint: #3a2a12;
+  --purple-tint: #3a1b1e;
+  --error-tint: #3a1b1e;
+  --table-header-bg: #1b2b3d;
+  --border-strong: #3d5670;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .fo-fx-error-correction ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .fo-fx-error-correction kbd {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .drag-target.correction {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .drag-target.reverse {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-fx-error-correction tbody tr:hover .sticky-col {
+  background: #1b2b3d !important;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .rowaction-btn.danger:hover {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .note {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .btn-confirm.is-reject {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .readonly-input {
+  background: #1b2b3d !important;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .mo-remark-banner strong {
+  color: #ffbb5c;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .reversed-banner {
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .zfac-toast.error {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-fx-error-correction .zfac-toast.success {
+  border-color: #26543a;
+}

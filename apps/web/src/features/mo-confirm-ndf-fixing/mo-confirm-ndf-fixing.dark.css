@@ -1,0 +1,50 @@
+/* Night mode for mo-confirm-ndf-fixing, derived from mo-confirm-ndf-fixing.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mo-confirm-ndf-fixing {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mo-confirm-ndf-fixing select,
+:root[data-theme='dark'] .mo-confirm-ndf-fixing textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --surface-2: #1b2b3d;
+  --text: #e6eef8;
+  --sub: #a9c2dd;
+  --muted: #7f9bb8;
+  --blue-soft: #17304a;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --green-soft: #14321f;
+  --warning-soft: #3a2a12;
+  --error-soft: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing .cal-day.muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing .btn:disabled {
+  color: #7f9bb8 !important;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing table.ndf-table thead th {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing table.ndf-table thead th.no-sort:hover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing table.ndf-table tbody tr {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing table.ndf-table tbody tr.selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .mo-confirm-ndf-fixing .empty-state .icon {
+  color: #7f9bb8;
+}

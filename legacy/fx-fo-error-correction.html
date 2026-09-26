@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EC2: TSF FO Error Correction - FX</title>
+<style>
+:root{
+  --white:#ffffff;
+  --bg-page:#f7f8fa;
+  --border:#e3e7eb;
+  --border-soft:#edf0f2;
+  --text:#1f2937;
+  --text-soft:#374151;
+  --text-muted:#6b7280;
+  --text-faint:#9aa4b2;
+  --text-header:#47576f;
+  --primary:#0a6ed1;
+  --primary-dark:#085fb3;
+  --primary-tint:#e8f2fc;
+  --success:#20a454;
+  --success-tint:#dcf5ef;
+  --success-text:#1f7a54;
+  --warning-text:#a15c00;
+  --warning-tint:#fdf1dd;
+  --purple-text:#6941c6;
+  --purple-tint:#f0ebfc;
+  --error:#d43f3f;
+  --error-text:#b23a3a;
+  --error-tint:#fbe9e9;
+  --table-header-bg:#f2f4f5;
+  --radius-lg:10px;
+  --radius-md:8px;
+  --radius-sm:6px;
+  --shadow-card:0 1px 2px rgba(16,24,40,.03);
+  --shadow-pop:0 12px 28px rgba(16,24,40,.14);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+
+  /* aliases so existing markup/JS keeps working unchanged */
+  --surface:var(--white); --ink:var(--text); --ink-soft:var(--text-soft);
+  --muted:var(--text-muted); --muted-2:var(--text-faint);
+  --blue:var(--primary); --blue-dark:var(--primary-dark); --blue-pale:var(--primary-tint);
+  --green:var(--success); --green-pale:var(--success-tint);
+  --amber:var(--warning-text); --amber-pale:var(--warning-tint);
+  --red:var(--error); --red-pale:var(--error-tint);
+  --border-strong:#d3dae1; --text-faint2:var(--text-faint);
+  --shadow:var(--shadow-card); --shadow-md:var(--shadow-pop);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg-page);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+button,input,select,textarea{font-family:var(--font);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#cfd6dd;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+kbd{background:#eef1f4;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10.5px;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;align-items:center;gap:14px;padding:11px 18px;background:var(--white);
+  border-bottom:1px solid var(--border);
+}
+.topbar-logo{height:26px;width:auto;flex:none;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;}
+.topbar-code{font-size:12px;font-weight:600;color:var(--text-faint);margin-left:2px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.status-dot{width:9px;height:9px;border-radius:50%;background:var(--success);flex:none;box-shadow:0 0 0 3px var(--success-tint);}
+.btn-outline,.btn-icon{
+  height:34px;padding:0 14px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--white);
+  color:var(--text-soft);font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.btn-outline:hover,.btn-icon:hover{border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.btn-icon{width:34px;padding:0;justify-content:center;}
+main{max-width:none;margin:0;padding:16px 18px 40px;}
+
+/* ---------- panel ---------- */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);margin-bottom:16px;overflow:visible;}
+.panel-title{display:none;} /* replaced by .panel-head below */
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px 4px;flex-wrap:wrap;}
+.panel-head-left{display:flex;align-items:baseline;gap:8px;}
+.panel-head-left h2{margin:0;font-size:15px;font-weight:700;color:var(--text);}
+.dot-bullet{display:none;}
+.record-count,.badge-blue{font-size:12.5px;color:var(--text-muted);font-weight:500;background:transparent;border:0;padding:0;border-radius:0;}
+.panel-head-right{display:flex;align-items:center;gap:8px;}
+.panel-head-right .search-box input{width:260px;}
+
+/* ---------- drag-and-drop action row (replaces the old bulk action buttons
+   and the KPI/status-pill strip) ---------- */
+.drag-actions-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap;
+  padding:10px 16px;border-top:1px solid var(--border-soft);
+}
+.drag-actions-left{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;}
+.drag-hint{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+.drag-target{
+  height:34px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:700;cursor:default;
+  border:1.5px dashed var(--border-strong);background:var(--white);color:var(--text-muted);white-space:nowrap;
+  position:relative;transition:all .15s;
+}
+.drag-target.correction{color:var(--primary-dark);border-color:#bcdcf7;background:var(--primary-tint);}
+.drag-target.reverse{color:var(--error-text);border-color:#f0c6c6;background:var(--error-tint);}
+body.row-dragging .drag-target{border-style:solid;box-shadow:0 0 0 2px rgba(10,110,209,.15);}
+body.row-dragging .drag-target::after{
+  content:"Drop here";position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);
+  padding:2px 7px;border-radius:4px;background:#1f2937;color:#fff;font-size:9.5px;font-weight:600;white-space:nowrap;z-index:80;
+}
+.drag-target.drag-over{transform:translateY(-2px) scale(1.03);box-shadow:0 0 0 3px rgba(10,110,209,.25),0 8px 18px rgba(16,24,40,.14) !important;}
+.drag-target.reverse.drag-over{box-shadow:0 0 0 3px rgba(212,63,63,.22),0 8px 18px rgba(16,24,40,.14) !important;}
+.drag-actions-spacer{flex:1 1 auto;min-width:12px;}
+.drag-actions-group{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;}
+.filter-bar .search-box{width:300px;min-width:300px;}
+.filter-bar .search-box input{width:100%;height:34px;min-width:0;}
+
+/* ---------- toolbar / filters / search ---------- */
+.master-toolbar{display:block;padding:10px 16px 4px;border-top:1px solid var(--border-soft);}
+.search-box{position:relative;display:flex;align-items:center;}
+.search-box .icon{position:absolute;left:10px;color:var(--text-faint);display:flex;pointer-events:none;}
+.search-box input{
+  width:100%;height:34px;padding:0 11px 0 32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:var(--white);color:var(--text);font-size:12.5px;outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.search-box input::placeholder{color:var(--text-faint);}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+#filter-panel-body{display:block;}
+#filter-panel-body.collapsed{display:none;}
+.filter-bar{display:flex;align-items:flex-end;gap:14px;flex-wrap:nowrap;}
+.filter-bar .search-field{flex:0 0 auto;}
+.filter-bar .actions-field{flex:0 0 auto;}
+.filter-scroll{
+  flex:1 1 auto;min-width:0;display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;
+  overflow-x:auto;overflow-y:hidden;padding-bottom:2px;
+}
+.filter-field{display:flex;flex-direction:column;gap:5px;}
+.filter-field label{font-size:11px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+.filter-field input,.filter-field select{
+  height:34px;padding:0 10px;background:var(--white);border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  color:var(--text);font-size:12px;outline:none;-webkit-appearance:none;min-width:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa4b2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;
+}
+.filter-field input{width:130px;background-image:none;padding-right:10px;}
+.filter-field select{width:136px;cursor:pointer;}
+.filter-field input:focus,.filter-field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.date-range{display:flex;align-items:center;gap:6px;}
+.date-range span{font-size:11px;color:var(--text-muted);}
+.dp{position:relative;display:inline-flex;align-items:center;}
+.dp input{width:102px;padding-right:26px;cursor:pointer;}
+.dp-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-muted);padding:2px 4px;}
+.dp-popup{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:236px;background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);padding:10px 12px 12px;display:none;
+}
+.dp-popup.open{display:block;}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-head button{width:24px;height:24px;padding:0;border:0;background:var(--table-header-bg);border-radius:6px;color:var(--text);cursor:pointer;font-size:13px;}
+.dp-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.dp-month-label{font-size:12px;font-weight:700;color:var(--text);}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-dow{font-size:9.5px;font-weight:700;color:var(--text-faint);text-align:center;padding:4px 0;}
+.dp-day{font-size:11.5px;text-align:center;padding:6px 0;border-radius:6px;cursor:pointer;color:var(--text-soft);}
+.dp-day:hover{background:var(--primary-tint);color:var(--primary-dark);}
+.dp-day.muted{color:var(--text-faint);opacity:.5;cursor:default;}
+.dp-day.muted:hover{background:none;}
+.dp-day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.dp-day.today:not(.selected){border:1px solid var(--primary);}
+.filter-reset-wrap{display:flex;flex-direction:column;gap:5px;}
+.filter-spacer-label{font-size:11px;color:transparent;user-select:none;}
+.filter-reset{
+  background:var(--white);border:1px solid var(--border-strong);color:var(--text-soft);border-radius:var(--radius-sm);
+  height:34px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;
+}
+.filter-reset:hover{border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.seg-group{display:inline-flex;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;}
+.seg{padding:0 12px;height:34px;font-size:12px;font-weight:600;border:none;background:var(--white);color:var(--text-soft);cursor:pointer;border-right:1px solid var(--border-strong);}
+.seg:last-child{border-right:none;}
+.seg.active{background:var(--primary);color:#fff;}
+.seg:disabled{color:var(--text-faint);cursor:not-allowed;}
+
+.selected-count{font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap;flex:0 0 auto;min-width:64px;text-align:left;}
+
+/* ---------- table ---------- */
+.table-wrap{width:100%;max-width:100%;overflow:auto;background:var(--white);border-top:1px solid var(--border-soft);margin-top:6px;}
+#mc-table,table{width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12.5px;}
+.list-table th,.list-table td{padding:9px 12px;white-space:nowrap;text-align:left;}
+.list-table thead th{
+  position:sticky;top:0;background:var(--table-header-bg);border-bottom:1px solid var(--border);color:var(--text-header);
+  font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;z-index:5;
+}
+.list-table thead th:first-child{text-align:center;}
+.list-table thead th.sortable{cursor:pointer;user-select:none;}
+.list-table thead th.sortable:hover{color:var(--primary-dark);}
+.list-table thead th.sortable .arrow{font-size:9px;margin-left:3px;color:var(--text-faint);}
+.list-table tbody td{border-bottom:1px solid var(--border-soft);color:var(--text-soft);}
+.list-table tbody td:first-child{text-align:center;}
+.list-table tbody tr:last-child td{border-bottom:none;}
+.list-table tbody tr:hover td{background:#fafbfc;}
+.list-table tbody tr.row-checked td{background:var(--primary-tint) !important;}
+#mc-table tbody tr.actionable-row{cursor:grab;}
+#mc-table tbody tr.actionable-row:active{cursor:grabbing;}
+#mc-table tbody tr.dragging-row{opacity:.45;}
+#mc-table tbody tr.dragging-row td{background:var(--primary-tint) !important;}
+.num{font-variant-numeric:tabular-nums;text-align:right;}
+.empty-row td{text-align:center !important;color:var(--text-muted);padding:30px 12px;font-style:italic;}
+
+.sticky-col{position:sticky !important;background:var(--white) !important;z-index:2;}
+.sticky-1{left:0;width:38px;min-width:38px;}
+.sticky-2{left:38px;width:190px;min-width:190px;}
+.sticky-3{left:228px;width:130px;min-width:130px;box-shadow:3px 0 5px -3px rgba(16,24,40,.12);}
+.list-table thead th.sticky-col{z-index:6;background:var(--table-header-bg) !important;}
+tbody tr:hover .sticky-col{background:#fafbfc !important;}
+tbody tr.row-checked .sticky-col{background:var(--primary-tint) !important;}
+
+/* status shown as plain bold colored text - no pill/badge background */
+.status-cell{display:inline;font-size:12px;font-weight:700;white-space:nowrap;}
+.status-cell .dot{display:none;}
+.st-errcorr{color:var(--warning-text);}
+.st-resub{color:var(--primary-dark);}
+.st-reversed{color:var(--error-text);}
+
+.tbl-link{color:var(--primary);font-weight:700;text-decoration:none;cursor:pointer;background:none;border:none;font-size:12.5px;padding:0;}
+.tbl-link:hover{color:var(--primary-dark);text-decoration:underline;}
+.deal-id{color:var(--success-text);font-weight:700;}
+.muted-dash{color:var(--text-faint);}
+.rowaction-btn{
+  height:28px;padding:0 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--white);
+  color:var(--primary-dark);font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.rowaction-btn:hover{border-color:var(--primary);background:var(--primary-tint);}
+.rowaction-btn.danger{color:var(--error-text);}
+.rowaction-btn.danger:hover{background:var(--error-tint);border-color:#f0c6c6;}
+.rowaction-btn + .rowaction-btn{margin-left:6px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+
+/* ---------- pager ---------- */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 14px;border-top:1px solid var(--border-soft);flex-wrap:wrap;gap:10px;}
+.pager-info{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+.pager-info strong{color:var(--text);font-weight:700;}
+.pager-controls{display:flex;align-items:center;gap:5px;}
+.pager-btn{
+  min-width:30px;height:30px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--white);
+  color:var(--text-soft);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.pager-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary-dark);}
+.pager-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pager-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.pager-size{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:7px;}
+.pager-size select{
+  font-size:12px;height:30px;padding:0 24px 0 9px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa4b2'/%3E%3C/svg%3E") no-repeat right 9px center;
+  color:var(--text-soft);cursor:pointer;-webkit-appearance:none;
+}
+
+/* ---------- note / glossary ---------- */
+.note{margin:0;padding:12px 16px 14px;background:#fafbfc;border-top:1px solid var(--border-soft);font-size:11.5px;color:var(--text-muted);line-height:1.6;}
+.note strong{color:var(--text-soft);font-weight:700;}
+.term-glossary{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;}
+.term-glossary span{font-size:11px;color:var(--text-muted);}
+.term-glossary b{color:var(--text-soft);}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,26,33,.45);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+#action-overlay,#reverse-overlay{z-index:1200;}
+.modal-card{width:100%;max-height:92vh;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);overflow:hidden;display:flex;flex-direction:column;margin:0 auto;}
+.modal-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--white);border-bottom:1px solid var(--border);}
+.modal-icon{display:none;}
+.modal-header-text{min-width:0;flex:1;}
+.modal-title{font-size:16px;font-weight:700;color:var(--text);}
+.modal-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.modal-close{width:30px;height:30px;border:0;background:transparent;border-radius:6px;color:var(--text-muted);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.modal-close:hover{background:var(--table-header-bg);color:var(--text);}
+.modal-body{padding:16px 18px;background:var(--white);overflow-y:auto;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);background:var(--white);display:flex;justify-content:flex-end;gap:8px;}
+.btn-cancel,.btn-confirm{height:34px;min-height:34px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;cursor:pointer;}
+.btn-cancel{background:var(--white);border:1px solid var(--border-strong);color:var(--text);}
+.btn-cancel:hover{border-color:var(--primary);color:var(--primary-dark);}
+.btn-confirm{background:var(--primary);border:1px solid var(--primary);color:#fff;}
+.btn-confirm:hover{background:var(--primary-dark);border-color:var(--primary-dark);}
+.btn-confirm.is-reject{background:var(--white);color:var(--error-text);border-color:#f0c6c6;}
+.btn-confirm.is-reject:hover{background:var(--error-tint);}
+
+.section-label{margin:14px 0 8px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--primary-dark);}
+.section-label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--primary);}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border);}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:var(--white);margin-bottom:12px;}
+.detail-cell{padding:9px 12px;border-bottom:1px solid var(--border-soft);}
+.detail-lbl{font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:2px;}
+.detail-val{font-size:12.5px;font-weight:600;color:var(--text);}
+.detail-val.accent{color:var(--primary-dark);}
+
+.field-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:6px;}
+.field-grid .filter-field{width:auto;}
+.field-grid .filter-field input,.field-grid .filter-field select{width:100%;height:34px;}
+@media (max-width:760px){.field-grid{grid-template-columns:1fr;}}
+.hint{font-size:11.5px;color:var(--text-muted);line-height:1.5;}
+.textarea-field{width:100%;resize:vertical;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:12.5px;font-family:inherit;color:var(--text);min-height:60px;}
+.textarea-field:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.field-error{display:none;color:var(--error);font-size:11px;font-weight:600;margin-top:4px;}
+.readonly-input{background:#f6f7f9 !important;color:var(--text-muted) !important;cursor:not-allowed;}
+
+.mo-remark-banner{padding:11px 14px;margin-bottom:14px;border-radius:var(--radius-md);background:var(--warning-tint);border:1px solid #f2ddb0;color:var(--warning-text);font-size:12px;line-height:1.6;}
+.mo-remark-banner strong{color:#7a4700;}
+.locked-banner{padding:11px 14px;margin-bottom:14px;border-radius:var(--radius-md);background:var(--table-header-bg);border:1px solid var(--border);color:var(--text-muted);font-size:12px;line-height:1.6;}
+.locked-banner strong{color:var(--text);}
+.reversed-banner{padding:11px 14px;margin-bottom:14px;border-radius:var(--radius-md);background:var(--error-tint);border:1px solid #f0c6c6;color:var(--error-text);font-size:12px;line-height:1.6;}
+
+/* Old Details / New Details grid (FX Error Correction modal) */
+.oldnew-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.oldnew-col{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;background:var(--white);}
+.oldnew-head{font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.oldnew-head.new{color:var(--primary-dark);}
+.oldnew-row{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:8px;margin-bottom:7px;}
+.oldnew-row label{font-size:11px;font-weight:600;color:var(--text-muted);}
+.oldnew-row input,.oldnew-row select{width:100%;height:32px;padding:0 9px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:12px;color:var(--text);background:var(--white);}
+.oldnew-row input:focus,.oldnew-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.oldnew-row .dp{width:100%;}
+.oldnew-row .dp-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:12px;}
+@media (max-width:760px){.oldnew-grid{grid-template-columns:1fr;}}
+
+/* ---------- toast ---------- */
+.zfac-toast{
+  position:fixed;bottom:22px;right:22px;max-width:360px;background:var(--white);color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);font-size:12.5px;padding:11px 14px;opacity:0;pointer-events:none;
+  transform:translateY(8px);transition:opacity .2s,transform .2s;z-index:2000;
+}
+.zfac-toast.show{opacity:1;transform:translateY(0);}
+.zfac-toast.error{background:var(--error-tint);border-color:#f0c6c6;color:var(--error-text);}
+.zfac-toast.success{background:var(--success-tint);border-color:#bfe6cf;color:var(--success-text);}
+
+@media (max-width:1200px){
+  .panel-head{flex-direction:column;align-items:flex-start;}
+  .panel-head-right{width:100%;}
+  .panel-head-right .search-box input{width:100%;}
+}
+@media (max-width:640px){
+  .topbar{padding:10px 12px;}
+  .topbar-title{font-size:14px;}
+  main{padding:12px;}
+  .pager{flex-direction:column;align-items:stretch;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+<img class="topbar-logo" src="data:image/png;base64,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" alt="Company logo"/>
+    <span class="topbar-title">EC2: TSF FO Error Correction</span>
+    <span class="topbar-code">FX</span>
+    <div class="topbar-right">
+      <span class="status-dot" title="Demo data - live"></span>
+      <button class="btn-outline" onclick="hardRefresh()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <h2>FX Transactions &mdash; Front Office Queue</h2>
+          <span class="record-count badge-blue" id="result-count-badge">0 transactions</span>
+        </div>
+        <div class="panel-head-right">
+          <button class="btn-icon" id="btn-toggle-filters" onclick="toggleFilterPanel()" title="Show/hide filters"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <button class="btn-icon" onclick="exportCsv()" title="Download CSV"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+
+      <div class="master-toolbar">
+        <div id="filter-panel-body">
+          <div class="filter-bar">
+            <div class="filter-field search-field">
+              <label>&nbsp;</label>
+              <div class="search-box">
+                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                <input id="f-search" type="text" placeholder="Search transaction, deal ID, partner, remark..." oninput="applyFilters()"/>
+              </div>
+            </div>
+
+            <div class="filter-scroll">
+              <div class="filter-field status-filter">
+                <label for="f-status">Status</label>
+                <select id="f-status" onchange="setStatusFilter(this.value)">
+                  <option value="ALL">All statuses</option>
+                  <option value="ERRCORR">Correction Required</option>
+                  <option value="RESUB">Released to MO</option>
+                  <option value="REVERSED">Reversed</option>
+                </select>
+              </div>
+              <div class="filter-field entity-filter">
+                <label for="f-cocode">Company Code</label>
+                <select id="f-cocode" onchange="applyFilters()"><option value="ALL">All company codes</option></select>
+              </div>
+              <div class="filter-field">
+                <label for="f-trader">Trader</label>
+                <select id="f-trader" onchange="applyFilters()"><option value="ALL">All traders</option></select>
+              </div>
+              <div class="filter-field">
+                <label>Display Type</label>
+                <div class="seg-group">
+                  <button type="button" class="seg active" title="This build is scoped to FX">FX</button>
+                  <button type="button" class="seg" disabled title="Options are handled on the separate EC2 Options queue">Options</button>
+                </div>
+              </div>
+              <div class="filter-field">
+                <label>Upto Blotter Date</label>
+                <div class="date-range">
+                  <div class="dp">
+                    <input id="f-date-from" type="text" value="01-01-2026" readonly="readonly" onclick="toggleDatePicker('f-date-from')"/>
+                    <button type="button" class="dp-btn" onclick="toggleDatePicker('f-date-from')" aria-label="Open calendar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                    <div class="dp-popup" id="f-date-from-cal"></div>
+                  </div>
+                  <span>to</span>
+                  <div class="dp">
+                    <input id="f-date-to" type="text" value="31-12-2026" readonly="readonly" onclick="toggleDatePicker('f-date-to')"/>
+                    <button type="button" class="dp-btn" onclick="toggleDatePicker('f-date-to')" aria-label="Open calendar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                    <div class="dp-popup" id="f-date-to-cal"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="filter-reset-wrap">
+                <span class="filter-spacer-label">Action</span>
+                <button class="filter-reset" onclick="resetFilters()">Reset</button>
+              </div>
+            </div>
+
+            <div class="filter-field actions-field">
+              <label>&nbsp;</label>
+              <div class="drag-actions-group">
+                <button type="button" class="drag-target correction" id="drop-correction"
+                  onclick="clickCorrectionAction()"
+                  ondragover="allowActionDrop(event)" ondragenter="enterActionDrop(event)"
+                  ondragleave="leaveActionDrop(event)" ondrop="dropRowOnAction(event,'correction')"
+                  title="Drag a Correction Required row here">FX Error Correction</button>
+                <button type="button" class="drag-target reverse" id="drop-reverse"
+                  onclick="clickReverseAction()"
+                  ondragover="allowActionDrop(event)" ondragenter="enterActionDrop(event)"
+                  ondragleave="leaveActionDrop(event)" ondrop="dropRowOnAction(event,'reverse')"
+                  title="Drag one or more Correction Required rows here">Reverse</button>
+                <span class="selected-count" id="selected-count">0 selected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="list-table" id="mc-table">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-1"><input type="checkbox" id="chk-all" onclick="toggleSelectAll(this.checked)" title="Select all correctable rows"/></th>
+              <th class="left sticky-col sticky-2">Txn Status Desc</th>
+              <th class="left sortable sticky-col sticky-3" onclick="sortBy('rfha')">Transaction <span class="arrow" id="sort-rfha"></span></th>
+              <th class="left sortable" onclick="sortBy('dealId')">Deal ID <span class="arrow" id="sort-dealId"></span></th>
+              <th class="left">Deal ID Description</th>
+              <th class="left">Master Contract</th>
+              <th class="left">CoCode</th>
+              <th class="left">Company Name</th>
+              <th class="left">TSF Entity</th>
+              <th class="left">Product ty</th>
+              <th class="left">Product Type Desc</th>
+              <th class="left">Transactio</th>
+              <th class="left">Transaction Type Description</th>
+              <th class="left">Partner</th>
+              <th class="left">Partner Name</th>
+              <th class="left">Buy/Sell 1</th>
+              <th class="left">Currency 1</th>
+              <th>Amount 1</th>
+              <th class="left">Currency 2</th>
+              <th>Amount 2</th>
+              <th>Spot Rate</th>
+              <th>Swap Rate</th>
+              <th>All in Rate</th>
+              <th class="sortable" onclick="sortBy('tradeDate')">Trade Date <span class="arrow" id="sort-tradeDate"></span></th>
+              <th>Value Date</th>
+              <th>Blotter Date</th>
+              <th class="left">Bus. Area</th>
+              <th class="left">Profit Center</th>
+              <th class="left">Trader Cod</th>
+              <th class="left">Trader Name</th>
+              <th class="left">Mode Of Trade</th>
+              <th class="left">Account Cat</th>
+              <th class="left">MO Remark</th>
+              <th class="left">Changed By</th>
+              <th class="left">Changed On</th>
+              <th class="left">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mc-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager">
+        <div class="pager-size">
+          <span>Rows per page</span>
+          <select id="pager-size" onchange="changePageSize()">
+            <option value="8">8</option>
+            <option value="15" selected="selected">15</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="pager-controls" id="pager-controls"></div>
+        <div class="pager-info" id="pager-info"></div>
+      </div>
+      <div class="note">
+        <strong>Note:</strong> Each row here is one <strong>FX financial transaction</strong> (Transaction No), not a Master
+        Contract or a Deal in the abstract &mdash; a Deal ID commonly has <strong>two</strong> transaction rows (e.g. one
+        booked at the OGA/Singapore leg and one at the DMCC/Dubai leg) that together form the offsetting pair. A transaction
+        lands here as <strong>Correction Required</strong> when Mid-Office sends it back &mdash; read <em>MO Remark</em>
+        for their reason. Use <strong>FX Error Correction</strong> to update the flagged fields (Business Partner, rates,
+        amounts, dates, Business Area, etc. &mdash; mirroring the SAP "Old Details / New Details" popup) and resubmit, or
+        <strong>Reverse</strong> if the transaction should be cancelled outright. Only <strong>Correction Required</strong> rows
+        can be selected; this queue is scoped to <strong>Display Type: FX</strong> &mdash; Options-type transactions are handled
+        on the separate Options queue and are not shown here.
+        <div class="term-glossary">
+          <span><b>Deal ID</b> &ndash; the Front Office booking identifier that links two offsetting transactions.</span>
+          <span><b>Transaction No</b> &ndash; the individual SAP TRM financial transaction (rfha) this screen corrects.</span>
+          <span><b>Master Contract</b> &ndash; the underlying trade contract this transaction's FX exposure is booked against.</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<div class="zfac-toast" id="toast"></div>
+
+<!-- ======================= FX ERROR CORRECTION MODAL ======================= -->
+<div class="modal-overlay" id="correct-overlay" onclick="overlayClick(event,'correct-overlay')">
+  <div class="modal-card" style="max-width:820px;">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title" id="correct-title">FX Error Correction</div>
+        <div class="modal-subtitle" id="correct-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('correct-overlay')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="correct-remark-banner"></div>
+
+      <div class="field-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:10px;">
+        <div class="filter-field"><label>Company Code</label><input id="ec-cocode-display" type="text" class="readonly-input" disabled/></div>
+        <div class="filter-field"><label>Transaction No</label><input id="ec-txn-display" type="text" class="readonly-input" disabled/></div>
+      </div>
+
+      <div class="section-label">Update BP</div>
+      <div class="oldnew-grid">
+        <div class="oldnew-col">
+          <div class="oldnew-head">Old Details</div>
+          <div class="oldnew-row"><label>Business Partner</label><input id="old-partner" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>All in Rate</label><input id="old-allinrate" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Swap Rate</label><input id="old-swaprate" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Spot Rate</label><input id="old-spotrate" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Amount 1</label><input id="old-amount1" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Amount 2</label><input id="old-amount2" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Value Date</label><input id="old-valuedate" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Business Area</label><input id="old-busarea" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Profit Center</label><input id="old-profitcenter" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Account Cat</label><input id="old-acctcat" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Mode Of Trade</label><input id="old-modeoftrade" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Master Contract</label><input id="old-mc" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Deal ID</label><input id="old-dealid" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Trade Date</label><input id="old-tradedate" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Blotter Date</label><input id="old-blotterdate" class="readonly-input" disabled/></div>
+        </div>
+        <div class="oldnew-col">
+          <div class="oldnew-head new">New Details</div>
+          <div class="oldnew-row"><label>Business Partner</label><select id="new-partner"></select></div>
+          <div class="oldnew-row"><label>All in Rate</label><input id="new-allinrate" type="text" onblur="ecRateBlur('new-allinrate')"/></div>
+          <div class="oldnew-row"><label>Swap Rate</label><input id="new-swaprate" type="text" onblur="ecRateBlur('new-swaprate')"/></div>
+          <div class="oldnew-row"><label>Spot Rate</label><input id="new-spotrate" type="text" onblur="ecRateBlur('new-spotrate')"/></div>
+          <div class="oldnew-row"><label>Amount 1</label><input id="new-amount1" type="text" onblur="ecAmountBlur()"/></div>
+          <div class="oldnew-row"><label>Amount 2 <span class="hint" style="font-weight:400;">(derived)</span></label><input id="new-amount2" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Value Date</label>
+            <div class="dp"><input id="new-valuedate" type="text" readonly="readonly" onclick="toggleDatePicker('new-valuedate')" style="width:100%;"/>
+              <button type="button" class="dp-btn" onclick="toggleDatePicker('new-valuedate')" aria-label="Open calendar">&#128197;</button>
+              <div class="dp-popup" id="new-valuedate-cal"></div></div>
+          </div>
+          <div class="oldnew-row"><label>Business Area</label><select id="new-busarea" onchange="ecBusinessAreaChanged()"></select></div>
+          <div class="oldnew-row"><label>Profit Center <span class="hint" style="font-weight:400;">(derived)</span></label><input id="new-profitcenter" class="readonly-input" disabled/></div>
+          <div class="oldnew-row"><label>Account Cat</label><select id="new-acctcat"></select></div>
+          <div class="oldnew-row"><label>Mode Of Trade</label><select id="new-modeoftrade"></select></div>
+          <div class="oldnew-row"><label>Master Contract</label><input id="new-mc" type="text"/></div>
+          <div class="oldnew-row"><label>Deal ID</label><input id="new-dealid" type="text"/></div>
+          <div class="oldnew-row"><label>Trade Date</label>
+            <div class="dp"><input id="new-tradedate" type="text" readonly="readonly" onclick="toggleDatePicker('new-tradedate')" style="width:100%;"/>
+              <button type="button" class="dp-btn" onclick="toggleDatePicker('new-tradedate')" aria-label="Open calendar">&#128197;</button>
+              <div class="dp-popup" id="new-tradedate-cal"></div></div>
+          </div>
+          <div class="oldnew-row"><label>Blotter Date</label>
+            <div class="dp"><input id="new-blotterdate" type="text" readonly="readonly" onclick="toggleDatePicker('new-blotterdate')" style="width:100%;"/>
+              <button type="button" class="dp-btn" onclick="toggleDatePicker('new-blotterdate')" aria-label="Open calendar">&#128197;</button>
+              <div class="dp-popup" id="new-blotterdate-cal"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px;">Tip: type a shorthand amount like <kbd>5M</kbd> (5 million) or <kbd>250T</kbd> (250 thousand) for Amount 1 and it converts automatically, just like the SAP amount field. Amount 2 and Profit Center recompute from Amount 1/Rate and Business Area, matching the SAP screen's derived fields.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('correct-overlay')" id="ec-cancel-btn">Cancel</button>
+      <button class="btn-confirm is-reject" id="ec-reverse-btn" onclick="switchToReverseFromCorrection()">Reverse Instead</button>
+      <button class="btn-confirm" id="ec-submit-btn" onclick="submitCorrection()">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= REVERSE CONFIRMATION MODAL ======================= -->
+<div class="modal-overlay" id="reverse-overlay" onclick="overlayClick(event,'reverse-overlay')">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-title">Reverse Transaction(s)</div>
+        <div class="modal-subtitle" id="reverse-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('reverse-overlay')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="reverse-body">
+      <div class="detail-grid" id="reverse-detail-grid" style="margin-bottom:12px;"></div>
+      <div class="note" style="margin-bottom:12px;">
+        <strong>Note:</strong> This calls the equivalent of <code>BAPI_FTR_FXT_REVERSE</code> &mdash; reversing is final in
+        this demo and the transaction leaves the Front Office queue entirely.
+      </div>
+      <div class="filter-field" style="width:100%;">
+        <label for="reverse-reason">Remark (optional)</label>
+        <textarea id="reverse-reason" class="textarea-field" rows="2" placeholder="Optional note for the audit trail."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('reverse-overlay')">Cancel</button>
+      <button class="btn-confirm is-reject" onclick="confirmReverse()">Yes, Reverse</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   MASTER / REFERENCE DATA
+   Drawn from the ZSGTSF_RFX_OPT_FO functional spec (EC2: TSF FO Error
+   Correction - FX & Options) - Company Codes, Business Areas, Partners,
+   Product/Transaction Types, Account Categories and Mode of Trade values
+   below mirror the value-help popups and ALV columns captured there.
+   This build's Display Type is fixed to FX (Spot/Forward); Options-type
+   transactions (a separate correction popup with strike/premium fields)
+   are out of scope per instruction and are not modeled here.
+   ========================================================================= */
+
+var COMPANY_CODES = [
+  {code:"SG03", name:"Olam Global Agri Pte. Ltd", entity:"OGA"},
+  {code:"AE13", name:"Olam International DMCC",   entity:"DMCC"},
+  {code:"IN11", name:"Olam Agri India Pvt Ltd",    entity:"OSIPL"}
+];
+function coOf(code){ return COMPANY_CODES.find(function(c){ return c.code===code; }); }
+
+var BUSINESS_AREAS = [
+  {code:"0223", name:"OLAM AGRI INDIA PRIVATE LIMITED", profitCenter:"SG032003", profitCenterDesc:"SG032003 - TSF-FX"},
+  {code:"0254", name:"OLAM (THAILAND) LIMITED",          profitCenter:"TH102003", profitCenterDesc:"TH102003 - TSF-FX"},
+  {code:"0615", name:"OLAM INTERNATIONAL DMCC",          profitCenter:"AE1340",   profitCenterDesc:"AE1340 - TSF-FX"},
+  {code:"0975", name:"SINGAPORE",                        profitCenter:"SG032003", profitCenterDesc:"SG032003 - TSF-FX"},
+  {code:"3812", name:"Olam Outspan TSF",                 profitCenter:"IN1114",   profitCenterDesc:"IN1114 - TSF-FX"}
+];
+function baOf(code){ return BUSINESS_AREAS.find(function(b){ return b.code===code; }); }
+
+var PARTNERS = [
+  {code:"0660012172", name:"BARCLAYS BANK PLC"},
+  {code:"0660012171", name:"AUSTRALIA AND NEW ZEALAND BANKING GROUP"},
+  {code:"0660012173", name:"JPMORGAN CHASE BANK NA SINGAPORE"}
+];
+function partnerOf(code){ return PARTNERS.find(function(p){ return p.code===code; }); }
+
+/* FX-only Product Type / Transaction Type combinations (Options-type 12C/12D
+   strategies with strike & premium fields are excluded from this build). */
+var PRODUCT_TYPES = [
+  {code:"12A", desc:"FX Spot: External"},
+  {code:"12B", desc:"FX Forwards: External"}
+];
+var TRANSACTION_TYPES = [
+  {code:"604", desc:"Spot-Exercise Option TSF", prodType:"12A"},
+  {code:"605", desc:"Spot-TSF",                 prodType:"12A"},
+  {code:"619", desc:"Forward-TSF",              prodType:"12B"}
+];
+function txnTypeOf(code){ return TRANSACTION_TYPES.find(function(t){ return t.code===code; }); }
+function prodTypeOf(code){ return PRODUCT_TYPES.find(function(p){ return p.code===code; }); }
+
+var ACCOUNT_CATS = [
+  {code:"1000", desc:"Trading"}, {code:"2000", desc:"Equity"}, {code:"3000", desc:"Overheads"}, {code:"4000", desc:"Loans"}
+];
+var MODE_OF_TRADE = ["360T", "BARX", "EMAIL-PHONE", "FXALL", "JPMC", "PLUTO"];
+var TRADERS = [
+  {code:"C14", name:"Ashon V"}, {code:"C18", name:"Terry Tay"}, {code:"C27", name:"Akshay M"}, {code:"C28", name:"Nidhi S"}
+];
+function traderOf(code){ return TRADERS.find(function(t){ return t.code===code; }); }
+
+var STATUS = { ERRCORR:"04-MO->FO: Correction Required", RESUB:"02-Released to MO", REVERSED:"15-Reversed" };
+var STATUS_KEY = {}; STATUS_KEY[STATUS.ERRCORR]="ERRCORR"; STATUS_KEY[STATUS.RESUB]="RESUB"; STATUS_KEY[STATUS.REVERSED]="REVERSED";
+var STATUS_SHORT = {}; STATUS_SHORT[STATUS.ERRCORR]="Correction Required"; STATUS_SHORT[STATUS.RESUB]="Released to MO"; STATUS_SHORT[STATUS.REVERSED]="Reversed";
+function isActionable(mc){ return mc.status === STATUS.ERRCORR; }
+
+function fmtNum(n){
+  var neg = n<0; n = Math.abs(n);
+  var parts = n.toFixed(2).split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (neg?"-":"") + parts[0] + "." + parts[1];
+}
+var MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(d){
+  var dd = String(d.getDate()).padStart(2,"0");
+  var mm = String(d.getMonth()+1).padStart(2,"0");
+  return dd + "-" + mm + "-" + d.getFullYear();
+}
+function parseDate(s){ var p = s.split("."); return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10)); }
+function safeParseDate(s){
+  if (!s) return null;
+  var m = s.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+  var day = parseInt(m[1],10), monthIdx = parseInt(m[2],10)-1, year = parseInt(m[3],10);
+  if (monthIdx < 0 || monthIdx > 11 || day < 1 || day > 31) return null;
+  var d = new Date(year, monthIdx, day);
+  if (d.getFullYear() !== year || d.getMonth() !== monthIdx || d.getDate() !== day) return null;
+  return d;
+}
+function addDays(d, n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function dealDesc(traderCode, entity, tradeDate, entityString){
+  var t = traderOf(traderCode);
+  return t.name.split(" ")[0] + " " + t.name.split(" ").slice(1).map(function(w){return w[0]+".";}).join("") +
+    "_" + entity + "_" + tradeDate.getFullYear() + "/" + entityString;
+}
+
+/* =========================================================================
+   SEED DATA
+   Deal IDs / Transaction numbers / company codes / partners / rates below
+   are drawn from the captured "EC2: TSF FO Error Correction" list screen
+   and "FX Error Correction" popup (e.g. Deal 1100002634 = txn 6005000001714
+   at SG03/OGA + txn 6005000000056 at AE13/DMCC, both vs Barclays); the
+   remaining rows extend the same pattern with new dummy values to round
+   out the FO queue and show the full Correction Required / Released to MO
+   / Reversed lifecycle, which no single screenshot captured mid-flow.
+   ========================================================================= */
+var TXN_SEED = [
+  // Deal 1100002634 - Spot pair, OGA <-> DMCC, vs Barclays
+  {rfha:"6005000001714", dealId:"1100002634", mc:"2000002317", coCode:"SG03", prodType:"12A", txnType:"604", partner:"0660012172",
+   ccy1:"USD", amt1:1000.00, ccy2:"INR", spot:91.5, swap:0, allIn:91.5, tradeDate:"31.03.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C28", acctCat:"1000", mot:"BARX", status:"ERRCORR",
+   moRemark:"Spot Rate looks stale versus today's market close - please re-verify and resubmit."},
+  {rfha:"6005000000056", dealId:"1100002634", mc:"2000002317", coCode:"AE13", prodType:"12A", txnType:"605", partner:"0660012172",
+   ccy1:"INR", amt1:91600.00, ccy2:"USD", spot:91.5, swap:0, allIn:91.5, tradeDate:"31.03.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C28", acctCat:"1000", mot:"BARX", status:"ERRCORR",
+   moRemark:"Opposite Amount does not tie back to the Spot Rate on the paired leg - please recompute."},
+
+  // Deal 1100002617 - Forward pair, both legs OGA/SG03, vs ANZ
+  {rfha:"6205000003601", dealId:"1100002617", mc:"2000002305", coCode:"SG03", prodType:"12B", txnType:"619", partner:"0660012171",
+   ccy1:"USD", amt1:1000000.00, ccy2:"THB", spot:34.0, swap:0, allIn:34.0, tradeDate:"05.03.2026", valueDateOff:301, blotterOff:0,
+   busArea:"0254", trader:"C28", acctCat:"1000", mot:"360T", status:"ERRCORR",
+   moRemark:"Business Area 0254 does not match this counterparty's booking desk - please confirm."},
+  {rfha:"6205000003602", dealId:"1100002617", mc:"2000002305", coCode:"SG03", prodType:"12B", txnType:"619", partner:"0660012171",
+   ccy1:"USD", amt1:1000000.00, ccy2:"THB", spot:35.0, swap:0, allIn:35.0, tradeDate:"05.03.2026", valueDateOff:301, blotterOff:0,
+   busArea:"0254", trader:"C28", acctCat:"1000", mot:"360T", status:"ERRCORR",
+   moRemark:"All-in Rate on the offsetting leg is wider than the approved spread - please re-quote."},
+
+  // Deal 1100002761 - single leg, OGA/SG03, vs JPMorgan
+  {rfha:"6205000003772", dealId:"1100002761", mc:"2000002310", coCode:"SG03", prodType:"12B", txnType:"619", partner:"0660012173",
+   ccy1:"USD", amt1:2000.00, ccy2:"THB", spot:32.35, swap:0, allIn:32.35, tradeDate:"01.01.2026", valueDateOff:25, blotterOff:0,
+   busArea:"0254", trader:"C28", acctCat:"1000", mot:"JPMC", status:"ERRCORR",
+   moRemark:"Value Date falls on a bank holiday in Thailand - please shift to the next business day."},
+
+  // Deal 1100002318 - single leg, OSIPL/IN11, vs Barclays
+  {rfha:"6205000000529", dealId:"1100002318", mc:"2000002298", coCode:"IN11", prodType:"12B", txnType:"619", partner:"0660012172",
+   ccy1:"USD", amt1:1000.00, ccy2:"INR", spot:33.0, swap:0, allIn:33.0, tradeDate:"13.01.2026", valueDateOff:24, blotterOff:0,
+   busArea:"3812", trader:"C27", acctCat:"1000", mot:"EMAIL-PHONE", status:"ERRCORR",
+   moRemark:"Master Contract linked does not belong to Origin Entity OSIPL - please correct the link."},
+
+  {rfha:"6005000001820", dealId:"1100002745", mc:"2000002340", coCode:"SG03", prodType:"12A", txnType:"605", partner:"0660012172",
+   ccy1:"USD", amt1:500.00, ccy2:"INR", spot:91.5, swap:0, allIn:91.5, tradeDate:"18.09.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C18", acctCat:"4000", mot:"BARX", status:"ERRCORR",
+   moRemark:"Account Category selected (Loans) is inconsistent with a Spot FX booking - please correct."},
+
+  {rfha:"6205000003890", dealId:"1100002752", mc:"2000002344", coCode:"AE13", prodType:"12B", txnType:"619", partner:"0660012171",
+   ccy1:"USD", amt1:750000.00, ccy2:"AED", spot:3.6733, swap:0, allIn:3.6733, tradeDate:"20.09.2026", valueDateOff:60, blotterOff:0,
+   busArea:"0615", trader:"C14", acctCat:"1000", mot:"FXALL", status:"ERRCORR",
+   moRemark:"Trade Date is after the Value Date on this leg - please correct the sequence."},
+
+  {rfha:"6005000001850", dealId:"1100002760", mc:"2000002350", coCode:"SG03", prodType:"12A", txnType:"604", partner:"0660012173",
+   ccy1:"USD", amt1:3200.00, ccy2:"INR", spot:88.9, swap:0, allIn:88.9, tradeDate:"22.09.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C28", acctCat:"1000", mot:"PLUTO", status:"ERRCORR",
+   moRemark:"Transaction Type 604 requires an Option reference - please confirm this is a Spot booking."},
+
+  {rfha:"6205000003910", dealId:"1100002765", mc:"2000002352", coCode:"IN11", prodType:"12B", txnType:"619", partner:"0660012172",
+   ccy1:"USD", amt1:15000.00, ccy2:"INR", spot:89.2, swap:0, allIn:89.2, tradeDate:"24.09.2026", valueDateOff:75, blotterOff:0,
+   busArea:"3812", trader:"C27", acctCat:"1000", mot:"360T", status:"ERRCORR",
+   moRemark:"Profit Center does not match the Business Area configured for entity OSIPL - please re-derive."},
+
+  // Released to MO (corrected)
+  {rfha:"6005000001680", dealId:"1100002290", mc:"2000002280", coCode:"SG03", prodType:"12A", txnType:"605", partner:"0660012172",
+   ccy1:"USD", amt1:2500.00, ccy2:"INR", spot:91.0, swap:0, allIn:91.0, tradeDate:"05.09.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C28", acctCat:"1000", mot:"BARX", status:"RESUB", changedOffset:4,
+   moRemark:"Spot Rate mismatch versus market - please re-verify."},
+  {rfha:"6205000000480", dealId:"1100002295", mc:"2000002283", coCode:"IN11", prodType:"12B", txnType:"619", partner:"0660012172",
+   ccy1:"USD", amt1:4000.00, ccy2:"INR", spot:33.0, swap:0, allIn:33.0, tradeDate:"06.09.2026", valueDateOff:25, blotterOff:0,
+   busArea:"3812", trader:"C27", acctCat:"1000", mot:"EMAIL-PHONE", status:"RESUB", changedOffset:5,
+   moRemark:"Master Contract link did not match Origin Entity - please correct."},
+
+  // Reversed
+  {rfha:"6205000003550", dealId:"1100002270", mc:"2000002265", coCode:"SG03", prodType:"12B", txnType:"619", partner:"0660012171",
+   ccy1:"USD", amt1:600000.00, ccy2:"THB", spot:34.0, swap:0, allIn:34.0, tradeDate:"03.09.2026", valueDateOff:120, blotterOff:0,
+   busArea:"0254", trader:"C28", acctCat:"1000", mot:"360T", status:"REVERSED", changedOffset:6,
+   moRemark:"Shipment window this forward was hedging has been cancelled - please review."},
+  {rfha:"6005000001900", dealId:"1100002402", mc:"2000002390", coCode:"SG03", prodType:"12A", txnType:"604", partner:"0660012173",
+   ccy1:"USD", amt1:1200.00, ccy2:"INR", spot:91.5, swap:0, allIn:91.5, tradeDate:"08.09.2026", valueDateOff:2, blotterOff:0,
+   busArea:"0223", trader:"C18", acctCat:"1000", mot:"PLUTO", status:"REVERSED", changedOffset:7,
+   moRemark:"GT Commodity underlying this hedge no longer matches the shipment - please review."}
+];
+
+function buildTransactions(){
+  return TXN_SEED.map(function(s){
+    var co = coOf(s.coCode);
+    var ba = baOf(s.busArea);
+    var tt = txnTypeOf(s.txnType);
+    var pt = prodTypeOf(s.prodType);
+    var tradeDate = parseDate(s.tradeDate);
+    var valueDate = addDays(tradeDate, s.valueDateOff);
+    var blotterDate = addDays(tradeDate, s.blotterOff);
+    var amt2 = s.amt1 * s.spot;
+    return {
+      rfha: s.rfha,
+      dealId: s.dealId,
+      dealIdDesc: dealDesc(s.trader, co.entity, tradeDate, co.entity + "-" + (co.entity==="OGA"?"DMCC-OSIPL":co.entity==="DMCC"?"OGA-OSIPL":"OGA-DMCC")),
+      mc: s.mc,
+      coCode: s.coCode,
+      companyName: co.name,
+      tsfEntity: co.entity,
+      prodType: s.prodType,
+      prodTypeDesc: pt.desc,
+      txnType: s.txnType,
+      txnTypeDesc: tt.desc,
+      partnerCode: s.partner,
+      partnerName: partnerOf(s.partner).name,
+      buySell1: "Buy",
+      ccy1: s.ccy1,
+      amt1: s.amt1,
+      buySell2: "Sell",
+      ccy2: s.ccy2,
+      amt2: amt2,
+      spotRate: s.spot,
+      swapRate: s.swap,
+      allInRate: s.allIn,
+      tradeDate: tradeDate,
+      valueDate: valueDate,
+      blotterDate: blotterDate,
+      busArea: s.busArea,
+      busAreaDesc: ba.name,
+      profitCenter: ba.profitCenter,
+      profitCenterDesc: ba.profitCenterDesc,
+      traderCode: s.trader,
+      traderName: traderOf(s.trader).name,
+      modeOfTrade: s.mot,
+      acctCat: s.acctCat,
+      status: STATUS[s.status],
+      moRemark: s.moRemark || "",
+      changedBy: s.status === "ERRCORR" ? "" : "FO_REVIEWER",
+      changedOn: s.status === "ERRCORR" ? null : addDays(tradeDate, s.changedOffset || 3)
+    };
+  });
+}
+var TRANSACTIONS = buildTransactions();
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+var filteredTxns = [];
+var checkedSet = {};
+var statusFilter = "ALL";
+var sortKey = "rfha";
+var sortDir = -1;
+var pageSize = 15;
+var pageIndex = 1;
+var correctingRfha = null;
+var reverseScope = null;
+
+var $ = function(id){ return document.getElementById(id); };
+
+/* =========================================================================
+   INIT DROPDOWNS
+   ========================================================================= */
+function initDropdowns(){
+  var coSel = $("f-cocode");
+  coSel.innerHTML = '<option value="ALL">All company codes</option>';
+  COMPANY_CODES.forEach(function(c){
+    var o = document.createElement("option"); o.value = c.code; o.textContent = c.code + " - " + c.name; coSel.appendChild(o);
+  });
+  var trSel = $("f-trader");
+  trSel.innerHTML = '<option value="ALL">All traders</option>';
+  TRADERS.forEach(function(t){
+    var o = document.createElement("option"); o.value = t.code; o.textContent = t.code + " - " + t.name; trSel.appendChild(o);
+  });
+}
+
+window.toggleFilterPanel = function(){
+  $("filter-panel-body").classList.toggle("collapsed");
+};
+window.exportCsv = function(){
+  var cols = ["rfha","dealId","dealIdDesc","mc","coCode","companyName","tsfEntity","prodType","prodTypeDesc",
+    "txnType","txnTypeDesc","partnerCode","partnerName","ccy1","amt1","ccy2","amt2","spotRate","swapRate","allInRate",
+    "busArea","busAreaDesc","profitCenterDesc","traderCode","traderName","modeOfTrade","acctCat","moRemark"];
+  var header = ["Transaction","Deal ID","Deal ID Description","Master Contract","CoCode","Company Name","TSF Entity",
+    "Product ty","Product Type Desc","Transactio","Transaction Type Description","Partner","Partner Name","Currency 1",
+    "Amount 1","Currency 2","Amount 2","Spot Rate","Swap Rate","All in Rate","Bus. Area","Bus. Area Desc","Profit Center",
+    "Trader Cod","Trader Name","Mode Of Trade","Account Cat","MO Remark","Txn Status Desc","Trade Date","Value Date","Blotter Date"];
+  function csvEsc(v){ v = String(v==null?"":v); return /[",\n]/.test(v) ? ('"' + v.replace(/"/g,'""') + '"') : v; }
+  var lines = [header.join(",")];
+  filteredTxns.forEach(function(t){
+    var row = cols.map(function(c){ return csvEsc(t[c]); });
+    row.push(csvEsc(STATUS_SHORT[t.status]));
+    row.push(csvEsc(fmtDate(t.tradeDate)));
+    row.push(csvEsc(fmtDate(t.valueDate)));
+    row.push(csvEsc(fmtDate(t.blotterDate)));
+    lines.push(row.join(","));
+  });
+  var blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8;"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "fx-error-correction-export.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setStatus("Exported " + filteredTxns.length + " row(s) to CSV.", "success");
+};
+
+/* =========================================================================
+   FILTERING
+   ========================================================================= */
+window.setStatusFilter = function(key){
+  statusFilter = key;
+  var sel = $("f-status");
+  if (sel) sel.value = key;
+  applyFilters();
+};
+/* Every value rendered anywhere in a row's table cells, in one place, so the
+   search box can genuinely match against every column instead of a hand
+   picked subset that risks drifting out of sync with the table markup. */
+function rowSearchValues(t){
+  var acctCatDesc = (ACCOUNT_CATS.find(function(a){ return a.code===t.acctCat; }) || {}).desc || "";
+  return [
+    STATUS_SHORT[t.status], t.rfha, t.dealId, t.dealIdDesc, t.mc, t.coCode, t.companyName, t.tsfEntity,
+    t.prodType, t.prodTypeDesc, t.txnType, t.txnTypeDesc, t.partnerCode, t.partnerName,
+    t.buySell1, t.ccy1, fmtNum(t.amt1), t.buySell2, t.ccy2, fmtNum(t.amt2),
+    t.spotRate.toFixed(6), t.swapRate.toFixed(6), t.allInRate.toFixed(6),
+    fmtDate(t.tradeDate), fmtDate(t.valueDate), fmtDate(t.blotterDate),
+    t.busArea, t.busAreaDesc, t.profitCenter, t.profitCenterDesc,
+    t.traderCode, t.traderName, t.modeOfTrade, t.acctCat, acctCatDesc,
+    t.moRemark, t.changedBy, t.changedOn ? fmtDate(t.changedOn) : ""
+  ];
+}
+function matchesFilters(t, p){
+  if (t.blotterDate < p.from || t.blotterDate > p.to) return false;
+  if (p.cocode !== "ALL" && t.coCode !== p.cocode) return false;
+  if (p.trader !== "ALL" && t.traderCode !== p.trader) return false;
+  if (p.status !== "ALL" && STATUS_KEY[t.status] !== p.status) return false;
+  if (p.q){
+    var hay = rowSearchValues(t).join(" ").toLowerCase();
+    if (hay.indexOf(p.q) === -1) return false;
+  }
+  return true;
+}
+window.applyFilters = function(){
+  var p = {
+    from: safeParseDate($("f-date-from").value) || new Date(1900,0,1),
+    to: safeParseDate($("f-date-to").value) || new Date(2999,0,1),
+    cocode: $("f-cocode").value,
+    trader: $("f-trader").value,
+    status: statusFilter,
+    q: $("f-search").value.trim().toLowerCase()
+  };
+  var scope = TRANSACTIONS.filter(function(t){ return matchesFilters(t, {from:p.from,to:p.to,cocode:p.cocode,trader:p.trader,status:"ALL",q:p.q}); });
+  filteredTxns = scope.filter(function(t){ return p.status === "ALL" || STATUS_KEY[t.status] === p.status; });
+
+  Object.keys(checkedSet).forEach(function(k){
+    var t = TRANSACTIONS.find(function(m){ return m.rfha === k; });
+    if (!t || !isActionable(t)) delete checkedSet[k];
+  });
+
+  pageIndex = 1;
+  sortRows();
+  renderTable();
+  updateCommonActions();
+};
+window.resetFilters = function(){
+  $("f-search").value = "";
+  $("f-cocode").value = "ALL";
+  $("f-trader").value = "ALL";
+  $("f-date-from").value = "01-01-2026";
+  $("f-date-to").value = "31-12-2026";
+  setStatusFilter("ALL");
+};
+
+/* =========================================================================
+   GENERIC CUSTOM DATE PICKER (dd-mm-yyyy) - shared by the filter bar and the
+   Value/Trade/Blotter Date fields inside the FX Error Correction modal.
+   ========================================================================= */
+var DOW_LABELS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+var dpViewMonth = {};
+function dpPopupId(fieldId){ return fieldId + "-cal"; }
+function daysInMonth(y, m){ return new Date(y, m+1, 0).getDate(); }
+function renderCalendar(fieldId){
+  var view = dpViewMonth[fieldId];
+  var y = view.getFullYear(), m = view.getMonth();
+  var firstDow = new Date(y, m, 1).getDay();
+  var totalDays = daysInMonth(y, m);
+  var prevMonthDays = daysInMonth(y, m === 0 ? 11 : m - 1);
+  var selected = safeParseDate($(fieldId).value);
+  var today = new Date();
+  var cells = [];
+  for (var i = 0; i < firstDow; i++){ cells.push('<div class="dp-day muted">' + (prevMonthDays - firstDow + 1 + i) + '</div>'); }
+  for (var d = 1; d <= totalDays; d++){
+    var cls = "dp-day";
+    var isSel = selected && selected.getFullYear()===y && selected.getMonth()===m && selected.getDate()===d;
+    var isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
+    if (isSel) cls += " selected"; else if (isToday) cls += " today";
+    cells.push('<div class="' + cls + '" onclick="event.stopPropagation();pickDate(\'' + fieldId + '\',' + y + ',' + m + ',' + d + ')">' + d + '</div>');
+  }
+  var trailing = (7 - (cells.length % 7)) % 7;
+  for (var n = 1; n <= trailing; n++){ cells.push('<div class="dp-day muted">' + n + '</div>'); }
+  $(dpPopupId(fieldId)).innerHTML =
+    '<div class="dp-head">' +
+      '<button type="button" onclick="event.stopPropagation();shiftMonth(\'' + fieldId + '\',-1)">&lsaquo;</button>' +
+      '<span class="dp-month-label">' + MONTH_ABBR[m] + ' ' + y + '</span>' +
+      '<button type="button" onclick="event.stopPropagation();shiftMonth(\'' + fieldId + '\',1)">&rsaquo;</button>' +
+    '</div>' +
+    '<div class="dp-grid">' + DOW_LABELS.map(function(dw){ return '<div class="dp-dow">' + dw + '</div>'; }).join("") + cells.join("") + '</div>';
+}
+window.toggleDatePicker = function(fieldId){
+  var openId = dpPopupId(fieldId);
+  var willOpen = !$(openId).classList.contains("open");
+  document.querySelectorAll(".dp-popup.open").forEach(function(el){ el.classList.remove("open"); });
+  if (willOpen){
+    var current = safeParseDate($(fieldId).value) || new Date();
+    dpViewMonth[fieldId] = new Date(current.getFullYear(), current.getMonth(), 1);
+    renderCalendar(fieldId);
+    $(openId).classList.add("open");
+  }
+};
+window.shiftMonth = function(fieldId, delta){
+  var view = dpViewMonth[fieldId];
+  dpViewMonth[fieldId] = new Date(view.getFullYear(), view.getMonth() + delta, 1);
+  renderCalendar(fieldId);
+};
+window.pickDate = function(fieldId, y, m, d){
+  $(fieldId).value = fmtDate(new Date(y, m, d));
+  $(dpPopupId(fieldId)).classList.remove("open");
+  if (fieldId === "f-date-from" || fieldId === "f-date-to") applyFilters();
+};
+document.addEventListener("click", function(e){
+  var path = typeof e.composedPath === "function" ? e.composedPath() : [e.target];
+  var insideDp = path.some(function(node){ return node && node.classList && node.classList.contains("dp"); });
+  if (!insideDp){ document.querySelectorAll(".dp-popup.open").forEach(function(el){ el.classList.remove("open"); }); }
+});
+
+/* =========================================================================
+   SORTING
+   ========================================================================= */
+window.sortBy = function(key){
+  if (sortKey === key) sortDir = -sortDir; else { sortKey = key; sortDir = 1; }
+  sortRows();
+  renderTable();
+  document.querySelectorAll(".list-table thead .arrow").forEach(function(el){ el.textContent = ""; });
+  var arrowEl = $("sort-" + key);
+  if (arrowEl) arrowEl.textContent = sortDir === 1 ? "\u25B2" : "\u25BC";
+};
+function sortRows(){
+  filteredTxns.sort(function(a,b){
+    var av = a[sortKey], bv = b[sortKey];
+    if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return 1 * sortDir;
+    return 0;
+  });
+}
+
+/* =========================================================================
+   TABLE / PAGER RENDER
+   ========================================================================= */
+function statusCell(status){
+  var key = STATUS_KEY[status];
+  var cls = key === "RESUB" ? "st-resub" : key === "REVERSED" ? "st-reversed" : "st-errcorr";
+  return '<span class="status-cell ' + cls + '">' + STATUS_SHORT[status] + '</span>';
+}
+function renderTable(){
+  $("result-count-badge").textContent = filteredTxns.length + " transaction" + (filteredTxns.length===1?"":"s");
+  var totalPages = Math.max(1, Math.ceil(filteredTxns.length / pageSize));
+  if (pageIndex > totalPages) pageIndex = totalPages;
+  var startIdx = (pageIndex - 1) * pageSize;
+  var pageRows = filteredTxns.slice(startIdx, startIdx + pageSize);
+
+  if (!pageRows.length){
+    $("mc-tbody").innerHTML = '<tr class="empty-row"><td colspan="35">No transactions match the selection criteria.</td></tr>';
+  } else {
+    $("mc-tbody").innerHTML = pageRows.map(function(t){
+      var eligible = isActionable(t);
+      var checked = !!checkedSet[t.rfha];
+      var actions = eligible
+        ? ('<button class="rowaction-btn" onclick="openCorrection(\'' + t.rfha + '\')">FX Error Correction</button>' +
+           '<button class="rowaction-btn danger" onclick="askReverse(\'' + t.rfha + '\')">Reverse</button>')
+        : '<button class="rowaction-btn" onclick="openCorrection(\'' + t.rfha + '\')">View</button>';
+      return '<tr class="' + (eligible?"actionable-row ":"") + (checked?"row-checked":"") + '" ' +
+        'draggable="' + (eligible?"true":"false") + '" ' +
+        'onclick="selectRowFromClick(event,\'' + t.rfha + '\')" ' +
+        'ondragstart="beginRowDrag(event,\'' + t.rfha + '\')" ondragend="endRowDrag(event)">' +
+        '<td class="sticky-col sticky-1"><input type="checkbox" ' + (eligible?"":"disabled") + ' ' + (checked?"checked":"") +
+          ' onclick="toggleRowCheck(\'' + t.rfha + '\', this.checked)" title="' + (eligible?"Select for Reverse / Error Correction":"Only Correction Required rows can be selected") + '"/></td>' +
+        '<td class="left sticky-col sticky-2">' + statusCell(t.status) + '</td>' +
+        '<td class="left sticky-col sticky-3"><button class="tbl-link" onclick="openCorrection(\'' + t.rfha + '\')">' + t.rfha + '</button></td>' +
+        '<td class="left">' + t.dealId + '</td>' +
+        '<td class="left">' + t.dealIdDesc + '</td>' +
+        '<td class="left">' + t.mc + '</td>' +
+        '<td class="left">' + t.coCode + '</td>' +
+        '<td class="left">' + t.companyName + '</td>' +
+        '<td class="left">' + t.tsfEntity + '</td>' +
+        '<td class="left">' + t.prodType + '</td>' +
+        '<td class="left">' + t.prodTypeDesc + '</td>' +
+        '<td class="left">' + t.txnType + '</td>' +
+        '<td class="left">' + t.txnTypeDesc + '</td>' +
+        '<td class="left">' + t.partnerCode + '</td>' +
+        '<td class="left">' + t.partnerName + '</td>' +
+        '<td class="left">' + t.buySell1 + '</td>' +
+        '<td class="left">' + t.ccy1 + '</td>' +
+        '<td class="num">' + fmtNum(t.amt1) + '</td>' +
+        '<td class="left">' + t.ccy2 + '</td>' +
+        '<td class="num">' + fmtNum(t.amt2) + '</td>' +
+        '<td class="num">' + t.spotRate.toFixed(6) + '</td>' +
+        '<td class="num">' + t.swapRate.toFixed(6) + '</td>' +
+        '<td class="num">' + t.allInRate.toFixed(6) + '</td>' +
+        '<td>' + fmtDate(t.tradeDate) + '</td>' +
+        '<td>' + fmtDate(t.valueDate) + '</td>' +
+        '<td>' + fmtDate(t.blotterDate) + '</td>' +
+        '<td class="left">' + t.busArea + ' - ' + t.busAreaDesc + '</td>' +
+        '<td class="left">' + t.profitCenterDesc + '</td>' +
+        '<td class="left">' + t.traderCode + '</td>' +
+        '<td class="left">' + t.traderName + '</td>' +
+        '<td class="left">' + t.modeOfTrade + '</td>' +
+        '<td class="left">' + t.acctCat + '</td>' +
+        '<td class="left">' + (t.moRemark || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + (t.changedBy || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + (t.changedOn ? fmtDate(t.changedOn) : '<span class="muted-dash">&ndash;</span>') + '</td>' +
+        '<td class="left">' + actions + '</td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  var allEligible = pageRows.filter(isActionable);
+  $("chk-all").checked = allEligible.length > 0 && allEligible.every(function(t){ return checkedSet[t.rfha]; });
+  $("chk-all").disabled = allEligible.length === 0;
+
+  renderPager(totalPages);
+}
+function renderPager(totalPages){
+  var total = filteredTxns.length;
+  var startIdx = total ? (pageIndex - 1) * pageSize + 1 : 0;
+  var endIdx = Math.min(total, pageIndex * pageSize);
+  $("pager-info").innerHTML = total ? ('Showing <strong>' + startIdx + '-' + endIdx + '</strong> of <strong>' + total + '</strong>') : "No records";
+  var html = "";
+  html += '<button class="pager-btn" ' + (pageIndex<=1?"disabled":"") + ' onclick="goToPage(1)">&laquo;</button>';
+  html += '<button class="pager-btn" ' + (pageIndex<=1?"disabled":"") + ' onclick="goToPage(' + (pageIndex-1) + ')">&lsaquo;</button>';
+  var lo = Math.max(1, pageIndex-2), hi = Math.min(totalPages, pageIndex+2);
+  for (var p=lo;p<=hi;p++){ html += '<button class="pager-btn ' + (p===pageIndex?"active":"") + '" onclick="goToPage(' + p + ')">' + p + '</button>'; }
+  html += '<button class="pager-btn" ' + (pageIndex>=totalPages?"disabled":"") + ' onclick="goToPage(' + (pageIndex+1) + ')">&rsaquo;</button>';
+  html += '<button class="pager-btn" ' + (pageIndex>=totalPages?"disabled":"") + ' onclick="goToPage(' + totalPages + ')">&raquo;</button>';
+  $("pager-controls").innerHTML = html;
+}
+window.goToPage = function(p){ pageIndex = p; renderTable(); };
+window.changePageSize = function(){ pageSize = parseInt($("pager-size").value, 10) || 15; pageIndex = 1; renderTable(); };
+
+/* =========================================================================
+   ROW / BULK SELECTION
+   ========================================================================= */
+window.toggleRowCheck = function(rfha, isChecked){
+  if (isChecked) checkedSet[rfha] = true; else delete checkedSet[rfha];
+  renderTable(); updateCommonActions();
+};
+window.toggleSelectAll = function(isChecked){
+  var startIdx = (pageIndex - 1) * pageSize;
+  filteredTxns.slice(startIdx, startIdx + pageSize).forEach(function(t){
+    if (isActionable(t)){ if (isChecked) checkedSet[t.rfha] = true; else delete checkedSet[t.rfha]; }
+  });
+  renderTable(); updateCommonActions();
+};
+function getCheckedTxns(){
+  return Object.keys(checkedSet).map(function(k){ return TRANSACTIONS.find(function(m){ return m.rfha===k; }); }).filter(Boolean);
+}
+function updateCommonActions(){
+  var n = getCheckedTxns().length;
+  $("selected-count").textContent = n + " selected";
+  $("selected-count").title = n ? "Drag a selected row onto FX Error Correction or Reverse" : "";
+}
+window.clickCorrectionAction = function(){
+  var ts = getCheckedTxns();
+  if (!ts.length){
+    setStatus("Select one Correction Required transaction first.", "error");
+    return;
+  }
+  if (ts.length !== 1){
+    setStatus("FX Error Correction can be opened for one transaction at a time.", "error");
+    return;
+  }
+  openCorrection(ts[0].rfha);
+};
+window.clickReverseAction = function(){
+  var ts = getCheckedTxns();
+  if (!ts.length){
+    setStatus("Select at least one Correction Required transaction first.", "error");
+    return;
+  }
+  askReverse("bulk");
+};
+window.selectRowFromClick = function(event, rfha){
+  if (event && event.target && event.target.closest && event.target.closest("button,input,a,select,textarea,label")) return;
+  var t = TRANSACTIONS.find(function(m){ return m.rfha === rfha; });
+  if (!t || !isActionable(t)) return;
+  if (checkedSet[rfha]) delete checkedSet[rfha]; else checkedSet[rfha] = true;
+  renderTable(); updateCommonActions();
+};
+/* =========================================================================
+   FX ERROR CORRECTION MODAL (mirrors the SAP "Old Details / New Details"
+   popup: Business Partner, All-in/Swap/Spot Rate, Amount 1/2, Value Date,
+   Business Area, Profit Center, Account Cat, Mode Of Trade, Master Contract,
+   Deal ID, Trade Date, Blotter Date.)
+   ========================================================================= */
+function parseAmountShorthand(str){
+  if (!str) return 0;
+  str = String(str).trim().replace(/,/g, "");
+  var m = str.match(/^([\d.]+)\s*([MT])$/i);
+  if (m){ var num = parseFloat(m[1]); return m[2].toUpperCase() === "M" ? num * 1e6 : num * 1e3; }
+  var plain = parseFloat(str);
+  return isNaN(plain) ? 0 : plain;
+}
+window.ecAmountBlur = function(){
+  $("new-amount1").value = fmtNum(parseAmountShorthand($("new-amount1").value));
+  ecRecalcAmount2();
+};
+window.ecRateBlur = function(id){
+  var v = parseFloat($(id).value.replace(/,/g,""));
+  $(id).value = isNaN(v) ? "0.000000" : v.toFixed(6);
+  if (id === "new-spotrate") ecRecalcAmount2();
+};
+function ecRecalcAmount2(){
+  var amt1 = parseAmountShorthand($("new-amount1").value);
+  var rate = parseFloat($("new-spotrate").value.replace(/,/g,"")) || 0;
+  $("new-amount2").value = fmtNum(amt1 * rate);
+}
+window.ecBusinessAreaChanged = function(){
+  var ba = baOf($("new-busarea").value);
+  $("new-profitcenter").value = ba ? ba.profitCenterDesc : "";
+};
+function fillSelectPlain(sel, options, selectedValue, labelFn, valueFn){
+  sel.innerHTML = options.map(function(o){
+    var val = valueFn ? valueFn(o) : o.code;
+    return '<option value="' + val + '"' + (val===selectedValue?" selected":"") + '>' + labelFn(o) + '</option>';
+  }).join("");
+}
+window.openCorrection = function(rfha){
+  var t = TRANSACTIONS.find(function(m){ return m.rfha === rfha; });
+  if (!t) return;
+  correctingRfha = rfha;
+  var editable = isActionable(t);
+
+  $("correct-title").textContent = editable ? "FX Error Correction" : "View FX Transaction";
+  $("correct-subtitle").textContent = "Deal " + t.dealId + " \u2013 " + t.dealIdDesc;
+  $("ec-cocode-display").value = t.coCode + " - " + t.companyName;
+  $("ec-txn-display").value = t.rfha;
+
+  if (editable){
+    $("correct-remark-banner").innerHTML = '<div class="mo-remark-banner"><strong>MO Remark:</strong> ' + t.moRemark + '</div>';
+  } else if (t.status === STATUS.REVERSED){
+    $("correct-remark-banner").innerHTML = '<div class="reversed-banner"><strong>Reversed.</strong> Original MO Remark: ' + t.moRemark + '</div>';
+  } else {
+    $("correct-remark-banner").innerHTML = '<div class="locked-banner"><strong>Read-only:</strong> this transaction is already <strong>' +
+      STATUS_SHORT[t.status] + '</strong>.<br/><strong>Original MO Remark:</strong> ' + t.moRemark + '</div>';
+  }
+
+  // Old Details - always the values as originally booked (read-only)
+  $("old-partner").value = t.partnerCode + " - " + t.partnerName;
+  $("old-allinrate").value = t.allInRate.toFixed(6);
+  $("old-swaprate").value = t.swapRate.toFixed(6);
+  $("old-spotrate").value = t.spotRate.toFixed(6);
+  $("old-amount1").value = t.ccy1 + " " + fmtNum(t.amt1);
+  $("old-amount2").value = t.ccy2 + " " + fmtNum(t.amt2);
+  $("old-valuedate").value = fmtDate(t.valueDate);
+  $("old-busarea").value = t.busArea + " - " + t.busAreaDesc;
+  $("old-profitcenter").value = t.profitCenterDesc;
+  $("old-acctcat").value = t.acctCat + " - " + (ACCOUNT_CATS.find(function(a){return a.code===t.acctCat;})||{}).desc;
+  $("old-modeoftrade").value = t.modeOfTrade;
+  $("old-mc").value = t.mc;
+  $("old-dealid").value = t.dealId;
+  $("old-tradedate").value = fmtDate(t.tradeDate);
+  $("old-blotterdate").value = fmtDate(t.blotterDate);
+
+  // New Details - editable, pre-filled with current values
+  fillSelectPlain($("new-partner"), PARTNERS, t.partnerCode, function(p){ return p.code + " - " + p.name; });
+  $("new-allinrate").value = t.allInRate.toFixed(6);
+  $("new-swaprate").value = t.swapRate.toFixed(6);
+  $("new-spotrate").value = t.spotRate.toFixed(6);
+  $("new-amount1").value = fmtNum(t.amt1);
+  $("new-amount2").value = fmtNum(t.amt2);
+  $("new-valuedate").value = fmtDate(t.valueDate);
+  fillSelectPlain($("new-busarea"), BUSINESS_AREAS, t.busArea, function(b){ return b.code + " - " + b.name; });
+  $("new-profitcenter").value = t.profitCenterDesc;
+  fillSelectPlain($("new-acctcat"), ACCOUNT_CATS, t.acctCat, function(a){ return a.code + " - " + a.desc; });
+  $("new-modeoftrade").innerHTML = MODE_OF_TRADE.map(function(m){ return '<option value="'+m+'"'+(m===t.modeOfTrade?" selected":"")+'>'+m+'</option>'; }).join("");
+  $("new-mc").value = t.mc;
+  $("new-dealid").value = t.dealId;
+  $("new-tradedate").value = fmtDate(t.tradeDate);
+  $("new-blotterdate").value = fmtDate(t.blotterDate);
+
+  ["new-partner","new-allinrate","new-swaprate","new-spotrate","new-amount1","new-valuedate","new-busarea",
+   "new-acctcat","new-modeoftrade","new-mc","new-dealid","new-tradedate","new-blotterdate"].forEach(function(id){
+    $(id).disabled = !editable;
+  });
+
+  $("ec-submit-btn").style.display = editable ? "" : "none";
+  $("ec-reverse-btn").style.display = editable ? "" : "none";
+  $("ec-cancel-btn").textContent = editable ? "Cancel" : "Close";
+
+  $("correct-overlay").classList.add("open");
+};
+window.submitCorrection = function(){
+  var t = TRANSACTIONS.find(function(m){ return m.rfha === correctingRfha; });
+  if (!t || !isActionable(t)) { closeModal("correct-overlay"); return; }
+
+  var ba = baOf($("new-busarea").value);
+  t.partnerCode = $("new-partner").value;
+  t.partnerName = partnerOf(t.partnerCode).name;
+  t.allInRate = parseFloat($("new-allinrate").value.replace(/,/g,"")) || t.allInRate;
+  t.swapRate = parseFloat($("new-swaprate").value.replace(/,/g,"")) || 0;
+  t.spotRate = parseFloat($("new-spotrate").value.replace(/,/g,"")) || t.spotRate;
+  t.amt1 = parseAmountShorthand($("new-amount1").value);
+  t.amt2 = t.amt1 * t.spotRate;
+  t.valueDate = safeParseDate($("new-valuedate").value) || t.valueDate;
+  t.busArea = ba.code;
+  t.busAreaDesc = ba.name;
+  t.profitCenter = ba.profitCenter;
+  t.profitCenterDesc = ba.profitCenterDesc;
+  t.acctCat = $("new-acctcat").value;
+  t.modeOfTrade = $("new-modeoftrade").value;
+  t.mc = $("new-mc").value;
+  t.dealId = $("new-dealid").value;
+  t.tradeDate = safeParseDate($("new-tradedate").value) || t.tradeDate;
+  t.blotterDate = safeParseDate($("new-blotterdate").value) || t.blotterDate;
+  t.status = STATUS.RESUB;
+  t.changedBy = "FO_REVIEWER";
+  t.changedOn = new Date();
+
+  delete checkedSet[t.rfha];
+  closeModal("correct-overlay");
+  setStatus("Transaction " + t.rfha + " updated and released to MO.", "success");
+  applyFilters();
+};
+window.switchToReverseFromCorrection = function(){
+  var rfha = correctingRfha;
+  closeModal("correct-overlay");
+  askReverse(rfha);
+};
+
+/* =========================================================================
+   REVERSE MODAL
+   scope is "bulk" (use the current checkbox selection), a single rfha
+   string, or an array of rfha strings (used by the drag-and-drop targets).
+   ========================================================================= */
+window.askReverse = function(scope){
+  reverseScope = scope;
+  var ts = scope === "bulk" ? getCheckedTxns()
+    : Array.isArray(scope) ? scope.map(function(r){ return TRANSACTIONS.find(function(m){ return m.rfha === r; }); }).filter(Boolean)
+    : TRANSACTIONS.filter(function(m){ return m.rfha === scope; });
+  if (!ts.length) return;
+
+  $("reverse-subtitle").textContent = ts.length === 1 ? ("Transaction " + ts[0].rfha + " \u2013 Deal " + ts[0].dealId) : (ts.length + " transactions selected");
+  $("reverse-detail-grid").innerHTML = ts.slice(0,8).map(function(t){
+    return '<div class="detail-cell"><div class="detail-lbl">' + t.rfha + '</div><div class="detail-val accent">Deal ' + t.dealId + ' &middot; ' + t.ccy1 + ' ' + fmtNum(t.amt1) + '</div></div>';
+  }).join("") + (ts.length>8 ? '<div class="detail-cell"><div class="detail-val">...and ' + (ts.length-8) + ' more.</div></div>' : "");
+  $("reverse-reason").value = "";
+  $("reverse-overlay").classList.add("open");
+};
+window.confirmReverse = function(){
+  var ts = reverseScope === "bulk" ? getCheckedTxns()
+    : Array.isArray(reverseScope) ? reverseScope.map(function(r){ return TRANSACTIONS.find(function(m){ return m.rfha === r; }); }).filter(Boolean)
+    : TRANSACTIONS.filter(function(m){ return m.rfha === reverseScope; });
+  var reason = $("reverse-reason").value.trim();
+  var now = new Date();
+  ts.forEach(function(t){
+    t.status = STATUS.REVERSED;
+    if (reason) t.moRemark = t.moRemark + " [FO: " + reason + "]";
+    t.changedBy = "FO_REVIEWER";
+    t.changedOn = now;
+    delete checkedSet[t.rfha];
+  });
+  var label = ts.length === 1 ? ("Transaction " + ts[0].rfha) : (ts.length + " transactions");
+  closeModal("reverse-overlay");
+  closeModal("correct-overlay");
+  setStatus(label + " reversed.", "error");
+  applyFilters();
+};
+
+/* =========================================================================
+   DRAG AND DROP
+   Dragging a Correction Required row carries the full current checkbox
+   selection if that row is part of it, or just that one row otherwise -
+   dropped on "FX Error Correction" it opens the correction modal (only
+   valid for a single transaction), dropped on "Reverse" it opens the
+   Reverse confirmation for every transaction that was dragged.
+   ========================================================================= */
+var draggedRfhas = [];
+window.beginRowDrag = function(event, rfha){
+  var t = TRANSACTIONS.find(function(m){ return m.rfha === rfha; });
+  if (!t || !isActionable(t)){ if (event) event.preventDefault(); return false; }
+  draggedRfhas = checkedSet[rfha] ? getCheckedTxns().map(function(m){ return m.rfha; }) : [rfha];
+  if (event && event.dataTransfer){
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggedRfhas.join(","));
+  }
+  document.body.classList.add("row-dragging");
+  if (event && event.currentTarget) event.currentTarget.classList.add("dragging-row");
+};
+window.endRowDrag = function(event){
+  document.body.classList.remove("row-dragging");
+  if (event && event.currentTarget) event.currentTarget.classList.remove("dragging-row");
+  document.querySelectorAll(".drag-target.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+};
+window.allowActionDrop = function(event){ event.preventDefault(); };
+window.enterActionDrop = function(event){ event.preventDefault(); event.currentTarget.classList.add("drag-over"); };
+window.leaveActionDrop = function(event){ event.currentTarget.classList.remove("drag-over"); };
+window.dropRowOnAction = function(event, action){
+  event.preventDefault();
+  event.currentTarget.classList.remove("drag-over");
+  document.body.classList.remove("row-dragging");
+  if (!draggedRfhas.length) return;
+  if (action === "correction"){
+    if (draggedRfhas.length === 1){
+      openCorrection(draggedRfhas[0]);
+    } else {
+      setStatus("Drag exactly one transaction onto FX Error Correction - " + draggedRfhas.length + " were selected.", "error");
+    }
+  } else if (action === "reverse"){
+    askReverse(draggedRfhas.slice());
+  }
+  draggedRfhas = [];
+};
+
+/* =========================================================================
+   MODAL PLUMBING / TOAST / REFRESH
+   ========================================================================= */
+window.closeModal = function(id){ $(id).classList.remove("open"); };
+window.overlayClick = function(ev, id){ if (ev.target && ev.target.id === id) closeModal(id); };
+
+var toastTimer = null;
+function setStatus(msg, kind){
+  var t = $("toast");
+  t.textContent = msg;
+  t.className = "zfac-toast show" + (kind ? " " + kind : "");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = "zfac-toast"; }, 3400);
+}
+
+window.hardRefresh = function(){
+  TRANSACTIONS = buildTransactions();
+  checkedSet = {};
+  statusFilter = "ALL";
+  sortKey = "rfha"; sortDir = -1;
+  pageSize = 15; $("pager-size").value = "15"; pageIndex = 1;
+  resetFilters();
+  setStatus("Refreshed. Data and filters reset.", "");
+};
+
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape"){
+    closeModal("correct-overlay"); closeModal("reverse-overlay");
+    document.querySelectorAll(".dp-popup.open").forEach(function(el){ el.classList.remove("open"); });
+  }
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function init(){
+  initDropdowns();
+  applyFilters();
+  var arrowEl = $("sort-rfha");
+  if (arrowEl) arrowEl.textContent = "\u25BC";
+  setStatus("Ready. " + filteredTxns.length + " FX transaction(s) loaded.", "");
+}
+init();
+
+})();
+</script>
+</body>
+</html>
