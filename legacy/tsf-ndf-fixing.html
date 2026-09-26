@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Confirm NDF Fixing</title>
+<style>
+:root{
+  --bg:#f4f7fa;--card:#fff;--line:#d7e0e8;--line2:#e6ebf0;--text:#1d2d3e;--muted:#61768c;
+  --blue:#0a6ed1;--blue2:#085caf;--soft:#eef5fc;--green:#188918;--red:#bb0000;--amber:#e9730c;
+  --shadow:0 1px 3px rgba(29,45,62,.08);--r:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Inter,Arial,Helvetica,sans-serif;color:var(--text);background:var(--bg);font-size:13px}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.48}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 20px;position:sticky;top:0;z-index:20}
+.back{height:38px;padding:0 14px;border:1px solid #9eb0c2;background:#fff;border-radius:5px;color:#415a72;font-weight:700;display:flex;align-items:center;gap:7px}
+.logo{width:27px;height:34px;position:relative;margin-left:2px}.logo i{display:block;height:6px;border-radius:7px;position:absolute;left:0}.logo i:nth-child(1){width:21px;background:#bd2b23;top:2px}.logo i:nth-child(2){width:14px;background:#f0a018;top:10px}.logo i:nth-child(3){width:18px;background:#298d3f;top:18px}.logo i:nth-child(4){width:7px;background:#6f7d89;top:26px}
+.titlewrap{display:flex;align-items:baseline;gap:12px;min-width:260px}.title{font-size:20px;font-weight:800;letter-spacing:.1px}.subtitle{color:#6d8195;font-size:13px}
+.spacer{flex:1}.actions{display:flex;align-items:center;gap:8px}.status-dot{width:12px;height:12px;border-radius:50%;background:#21a366;border:2px solid #cff1df;margin-right:2px}
+.btn{height:38px;border-radius:5px;border:1px solid #9eb0c2;background:#fff;color:#415a72;font-weight:700;padding:0 15px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 5px rgba(10,110,209,.18)}.btn.primary:hover{background:var(--blue2)}
+.btn.warn{border-color:#d17a2d;color:#a84d00}.btn.danger{border-color:#d44b4b;color:#b42318}.btn.ghost:hover{background:#f6f8fa}
+.icon{font-size:16px;line-height:1}
+.main{padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.card-title{height:46px;padding:0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);font-weight:800;font-size:15px}.record-count{font-size:12px;color:#6a7e92;font-weight:500}.card-title .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.selection{padding:13px 14px 14px}.selection-grid{display:grid;grid-template-columns:220px 220px 220px minmax(220px,1fr) auto;gap:12px;align-items:end}
+.field label{display:flex;gap:4px;color:#40566c;font-size:12px;font-weight:700;margin:0 0 6px}.req{color:#bb0000}.control{width:100%;height:36px;border:1px solid #9fb2c4;border-radius:4px;background:#fff;color:#1d2d3e;padding:0 10px;outline:none}.control:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(10,110,209,.12)}
+.date-wrap{position:relative}.date-wrap input{padding-right:35px}.calbtn{position:absolute;right:1px;top:1px;width:34px;height:34px;border:0;border-left:1px solid #dbe3ea;background:#fff;color:#4d647a;border-radius:0 4px 4px 0;font-size:15px}
+.selection-actions{display:flex;gap:8px;justify-content:flex-end}.helper{font-size:11px;color:#74879a;margin-top:7px}
+.toolbar{padding:7px 10px;display:grid;grid-template-columns:minmax(230px,1fr) auto auto;align-items:center;gap:12px;border-bottom:1px solid var(--line);background:#fff}.toolbar-left{display:flex;align-items:center;gap:8px;min-width:0}.toolbar-filters{display:flex;align-items:center;justify-content:center;gap:8px}.toolbar-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}.search{width:230px;height:33px;border:1px solid #9fb2c4;border-radius:4px;padding:0 10px;flex:0 0 auto}.filter-control{height:33px;border:1px solid #a9bac9;border-radius:4px;background:#fff;color:#243b53;padding:0 30px 0 9px;font:inherit;min-width:138px}.trader-filter{min-width:145px}.toolbar-date{width:145px}.toolbar-date .filter-control{width:145px;padding-right:35px}.toolbar-date .calbtn{height:31px;width:32px}.square{width:34px;height:33px;border:1px solid #a9bac9;border-radius:4px;background:#fff;color:#425a70;font-size:15px}@media(max-width:1250px){.toolbar{grid-template-columns:1fr}.toolbar-left,.toolbar-filters,.toolbar-right{justify-content:flex-start;flex-wrap:wrap}.toolbar-right{position:absolute;right:20px}.search{width:220px}}
+.table-wrap{overflow:auto;max-height:480px;position:relative}.table-wrap::-webkit-scrollbar{height:12px;width:12px}.table-wrap::-webkit-scrollbar-thumb{background:#9b9b9b;border-radius:10px;border:3px solid #f3f5f7}.table-wrap::-webkit-scrollbar-track{background:#f3f5f7}
+table{border-collapse:separate;border-spacing:0;min-width:1900px;width:100%;font-size:12.5px}th,td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:8px 10px;white-space:nowrap;height:37px;background:#fff}th{position:sticky;top:0;z-index:5;background:#f2f4f5;color:#405a73;font-weight:800;text-align:left}.num{text-align:right;font-variant-numeric:tabular-nums}.center{text-align:center}
+th:first-child,td:first-child{position:sticky;left:0;z-index:6;width:42px;min-width:42px;max-width:42px;text-align:center}th:first-child{z-index:9;background:#f2f4f5}td:first-child{background:#fff}
+th:nth-child(2),td:nth-child(2){position:sticky;left:42px;z-index:6;min-width:110px}th:nth-child(2){z-index:9;background:#f2f4f5}td:nth-child(2){background:#fff}
+tr.selected td{background:#eaf4ff}tr.selected td:first-child,tr.selected td:nth-child(2){background:#eaf4ff}tbody tr:hover td{background:#f7fbff}tbody tr:hover td:first-child,tbody tr:hover td:nth-child(2){background:#f7fbff}tbody tr{cursor:pointer}tbody tr[draggable="true"]{user-select:none}.btn.drop-target{outline:2px dashed #1f6feb;outline-offset:3px;transform:translateY(-1px);box-shadow:0 0 0 4px rgba(31,111,235,.10)}
+.link{color:#0064c8;text-decoration:underline;font-weight:700;cursor:pointer}.status{font-weight:800}.status.pending{color:#7b3fc6}.status.released{color:#188918}.status.correction{color:#c35500}.status.error{color:#bb0000}
+.footer{min-height:43px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:6px 11px;color:#64798e;font-size:12px}.pages{display:flex;gap:4px;align-items:center}.pagebtn{min-width:29px;height:29px;border:1px solid #d7e0e8;border-radius:4px;background:#fff;color:#415a72}.pagebtn.active{border-color:#95aabe;background:#f8fafc;color:#21384e}.showing{justify-self:end}
+.empty{padding:50px;text-align:center;color:#71859a}
+.overlay{position:fixed;inset:0;background:rgba(22,38,55,.37);z-index:100;display:none;overflow:auto;padding:38px 18px}.overlay.show{display:flex;align-items:flex-start;justify-content:center}.modal{width:min(620px,96vw);background:#fff;border-radius:9px;box-shadow:0 16px 50px rgba(16,32,48,.28);overflow:hidden;animation:pop .16s ease-out;margin:auto}.modal.small{width:min(460px,96vw)}@keyframes pop{from{transform:translateY(7px) scale(.985);opacity:.75}to{transform:none;opacity:1}}
+.modal-head{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px}.modal-head h2{font-size:17px;margin:0}.x{margin-left:auto;border:0;background:transparent;font-size:22px;color:#5d7185}.modal-body{padding:17px 18px}.deal-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:11px 12px;background:#f6f8fa;border:1px solid #e2e8ee;border-radius:6px;margin-bottom:15px}.mini b{display:block;font-size:11px;color:#72869a;margin-bottom:4px}.mini span{font-weight:800;color:#20364c}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.form-grid .full{grid-column:1/-1}textarea.control{height:84px;padding:9px 10px;resize:vertical}.readonly{background:#f5f7f9;color:#51687e}
+.modal-foot{height:57px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 18px;background:#fafbfc}.note{font-size:12px;color:#6c8195}.toastbox{position:fixed;right:20px;top:74px;z-index:200;display:flex;flex-direction:column;gap:8px}.toast{min-width:280px;max-width:420px;padding:11px 13px;border-radius:6px;background:#fff;border:1px solid #cbd8e3;box-shadow:0 6px 22px rgba(25,45,65,.16);display:flex;gap:9px;align-items:flex-start;animation:toastin .18s ease}.toast.success{border-left:4px solid #188918}.toast.error{border-left:4px solid #bb0000}.toast.info{border-left:4px solid #0a6ed1}@keyframes toastin{from{transform:translateX(12px);opacity:0}to{transform:none;opacity:1}}
+.error-msg{display:none;color:#bb0000;font-size:11px;margin-top:5px}.field.invalid .control{border-color:#bb0000}.field.invalid .error-msg{display:block}
+.calendar{position:fixed;z-index:180;width:278px;background:#fff;border:1px solid #bdcad5;border-radius:7px;box-shadow:0 10px 30px rgba(22,41,59,.22);display:none;overflow:hidden}.calendar.show{display:block}.cal-head{height:42px;display:grid;grid-template-columns:38px 1fr 38px;align-items:center;border-bottom:1px solid #e2e8ee}.cal-head button{border:0;background:#fff;font-size:20px}.cal-title{text-align:center;font-weight:800}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:8px}.dow,.day{height:31px;display:flex;align-items:center;justify-content:center}.dow{font-size:10px;color:#74879a;font-weight:800}.day{border-radius:50%;cursor:pointer}.day:hover{background:#eaf4ff}.day.muted{color:#bac4cd}.day.today{border:1px solid #0a6ed1}.day.sel{background:#0a6ed1;color:#fff}
+@media(max-width:1050px){.selection-grid{grid-template-columns:1fr 1fr}.selection-actions{grid-column:1/-1;justify-content:flex-start}.titlewrap{min-width:auto}.actions .btn span.label{display:none}.actions .btn{padding:0 10px}}
+@media(max-width:700px){.topbar{padding:0 9px;gap:7px}.subtitle,.logo{display:none}.title{font-size:16px}.main{padding:8px}.selection-grid{grid-template-columns:1fr}.toolbar{flex-wrap:wrap}.search{margin-left:0;width:100%;order:3}.deal-strip{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.footer{grid-template-columns:1fr;gap:7px}.pages,.showing{justify-self:start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="back" onclick="toast('info','Back is disabled in this standalone demo.')"><span class="icon">←</span> Back</button>
+    <div class="logo" aria-label="FS"><i></i><i></i><i></i><i></i></div>
+    <div class="titlewrap"><div class="title">Confirm NDF Fixing</div><div class="subtitle">NDF</div></div>
+    <div class="spacer"></div>
+  </header>
+
+  <main class="main">
+    <section class="card">
+      <div class="card-title">NDF Fixing Deals <span class="record-count" id="countLabel">0 records</span>
+        <div class="right"><span class="note" id="selectionNote">No deal selected</span></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input class="search" id="search" placeholder="Search NDF deals..." />
+        </div>
+        <div class="toolbar-filters">
+          <select class="filter-control" id="company" title="Company Code">
+            <option value="">All Company Codes</option><option>AE11</option><option>AE13</option><option>SG03</option><option>IN11</option><option>ES12</option><option>9990</option>
+          </select>
+          <div class="date-wrap toolbar-date"><input class="filter-control" id="fixingDate" placeholder="Fixing Date" maxlength="10"/><button class="calbtn" id="openCal" type="button">▣</button></div>
+          <select class="filter-control trader-filter" id="trader" title="Trader"><option value="">All Traders</option><option>Nidhi S</option><option>Aparna</option><option>Lakshmi</option><option>Sibte</option><option>Rahul K</option><option>TERRY TAY</option><option>Amey T</option><option>Anil Jena</option><option>Mayank Jain</option><option>Rahul Yadav</option><option>Andre</option><option>Suraya S</option><option>SUN BIN</option><option>Prem Sai</option></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn ghost" id="ndfFixBtn" title="Click to open NDF Rate Fixing or drag a selected row onto this button">◆ NDF Rate Fixing</button>
+          <button class="btn ghost" id="refreshBtn">↻ Refresh</button>
+          <button class="square" id="exportBtn" title="Download CSV">⇩</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead><tr>
+            <th><input type="checkbox" id="selectAll" aria-label="Select all visible rows"></th>
+            <th>Transaction No ▼</th><th>Company Code</th><th>Trader</th><th>Buy / Sell</th><th>Currency Pair</th><th class="num">Amount 1</th><th>Crcy 1</th><th class="num">Amount 2</th><th>Crcy 2</th><th class="num">Original Spot</th><th class="num">Swap</th><th class="num">Forward Rate</th><th>Fixing Date</th><th class="num">NDF Value</th><th>Fixing Reference</th><th>Status</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="empty" style="display:none">No NDF deals match the current selection.</div>
+      </div>
+      <div class="footer"><div id="footerLeft">Showing 0 of 0</div><div class="pages" id="pages"></div><div class="showing" id="footerRight">0 selected</div></div>
+    </section>
+  </main>
+</div>
+
+<div class="toastbox" id="toastbox"></div>
+<div class="calendar" id="calendar"></div>
+
+
+<div class="overlay" id="ndfFixOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>NDF Rate Fixing</h2><button class="x" data-close="ndfFixOverlay">×</button></div>
+    <div class="modal-body">
+      <div class="deal-strip" id="ndfFixSummary"></div>
+      <div class="form-grid">
+        <div class="field"><label>Fixing Date</label><input class="control readonly" id="nFixDate" readonly></div>
+        <div class="field" id="fFixRate"><label>Fixing Rate <span class="req">*</span></label><input class="control num" id="nFixRate" inputmode="decimal" placeholder="Enter fixing rate"><div class="error-msg">Fixing Rate is required.</div></div>
+        <div class="field"><label>Cash Settlement</label><input class="control readonly num" id="nCashSettlement" readonly></div>
+        <div class="field" id="fFixRef"><label>Fixing Reference <span class="req">*</span></label><select class="control" id="nFixRef"><option value="">Select fixing reference</option><option>WM/REUTERS</option><option>Bloomberg</option><option>Central Bank Reference</option></select><div class="error-msg">Fixing Reference is required.</div></div>
+        <div class="field full"><label>FO Remarks</label><textarea class="control" id="nFoRemarks" placeholder="Enter FO remarks" maxlength="200"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" data-close="ndfFixOverlay">Cancel</button><button class="btn primary" id="confirmNdfFix">Save Fixing</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="matchOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Match &amp; Release</h2><button class="x" data-close="matchOverlay">×</button></div>
+    <div class="modal-body">
+      <div class="deal-strip" id="matchSummary"></div>
+      <div class="form-grid">
+        <div class="field"><label>Fixing Date</label><input class="control readonly" id="mDate" readonly></div>
+        <div class="field"><label>NDF Value</label><input class="control readonly num" id="mNdf" readonly></div>
+        <div class="field full" id="fRef"><label>Fixing Reference <span class="req">*</span></label><input class="control" id="mRef" placeholder="Enter fixing reference" maxlength="100"><div class="error-msg">Fixing Reference is required.</div></div>
+        <div class="field full" id="fRemarks"><label>Remarks <span class="req">*</span></label><textarea class="control" id="mRemarks" placeholder="Enter remarks" maxlength="200"></textarea><div class="error-msg">Remarks are required.</div></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" data-close="matchOverlay">Cancel</button><button class="btn primary" id="confirmMatch">Confirm &amp; Release</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="correctionOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Correction Required</h2><button class="x" data-close="correctionOverlay">×</button></div>
+    <div class="modal-body">
+      <div class="deal-strip" id="correctionSummary"></div>
+      <div class="form-grid">
+        <div class="field"><label>Fixing Date</label><input class="control readonly" id="cDate" readonly></div>
+        <div class="field"><label>NDF Value</label><input class="control readonly num" id="cNdf" readonly></div>
+        <div class="field full" id="fMo"><label>MO Remarks <span class="req">*</span></label><textarea class="control" id="cRemarks" placeholder="Enter MO remarks" maxlength="200"></textarea><div class="error-msg">MO Remarks are required.</div></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" data-close="correctionOverlay">Cancel</button><button class="btn warn" id="confirmCorrection">Send for Correction</button></div>
+  </div>
+</div>
+
+
+<div class="overlay" id="viewTxnOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>View Transaction</h2><button class="x" data-close="viewTxnOverlay">×</button></div>
+    <div class="modal-body">
+      <div class="deal-strip" id="viewTxnSummary"></div>
+      <div class="form-grid">
+        <div class="field"><label>Trader</label><input class="control readonly" id="vTrader" readonly></div>
+        <div class="field"><label>Buy / Sell</label><input class="control readonly" id="vSide" readonly></div>
+        <div class="field"><label>Currency 1</label><input class="control readonly" id="vC1" readonly></div>
+        <div class="field"><label>Amount 1</label><input class="control readonly num" id="vAmt1" readonly></div>
+        <div class="field"><label>Currency 2</label><input class="control readonly" id="vC2" readonly></div>
+        <div class="field"><label>Amount 2</label><input class="control readonly num" id="vAmt2" readonly></div>
+        <div class="field"><label>Original Spot</label><input class="control readonly num" id="vSpot" readonly></div>
+        <div class="field"><label>Swap</label><input class="control readonly num" id="vSwap" readonly></div>
+        <div class="field"><label>Forward Rate</label><input class="control readonly num" id="vFwd" readonly></div>
+        <div class="field"><label>Fixing Date</label><input class="control readonly" id="vDate" readonly></div>
+        <div class="field"><label>NDF Value</label><input class="control readonly num" id="vNdf" readonly></div>
+        <div class="field"><label>Status</label><input class="control readonly" id="vStatus" readonly></div>
+        <div class="field full"><label>Fixing Reference</label><input class="control readonly" id="vRef" readonly></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn primary" data-close="viewTxnOverlay">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="refreshOverlay">
+  <div class="modal small">
+    <div class="modal-head"><h2>Refresh</h2><button class="x" data-close="refreshOverlay">×</button></div>
+    <div class="modal-body" style="text-align:center;padding:28px 26px"><div style="font-size:32px;color:#188918;margin-bottom:10px">✓</div><div style="font-size:16px;font-weight:800;margin-bottom:7px">Screen refreshed successfully</div><div class="note">All NDF deals, search, filters, sorting and row selection have been reset.</div></div>
+    <div class="modal-foot"><button class="btn primary" data-close="refreshOverlay">OK</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const today=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmtDate=d=>`${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}`;
+  const isoFromDisplay=s=>{const m=/^(\d{2})-(\d{2})-(\d{4})$/.exec(s||''); if(!m)return null; const d=new Date(+m[3],+m[2]-1,+m[1]); return d.getFullYear()==+m[3]&&d.getMonth()==+m[2]-1&&d.getDate()==+m[1]?d:null};
+  const money=n=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rate=n=>Number(n).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:6});
+
+  const baseDates=[0,0,0,1,1,2,2,3,3,4,4,5,6,7,10,14,20,30];
+  const companies=['AE13','AE13','AE11','SG03','IN11','AE13','ES12','AE11','SG03','IN11','AE13','AE11','SG03','ES12','AE13','IN11','AE11','SG03'];
+  const traders=['Nidhi S','Aparna','Lakshmi','Sibte','Rahul K','TERRY TAY','Amey T','Anil Jena','Mayank Jain','Rahul Yadav','Andre','Suraya S','SUN BIN','Prem Sai','Nidhi S','Aparna','Lakshmi','Sibte'];
+  const pairs=[['USD','INR'],['USD','IDR'],['USD','VND'],['USD','SGD'],['EUR','USD'],['USD','INR'],['USD','TWD'],['USD','AED'],['EUR','USD'],['USD','INR'],['USD','IDR'],['GBP','USD'],['USD','VND'],['USD','SGD'],['USD','INR'],['USD','AED'],['EUR','USD'],['USD','TWD']];
+  function makeData(){return baseDates.map((off,i)=>{
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+off), p=pairs[i];
+    const amt1=500000+(i%6)*750000+(i*35000); const spot=[83.1425,15820.0,24610.0,1.3426,1.0864,83.1950,31.9820,3.6725,1.0842,83.2250,15835,1.2715,24640,1.3440,83.2675,3.6725,1.0870,32.015][i];
+    const sw=[.0525,15,35,.0012,.0008,.0475,.014,.0002,.0007,.045,12,.0012,28,.0014,.041,.0002,.0009,.011][i];
+    const fwd=spot+sw; const amt2=amt1*fwd; const ndf=(i%2===0?1:-1)*(amt1*(0.0018+(i%5)*0.0004));
+    return {id:String(710082+i),company:companies[i],trader:traders[i],side:i%2?'Sell':'Buy',pair:`${p[0]}/${p[1]}`,amt1,c1:p[0],amt2,c2:p[1],spot,swap:sw,fwd,date:fmtDate(d),ndf,ref:i%4===0?'WM/REUTERS':'',status:'Pending Confirmation',remarks:'',moRemarks:''};
+  })}
+  let data=makeData(), visible=[], selected=new Set(), page=1, perPage=15, sortAsc=false;
+  $('#fixingDate').value=fmtDate(today);
+
+  function statusClass(s){return s==='Released'?'released':s==='Correction Required'?'correction':s==='Rate Fixed'?'released':'pending'}
+  function applyFilters(){
+    const q=$('#search').value.trim().toLowerCase(), company=$('#company').value, trader=$('#trader').value, date=$('#fixingDate').value;
+    visible=data.filter(r=>{
+      if(company && r.company!==company)return false;
+      if(date && isoFromDisplay(date) && r.date!==date)return false;
+      if(trader && r.trader!==trader)return false;
+      if(q){const joined=Object.values(r).join(' ').toLowerCase(); if(!joined.includes(q))return false}
+      return true;
+    });
+    visible.sort((a,b)=>sortAsc?a.id.localeCompare(b.id):b.id.localeCompare(a.id));
+    render();
+  }
+  function render(){
+    const start=(page-1)*perPage, rows=visible.slice(start,start+perPage), tb=$('#tbody'); tb.innerHTML='';
+    rows.forEach(r=>{const tr=document.createElement('tr'); tr.draggable=true; tr.dataset.id=r.id; if(selected.has(r.id))tr.className='selected'; tr.innerHTML=`
+      <td><input type="checkbox" data-id="${r.id}" ${selected.has(r.id)?'checked':''}></td>
+      <td><span class="link" data-open="${r.id}">${r.id}</span></td><td>${r.company}</td><td>${r.trader}</td><td>${r.side}</td><td>${r.pair}</td>
+      <td class="num">${money(r.amt1)}</td><td>${r.c1}</td><td class="num">${money(r.amt2)}</td><td>${r.c2}</td>
+      <td class="num">${rate(r.spot)}</td><td class="num">${rate(r.swap)}</td><td class="num">${rate(r.fwd)}</td><td>${r.date}</td><td class="num">${money(r.ndf)}</td><td>${r.ref||'—'}</td><td><span class="status ${statusClass(r.status)}">${r.status}</span></td>`; tb.appendChild(tr)});
+    $('#empty').style.display=rows.length?'none':'block'; $('table').style.display=rows.length?'table':'none';
+    $('#countLabel').textContent=`${visible.length} records`; $('#footerLeft').textContent=`Showing ${rows.length?start+1:0}–${Math.min(start+perPage,visible.length)} of ${visible.length}`; $('#footerRight').textContent=`${selected.size} selected`;
+    $('#selectionNote').textContent=selected.size?`${selected.size} deal${selected.size>1?'s':''} selected • drag the selected row to NDF Rate Fixing`:'No deal selected • click a row to select, or drag a row onto NDF Rate Fixing';
+    const total=Math.max(1,Math.ceil(visible.length/perPage)); if(page>total){page=total;return render()} const pg=$('#pages');pg.innerHTML='';
+    const add=(txt,p,disabled,active)=>{const b=document.createElement('button');b.className='pagebtn'+(active?' active':'');b.textContent=txt;b.disabled=disabled;b.onclick=()=>{page=p;render()};pg.appendChild(b)};
+    add('‹',page-1,page===1,false); for(let p=1;p<=Math.min(total,5);p++)add(p,p,false,p===page); add('›',page+1,page===total,false);
+    $('#selectAll').checked=rows.length>0&&rows.every(r=>selected.has(r.id));
+  }
+  $('#search').addEventListener('input',()=>{page=1;applyFilters()});
+  $('#company').addEventListener('change',()=>{page=1;selected.clear();applyFilters()});
+  $('#trader').addEventListener('change',()=>{page=1;selected.clear();applyFilters()});
+  $('#fixingDate').addEventListener('change',()=>{page=1;selected.clear();applyFilters()});
+  $('#tbody').addEventListener('change',e=>{if(e.target.matches('input[type=checkbox][data-id]')){const id=e.target.dataset.id;e.target.checked?selected.add(id):selected.delete(id);render()}});
+  $('#tbody').addEventListener('click',e=>{
+    const txn=e.target.closest('[data-open]');
+    if(txn){const id=txn.dataset.open;selected.clear();selected.add(id);render();openViewTxn(id);return}
+    if(e.target.matches('input[type=checkbox]'))return;const tr=e.target.closest('tr');if(!tr)return;const id=tr.dataset.id;if(!id)return;selected.clear();selected.add(id);render()
+  });
+  $('#tbody').addEventListener('dragstart',e=>{const tr=e.target.closest('tr');if(!tr)return;const id=tr.dataset.id;if(!id)return;if(!selected.has(id)||selected.size!==1){selected.clear();selected.add(id);render()}e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);requestAnimationFrame(()=>tr.classList.add('dragging'))});
+  $('#tbody').addEventListener('dragend',e=>{const tr=e.target.closest('tr');if(tr)tr.classList.remove('dragging');$$('.btn.drop-target').forEach(b=>b.classList.remove('drop-target'))});
+  $('#selectAll').onchange=e=>{const start=(page-1)*perPage;visible.slice(start,start+perPage).forEach(r=>e.target.checked?selected.add(r.id):selected.delete(r.id));render()};
+  $$('th').forEach((th,i)=>{if(i===1)th.onclick=()=>{sortAsc=!sortAsc;applyFilters()}});
+
+  function selectedOne(){if(selected.size!==1){toast('error',selected.size?'Select only one NDF deal for this action.':'Select an NDF deal first.');return null}return data.find(r=>r.id===[...selected][0])}
+  function summaryHTML(r){return `<div class="mini"><b>Transaction No</b><span>${r.id}</span></div><div class="mini"><b>Company Code</b><span>${r.company}</span></div><div class="mini"><b>Currency Pair</b><span>${r.pair}</span></div><div class="mini"><b>Forward Rate</b><span>${rate(r.fwd)}</span></div>`}
+  function openViewTxn(id){
+    const r=data.find(x=>x.id===id);if(!r)return;
+    $('#viewTxnSummary').innerHTML=summaryHTML(r);
+    $('#vTrader').value=r.trader;$('#vSide').value=r.side;$('#vC1').value=r.c1;$('#vAmt1').value=money(r.amt1);
+    $('#vC2').value=r.c2;$('#vAmt2').value=money(r.amt2);$('#vSpot').value=rate(r.spot);$('#vSwap').value=rate(r.swap);
+    $('#vFwd').value=rate(r.fwd);$('#vDate').value=r.date;$('#vNdf').value=money(r.ndf);$('#vStatus').value=r.status;$('#vRef').value=r.ref||'—';
+    open('viewTxnOverlay');
+  }
+  function calcCashSettlement(r,fixRate){
+    if(!fixRate||!isFinite(fixRate))return 0;
+    // Demo approximation of the SAP NDF cash-settlement logic: compare contracted forward rate to fixing rate on Amount 1.
+    return (r.fwd-fixRate)*r.amt1;
+  }
+  function updateNdfCashPreview(){
+    const r=selectedOne();if(!r)return;const fix=parseFloat($('#nFixRate').value);
+    $('#nCashSettlement').value=isFinite(fix)?money(calcCashSettlement(r,fix)):'';
+  }
+  function openNdfFix(){
+    const r=selectedOne();if(!r)return;if(r.status==='Released'){toast('info','This NDF deal has already been released.');return}
+    $('#ndfFixSummary').innerHTML=summaryHTML(r);
+    $('#nFixDate').value=r.date;
+    $('#nFixRate').value=r.fixRate?rate(r.fixRate):'';
+    $('#nFixRef').value=r.ref||'';
+    $('#nFoRemarks').value=r.foRemarks||'';
+    $('#fFixRate').classList.remove('invalid');$('#fFixRef').classList.remove('invalid');
+    $('#nCashSettlement').value=r.cashSettlement!=null?money(r.cashSettlement):'';
+    open('ndfFixOverlay');
+  }
+  function openMatch(){const r=selectedOne();if(!r)return;if(r.status==='Released'){toast('info','This NDF deal has already been released.');return}$('#matchSummary').innerHTML=summaryHTML(r);$('#mDate').value=r.date;$('#mNdf').value=money(r.ndf);$('#mRef').value=r.ref||'';$('#mRemarks').value=r.remarks||'';$('#fRef').classList.remove('invalid');$('#fRemarks').classList.remove('invalid');open('matchOverlay')}
+  function openCorrection(){const r=selectedOne();if(!r)return;if(r.status==='Released'){toast('info','Released deals cannot be sent back for correction in this demo.');return}$('#correctionSummary').innerHTML=summaryHTML(r);$('#cDate').value=r.date;$('#cNdf').value=money(r.ndf);$('#cRemarks').value=r.moRemarks||'';$('#fMo').classList.remove('invalid');open('correctionOverlay')}
+  $('#ndfFixBtn').onclick=openNdfFix;
+  wireDropAction($('#ndfFixBtn'),openNdfFix);
+  $('#nFixRate').addEventListener('input',updateNdfCashPreview);
+  $('#confirmNdfFix').onclick=()=>{const r=selectedOne();if(!r)return;const fix=parseFloat($('#nFixRate').value),ref=$('#nFixRef').value.trim();$('#fFixRate').classList.toggle('invalid',!isFinite(fix)||fix<=0);$('#fFixRef').classList.toggle('invalid',!ref);if(!isFinite(fix)||fix<=0||!ref)return;r.fixRate=fix;r.cashSettlement=calcCashSettlement(r,fix);r.ndf=r.cashSettlement;r.ref=ref;r.foRemarks=$('#nFoRemarks').value.trim();r.status='Rate Fixed';close('ndfFixOverlay');selected.clear();applyFilters();toast('success',`NDF rate fixed for transaction ${r.id}.`)};
+  function wireDropAction(btn,action){btn.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';btn.classList.add('drop-target')});btn.addEventListener('dragleave',()=>btn.classList.remove('drop-target'));btn.addEventListener('drop',e=>{e.preventDefault();btn.classList.remove('drop-target');const id=e.dataTransfer.getData('text/plain');if(id){selected.clear();selected.add(id);render()}action()})}
+  $('#confirmMatch').onclick=()=>{const ref=$('#mRef').value.trim(),rem=$('#mRemarks').value.trim();$('#fRef').classList.toggle('invalid',!ref);$('#fRemarks').classList.toggle('invalid',!rem);if(!ref||!rem)return;const r=selectedOne();if(!r)return;r.ref=ref;r.remarks=rem;r.status='Released';close('matchOverlay');selected.clear();applyFilters();toast('success',`NDF transaction ${r.id} matched and released.`)};
+  $('#confirmCorrection').onclick=()=>{const rem=$('#cRemarks').value.trim();$('#fMo').classList.toggle('invalid',!rem);if(!rem)return;const r=selectedOne();if(!r)return;r.moRemarks=rem;r.status='Correction Required';close('correctionOverlay');selected.clear();applyFilters();toast('success',`Transaction ${r.id} sent for correction.`)};
+  function refreshAll(){data=makeData();visible=[];selected.clear();page=1;$('#company').value='';$('#trader').value='';$('#fixingDate').value=fmtDate(today);$('#search').value='';applyFilters();open('refreshOverlay')}
+  $('#refreshBtn').onclick=refreshAll;
+  $('#exportBtn').onclick=()=>{const cols=['Transaction No','Company Code','Trader','Buy/Sell','Currency Pair','Amount 1','Crcy 1','Amount 2','Crcy 2','Original Spot','Swap','Forward Rate','Fixing Date','NDF Value','Fixing Reference','Status']; const rows=visible.map(r=>[r.id,r.company,r.trader,r.side,r.pair,r.amt1,r.c1,r.amt2,r.c2,r.spot,r.swap,r.fwd,r.date,r.ndf,r.ref,r.status]); const csv=[cols,...rows].map(a=>a.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='confirm_ndf_fixing.csv';a.click();URL.revokeObjectURL(a.href);toast('success','CSV downloaded.')};
+
+  function open(id){$('#'+id).classList.add('show')} function close(id){$('#'+id).classList.remove('show')}
+  $$('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close)); $$('.overlay').forEach(o=>o.addEventListener('mousedown',e=>{if(e.target===o)close(o.id)}));
+  window.toast=toast; function toast(type,msg){const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<strong>${type==='success'?'✓':type==='error'?'!':'i'}</strong><div>${msg}</div>`;$('#toastbox').appendChild(t);setTimeout(()=>t.remove(),3400)}
+
+  // Compact custom calendar. Display month is synced only when opening, not on every render.
+  let calMonth=new Date(today.getFullYear(),today.getMonth(),1); const cal=$('#calendar');
+  function openCalendar(){const parsed=isoFromDisplay($('#fixingDate').value);calMonth=new Date((parsed||today).getFullYear(),(parsed||today).getMonth(),1);renderCal();const r=$('#fixingDate').getBoundingClientRect();cal.style.left=Math.max(8,Math.min(r.left,window.innerWidth-286))+'px';cal.style.top=Math.min(r.bottom+5,window.innerHeight-320)+'px';cal.classList.add('show')}
+  function renderCal(){const y=calMonth.getFullYear(),m=calMonth.getMonth(),first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate(); const selected=isoFromDisplay($('#fixingDate').value); const names=['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; let h=`<div class="cal-head"><button data-cal="prev">‹</button><div class="cal-title">${calMonth.toLocaleString('en',{month:'long'})} ${y}</div><button data-cal="next">›</button></div><div class="cal-grid">${names.map(n=>`<div class="dow">${n}</div>`).join('')}`; for(let i=0;i<42;i++){let d,mm=m,yy=y,muted=false;if(i<start){d=prev-start+i+1;mm=m-1;muted=true}else if(i>=start+days){d=i-start-days+1;mm=m+1;muted=true}else d=i-start+1; const dt=new Date(yy,mm,d),isToday=fmtDate(dt)===fmtDate(today),isSel=selected&&fmtDate(dt)===fmtDate(selected);h+=`<div class="day ${muted?'muted':''} ${isToday?'today':''} ${isSel?'sel':''}" data-date="${fmtDate(dt)}">${d}</div>`}h+='</div>';cal.innerHTML=h}
+  $('#openCal').onclick=openCalendar; $('#fixingDate').addEventListener('click',openCalendar); cal.addEventListener('click',e=>{if(e.target.dataset.cal==='prev'){calMonth.setMonth(calMonth.getMonth()-1);renderCal()}else if(e.target.dataset.cal==='next'){calMonth.setMonth(calMonth.getMonth()+1);renderCal()}else if(e.target.dataset.date){$('#fixingDate').value=e.target.dataset.date;cal.classList.remove('show');page=1;selected.clear();applyFilters()}}); document.addEventListener('mousedown',e=>{if(!cal.contains(e.target)&&!e.target.closest('.date-wrap'))cal.classList.remove('show')});
+  $('#fixingDate').addEventListener('input',e=>{let v=e.target.value.replace(/\D/g,'').slice(0,8);if(v.length>4)v=v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4);else if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);e.target.value=v;if(v.length===10&&isoFromDisplay(v)){page=1;selected.clear();applyFilters()}else if(v.length===0){page=1;selected.clear();applyFilters()}});
+  applyFilters();
+})();
+</script>
+</body>
+</html>

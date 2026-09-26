@@ -127,7 +127,15 @@
       },
       {
         "label": "NDF Fixing",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSFR050",
+            "title": "UA1: TSF NDF Fixing",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR050",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          }
+        ]
       }
     ]
   },
@@ -137,13 +145,6 @@
       {
         "label": "FX Deal Confirmation",
         "items": [
-          {
-            "code": "ZSGTSFR002",
-            "title": "Update Bank Reference for FX Deals",
-            "tag": "Transaction",
-            "desc": "ZSGTSFR002",
-            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-          },
           {
             "code": "ZSGTSFR024",
             "title": "TSF MO Deal Confirmation - FX & Options",
@@ -157,12 +158,41 @@
             "tag": "Transaction",
             "desc": "ZSGTSFR026",
             "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR002",
+            "title": "Update Bank Reference for FX Deals",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR002",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
           }
         ]
       },
       {
         "label": "FX Deal ID Confirmation",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSFR044",
+            "title": "MO: View List of Deal IDs for Confirmation",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR044",
+            "icon": "M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"
+          },
+          {
+            "code": "ZSGTSFP002",
+            "title": "MO: Confirm FX Deal ID (Single Deal ID)",
+            "tag": "Transaction",
+            "desc": "ZSGTSFP002",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+          },
+          {
+            "code": "ZSGTSFP017",
+            "title": "MO: Confirm FX Deal ID for SS (Single Deal ID)",
+            "tag": "Transaction",
+            "desc": "ZSGTSFP017",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+          }
+        ]
       },
       {
         "label": "FX Trade Invoicing",
