@@ -1,10 +1,12 @@
 /**
  * MO: Confirm Master Contract (ZSGTSFR011) against the SLC middleware.
  *
- * Mirrors the program: the queue is ZSGTSFTR_MAS_CON at ZMC_STAT 02 (Release to MO) or 11
- * (Error Correction); Confirm moves a contract to 03, Reject to 13 with the MO remark in
- * ZMO_REMARKS, one update per contract; Edit (ZSGTSF_RMC_DETAIL_EDIT) writes the amount,
- * payment terms and FX Model with the entity / currency strings the model carries.
+ * Mirrors the program: the queue is ZSGTSFTR_MAS_CON at ZMC_STAT 02 (Release to MO), 13 or 22
+ * (FO's correction of a Reject/Correction-after-Deal, resubmitted for review); Confirm moves a
+ * contract to 03, Reject to 11 (MO->FO: Correction Required) with the MO remark in ZMO_REMARKS,
+ * one update per contract, and takes it out of this queue into FO's Error Correction screen
+ * until it is resubmitted; Edit (ZSGTSF_RMC_DETAIL_EDIT) writes the amount, payment terms and
+ * FX Model with the entity / currency strings the model carries.
  *
  * What MySQL cannot answer keeps the screen's dummy values: masters that are registered but
  * empty (RULE_BT, PAYMENT), the regions and port pairs (no master is migrated), utilization
@@ -23,24 +25,29 @@ import {
 } from '../../shared/fx/master-contract.ts'
 import type { FxRow } from '../../shared/fx/mw.ts'
 import { clip, dateFromIso, dec, num, sapUser } from '../../shared/fx/sap.ts'
-import { COMMODITIES, ENTITIES, FX_MODELS, PAYMENT_TERMS, STATUS, commodityOf, seedContracts } from './data.ts'
+import { COMMODITIES, ENTITIES, FX_MODELS, PAYMENT_TERMS, STATUS, STATUS_KEY, commodityOf, seedContracts } from './data.ts'
 import { addDays } from './format.ts'
 import type { Commodity, Entity, FxModel, MasterContract, McAction, PaymentTerm, StatusValue } from './types.ts'
 
-/** The ZMC_STAT codes this queue holds (the program's WHERE zmc_stat IN ('02','11')). */
-export const QUEUE_FILTER = { 'ZMC_STAT[in]': '02,11' }
+/** The ZMC_STAT codes this queue holds (the program's WHERE zmc_stat IN ('02','13','22')). */
+export const QUEUE_FILTER = { 'ZMC_STAT[in]': '02,13,22' }
 
-/** What Confirm and Reject write to ZMC_STAT. */
-export const ACTION_STATUS: Record<McAction, string> = { confirm: '03', reject: '13' }
+/** What Confirm and Reject write to ZMC_STAT. Reject is 11, not a terminal status — it sends
+ * the contract to FO's Error Correction screen, which resubmits it as 13 or 22. */
+export const ACTION_STATUS: Record<McAction, string> = { confirm: '03', reject: '11' }
 
 // ---------------------------------------------------------------- status
 
 /** The screen's status texts are code first ("02-Release to MO"), so the code is the prefix. */
 export const statusCodeOf = (status: StatusValue): string => status.slice(0, 2)
 
-/** ZMC_STAT -> the screen's status text; undefined for a code this screen has no text for. */
+/**
+ * ZMC_STAT -> the screen's status text; undefined for a code this screen has no text for.
+ * Searches every recognised StatusValue (STATUS_KEY's keys), not just STATUS's one-per-key
+ * canonical values, since ERRCORR alone covers two distinct codes (13 and 22).
+ */
 export function statusFromCode(code: string): StatusValue | undefined {
-  return Object.values(STATUS).find((s) => statusCodeOf(s) === code)
+  return (Object.keys(STATUS_KEY) as StatusValue[]).find((s) => statusCodeOf(s) === code)
 }
 
 // ---------------------------------------------------------------- masters
@@ -199,7 +206,7 @@ export function actionColumns(action: McAction, remark: string): Record<string, 
 }
 
 /**
- * Confirms (03) or rejects (13) each contract, one update per MC as the program loops.
+ * Confirms (03) or rejects (11) each contract, one update per MC as the program loops.
  * Returns who ZCHANGED_BY was stamped as, for the table to show.
  */
 export async function actionMcs(mcNumbers: readonly number[], action: McAction, remark: string): Promise<string> {

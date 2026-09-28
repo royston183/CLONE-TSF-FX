@@ -82,28 +82,39 @@ export const PORT_PAIRS: PortPair[] = [
 
 export const ENTERED_BY_USERS = ['TINAKSHAYM', 'AERAHULY']
 
+/**
+ * ZMC_STAT, as this queue actually uses it: Reject moves a contract to 11 (MO->FO: Correction
+ * Required), which takes it out of MO's queue and into FO's Error Correction screen; once FO
+ * corrects and resubmits, it comes back as 13 (or 22, from a Correction-after-Deal 21) for MO
+ * to review again. STATUS.ERRCORR is the 13 case, the more common of the two.
+ */
 export const STATUS: Record<StatusKey, StatusValue> = {
   RELEASE: '02-Release to MO',
-  ERRCORR: '11-Error Correction',
+  ERRCORR: '13-FO: Error Correction - Correct',
   CONFIRMED: '03-Confirmed by MO',
   INUSE: '04-In-Use',
-  REJECTED: '13-Rejected by MO',
+  REJECTED: '11-MO->FO: Correction Required',
 }
+
+/** The other code ERRCORR covers: FO's resubmission of a 21 (Correction after Deal). */
+export const ERRCORR_AFTER_DEAL: StatusValue = '22-FO: Error Correction - Correct'
 
 export const STATUS_KEY: Record<StatusValue, StatusKey> = {
   '02-Release to MO': 'RELEASE',
-  '11-Error Correction': 'ERRCORR',
+  '13-FO: Error Correction - Correct': 'ERRCORR',
+  '22-FO: Error Correction - Correct': 'ERRCORR',
   '03-Confirmed by MO': 'CONFIRMED',
   '04-In-Use': 'INUSE',
-  '13-Rejected by MO': 'REJECTED',
+  '11-MO->FO: Correction Required': 'REJECTED',
 }
 
 export const STATUS_SHORT: Record<StatusValue, string> = {
   '02-Release to MO': 'Release to MO',
-  '11-Error Correction': 'Error Correction',
+  '13-FO: Error Correction - Correct': 'Error Correction',
+  '22-FO: Error Correction - Correct': 'Error Correction',
   '03-Confirmed by MO': 'Confirmed',
   '04-In-Use': 'In Use',
-  '13-Rejected by MO': 'Rejected',
+  '11-MO->FO: Correction Required': 'Rejected',
 }
 
 /**

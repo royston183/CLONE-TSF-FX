@@ -3,7 +3,18 @@
  * component only holds state. The writes they stand for (Confirm, Reject, Update) go to
  * ZSGTSFTR_MAS_CON through api.ts first; these then apply the same change to the table.
  */
-import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, FX_MODELS, MO_REVIEWER, STATUS, STATUS_KEY, STATUS_SHORT, entityOf, modelOf } from './data.ts'
+import {
+  DEFAULT_DATE_FROM,
+  DEFAULT_DATE_TO,
+  ERRCORR_AFTER_DEAL,
+  FX_MODELS,
+  MO_REVIEWER,
+  STATUS,
+  STATUS_KEY,
+  STATUS_SHORT,
+  entityOf,
+  modelOf,
+} from './data.ts'
 import { fmtDate, fmtDateTime, fmtNum, parseAmountShorthand, safeParseDate } from './format.ts'
 import type {
   ChildLeg,
@@ -23,22 +34,23 @@ import type {
 
 /**
  * This transaction's work queue only ever surfaces Master Contracts still awaiting MO action:
- * freshly released (Release to MO) or bounced back for correction (Error Correction). A Deal
- * ID can only ever be assigned once an MC is Confirmed and an FX Deal is booked against it —
- * since Confirmed/In-Use records never appear here, no visible row will ever carry one. Once
- * MO confirms or rejects a contract it leaves the queue entirely (matches the ABAP: those
- * statuses are no longer '02' or '11', so they fall outside scope).
+ * freshly released (Release to MO), or FO's resubmission after a correction (13, or 22 from a
+ * Correction-after-Deal). A Deal ID can only ever be assigned once an MC is Confirmed and an
+ * FX Deal is booked against it — since Confirmed/In-Use records never appear here, no visible
+ * row will ever carry one. Once MO confirms a contract it leaves the queue entirely; a Reject
+ * (11) leaves it too — it goes to FO's Error Correction screen, not back here, until FO
+ * resubmits it as 13/22.
  */
-const QUEUE_STATUSES: StatusValue[] = [STATUS.RELEASE, STATUS.ERRCORR]
+const QUEUE_STATUSES: StatusValue[] = [STATUS.RELEASE, STATUS.ERRCORR, ERRCORR_AFTER_DEAL]
 
 export const isInQueueScope = (mc: MasterContract) => QUEUE_STATUSES.includes(mc.status)
 
 /**
- * Both statuses in this queue are actionable the same way: selectable, confirmable or
- * rejectable in bulk, and offered both quick actions in the child-contract modal. There is no
- * special-cased "confirm only" path — Error Correction follows exactly the same logic.
+ * Every status in this queue is actionable the same way: selectable, confirmable or rejectable
+ * in bulk, and offered both quick actions in the child-contract modal. There is no
+ * special-cased "confirm only" path — a resubmitted correction follows exactly the same logic.
  */
-export const isActionable = (mc: MasterContract) => mc.status === STATUS.RELEASE || mc.status === STATUS.ERRCORR
+export const isActionable = (mc: MasterContract) => QUEUE_STATUSES.includes(mc.status)
 
 // ---------------------------------------------------------------- filtering / sorting
 

@@ -18,13 +18,18 @@ export type FxModel = {
 }
 
 export type StatusKey = 'RELEASE' | 'ERRCORR' | 'CONFIRMED' | 'INUSE' | 'REJECTED'
-/** The ABAP status text, code first ("02-Release to MO"), exactly as the SAP table holds it. */
+/**
+ * The ABAP status text, code first ("02-Release to MO"), exactly as the SAP table holds it.
+ * Two codes land under ERRCORR: 13 is FO's correction of an 11 (Reject), 22 is FO's correction
+ * of a 21 (Correction after Deal) — both come back to this queue for MO to review again.
+ */
 export type StatusValue =
   | '02-Release to MO'
-  | '11-Error Correction'
+  | '13-FO: Error Correction - Correct'
+  | '22-FO: Error Correction - Correct'
   | '03-Confirmed by MO'
   | '04-In-Use'
-  | '13-Rejected by MO'
+  | '11-MO->FO: Correction Required'
 
 /** One row of the legacy page's MC_SEED block, before the derived columns are filled in. */
 export type McSeed = {
