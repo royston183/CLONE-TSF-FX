@@ -1,0 +1,91 @@
+/* Night mode for fo-change-deal-id, derived from fo-change-deal-id.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .fo-change-deal-id {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .fo-change-deal-id input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .fo-change-deal-id select,
+:root[data-theme='dark'] .fo-change-deal-id textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id {
+  --bg: #0d1724;
+  --card: #14212f;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --text: #e6eef8;
+  --blue-dark: #7cc0f8;
+  --blue-light: #17304a;
+  --green-bg: #14321f;
+  --orange-bg: #3a2a12;
+  --red-bg: #3a1b1e;
+  --gray-bg: #1b2b3d;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .fo-change-deal-id .btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .btn-danger {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .search-input-wrap input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .search-input-wrap input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fo-change-deal-id .typeahead {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-green {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-red {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-orange {
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid th {
+  background: var(--gray-tint,#1b2b3d);
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr.row-selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr.row-selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid input.cell-input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid input.cell-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input[type=text],
+:root[data-theme='dark'] .fo-change-deal-id .form-field input[type=number] {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fo-change-deal-id .info-banner.warn {
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .info-banner.error {
+  color: #a9c2dd;
+}

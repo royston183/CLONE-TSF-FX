@@ -1,94 +1,78 @@
-/** A TSF entity / company code (ZSGTSFTR_COMP). */
-export type Company = { name: string; co: string }
+/** Report Type pill: Forex or Option deals. */
+export type DealType = 'FX' | 'OP'
 
-/** An FX Model (ZSGTSFTR_RULE_BT). FX1 books forwards, FX2 options. */
-export type FxModel = { desc: string; subType: 'FX1' | 'FX2'; entityId: string; currId: string }
+export type Company = { code: string; name: string }
+export type FxPair = { pair: string; c1: string; c2: string; spot: number }
+export type Trader = { code: string; name: string }
+export type Partner = { code: string; name: string }
+export type TxnType = { code: string; desc: string }
+export type Portfolio = { code: string; name: string }
 
-/** ABAP Deal ID status codes. */
-export type DealStatus = '01' | '02' | '03' | '30'
+export type TxnStatus = 'Active' | 'Pending' | 'Settled'
+export type MatchStatus = 'Matched' | 'Unmatched'
 
-export type BuySell = 'Buy' | 'Sell'
-
-/** One row of the legacy RAW_DEALS block, its dates already resolved against "today". */
-export type RawDeal = {
-  dealId: string
-  mcRef: string
-  model: string
-  trader: string
-  status: DealStatus
-  dealStart: Date
-  dealEnd: Date
-  shipStart: Date
-  shipEnd: Date
-  origin: string
-  allInRate: number
-  notional: number
-  curr1: string
-  curr2: string
-}
-
-/** A market-facing FX Deal leg, D1 or D2. */
-export type FxLeg = {
-  leg: 'D1' | 'D2'
-  coCode: string
-  tradeDate: Date
-  buy1: BuySell
-  curr1: string
-  amt1: number
-  buy2: BuySell
-  curr2: string
-  amt2: number
-  rate: number
-  valueDate: Date
-  partner: string
-  txnType: string
-}
-
-/** A planned trade-invoice leg, T1 / T2 / T3 — one per step of the Entity String. */
-export type InvLeg = {
-  ref: string
-  type: 'T1' | 'T2' | 'T3'
-  dealType: 'D1' | 'D2'
-  sell: string
-  buy: string
-  mcSell: string
-  mcBuy: string
-  amt: number
-  rate: number
-  invAmt: number
-  curr: string
-}
-
-export type EditPairEntry = { leg: 'D1' | 'D2'; newRfha: string; at: Date }
-
+/** One external deal row, keyed by the original's SAP field names. */
 export type Deal = {
-  dealId: string
-  mcRef: string
-  model: string
-  modelDesc: string
-  subType: FxModel['subType']
-  entityId: string
-  entChain: string[]
-  currId: string
-  currChain: string[]
-  trader: string
-  status: DealStatus
-  dealStart: Date
-  dealEnd: Date
-  shipStart: Date
-  shipEnd: Date
-  origin: string
-  fxLegs: FxLeg[]
-  invLegs: InvLeg[]
-  premiumRate: number | null
-  editHistory: EditPairEntry[]
+  _id: string
+  RFHA: string
+  BUKRS: string
+  BUTXT: string
+  SFHAART: string
+  XTEXT: string
+  CPAIR: string
+  BS_1: 'Buy' | 'Sell'
+  CURR1: string
+  AMT1: number
+  DBLFZ: string
+  DELFZ: string
+  RDEALER: string
+  BP_NAME: string
+  KONTRH: string
+  RBUSA: string
+  RPORTB: string
+  PRCTR: string
+  TXN_STATUS: TxnStatus
+  MAT_UNMAT: MatchStatus
+  ZTSF_DEAL_ID: string
+  ZMC_REF_NO: string
+  /** External Reference (editable). */
+  NORDEXT: string
+  /** Int Ref (editable). */
+  ZOLAM_DEAL_NO: string
+  _checked: boolean
+  // Forex only
+  BS_2?: 'Buy' | 'Sell'
+  CURR2?: string
+  AMT2?: number
+  SPOT?: number
+  SWAP?: number
+  TOT_RATE?: number
+  // Option only
+  OPTION_TYPE?: string
+  STRIKE_RATE?: number
+  PREMIUM_AMT?: number
+  PREMIUM_CURR?: string
+  EXPIRY_DATE?: string
 }
 
-/** An already-booked transaction Edit Deal Pair can re-point a leg to. */
-export type AltTxn = { rfha: string; desc: string }
+export type ColumnKey = Exclude<keyof Deal, '_id' | '_checked'>
+export type ColumnType = 'hotspot' | 'text' | 'number' | 'rate' | 'date' | 'status' | 'status2' | 'edit'
+export type Column = { key: ColumnKey; label: string; type: ColumnType; pin?: true }
 
-/** The list screen's search box and three dropdowns; '' is "All". */
-export type Filters = { search: string; status: DealStatus | ''; model: string; origin: string }
+/** The two inline-editable columns. */
+export type EditKey = 'NORDEXT' | 'ZOLAM_DEAL_NO'
 
-export type ToastKind = '' | 'success' | 'error'
-export type Toast = { message: string; kind: ToastKind; show: boolean }
+/** Basic Selection. keyDate is the DD-MM-YYYY text of the Key Date box. */
+export type Selection = {
+  coFrom: string
+  coTo: string
+  keyDate: string
+  dealType: DealType
+  withRef: boolean
+  layout: string
+}
+
+export type ColFilters = { type: string; status: string; trader: string }
+export type SortState = { field: ColumnKey | null; dir: 'asc' | 'desc' }
+
+export type Toast = { id: number; message: string; error: boolean }

@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>External Deals: Update Bank Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   Design system — tokens ported verbatim from the reference
+   application's resolved (OTTK-themed) cascade.
+   ========================================================= */
+:root{
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:13px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button, input, select, textarea{font-family:var(--font);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#B7C2CB;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* -------- Layout -------- */
+.app{
+  max-width:100%;
+  margin:0;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+
+/* -------- Header -------- */
+.page-header{
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.page-header .logo-img{
+  height:40px;
+  width:auto;
+  max-width:120px;
+  object-fit:contain;
+  flex:none;
+}
+.page-header .header-text{display:flex;flex-direction:column;}
+.page-header h1{
+  font-size:16px;
+  font-weight:700;
+  margin:0 0 3px;
+  letter-spacing:-0.2px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.page-header .tcode-chip{
+  font-size:11px;font-weight:600;color:var(--text-muted);
+  background:var(--gray-tint);border:1px solid var(--border);border-radius:3px;
+  padding:1px 6px;letter-spacing:.3px;
+}
+.page-header p{margin:0;color:var(--text-muted);font-size:12.5px;}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+
+/* -------- Cards / sections -------- */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  margin-bottom:12px;
+  overflow:visible;
+}
+.section-title{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:13px;font-weight:700;color:var(--primary-dark);letter-spacing:0.3px;
+}
+.section-title .dot{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.section-body{padding:12px 16px 14px;}
+
+/* -------- Form grid -------- */
+.form-grid-12{display:grid;grid-template-columns:repeat(12,1fr);gap:10px 12px;margin-bottom:14px;}
+.form-grid-12:last-child{margin-bottom:0;}
+.form-grid-12 > .field{min-width:0;}
+.gc-2{grid-column:span 2;}
+.gc-3{grid-column:span 3;}
+.gc-4{grid-column:span 4;}
+.gc-5{grid-column:span 5;}
+.gc-6{grid-column:span 6;}
+@media (max-width:760px){
+  .form-grid-12{grid-template-columns:repeat(6,1fr);}
+  .gc-2,.gc-3{grid-column:span 3;}
+  .gc-4,.gc-5,.gc-6{grid-column:span 6;}
+}
+@media (max-width:460px){
+  .form-grid-12{grid-template-columns:1fr;}
+  .gc-2,.gc-3,.gc-4,.gc-5,.gc-6{grid-column:span 1;}
+}
+
+.field{display:flex;flex-direction:column;gap:6px;position:relative;}
+.field label{font-size:13px;font-weight:600;color:var(--text-muted);white-space:nowrap;line-height:1.2;}
+.field label .req{color:var(--error);margin-left:2px;}
+.field .hint{font-size:11px;color:var(--text-faint);}
+.field .error-msg{font-size:11px;color:var(--error);display:none;margin-top:-2px;}
+.field.has-error .error-msg{display:block;}
+.field.has-error .control, .field.has-error .dd-input{border-color:var(--error) !important;background:var(--error-tint);}
+
+.control{
+  height:36px;min-width:0;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:0 11px;font-size:13px;color:var(--text);background:#fff;width:100%;outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.control::placeholder{color:var(--text-faint);}
+.control:hover{border-color:#A6B0B9;}
+.control:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+select.control{cursor:pointer;}
+
+/* Searchable dropdown */
+.dd{position:relative;}
+.dd-input{
+  height:36px;min-width:0;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:0 32px 0 11px;font-size:13px;width:100%;outline:none;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;cursor:pointer;transition:border-color .15s, box-shadow .15s;
+  background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23475E75" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+}
+.dd-input::placeholder{color:var(--text-faint);}
+.dd-input:hover{border-color:#A6B0B9;}
+.dd-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.dd-panel{
+  position:absolute;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);min-width:220px;max-height:240px;overflow-y:auto;z-index:210;
+  display:none;padding:6px;
+}
+.dd.open .dd-panel{display:block;}
+.dd-item{padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;display:flex;flex-direction:column;gap:1px;}
+.dd-item:hover, .dd-item.active{background:var(--primary-tint);}
+.dd-item .primary-line{font-weight:600;font-size:13px;color:var(--text);}
+.dd-item .secondary-line{font-size:11px;color:var(--text-muted);}
+.dd-empty{padding:14px 10px;text-align:center;color:var(--text-faint);font-size:11.5px;}
+
+/* Date field */
+.date-field{position:relative;}
+.date-field .control{padding-right:34px;}
+.date-icon{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;
+  border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;color:var(--text-muted);font-size:13px;
+}
+.date-icon:hover{background:var(--primary-tint);color:var(--primary);}
+.date-popup{
+  position:absolute;width:250px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);z-index:210;padding:10px;display:none;
+}
+.date-popup.open{display:block;}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cal-head button{width:24px;height:24px;border:none;background:var(--gray-tint);border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);}
+.cal-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.cal-head .cal-title{font-weight:700;font-size:12px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-grid .dow{text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;}
+.cal-grid .day{text-align:center;font-size:11.5px;padding:6px 0;border-radius:6px;cursor:pointer;color:var(--text);}
+.cal-grid .day:hover{background:var(--primary-tint);}
+.cal-grid .day.muted{color:var(--text-faint);}
+.cal-grid .day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.cal-grid .day.today:not(.selected){box-shadow:inset 0 0 0 1px var(--primary-light);}
+
+/* Segmented / radio pill (no direct reference equivalent — tokens matched) */
+.pillgroup{display:flex;gap:8px;}
+.pill{
+  height:36px;padding:0 16px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:#fff;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.pill .dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--border-strong);flex:0 0 auto;}
+.pill.active{border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.pill.active .dot{border-color:var(--primary);background:var(--primary);}
+
+/* -------- Buttons -------- */
+.btn{
+  height:32px;padding:0 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;
+  border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease,box-shadow .15s ease,transform .1s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-strong);}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.btn-danger{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-danger:hover{background:var(--error-tint);}
+.btn-ghost{background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.btn-ghost:hover{text-decoration:underline;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sm{height:28px;padding:0 10px;font-size:12px;}
+
+.icon-btn{
+  width:34px;height:34px;border:1px solid var(--border-strong);background:#fff;border-radius:var(--radius-sm);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;
+}
+.icon-btn:hover{border-color:var(--primary);color:var(--primary);}
+.icon-btn.active{background:var(--primary-tint);border-color:var(--primary);color:var(--primary);}
+
+.sel-actions{display:flex;align-items:center;gap:10px;padding:12px 16px;}
+.helper-note{font-size:11.5px;color:var(--text-faint);line-height:1.5;padding:0 16px 14px;}
+
+/* =========================================================
+   Table toolbar / results table
+   ========================================================= */
+.table-toolbar{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;flex-wrap:wrap;}
+.search-box{position:relative;flex:1 1 240px;min-width:200px;}
+.search-box input{
+  height:32px;width:100%;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;font-size:13px;outline:none;transition:border-color .18s ease,box-shadow .18s ease;
+}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.search-box .icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:13px;}
+.toolbar-spacer{flex:1 0 8px;}
+.result-count{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.filter-select{flex:0 1 150px;min-width:110px;height:32px;cursor:pointer;font-size:13px;border-radius:var(--radius-sm);}
+
+.results-title{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--primary-dark);}
+
+.table-scroll{overflow-x:auto;}
+table.grid{width:100%;border-collapse:collapse;min-width:2050px;}
+table.grid thead th{
+  position:sticky;top:0;background:var(--gray-tint);border-bottom:1px solid #E6E9EB;
+  text-align:left;font-size:13px;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);
+  font-weight:700;padding:8px 10px;white-space:nowrap;cursor:pointer;user-select:none;z-index:5;
+}
+table.grid thead th:hover{color:var(--primary-dark);}
+table.grid thead th .sort-ind{display:inline-block;margin-left:4px;font-size:9px;color:var(--text-faint);}
+table.grid thead th.sorted .sort-ind{color:var(--primary);}
+table.grid thead th.num, table.grid td.num{text-align:right;font-variant-numeric:tabular-nums;}
+table.grid thead th.chkcol, table.grid td.chkcol{width:40px;min-width:40px;text-align:center;padding-left:10px;padding-right:10px;position:sticky;left:0;background:var(--gray-tint);z-index:6;}
+table.grid td.chkcol{background:var(--card);}
+table.grid thead th.pin2, table.grid td.pin2{position:sticky;left:40px;z-index:6;background:var(--gray-tint);box-shadow:2px 0 3px -1px rgba(34,53,72,.08);}
+table.grid td.pin2{background:var(--card);}
+table.grid tbody td{padding:8px 10px;border-bottom:1px solid #E6E9EB;font-size:14px;white-space:nowrap;color:var(--text);}
+table.grid tbody tr{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;}
+table.grid tbody tr:hover td{background:#F7FBFF;}
+table.grid tbody tr:hover{transform:translateY(-1px) scale(1.002);box-shadow:0 3px 9px rgba(34,53,72,.10);position:relative;z-index:2;}
+table.grid tbody tr:hover td.chkcol, table.grid tbody tr:hover td.pin2{background:#F7FBFF;}
+table.grid tbody tr.zebra td{background:#FBFCFD;}
+table.grid tbody tr.zebra:hover td{background:#F7FBFF;}
+table.grid tbody tr.active-row td{background:#EAF3FC;}
+table.grid tbody tr.active-row td.chkcol, table.grid tbody tr.active-row td.pin2{background:#EAF3FC;}
+table.grid tbody tr.active-row:hover{box-shadow:0 3px 9px rgba(10,110,209,.14);}
+table.grid tbody tr.dragging{opacity:.5;}
+.row-select-checkbox{width:14px;height:14px;accent-color:var(--primary);cursor:pointer;vertical-align:middle;}
+.mc-link{color:var(--primary-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+.mc-link:hover{text-decoration:underline;color:var(--primary);}
+.status-txt{font-weight:600;font-size:14px;}
+.status-Active{color:var(--success);}
+.status-Settled{color:var(--teal);}
+.status-Pending{color:var(--warning);}
+.status-Matched{color:var(--success);}
+.status-Unmatched{color:var(--error);}
+.edit-input{
+  width:100%;min-width:140px;height:28px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:0 7px;background:#FFFDF3;font-size:13px;
+}
+.edit-input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 2px var(--primary-tint);}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);}
+.empty-state .big{font-size:28px;margin-bottom:6px;}
+
+.table-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 12px;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border);}
+.page-size-select{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.page-size-select select{height:28px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;padding:0 6px;}
+.pagination{display:flex;align-items:center;gap:4px;}
+.pagination button{
+  min-width:28px;height:28px;border:1px solid var(--border-strong);background:#fff;border-radius:var(--radius-sm);
+  font-size:11.5px;cursor:pointer;color:var(--text);transition:border-color .15s ease,color .15s ease,background .15s ease,transform .1s ease;
+}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pagination button:active:not(:disabled){transform:translateY(1px);}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,26,41,0.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-overlay.closing{display:flex;}
+.modal{background:#fff;border:1px solid #B9C2C9;border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);animation:popIn .18s ease-out;}
+@keyframes popIn{from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.modal-overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+.modal.modal-left{text-align:left;padding:20px 22px 16px;}
+.modal-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.modal-head-row h2{margin:0;font-size:14px;}
+.modal-head-row .sub{font-size:11.5px;color:var(--text-faint);margin-top:2px;font-weight:500;}
+.modal-close-btn{border:none;background:transparent;font-size:18px;line-height:1;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:6px;transition:background .15s ease,color .15s ease;}
+.modal-close-btn:hover{background:var(--gray-tint);color:var(--text);}
+.modal.modal-scrollable{display:flex;flex-direction:column;max-height:92vh;}
+.modal.modal-scrollable .modal-head-row{flex:0 0 auto;}
+.modal.modal-scrollable .modal-body-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding-right:2px;}
+.modal.modal-scrollable .modal-actions{flex:0 0 auto;margin-top:14px;}
+.view-txn-modal{width:min(760px, calc(100vw - 40px));max-width:96vw;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+.detail-section{margin-bottom:16px;}
+.detail-section:last-child{margin-bottom:0;}
+.detail-section-title{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;color:var(--primary-dark);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 18px;}
+.detail-item{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.detail-item .detail-label{font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.detail-item .detail-value{font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+@media (max-width:640px){.detail-grid{grid-template-columns:1fr 1fr;}}
+
+/* =========================================================
+   Toast
+   ========================================================= */
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#243B53;color:#fff;
+  padding:11px 18px;border-radius:var(--radius-md);font-size:12.5px;box-shadow:var(--shadow-pop);
+  z-index:300;display:none;align-items:center;gap:8px;
+}
+.toast.show{display:flex;}
+.toast.error{background:#4A211D;}
+
+/* =========================================================
+   Drag and drop
+   ========================================================= */
+.drag-ghost{
+  position:fixed;top:-1000px;left:-1000px;padding:6px 10px;background:#1D2D3E;color:#fff;
+  border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap;font-family:var(--font);pointer-events:none;
+}
+.btn.drag-over{
+  border-color:var(--primary) !important;background:var(--primary-tint) !important;color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+
+.hidden{display:none !important;}
+
+@media (max-width:900px){ .filter-select{flex:1 1 130px;} }
+@media (max-width:600px){
+  .app{padding:14px 0.2rem;}
+  .sel-actions{flex-direction:column-reverse;}
+  .sel-actions .btn{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ HEADER (FS logo asset reused verbatim from reference) ============ -->
+  <div class="page-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="FS logo">
+    <div class="header-text">
+      <h1>External Deals: Update Bank Reference <span class="tcode-chip">ZSGTSFR002</span></h1>
+      <p>External Reference Type</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="btnBack">&larr; Back</button>
+      <button class="btn btn-secondary" id="btnRefresh">&#8635; Refresh</button>
+      <button class="btn btn-secondary" id="btnSignOut">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ============ Selection Criteria ============ -->
+  <div class="card" id="selectionCard">
+    <div class="section-title"><span class="dot"></span>Basic Selection</div>
+    <div class="section-body">
+      <div class="form-grid-12">
+        <div class="field gc-3" id="field-coFrom">
+          <label>Company Code (From)<span class="req">*</span></label>
+          <div class="dd" id="dd-coFrom">
+            <input class="dd-input" id="input-coFrom" placeholder="Select company" autocomplete="off">
+            <input type="hidden" id="value-coFrom">
+            <div class="dd-panel" id="panel-coFrom"></div>
+          </div>
+          <div class="error-msg">Company Code is a required entry.</div>
+        </div>
+
+        <div class="field gc-3" id="field-coTo">
+          <label>Company Code (To)</label>
+          <div class="dd" id="dd-coTo">
+            <input class="dd-input" id="input-coTo" placeholder="Select company" autocomplete="off">
+            <input type="hidden" id="value-coTo">
+            <div class="dd-panel" id="panel-coTo"></div>
+          </div>
+        </div>
+
+        <div class="field gc-3" id="field-keyDate">
+          <label>Key Date<span class="req">*</span></label>
+          <div class="date-field">
+            <input class="control" id="input-keyDate" placeholder="DD-MM-YYYY" autocomplete="off">
+            <button type="button" class="date-icon" data-target="keyDate">&#128197;</button>
+            <div class="date-popup" id="popup-keyDate"></div>
+          </div>
+          <div class="error-msg">Key Date is a required entry.</div>
+        </div>
+
+        <div class="field gc-3">
+          <label>Layout</label>
+          <select class="control" id="input-layout">
+            <option value="">Default Layout</option>
+            <option value="STD">Standard View</option>
+            <option value="MYVAR">My Layout</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-12">
+        <div class="field gc-6">
+          <label>Report Type</label>
+          <div class="pillgroup" id="pillDealType">
+            <div class="pill active" data-val="FX"><span class="dot"></span>Forex</div>
+            <div class="pill" data-val="OP"><span class="dot"></span>Option</div>
+          </div>
+        </div>
+        <div class="field gc-6">
+          <label>External Reference</label>
+          <div class="pillgroup" id="pillWithRef">
+            <div class="pill active" data-val="1"><span class="dot"></span>With External Reference</div>
+            <div class="pill" data-val="0"><span class="dot"></span>Without External Reference</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="helper-note"><strong>Note:</strong> Key Date = Date on which deals in the system are without bank reference (includes open deals and expired deals).</div>
+    <div class="sel-actions">
+      <button class="btn btn-primary" id="btnExecute">Execute</button>
+      <button class="btn btn-secondary" id="btnReset">Reset</button>
+    </div>
+  </div>
+
+  <!-- ============ Results ============ -->
+  <div class="card hidden" id="resultsCard">
+    <div class="results-title"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--primary);"></span><span id="resultsTitleText">External Deals</span></div>
+
+    <div class="table-toolbar">
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input id="searchBox" placeholder="Search deals...">
+      </div>
+      <select class="control filter-select" id="filterType"><option value="">All types</option></select>
+      <select class="control filter-select" id="filterStatus"><option value="">All statuses</option></select>
+      <select class="control filter-select" id="filterTrader"><option value="">All traders</option></select>
+      <button class="btn btn-secondary btn-sm" id="btnResetFilters">Reset</button>
+      <button class="btn btn-primary btn-sm" id="btnUpdate" disabled>Update Bank Reference</button>
+      <button class="btn btn-secondary btn-sm" id="btnViewTxn" disabled>View Transaction</button>
+      <div class="icon-btn" id="btnDownload" title="Download">&#8681;</div>
+      <div class="toolbar-spacer"></div>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="grid" id="gridTable">
+        <thead><tr id="gridHeadRow"></tr></thead>
+        <tbody id="gridBody"></tbody>
+      </table>
+    </div>
+
+    <div class="empty-state hidden" id="emptyState">
+      <div class="big">&#128203;</div>
+      No record found. No external deals match the selected criteria.
+    </div>
+
+    <div class="table-footer">
+      <div class="page-size-select">
+        Rows per page
+        <select id="pageSizeSelect">
+          <option value="10">10</option>
+          <option value="15" selected>15</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ View Transaction modal ============ -->
+<div class="modal-overlay" id="viewModalOverlay">
+  <div class="modal modal-left modal-scrollable view-txn-modal">
+    <div class="modal-head-row">
+      <div>
+        <h2>View Transaction</h2>
+        <div class="sub" id="viewModalSub">&nbsp;</div>
+      </div>
+      <button type="button" class="modal-close-btn" id="btnCloseView" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body-scroll" id="viewModalBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="btnCloseView2">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   DUMMY DATA / LOOKUP MASTERS  (unchanged business data)
+   ========================================================= */
+var COMPANIES = [
+  {code:'AE13', name:'Olam International DMCC'},
+  {code:'ES12', name:'SEDA OUTSPAN IBERIA S.L.U'},
+  {code:'IN11', name:'Olam Agri India Pvt Ltd'},
+  {code:'SG10', name:'Olam Global Holdings Pte Ltd'},
+  {code:'TH10', name:'Olam (Thailand) Ltd'},
+  {code:'US15', name:'Olam Americas Inc'},
+  {code:'VN10', name:'Olam Vietnam Limited'}
+];
+var FX_PAIRS = [
+  {pair:'USD/INR', c1:'USD', c2:'INR', spot:87.1500},
+  {pair:'USD/THB', c1:'USD', c2:'THB', spot:34.2000},
+  {pair:'USD/VND', c1:'USD', c2:'VND', spot:25150.00},
+  {pair:'EUR/USD', c1:'EUR', c2:'USD', spot:1.0870},
+  {pair:'USD/AED', c1:'USD', c2:'AED', spot:3.6725},
+  {pair:'USD/SGD', c1:'USD', c2:'SGD', spot:1.3120},
+  {pair:'USD/CNH', c1:'USD', c2:'CNH', spot:7.1800}
+];
+var TRADERS = [
+  {code:'SKHAN', name:'S. Khan'},
+  {code:'SALVA', name:'S. Alva'},
+  {code:'RGUPTA', name:'R. Gupta'},
+  {code:'NPATEL', name:'N. Patel'},
+  {code:'MTAN', name:'M. Tan'}
+];
+var PARTNERS = [
+  {code:'P100234', name:'HSBC'},
+  {code:'P100567', name:'Citi'},
+  {code:'P100812', name:'Standard Chartered'},
+  {code:'P101045', name:'JPMorgan'},
+  {code:'P101390', name:'Deutsche Bank'}
+];
+var FX_TXN_TYPES = [
+  {code:'FWD', desc:'Forward'},
+  {code:'SPT', desc:'Spot'},
+  {code:'SWP', desc:'FX Swap'},
+  {code:'NDF', desc:'Non-Deliverable Forward'}
+];
+var OP_TXN_TYPES = [
+  {code:'CALL', desc:'Call Option'},
+  {code:'PUT', desc:'Put Option'},
+  {code:'CPCB', desc:'Call & Put Combo'}
+];
+var TXN_STATUSES = ['Active','Pending','Settled'];
+var MATCH_STATUSES = ['Matched','Unmatched'];
+var PORTFOLIOS = [{code:'P0010',name:'Trading Book'},{code:'P0020',name:'Hedging Book'},{code:'P0030',name:'Treasury Book'}];
+var PROFIT_CENTERS = ['PC-1001','PC-1002','PC-1003','PC-2001'];
+var BUSINESS_AREAS = ['BA01','BA02','BA03'];
+
+/* =========================================================
+   COLUMN DEFINITIONS (unchanged — confirmed FIELDCATALOG order;
+   OP list substitutes option-specific fields for the FX-only
+   rate fields, per the documented assumption)
+   ========================================================= */
+var FX_COLUMNS = [
+  {key:'RFHA', label:'Transaction', type:'hotspot', pin:true},
+  {key:'BUKRS', label:'Company Code', type:'text'},
+  {key:'BUTXT', label:'Company Name', type:'text'},
+  {key:'SFHAART', label:'Transaction Type', type:'text'},
+  {key:'XTEXT', label:'Type Description', type:'text'},
+  {key:'CPAIR', label:'Currency Pair', type:'text'},
+  {key:'BS_1', label:'Buy/Sell 1', type:'text'},
+  {key:'CURR1', label:'Currency 1', type:'text'},
+  {key:'AMT1', label:'Amount 1', type:'number'},
+  {key:'BS_2', label:'Buy/Sell 2', type:'text'},
+  {key:'CURR2', label:'Currency 2', type:'text'},
+  {key:'AMT2', label:'Amount 2', type:'number'},
+  {key:'DBLFZ', label:'Trade Date', type:'date'},
+  {key:'DELFZ', label:'Value Date', type:'date'},
+  {key:'SPOT', label:'Spot Rate', type:'rate'},
+  {key:'SWAP', label:'Swap Points', type:'rate'},
+  {key:'TOT_RATE', label:'All-in Rate', type:'rate'},
+  {key:'RDEALER', label:'Trader', type:'text'},
+  {key:'BP_NAME', label:'Partner Name', type:'text'},
+  {key:'KONTRH', label:'Partner Code', type:'text'},
+  {key:'RBUSA', label:'Business Area', type:'text'},
+  {key:'RPORTB', label:'Portfolio', type:'text'},
+  {key:'PRCTR', label:'Profit Center', type:'text'},
+  {key:'TXN_STATUS', label:'Txn Status', type:'status'},
+  {key:'MAT_UNMAT', label:'Match/Unmatch', type:'status2'},
+  {key:'ZTSF_DEAL_ID', label:'Deal ID', type:'text'},
+  {key:'ZMC_REF_NO', label:'MC Reference No', type:'text'},
+  {key:'NORDEXT', label:'External Reference', type:'edit'},
+  {key:'ZOLAM_DEAL_NO', label:'Int Ref', type:'edit'}
+];
+var OP_COLUMNS = [
+  {key:'RFHA', label:'Transaction', type:'hotspot', pin:true},
+  {key:'BUKRS', label:'Company Code', type:'text'},
+  {key:'BUTXT', label:'Company Name', type:'text'},
+  {key:'SFHAART', label:'Transaction Type', type:'text'},
+  {key:'XTEXT', label:'Type Description', type:'text'},
+  {key:'CPAIR', label:'Currency Pair', type:'text'},
+  {key:'OPTION_TYPE', label:'Option Type', type:'text'},
+  {key:'BS_1', label:'Buy/Sell 1', type:'text'},
+  {key:'CURR1', label:'Currency 1', type:'text'},
+  {key:'AMT1', label:'Amount 1', type:'number'},
+  {key:'STRIKE_RATE', label:'Strike Rate', type:'rate'},
+  {key:'PREMIUM_AMT', label:'Premium Amount', type:'number'},
+  {key:'PREMIUM_CURR', label:'Premium Currency', type:'text'},
+  {key:'DBLFZ', label:'Trade Date', type:'date'},
+  {key:'DELFZ', label:'Value Date', type:'date'},
+  {key:'EXPIRY_DATE', label:'Expiry Date', type:'date'},
+  {key:'RDEALER', label:'Trader', type:'text'},
+  {key:'BP_NAME', label:'Partner Name', type:'text'},
+  {key:'KONTRH', label:'Partner Code', type:'text'},
+  {key:'RBUSA', label:'Business Area', type:'text'},
+  {key:'RPORTB', label:'Portfolio', type:'text'},
+  {key:'PRCTR', label:'Profit Center', type:'text'},
+  {key:'TXN_STATUS', label:'Txn Status', type:'status'},
+  {key:'MAT_UNMAT', label:'Match/Unmatch', type:'status2'},
+  {key:'ZTSF_DEAL_ID', label:'Deal ID', type:'text'},
+  {key:'ZMC_REF_NO', label:'MC Reference No', type:'text'},
+  {key:'NORDEXT', label:'External Reference', type:'edit'},
+  {key:'ZOLAM_DEAL_NO', label:'Int Ref', type:'edit'}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+var state = {
+  filters:{ coFrom:'', coTo:'', keyDate:null, dealType:'FX', withRef:true, layout:'' },
+  results:[],
+  search:'',
+  sort:{ field:null, dir:'asc' },
+  page:1,
+  pageSize:15,
+  activeRowId:null,
+  colFilters:{ type:'', status:'', trader:'' }
+};
+var toastTimer = null;
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+function pad(n,len){ n=String(n); while(n.length<len) n='0'+n; return n; }
+function hashCode(str){ var h=0; for(var i=0;i<str.length;i++){ h=((h<<5)-h+str.charCodeAt(i))|0; } return h>>>0; }
+function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; var t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function fmtDate(d){ if(!d) return ''; return pad(d.getDate(),2)+'-'+pad(d.getMonth()+1,2)+'-'+d.getFullYear(); }
+function isoOf(d){ if(!d) return ''; return d.getFullYear()+'-'+pad(d.getMonth()+1,2)+'-'+pad(d.getDate(),2); }
+function fmtNum(n, dec){
+  dec=(dec===undefined)?2:dec;
+  if(n===null||n===undefined||n==='') return '';
+  var neg=n<0; n=Math.abs(n);
+  var parts=n.toFixed(dec).split('.');
+  parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (neg?'-':'')+parts.join('.');
+}
+function escHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pick(arr, rng){ return arr[Math.floor(rng()*arr.length)]; }
+function rnd(rng,min,max){ return min+rng()*(max-min); }
+function rndInt(rng,min,max){ return Math.floor(rnd(rng,min,max+1)); }
+function parseDMY(str){
+  if(!str) return null;
+  var m=/^(\d{2})-(\d{2})-(\d{4})$/.exec(str.trim());
+  if(!m) return null;
+  var d=parseInt(m[1],10), mo=parseInt(m[2],10)-1, y=parseInt(m[3],10);
+  var dt=new Date(y,mo,d);
+  if(dt.getDate()!==d||dt.getMonth()!==mo||dt.getFullYear()!==y) return null;
+  return dt;
+}
+function setFieldError(key, show){
+  var f=document.getElementById('field-'+key);
+  if(!f) return;
+  f.classList.toggle('has-error', !!show);
+}
+function clearFieldError(key){ setFieldError(key,false); }
+
+/* =========================================================
+   Floating panel positioning (ported verbatim from reference —
+   keeps dropdown/calendar popups on-screen and viewport-aware)
+   ========================================================= */
+function positionFloatingPanel(triggerEl, panelEl, opts){
+  opts = opts || {};
+  var margin = 8;
+  var gap = opts.gap===undefined ? 6 : opts.gap;
+  var triggerRect = triggerEl.getBoundingClientRect();
+  var boundsEl = triggerEl.closest('.modal');
+  var boundRect = boundsEl ? boundsEl.getBoundingClientRect() : { left:0, right:window.innerWidth, top:0, bottom:window.innerHeight };
+  if(opts.matchWidth){ panelEl.style.width = triggerRect.width+'px'; }
+  var panelRect = panelEl.getBoundingClientRect();
+  var boundLeft = boundRect.left+margin, boundRight = boundRect.right-margin;
+  var boundTop = boundRect.top+margin, boundBottom = boundRect.bottom-margin;
+  var preferredLeft = opts.alignRight ? (triggerRect.right-panelRect.width) : triggerRect.left;
+  var maxLeft = boundRight-panelRect.width;
+  var left = preferredLeft;
+  if(maxLeft<boundLeft){ left=boundLeft; } else { if(left>maxLeft) left=maxLeft; if(left<boundLeft) left=boundLeft; }
+  var desiredTop = triggerRect.bottom+gap;
+  var fitsBelow = (desiredTop+panelRect.height)<=boundBottom;
+  var top;
+  if(fitsBelow){ top=desiredTop; }
+  else { var aboveTop=triggerRect.top-gap-panelRect.height; top=(aboveTop>=boundTop)?aboveTop:Math.max(boundTop, boundBottom-panelRect.height); }
+  panelEl.style.position='fixed'; panelEl.style.left=left+'px'; panelEl.style.top=top+'px'; panelEl.style.right='auto'; panelEl.style.bottom='auto';
+}
+
+/* =========================================================
+   Generic searchable dropdown (ported from reference initDropdown)
+   ========================================================= */
+function initDropdown(cfg){
+  var wrap=document.getElementById('dd-'+cfg.key), input=document.getElementById('input-'+cfg.key),
+      hidden=document.getElementById('value-'+cfg.key), panel=document.getElementById('panel-'+cfg.key);
+
+  function renderPanel(filterText){
+    var ft=(filterText||'').toLowerCase();
+    var items=cfg.items.filter(function(it){ return cfg.searchText(it).toLowerCase().indexOf(ft)!==-1; });
+    panel.innerHTML='';
+    if(items.length===0){ var e=document.createElement('div'); e.className='dd-empty'; e.textContent='No matches found'; panel.appendChild(e); return; }
+    items.forEach(function(it){
+      var el=document.createElement('div'); el.className='dd-item';
+      el.innerHTML='<span class="primary-line">'+cfg.primaryText(it)+'</span>'+(cfg.secondaryText?'<span class="secondary-line">'+cfg.secondaryText(it)+'</span>':'');
+      el.addEventListener('click', function(){ selectItem(it); });
+      panel.appendChild(el);
+    });
+  }
+  function selectItem(it){
+    input.value=cfg.displayText(it); input.title=cfg.displayText(it); hidden.value=cfg.valueOf(it);
+    wrap.classList.remove('open'); clearFieldError(cfg.key);
+    if(cfg.onSelect) cfg.onSelect(it);
+  }
+  function openPanel(filterText){ renderPanel(filterText||''); wrap.classList.add('open'); positionFloatingPanel(wrap, panel, {matchWidth:true, gap:4}); }
+
+  input.addEventListener('focus', function(){ openPanel(''); });
+  input.addEventListener('click', function(){ openPanel(''); });
+  input.addEventListener('input', function(){ hidden.value=''; openPanel(input.value); if(cfg.onClear) cfg.onClear(); });
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)){ wrap.classList.remove('open'); if(!hidden.value){ input.value=''; } }
+  });
+  document.addEventListener('scroll', function(){ if(wrap.classList.contains('open')) wrap.classList.remove('open'); }, true);
+  window.addEventListener('resize', function(){ if(wrap.classList.contains('open')) positionFloatingPanel(wrap, panel, {matchWidth:true, gap:4}); });
+}
+
+initDropdown({
+  key:'coFrom', items:COMPANIES,
+  searchText:function(c){ return c.code+' '+c.name; },
+  primaryText:function(c){ return c.code+' &nbsp;&nbsp; '+escHtml(c.name); },
+  displayText:function(c){ return c.code+' - '+c.name; },
+  valueOf:function(c){ return c.code; },
+  onSelect:function(c){ state.filters.coFrom = c.code; }
+});
+initDropdown({
+  key:'coTo', items:COMPANIES,
+  searchText:function(c){ return c.code+' '+c.name; },
+  primaryText:function(c){ return c.code+' &nbsp;&nbsp; '+escHtml(c.name); },
+  displayText:function(c){ return c.code+' - '+c.name; },
+  valueOf:function(c){ return c.code; },
+  onSelect:function(c){ state.filters.coTo = c.code; }
+});
+
+/* =========================================================
+   Date picker (ported from reference initDatePicker, single field)
+   ========================================================= */
+function initDatePicker(fieldKey){
+  var input=document.getElementById('input-'+fieldKey), btn=document.querySelector('.date-icon[data-target="'+fieldKey+'"]'),
+      popup=document.getElementById('popup-'+fieldKey), wrap=input.closest('.date-field');
+  var viewDate=new Date();
+  var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function render(){
+    var selected=parseDMY(input.value);
+    if(selected) viewDate=new Date(selected.getFullYear(), selected.getMonth(),1);
+    var year=viewDate.getFullYear(), month=viewDate.getMonth();
+    var firstDay=new Date(year,month,1), startOffset=firstDay.getDay();
+    var daysInMonth=new Date(year,month+1,0).getDate(), daysInPrevMonth=new Date(year,month,0).getDate();
+    var today=new Date();
+    var html='<div class="cal-head"><button type="button" data-nav="-1">&lsaquo;</button><span class="cal-title">'+MONTH_NAMES[month]+' '+year+'</span><button type="button" data-nav="1">&rsaquo;</button></div><div class="cal-grid">';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d){ html+='<div class="dow">'+d+'</div>'; });
+    for(var i=0;i<startOffset;i++){ var pd=daysInPrevMonth-startOffset+1+i; html+='<div class="day muted">'+pd+'</div>'; }
+    for(var d2=1; d2<=daysInMonth; d2++){
+      var cls='day'; var thisDate=new Date(year,month,d2);
+      if(selected && thisDate.getTime()===new Date(selected.getFullYear(),selected.getMonth(),selected.getDate()).getTime()) cls+=' selected';
+      if(thisDate.toDateString()===today.toDateString()) cls+=' today';
+      html+='<div class="'+cls+'" data-date="'+d2+'">'+d2+'</div>';
+    }
+    var trailing=(7-((startOffset+daysInMonth)%7))%7;
+    for(var t=1;t<=trailing;t++){ html+='<div class="day muted">'+t+'</div>'; }
+    html+='</div>';
+    popup.innerHTML=html;
+    popup.querySelectorAll('[data-nav]').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); viewDate=new Date(year, month+parseInt(b.getAttribute('data-nav'),10),1); render(); positionPopup(); });
+    });
+    popup.querySelectorAll('.day:not(.muted)').forEach(function(dEl){
+      dEl.addEventListener('click', function(e){
+        e.stopPropagation();
+        var picked=new Date(year,month,parseInt(dEl.getAttribute('data-date'),10));
+        input.value=fmtDate(picked); popup.classList.remove('open'); clearFieldError(fieldKey);
+        state.filters.keyDate = picked;
+      });
+    });
+  }
+  function positionPopup(){ positionFloatingPanel(wrap, popup, {alignRight:true, gap:6}); }
+  function openPopup(){
+    document.querySelectorAll('.date-popup.open').forEach(function(p){ if(p!==popup) p.classList.remove('open'); });
+    render(); popup.classList.add('open'); positionPopup();
+  }
+  function closePopup(){ popup.classList.remove('open'); }
+  function togglePopup(e){ if(e) e.stopPropagation(); if(popup.classList.contains('open')) closePopup(); else openPopup(); }
+  btn.addEventListener('click', togglePopup);
+  input.addEventListener('click', togglePopup);
+  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) closePopup(); });
+  document.addEventListener('scroll', function(){ if(popup.classList.contains('open')) closePopup(); }, true);
+  window.addEventListener('resize', function(){ if(popup.classList.contains('open')) positionPopup(); });
+}
+initDatePicker('keyDate');
+
+/* ---- pills ---- */
+document.querySelectorAll('#pillDealType .pill').forEach(function(p){
+  p.addEventListener('click', function(){
+    document.querySelectorAll('#pillDealType .pill').forEach(function(x){x.classList.remove('active');});
+    p.classList.add('active'); state.filters.dealType = p.getAttribute('data-val');
+  });
+});
+document.querySelectorAll('#pillWithRef .pill').forEach(function(p){
+  p.addEventListener('click', function(){
+    document.querySelectorAll('#pillWithRef .pill').forEach(function(x){x.classList.remove('active');});
+    p.classList.add('active'); state.filters.withRef = p.getAttribute('data-val')==='1';
+  });
+});
+document.getElementById('input-layout').addEventListener('change', function(e){ state.filters.layout = e.target.value; });
+
+/* =========================================================
+   DATA SERVICE — deals generated on demand from Company Code
+   range + Key Date + Report Type + External Reference toggle
+   ========================================================= */
+function companiesInRange(from, to){
+  if(!from) return [];
+  var lo=from, hi=to||from;
+  if(hi<lo){ var t=lo; lo=hi; hi=t; }
+  return COMPANIES.filter(function(c){ return c.code>=lo && c.code<=hi; });
+}
+function buildRow(co, dealType, keyDateStr, withRef, rng, idx){
+  var isFx=dealType==='FX';
+  var pairInfo=pick(FX_PAIRS, rng), txnType=pick(isFx?FX_TXN_TYPES:OP_TXN_TYPES, rng);
+  var trader=pick(TRADERS, rng), partner=pick(PARTNERS, rng), portfolio=pick(PORTFOLIOS, rng);
+  var tradeDate=new Date(keyDateStr+'T00:00:00'); tradeDate.setDate(tradeDate.getDate()-rndInt(rng,3,45));
+  var rfha='5'+pad(hashCode(co.code+idx+keyDateStr)%100000000,8);
+  var amt1=Math.round(rnd(rng,50000,4500000)*100)/100;
+  var row={
+    _id: rfha+'-'+co.code, RFHA:rfha, BUKRS:co.code, BUTXT:co.name, SFHAART:txnType.code, XTEXT:txnType.desc,
+    CPAIR:pairInfo.pair, BS_1: rng()>0.5?'Buy':'Sell', CURR1:pairInfo.c1, AMT1:amt1,
+    DBLFZ:fmtDate(tradeDate), DELFZ:fmtDate(new Date(keyDateStr+'T00:00:00')),
+    RDEALER:trader.code, BP_NAME:partner.name, KONTRH:partner.code,
+    RBUSA:pick(BUSINESS_AREAS,rng), RPORTB:portfolio.code, PRCTR:pick(PROFIT_CENTERS,rng),
+    TXN_STATUS:pick(TXN_STATUSES,rng), MAT_UNMAT:pick(MATCH_STATUSES,rng),
+    ZTSF_DEAL_ID:'TSF'+pad(hashCode(rfha+'D')%900000+100000,6),
+    ZMC_REF_NO:(rng()>0.35)?('MC'+pad(hashCode(rfha+'M')%9000000+1000000,7)):'',
+    NORDEXT: withRef ? ('EXT-'+co.code+'-'+pad(hashCode(rfha+'X')%9000+1000,4)) : '',
+    ZOLAM_DEAL_NO:(rng()>0.7)?('OLM'+pad(hashCode(rfha+'O')%90000+10000,5)):'',
+    _checked:false
+  };
+  if(isFx){
+    row.BS_2=row.BS_1==='Buy'?'Sell':'Buy'; row.CURR2=pairInfo.c2; row.AMT2=Math.round(amt1*pairInfo.spot*100)/100;
+    row.SPOT=pairInfo.spot; row.SWAP=Math.round(rnd(rng,-0.85,0.85)*10000)/10000; row.TOT_RATE=Math.round((row.SPOT+row.SWAP)*10000)/10000;
+  } else {
+    row.OPTION_TYPE=txnType.desc; row.STRIKE_RATE=Math.round((pairInfo.spot*rnd(rng,0.97,1.03))*10000)/10000;
+    row.PREMIUM_AMT=Math.round(rnd(rng,500,45000)*100)/100; row.PREMIUM_CURR=pairInfo.c1;
+    var exp=new Date(keyDateStr+'T00:00:00'); exp.setMonth(exp.getMonth()+rndInt(rng,1,9)); row.EXPIRY_DATE=fmtDate(exp);
+  }
+  return row;
+}
+function generateDeals(dealType, coFrom, coTo, keyDateStr, withRef){
+  var companies=companiesInRange(coFrom, coTo);
+  if(companies.length===0||!keyDateStr) return [];
+  var seed=hashCode([dealType,coFrom,coTo,keyDateStr,withRef].join('|'));
+  var rng=mulberry32(seed); var rows=[];
+  companies.forEach(function(co,ci){
+    var n=rndInt(rng,2,5);
+    for(var i=0;i<n;i++){ rows.push(buildRow(co, dealType, keyDateStr, withRef, rng, ci*100+i)); }
+  });
+  return rows;
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+function currentColumns(){ return state.filters.dealType==='FX' ? FX_COLUMNS : OP_COLUMNS; }
+
+function validateSelection(){
+  var ok=true;
+  if(!state.filters.coFrom){ setFieldError('coFrom', true); ok=false; } else { clearFieldError('coFrom'); }
+  if(!state.filters.keyDate){ setFieldError('keyDate', true); ok=false; } else { clearFieldError('keyDate'); }
+  return ok;
+}
+
+function populateFilterOptions(){
+  var types = state.filters.dealType==='FX' ? FX_TXN_TYPES : OP_TXN_TYPES;
+  var selType=document.getElementById('filterType');
+  selType.innerHTML='<option value="">All types</option>'+types.map(function(t){return '<option value="'+t.code+'">'+t.desc+'</option>';}).join('');
+  var selStatus=document.getElementById('filterStatus');
+  selStatus.innerHTML='<option value="">All statuses</option>'+TXN_STATUSES.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+  var selTrader=document.getElementById('filterTrader');
+  selTrader.innerHTML='<option value="">All traders</option>'+TRADERS.map(function(t){return '<option value="'+t.code+'">'+t.code+' — '+t.name+'</option>';}).join('');
+}
+
+function execute(){
+  if(!validateSelection()) return;
+  var keyDateStr=isoOf(state.filters.keyDate);
+  state.results=generateDeals(state.filters.dealType, state.filters.coFrom, state.filters.coTo||state.filters.coFrom, keyDateStr, state.filters.withRef);
+  state.page=1; state.sort={field:null,dir:'asc'}; state.search=''; document.getElementById('searchBox').value='';
+  state.colFilters={type:'',status:'',trader:''};
+  state.activeRowId=null;
+  document.getElementById('resultsTitleText').textContent = state.filters.dealType==='FX' ? 'External FX Deals' : 'External Option Deals';
+  document.getElementById('resultsCard').classList.remove('hidden');
+  populateFilterOptions();
+  document.getElementById('filterType').value=''; document.getElementById('filterStatus').value=''; document.getElementById('filterTrader').value='';
+  renderTableHead();
+  renderTable();
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function resetSelection(){
+  state.filters={coFrom:'',coTo:'',keyDate:null,dealType:'FX',withRef:true,layout:''};
+  document.getElementById('input-coFrom').value=''; document.getElementById('value-coFrom').value='';
+  document.getElementById('input-coTo').value=''; document.getElementById('value-coTo').value='';
+  document.getElementById('input-keyDate').value='';
+  document.getElementById('input-layout').value='';
+  clearFieldError('coFrom'); clearFieldError('keyDate');
+  document.querySelectorAll('#pillDealType .pill').forEach(function(x,i){ x.classList.toggle('active', i===0); });
+  document.querySelectorAll('#pillWithRef .pill').forEach(function(x,i){ x.classList.toggle('active', i===0); });
+  document.getElementById('resultsCard').classList.add('hidden');
+}
+
+/* -------- Table head / sort -------- */
+function renderTableHead(){
+  var cols=currentColumns(); var row=document.getElementById('gridHeadRow');
+  var html='<th class="chkcol"><input type="checkbox" class="row-select-checkbox" id="chkAll"></th>';
+  cols.forEach(function(c){
+    var pinCls=c.pin?' pin2':''; var numCls=(c.type==='number'||c.type==='rate')?' num':'';
+    var sortCls=(state.sort.field===c.key)?' sorted':'';
+    var ind = state.sort.field===c.key ? (state.sort.dir==='asc'?'▲':'▼') : '';
+    html+='<th class="'+pinCls+numCls+sortCls+'" data-sort="'+c.key+'">'+escHtml(c.label)+'<span class="sort-ind">'+ind+'</span></th>';
+  });
+  row.innerHTML=html;
+  document.getElementById('chkAll').addEventListener('change', function(e){
+    var checked=e.target.checked; getFilteredSortedRows().forEach(function(r){ r._checked=checked; }); renderTable();
+  });
+  row.querySelectorAll('th[data-sort]').forEach(function(th){
+    th.addEventListener('click', function(){
+      var key=th.getAttribute('data-sort');
+      if(state.sort.field===key){ state.sort.dir = state.sort.dir==='asc'?'desc':'asc'; } else { state.sort.field=key; state.sort.dir='asc'; }
+      state.page=1; renderTableHead(); renderTable();
+    });
+  });
+}
+
+function rowMatchesSearch(r, term){
+  if(!term) return true; term=term.toLowerCase();
+  var cols=currentColumns();
+  for(var i=0;i<cols.length;i++){ var v=r[cols[i].key]; if(v!==undefined&&v!==null&&String(v).toLowerCase().indexOf(term)>-1) return true; }
+  return false;
+}
+function getFilteredSortedRows(){
+  var rows=state.results.filter(function(r){
+    if(!rowMatchesSearch(r, state.search)) return false;
+    if(state.colFilters.type && r.SFHAART!==state.colFilters.type) return false;
+    if(state.colFilters.status && r.TXN_STATUS!==state.colFilters.status) return false;
+    if(state.colFilters.trader && r.RDEALER!==state.colFilters.trader) return false;
+    return true;
+  });
+  if(state.sort.field){
+    var key=state.sort.field, dir=state.sort.dir==='asc'?1:-1;
+    rows=rows.slice().sort(function(a,b){
+      var va=a[key], vb=b[key];
+      if(typeof va==='number' && typeof vb==='number') return (va-vb)*dir;
+      va=(va||'').toString(); vb=(vb||'').toString(); return va.localeCompare(vb)*dir;
+    });
+  }
+  return rows;
+}
+
+function cellHtml(col, row){
+  var v=row[col.key];
+  switch(col.type){
+    case 'hotspot': return '<span class="mc-link" data-act="view" data-id="'+row._id+'" title="Click to view transaction details">'+escHtml(v)+'</span>';
+    case 'number': return escHtml(fmtNum(v,2));
+    case 'rate': return escHtml(v===undefined||v===''?'':fmtNum(v,4));
+    case 'date': return escHtml(v);
+    case 'status': case 'status2': return '<span class="status-txt status-'+v+'">'+escHtml(v)+'</span>';
+    case 'edit': return '<input type="text" class="edit-input" data-field="'+col.key+'" data-id="'+row._id+'" value="'+escHtml(v)+'" placeholder="'+(col.key==='NORDEXT'?'Enter reference':'Enter internal ref')+'">';
+    default: return escHtml(v);
+  }
+}
+
+function renderTable(){
+  var cols=currentColumns(); var all=getFilteredSortedRows(); var total=all.length;
+  var totalPages=Math.max(1, Math.ceil(total/state.pageSize));
+  if(state.page>totalPages) state.page=totalPages;
+  var start=(state.page-1)*state.pageSize; var pageRows=all.slice(start, start+state.pageSize);
+
+  var body=document.getElementById('gridBody'); var emptyState=document.getElementById('emptyState');
+  var tableScroll=document.querySelector('.table-scroll'); var footer=document.querySelector('.table-footer');
+
+  document.getElementById('resultCount').textContent = total + (total===1?' record':' records');
+
+  if(total===0){
+    body.innerHTML=''; tableScroll.classList.add('hidden'); emptyState.classList.remove('hidden'); footer.classList.add('hidden');
+  } else {
+    tableScroll.classList.remove('hidden'); emptyState.classList.add('hidden'); footer.classList.remove('hidden');
+    var html='';
+    pageRows.forEach(function(r, idx){
+      var rowCls=[]; if(idx%2===1) rowCls.push('zebra');
+      if(state.activeRowId===r._id) rowCls.push('active-row');
+      var draggable = r._checked || state.activeRowId===r._id;
+      html+='<tr class="'+rowCls.join(' ')+'" data-id="'+r._id+'"'+(draggable?' draggable="true"':'')+'>';
+      html+='<td class="chkcol"><input type="checkbox" class="row-select-checkbox row-chk" data-id="'+r._id+'"'+(r._checked?' checked':'')+'></td>';
+      cols.forEach(function(c){
+        var pinCls=c.pin?' pin2':''; var numCls=(c.type==='number'||c.type==='rate')?' num':'';
+        html+='<td class="'+pinCls+numCls+'">'+cellHtml(c,r)+'</td>';
+      });
+      html+='</tr>';
+    });
+    body.innerHTML=html;
+
+    body.querySelectorAll('tr').forEach(function(tr){
+      var id=tr.getAttribute('data-id');
+      var rowData=state.results.filter(function(x){return x._id===id;})[0];
+      tr.addEventListener('click', function(e){
+        if(e.target.closest('input')||e.target.closest('.mc-link')) return;
+        state.activeRowId=(state.activeRowId===id)?null:id;
+        renderTable(); updateToolbarState();
+      });
+      tr.addEventListener('dblclick', function(e){ if(e.target.closest('input')) return; openViewTransaction(id); });
+      tr.addEventListener('dragstart', function(e){
+        if(!(rowData._checked || state.activeRowId===id)){ e.preventDefault(); return; }
+        startRowDrag(e, rowData, tr);
+      });
+      tr.addEventListener('dragend', function(){ endRowDrag(tr); });
+    });
+    body.querySelectorAll('.row-chk').forEach(function(chk){
+      chk.addEventListener('click', function(e){ e.stopPropagation(); });
+      chk.addEventListener('change', function(e){
+        var id=chk.getAttribute('data-id'); var r=state.results.filter(function(x){return x._id===id;})[0];
+        if(r) r._checked=chk.checked;
+        renderTable(); updateToolbarState();
+      });
+    });
+    body.querySelectorAll('.mc-link[data-act="view"]').forEach(function(el){
+      el.addEventListener('click', function(e){ e.stopPropagation(); openViewTransaction(el.getAttribute('data-id')); });
+    });
+    body.querySelectorAll('.edit-input').forEach(function(inp){
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
+      inp.addEventListener('change', function(){
+        var id=inp.getAttribute('data-id'), field=inp.getAttribute('data-field');
+        var r=state.results.filter(function(x){return x._id===id;})[0];
+        if(r) r[field]=inp.value;
+      });
+    });
+  }
+  renderPagination(totalPages);
+  updateToolbarState();
+  var chkAll=document.getElementById('chkAll');
+  if(chkAll) chkAll.checked = pageRows.length>0 && pageRows.every(function(r){return r._checked;});
+}
+
+function renderPagination(pageCount){
+  var el=document.getElementById('pagination'); el.innerHTML='';
+  var prev=document.createElement('button'); prev.textContent='‹'; prev.disabled=state.page<=1;
+  prev.addEventListener('click', function(){ state.page--; renderTable(); }); el.appendChild(prev);
+  for(var p=1;p<=pageCount;p++){
+    (function(p){
+      var b=document.createElement('button'); b.textContent=p;
+      if(p===state.page) b.classList.add('active');
+      b.addEventListener('click', function(){ state.page=p; renderTable(); });
+      el.appendChild(b);
+    })(p);
+  }
+  var next=document.createElement('button'); next.textContent='›'; next.disabled=state.page>=pageCount;
+  next.addEventListener('click', function(){ state.page++; renderTable(); }); el.appendChild(next);
+}
+
+function updateToolbarState(){
+  var checkedCount=state.results.filter(function(r){return r._checked;}).length;
+  document.getElementById('btnUpdate').disabled = checkedCount===0;
+  document.getElementById('btnViewTxn').disabled = !state.activeRowId;
+}
+
+/* =========================================================
+   ACTIONS — Update Bank Reference / View Transaction.
+   Both the click handlers and the drag-drop targets below call
+   these exact same functions; no separate drag-only logic.
+   ========================================================= */
+function doUpdateBankReference(){
+  var checked=state.results.filter(function(r){return r._checked;});
+  if(checked.length===0) return;
+  var n=checked.length;
+  showToast('External Reference Updated Successfully ('+n+' transaction'+(n>1?'s':'')+')');
+  document.getElementById('resultsCard').classList.add('hidden');
+  state.results=[];
+}
+function detailItem(label, valueHtml){
+  var v=(valueHtml===undefined||valueHtml===null||valueHtml==='') ? '<span style="color:var(--text-faint);">—</span>' : valueHtml;
+  return '<div class="detail-item"><span class="detail-label">'+label+'</span><span class="detail-value">'+v+'</span></div>';
+}
+function openViewTransaction(id){
+  var r=state.results.filter(function(x){return x._id===id;})[0];
+  if(!r) return;
+  state.activeRowId=id;
+  var isFx=state.filters.dealType==='FX';
+  document.getElementById('viewModalSub').textContent = r.BUKRS+' — '+r.BUTXT;
+
+  var html='';
+  html+='<div class="detail-section"><div class="detail-section-title">Basic Data</div><div class="detail-grid">'+
+    detailItem('Transaction No', r.RFHA)+detailItem('Company Code', r.BUKRS)+detailItem('Company Name', r.BUTXT)+
+    detailItem('Transaction Type', r.SFHAART+' — '+r.XTEXT)+detailItem('Deal ID', r.ZTSF_DEAL_ID)+detailItem('MC Reference No', r.ZMC_REF_NO)+
+    '</div></div>';
+
+  html+='<div class="detail-section"><div class="detail-section-title">Amounts &amp; Rates</div><div class="detail-grid">'+
+    detailItem('Currency Pair', r.CPAIR)+
+    (isFx? detailItem('Buy/Sell 1', r.BS_1+' '+r.CURR1) : detailItem('Option Type', r.OPTION_TYPE))+
+    detailItem('Amount 1', r.CURR1+' '+fmtNum(r.AMT1,2))+
+    (isFx? detailItem('Buy/Sell 2', r.BS_2+' '+r.CURR2) : detailItem('Strike Rate', fmtNum(r.STRIKE_RATE,4)))+
+    (isFx? detailItem('Amount 2', r.CURR2+' '+fmtNum(r.AMT2,2)) : detailItem('Premium Amount', r.PREMIUM_CURR+' '+fmtNum(r.PREMIUM_AMT,2)))+
+    (isFx? detailItem('Spot Rate', fmtNum(r.SPOT,4)) : detailItem('Expiry Date', r.EXPIRY_DATE))+
+    (isFx? detailItem('Swap Points', fmtNum(r.SWAP,4)) : '')+
+    (isFx? detailItem('All-in Rate', fmtNum(r.TOT_RATE,4)) : '')+
+    '</div></div>';
+
+  html+='<div class="detail-section"><div class="detail-section-title">Partner &amp; Trader</div><div class="detail-grid">'+
+    detailItem('Trader', r.RDEALER)+detailItem('Partner Name', r.BP_NAME)+detailItem('Partner Code', r.KONTRH)+
+    detailItem('Business Area', r.RBUSA)+detailItem('Portfolio', r.RPORTB)+detailItem('Profit Center', r.PRCTR)+
+    '</div></div>';
+
+  html+='<div class="detail-section"><div class="detail-section-title">Dates &amp; Status</div><div class="detail-grid">'+
+    detailItem('Trade Date', r.DBLFZ)+detailItem('Value Date', r.DELFZ)+
+    detailItem('Txn Status', '<span class="status-txt status-'+r.TXN_STATUS+'">'+r.TXN_STATUS+'</span>')+
+    detailItem('Match/Unmatch', '<span class="status-txt status-'+r.MAT_UNMAT+'">'+r.MAT_UNMAT+'</span>')+
+    detailItem('External Reference', r.NORDEXT)+detailItem('Int Ref', r.ZOLAM_DEAL_NO)+
+    '</div></div>';
+
+  document.getElementById('viewModalBody').innerHTML=html;
+  openDetailModal(document.getElementById('viewModalOverlay'));
+  renderTable();
+}
+
+/* -------- modal open/close (ported animation pattern) -------- */
+function openDetailModal(overlay){ overlay.classList.remove('closing'); overlay.classList.add('open'); }
+function closeDetailModal(overlay){
+  if(!overlay.classList.contains('open')) return;
+  overlay.classList.add('closing');
+  setTimeout(function(){ overlay.classList.remove('open'); overlay.classList.remove('closing'); }, 160);
+}
+
+/* -------- toast (ported placement/colors/animation) -------- */
+function showToast(msg, isError){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.toggle('error', !!isError); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
+/* =========================================================
+   Drag and drop — drag a checked (or the active) row onto
+   "Update Bank Reference" or "View Transaction". Reuses the
+   exact same functions the buttons call on click; no separate
+   drag-only business logic is introduced.
+   ========================================================= */
+var draggedRow=null;
+function startRowDrag(e, row, rowEl){
+  draggedRow=row; rowEl.classList.add('dragging');
+  var ghost=document.createElement('div'); ghost.className='drag-ghost'; ghost.textContent=row.RFHA+' — '+row.BUKRS;
+  document.body.appendChild(ghost);
+  if(e.dataTransfer){
+    e.dataTransfer.effectAllowed='copy';
+    try{ e.dataTransfer.setData('text/plain', String(row.RFHA)); }catch(err){}
+    if(e.dataTransfer.setDragImage){ e.dataTransfer.setDragImage(ghost, 12, 14); }
+  }
+  setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+}
+function endRowDrag(rowEl){
+  draggedRow=null; rowEl.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+}
+function wireDropTarget(btnId, onDrop){
+  var btn=document.getElementById(btnId);
+  btn.addEventListener('dragover', function(e){
+    if(!draggedRow || btn.disabled) return;
+    e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect='copy'; btn.classList.add('drag-over');
+  });
+  btn.addEventListener('dragleave', function(){ btn.classList.remove('drag-over'); });
+  btn.addEventListener('drop', function(e){
+    e.preventDefault(); btn.classList.remove('drag-over');
+    if(draggedRow && !btn.disabled) onDrop(draggedRow);
+  });
+}
+wireDropTarget('btnUpdate', function(){ doUpdateBankReference(); });
+wireDropTarget('btnViewTxn', function(row){ openViewTransaction(row._id); });
+
+/* =========================================================
+   Filter panel + search + reset + download
+   ========================================================= */
+document.getElementById('searchBox').addEventListener('input', function(e){ state.search=e.target.value; state.page=1; renderTable(); });
+document.getElementById('filterType').addEventListener('change', function(e){ state.colFilters.type=e.target.value; state.page=1; renderTable(); });
+document.getElementById('filterStatus').addEventListener('change', function(e){ state.colFilters.status=e.target.value; state.page=1; renderTable(); });
+document.getElementById('filterTrader').addEventListener('change', function(e){ state.colFilters.trader=e.target.value; state.page=1; renderTable(); });
+document.getElementById('btnResetFilters').addEventListener('click', function(){
+  state.colFilters={type:'',status:'',trader:''};
+  document.getElementById('filterType').value=''; document.getElementById('filterStatus').value=''; document.getElementById('filterTrader').value='';
+  state.search=''; document.getElementById('searchBox').value='';
+  state.page=1; renderTable();
+});
+document.getElementById('pageSizeSelect').addEventListener('change', function(e){ state.pageSize=parseInt(e.target.value,10); state.page=1; renderTable(); });
+
+function doDownload(){
+  var cols=currentColumns(); var rows=getFilteredSortedRows();
+  var lines=[cols.map(function(c){return c.label;}).join(',')];
+  rows.forEach(function(r){
+    lines.push(cols.map(function(c){ var v=r[c.key]; if(v===undefined||v===null) v=''; v=String(v).replace(/"/g,'""'); return /[,"\n]/.test(v)?'"'+v+'"':v; }).join(','));
+  });
+  var blob=new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob); var a=document.createElement('a');
+  a.href=url; a.download='external_deals_'+state.filters.dealType+'_'+(isoOf(state.filters.keyDate)||'export')+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+document.getElementById('btnDownload').addEventListener('click', doDownload);
+
+/* =========================================================
+   Main actions / modal wiring / header
+   ========================================================= */
+document.getElementById('btnExecute').addEventListener('click', execute);
+document.getElementById('btnReset').addEventListener('click', resetSelection);
+document.getElementById('btnRefresh').addEventListener('click', function(){ resetSelection(); showToast('Screen refreshed'); });
+document.getElementById('btnBack').addEventListener('click', function(){ showToast('Returning to previous screen'); });
+document.getElementById('btnSignOut').addEventListener('click', function(){ showToast('Signed out'); });
+
+document.getElementById('btnUpdate').addEventListener('click', doUpdateBankReference);
+document.getElementById('btnViewTxn').addEventListener('click', function(){ if(state.activeRowId) openViewTransaction(state.activeRowId); });
+
+document.getElementById('btnCloseView').addEventListener('click', function(){ closeDetailModal(document.getElementById('viewModalOverlay')); });
+document.getElementById('btnCloseView2').addEventListener('click', function(){ closeDetailModal(document.getElementById('viewModalOverlay')); });
+document.getElementById('viewModalOverlay').addEventListener('click', function(e){ if(e.target===this) closeDetailModal(this); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDetailModal(document.getElementById('viewModalOverlay')); });
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+/* Night mode for mo-confirm-fx-deal-id-ss, derived from mo-confirm-fx-deal-id-ss.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss select,
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --border-soft: #16243a;
+  --blue-dark: #7cc0f8;
+  --blue-soft: #17304a;
+  --green-soft: #14321f;
+  --amber-soft: #3a2a12;
+  --red-soft: #3a1b1e;
+  --teal-soft: #113330;
+  --purple-soft: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .btn-danger {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .combo input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .combo input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .combo-list {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .badge-amber {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .toolbar {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss table.data tbody td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss table.data tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss table.data tbody tr.row-total td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .mini-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .modal-footer {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field .fv {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field .fv.calc {
+  color: #6e9eed;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field select,
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field input[type=text] {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field select:disabled,
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .form-field input:disabled {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .banner-info {
+  color: #709feb;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .banner-warn {
+  color: #ffb65c;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .banner-error {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .mo-confirm-fx-deal-id-ss .banner-success {
+  color: #e6eef8;
+}

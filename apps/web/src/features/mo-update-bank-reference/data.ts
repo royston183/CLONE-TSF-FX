@@ -1,99 +1,138 @@
-/**
- * Reference and sample data, verbatim from the legacy page's "REFERENCE DATA" and "SAMPLE DEAL
- * IDS" blocks. The page never called an API: the reference lists mirror ZSGTSFTR_RULE_BT (FX
- * Models), ZSGTSFTR_ENT_STR (Entity Strings), ZSGTSFTR_CUR_STR (Currency Strings) and
- * ZSGTSFTR_COMP (TSF entities / company codes) as the SAP value-help screens show them.
- */
-import { addDays } from './format.ts'
-import type { AltTxn, Company, DealStatus, FxModel, RawDeal } from './types.ts'
+// Dummy lookup masters from the original page (unchanged business data). The legacy screen
+// never called an API; every deal is generated from these on demand.
+import type { Column, Company, FxPair, MatchStatus, Partner, Portfolio, Trader, TxnStatus, TxnType } from './types.ts'
 
-export const COMPANIES: Record<string, Company> = {
-  OGA: { name: 'Olam Global Agri Pte. Ltd.', co: 'SG03' },
-  DMCC: { name: 'Olam International DMCC', co: 'AE13' },
-  OSIPL: { name: 'Olam Agri India Pvt Ltd', co: 'IN11' },
-  OTL: { name: 'Olam (Thailand) Ltd', co: 'TH10' },
-  OVL: { name: 'Olam Vietnam Limited', co: 'VN10' },
-  SEDA: { name: 'SEDA Outspan Iberia S.L.U', co: 'ES12' },
-  PAN: { name: 'Panasia International FZE', co: 'AE11' },
-  OSL: { name: 'Olam Shanghai Limited', co: 'CN10' },
-  OAL: { name: 'Olam Global Agri Americas', co: 'US40' },
-}
-
-export const ENTITY_STRINGS: Record<string, string[]> = {
-  E014: ['OGA', 'OSIPL', 'DMCC'],
-  E015: ['OGA', 'DMCC', 'OSIPL'],
-  E026: ['OGA', 'OSIPL', 'DMCC'],
-  E033: ['OGA', 'DMCC', 'OTL'],
-}
-
-export const CURR_STRINGS: Record<string, string[]> = {
-  C001: ['INR', 'INR', 'INR'],
-  C002: ['USD', 'USD', 'INR'],
-  C003: ['INR', 'INR', 'USD'],
-  C012: ['USD', 'INR', 'INR'],
-  C013: ['INR', 'USD', 'USD'],
-}
-
-/** The original wrote "&amp;" here because it rendered through innerHTML; React escapes, so plain "&". */
-export const FX_MODELS: Record<string, FxModel> = {
-  M032: { desc: 'INR Long Forward', subType: 'FX1', entityId: 'E015', currId: 'C002' },
-  M033: { desc: 'INR-INR-INR Forward', subType: 'FX1', entityId: 'E015', currId: 'C001' },
-  M034: { desc: 'INR – INR Staggered Call & Put Option', subType: 'FX2', entityId: 'E015', currId: 'C003' },
-  M035: { desc: 'INR-INR-Put & Call Option', subType: 'FX2', entityId: 'E014', currId: 'C003' },
-  M036: { desc: 'USD-INR-INR-Put & Call Option', subType: 'FX2', entityId: 'E015', currId: 'C012' },
-  M037: { desc: 'INR Short Forward', subType: 'FX1', entityId: 'E015', currId: 'C013' },
-  M041: { desc: 'INR – INR Staggered Call & Put Option', subType: 'FX2', entityId: 'E026', currId: 'C001' },
-}
-
-export const STATUS_DESC: Record<DealStatus, string> = {
-  '01': 'Not Confirmed',
-  '02': 'Confirmed by MO',
-  '03': 'In Use',
-  '30': 'Cancelled',
-}
-
-export const PARTNER_BANK = '0660012173 — JPMORGAN CHASE BANK NA SINGAPORE'
-
-/** Share of notional baked in on the middle (DMCC) invoice legs: the parked trade markup. */
-export const MARKUP_PCT = 0.002
-
-/** Edit Deal Pair's matching open transactions, per leg (ABAP screen 9004). */
-export const EP_ALT_TXNS: Record<'D1' | 'D2', AltTxn[]> = {
-  D1: [
-    { rfha: '0500011234', desc: 'Alt Forward booked 2 days earlier, same amount' },
-    { rfha: '0500011291', desc: 'Alt Forward booked same day, partner: HSBC Singapore' },
-  ],
-  D2: [
-    { rfha: '0500011455', desc: 'Alt Option booked same day, same strike' },
-    { rfha: '0500011488', desc: 'Alt Option booked same day, DBS Bank Ltd' },
-  ],
-}
-
-type DealSeed = Omit<RawDeal, 'dealStart' | 'dealEnd' | 'shipStart' | 'shipEnd'> & {
-  /** Day offsets from today: deal start / end, ship start / end. */
-  days: [number, number, number, number]
-}
-
-const DEAL_SEED: DealSeed[] = [
-  { dealId: '1100000564', mcRef: '2000000184', model: 'M041', trader: 'D_OSIPL', status: '01', days: [-40, 220, 30, 240], origin: 'OSIPL', allInRate: 88.475, notional: 20000000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000565', mcRef: '2000002727', model: 'M032', trader: 'T_ADRIEL', status: '02', days: [-95, 10, -20, 15], origin: 'OSIPL', allInRate: 90.7112, notional: 5000000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000566', mcRef: '2000002728', model: 'M032', trader: 'T_HARSHADA', status: '03', days: [-150, -3, -60, -2], origin: 'OSIPL', allInRate: 95.7112, notional: 100000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000567', mcRef: '2000002723', model: 'M034', trader: 'K_RAMASAMY', status: '01', days: [-12, 300, 45, 310], origin: 'OSIPL', allInRate: 87, notional: 7391000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000568', mcRef: '2000002717', model: 'M032', trader: 'D_OSIPL', status: '02', days: [-70, 40, -10, 45], origin: 'OSIPL', allInRate: 89.5, notional: 30087000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000569', mcRef: '2000002713', model: 'M041', trader: 'S_KHANVILKAR', status: '01', days: [-5, 260, 55, 280], origin: 'OSIPL', allInRate: 88.9, notional: 48524000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000570', mcRef: '2000002710', model: 'M037', trader: 'A_KAMATH', status: '02', days: [-30, 70, 5, 80], origin: 'OSIPL', allInRate: 83.2, notional: 18335000, curr1: 'INR', curr2: 'USD' },
-  { dealId: '1100000571', mcRef: '2000002708', model: 'M032', trader: 'K_RAMASAMY', status: '30', days: [-200, -40, -120, -35], origin: 'OSIPL', allInRate: 91.2, notional: 28838000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000572', mcRef: '2000002702', model: 'M036', trader: 'D_OSIPL', status: '01', days: [-2, 180, 20, 190], origin: 'OSIPL', allInRate: 1, notional: 12450000, curr1: 'USD', curr2: 'INR' },
-  { dealId: '1100000573', mcRef: '2000002719', model: 'M034', trader: 'S_KHANVILKAR', status: '03', days: [-260, -80, -200, -75], origin: 'OSIPL', allInRate: 86.3, notional: 16763000, curr1: 'USD', curr2: 'INR' },
+export const COMPANIES: readonly Company[] = [
+  { code: 'AE13', name: 'Olam International DMCC' },
+  { code: 'ES12', name: 'SEDA OUTSPAN IBERIA S.L.U' },
+  { code: 'IN11', name: 'Olam Agri India Pvt Ltd' },
+  { code: 'SG10', name: 'Olam Global Holdings Pte Ltd' },
+  { code: 'TH10', name: 'Olam (Thailand) Ltd' },
+  { code: 'US15', name: 'Olam Americas Inc' },
+  { code: 'VN10', name: 'Olam Vietnam Limited' },
 ]
 
-/** The sample Deal IDs, dated relative to `today` as the original's mkDate(offset) did. */
-export function rawDeals(today: Date): RawDeal[] {
-  return DEAL_SEED.map(({ days, ...r }) => ({
-    ...r,
-    dealStart: addDays(today, days[0]),
-    dealEnd: addDays(today, days[1]),
-    shipStart: addDays(today, days[2]),
-    shipEnd: addDays(today, days[3]),
-  }))
-}
+export const FX_PAIRS: readonly FxPair[] = [
+  { pair: 'USD/INR', c1: 'USD', c2: 'INR', spot: 87.15 },
+  { pair: 'USD/THB', c1: 'USD', c2: 'THB', spot: 34.2 },
+  { pair: 'USD/VND', c1: 'USD', c2: 'VND', spot: 25150.0 },
+  { pair: 'EUR/USD', c1: 'EUR', c2: 'USD', spot: 1.087 },
+  { pair: 'USD/AED', c1: 'USD', c2: 'AED', spot: 3.6725 },
+  { pair: 'USD/SGD', c1: 'USD', c2: 'SGD', spot: 1.312 },
+  { pair: 'USD/CNH', c1: 'USD', c2: 'CNH', spot: 7.18 },
+]
+
+export const TRADERS: readonly Trader[] = [
+  { code: 'SKHAN', name: 'S. Khan' },
+  { code: 'SALVA', name: 'S. Alva' },
+  { code: 'RGUPTA', name: 'R. Gupta' },
+  { code: 'NPATEL', name: 'N. Patel' },
+  { code: 'MTAN', name: 'M. Tan' },
+]
+
+export const PARTNERS: readonly Partner[] = [
+  { code: 'P100234', name: 'HSBC' },
+  { code: 'P100567', name: 'Citi' },
+  { code: 'P100812', name: 'Standard Chartered' },
+  { code: 'P101045', name: 'JPMorgan' },
+  { code: 'P101390', name: 'Deutsche Bank' },
+]
+
+export const FX_TXN_TYPES: readonly TxnType[] = [
+  { code: 'FWD', desc: 'Forward' },
+  { code: 'SPT', desc: 'Spot' },
+  { code: 'SWP', desc: 'FX Swap' },
+  { code: 'NDF', desc: 'Non-Deliverable Forward' },
+]
+
+export const OP_TXN_TYPES: readonly TxnType[] = [
+  { code: 'CALL', desc: 'Call Option' },
+  { code: 'PUT', desc: 'Put Option' },
+  { code: 'CPCB', desc: 'Call & Put Combo' },
+]
+
+export const TXN_STATUSES: readonly TxnStatus[] = ['Active', 'Pending', 'Settled']
+export const MATCH_STATUSES: readonly MatchStatus[] = ['Matched', 'Unmatched']
+export const PORTFOLIOS: readonly Portfolio[] = [
+  { code: 'P0010', name: 'Trading Book' },
+  { code: 'P0020', name: 'Hedging Book' },
+  { code: 'P0030', name: 'Treasury Book' },
+]
+export const PROFIT_CENTERS: readonly string[] = ['PC-1001', 'PC-1002', 'PC-1003', 'PC-2001']
+export const BUSINESS_AREAS: readonly string[] = ['BA01', 'BA02', 'BA03']
+
+export const LAYOUTS: readonly { value: string; label: string }[] = [
+  { value: '', label: 'Default Layout' },
+  { value: 'STD', label: 'Standard View' },
+  { value: 'MYVAR', label: 'My Layout' },
+]
+
+export const PAGE_SIZES: readonly number[] = [10, 15, 25, 50]
+export const DEFAULT_PAGE_SIZE = 15
+
+/**
+ * Column definitions (confirmed FIELDCATALOG order). The OP list substitutes option-specific
+ * fields for the FX-only rate fields, per the original's documented assumption.
+ */
+export const FX_COLUMNS: readonly Column[] = [
+  { key: 'RFHA', label: 'Transaction', type: 'hotspot', pin: true },
+  { key: 'BUKRS', label: 'Company Code', type: 'text' },
+  { key: 'BUTXT', label: 'Company Name', type: 'text' },
+  { key: 'SFHAART', label: 'Transaction Type', type: 'text' },
+  { key: 'XTEXT', label: 'Type Description', type: 'text' },
+  { key: 'CPAIR', label: 'Currency Pair', type: 'text' },
+  { key: 'BS_1', label: 'Buy/Sell 1', type: 'text' },
+  { key: 'CURR1', label: 'Currency 1', type: 'text' },
+  { key: 'AMT1', label: 'Amount 1', type: 'number' },
+  { key: 'BS_2', label: 'Buy/Sell 2', type: 'text' },
+  { key: 'CURR2', label: 'Currency 2', type: 'text' },
+  { key: 'AMT2', label: 'Amount 2', type: 'number' },
+  { key: 'DBLFZ', label: 'Trade Date', type: 'date' },
+  { key: 'DELFZ', label: 'Value Date', type: 'date' },
+  { key: 'SPOT', label: 'Spot Rate', type: 'rate' },
+  { key: 'SWAP', label: 'Swap Points', type: 'rate' },
+  { key: 'TOT_RATE', label: 'All-in Rate', type: 'rate' },
+  { key: 'RDEALER', label: 'Trader', type: 'text' },
+  { key: 'BP_NAME', label: 'Partner Name', type: 'text' },
+  { key: 'KONTRH', label: 'Partner Code', type: 'text' },
+  { key: 'RBUSA', label: 'Business Area', type: 'text' },
+  { key: 'RPORTB', label: 'Portfolio', type: 'text' },
+  { key: 'PRCTR', label: 'Profit Center', type: 'text' },
+  { key: 'TXN_STATUS', label: 'Txn Status', type: 'status' },
+  { key: 'MAT_UNMAT', label: 'Match/Unmatch', type: 'status2' },
+  { key: 'ZTSF_DEAL_ID', label: 'Deal ID', type: 'text' },
+  { key: 'ZMC_REF_NO', label: 'MC Reference No', type: 'text' },
+  { key: 'NORDEXT', label: 'External Reference', type: 'edit' },
+  { key: 'ZOLAM_DEAL_NO', label: 'Int Ref', type: 'edit' },
+]
+
+export const OP_COLUMNS: readonly Column[] = [
+  { key: 'RFHA', label: 'Transaction', type: 'hotspot', pin: true },
+  { key: 'BUKRS', label: 'Company Code', type: 'text' },
+  { key: 'BUTXT', label: 'Company Name', type: 'text' },
+  { key: 'SFHAART', label: 'Transaction Type', type: 'text' },
+  { key: 'XTEXT', label: 'Type Description', type: 'text' },
+  { key: 'CPAIR', label: 'Currency Pair', type: 'text' },
+  { key: 'OPTION_TYPE', label: 'Option Type', type: 'text' },
+  { key: 'BS_1', label: 'Buy/Sell 1', type: 'text' },
+  { key: 'CURR1', label: 'Currency 1', type: 'text' },
+  { key: 'AMT1', label: 'Amount 1', type: 'number' },
+  { key: 'STRIKE_RATE', label: 'Strike Rate', type: 'rate' },
+  { key: 'PREMIUM_AMT', label: 'Premium Amount', type: 'number' },
+  { key: 'PREMIUM_CURR', label: 'Premium Currency', type: 'text' },
+  { key: 'DBLFZ', label: 'Trade Date', type: 'date' },
+  { key: 'DELFZ', label: 'Value Date', type: 'date' },
+  { key: 'EXPIRY_DATE', label: 'Expiry Date', type: 'date' },
+  { key: 'RDEALER', label: 'Trader', type: 'text' },
+  { key: 'BP_NAME', label: 'Partner Name', type: 'text' },
+  { key: 'KONTRH', label: 'Partner Code', type: 'text' },
+  { key: 'RBUSA', label: 'Business Area', type: 'text' },
+  { key: 'RPORTB', label: 'Portfolio', type: 'text' },
+  { key: 'PRCTR', label: 'Profit Center', type: 'text' },
+  { key: 'TXN_STATUS', label: 'Txn Status', type: 'status' },
+  { key: 'MAT_UNMAT', label: 'Match/Unmatch', type: 'status2' },
+  { key: 'ZTSF_DEAL_ID', label: 'Deal ID', type: 'text' },
+  { key: 'ZMC_REF_NO', label: 'MC Reference No', type: 'text' },
+  { key: 'NORDEXT', label: 'External Reference', type: 'edit' },
+  { key: 'ZOLAM_DEAL_NO', label: 'Int Ref', type: 'edit' },
+]
