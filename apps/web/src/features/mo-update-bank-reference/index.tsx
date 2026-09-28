@@ -1,540 +1,527 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import { ConfirmModal } from './ConfirmModal.tsx'
-import { DealTable, PagerControls } from './DealTable.tsx'
-import { FxDealsPanel, InvoicesPanel, PlPanel } from './DetailTables.tsx'
-import { EditPairModal } from './EditPairModal.tsx'
-import { fmtDate } from './format.ts'
-import { FX_LOGO as HEAD_LOGO } from '../../shared/fx/logo.ts'
+import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
+import { COMPANIES, DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES, TRADERS, TXN_STATUSES } from './data.ts'
+import { DateField } from './DateField.tsx'
+import { DealGrid } from './DealGrid.tsx'
+import { isoOf, parseDMY } from './format.ts'
 import {
-  DEFAULT_FILTERS,
-  DEFAULT_PAGE_SIZE,
-  PAGE_SIZES,
-  applyEditPair,
-  applyPremium,
-  buildDeals,
-  canReverse,
-  cancelDeal,
-  companyName,
-  confirmDeal,
-  editPairCandidates,
-  filterDeals,
-  gapNote,
-  isCancelled,
-  modelOptions,
-  originOptions,
-  pageOf,
-  recalcInvoices,
-  reverseConfirm,
-  setInvRate,
-  statusText,
-  statusValClass,
+  DEFAULT_SORT,
+  EMPTY_COL_FILTERS,
+  EMPTY_SELECTION,
+  ERROR_MESSAGES,
+  buildCsv,
+  columnsFor,
+  csvFileName,
+  filterSortRows,
+  generateDeals,
+  isValid,
+  nextSort,
+  pageCountOf,
+  recordCountText,
+  resultsTitle,
+  txnTypesFor,
+  updateToastText,
+  validateSelection,
+  type SelectionErrors,
 } from './logic.ts'
-import { CancelModal, DmsModal, ReverseModal } from './NarrowModals.tsx'
-import { PremiumModal } from './PremiumModal.tsx'
+import { useModal } from './modal.tsx'
+import { SearchDropdown } from './SearchDropdown.tsx'
+import { ViewTxnModal } from './ViewTxnModal.tsx'
 import './mo-update-bank-reference.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-update-bank-reference.dark.css'
-import type { Deal, DealStatus, Filters, Toast, ToastKind } from './types.ts'
+import type { ColFilters, ColumnKey, Company, Deal, DealType, EditKey, Selection, SortState, Toast } from './types.ts'
 
-type ModalId = 'confirm' | 'premium' | 'editpair' | 'cancel' | 'reverse' | 'dms'
+const NO_ERRORS: SelectionErrors = { coFrom: false, keyDate: false }
+const TOAST_MS = 3200
 
-const TOAST_MS = 3600
-const MODEL_OPTIONS = modelOptions()
+type DropTarget = 'update' | 'view'
+
+const companyProps = {
+  items: COMPANIES,
+  keyOf: (c: Company) => c.code,
+  searchText: (c: Company) => `${c.code} ${c.name}`,
+  primaryText: (c: Company) => `${c.code}    ${c.name}`,
+  displayText: (c: Company) => `${c.code} - ${c.name}`,
+  placeholder: 'Select company',
+}
 
 /**
- * Deal ID: MO Confirmation, converted from legacy/deal-id-mo-confirmation.html and served as
- * "Update Bank Reference for FX Deals" (ZSGTSFR002).
+ * External Deals: Update Bank Reference (ZSGTSFR002), converted from
+ * legacy/update bank reference.html.
  *
- * The original never called an API, so this is the same UI-only screen: the sample Deal IDs
- * are dated relative to the day the screen opened and every change lives in component state
- * for the session.
+ * The original never called an API, so this is the same UI-only screen: Execute generates
+ * seeded dummy deals from the Company Code range, Key Date, Report Type and External Reference
+ * choice, and every edit lives in component state for the session.
  */
 export default function MoUpdateBankReference() {
-  const [today] = useState(() => new Date())
-  const [deals, setDeals] = useState<Deal[]>(() => buildDeals(today))
-  const originOpts = useMemo(() => originOptions(deals), [deals])
+  // Basic Selection
+  const [sel, setSel] = useState<Selection>(EMPTY_SELECTION)
+  const [errors, setErrors] = useState<SelectionErrors>(NO_ERRORS)
 
-  // List screen
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  // Results
+  const [results, setResults] = useState<Deal[]>([])
+  const [showResults, setShowResults] = useState(false)
+  /** Report Type and Key Date the current results were generated for. */
+  const [executed, setExecuted] = useState<{ dealType: DealType; keyDateIso: string }>({ dealType: 'FX', keyDateIso: '' })
+  const [execSeq, setExecSeq] = useState(0)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
+  const [colFilters, setColFilters] = useState<ColFilters>(EMPTY_COL_FILTERS)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [glossaryHidden, setGlossaryHidden] = useState(false)
+  const [activeRowId, setActiveRowId] = useState<string | null>(null)
 
-  // Detail screen. `rev` redraws the invoice rate inputs from state, as re-rendering the grid did.
-  const [currentId, setCurrentId] = useState<string | null>(null)
-  const [rev, setRev] = useState(0)
-  const deal = currentId ? deals.find((d) => d.dealId === currentId) : undefined
+  // View Transaction
+  const viewModal = useModal()
+  const [viewRow, setViewRow] = useState<Deal | null>(null)
 
-  // Popups. Confirm / Premium show the record as it was when they opened.
-  const [openModal, setOpenModal] = useState<ModalId | null>(null)
-  const [confirmSnap, setConfirmSnap] = useState<Deal | null>(null)
-  const [premiumSnap, setPremiumSnap] = useState<Deal | null>(null)
-  const [premiumRate, setPremiumRate] = useState('')
-  const [epLeg, setEpLeg] = useState(0)
-  const [epCandidate, setEpCandidate] = useState('')
-  const closeModal = useCallback(() => setOpenModal(null), [])
-
-  // Toast — the page opened with a "Ready" message.
-  const [toast, setToast] = useState<Toast>(() => ({ message: `Ready. ${deals.length} Deal ID(s) loaded.`, kind: '', show: true }))
+  // Toast
+  const [toast, setToast] = useState<Toast | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const hideToast = useCallback(() => setToast((t) => ({ ...t, kind: '', show: false })), [])
-  const showToast = useCallback(
-    (message: string, kind: ToastKind) => {
-      clearTimeout(toastTimer.current)
-      setToast({ message, kind, show: true })
-      toastTimer.current = setTimeout(hideToast, TOAST_MS)
-    },
-    [hideToast],
-  )
-  useEffect(() => {
-    toastTimer.current = setTimeout(hideToast, TOAST_MS)
-    return () => clearTimeout(toastTimer.current)
-  }, [hideToast])
+  const showToast = useCallback((message: string, error = false) => {
+    clearTimeout(toastTimer.current)
+    setToast({ message, error, id: Date.now() })
+    toastTimer.current = setTimeout(() => setToast(null), TOAST_MS)
+  }, [])
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
 
-  // Escape closes every popup.
+  // Drag and drop
+  const dragged = useRef<Deal | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState<DropTarget | null>(null)
+  const [ghostText, setGhostText] = useState('')
+  const ghostRef = useRef<HTMLDivElement>(null)
+
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // ------------------------------------------------------------------ selection
+
+  const patchSel = (patch: Partial<Selection>) => setSel((s) => ({ ...s, ...patch }))
+
+  const execute = () => {
+    const errs = validateSelection(sel)
+    setErrors(errs)
+    if (!isValid(errs)) return
+    const keyDateIso = isoOf(parseDMY(sel.keyDate))
+    setResults(generateDeals(sel.dealType, sel.coFrom, sel.coTo || sel.coFrom, keyDateIso, sel.withRef))
+    setExecuted({ dealType: sel.dealType, keyDateIso })
+    setPage(1)
+    setSort(DEFAULT_SORT)
+    setSearch('')
+    setColFilters(EMPTY_COL_FILTERS)
+    setActiveRowId(null)
+    setShowResults(true)
+    setExecSeq((n) => n + 1)
+  }
+
+  useEffect(() => {
+    if (execSeq > 0) resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [execSeq])
+
+  const resetSelection = () => {
+    setSel(EMPTY_SELECTION)
+    setErrors(NO_ERRORS)
+    setShowResults(false)
+  }
+
+  const refresh = () => {
+    resetSelection()
+    showToast('Screen refreshed')
+  }
+
+  // ------------------------------------------------------------------ table
+
+  const cols = columnsFor(executed.dealType)
+  const filtered = useMemo(() => filterSortRows(results, cols, search, colFilters, sort), [results, cols, search, colFilters, sort])
+  const total = filtered.length
+  const pageCount = pageCountOf(total, pageSize)
+  const currentPage = Math.min(page, pageCount)
+  const start = (currentPage - 1) * pageSize
+  const pageRows = filtered.slice(start, start + pageSize)
+  const allPageChecked = pageRows.length > 0 && pageRows.every((r) => r._checked)
+  const checkedCount = results.filter((r) => r._checked).length
+  const updateDisabled = checkedCount === 0
+  const viewDisabled = !activeRowId
+
+  const patchColFilters = (patch: Partial<ColFilters>) => {
+    setColFilters((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }
+
+  const resetFilters = () => {
+    setColFilters(EMPTY_COL_FILTERS)
+    setSearch('')
+    setPage(1)
+  }
+
+  const onSort = (key: ColumnKey) => {
+    setSort((s) => nextSort(s, key))
+    setPage(1)
+  }
+
+  /** The original's header checkbox (un)checks every filtered row, not just this page. */
+  const onToggleAll = (checked: boolean) => {
+    const ids = new Set(filtered.map((r) => r._id))
+    setResults((rs) => rs.map((r) => (ids.has(r._id) ? { ...r, _checked: checked } : r)))
+  }
+
+  const onToggleRow = (id: string, checked: boolean) =>
+    setResults((rs) => rs.map((r) => (r._id === id ? { ...r, _checked: checked } : r)))
+
+  const onEdit = (id: string, field: EditKey, value: string) =>
+    setResults((rs) => rs.map((r) => (r._id === id ? { ...r, [field]: value } : r)))
+
+  const onRowClick = (id: string) => setActiveRowId((cur) => (cur === id ? null : id))
+
+  // ------------------------------------------------------------------ actions
+  // The buttons and the drag-and-drop targets below call exactly these.
+
+  const doUpdateBankReference = () => {
+    const n = results.filter((r) => r._checked).length
+    if (n === 0) return
+    showToast(updateToastText(n))
+    setShowResults(false)
+    setResults([])
+  }
+
+  const openViewTransaction = (id: string) => {
+    const r = results.find((x) => x._id === id)
+    if (!r) return
+    setActiveRowId(id)
+    setViewRow(r)
+    viewModal.open()
+  }
+
+  const closeView = viewModal.close
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal()
+      if (e.key === 'Escape') closeView()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [closeModal])
+  }, [closeView])
 
-  const filtered = useMemo(() => filterDeals(deals, filters), [deals, filters])
-  const paged = pageOf(filtered, page, pageSize)
-
-  const setFilter = (patch: Partial<Filters>) => {
-    setFilters((f) => ({ ...f, ...patch }))
-    setPage(1)
+  const doDownload = () => {
+    const blob = new Blob([buildCsv(cols, filtered)], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = csvFileName(executed.dealType, executed.keyDateIso)
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
-  const updateDeal = (updated: Deal) => setDeals((all) => all.map((d) => (d.dealId === updated.dealId ? updated : d)))
-  /** A change the page followed with renderDetail(), which also rebuilt the rate inputs. */
-  const redraw = (updated: Deal) => {
-    updateDeal(updated)
-    setRev((r) => r + 1)
+  // ------------------------------------------------------------------ drag and drop
+
+  const onDragStart = (e: DragEvent<HTMLTableRowElement>, row: Deal) => {
+    dragged.current = row
+    // The ghost lives inside the scope root so the scoped .drag-ghost style reaches it; its
+    // text must be in the DOM before setDragImage snapshots it.
+    flushSync(() => setGhostText(`${row.RFHA} — ${row.BUKRS}`))
+    setDraggingId(row._id)
+    e.dataTransfer.effectAllowed = 'copy'
+    e.dataTransfer.setData('text/plain', String(row.RFHA))
+    if (ghostRef.current) e.dataTransfer.setDragImage(ghostRef.current, 12, 14)
   }
 
-  // ------------------------------------------------------------------ navigation
-
-  const openDeal = (id: string) => {
-    setCurrentId(id)
-    window.scrollTo(0, 0)
+  const onDragEnd = () => {
+    dragged.current = null
+    setDraggingId(null)
+    setDragOver(null)
   }
 
-  /** Back to the list with the filters cleared; the header's Refresh also says so. */
-  const goHome = (refreshToast: boolean) => {
-    setCurrentId(null)
-    setFilters(DEFAULT_FILTERS)
-    setPage(1)
-    if (refreshToast) showToast(`Refreshed. ${deals.length} Deal ID(s) loaded.`, '')
-  }
-
-  // ------------------------------------------------------------------ invoices
-
-  const onRateChange = (idx: number, text: string) => {
-    if (!deal) return
-    const updated = setInvRate(deal, idx, text)
-    if (updated) redraw(updated)
-    else {
-      showToast('Exchange rate must be a positive number.', 'error')
-      setRev((r) => r + 1)
-    }
-  }
-
-  const onCalculate = () => {
-    if (!deal) return
-    redraw(recalcInvoices(deal))
-    showToast('Invoice amounts and P&L recalculated.', 'success')
-  }
-
-  // ------------------------------------------------------------------ popups
-
-  const openConfirm = () => {
-    if (!deal) return
-    setConfirmSnap(deal)
-    setOpenModal('confirm')
-  }
-
-  const doConfirm = () => {
-    const updated = deal ? confirmDeal(deal) : null
-    closeModal()
-    if (!updated) return
-    redraw(updated)
-    showToast(`Deal ID ${updated.dealId} confirmed by MO.`, 'success')
-  }
-
-  const openPremium = () => {
-    if (!deal) return
-    setPremiumSnap(deal)
-    setPremiumRate(deal.premiumRate ? deal.premiumRate.toFixed(7) : '')
-    setOpenModal('premium')
-  }
-
-  const doPremium = () => {
-    if (!deal) return
-    const updated = applyPremium(deal, premiumRate)
-    if (!updated) {
-      showToast('Enter a valid adjusted rate first.', 'error')
-      return
-    }
-    redraw(updated)
-    closeModal()
-    showToast('Premium adjustment applied to the D2 (T2) invoice leg.', 'success')
-  }
-
-  const selectEpLeg = (d: Deal, idx: number) => {
-    setEpLeg(idx)
-    setEpCandidate(editPairCandidates(d.fxLegs[idx])[0]?.rfha ?? '')
-  }
-
-  const openEditPair = () => {
-    if (!deal) return
-    selectEpLeg(deal, 0)
-    setOpenModal('editpair')
-  }
-
-  const doEditPair = () => {
-    if (!deal) return
-    const updated = applyEditPair(deal, epLeg, epCandidate, new Date())
-    if (!updated) {
-      showToast('No alternate transaction selected.', 'error')
-      return
-    }
-    updateDeal(updated)
-    closeModal()
-    showToast(`${deal.fxLegs[epLeg]?.leg ?? ''} leg re-pointed to transaction ${epCandidate}.`, 'success')
-  }
-
-  const doCancel = () => {
-    if (!deal) return
-    redraw(cancelDeal(deal))
-    closeModal()
-    showToast(`Deal ID ${deal.dealId} has been cancelled.`, 'success')
-  }
-
-  const doReverse = () => {
-    if (!deal) return
-    redraw(reverseConfirm(deal))
-    closeModal()
-    showToast(`Confirmation for Deal ID ${deal.dealId} reversed to 01 - Not Confirmed.`, 'success')
-  }
+  const dropTarget = (target: DropTarget, disabled: boolean, onDrop: (row: Deal) => void) => ({
+    onDragOver: (e: DragEvent<HTMLButtonElement>) => {
+      if (!dragged.current || disabled) return
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'copy'
+      setDragOver(target)
+    },
+    onDragLeave: () => setDragOver(null),
+    onDrop: (e: DragEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      setDragOver(null)
+      if (dragged.current && !disabled) onDrop(dragged.current)
+    },
+  })
 
   // ------------------------------------------------------------------ render
 
+  const selectedFrom = COMPANIES.find((c) => c.code === sel.coFrom)
+  const selectedTo = COMPANIES.find((c) => c.code === sel.coTo)
+
   return (
     <div className="mo-update-bank-reference">
-      <div className="page-head">
-        <BackButton className="back-btn" />
-        <img className="head-logo" src={HEAD_LOGO} alt="Logo" />
-        <div className="title-wrap">
-          <div className="page-title">Deal ID: MO Confirmation </div>
-          <div className="page-subtitle">Trade &amp; Structured Finance — assign a booked FX Deal to a Master Contract and confirm it</div>
-        </div>
-        <div className="head-actions">
-          <button className="btn-icon" type="button" title="Help" onClick={() => setGlossaryHidden((h) => !h)}>
-            ?
-          </button>
-          <button className="btn-icon" type="button" title="Refresh" onClick={() => goHome(true)}>
-            ↻
-          </button>
-          <SignOutButton className="back-btn" />
-        </div>
-      </div>
-
-      <main>
-        {/* ============================= DEAL ID SELECTION SCREEN ============================= */}
-        <div id="list-view" style={deal ? { display: 'none' } : undefined}>
-          <div id="glossary-box" className="glossary" style={glossaryHidden ? { display: 'none' } : undefined}>
-            <span>
-              <b>MC</b> = Master Contract (commodity, quantity &amp; shipping window agreed with a counterparty)
-            </span>
-            <span>
-              <b>Deal ID</b> = the link key created once an FX Deal is assigned to an MC
-            </span>
-            <span>
-              <b>D1 / D2</b> = the two offsetting FX Deal legs booked for a Deal ID
-            </span>
-            <span>
-              <b>T1 / T2 / T3</b> = the trade-invoice legs generated along the Entity String
-            </span>
-            <span>
-              <b>Entity String</b> = the chain of Olam entities the trade physically flows through, e.g. OGA→DMCC→OSIPL
-            </span>
-            <span>
-              <b>All-in Rate</b> = the blended spot+swap FX rate applied to a deal leg
-            </span>
+      <div className="app">
+        <div className="page-header">
+          <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
+          <div className="header-text">
+            <h1>
+              External Deals: Update Bank Reference <span className="tcode-chip">ZSGTSFR002</span>
+            </h1>
+            <p>External Reference Type</p>
           </div>
+          <div className="header-actions">
+            <BackButton className="btn btn-secondary" />
+            <button type="button" className="btn btn-secondary" onClick={refresh}>
+              ↻ Refresh
+            </button>
+            <SignOutButton className="btn btn-secondary" />
+          </div>
+        </div>
 
-          <div className="panel">
-            <div className="panel-title">
-              <div className="panel-title-left">
-                <span className="dot-bullet" />
-                <h2>Open Deal IDs</h2>
+        {/* ============ Selection Criteria ============ */}
+        <div className="card">
+          <div className="section-title">
+            <span className="dot"></span>Basic Selection
+          </div>
+          <div className="section-body">
+            <div className="form-grid-12">
+              <div className={`field gc-3${errors.coFrom ? ' has-error' : ''}`}>
+                <label>
+                  Company Code (From)<span className="req">*</span>
+                </label>
+                <SearchDropdown
+                  {...companyProps}
+                  selected={selectedFrom}
+                  onSelect={(c) => {
+                    patchSel({ coFrom: c.code })
+                    setErrors((e) => ({ ...e, coFrom: false }))
+                  }}
+                  onClear={() => patchSel({ coFrom: '' })}
+                />
+                <div className="error-msg">{ERROR_MESSAGES.coFrom}</div>
               </div>
-              <span className="panel-count" id="deal-count">
-                {filtered.length} record{filtered.length === 1 ? '' : 's'}
-              </span>
-            </div>
-            <div className="list-toolbar">
-              <div className="search-box">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  id="deal-search"
-                  type="text"
-                  placeholder="Search Deal ID, MC Ref, Model, Trader…"
-                  value={filters.search}
-                  onChange={(e) => setFilter({ search: e.target.value })}
+
+              <div className="field gc-3">
+                <label>Company Code (To)</label>
+                <SearchDropdown
+                  {...companyProps}
+                  selected={selectedTo}
+                  onSelect={(c) => patchSel({ coTo: c.code })}
+                  onClear={() => patchSel({ coTo: '' })}
                 />
               </div>
-              <div className="filter-field">
-                <label>Status</label>
-                <select id="f-status" value={filters.status} onChange={(e) => setFilter({ status: e.target.value as DealStatus | '' })}>
-                  <option value="">All statuses</option>
-                  <option value="01">01 - Not Confirmed</option>
-                  <option value="02">02 - Confirmed by MO</option>
-                  <option value="03">03 - In Use</option>
-                  <option value="30">30 - Cancelled</option>
-                </select>
+
+              <div className={`field gc-3${errors.keyDate ? ' has-error' : ''}`}>
+                <label>
+                  Key Date<span className="req">*</span>
+                </label>
+                <DateField
+                  value={sel.keyDate}
+                  onChange={(v) => patchSel({ keyDate: v })}
+                  onPicked={() => setErrors((e) => ({ ...e, keyDate: false }))}
+                />
+                <div className="error-msg">{ERROR_MESSAGES.keyDate}</div>
               </div>
-              <div className="filter-field">
-                <label>FX Model</label>
-                <select id="f-model" value={filters.model} onChange={(e) => setFilter({ model: e.target.value })}>
-                  <option value="">All models</option>
-                  {MODEL_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
+
+              <div className="field gc-3">
+                <label>Layout</label>
+                <select className="control" value={sel.layout} onChange={(e) => patchSel({ layout: e.target.value })}>
+                  {LAYOUTS.map((l) => (
+                    <option key={l.value} value={l.value}>
+                      {l.label}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="filter-field">
-                <label>Origin Entity</label>
-                <select id="f-origin" value={filters.origin} onChange={(e) => setFilter({ origin: e.target.value })}>
-                  <option value="">All entities</option>
-                  {originOpts.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button className="filter-reset" type="button" onClick={() => setFilter(DEFAULT_FILTERS)}>
-                Reset
-              </button>
             </div>
-            <DealTable rows={paged.rows} onOpen={openDeal} />
-            <div className="pager">
-              <div className="pager-size">
-                Rows per page
-                <select
-                  id="page-size"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(parseInt(e.target.value, 10))
-                    setPage(1)
-                  }}
-                >
-                  {PAGE_SIZES.map((n) => (
-                    <option key={n}>{n}</option>
+
+            <div className="form-grid-12">
+              <div className="field gc-6">
+                <label>Report Type</label>
+                <div className="pillgroup">
+                  {(
+                    [
+                      ['FX', 'Forex'],
+                      ['OP', 'Option'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <div key={val} className={`pill${sel.dealType === val ? ' active' : ''}`} onClick={() => patchSel({ dealType: val })}>
+                      <span className="dot"></span>
+                      {label}
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
-              <PagerControls page={paged.page} totalPages={paged.totalPages} onPage={setPage} />
-              <div className="pager-info" id="pager-info">
-                {filtered.length ? (
-                  <>
-                    Showing{' '}
-                    <strong>
-                      {paged.start + 1}–{paged.end}
-                    </strong>{' '}
-                    of <strong>{filtered.length}</strong>
-                  </>
-                ) : (
-                  'Showing 0 of 0'
-                )}
+              <div className="field gc-6">
+                <label>External Reference</label>
+                <div className="pillgroup">
+                  {(
+                    [
+                      [true, 'With External Reference'],
+                      [false, 'Without External Reference'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <div key={label} className={`pill${sel.withRef === val ? ' active' : ''}`} onClick={() => patchSel({ withRef: val })}>
+                      <span className="dot"></span>
+                      {label}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ============================= DEAL ID DETAIL SCREEN ============================= */}
-        <div id="detail-view" style={deal ? { display: 'block' } : undefined}>
-          <div className="back-row">
-            <button className="back-btn" type="button" onClick={() => goHome(false)}>
-              ← Back to Deal ID list
+          <div className="helper-note">
+            <strong>Note:</strong> Key Date = Date on which deals in the system are without bank reference (includes open deals
+            and expired deals).
+          </div>
+          <div className="sel-actions">
+            <button type="button" className="btn btn-primary" onClick={execute}>
+              Execute
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={resetSelection}>
+              Reset
             </button>
           </div>
-          {deal && (
-            <>
-              <DealHeaderPanel
-                deal={deal}
-                today={today}
-                onConfirm={openConfirm}
-                onPremium={openPremium}
-                onEditPair={openEditPair}
-                onCancel={() => setOpenModal('cancel')}
-                onReverse={() => setOpenModal('reverse')}
-                onDms={() => setOpenModal('dms')}
-                onRefresh={() => setRev((r) => r + 1)}
+        </div>
+
+        {/* ============ Results ============ */}
+        <div ref={resultsRef} className={`card${showResults ? '' : ' hidden'}`}>
+          <div className="results-title">
+            <span className="dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></span>
+            <span>{resultsTitle(executed.dealType)}</span>
+          </div>
+
+          <div className="table-toolbar">
+            <div className="search-box">
+              <span className="icon">🔍</span>
+              <input
+                placeholder="Search deals..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
               />
-              <FxDealsPanel deal={deal} />
-              <InvoicesPanel deal={deal} rev={rev} onRateChange={onRateChange} onCalculate={onCalculate} />
-              <PlPanel deal={deal} />
-            </>
-          )}
+            </div>
+            <select className="control filter-select" value={colFilters.type} onChange={(e) => patchColFilters({ type: e.target.value })}>
+              <option value="">All types</option>
+              {txnTypesFor(executed.dealType).map((t) => (
+                <option key={t.code} value={t.code}>
+                  {t.desc}
+                </option>
+              ))}
+            </select>
+            <select className="control filter-select" value={colFilters.status} onChange={(e) => patchColFilters({ status: e.target.value })}>
+              <option value="">All statuses</option>
+              {TXN_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select className="control filter-select" value={colFilters.trader} onChange={(e) => patchColFilters({ trader: e.target.value })}>
+              <option value="">All traders</option>
+              {TRADERS.map((t) => (
+                <option key={t.code} value={t.code}>
+                  {t.code} — {t.name}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={resetFilters}>
+              Reset
+            </button>
+            <button
+              type="button"
+              className={`btn btn-primary btn-sm${dragOver === 'update' ? ' drag-over' : ''}`}
+              disabled={updateDisabled}
+              onClick={doUpdateBankReference}
+              {...dropTarget('update', updateDisabled, () => doUpdateBankReference())}
+            >
+              Update Bank Reference
+            </button>
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm${dragOver === 'view' ? ' drag-over' : ''}`}
+              disabled={viewDisabled}
+              onClick={() => {
+                if (activeRowId) openViewTransaction(activeRowId)
+              }}
+              {...dropTarget('view', viewDisabled, (row) => openViewTransaction(row._id))}
+            >
+              View Transaction
+            </button>
+            <div className="icon-btn" title="Download" onClick={doDownload}>
+              ⇩
+            </div>
+            <div className="toolbar-spacer"></div>
+            <span className="result-count">{recordCountText(total)}</span>
+          </div>
+
+          <div className={`table-scroll${total === 0 ? ' hidden' : ''}`}>
+            <DealGrid
+              cols={cols}
+              rows={pageRows}
+              rowKeyPrefix={String(execSeq)}
+              sort={sort}
+              activeRowId={activeRowId}
+              draggingId={draggingId}
+              allPageChecked={allPageChecked}
+              onSort={onSort}
+              onToggleAll={onToggleAll}
+              onToggleRow={onToggleRow}
+              onRowClick={onRowClick}
+              onView={openViewTransaction}
+              onEdit={onEdit}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+            />
+          </div>
+
+          <div className={`empty-state${total === 0 ? '' : ' hidden'}`}>
+            <div className="big">📋</div>
+            No record found. No external deals match the selected criteria.
+          </div>
+
+          <div className={`table-footer${total === 0 ? ' hidden' : ''}`}>
+            <div className="page-size-select">
+              Rows per page
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(parseInt(e.target.value, 10))
+                  setPage(1)
+                }}
+              >
+                {PAGE_SIZES.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="pagination">
+              <button type="button" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                ‹
+              </button>
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
+                <button key={p} type="button" className={p === currentPage ? 'active' : undefined} onClick={() => setPage(p)}>
+                  {p}
+                </button>
+              ))}
+              <button type="button" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>
+                ›
+              </button>
+            </div>
+          </div>
         </div>
-      </main>
-
-      <ConfirmModal open={openModal === 'confirm'} deal={confirmSnap} onClose={closeModal} onConfirm={doConfirm} />
-      <PremiumModal
-        open={openModal === 'premium'}
-        deal={premiumSnap}
-        rate={premiumRate}
-        onRateChange={setPremiumRate}
-        onClose={closeModal}
-        onApply={doPremium}
-      />
-      <EditPairModal
-        open={openModal === 'editpair'}
-        deal={deal ?? null}
-        legIdx={epLeg}
-        candidate={epCandidate}
-        onLegChange={(idx) => deal && selectEpLeg(deal, idx)}
-        onCandidateChange={setEpCandidate}
-        onClose={closeModal}
-        onApply={doEditPair}
-      />
-      <CancelModal open={openModal === 'cancel'} dealId={deal?.dealId ?? ''} onClose={closeModal} onConfirm={doCancel} />
-      <ReverseModal open={openModal === 'reverse'} dealId={deal?.dealId ?? ''} onClose={closeModal} onConfirm={doReverse} />
-      <DmsModal open={openModal === 'dms'} onClose={closeModal} />
-
-      <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
-        {toast.message}
-      </div>
-    </div>
-  )
-}
-
-/** Heading, action toolbar, info grid and the waiting-on-shipment note. */
-function DealHeaderPanel({
-  deal,
-  today,
-  onConfirm,
-  onPremium,
-  onEditPair,
-  onCancel,
-  onReverse,
-  onDms,
-  onRefresh,
-}: {
-  deal: Deal
-  today: Date
-  onConfirm: () => void
-  onPremium: () => void
-  onEditPair: () => void
-  onCancel: () => void
-  onReverse: () => void
-  onDms: () => void
-  onRefresh: () => void
-}) {
-  const cancelled = isCancelled(deal)
-  const note = gapNote(deal, today)
-  return (
-    <div className="panel">
-      <div className="panel-title">
-        <div className="detail-heading">
-          <h1>Deal ID: MO Confirmation</h1>
-          <span className="deal-badge" id="dt-dealid">
-            {deal.dealId}
-          </span>
-        </div>
       </div>
 
-      <div className="action-bar" id="dt-actionbar">
-        <button className="tb-btn primary" type="button" disabled={cancelled} onClick={onConfirm}>
-          <span className="ico">✓</span> {deal.status === '01' ? 'Change / Confirm' : 'View Confirmation'}
-        </button>
-        <button className="tb-btn" type="button" disabled={cancelled} onClick={onPremium}>
-          <span className="ico">%</span> Premium Adjustment
-        </button>
-        <button className="tb-btn" type="button" disabled={cancelled} onClick={onEditPair}>
-          <span className="ico">⇆</span> Edit Deal Pair
-        </button>
-        <button className="tb-btn danger" type="button" disabled={cancelled} onClick={onCancel}>
-          <span className="ico">✕</span> Cancel Deal ID
-        </button>
-        {canReverse(deal) && (
-          <button className="tb-btn danger" type="button" onClick={onReverse}>
-            <span className="ico">↶</span> Reverse Confirmation
-          </button>
-        )}
-        <button className="tb-btn" type="button" onClick={onDms}>
-          <span className="ico">📎</span> DMS
-        </button>
-        <button className="tb-btn" type="button" onClick={onRefresh}>
-          <span className="ico">↻</span> Refresh
-        </button>
-      </div>
+      <ViewTxnModal modal={viewModal} row={viewRow} isFx={executed.dealType === 'FX'} onClose={viewModal.close} />
 
-      <div className="info-grid" id="dt-infogrid">
-        <InfoCell label="Deal ID" cls="green">
-          {deal.dealId}
-        </InfoCell>
-        <InfoCell label="MC Reference No" cls="accent">
-          {deal.mcRef}
-        </InfoCell>
-        <InfoCell label="FX Model">{`${deal.model} – ${deal.modelDesc}`}</InfoCell>
-        <InfoCell label="Trader">{deal.trader}</InfoCell>
-        <InfoCell label="Deal Start Date">{fmtDate(deal.dealStart)}</InfoCell>
-        <InfoCell label="Deal End Date">{fmtDate(deal.dealEnd)}</InfoCell>
-        <InfoCell label="Ship Start Date">{fmtDate(deal.shipStart)}</InfoCell>
-        <InfoCell label="Ship End Date">{fmtDate(deal.shipEnd)}</InfoCell>
-        <InfoCell label="Entity String">
-          {deal.entChain.map((e, i) => (
-            <Fragment key={i}>
-              {i > 0 && <span className="flow-arrow">→</span>}
-              {e}
-            </Fragment>
-          ))}
-        </InfoCell>
-        <InfoCell label="Currency String">{deal.currChain.join(' → ')}</InfoCell>
-        <InfoCell label="Deal ID Status" cls={statusValClass(deal.status)}>
-          {statusText(deal.status)}
-        </InfoCell>
-        <InfoCell label="Origin Entity">{`${deal.origin} – ${companyName(deal.origin)}`}</InfoCell>
-      </div>
+      <div className={`toast${toast ? ' show' : ''}${toast?.error ? ' error' : ''}`}>{toast?.message}</div>
 
-      <div className="section-note gap-note" id="dt-gapnote" style={{ display: note ? 'block' : 'none' }}>
-        {note?.kind === 'waiting' && (
-          <>
-            <strong>Waiting on shipment.</strong> This Deal ID is booked and assigned, but shipment isn't due to start for {note.days} more day(s).
-            Nothing changes in the system for this Deal ID during that gap except a monthly mark-to-market (MTM) valuation of the open FX position —
-            no invoices exist yet.
-          </>
-        )}
-        {note?.kind === 'ready' && (
-          <>
-            <strong>Ready to confirm.</strong> The shipping window has opened. Once the Bill of Lading is attached by the Trade Flow team, Trade
-            Invoices T1/T2/T3 will be generated for this Deal ID.
-          </>
-        )}
+      <div ref={ghostRef} className="drag-ghost">
+        {ghostText}
       </div>
-    </div>
-  )
-}
-
-function InfoCell({ label, cls = '', children }: { label: string; cls?: string; children: ReactNode }) {
-  return (
-    <div className="info-cell">
-      <div className="info-lbl">{label}</div>
-      <div className={`info-val${cls ? ` ${cls}` : ''}`}>{children}</div>
     </div>
   )
 }

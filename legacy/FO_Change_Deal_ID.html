@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FO: Change Deal ID</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM — ported from the approved OTTK / Create Master
+   Contract reference (same tokens, radii, shadows, font, and
+   interaction language). Target class names are unchanged;
+   only their visual values are re-mapped to the reference.
+   ============================================================ */
+:root{
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --th:#475E75;
+  --blue:#0A6ED1;
+  --blue-dark:#085CAF;
+  --blue-light:#EAF3FC;
+  --green:#107E3E;
+  --green-bg:#E4F5E9;
+  --orange:#E9730C;
+  --orange-bg:#FFF4CC;
+  --red:#BB0000;
+  --red-bg:#FCEAEA;
+  --gray:#475E75;
+  --gray-bg:#F2F4F5;
+  --radius:12px;
+  --radius-sm:4px;
+  --shadow:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:13px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;}
+input,select{font-family:inherit;}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#B7C2CB;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- Layout ---------- */
+.app{max-width:100%;margin:0;padding:.3rem .2px .5rem;padding-left:.2px;padding-right:.2px;}
+.hidden{display:none !important;}
+
+/* ---------- Header ---------- */
+.header{
+  display:flex;align-items:center;gap:14px;
+  background:transparent;
+  border:none;
+  padding:4px 2px 12px;
+  margin-bottom:2px;
+}
+.header .titleblock{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
+.logo-mark{height:40px;width:auto;max-width:120px;object-fit:contain;flex:none;}
+.header-text{display:flex;flex-direction:column;}
+.header h1{font-size:16px;font-weight:700;margin:0 0 3px;letter-spacing:-0.2px;}
+.header p{margin:0;color:var(--text-muted);font-size:12.5px;}
+.header .subcode{
+  font-size:12.5px;font-weight:500;color:var(--text-faint);
+  background:none;padding:0;border-radius:0;
+}
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  height:32px;padding:0 12px;
+  font-size:12.5px;font-weight:600;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+  background:#fff;
+  color:var(--text);
+  cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .1s ease,opacity .15s ease;
+}
+.btn:hover{border-color:var(--blue);color:var(--blue);box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn:disabled:hover{border-color:var(--border-strong);color:var(--text);box-shadow:none;}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-dark);border-color:var(--blue-dark);color:#fff;box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.btn-primary:disabled:hover{background:var(--blue);border-color:var(--blue);}
+.btn-danger{background:#fff;border-color:#E3B3AC;color:var(--red);}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red);color:var(--red);box-shadow:none;}
+.btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
+.btn-icon{width:32px;padding:0;justify-content:center;}
+.btn svg{width:14px;height:14px;flex-shrink:0;}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin-bottom:12px;
+  overflow:visible;
+}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.card-head .htitle{display:flex;align-items:center;gap:8px;}
+.card-head .htitle::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--blue);flex:none;
+}
+.card-head h2{font-size:12px;font-weight:700;margin:0;color:var(--blue-dark);letter-spacing:.3px;}
+.card-head .count{font-size:11.5px;color:var(--text-muted);font-weight:500;}
+.card-body{padding:12px 16px 14px;}
+
+/* ---------- Selection bar (Deal ID search) ---------- */
+.selectbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.search-input-wrap{position:relative;flex:1;min-width:260px;max-width:420px;}
+.search-input-wrap input{
+  width:100%;height:32px;padding:0 14px 0 30px;
+  border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  font-size:12.5px;color:var(--text);background:#fff;
+  outline:none;transition:border-color .18s ease,box-shadow .18s ease;
+}
+.search-input-wrap input:hover{border-color:#A6B0B9;}
+.search-input-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.search-input-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-faint);}
+.typeahead{
+  position:absolute;top:38px;left:0;right:0;background:#fff;
+  border:1px solid var(--border);border-radius:8px;
+  box-shadow:var(--shadow-pop);max-height:260px;overflow-y:auto;z-index:210;
+  padding:6px;
+}
+.typeahead-item{padding:8px 10px;cursor:pointer;border-radius:var(--radius-sm);}
+.typeahead-item:hover,.typeahead-item.active{background:var(--blue-light);}
+.typeahead-item .ti-id{font-weight:600;color:var(--text);font-size:12.5px;}
+.typeahead-item .ti-meta{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.typeahead-empty{padding:14px 10px;color:var(--text-faint);font-size:11.5px;text-align:center;}
+
+/* ---------- Form fields (summary grid) ---------- */
+.field-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 14px;}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.field label{font-size:11.5px;font-weight:600;color:var(--text-muted);text-transform:none;letter-spacing:normal;}
+.field .value{font-size:13px;font-weight:600;color:var(--text);word-break:break-word;}
+.field .value.muted{font-weight:500;color:var(--text-muted);}
+.field .sub{font-size:11.5px;color:var(--text-muted);font-weight:500;margin-top:1px;}
+
+/* status badge/pill */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;
+  white-space:nowrap;
+}
+.pill-blue{background:var(--blue-light);color:var(--blue-dark);}
+.pill-green{background:var(--green-bg);color:#1E7A46;}
+.pill-gray{background:var(--gray-bg);color:var(--text-muted);}
+.pill-red{background:var(--red-bg);color:#B4362A;}
+.pill-orange{background:var(--orange-bg);color:#9A5300;}
+
+/* ---------- Action toolbar ---------- */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border);background:transparent;}
+.toolbar .spacer{flex:1;}
+.tip-wrap{position:relative;display:inline-flex;}
+.tip-wrap[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#2A3B4D;color:#fff;font-size:11px;font-weight:500;
+  padding:5px 9px;border-radius:6px;white-space:nowrap;z-index:80;
+}
+
+/* ---------- Tables ---------- */
+.table-scroll{overflow-x:auto;}
+table.grid{border-collapse:collapse;width:100%;min-width:640px;}
+table.grid th{
+  position:sticky;top:0;
+  text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.4px;
+  background:var(--gray-tint,#F2F4F5);padding:8px 10px;white-space:nowrap;
+  border-bottom:1px solid #E6E9EB;z-index:5;
+}
+table.grid td{
+  padding:8px 10px;font-size:14px;color:var(--text);
+  border-bottom:1px solid #E6E9EB;white-space:nowrap;
+}
+table.grid tbody tr{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;}
+table.grid tbody tr:hover{
+  background:#F7FBFF;
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  position:relative;z-index:2;
+}
+table.grid tbody tr.row-selected{background:#EAF3FC;}
+table.grid tbody tr.row-selected:hover{background:#EAF3FC;box-shadow:0 3px 9px rgba(10,110,209,.14);}
+table.grid tbody tr.dragging{opacity:.5;}
+table.grid td.num{text-align:right;font-variant-numeric:tabular-nums;}
+table.grid td.center{text-align:center;}
+table.grid td.hotspot{color:var(--blue-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+table.grid td.hotspot:hover{text-decoration:underline;color:var(--blue);}
+table.grid td.empty-row{text-align:center;color:var(--text-faint);padding:26px;}
+table.grid input.cell-input{
+  width:104px;height:28px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:0 8px;font-size:12.5px;text-align:right;background:#fff;
+  transition:border-color .15s,box-shadow .15s;
+}
+table.grid input.cell-input:hover{border-color:#A6B0B9;}
+table.grid input.cell-input:disabled{background:var(--gray-bg);color:var(--text-faint);border-color:var(--border);}
+table.grid input.cell-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+table.grid tfoot td{font-weight:700;background:var(--gray-bg);border-top:2px solid var(--border);border-bottom:none;}
+.chk{width:14px;height:14px;cursor:pointer;accent-color:var(--blue);}
+.badge-type{
+  display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;font-size:11px;
+  background:var(--blue-light);color:var(--blue-dark);
+}
+
+/* ---------- Empty/placeholder state ---------- */
+.placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;color:var(--text-muted);text-align:center;gap:8px;
+}
+.placeholder svg{width:36px;height:36px;color:var(--border-strong);}
+.placeholder .ph-title{font-size:14px;font-weight:700;color:var(--text);}
+.placeholder .ph-sub{font-size:12.5px;max-width:360px;color:var(--text-muted);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(16,26,41,.5);
+  display:none;align-items:center;justify-content:center;z-index:200;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-overlay.closing{display:flex;}
+.modal{
+  background:#fff;border-radius:12px;box-shadow:var(--shadow-pop);
+  border:1px solid #B9C2C9;
+  width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;
+  animation:popIn .18s ease-out;
+}
+.modal-overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+@keyframes popIn{from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.modal.modal-md{max-width:560px;}
+.modal.modal-lg{max-width:760px;}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+}
+.modal-head h3{margin:0;font-size:14px;font-weight:700;}
+.modal-close{
+  width:28px;height:28px;border-radius:6px;border:none;background:transparent;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);
+  font-size:18px;line-height:1;transition:background .15s ease,color .15s ease;
+}
+.modal-close:hover{background:var(--gray-bg);color:var(--text);}
+.modal-body{padding:20px;overflow-y:auto;}
+.modal-foot{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  padding:12px 20px;border-top:1px solid var(--border);background:transparent;
+}
+.modal-foot .left-note{margin-right:auto;font-size:11.5px;color:var(--text-muted);}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+.form-grid.single{grid-template-columns:1fr;}
+.form-field{display:flex;flex-direction:column;gap:6px;}
+.form-field label{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+.form-field .static{font-size:13px;font-weight:600;color:var(--text);padding:6px 0;}
+.form-field input[type=text],.form-field input[type=number]{
+  height:36px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 11px;
+  font-size:12.5px;background:#fff;color:var(--text);
+  transition:border-color .15s,box-shadow .15s;
+}
+.form-field input:hover{border-color:#A6B0B9;}
+.form-field input:disabled{background:var(--gray-bg);color:var(--text-faint);}
+.form-field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.inline-err{font-size:11px;color:var(--red);font-weight:600;margin-top:2px;}
+.info-banner{
+  display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:8px;
+  background:var(--blue-light);color:var(--blue-dark);font-size:12px;font-weight:600;margin-bottom:14px;
+}
+.info-banner.warn{background:var(--orange-bg);color:#9A5300;}
+.info-banner.error{background:var(--red-bg);color:#B4362A;}
+.info-banner svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+.section-title{font-size:11px;font-weight:700;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+.confirm-icon{width:52px;height:52px;border-radius:50%;background:var(--red-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.confirm-icon svg{width:24px;height:24px;color:var(--red);}
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  background:#243B53;color:#fff;padding:11px 18px;border-radius:8px;
+  font-size:12.5px;font-weight:600;box-shadow:var(--shadow-pop);
+  z-index:400;display:flex;align-items:center;gap:8px;
+}
+.toast.err{background:#4A211D;}
+.toast svg{width:16px;height:16px;}
+
+/* ---------- Drag and drop ---------- */
+.drag-ghost{
+  position:fixed;top:-1000px;left:-1000px;
+  padding:6px 10px;background:#1D2D3E;color:#fff;border-radius:4px;
+  font-size:12px;font-weight:600;white-space:nowrap;font-family:var(--font);
+  pointer-events:none;
+}
+.btn.drag-over{
+  border-color:var(--blue) !important;
+  background:var(--blue-light) !important;
+  color:var(--blue) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+
+@media (max-width:900px){
+  .field-grid{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <div class="header">
+    <div class="titleblock">
+      <img class="logo-mark" alt="FS logo" src="data:image/png;base64,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">
+      <div class="header-text">
+        <h1>FO: Change Deal ID</h1>
+        <p>Deal ID analysis &amp; maintenance <span class="subcode">&middot; ZSGTSFP013</span></p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btnBack" onclick="App.goToSelection()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <button class="btn btn-icon" title="Refresh" onclick="App.refresh()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEAL ID SELECTION BAR
+       ============================================================ -->
+  <div class="card">
+    <div class="card-body">
+      <div class="selectbar">
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="dealSearch" placeholder="Enter Deal ID..." autocomplete="off"
+                 oninput="App.onDealSearchInput(this.value)" onfocus="App.onDealSearchInput(this.value)">
+          <div class="typeahead hidden" id="dealTypeahead"></div>
+        </div>
+        <span class="sub" id="selectHint" style="color:var(--text-muted);font-size:12px;">Search by Deal ID, entity string or trader to open the Deal ID analysis workbench.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PLACEHOLDER (no deal selected)
+       ============================================================ -->
+  <div class="card" id="placeholderCard">
+    <div class="placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      <div class="ph-title">No Deal ID selected</div>
+      <div class="ph-sub">Search for a Deal ID above to view its FX deals, invoice plan and planned P&amp;L.</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEAL WORKBENCH (hidden until a Deal ID is loaded)
+       ============================================================ -->
+  <div id="workbench" class="hidden">
+
+    <!-- ---- Deal ID summary ---- -->
+    <div class="card">
+      <div class="card-head">
+        <div class="htitle">
+          <h2 id="wbTitle">Deal ID Analysis</h2>
+          <span class="count" id="wbDealRef"></span>
+        </div>
+        <span id="wbStatusPill"></span>
+      </div>
+      <div class="card-body">
+        <div class="field-grid" id="summaryGrid"><!-- rendered by JS --></div>
+      </div>
+      <div class="toolbar" id="actionToolbar"><!-- rendered by JS --></div>
+    </div>
+
+    <!-- ---- FX Deals table ---- -->
+    <div class="card">
+      <div class="card-head">
+        <div class="htitle"><h2>FX Deals</h2><span class="count" id="topCount"></span></div>
+        <span class="sub" style="font-size:11.5px;color:var(--text-muted);">Select a row, then use <b>Edit Deal Pair</b> to reassign the underlying transaction</span>
+      </div>
+      <div class="table-scroll">
+        <table class="grid" id="topTable">
+          <thead>
+            <tr>
+              <th class="center">Sel</th>
+              <th>Co. Code</th>
+              <th>Deal Type</th>
+              <th>BP Name</th>
+              <th>BP No.</th>
+              <th>Transaction No</th>
+              <th>Structure</th>
+              <th>Deal Start</th>
+              <th>Deal Valid</th>
+              <th>Text</th>
+              <th>Entity</th>
+              <th>B/S 1</th>
+              <th>Curr 1</th>
+              <th class="num">Amount 1</th>
+              <th>B/S 2</th>
+              <th>Curr 2</th>
+              <th class="num">Amount 2</th>
+              <th class="num">Spot</th>
+              <th class="num">Swap</th>
+              <th class="num">All-in Rate</th>
+              <th class="num">Strike</th>
+              <th>MC Ref No</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="topTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ---- Invoice Plan table ---- -->
+    <div class="card" id="invCard">
+      <div class="card-head">
+        <div class="htitle"><h2>Deal ID: Planned Trade Invoices</h2><span class="count" id="invCount"></span></div>
+        <button class="btn btn-sm" onclick="App.calculateInvoicePlan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+          Calculate
+        </button>
+      </div>
+      <div class="table-scroll">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>From (Sell)</th>
+              <th>To (Buy)</th>
+              <th>Currency</th>
+              <th>Invoice Term No</th>
+              <th class="num">Invoice Amount (USD)</th>
+              <th class="num">Exchange Rate</th>
+              <th class="num">Invoice Amount</th>
+            </tr>
+          </thead>
+          <tbody id="invTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ---- Deal P&L table ---- -->
+    <div class="card" id="plCard">
+      <div class="card-head">
+        <div class="htitle"><h2>Deal ID: Planned P&amp;L</h2><span class="count" id="plCount"></span></div>
+      </div>
+      <div class="table-scroll">
+        <table class="grid" id="plTable">
+          <thead><tr id="plHeadRow"></tr></thead>
+          <tbody id="plTbody"></tbody>
+          <tfoot><tr id="plFootRow"></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: View Transaction (RFHA hotspot)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalTxn">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3>Transaction Details</h3>
+      <button class="modal-close" onclick="App.closeModal('modalTxn')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="txnDetailGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="App.closeModal('modalTxn')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Change / Invoice Plan Change-Confirm (Screen 9001)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalChange">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3>Change / Confirm</h3>
+      <button class="modal-close" onclick="App.closeModal('modalChange')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="changeErrBanner"></div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Deal ID</label>
+          <div class="static" id="chgDealId"></div>
+        </div>
+        <div class="form-field">
+          <label>Deal Description</label>
+          <div class="static" id="chgDealDesc"></div>
+        </div>
+        <div class="form-field" style="grid-column:1 / -1;">
+          <label>MC Reference No</label>
+          <input type="text" id="chgMcRefInput" placeholder="Select Master Contract..." disabled onclick="App.openMcPicker()" readonly>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="left-note" id="chgToggleHint">Click <b>Change</b> to select a different Master Contract</span>
+      <button class="btn" onclick="App.closeModal('modalChange')">Cancel</button>
+      <button class="btn" id="btnChgToggle" onclick="App.toggleChangeEdit()">Change</button>
+      <button class="btn btn-primary" onclick="App.confirmChange()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Master Contract picker (F4 help for MC Ref No)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalMcPicker">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3>Master Contract (1) - Search Result</h3>
+      <button class="modal-close" onclick="App.closeModal('modalMcPicker')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-scroll">
+        <table class="grid">
+          <thead><tr>
+            <th>MC Ref No</th><th>MC Description</th><th>Origin Entity</th>
+            <th>MC Date</th><th class="num">MC Amount</th><th>Currency</th><th>Entity String</th>
+          </tr></thead>
+          <tbody id="mcPickerTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="App.closeModal('modalMcPicker')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Premium Adjustment (Screen 9003)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalPremium">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3>Premium Adjustment</h3>
+      <button class="modal-close" onclick="App.closeModal('modalPremium')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="premiumGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="App.closeModal('modalPremium')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Edit Deal Pair (Screen 9004)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalEditPair">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3>Edit Deal Pair</h3>
+      <button class="modal-close" onclick="App.closeModal('modalEditPair')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="editPairErrBanner"></div>
+      <div class="form-grid">
+        <div class="form-field"><label>Deal Type</label><div class="static" id="epDealType"></div></div>
+        <div class="form-field"><label>Company Code</label><div class="static" id="epBukrs"></div></div>
+        <div class="form-field"><label>Old Transaction</label><div class="static" id="epOldRfha"></div></div>
+        <div class="form-field">
+          <label>New Transaction</label>
+          <input type="text" id="epNewRfha" placeholder="Enter new transaction no." disabled>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="left-note">Click <b>Edit</b> to enter a replacement transaction number</span>
+      <button class="btn" onclick="App.closeModal('modalEditPair')">Cancel</button>
+      <button class="btn" id="btnEpToggle" onclick="App.toggleEditPair()">Edit</button>
+      <button class="btn btn-primary" onclick="App.dealUpdate()">Deal Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Cancel Deal ID (Screen 9005)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalCancelDeal">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3>Cancel Deal ID</h3>
+      <button class="modal-close" onclick="App.closeModal('modalCancelDeal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Deal ID</label><div class="static" id="cdDealId"></div></div>
+        <div class="form-field"><label>MC Ref No</label><div class="static" id="cdMcRef"></div></div>
+        <div class="form-field"><label>FX Model ID</label><div class="static" id="cdModel"></div></div>
+        <div class="form-field"><label>Trader</label><div class="static" id="cdTrader"></div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="App.closeModal('modalCancelDeal')">Cancel</button>
+      <button class="btn btn-danger" onclick="App.requestCancelDeal()">Cancel Deal ID</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: generic confirm (POPUP_TO_CONFIRM)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="modalConfirm">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3 id="confirmTitle">Confirm</h3>
+      <button class="modal-close" onclick="App.closeModal('modalConfirm')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      </div>
+      <div id="confirmMsg" style="font-size:13.5px;font-weight:600;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="confirmNoBtn">No</button>
+      <button class="btn btn-danger" id="confirmYesBtn">Yes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DUMMY DATA
+   ============================================================ */
+var STATUS_MAP = {
+  '01': {label:'01 – Open',      css:'pill-blue'},
+  '02': {label:'02 – Confirmed', css:'pill-green'},
+  '04': {label:'04 – Matured',   css:'pill-gray'},
+  '30': {label:'30 – Cancelled', css:'pill-red'}
+};
+
+function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+// Master contracts available for the "Change" MC picker (F4 help)
+var mockMasterContracts = [
+  {ref:'2000002728', desc:'OSIPL_RICE_M032_0.1M',  origin:'OSIPL', date:'22-08-2026', amt:100000.00,   curr:'USD', entstr:'OGA-DMCC-OSIPL'},
+  {ref:'2000002727', desc:'OSIPL_Multi-Commodity',  origin:'OSIPL', date:'21-09-2026', amt:500000.00,   curr:'USD', entstr:'OGA-DMCC-OSIPL'},
+  {ref:'2000002716', desc:'OSIPL_Multi-Commodity',  origin:'OSIPL', date:'19-09-2026', amt:44758.00,    curr:'USD', entstr:'OGA-DMCC-OSIPL'},
+  {ref:'2000002699', desc:'OSIPL_Multi-Commodity',  origin:'OSIPL', date:'19-09-2026', amt:48323.00,    curr:'USD', entstr:'OGA-DMCC-OSIPL'}
+];
+
+function buildTopRow(o){
+  return Object.assign({
+    color:'', premCurr:'USD'
+  }, o);
+}
+
+var mockDeals = {
+  '3000045210': {
+    dealId:'3000045210', dealRef:'DL-25-OSIPL-0210', status:'01',
+    sDate:'01-09-2026', eDate:'31-03-2027',
+    trdCode:'T01', trdDesc:'Rohan Mehta',
+    mcRef:'2000002728', mcDesc:'OSIPL_RICE_M032_0.1M', mcDate:'22-08-2026',
+    shipStart:'01-09-2026', shipEnd:'31-12-2026',
+    modId:'M032', modDesc:'INR Long Forward',
+    entStr:'OGA-DMCC-OSIPL', currStr:'USD-USD-INR',
+    top:[
+      buildTopRow({bukrs:'IN11', dealType:'D1', bpName:'Olam Agri India Pvt Ltd', kontrh:'0001045210', rfha:'5000123401', sfhaart:'FX Forward', dblfz:'01-09-2026', delfz:'22-08-2026', xtext:'RICE Import Hedge Leg 1', entity:'OSIPL', bs1:'Sell', curr1:'USD', amt1:100000.00, bs2:'Buy', curr2:'INR', amt2:9000000.00, ospot:90.20, oswap:-0.20, otot_rate:90.00, strike:'', mcRefNo:'2000002728', txnStatus:'02'}),
+      buildTopRow({bukrs:'IN11', dealType:'D2', bpName:'Olam Agri India Pvt Ltd', kontrh:'0001045210', rfha:'5000123402', sfhaart:'FX Forward', dblfz:'01-09-2026', delfz:'22-08-2026', xtext:'RICE Import Hedge Leg 2', entity:'DMCC', bs1:'Buy', curr1:'USD', amt1:100000.00, bs2:'Sell', curr2:'INR', amt2:9000000.00, ospot:90.20, oswap:-0.20, otot_rate:90.00, strike:'', mcRefNo:'2000002728', txnStatus:'02'})
+    ],
+    inv:[
+      {zttype:'T1', sell:'OGA', buy:'DMCC', curr:'USD', trmNo:'3000045210-T1', amt:100000.00, exRate:90.00, invAmt:9000000.00},
+      {zttype:'T2', sell:'DMCC', buy:'OSIPL', curr:'INR', trmNo:'3000045210-T2', amt:9000000.00, exRate:1.00, invAmt:9000000.00}
+    ]
+  },
+  '3000045211': {
+    dealId:'3000045211', dealRef:'DL-25-OTL-0211', status:'02',
+    sDate:'15-09-2026', eDate:'15-01-2027',
+    trdCode:'T02', trdDesc:'Alicia Fernandes',
+    mcRef:'2000002727', mcDesc:'OSIPL_Multi-Commodity', mcDate:'21-09-2026',
+    shipStart:'15-09-2026', shipEnd:'30-11-2026',
+    modId:'M034', modDesc:'INR – INR Staggered Call &amp; Put Option',
+    entStr:'OGA-DMCC-OTL', currStr:'INR-INR-USD',
+    top:[
+      buildTopRow({bukrs:'TH10', dealType:'D1', bpName:'Olam (Thailand) Ltd', kontrh:'0001045211', rfha:'5000123411', sfhaart:'FX Option', dblfz:'15-09-2026', delfz:'21-09-2026', xtext:'CORN Export Hedge Leg 1', entity:'OTL', bs1:'Sell', curr1:'USD', amt1:33055.00, bs2:'Buy', curr2:'INR', amt2:2975000.00, ospot:90.00, oswap:0.00, otot_rate:'', strike:90.00, mcRefNo:'2000002727', txnStatus:'03'})
+    ],
+    inv:[
+      {zttype:'T1', sell:'OGA', buy:'DMCC', curr:'USD', trmNo:'3000045211-T1', amt:33055.00, exRate:90.00, invAmt:2974950.00}
+    ]
+  },
+  '3000045212': {
+    dealId:'3000045212', dealRef:'DL-25-OVL-0212', status:'04',
+    sDate:'01-06-2026', eDate:'01-09-2026',
+    trdCode:'T01', trdDesc:'Rohan Mehta',
+    mcRef:'2000002699', mcDesc:'OSIPL_Multi-Commodity', mcDate:'19-09-2026',
+    shipStart:'01-06-2026', shipEnd:'31-08-2026',
+    modId:'M041', modDesc:'INR – INR Staggered Call &amp; Put Option',
+    entStr:'OGA-DMCC-OVL', currStr:'INR-INR-INR',
+    top:[
+      buildTopRow({bukrs:'VN10', dealType:'D1', bpName:'Olam Vietnam Limited', kontrh:'0001045212', rfha:'5000123421', sfhaart:'FX Forward', dblfz:'01-06-2026', delfz:'19-09-2026', xtext:'WHEAT Hedge – Matured', entity:'OVL', bs1:'Sell', curr1:'USD', amt1:48323.00, bs2:'Buy', curr2:'INR', amt2:4348070.00, ospot:90.00, oswap:0.00, otot_rate:90.00, strike:'', mcRefNo:'2000002699', txnStatus:'03'})
+    ],
+    inv:[
+      {zttype:'T1', sell:'OGA', buy:'DMCC', curr:'USD', trmNo:'3000045212-T1', amt:48323.00, exRate:90.00, invAmt:4349070.00}
+    ]
+  },
+  '3000045213': {
+    dealId:'3000045213', dealRef:'DL-25-OSIPL-0213', status:'30',
+    sDate:'10-07-2026', eDate:'10-10-2026',
+    trdCode:'T03', trdDesc:'Kenji Watanabe',
+    mcRef:'2000002716', mcDesc:'OSIPL_Multi-Commodity', mcDate:'19-09-2026',
+    shipStart:'10-07-2026', shipEnd:'30-09-2026',
+    modId:'M032', modDesc:'INR Long Forward',
+    entStr:'OGA-DMCC-OSIPL', currStr:'USD-USD-INR',
+    top:[
+      buildTopRow({bukrs:'IN11', dealType:'D1', bpName:'Olam Agri India Pvt Ltd', kontrh:'0001045213', rfha:'5000123431', sfhaart:'FX Forward', dblfz:'10-07-2026', delfz:'19-09-2026', xtext:'MAIZE Hedge – Deassigned', entity:'OSIPL', bs1:'Sell', curr1:'USD', amt1:44758.00, bs2:'Buy', curr2:'INR', amt2:4028220.00, ospot:90.00, oswap:0.00, otot_rate:90.00, strike:'', mcRefNo:'', txnStatus:'03'})
+    ],
+    inv:[]
+  },
+  '3000045214': {
+    dealId:'3000045214', dealRef:'DL-25-DMCC-0214', status:'01',
+    sDate:'05-09-2026', eDate:'05-03-2027',
+    trdCode:'T02', trdDesc:'Alicia Fernandes',
+    mcRef:'2000002727', mcDesc:'OSIPL_Multi-Commodity', mcDate:'21-09-2026',
+    shipStart:'05-09-2026', shipEnd:'20-12-2026',
+    modId:'M034', modDesc:'INR – INR Staggered Call &amp; Put Option',
+    entStr:'OGA-DMCC-OTL', currStr:'INR-INR-USD',
+    top:[
+      buildTopRow({bukrs:'AE13', dealType:'D1', bpName:'Olam International DMCC', kontrh:'0001045214', rfha:'5000123441', sfhaart:'FX Swap', dblfz:'05-09-2026', delfz:'21-09-2026', xtext:'CORN Hedge Leg 1', entity:'DMCC', bs1:'Sell', curr1:'USD', amt1:20280.00, bs2:'Buy', curr2:'INR', amt2:1825200.00, ospot:90.00, oswap:0.00, otot_rate:90.00, strike:'', mcRefNo:'2000002727', txnStatus:'02'}),
+      buildTopRow({bukrs:'AE13', dealType:'D2', bpName:'Olam International DMCC', kontrh:'0001045214', rfha:'5000123442', sfhaart:'FX Swap', dblfz:'05-09-2026', delfz:'21-09-2026', xtext:'CORN Hedge Leg 2', entity:'OTL', bs1:'Buy', curr1:'USD', amt1:20280.00, bs2:'Sell', curr2:'INR', amt2:1825200.00, ospot:90.00, oswap:0.00, otot_rate:90.00, strike:'', mcRefNo:'2000002727', txnStatus:'02'})
+    ],
+    inv:[
+      {zttype:'T1', sell:'OGA', buy:'DMCC', curr:'USD', trmNo:'3000045214-T1', amt:20280.00, exRate:90.00, invAmt:1825200.00},
+      {zttype:'T2', sell:'DMCC', buy:'OTL',  curr:'INR', trmNo:'3000045214-T2', amt:1825200.00, exRate:1.00, invAmt:1825200.00}
+    ]
+  }
+};
+
+// Premium adjustment mock lookup (Screen 9003 data source)
+var mockPremium = {
+  '3000045210': {dAmt:100000.00, dCurr:'USD', lNet:120000.00, lCurr:'INR', rbi:82.1500, rbiDate:'01-09-2026', fNet:98500.00, fCurr:'USD', pNet:1.2200, sRate:90.0000, iRate:90.5000},
+  '3000045211': {dAmt:33055.00,  dCurr:'USD', lNet:41000.00,  lCurr:'INR', rbi:82.4500, rbiDate:'15-09-2026', fNet:32500.00, fCurr:'USD', pNet:1.2300, sRate:90.0000, iRate:90.2000},
+  '3000045212': {dAmt:48323.00,  dCurr:'USD', lNet:53000.00,  lCurr:'INR', rbi:82.9000, rbiDate:'01-06-2026', fNet:47500.00, fCurr:'USD', pNet:1.1900, sRate:90.0000, iRate:89.8000},
+  '3000045213': {dAmt:44758.00,  dCurr:'USD', lNet:0.00,      lCurr:'INR', rbi:0.0000,  rbiDate:'',            fNet:0.00,     fCurr:'USD', pNet:0.0000, sRate:90.0000, iRate:90.0000},
+  '3000045214': {dAmt:20280.00,  dCurr:'USD', lNet:24500.00,  lCurr:'INR', rbi:82.3000, rbiDate:'05-09-2026', fNet:19800.00, fCurr:'USD', pNet:1.2080, sRate:90.0000, iRate:90.3000}
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var state = {
+  currentDealId:null,
+  currentDeal:null,
+  selectedTopIndex:null,
+  changeEditing:false,
+  editPairEditing:false,
+  editPairIndex:null,
+  pendingConfirm:null
+};
+
+/* ============================================================
+   DATA / SERVICE FUNCTIONS  (replace with REST calls later)
+   ============================================================ */
+function svcSearchDeals(term){
+  term = (term||'').trim().toLowerCase();
+  var ids = Object.keys(mockDeals);
+  if(!term){ return ids.slice(0,6).map(function(id){return mockDeals[id];}); }
+  return ids.map(function(id){return mockDeals[id];}).filter(function(d){
+    return d.dealId.toLowerCase().indexOf(term)>-1 ||
+           d.entStr.toLowerCase().indexOf(term)>-1 ||
+           d.trdDesc.toLowerCase().indexOf(term)>-1 ||
+           d.mcRef.toLowerCase().indexOf(term)>-1;
+  });
+}
+function svcLoadDeal(dealId){
+  var d = mockDeals[dealId];
+  return d ? deepClone(d) : null;
+}
+function svcCancelDeal(dealId){
+  if(mockDeals[dealId]){ mockDeals[dealId].status = '30'; }
+}
+function svcUpdateMcRef(dealId, newMcRef, newMcDesc){
+  if(mockDeals[dealId]){
+    mockDeals[dealId].mcRef = newMcRef;
+    mockDeals[dealId].mcDesc = newMcDesc;
+  }
+}
+function svcUpdateDealPair(dealId, topIndex, newRfha){
+  if(mockDeals[dealId]){
+    mockDeals[dealId].top[topIndex].rfha = newRfha;
+    mockDeals[dealId].top[topIndex].color = 'C500'; // matched/updated marker
+  }
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+var App = {};
+
+function fmtAmt(n){
+  if(n===undefined||n===null||n==='') return '';
+  var neg = n<0; n = Math.abs(n);
+  var s = n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (neg?'-':'') + s;
+}
+function statusPillHtml(code){
+  var s = STATUS_MAP[code] || {label:code, css:'pill-gray'};
+  return '<span class="pill '+s.css+'">'+s.label+'</span>';
+}
+function esc(s){ return (s===undefined||s===null)?'':String(s); }
+
+App.goToSelection = function(){
+  state.currentDealId = null; state.currentDeal = null; state.selectedTopIndex = null;
+  document.getElementById('workbench').classList.add('hidden');
+  document.getElementById('placeholderCard').classList.remove('hidden');
+  document.getElementById('dealSearch').value='';
+};
+
+App.refresh = function(){
+  if(!state.currentDealId){ App.toast('Screen refreshed.'); return; }
+  App.loadDeal(state.currentDealId);
+  App.toast('Workbench data refreshed.');
+};
+
+App.onDealSearchInput = function(term){
+  var results = svcSearchDeals(term);
+  var box = document.getElementById('dealTypeahead');
+  if(results.length===0){
+    box.innerHTML = '<div class="typeahead-empty">No matching Deal ID found</div>';
+  }else{
+    box.innerHTML = results.map(function(d){
+      return '<div class="typeahead-item" onclick="App.pickDeal(\''+d.dealId+'\')">'+
+        '<div class="ti-id">'+d.dealId+'</div>'+
+        '<div class="ti-meta">'+d.entStr+' &middot; '+d.modId+' &middot; Trader '+d.trdDesc+' &middot; '+statusPillHtml(d.status)+'</div>'+
+        '</div>';
+    }).join('');
+  }
+  box.classList.remove('hidden');
+};
+document.addEventListener('click', function(e){
+  var wrap = document.querySelector('.search-input-wrap');
+  if(wrap && !wrap.contains(e.target)){
+    document.getElementById('dealTypeahead').classList.add('hidden');
+  }
+});
+
+App.pickDeal = function(dealId){
+  document.getElementById('dealSearch').value = dealId;
+  document.getElementById('dealTypeahead').classList.add('hidden');
+  App.loadDeal(dealId);
+};
+
+App.loadDeal = function(dealId){
+  var d = svcLoadDeal(dealId);
+  if(!d){ App.toast('Deal ID not found.', true); return; }
+  state.currentDealId = dealId;
+  state.currentDeal = d;
+  state.selectedTopIndex = null;
+  document.getElementById('placeholderCard').classList.add('hidden');
+  document.getElementById('workbench').classList.remove('hidden');
+  App.renderSummary();
+  App.renderToolbar();
+  App.renderTopTable();
+  App.renderInvTable();
+  App.renderPlTable();
+};
+
+App.renderSummary = function(){
+  var d = state.currentDeal;
+  document.getElementById('wbTitle').textContent = 'Deal ID ' + d.dealId;
+  document.getElementById('wbDealRef').textContent = d.dealRef;
+  document.getElementById('wbStatusPill').innerHTML = statusPillHtml(d.status);
+
+  var fields = [
+    ['Deal Start Date', d.sDate], ['Deal End Date', d.eDate],
+    ['MC Ref No', d.mcRef], ['MC Description', d.mcDesc],
+    ['MC Date', d.mcDate], ['Ship Start Date', d.shipStart],
+    ['Ship End Date', d.shipEnd], ['FX Model ID', d.modId],
+    ['Model Description', d.modDesc], ['Entity String', d.entStr],
+    ['Currency String', d.currStr], ['Trader', d.trdCode + ' – ' + d.trdDesc]
+  ];
+  document.getElementById('summaryGrid').innerHTML = fields.map(function(f){
+    return '<div class="field"><label>'+f[0]+'</label><div class="value">'+esc(f[1])+'</div></div>';
+  }).join('');
+};
+
+App.renderToolbar = function(){
+  var d = state.currentDeal;
+  var isOpen = (d.status === '01'); // function_button excludes UPD/CAN/DEAL_EDIT unless status = 01
+  var hasSelection = state.selectedTopIndex !== null;
+  var html = '';
+  html += '<button class="btn" '+(isOpen?'':'disabled')+' onclick="App.openChangeModal()">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Change</button>';
+  html += '<span class="tip-wrap" '+(hasSelection?'':'data-tip="Select an FX Deal row first"')+'>'+
+          '<button class="btn" id="btnEditDealPair" '+(isOpen && hasSelection?'':'disabled')+' onclick="App.openEditPairModal()">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>Edit Deal Pair</button></span>';
+  html += '<button class="btn" onclick="App.openPremiumModal()">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Premium Adjustment</button>';
+  html += '<span class="spacer"></span>';
+  html += '<button class="btn btn-danger" '+(isOpen?'':'disabled')+' onclick="App.openCancelDealModal()">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>Cancel Deal ID</button>';
+  document.getElementById('actionToolbar').innerHTML = html;
+  App.wireEditPairDropTarget(); // re-bind drop target: the button node above is freshly re-rendered
+};
+
+App.renderTopTable = function(){
+  var d = state.currentDeal;
+  document.getElementById('topCount').textContent = d.top.length + ' record' + (d.top.length===1?'':'s');
+  var rows = d.top.map(function(r, idx){
+    var sel = state.selectedTopIndex === idx;
+    return '<tr data-idx="'+idx+'" class="'+(sel?'row-selected':'')+'" onclick="App.selectTopRow('+idx+')">'+
+      '<td class="center"><input type="checkbox" class="chk" '+(sel?'checked':'')+' onclick="event.stopPropagation();App.selectTopRow('+idx+')"></td>'+
+      '<td>'+esc(r.bukrs)+'</td>'+
+      '<td><span class="badge-type">'+esc(r.dealType)+'</span></td>'+
+      '<td>'+esc(r.bpName)+'</td>'+
+      '<td>'+esc(r.kontrh)+'</td>'+
+      '<td class="hotspot" onclick="event.stopPropagation();App.openTxnModal('+idx+')">'+esc(r.rfha)+'</td>'+
+      '<td>'+esc(r.sfhaart)+'</td>'+
+      '<td>'+esc(r.dblfz)+'</td>'+
+      '<td>'+esc(r.delfz)+'</td>'+
+      '<td>'+esc(r.xtext)+'</td>'+
+      '<td>'+esc(r.entity)+'</td>'+
+      '<td>'+esc(r.bs1)+'</td>'+
+      '<td>'+esc(r.curr1)+'</td>'+
+      '<td class="num">'+fmtAmt(r.amt1)+'</td>'+
+      '<td>'+esc(r.bs2)+'</td>'+
+      '<td>'+esc(r.curr2)+'</td>'+
+      '<td class="num">'+fmtAmt(r.amt2)+'</td>'+
+      '<td class="num">'+(r.ospot?r.ospot.toFixed(4):'')+'</td>'+
+      '<td class="num">'+(r.oswap?r.oswap.toFixed(4):'')+'</td>'+
+      '<td class="num">'+(r.otot_rate?Number(r.otot_rate).toFixed(4):'')+'</td>'+
+      '<td class="num">'+(r.strike?Number(r.strike).toFixed(4):'')+'</td>'+
+      '<td>'+esc(r.mcRefNo)+'</td>'+
+      '<td>'+statusPillHtml(r.txnStatus==='02'?'02':(r.txnStatus==='03'?'02':'01'))+'</td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('topTbody').innerHTML = rows || '<tr><td class="empty-row" colspan="23">No FX deal legs found for this Deal ID.</td></tr>';
+
+  // A row is draggable only while it is the single selected row — same pattern
+  // as the reference table. Dropping it on "Edit Deal Pair" calls the exact
+  // same App.openEditPairModal() function the button's click handler calls.
+  Array.prototype.forEach.call(document.querySelectorAll('#topTbody tr[data-idx]'), function(tr){
+    var idx = parseInt(tr.getAttribute('data-idx'), 10);
+    var selected = state.selectedTopIndex === idx;
+    tr.draggable = selected;
+    tr.addEventListener('dragstart', function(e){
+      if(state.selectedTopIndex !== idx){ e.preventDefault(); return; }
+      App.startTopRowDrag(e, d.top[idx], tr);
+    });
+    tr.addEventListener('dragend', function(){ App.endTopRowDrag(tr); });
+  });
+};
+
+App.selectTopRow = function(idx){
+  state.selectedTopIndex = (state.selectedTopIndex === idx) ? null : idx;
+  App.renderTopTable();
+  App.renderToolbar();
+};
+
+/* ---- Drag-and-drop: selected FX Deal row → Edit Deal Pair button ---- */
+var draggedTopRow = null;
+
+App.startTopRowDrag = function(e, row, rowEl){
+  draggedTopRow = row;
+  rowEl.classList.add('dragging');
+  var ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = row.rfha + ' — ' + row.entity;
+  document.body.appendChild(ghost);
+  if(e.dataTransfer){
+    e.dataTransfer.effectAllowed = 'copy';
+    try{ e.dataTransfer.setData('text/plain', String(row.rfha)); }catch(err){}
+    if(e.dataTransfer.setDragImage){ e.dataTransfer.setDragImage(ghost, 12, 14); }
+  }
+  setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+};
+App.endTopRowDrag = function(rowEl){
+  draggedTopRow = null;
+  rowEl.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+};
+App.wireEditPairDropTarget = function(){
+  var btn = document.getElementById('btnEditDealPair');
+  if(!btn) return;
+  btn.addEventListener('dragover', function(e){
+    if(!draggedTopRow || btn.disabled) return;
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    btn.classList.add('drag-over');
+  });
+  btn.addEventListener('dragleave', function(){ btn.classList.remove('drag-over'); });
+  btn.addEventListener('drop', function(e){
+    e.preventDefault();
+    btn.classList.remove('drag-over');
+    if(draggedTopRow && !btn.disabled){
+      // Same function the button's own click handler calls — no separate drag-only logic.
+      App.openEditPairModal();
+    }
+  });
+};
+
+App.openTxnModal = function(idx){
+  var r = state.currentDeal.top[idx];
+  var fields = [
+    ['Company Code', r.bukrs], ['Transaction No', r.rfha],
+    ['Deal Type', r.sfhaart], ['Product Type', r.dealType],
+    ['Business Partner', r.bpName], ['BP Number', r.kontrh],
+    ['Buy/Sell 1', r.bs1 + ' ' + r.curr1], ['Amount 1', fmtAmt(r.amt1)],
+    ['Buy/Sell 2', r.bs2 + ' ' + r.curr2], ['Amount 2', fmtAmt(r.amt2)],
+    ['Deal Start', r.dblfz], ['Deal Valid To', r.delfz]
+  ];
+  document.getElementById('txnDetailGrid').innerHTML = fields.map(function(f){
+    return '<div class="form-field"><label>'+f[0]+'</label><div class="static">'+esc(f[1])+'</div></div>';
+  }).join('');
+  App.openModal('modalTxn');
+};
+
+App.renderInvTable = function(){
+  var d = state.currentDeal;
+  var showInvoicePl = (d.status !== '30'); // hidden when deal status = 30 (no-invoice / cancelled)
+  document.getElementById('invCard').classList.toggle('hidden', !showInvoicePl);
+  document.getElementById('plCard').classList.toggle('hidden', !showInvoicePl);
+  if(!showInvoicePl) return;
+
+  document.getElementById('invCount').textContent = d.inv.length + ' record' + (d.inv.length===1?'':'s');
+  var rows = d.inv.map(function(r, idx){
+    return '<tr>'+
+      '<td><span class="badge-type">'+esc(r.zttype)+'</span></td>'+
+      '<td>'+esc(r.sell)+'</td>'+
+      '<td>'+esc(r.buy)+'</td>'+
+      '<td>'+esc(r.curr)+'</td>'+
+      '<td>'+esc(r.trmNo)+'</td>'+
+      '<td class="num">'+fmtAmt(r.amt)+'</td>'+
+      '<td class="num"><input class="cell-input" type="number" step="0.0001" value="'+r.exRate+'" onchange="App.onExRateChange('+idx+', this.value)"></td>'+
+      '<td class="num">'+fmtAmt(r.invAmt)+'</td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('invTbody').innerHTML = rows || '<tr><td class="empty-row" colspan="8">No invoice plan lines for this Deal ID.</td></tr>';
+};
+
+App.onExRateChange = function(idx, val){
+  var d = state.currentDeal;
+  d.inv[idx].exRate = parseFloat(val)||0;
+};
+
+App.calculateInvoicePlan = function(){
+  var d = state.currentDeal;
+  d.inv.forEach(function(r){
+    r.invAmt = r.amt * r.exRate;
+  });
+  App.renderInvTable();
+  App.renderPlTable();
+  App.toast('Invoice plan recalculated.');
+};
+
+// P&L rows use the confirmed on-screen labels from the program's text pool
+var PL_ROW_LABELS = ['NDF Fixing-Profit Adj', 'Option Premium Income', 'Option Premium Expense', 'P&L Orign(%)'];
+
+App.renderPlTable = function(){
+  var d = state.currentDeal;
+  if(d.status === '30') return;
+
+  // Build a Buy/Sell amount-pair column per invoice leg, matching source pattern (ztrd_sell '-' currency)
+  var legs = d.inv.map(function(r){ return {label: r.sell + '-' + r.curr, curr: r.curr}; });
+  if(legs.length === 0){
+    document.getElementById('plHeadRow').innerHTML = '<th>Type</th>';
+    document.getElementById('plTbody').innerHTML = '<tr><td class="empty-row">No P&amp;L data available.</td></tr>';
+    document.getElementById('plFootRow').innerHTML = '';
+    document.getElementById('plCount').textContent = '0 records';
+    return;
+  }
+
+  var head = '<th>Type</th>' + legs.map(function(l){ return '<th class="num">'+esc(l.label)+' Amt</th>'; }).join('');
+  document.getElementById('plHeadRow').innerHTML = head;
+
+  var premRates = mockPremium[d.dealId] || {pNet:0, iRate:0, sRate:0};
+  var rowsData = [
+    PL_ROW_LABELS.map(function(){return 0;}), // placeholder, replaced below per row
+  ];
+
+  // Derive simple, deterministic mock figures per row/leg (kept proportional to invoice amounts)
+  function rowValues(rowIdx){
+    return legs.map(function(l, i){
+      var base = d.inv[i] ? d.inv[i].invAmt : 0;
+      var factor = [0.012, 0.006, -0.004, 0.008][rowIdx] || 0;
+      return base * factor;
+    });
+  }
+
+  var bodyRows = '';
+  var totals = legs.map(function(){return 0;});
+  PL_ROW_LABELS.forEach(function(label, rIdx){
+    var vals = rowValues(rIdx);
+    vals.forEach(function(v,i){ totals[i]+=v; });
+    bodyRows += '<tr><td>'+label+'</td>' + vals.map(function(v){
+      var cls = v<0 ? 'style="color:var(--red);"' : '';
+      return '<td class="num" '+cls+'>'+fmtAmt(v)+'</td>';
+    }).join('') + '</tr>';
+  });
+  document.getElementById('plTbody').innerHTML = bodyRows;
+  document.getElementById('plFootRow').innerHTML = '<td>Total</td>' + totals.map(function(t){
+    var cls = t<0 ? 'style="color:var(--red);"' : 'style="color:var(--green);"';
+    return '<td class="num" '+cls+'>'+fmtAmt(t)+'</td>';
+  }).join('');
+  document.getElementById('plCount').textContent = PL_ROW_LABELS.length + ' records';
+};
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+App.openModal = function(id){
+  var el = document.getElementById(id);
+  el.classList.remove('hidden');
+  el.classList.remove('closing');
+  el.classList.add('open');
+};
+App.closeModal = function(id){
+  var el = document.getElementById(id);
+  el.classList.add('closing');
+  el.classList.remove('open');
+  setTimeout(function(){
+    el.classList.add('hidden');
+    el.classList.remove('closing');
+  }, 160);
+};
+
+App.toast = function(msg, isErr){
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr?' err':'');
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+(isErr?'<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>':'<path d="M20 6L9 17l-5-5"/>')+'</svg>'+msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3200);
+};
+
+/* ---- Change / Invoice Plan Change-Confirm (Screen 9001) ---- */
+App.openChangeModal = function(){
+  var d = state.currentDeal;
+  state.changeEditing = false;
+  document.getElementById('chgDealId').textContent = d.dealId;
+  document.getElementById('chgDealDesc').textContent = d.dealRef;
+  document.getElementById('chgMcRefInput').value = d.mcRef + ' – ' + d.mcDesc;
+  document.getElementById('chgMcRefInput').disabled = true;
+  document.getElementById('btnChgToggle').textContent = 'Change';
+  document.getElementById('changeErrBanner').innerHTML = '';
+  App.openModal('modalChange');
+};
+App.toggleChangeEdit = function(){
+  state.changeEditing = !state.changeEditing;
+  document.getElementById('chgMcRefInput').disabled = !state.changeEditing;
+  document.getElementById('btnChgToggle').textContent = state.changeEditing ? 'Cancel Change' : 'Change';
+  document.getElementById('chgToggleHint').textContent = state.changeEditing
+    ? 'Click the field to search for a Master Contract'
+    : 'Click Change to select a different Master Contract';
+};
+App.openMcPicker = function(){
+  if(!state.changeEditing) return;
+  var rows = mockMasterContracts.map(function(mc){
+    return '<tr onclick="App.pickMc(\''+mc.ref+'\')" style="cursor:pointer;">'+
+      '<td class="hotspot">'+mc.ref+'</td><td>'+mc.desc+'</td><td>'+mc.origin+'</td>'+
+      '<td>'+mc.date+'</td><td class="num">'+fmtAmt(mc.amt)+'</td><td>'+mc.curr+'</td><td>'+mc.entstr+'</td></tr>';
+  }).join('');
+  document.getElementById('mcPickerTbody').innerHTML = rows;
+  App.openModal('modalMcPicker');
+};
+App.pickMc = function(ref){
+  var mc = mockMasterContracts.filter(function(m){return m.ref===ref;})[0];
+  document.getElementById('chgMcRefInput').value = mc.ref + ' – ' + mc.desc;
+  document.getElementById('chgMcRefInput').dataset.ref = mc.ref;
+  document.getElementById('chgMcRefInput').dataset.desc = mc.desc;
+  App.closeModal('modalMcPicker');
+};
+App.confirmChange = function(){
+  var d = state.currentDeal;
+  // Business rule (F01:463-475): every FX deal leg must already be matched (color set)
+  // or have txn_status = '03' before the MC Ref No can be confirmed/updated.
+  var blocked = d.top.some(function(r){ return r.txnStatus !== '03' && !r.color; });
+  if(blocked){
+    document.getElementById('changeErrBanner').innerHTML =
+      '<div class="info-banner error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Unable to update the MC Ref No – one or more FX deal legs are not yet matched.</div>';
+    return;
+  }
+  var input = document.getElementById('chgMcRefInput');
+  if(input.dataset.ref){
+    svcUpdateMcRef(d.dealId, input.dataset.ref, input.dataset.desc);
+    d.mcRef = input.dataset.ref; d.mcDesc = input.dataset.desc;
+    App.renderSummary();
+  }
+  App.closeModal('modalChange');
+  App.toast('MC Ref No updated successfully.');
+};
+
+/* ---- Premium Adjustment (Screen 9003, read-only) ---- */
+App.openPremiumModal = function(){
+  var p = mockPremium[state.currentDeal.dealId] || {};
+  var fields = [
+    ['Deal Value', fmtAmt(p.dAmt) + ' ' + p.dCurr],
+    ['Net Premium (Local)', fmtAmt(p.lNet) + ' ' + p.lCurr],
+    ['RBI Rate', (p.rbi||0).toFixed(4)],
+    ['RBI Date', p.rbiDate || '–'],
+    ['Net Premium (Foreign)', fmtAmt(p.fNet) + ' ' + p.fCurr],
+    ['Net Premium per USD', (p.pNet||0).toFixed(4)],
+    ['Strike Rate', (p.sRate||0).toFixed(4)],
+    ['Invoice Rate', (p.iRate||0).toFixed(4)]
+  ];
+  document.getElementById('premiumGrid').innerHTML = fields.map(function(f){
+    return '<div class="form-field"><label>'+f[0]+'</label><div class="static">'+f[1]+'</div></div>';
+  }).join('');
+  App.openModal('modalPremium');
+};
+
+/* ---- Edit Deal Pair (Screen 9004) ---- */
+App.openEditPairModal = function(){
+  if(state.selectedTopIndex === null) return;
+  state.editPairIndex = state.selectedTopIndex;
+  state.editPairEditing = false;
+  var r = state.currentDeal.top[state.editPairIndex];
+  document.getElementById('epDealType').textContent = r.dealType;
+  document.getElementById('epBukrs').textContent = r.bukrs;
+  document.getElementById('epOldRfha').textContent = r.rfha;
+  var newInput = document.getElementById('epNewRfha');
+  newInput.value = ''; newInput.disabled = true;
+  document.getElementById('btnEpToggle').textContent = 'Edit';
+  document.getElementById('editPairErrBanner').innerHTML = '';
+  App.openModal('modalEditPair');
+};
+App.toggleEditPair = function(){
+  state.editPairEditing = !state.editPairEditing;
+  document.getElementById('epNewRfha').disabled = !state.editPairEditing;
+  document.getElementById('btnEpToggle').textContent = state.editPairEditing ? 'Cancel Edit' : 'Edit';
+  if(state.editPairEditing) document.getElementById('epNewRfha').focus();
+};
+App.dealUpdate = function(){
+  var val = document.getElementById('epNewRfha').value.trim();
+  if(!val){
+    document.getElementById('editPairErrBanner').innerHTML =
+      '<div class="info-banner error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Please enter the new transaction number.</div>';
+    return;
+  }
+  svcUpdateDealPair(state.currentDeal.dealId, state.editPairIndex, val);
+  state.currentDeal.top[state.editPairIndex].rfha = val;
+  App.renderTopTable();
+  App.closeModal('modalEditPair');
+  App.toast('Deal pair updated successfully.');
+};
+
+/* ---- Cancel Deal ID (Screen 9005) ---- */
+App.openCancelDealModal = function(){
+  var d = state.currentDeal;
+  document.getElementById('cdDealId').textContent = d.dealId;
+  document.getElementById('cdMcRef').textContent = d.mcRef;
+  document.getElementById('cdModel').textContent = d.modId;
+  document.getElementById('cdTrader').textContent = d.trdCode + ' – ' + d.trdDesc;
+  App.openModal('modalCancelDeal');
+};
+App.requestCancelDeal = function(){
+  App.closeModal('modalCancelDeal');
+  App.showConfirm('Cancel Deal ID', 'FX Deal ID Deassigned Completely. Do you want to confirm?', function(){
+    svcCancelDeal(state.currentDeal.dealId);
+    state.currentDeal.status = '30';
+    App.renderSummary();
+    App.renderToolbar();
+    App.renderInvTable();
+    App.toast('Deal ID ' + state.currentDeal.dealId + ' cancelled.');
+  });
+};
+
+/* ---- Generic confirm popup (POPUP_TO_CONFIRM) ---- */
+App.showConfirm = function(title, msg, onYes){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  var yesBtn = document.getElementById('confirmYesBtn');
+  var noBtn = document.getElementById('confirmNoBtn');
+  var newYes = yesBtn.cloneNode(true); yesBtn.parentNode.replaceChild(newYes, yesBtn);
+  var newNo = noBtn.cloneNode(true); noBtn.parentNode.replaceChild(newNo, noBtn);
+  newYes.addEventListener('click', function(){ App.closeModal('modalConfirm'); onYes && onYes(); });
+  newNo.addEventListener('click', function(){ App.closeModal('modalConfirm'); });
+  App.openModal('modalConfirm');
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init(){
+  App.onDealSearchInput('');
+})();
+</script>
+</body>
+</html>

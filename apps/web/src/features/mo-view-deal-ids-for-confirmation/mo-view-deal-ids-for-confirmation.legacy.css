@@ -1,0 +1,395 @@
+/* Original stylesheet of view list of deal ids.html, scoped under .mo-view-deal-ids-for-confirmation.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+/* ============================================================
+   DESIGN SYSTEM — ported from the FourthSignal / OTTK reference
+   (Create Master Contract). Tokens, type scale, radii, shadows
+   and component patterns below are taken from that file's final
+   (OTTK theme override) cascade, not approximated.
+   ============================================================ */
+.mo-view-deal-ids-for-confirmation {
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --border-soft:#E6E9EB;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-soft:#EAF3FC;
+  --secondary-blue:#4FA3E8;
+  --success:#107E3E;
+  --success-soft:#E4F5E9;
+  --warning:#E9730C;
+  --warning-soft:#FFF4CC;
+  --pending:#9B6B00;
+  --error:#BB0000;
+  --error-soft:#FCEAEA;
+  --deal-green:var(--success);
+  --deal-green-soft:var(--success-soft);
+  --mc-blue:var(--primary-dark);
+  --mc-blue-soft:var(--primary-soft);
+  --radius:12px;
+  --radius-sm:4px;
+  --radius-md:8px;
+  --shadow:0 1px 3px rgba(34,53,72,.13);
+  --shadow-md:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+.mo-view-deal-ids-for-confirmation *, .mo-view-deal-ids-for-confirmation {box-sizing:border-box;}
+.mo-view-deal-ids-for-confirmation {margin:0;padding:0;}
+.mo-view-deal-ids-for-confirmation {
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.mo-view-deal-ids-for-confirmation button {font-family:inherit;}
+.mo-view-deal-ids-for-confirmation input, .mo-view-deal-ids-for-confirmation select {font-family:inherit;}
+/* ---------- Header ---------- */
+.mo-view-deal-ids-for-confirmation .app-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 20px;background:var(--card);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:40;
+}
+.mo-view-deal-ids-for-confirmation .app-header-left {display:flex;align-items:center;gap:12px;}
+.mo-view-deal-ids-for-confirmation .header-logo {height:32px;width:auto;max-width:110px;object-fit:contain;flex:none;}
+.mo-view-deal-ids-for-confirmation .back-btn {
+  display:flex;align-items:center;gap:6px;
+  border:1px solid var(--border);background:var(--card);
+  color:var(--text-muted);padding:0 12px;height:32px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:600;cursor:pointer;transition:.15s;
+}
+.mo-view-deal-ids-for-confirmation .back-btn:hover {border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.mo-view-deal-ids-for-confirmation .header-title-block {display:flex;flex-direction:column;gap:1px;}
+.mo-view-deal-ids-for-confirmation .header-title-row {display:flex;align-items:baseline;gap:10px;}
+.mo-view-deal-ids-for-confirmation .header-title {font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+.mo-view-deal-ids-for-confirmation .header-subtitle {font-size:11.5px;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .header-tcode {
+  font-size:10.5px;font-weight:700;color:var(--primary-dark);
+  background:var(--primary-soft);padding:2px 7px;border-radius:6px;letter-spacing:.3px;
+}
+.mo-view-deal-ids-for-confirmation .app-header-right {display:flex;align-items:center;gap:8px;}
+.mo-view-deal-ids-for-confirmation .btn {
+  display:inline-flex;align-items:center;gap:6px;
+  height:32px;padding:0 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+  cursor:pointer;border:1px solid transparent;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.mo-view-deal-ids-for-confirmation .btn svg {width:14px;height:14px;flex-shrink:0;}
+.mo-view-deal-ids-for-confirmation .btn-primary {background:var(--primary);color:#fff;}
+.mo-view-deal-ids-for-confirmation .btn-primary:hover {background:var(--primary-dark);box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.mo-view-deal-ids-for-confirmation .btn-secondary {background:var(--card);color:var(--text);border-color:var(--border-strong,#8996A1);}
+.mo-view-deal-ids-for-confirmation .btn-secondary:hover {border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.mo-view-deal-ids-for-confirmation .btn-ghost {background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.mo-view-deal-ids-for-confirmation .btn-ghost:hover {text-decoration:underline;}
+.mo-view-deal-ids-for-confirmation .btn:active:not(:disabled) {transform:translateY(1px);}
+.mo-view-deal-ids-for-confirmation .btn:disabled {opacity:.45;cursor:not-allowed;}
+.mo-view-deal-ids-for-confirmation .btn-icon {padding:0;width:32px;justify-content:center;}
+/* ---------- Layout ---------- */
+.mo-view-deal-ids-for-confirmation .page {max-width:100%;margin:0;padding:.6rem .9rem 2rem;}
+.mo-view-deal-ids-for-confirmation .card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+/* ---------- Filter bar ---------- */
+.mo-view-deal-ids-for-confirmation .filter-card {padding:14px 18px;margin-bottom:14px;}
+.mo-view-deal-ids-for-confirmation .filter-card-head {display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.mo-view-deal-ids-for-confirmation .filter-title {display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--primary-dark);letter-spacing:.2px;}
+.mo-view-deal-ids-for-confirmation .filter-title .dot {width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.mo-view-deal-ids-for-confirmation .legend {display:flex;align-items:center;gap:16px;font-size:11.5px;color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .legend-item {display:flex;align-items:center;gap:6px;}
+.mo-view-deal-ids-for-confirmation .legend-dot {width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.mo-view-deal-ids-for-confirmation .legend-item.muted {opacity:.6;}
+.mo-view-deal-ids-for-confirmation .filter-grid {
+  display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+}
+.mo-view-deal-ids-for-confirmation .field {display:flex;flex-direction:column;gap:5px;min-width:150px;}
+.mo-view-deal-ids-for-confirmation .field.wide {min-width:200px;}
+.mo-view-deal-ids-for-confirmation .field label {
+  font-size:11.5px;font-weight:600;color:var(--text-muted);
+  display:flex;align-items:center;gap:4px;
+}
+.mo-view-deal-ids-for-confirmation .req-star {color:var(--error);}
+.mo-view-deal-ids-for-confirmation .control {
+  height:36px;border:1px solid var(--border-strong,#8996A1);border-radius:var(--radius-sm);
+  padding:0 11px;font-size:13px;color:var(--text);background:var(--card);
+  outline:none;transition:border-color .15s, box-shadow .15s;display:flex;align-items:center;
+}
+.mo-view-deal-ids-for-confirmation .control:hover {border-color:#A6B0B9;}
+.mo-view-deal-ids-for-confirmation .control:focus-within, .mo-view-deal-ids-for-confirmation input.control:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation input.control {width:100%;}
+.mo-view-deal-ids-for-confirmation select.control {width:100%;appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23475E75'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;}
+/* ---------- Custom date field / calendar (ported from reference) ---------- */
+.mo-view-deal-ids-for-confirmation .date-field {position:relative;}
+.mo-view-deal-ids-for-confirmation .date-field .control {padding-right:34px;cursor:pointer;}
+.mo-view-deal-ids-for-confirmation .date-icon {
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border:none;background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;border-radius:6px;
+  color:var(--text-muted);font-size:13px;
+}
+.mo-view-deal-ids-for-confirmation .date-icon:hover {background:var(--primary-soft);color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .date-popup {
+  position:fixed;width:250px;background:#fff;border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:210;padding:10px;display:none;
+}
+.mo-view-deal-ids-for-confirmation .date-popup.open {display:block;}
+.mo-view-deal-ids-for-confirmation .cal-head {display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.mo-view-deal-ids-for-confirmation .cal-head button {
+  width:24px;height:24px;border:none;background:var(--bg);
+  border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);
+}
+.mo-view-deal-ids-for-confirmation .cal-head button:hover {background:var(--primary-soft);color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .cal-head .cal-title {font-weight:700;font-size:12px;}
+.mo-view-deal-ids-for-confirmation .cal-grid {display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.mo-view-deal-ids-for-confirmation .cal-grid .dow {text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;}
+.mo-view-deal-ids-for-confirmation .cal-grid .day {text-align:center;font-size:11.5px;padding:6px 0;border-radius:6px;cursor:pointer;color:var(--text);}
+.mo-view-deal-ids-for-confirmation .cal-grid .day:hover {background:var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation .cal-grid .day.muted {color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .cal-grid .day.selected {background:var(--primary);color:#fff;font-weight:700;}
+.mo-view-deal-ids-for-confirmation .cal-grid .day.today:not(.selected) {box-shadow:inset 0 0 0 1px var(--secondary-blue);}
+/* multiselect (styled like the reference searchable dropdown) */
+.mo-view-deal-ids-for-confirmation .msel {position:relative;}
+.mo-view-deal-ids-for-confirmation .msel-btn {
+  height:36px;border:1px solid var(--border-strong,#8996A1);border-radius:var(--radius-sm);background:var(--card);
+  padding:0 30px 0 11px;font-size:13px;color:var(--text);cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;width:100%;min-width:170px;
+  position:relative;transition:border-color .15s, box-shadow .15s;
+}
+.mo-view-deal-ids-for-confirmation .msel-btn:hover {border-color:#A6B0B9;}
+.mo-view-deal-ids-for-confirmation .msel-btn.open {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation .msel-btn .chev {width:9px;height:9px;position:absolute;right:12px;pointer-events:none;color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .msel-btn-label {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mo-view-deal-ids-for-confirmation .msel-btn-label.placeholder {color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .msel-count {
+  background:var(--primary-soft);color:var(--primary-dark);font-size:11px;font-weight:700;
+  padding:1px 7px;border-radius:20px;margin-left:6px;
+}
+.mo-view-deal-ids-for-confirmation .msel-panel {
+  position:absolute;top:calc(100% + 6px);left:0;width:260px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-md);z-index:60;padding:6px;display:none;
+}
+.mo-view-deal-ids-for-confirmation .msel-panel.show {display:block;}
+.mo-view-deal-ids-for-confirmation .msel-search {
+  width:100%;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:0 10px;font-size:12.5px;margin-bottom:6px;outline:none;
+}
+.mo-view-deal-ids-for-confirmation .msel-search:focus {border-color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .msel-list {max-height:220px;overflow-y:auto;}
+.mo-view-deal-ids-for-confirmation .msel-opt {
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);
+  cursor:pointer;font-size:12.5px;
+}
+.mo-view-deal-ids-for-confirmation .msel-opt:hover {background:var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation .msel-opt input {pointer-events:none;}
+.mo-view-deal-ids-for-confirmation .msel-opt-sub {color:var(--text-faint);font-size:11px;margin-left:auto;}
+.mo-view-deal-ids-for-confirmation .msel-foot {display:flex;justify-content:space-between;padding:6px 4px 2px;border-top:1px solid var(--border-soft);margin-top:6px;}
+.mo-view-deal-ids-for-confirmation .msel-foot button {background:none;border:none;color:var(--primary);font-size:11.5px;font-weight:600;cursor:pointer;padding:4px;}
+.mo-view-deal-ids-for-confirmation .msel-empty {padding:10px;text-align:center;color:var(--text-faint);font-size:12px;}
+.mo-view-deal-ids-for-confirmation .filter-actions {display:flex;gap:8px;margin-left:auto;}
+.mo-view-deal-ids-for-confirmation .quick-filters {
+  display:none;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft);
+  align-items:center;flex-wrap:wrap;
+}
+.mo-view-deal-ids-for-confirmation .quick-filters.show {display:flex;}
+.mo-view-deal-ids-for-confirmation .qf-label {font-size:11.5px;font-weight:600;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .chip {
+  display:flex;align-items:center;gap:7px;border:1px solid var(--border-strong,#8996A1);
+  border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--text-muted);
+  cursor:pointer;background:var(--card);transition:.15s;user-select:none;
+}
+.mo-view-deal-ids-for-confirmation .chip input {display:none;}
+.mo-view-deal-ids-for-confirmation .chip .box {width:14px;height:14px;border:1.5px solid var(--border-strong,#8996A1);border-radius:4px;flex-shrink:0;position:relative;}
+.mo-view-deal-ids-for-confirmation .chip input:checked ~ .box {background:var(--primary);border-color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .chip input:checked ~ .box::after {
+  content:"";position:absolute;left:3px;top:0px;width:4px;height:8px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);
+}
+.mo-view-deal-ids-for-confirmation .chip.active {border-color:var(--primary);color:var(--primary);background:var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation .validation-msg {
+  display:none;align-items:center;gap:6px;color:var(--error);font-size:11.5px;font-weight:600;margin-top:4px;
+}
+.mo-view-deal-ids-for-confirmation .field.has-error .control {border-color:var(--error);background:var(--error-soft);}
+.mo-view-deal-ids-for-confirmation .field.has-error .validation-msg {display:flex;}
+/* ---------- Table card ---------- */
+.mo-view-deal-ids-for-confirmation .table-card {padding:0;overflow:hidden;}
+.mo-view-deal-ids-for-confirmation .table-head {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap;
+}
+.mo-view-deal-ids-for-confirmation .table-head-left {display:flex;align-items:center;gap:10px;}
+.mo-view-deal-ids-for-confirmation .table-title {display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--primary-dark);}
+.mo-view-deal-ids-for-confirmation .table-title .dot {width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.mo-view-deal-ids-for-confirmation .table-count {font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.mo-view-deal-ids-for-confirmation .keydate-badge {
+  display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border-soft);
+  color:var(--text-muted);font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:var(--radius-sm);margin-left:4px;
+}
+.mo-view-deal-ids-for-confirmation .table-head-right {display:flex;align-items:center;gap:8px;}
+.mo-view-deal-ids-for-confirmation .search-box {position:relative;flex:1 1 250px;min-width:200px;max-width:260px;}
+.mo-view-deal-ids-for-confirmation .search-box svg {position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-faint);pointer-events:none;}
+.mo-view-deal-ids-for-confirmation .search-box input {
+  height:32px;width:100%;border:1px solid var(--border-strong,#8996A1);border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;font-size:13px;outline:none;background:var(--card);color:var(--text);
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.mo-view-deal-ids-for-confirmation .search-box input:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mo-view-deal-ids-for-confirmation .icon-btn {
+  width:32px;height:32px;border:1px solid var(--border-strong,#8996A1);border-radius:var(--radius-sm);background:var(--card);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:.15s;position:relative;flex-shrink:0;
+}
+.mo-view-deal-ids-for-confirmation .icon-btn:hover {border-color:var(--primary);color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .icon-btn.active {background:var(--primary-soft);border-color:var(--primary);color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .icon-btn svg {width:15px;height:15px;}
+.mo-view-deal-ids-for-confirmation .icon-btn .dot {
+  position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--primary);
+  border-radius:50%;border:2px solid var(--card);display:none;
+}
+.mo-view-deal-ids-for-confirmation .icon-btn .dot.show {display:block;}
+/* Table scroll wrapper */
+.mo-view-deal-ids-for-confirmation .table-scroll {overflow-x:auto;overflow-y:visible;}
+.mo-view-deal-ids-for-confirmation table.data-table {border-collapse:collapse;width:100%;min-width:1400px;}
+.mo-view-deal-ids-for-confirmation table.data-table thead th {
+  position:sticky;top:0;background:var(--bg);z-index:5;
+  text-align:left;font-size:13px;font-weight:700;color:var(--text-muted);
+  padding:8px 10px;border-bottom:1px solid var(--border-soft);white-space:nowrap;
+  cursor:pointer;user-select:none;letter-spacing:.3px;text-transform:uppercase;
+}
+.mo-view-deal-ids-for-confirmation table.data-table thead th:hover {color:var(--primary-dark);}
+.mo-view-deal-ids-for-confirmation table.data-table thead th.no-sort {cursor:default;}
+.mo-view-deal-ids-for-confirmation table.data-table thead th.no-sort:hover {color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation table.data-table thead th .th-inner {display:flex;align-items:center;gap:5px;}
+.mo-view-deal-ids-for-confirmation table.data-table thead th.num .th-inner {justify-content:flex-end;}
+.mo-view-deal-ids-for-confirmation .sort-ind {width:10px;height:10px;opacity:.3;flex-shrink:0;}
+.mo-view-deal-ids-for-confirmation .sort-ind.active {opacity:1;color:var(--primary);}
+.mo-view-deal-ids-for-confirmation table.data-table tbody td {
+  padding:8px 10px;border-bottom:1px solid var(--border-soft);font-size:14px;
+  color:var(--text);white-space:nowrap;
+}
+.mo-view-deal-ids-for-confirmation table.data-table tbody td.num {text-align:right;font-variant-numeric:tabular-nums;}
+.mo-view-deal-ids-for-confirmation table.data-table tbody tr {
+  cursor:default;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.mo-view-deal-ids-for-confirmation table.data-table tbody tr:hover {
+  background:#F7FBFF;
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  position:relative;z-index:2;
+}
+.mo-view-deal-ids-for-confirmation table.data-table tbody tr:last-child td {border-bottom:none;}
+.mo-view-deal-ids-for-confirmation .cell-desc {max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .hotspot {
+  color:var(--mc-blue);font-weight:700;cursor:pointer;background:none;border:none;
+  padding:0;font-size:14px;font-family:inherit;text-decoration:none;
+}
+.mo-view-deal-ids-for-confirmation .hotspot:hover {text-decoration:underline;color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .hotspot.green {color:var(--deal-green);}
+.mo-view-deal-ids-for-confirmation .hotspot.green:hover {color:var(--deal-green);text-decoration:underline;}
+.mo-view-deal-ids-for-confirmation .num-green {color:var(--deal-green);font-weight:600;}
+.mo-view-deal-ids-for-confirmation .num-blue {color:var(--mc-blue);font-weight:600;}
+.mo-view-deal-ids-for-confirmation .status-text {font-weight:700;font-size:14px;white-space:nowrap;}
+.mo-view-deal-ids-for-confirmation .status-text-pending {color:var(--pending);}
+.mo-view-deal-ids-for-confirmation .status-text-confirmed {color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .flag-yes {color:var(--success);font-weight:700;}
+.mo-view-deal-ids-for-confirmation .flag-no {color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .pl-neg {color:var(--error);}
+.mo-view-deal-ids-for-confirmation .pl-pos {color:var(--success);}
+.mo-view-deal-ids-for-confirmation .empty-state {padding:56px 20px;text-align:center;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .empty-state svg {width:40px;height:40px;color:var(--text-faint);margin-bottom:12px;}
+.mo-view-deal-ids-for-confirmation .empty-state h4 {margin:0 0 6px;font-size:14px;color:var(--text);}
+.mo-view-deal-ids-for-confirmation .empty-state p {margin:0;color:var(--text-faint);font-size:12.5px;}
+/* ---------- Pagination ---------- */
+.mo-view-deal-ids-for-confirmation .pagination {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px 12px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;
+}
+.mo-view-deal-ids-for-confirmation .page-info {font-size:11.5px;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .page-controls {display:flex;align-items:center;gap:4px;}
+.mo-view-deal-ids-for-confirmation .page-btn {
+  min-width:28px;height:28px;border:1px solid var(--border-strong,#8996A1);background:var(--card);
+  border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:11.5px;font-weight:600;color:var(--text);transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;padding:0 8px;
+}
+.mo-view-deal-ids-for-confirmation .page-btn:hover:not(:disabled) {border-color:var(--primary);color:var(--primary);}
+.mo-view-deal-ids-for-confirmation .page-btn:active:not(:disabled) {transform:translateY(1px);}
+.mo-view-deal-ids-for-confirmation .page-btn.active {background:var(--primary);border-color:var(--primary);color:#fff;}
+.mo-view-deal-ids-for-confirmation .page-btn:disabled {opacity:0.4;cursor:not-allowed;}
+.mo-view-deal-ids-for-confirmation .page-size-select {display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.mo-view-deal-ids-for-confirmation .page-size-select select {height:28px;border:1px solid var(--border-strong,#8996A1);border-radius:6px;padding:0 6px;font-size:11.5px;color:var(--text-muted);background:var(--card);}
+/* ---------- Modal ---------- */
+.mo-view-deal-ids-for-confirmation .overlay {
+  position:fixed;inset:0;background:rgba(16,26,41,.5);display:none;
+  align-items:center;justify-content:center;z-index:200;padding:20px;
+}
+.mo-view-deal-ids-for-confirmation .overlay.open {display:flex;}
+.mo-view-deal-ids-for-confirmation .overlay.closing {display:flex;}
+.mo-view-deal-ids-for-confirmation .modal {
+  background:var(--card);border:1px solid #B9C2C9;border-radius:var(--radius);width:100%;
+  box-shadow:var(--shadow-md);max-height:88vh;display:flex;flex-direction:column;animation:mo-view-deal-ids-for-confirmation-popIn .18s ease-out;
+}
+.mo-view-deal-ids-for-confirmation .overlay.closing .modal {animation:mo-view-deal-ids-for-confirmation-popOut .16s ease-in forwards;}
+@keyframes mo-view-deal-ids-for-confirmation-popIn {from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes mo-view-deal-ids-for-confirmation-popOut {from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.mo-view-deal-ids-for-confirmation .modal-md {max-width:640px;}
+.mo-view-deal-ids-for-confirmation .modal-header {
+  display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+  border-bottom:1px solid var(--border);flex:0 0 auto;
+}
+.mo-view-deal-ids-for-confirmation .modal-header-titles {display:flex;flex-direction:column;gap:3px;}
+.mo-view-deal-ids-for-confirmation .modal-title {font-size:15px;font-weight:700;color:var(--text);}
+.mo-view-deal-ids-for-confirmation .modal-subtitle {font-size:11.5px;color:var(--text-faint);}
+.mo-view-deal-ids-for-confirmation .modal-close {
+  border:none;background:transparent;font-size:18px;line-height:1;color:var(--text-muted);
+  cursor:pointer;padding:2px 8px;border-radius:6px;transition:background .15s ease, color .15s ease;
+}
+.mo-view-deal-ids-for-confirmation .modal-close:hover {background:var(--bg);color:var(--text);}
+.mo-view-deal-ids-for-confirmation .modal-body {padding:18px 20px;overflow-y:auto;flex:1 1 auto;min-height:0;}
+.mo-view-deal-ids-for-confirmation .modal-footer {
+  display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex:0 0 auto;
+}
+.mo-view-deal-ids-for-confirmation .mc-section-title {
+  font-size:11px;font-weight:700;color:var(--primary-dark);text-transform:uppercase;
+  letter-spacing:.5px;margin:0 0 8px;padding:14px 0 5px;border-bottom:1px solid var(--border);
+}
+.mo-view-deal-ids-for-confirmation .mc-section-title:first-child {padding-top:0;}
+.mo-view-deal-ids-for-confirmation .mc-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.mo-view-deal-ids-for-confirmation .mc-item {display:flex;flex-direction:column;gap:2px;}
+.mo-view-deal-ids-for-confirmation .mc-item.span2 {grid-column:1/-1;}
+.mo-view-deal-ids-for-confirmation .mc-item-label {font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.mo-view-deal-ids-for-confirmation .mc-item-value {font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+.mo-view-deal-ids-for-confirmation .mc-item-value.blue {color:var(--mc-blue);}
+.mo-view-deal-ids-for-confirmation .mc-item-value.green {color:var(--deal-green);}
+.mo-view-deal-ids-for-confirmation .divider {height:1px;background:var(--border-soft);margin:14px 0;}
+/* ---------- Toast ---------- */
+.mo-view-deal-ids-for-confirmation .toast {
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  background:#243B53;color:#fff;padding:11px 18px;border-radius:var(--radius-md);
+  font-size:12.5px;box-shadow:var(--shadow-md);z-index:300;display:none;align-items:center;gap:8px;
+}
+.mo-view-deal-ids-for-confirmation .toast.show {display:flex;}
+.mo-view-deal-ids-for-confirmation .toast.error {background:#4A211D;}
+/* misc */
+.mo-view-deal-ids-for-confirmation .visually-hidden {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+.mo-view-deal-ids-for-confirmation ::-webkit-scrollbar {height:9px;width:9px;}
+.mo-view-deal-ids-for-confirmation ::-webkit-scrollbar-thumb {background:#B7C2CB;border-radius:20px;}
+.mo-view-deal-ids-for-confirmation ::-webkit-scrollbar-track {background:transparent;}
+@media (max-width:760px) {
+.mo-view-deal-ids-for-confirmation .filter-grid {flex-direction:column;align-items:stretch;}
+.mo-view-deal-ids-for-confirmation .field, .mo-view-deal-ids-for-confirmation .msel {width:100%;}
+.mo-view-deal-ids-for-confirmation .filter-actions {margin-left:0;width:100%;}
+.mo-view-deal-ids-for-confirmation .table-head {flex-direction:column;align-items:stretch;}
+.mo-view-deal-ids-for-confirmation .search-box {width:100%;max-width:none;}
+}

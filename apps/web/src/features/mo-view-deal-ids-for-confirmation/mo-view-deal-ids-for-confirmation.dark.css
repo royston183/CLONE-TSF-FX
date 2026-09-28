@@ -1,0 +1,43 @@
+/* Night mode for mo-view-deal-ids-for-confirmation, derived from mo-view-deal-ids-for-confirmation.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation select,
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation {
+  --bg: #0d1724;
+  --card: #14212f;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --border-soft: #16243a;
+  --text: #e6eef8;
+  --primary-soft: #17304a;
+  --success-soft: #14321f;
+  --warning-soft: #3a2a12;
+  --error-soft: #3a1b1e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation .control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation .date-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation .msel-btn:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation .chip input:checked ~ .box::after {
+  border: solid #2a3d52;
+}
+:root[data-theme='dark'] .mo-view-deal-ids-for-confirmation table.data-table tbody tr:hover {
+  background: #1b2b3d;
+}

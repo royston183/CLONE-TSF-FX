@@ -23,130 +23,76 @@
   --success-tint: #14321f;
   --warning-tint: #3a2a12;
   --error-tint: #3a1b1e;
-  --orange-tint: #3a2a12;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
   --gray-tint: #1b2b3d;
 }
-:root[data-theme='dark'] .mo-update-bank-reference ::-webkit-scrollbar-thumb {
-  background: #1e4368;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .page-head {
+:root[data-theme='dark'] .mo-update-bank-reference .control {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .btn-icon {
+:root[data-theme='dark'] .mo-update-bank-reference .control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-update-bank-reference .dd-input {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23475E75" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+}
+:root[data-theme='dark'] .mo-update-bank-reference .dd-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .mo-update-bank-reference .dd-panel {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .tb-btn {
+:root[data-theme='dark'] .mo-update-bank-reference .date-popup {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .tb-btn.danger {
-  background: #14212f;
-  border-color: #5c2b30;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .panel {
+:root[data-theme='dark'] .mo-update-bank-reference .pill {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .search-box input {
+:root[data-theme='dark'] .mo-update-bank-reference .btn-secondary {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .filter-field select {
-  background: #14212f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238CA0B3'/%3E%3C/svg%3E") no-repeat right 9px center;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .filter-reset {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .table-wrap {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .list-table thead th {
-  background: #1b2b3d;
-  color: #a9c2dd;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .list-table tbody tr:hover td {
-  background: #1b2b3d;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .sticky-col {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .list-table thead th.sticky-col {
-  background: #1b2b3d!important;
-}
-:root[data-theme='dark'] .mo-update-bank-reference tbody tr:hover .sticky-col {
-  background: #1b2b3d!important;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .pager {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .pager-size select {
-  background-color: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .pager-btn {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .glossary {
-  border: 1px solid #2d4a6b;
-  color: #6e9cec;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .back-btn {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .section-note {
-  background: #1b2b3d;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .section-note.gap-note {
-  color: #ffc05c;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .section-note.gap-note strong {
-  color: #ffbf5c;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .grid-mini-table thead th {
-  background: #1b2b3d;
-  color: #a9c2dd;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .grid-mini-table thead tr.pl-subhead th {
-  background: #1b2b3d;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .pl-row td {
-  background: #1b2b3d;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .modal-card {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .modal-header {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .modal-body {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .modal-footer {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .btn-cancel {
-  background: #14212f;
-}
-:root[data-theme='dark'] .mo-update-bank-reference .btn-confirm.is-reject {
+:root[data-theme='dark'] .mo-update-bank-reference .btn-danger {
   background: #14212f;
   border-color: #5c2b30;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .detail-grid {
+:root[data-theme='dark'] .mo-update-bank-reference .icon-btn {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .warn-box {
-  color: #ffc05c;
+:root[data-theme='dark'] .mo-update-bank-reference table.grid thead th {
+  border-bottom: 1px solid #2a3d52;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .warn-box strong {
-  color: #ffbf5c;
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody td {
+  border-bottom: 1px solid #2a3d52;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .err-box {
-  border: 1px solid #5c2b30;
-  color: #e6eef8;
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr:hover td {
+  background: #1b2b3d;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .zfac-toast {
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr:hover td.chkcol,
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr:hover td.pin2 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr.zebra td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr.zebra:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr.active-row td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr.active-row td.chkcol,
+:root[data-theme='dark'] .mo-update-bank-reference table.grid tbody tr.active-row td.pin2 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .mo-update-bank-reference .edit-input {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-update-bank-reference .edit-input:focus {
   background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .zfac-toast.success {
-  border-color: #26543a;
-  color: #e6eef8;
+:root[data-theme='dark'] .mo-update-bank-reference .pagination button {
+  background: #14212f;
 }
-:root[data-theme='dark'] .mo-update-bank-reference .zfac-toast.error {
-  border-color: #5c2b30;
+:root[data-theme='dark'] .mo-update-bank-reference .modal {
+  background: #14212f;
 }

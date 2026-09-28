@@ -334,23 +334,44 @@
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     },
     {
+      "code": "ZSGTSFP013",
+      "id": "fo-change-deal-id",
+      "route": "/apps/fo-change-deal-id",
+      "title": "FO: Change Deal ID",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/FO_Change_Deal_ID.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFP015",
+      "id": "fo-early-delivery-unwind-rollover",
+      "route": "/apps/fo-early-delivery-unwind-rollover",
+      "title": "FO: Create Early Delivery/Unwinding/Rollover",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/unwindroll.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
       "code": "ZSGTSFP002",
-      "id": "mo-update-bank-reference",
-      "route": "/apps/mo-update-bank-reference",
+      "id": "mo-confirm-fx-deal-id",
+      "route": "/apps/mo-confirm-fx-deal-id",
       "title": "MO: Confirm FX Deal ID (Single Deal ID)",
       "status": "scaffold",
       "services": [],
-      "legacy": "legacy/deal-id-mo-confirmation.html",
-      "note": "Was ZSGTSFR002 (\"Update Bank Reference for FX Deals\") under FX Deal Confirmation; moved into the FX Deal ID Confirmation folder and renamed to ZSGTSFP002 to match that folder's tile set. Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "legacy": "legacy/confirm-fx-deal.html",
+      "note": "Replaces the earlier conversion of legacy/deal-id-mo-confirmation.html on this tile. Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     },
     {
       "code": "ZSGTSFR002",
-      "id": "mo-update-bank-reference-r002",
-      "route": "/apps/mo-update-bank-reference-r002",
+      "id": "mo-update-bank-reference",
+      "route": "/apps/mo-update-bank-reference",
       "title": "Update Bank Reference for FX Deals",
-      "status": "planned",
+      "status": "scaffold",
       "services": [],
-      "note": "Tile re-added under FX Deal Confirmation per the current SAP menu screenshot, kept deliberately unwired (status: planned, no legacy HTML) so it stays an empty placeholder rather than opening ZSGTSFP002's screen."
+      "legacy": "legacy/update bank reference.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     },
     {
       "code": "ZSGTSFR024",
@@ -387,18 +408,20 @@
       "id": "mo-view-deal-ids-for-confirmation",
       "route": "/apps/mo-view-deal-ids-for-confirmation",
       "title": "MO: View List of Deal IDs for Confirmation",
-      "status": "planned",
+      "status": "scaffold",
       "services": [],
-      "note": "Tile added from the FX Deal ID Confirmation folder screenshot; no legacy HTML or conversion exists yet."
+      "legacy": "legacy/view list of deal ids.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     },
     {
       "code": "ZSGTSFP017",
       "id": "mo-confirm-fx-deal-id-ss",
       "route": "/apps/mo-confirm-fx-deal-id-ss",
       "title": "MO: Confirm FX Deal ID for SS (Single Deal ID)",
-      "status": "planned",
+      "status": "scaffold",
       "services": [],
-      "note": "Tile added from the FX Deal ID Confirmation folder screenshot; no legacy HTML or conversion exists yet."
+      "legacy": "legacy/confirm-fx-deal-id for ss.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     }
   ]
 }
