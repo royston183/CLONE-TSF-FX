@@ -12,7 +12,7 @@ import {
   toFxModels,
   toPaymentTerms,
 } from './api.ts'
-import { STATUS } from './data.ts'
+import { ERRCORR_AFTER_DEAL, STATUS } from './data.ts'
 import { fmtDate } from './format.ts'
 import { applyEdit } from './logic.ts'
 import type { MasterContract } from './types.ts'
@@ -62,9 +62,10 @@ const mustContract = (r: Record<string, string | null>, dealId = ''): MasterCont
 describe('status codes', () => {
   it('maps ZMC_STAT to the screen text by code prefix, and back', () => {
     strictEqual(statusFromCode('02'), STATUS.RELEASE)
-    strictEqual(statusFromCode('11'), STATUS.ERRCORR)
+    strictEqual(statusFromCode('13'), STATUS.ERRCORR)
+    strictEqual(statusFromCode('22'), ERRCORR_AFTER_DEAL)
     strictEqual(statusFromCode('03'), STATUS.CONFIRMED)
-    strictEqual(statusFromCode('13'), STATUS.REJECTED)
+    strictEqual(statusFromCode('11'), STATUS.REJECTED)
     strictEqual(statusFromCode('01'), undefined)
     strictEqual(statusCodeOf(STATUS.INUSE), '04')
   })
@@ -116,10 +117,11 @@ describe('toContract', () => {
     strictEqual(c.changedOn, null)
   })
 
-  it('reads an Error Correction row with its MO remark, and drops a status it cannot show', () => {
-    const c = mustContract({ ...row, ZMC_STAT: '11', ZMO_REMARKS: 'Rate is stale' })
+  it('reads a resubmitted-correction row with its MO remark, and drops a status it cannot show', () => {
+    const c = mustContract({ ...row, ZMC_STAT: '13', ZMO_REMARKS: 'Rate is stale' })
     strictEqual(c.status, STATUS.ERRCORR)
     strictEqual(c.moRemarks, 'Rate is stale')
+    strictEqual(mustContract({ ...row, ZMC_STAT: '22' }).status, ERRCORR_AFTER_DEAL)
     strictEqual(toContract({ ...row, ZMC_STAT: '01' }, ''), null)
   })
 })

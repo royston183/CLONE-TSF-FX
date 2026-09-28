@@ -263,12 +263,31 @@ export default function FoCreateMasterContract() {
 
   // ------------------------------------------------------------------ send to M.O.
 
-  /** The one entry point for every Send to M.O. button: email each, then release. */
+  /**
+   * The one entry point for every Send to M.O. button: email each, then release. Only a
+   * contract still at status 01 "Created" can move (ABAP RELEASE_TO_MO's own rule) — a
+   * Rejected one silently failed to update before this filter existed, since releaseToMO()
+   * and releaseContracts() already both no-op on anything else, but the toast still claimed
+   * success. Ineligible contracts are now reported instead of silently dropped.
+   */
   const sendToMO = async (list: MasterContract[]) => {
     if (list.length === 0) return
+    const eligible = list.filter((c) => c.statusCode === '01' || c.status === 'Created')
+    const skipped = list.length - eligible.length
+
+    if (eligible.length === 0) {
+      showToast(
+        list.length === 1
+          ? `Master Contract ${list[0]!.mcNumber} is ${list[0]!.status} and cannot be sent to M.O. again — only a newly created contract can be released.`
+          : `None of the selected Master Contracts can be sent to M.O. — only newly created contracts can be released.`,
+        true,
+      )
+      return
+    }
+
     if (source === 'mysql') {
       try {
-        await releaseContracts(list)
+        await releaseContracts(eligible)
       } catch (error) {
         showToast(messageOf(error), true)
         // Whatever did move is re-read, so the table never shows a status MySQL lacks.
@@ -276,16 +295,15 @@ export default function FoCreateMasterContract() {
         return
       }
     }
-    for (const c of list) sendMasterContractEmail(c)
-    const released = new Set(list.map((c) => c.mcNumber))
+    for (const c of eligible) sendMasterContractEmail(c)
+    const released = new Set(eligible.map((c) => c.mcNumber))
     setContracts((all) => all.map((c) => (released.has(c.mcNumber) ? releaseToMO(c) : c)))
-    const [first] = list
-    showToast(
-      list.length === 1 && first
+    const [first] = eligible
+    const sentMsg =
+      eligible.length === 1 && first
         ? `Master Contract ${first.mcNumber} sent to M.O. successfully.`
-        : `${list.length} Master Contracts sent to M.O. successfully.`,
-      false,
-    )
+        : `${eligible.length} Master Contracts sent to M.O. successfully.`
+    showToast(skipped > 0 ? `${sentMsg} ${skipped} skipped — not eligible for release.` : sentMsg, false)
   }
 
   // ------------------------------------------------------------------ popups
