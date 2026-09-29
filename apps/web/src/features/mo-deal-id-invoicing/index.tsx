@@ -1,10 +1,13 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadScreen, statusOptions } from './api.ts'
 import { BlListModal } from './BlListModal.tsx'
 import { ComplianceModal, type ComplianceNote } from './ComplianceModal.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
-import { buildDeals, ENTITIES, FX_MODELS, REGIONS } from './data.ts'
+import { ENTITIES, FX_MODELS, REGIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DiffModal } from './DiffModal.tsx'
@@ -34,23 +37,45 @@ import './mo-deal-id-invoicing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-deal-id-invoicing.dark.css'
-import type { Filters, Sort, SortKey, SubModal, Toast } from './types.ts'
+import type { Deal, Filters, Sort, SortKey, SubModal, Toast } from './types.ts'
 
 const PAGE_SIZE = 15
 const FIRST_INVOICE_SEQ = 600
+/** The rbill popup's actions belong to ZSGTSF_RBILL_ADJUST, which is not wired yet. */
+const NOT_SAVED_NOTE = 'Amendment applied on this screen only — invoice generation (ZSGTSF_RBILL_ADJUST) is not saved to MySQL yet.'
 
 /**
  * MO: View List of Deal IDs for Invoicing (ZSGTSFR008), converted from
  * legacy/View_List_of_Deal_IDs_for_Invoicing_CALENDAR_FIXED.html.
  *
- * The legacy page never called an API — no fetch, no XMLHttpRequest — so it stays a UI-only
- * React shell with its seed data quarantined in data.ts, same as sblc-allocate-bank and
- * fo-additional-spot-booking; SAP wiring (ZSGTSFV_FX, the invoice/BL tables) is a follow-up.
+ * The list, the planned / raised invoice legs and the assigned Bills of Lading come from
+ * MySQL through the SLC middleware (api.ts), read-only as in the report; the seed deals in
+ * data.ts are shown only when it cannot be reached. The invoice-generation popup
+ * (ZSGTSF_RBILL_ADJUST: mark, price, bank, generate, reverse, amend status, de-assign BL)
+ * still works on the screen only — that program needs tables not yet migrated.
  */
 export default function MoDealIdInvoicing() {
-  const [deals, setDeals] = useState(() => buildDeals())
-  const seedRef = useRef(deals)
+  const [deals, setDeals] = useState<Deal[]>([])
+  /** The deals as loaded: the rbill popup's Refresh / Cancel restore a deal from here. */
+  const seedRef = useRef<Deal[]>([])
   const invoiceSeq = useRef(FIRST_INVOICE_SEQ)
+  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const [generation, setGeneration] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    setSource('loading')
+    loadScreen(controller.signal)
+      .then((loaded) => {
+        seedRef.current = loaded.deals
+        setDeals(loaded.deals.map((d) => ({ ...d })))
+        setSource(loaded.source)
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) console.error('[fx] Deal IDs for invoicing failed to load', error)
+      })
+    return () => controller.abort()
+  }, [generation])
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(true)
@@ -97,10 +122,10 @@ export default function MoDealIdInvoicing() {
   }
 
   const refreshList = () => {
-    setDeals(seedRef.current.map((d) => ({ ...d })))
+    setGeneration((g) => g + 1)
     invoiceSeq.current = FIRST_INVOICE_SEQ
     resetFilters()
-    pushToast('List refreshed to initial dataset.')
+    pushToast(source === 'dummy' ? 'List refreshed to initial dataset.' : 'List reloaded from MySQL.')
   }
 
   const exportCsv = () => {
@@ -256,6 +281,7 @@ export default function MoDealIdInvoicing() {
             <div className="panel-title-left">
               <h2>Deal IDs for Invoicing</h2>
               <span className="rec-count">{sortedDeals.length} records</span>
+              <SourceNote source={source} />
             </div>
             <div className="panel-title-right">
               <button className="btn-icon" title="Show/hide filters" onClick={() => setFiltersOpen((v) => !v)}>
@@ -328,9 +354,11 @@ export default function MoDealIdInvoicing() {
                 <label>Status</label>
                 <select value={filters.status} onChange={(e) => applyFilters({ status: e.target.value })}>
                   <option value="ALL">All statuses</option>
-                  <option value="04">04 - Booked, Pending Invoice</option>
-                  <option value="07">07 - Partial Invoice Created</option>
-                  <option value="05">05 - Confirmed, Fully Invoiced</option>
+                  {statusOptions(source).map(([code, label]) => (
+                    <option key={code} value={code}>
+                      {code} - {label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="filter-reset-wrap">
@@ -408,7 +436,7 @@ export default function MoDealIdInvoicing() {
           }}
           onConfirmAmendment={() => {
             setAmending(false)
-            pushToast('Amendment saved to invoice adjustment records.', 'success')
+            pushToast(NOT_SAVED_NOTE, 'warn')
           }}
           onAmendDealStatus={amendDealStatus}
           onConfirmInvoiceGeneration={confirmInvoiceGeneration}
@@ -468,4 +496,15 @@ export default function MoDealIdInvoicing() {
       {sub?.kind === 'confirm' ? <ConfirmModal title={sub.title} text={sub.text} yesLabel={sub.yesLabel} onYes={sub.onYes} onClose={() => setSub(null)} /> : null}
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_DEALID · MySQL — invoice actions are not saved yet'
+        : 'Dummy data — the middleware could not be reached'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

@@ -4,7 +4,7 @@
  */
 import type { CodeDesc, DealRow, DealStatusCode } from './types.ts'
 
-export const STATUS_MAP: Record<DealStatusCode, string> = {
+export const STATUS_MAP: Record<string, string> = {
   '01': 'FO: FX Deals Created',
   '04': 'BL Assigned to Deal ID for Invoicing',
   '05': 'Invoice Created in TRM',

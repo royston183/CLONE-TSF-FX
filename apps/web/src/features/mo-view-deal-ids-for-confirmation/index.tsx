@@ -5,7 +5,10 @@ import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DealModal, McModal } from './DetailModals.tsx'
-import { ENTITIES, MODELS, REGIONS, STATUSES, defaultKeyDate, loadDeals } from './data.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadScreen } from './api.ts'
+import { ENTITIES, MODELS, REGIONS, STATUSES } from './data.ts'
 import { fmtDate, parseDMY } from './format.ts'
 import {
   CSV_FILENAME,
@@ -32,9 +35,11 @@ import type { ColumnKey, Deal, Filters, Layout, MselOption, MultiFilterKey, Quic
 
 const TOAST_MS = 3200
 
-const REGION_OPTIONS: MselOption[] = REGIONS.map((r) => ({ id: r.id, label: r.desc }))
-const ENTITY_OPTIONS: MselOption[] = ENTITIES.map((e) => ({ id: e.id, label: e.name, sub: e.region }))
-const MODEL_OPTIONS: MselOption[] = MODELS.map((m) => ({ id: m.id, label: m.desc }))
+/** The Key Date defaults to today; the seed data keeps its own 28-09-2026 anchor (data.ts). */
+function today(): Date {
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
 
 const QUICK_CHIPS: { key: keyof QuickFilters; label: string }[] = [
   { key: 'confirmedOnly', label: 'Confirmed only' },
@@ -42,11 +47,16 @@ const QUICK_CHIPS: { key: keyof QuickFilters; label: string }[] = [
   { key: 'revisedOnly', label: 'Revised end date only' },
 ]
 
-const MSELS: { key: MultiFilterKey; label: string; wide: boolean; options: MselOption[]; placeholder: string }[] = [
-  { key: 'region', label: 'Region', wide: false, options: REGION_OPTIONS, placeholder: 'Select region...' },
-  { key: 'entity', label: 'Origin Entity', wide: true, options: ENTITY_OPTIONS, placeholder: 'Select entity...' },
-  { key: 'model', label: 'FX Model', wide: true, options: MODEL_OPTIONS, placeholder: 'Select FX model...' },
-]
+type Msel = { key: MultiFilterKey; label: string; wide: boolean; options: MselOption[]; placeholder: string }
+
+/** Built per load: REGIONS / ENTITIES / MODELS are swapped for MySQL's rows once they arrive. */
+function buildMsels(): Msel[] {
+  return [
+    { key: 'region', label: 'Region', wide: false, options: REGIONS.map((r) => ({ id: r.id, label: r.desc })), placeholder: 'Select region...' },
+    { key: 'entity', label: 'Origin Entity', wide: true, options: ENTITIES.map((e) => ({ id: e.id, label: e.name, sub: e.region })), placeholder: 'Select entity...' },
+    { key: 'model', label: 'FX Model', wide: true, options: MODELS.map((m) => ({ id: m.id, label: m.desc })), placeholder: 'Select FX model...' },
+  ]
+}
 
 function CalendarIcon() {
   return (
@@ -78,14 +88,31 @@ function RefreshIcon({ size }: { size?: number }) {
  *
  * A read-only workbench: the deals active as of the Key Date with status 01 Pending
  * Confirmation / 02 Confirmed, narrowed by the Basic Selection, quick filters and search.
- * The original never called a service, so the 46 deals are its seeded dummy data (data.ts),
- * generated once per mount. Deal ID and MC Reference No. open read-only detail popups.
+ * The deals come from ZSGTSFTR_DEALID through the SLC middleware (api.ts); the 46 seeded
+ * deals in data.ts are shown only when it cannot be reached. Deal ID and MC Reference No.
+ * open read-only detail popups.
  */
 export default function MoViewDealIdsForConfirmation() {
-  const [deals] = useState<Deal[]>(loadDeals)
+  const [deals, setDeals] = useState<Deal[]>([])
+  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  useEffect(() => {
+    const controller = new AbortController()
+    loadScreen(controller.signal)
+      .then((loaded) => {
+        setDeals(loaded.deals)
+        setSource(loaded.source)
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) console.error('[fx] Deal IDs for confirmation failed to load', error)
+      })
+    return () => controller.abort()
+  }, [])
+  // The masters are swapped in place once `source` settles, so the options are rebuilt then.
+  const msels = useMemo(buildMsels, [source])
 
-  const [keyDateText, setKeyDateText] = useState(() => fmtDate(defaultKeyDate()))
-  const [keyDate, setKeyDate] = useState<Date>(defaultKeyDate)
+  const [keyDateText, setKeyDateText] = useState(() => fmtDate(today()))
+  const [keyDate, setKeyDate] = useState<Date>(today)
   const [keyDateError, setKeyDateError] = useState(false)
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
   const [quickFilters, setQuickFilters] = useState<QuickFilters>(EMPTY_QUICK_FILTERS)
@@ -148,9 +175,9 @@ export default function MoViewDealIdsForConfirmation() {
   }
 
   const resetAll = () => {
-    const today = defaultKeyDate()
-    setKeyDateText(fmtDate(today))
-    setKeyDate(today)
+    const now = today()
+    setKeyDateText(fmtDate(now))
+    setKeyDate(now)
     setKeyDateError(false)
     setFilters(EMPTY_FILTERS)
     setQuickFilters(EMPTY_QUICK_FILTERS)
@@ -274,7 +301,7 @@ export default function MoViewDealIdsForConfirmation() {
               </div>
             </div>
 
-            {MSELS.map((m) => (
+            {msels.map((m) => (
               <div key={m.key} className={m.wide ? 'field wide' : 'field'}>
                 <label>{m.label}</label>
                 <MultiSelect
@@ -351,6 +378,7 @@ export default function MoViewDealIdsForConfirmation() {
                 Deal IDs for Confirmation
               </span>
               <span className="table-count">{recordCount(filtered.length)}</span>
+              <SourceNote source={source} />
               <span className="keydate-badge">
                 <CalendarIcon /> Key Date: {fmtDate(keyDate)}
               </span>
@@ -427,4 +455,15 @@ export default function MoViewDealIdsForConfirmation() {
       <div className={`toast${toast.show ? ' show' : ''}`}>{toast.message}</div>
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_DEALID · MySQL'
+        : 'Dummy data — the middleware could not be reached'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

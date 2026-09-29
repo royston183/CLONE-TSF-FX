@@ -6,13 +6,13 @@
 import { pad } from './format.ts'
 import type { Column, Currency, Deal, Entity, FxModel, Region, Status, StatusCode } from './types.ts'
 
-export const REGIONS: readonly Region[] = [
+export const REGIONS: Region[] = [
   { id: 'APAC', desc: 'Asia Pacific' },
   { id: 'EMEA', desc: 'Europe, ME & Africa' },
   { id: 'AMER', desc: 'Americas' },
 ]
 
-export const ENTITIES: readonly Entity[] = [
+export const ENTITIES: Entity[] = [
   { id: 'OSIPL', name: 'Olam Agri India Pvt Ltd', region: 'APAC', currency: 'INR' },
   { id: 'OTL', name: 'Olam (Thailand) Ltd', region: 'APAC', currency: 'THB' },
   { id: 'OVL', name: 'Olam Vietnam Limited', region: 'APAC', currency: 'VND' },
@@ -20,7 +20,7 @@ export const ENTITIES: readonly Entity[] = [
   { id: 'DMCC', name: 'Olam International DMCC', region: 'EMEA', currency: 'AED' },
 ]
 
-export const MODELS: readonly FxModel[] = [
+export const MODELS: FxModel[] = [
   { id: 'M032', desc: 'INR Long Forward', type: 'FORWARD' },
   { id: 'M033', desc: 'INR-INR Forward', type: 'FORWARD' },
   { id: 'M034', desc: 'INR–INR Staggered Call & Put Option', type: 'OPTION' },
@@ -30,7 +30,7 @@ export const MODELS: readonly FxModel[] = [
   { id: 'M041', desc: 'INR–INR Staggered Call & Put Option', type: 'OPTION' },
 ]
 
-export const STATUSES: readonly Status[] = [
+export const STATUSES: Status[] = [
   { code: '01', desc: 'Pending Confirmation' },
   { code: '02', desc: 'Confirmed' },
 ]
@@ -146,7 +146,7 @@ export function generateDeals(count: number): Deal[] {
     // The trailing "* 0" term is the original's: it adds nothing but still consumes a draw.
     let plAmt = (rnd() < 0.28 ? -1 : 1) * randInt(2000, 165000) + Number((rnd() * 100).toFixed(2)) * 0
     plAmt = Math.round(plAmt * 100) / 100
-    let rate = FX_RATES[plLocalCurr] * (0.985 + rnd() * 0.03)
+    let rate = (FX_RATES[plLocalCurr] ?? 1) * (0.985 + rnd() * 0.03)
     rate = Math.round(rate * 10000) / 10000
     const plLamt = Math.round(plAmt * rate * 100) / 100
 

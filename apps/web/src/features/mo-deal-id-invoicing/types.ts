@@ -38,7 +38,8 @@ export type BillOfLading = {
   status: string
 }
 
-export type DealStatus = '04' | '05' | '07'
+/** ZSGTSFTR_DEAL_ST's ZDEAL_STAT; the invoicing workflow runs 03 -> 04 -> 05 / 07. */
+export type DealStatus = string
 
 /** One Deal ID booked against one Master Contract — ZSGTSF_RBILL_ADJUST's unit of work. */
 export type Deal = {
@@ -55,6 +56,10 @@ export type Deal = {
   dealStart: string
   dealEnd: string
   dealStat: DealStatus
+  /** The MC's origin entity (ZSGTSFTR_MAS_CON-ZORIGIN); seed deals leave it to the model's entity string. */
+  origin?: string
+  /** The origin's region (ZSGTSFTR_COMP-ZREG_ID); seed deals leave it to the model. */
+  region?: string
   mcAmtUsd: number
   fx: FxLeg[]
   inv: InvoiceLeg[]

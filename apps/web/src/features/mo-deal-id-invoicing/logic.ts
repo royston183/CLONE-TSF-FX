@@ -19,7 +19,8 @@ export function fxUtilAmt(deal: Deal): number {
   return d1 ? Math.abs(d1.amt1) : 0
 }
 
-export const originEntityOf = (deal: Deal): string => FX_MODELS[deal.model]!.entities[0]!
+/** The MC's origin when the deal came from MySQL; the seed deals read it off the entity string. */
+export const originEntityOf = (deal: Deal): string => deal.origin || FX_MODELS[deal.model]!.entities[0]!
 
 // ---------------------------------------------------------------- filtering / sorting
 
@@ -63,7 +64,7 @@ export function filterDeals(deals: readonly Deal[], filters: Filters): Deal[] {
 
   return deals.filter((d) => {
     const originEntity = originEntityOf(d)
-    const region = FX_MODELS[d.model]!.region
+    const region = d.region ?? FX_MODELS[d.model]!.region
     const dEnd = parseDMY(d.dealEnd)
     if (dFrom && dEnd && dEnd < dFrom) return false
     if (dTo && dEnd && dEnd > dTo) return false
