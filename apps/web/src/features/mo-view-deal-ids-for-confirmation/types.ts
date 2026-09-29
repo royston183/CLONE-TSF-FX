@@ -1,5 +1,6 @@
-export type RegionId = 'APAC' | 'EMEA' | 'AMER'
-export type Currency = 'INR' | 'THB' | 'VND' | 'SGD' | 'AED' | 'USD'
+/** COMP's ZREG_ID (R01…) against MySQL; the seed data's APAC/EMEA/AMER otherwise. */
+export type RegionId = string
+export type Currency = string
 export type ModelType = 'FORWARD' | 'OPTION'
 export type StatusCode = '01' | '02'
 /** SAP's boolean: 'X' is set, blank is not. */

@@ -1,4 +1,5 @@
-export type DealStatusCode = '01' | '04' | '05' | '07' | '20' | '21' | '30'
+/** ZSGTSFTR_DEAL_ST's ZDEAL_STAT; the seed data uses 01, 04, 05, 07, 20, 21 and 30. */
+export type DealStatusCode = string
 
 /** One row of the legacy page's sampleRow(): a Deal ID and its FX/invoice linkage. */
 export type DealRow = {

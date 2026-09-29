@@ -1,8 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadScreen } from './api.ts'
 import { DateField } from './DateField.tsx'
-import { buildSampleData, MODELS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
+import { MODELS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
 import { DealWorkspace } from './DealWorkspace.tsx'
 import { DetailModal } from './DetailModal.tsx'
 import { dateToIso, formatAmount, parseDisplayDate, toDisplayDate } from './format.ts'
@@ -59,12 +62,30 @@ function cellDisplay(row: DealRow, col: Column): { text: string; empty: boolean 
  * MO: Deal ID Invoice Status (ZSGTSFR014), converted from
  * legacy/ZSGTSF_RDEAL_ID_INV_STAT_NO_TXN_UNDERLINE.html.
  *
- * The legacy page never called an API — no fetch, no XMLHttpRequest — so it stays a UI-only
- * React shell with its seed data quarantined in data.ts; SAP wiring is a follow-up.
+ * The Deal IDs come from ZSGTSFTR_DEALID through the SLC middleware (api.ts), read-only as in
+ * the report; the seed rows in data.ts are shown only when it cannot be reached. The Deal ID
+ * workspace (FX legs, planned invoices, P&L, DMS) still runs on the screen's own values: its
+ * sources are ZSGTSFCDS_FX / _OPTION, not in MySQL yet.
  */
 export default function MoDealIdInvoiceStatus() {
-  const [rows, setRows] = useState<DealRow[]>(() => buildSampleData())
-  const seedRef = useRef(rows)
+  const [rows, setRows] = useState<DealRow[]>([])
+  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Bumped by Refresh, which re-reads MySQL. */
+  const [generation, setGeneration] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    setSource('loading')
+    loadScreen(controller.signal)
+      .then((loaded) => {
+        setRows(loaded.rows)
+        setSource(loaded.source)
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) console.error('[fx] Deal ID invoice status failed to load', error)
+      })
+    return () => controller.abort()
+  }, [generation])
 
   const [search, setSearch] = useState('')
   const [origin, setOrigin] = useState('')
@@ -108,7 +129,7 @@ export default function MoDealIdInvoiceStatus() {
   }
 
   const refreshAll = () => {
-    setRows(seedRef.current.map((r) => ({ ...r })))
+    setGeneration((g) => g + 1)
     resetAll()
   }
 
@@ -158,7 +179,10 @@ export default function MoDealIdInvoiceStatus() {
         <section className="card" aria-label="Deal ID List Report: Invoice Status">
           <div className="card-titlebar">
             <div className="card-title">Deal ID List Report: Invoice Status</div>
-            <div className="record-count">{sorted.length + (sorted.length === 1 ? ' record' : ' records')}</div>
+            <div className="record-count">
+              {sorted.length + (sorted.length === 1 ? ' record' : ' records')}
+              <SourceNote source={source} />
+            </div>
             <div className="card-title-actions">
               <button className="icon-btn" type="button" title="Download CSV" onClick={downloadCsv}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -409,4 +433,15 @@ export default function MoDealIdInvoiceStatus() {
       ) : null}
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_DEALID · MySQL'
+        : 'Dummy data — the middleware could not be reached'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

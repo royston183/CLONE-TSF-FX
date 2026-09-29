@@ -1,11 +1,14 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import { buildInitialData } from './data.ts'
+import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
+import type { MasterSource } from '../../shared/fx/masters.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { ELIGIBLE_STATUS, loadScreen, MARKED_STATUS, markForInvoicing } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { parseDate } from './format.ts'
-import { buildCsv, enrichRow, filterRows, sortRows } from './logic.ts'
+import { buildCsv, filterRows, sortRows } from './logic.ts'
 import { McModal } from './McModal.tsx'
 import { SubModal } from './SubModal.tsx'
 import { ViewDealModal } from './ViewDealModal.tsx'
@@ -28,14 +31,34 @@ function uniqueValues(rows: readonly DealRow[], key: 'origin' | 'region' | 'mode
  * MO: Deal ID Invoice Marking (ZSGTSFR015), converted from
  * legacy/ZSGTSF_RDEAL_ID_INV_MARK_MANUAL_DEFAULT_LAYOUT.html.
  *
- * The legacy page never called an API — no fetch, no XMLHttpRequest — so it stays a UI-only
- * React shell with its seed data quarantined in data.ts; SAP wiring is a follow-up. Only the
- * "Manual Mark" invoicing-selection mode exists in the legacy page's HTML, so that's the only
- * mode this conversion offers too.
+ * The eligible Deal IDs come from ZSGTSFTR_DEALID through the SLC middleware (api.ts), and
+ * Mark for Invoicing writes 02 -> 03 there; the seed rows in data.ts are shown, and marks stay
+ * on the screen, only when it cannot be reached. The workflow popups (View Deal, settlement,
+ * premium, invoice plan) still run on the screen's own values. Only the "Manual Mark"
+ * invoicing-selection mode exists in the legacy page's HTML, so that's the only mode here too.
  */
 export default function MoDealIdInvoiceMark() {
-  const initial = useMemo(() => buildInitialData().map(enrichRow), [])
-  const [rows, setRows] = useState<DealRow[]>(initial)
+  const [rows, setRows] = useState<DealRow[]>([])
+  /** The DEALID rows behind the screen rows: Mark writes against their keys. */
+  const keys = useRef<ReadonlyMap<string, DealIdRow>>(new Map())
+  /** Where the rows came from; 'dummy' means marks stay on this screen. */
+  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  const [generation, setGeneration] = useState(0)
+  const busy = useRef(false)
+  useEffect(() => {
+    const controller = new AbortController()
+    setSource('loading')
+    loadScreen(controller.signal)
+      .then((loaded) => {
+        keys.current = loaded.keys
+        setRows(loaded.rows)
+        setSource(loaded.source)
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) console.error('[fx] Deal IDs for invoice marking failed to load', error)
+      })
+    return () => controller.abort()
+  }, [generation])
 
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_FROM)
@@ -62,9 +85,9 @@ export default function MoDealIdInvoiceMark() {
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3600)
   }
 
-  const originOptions = useMemo(() => uniqueValues(initial, 'origin'), [initial])
-  const regionOptions = useMemo(() => uniqueValues(initial, 'region'), [initial])
-  const modelOptions = useMemo(() => uniqueValues(initial, 'model'), [initial])
+  const originOptions = useMemo(() => uniqueValues(rows, 'origin'), [rows])
+  const regionOptions = useMemo(() => uniqueValues(rows, 'region'), [rows])
+  const modelOptions = useMemo(() => uniqueValues(rows, 'model'), [rows])
 
   const fromDate = parseDate(dateFrom.trim())
   const toDate = parseDate(dateTo.trim())
@@ -92,9 +115,9 @@ export default function MoDealIdInvoiceMark() {
   }
 
   const refreshWorkbench = () => {
-    setRows(initial.map((r) => ({ ...r })))
+    setGeneration((g) => g + 1)
     resetFilters()
-    pushToast('Workbench refreshed to the original demo data.', 'info')
+    pushToast(source === 'dummy' ? 'Workbench refreshed to the original demo data.' : 'Workbench reloaded from MySQL.', 'info')
   }
 
   const toggleRow = (id: string, checked: boolean) => {
@@ -117,24 +140,34 @@ export default function MoDealIdInvoiceMark() {
     })
   }
 
-  const markSelected = (ids: ReadonlySet<string>) => {
-    let count = 0
-    setRows((all) =>
-      all.map((r) => {
-        if (ids.has(r.dealId) && r.status === '02') {
-          count++
-          return { ...r, status: '03', statusDesc: 'Deal ID Marked for Invoicing', manualMarked: true }
-        }
-        return r
-      }),
-    )
-    if (count === 0) {
+  const markSelected = async (ids: ReadonlySet<string>) => {
+    const eligible = rows.filter((r) => ids.has(r.dealId) && r.status === ELIGIBLE_STATUS)
+    if (eligible.length === 0) {
       pushToast('Select at least one eligible deal first.', 'warn')
       return
     }
+    if (busy.current) return
+    if (source === 'mysql') {
+      const targets = eligible.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
+      busy.current = true
+      try {
+        await markForInvoicing(targets)
+      } catch (error) {
+        pushToast(messageOf(error), 'warn')
+        // Whatever did move is re-read, so the list never shows a status MySQL lacks.
+        setGeneration((g) => g + 1)
+        return
+      } finally {
+        busy.current = false
+      }
+    }
+    const marked = new Set(eligible.map((r) => r.dealId))
+    setRows((all) =>
+      all.map((r) => (marked.has(r.dealId) ? { ...r, status: MARKED_STATUS, statusDesc: 'Deal ID marked for Invoicing', manualMarked: true } : r)),
+    )
     setSelected(new Set())
     setPage(1)
-    pushToast(`Invoice Marking Updated Successfully — ${count} deal(s) updated.`, 'success')
+    pushToast(`Invoice Marking Updated Successfully — ${eligible.length} deal(s) updated.`, 'success')
   }
 
   const downloadCsv = () => {
@@ -194,6 +227,7 @@ export default function MoDealIdInvoiceMark() {
               <div className="table-heading">
                 Deal ID List Report: Mark for Invoicing
                 <span className="record-count">{sorted.length} records</span>
+                <SourceNote source={source} />
               </div>
               <div className="table-tools">
                 <button className="icon-btn" type="button" title="Download CSV" aria-label="Download CSV" onClick={downloadCsv}>
@@ -327,7 +361,7 @@ export default function MoDealIdInvoiceMark() {
                 type="button"
                 disabled={selected.size === 0}
                 title={selected.size === 0 ? 'Select one or more deals first' : `Mark ${selected.size} selected deal(s) for invoicing`}
-                onClick={() => markSelected(selected)}
+                onClick={() => void markSelected(selected)}
                 onDragOver={(e) => {
                   e.preventDefault()
                   setDropOver(true)
@@ -338,7 +372,7 @@ export default function MoDealIdInvoiceMark() {
                   setDropOver(false)
                   setDropReady(false)
                   const ids = dragId ? new Set([...selected, dragId]) : selected
-                  markSelected(ids)
+                  void markSelected(ids)
                 }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
@@ -438,4 +472,15 @@ export default function MoDealIdInvoiceMark() {
       {sub ? <SubModal state={sub} onClose={() => setSub(null)} /> : null}
     </div>
   )
+}
+
+/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
+function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+  const text =
+    source === 'loading'
+      ? 'Loading from MySQL…'
+      : source === 'mysql'
+        ? 'ZSGTSFTR_DEALID · MySQL'
+        : 'Dummy data — the middleware could not be reached, so marks stay on this screen'
+  return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }
