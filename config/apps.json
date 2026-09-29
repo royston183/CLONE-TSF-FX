@@ -354,6 +354,76 @@
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
     },
     {
+      "code": "ZSGTSFR094",
+      "id": "fo-additional-spot-booking",
+      "route": "/apps/fo-additional-spot-booking",
+      "title": "FO: Additional Spot Booking",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html",
+      "note": "Legacy page never called an API — no fetch, no XMLHttpRequest. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP wiring for the underlying FX/DSS deal tables and the spot-booking write is a follow-up once those entities are defined."
+    },
+    {
+      "code": "ZSGTSFR008",
+      "id": "mo-deal-id-invoicing",
+      "route": "/apps/mo-deal-id-invoicing",
+      "title": "MO: View List of Deal IDs for Invoicing",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/View_List_of_Deal_IDs_for_Invoicing_CALENDAR_FIXED.html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; SAP wiring (ZSGTSFV_FX, the invoice/BL tables the Invoice Finalisation Blotter reads and writes) is a follow-up once those entities are defined."
+    },
+    {
+      "code": "ZSGTSFR033",
+      "id": "mo-generate-invoices-deal-id",
+      "route": "/apps/mo-generate-invoices-deal-id",
+      "title": "MO: Generate Invoices for Deal ID (Single Deal ID)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSF_RBILL_ADJUST_SELECTION_BASIC.html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; covers the Invoice Finalisation Blotter (Adjusted Price/Qty grid, tolerance-based Confirm Invoice with BL Compliance Checklist, View BLs de-assign workflow, Invoice Difference, House Bank/Partner Bank assignment, Amendment, and the more-actions menu). SAP wiring (ZSGTSFV_FX, the invoice/BL tables this reads and writes) is a follow-up once those entities are defined."
+    },
+    {
+      "code": "ZSGTSFR014",
+      "id": "mo-deal-id-invoice-status",
+      "route": "/apps/mo-deal-id-invoice-status",
+      "title": "MO: Check Invoice Status of Deal IDs",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSF_RDEAL_ID_INV_STAT_NO_TXN_UNDERLINE.html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; SAP wiring (ZSGTSFV_FX, the FX/invoice tables the Deal ID Analysis workspace reads) is a follow-up once those entities are defined."
+    },
+    {
+      "code": "ZSGTSFR015",
+      "id": "mo-deal-id-invoice-mark",
+      "route": "/apps/mo-deal-id-invoice-mark",
+      "title": "MO: Mark Deal IDs for Invoicing",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSF_RDEAL_ID_INV_MARK_MANUAL_DEFAULT_LAYOUT.html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; only the Manual Mark invoicing-selection mode exists in the legacy HTML. SAP wiring (ZSGTSFV_FX, the FX/invoice/settlement tables the View Deal ID workspace reads) is a follow-up once those entities are defined."
+    },
+    {
+      "code": "ZSGTSFR025",
+      "id": "fo-ndf-fixing-error-correction",
+      "route": "/apps/fo-ndf-fixing-error-correction",
+      "title": "AE1: TSF FO Error Correction - NDF Fixing",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; the NDF Rate Correction drag-and-drop workflow recalculates the settlement amount client-side and marks the row Fixing Rate Updated. SAP wiring (the NDF transaction table this reads/writes) is a follow-up once that entity is defined."
+    },
+    {
+      "code": "ZSGTSFR079",
+      "id": "fo-create-deal-id-manually",
+      "route": "/apps/fo-create-deal-id-manually",
+      "title": "FO: Create Deal ID Manually",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/ZSGTSF_PCREATE_DEAL_ANAL_SELECTION_BASIC_TIGHT_CARD.html",
+      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; covers the Deal ID Analysis workbench (Basic Details, FX Deals/Planned Trade Invoices/Planned P&L tables, Create Deal with cascading Origin/MC/transaction selects, Change/Confirm, Premium Adjustment, and drag-and-drop Edit Deal Pair). SAP wiring (the MC/FX/invoice tables this reads/writes) is a follow-up once those entities are defined."
+    },
+    {
       "code": "ZSGTSFP002",
       "id": "mo-confirm-fx-deal-id",
       "route": "/apps/mo-confirm-fx-deal-id",

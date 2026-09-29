@@ -1,0 +1,86 @@
+/* Night mode for mo-deal-id-invoicing, derived from mo-deal-id-invoicing.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .modiv {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .modiv input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .modiv select,
+:root[data-theme='dark'] .modiv textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modiv {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --border: #2a3d52;
+  --border-soft: #1b2b3d;
+  --muted: #7f9bb8;
+  --blue-dark: #7cc0f8;
+  --blue-pale: #17304a;
+  --green-pale: #14321f;
+  --amber-pale: #3a2a12;
+  --red-pale: #3a1b1e;
+  --purple-pale: #3a1b1e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .modiv .list-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modiv .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modiv .st-partial {
+  color: #7092eb;
+}
+:root[data-theme='dark'] .modiv .badge-blue {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modiv .badge-orange {
+  color: #ffbe5c;
+}
+:root[data-theme='dark'] .modiv .badge-green {
+  color: #6eed9d;
+  border: 1px solid #26543a;
+}
+:root[data-theme='dark'] .modiv .modal-icon {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modiv .modal-close {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modiv .modal-footer {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modiv .tbtn.danger {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .modiv .tbtn.amber {
+  color: #ffbe5c;
+}
+:root[data-theme='dark'] .modiv .tbtn.purple {
+  color: #a9c2dd;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .modiv .editing-row td {
+  background: #1b2b3d !important;
+}
+:root[data-theme='dark'] .modiv .note-box {
+  border: 1px solid #2d4a6b;
+  color: #709deb;
+}
+:root[data-theme='dark'] .modiv .warn-box {
+  border: 1px solid #5c2b30;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modiv .ok-box {
+  border: 1px solid #26543a;
+  color: #6eed9d;
+}
+:root[data-theme='dark'] .modiv .subgrid-panel {
+  background: #1b2b3d;
+}

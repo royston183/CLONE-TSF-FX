@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NDF Fixing Error Correction</title>
+<style>
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  color: #1d2d3e;
+  background: #f5f7f9;
+  font-size: 13px;
+}
+* { box-sizing: border-box; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.app-header {
+  height: 58px;
+  background: #ffffff;
+  border-bottom: 1px solid #dce3e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+.header-left, .header-right { display: flex; align-items: center; }
+.header-left > * { margin-right: 14px; }
+.header-right > * { margin-left: 8px; }
+.back-btn, .header-btn, .icon-btn, .secondary-btn {
+  border: 1px solid #9fb0c0;
+  background: #ffffff;
+  color: #3f5870;
+  border-radius: 5px;
+  height: 38px;
+  padding: 0 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-btn:hover, .header-btn:hover, .icon-btn:hover, .secondary-btn:hover {
+  background: #f6f9fc;
+}
+.primary-btn {
+  border: 1px solid #0b6fcf;
+  background: #0b74d1;
+  color: #ffffff;
+  border-radius: 5px;
+  height: 36px;
+  padding: 0 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(11,116,209,.18);
+}
+.primary-btn:hover { background: #0968bc; }
+.primary-btn:disabled {
+  border-color: #b9c9d6;
+  background: #dfe8ef;
+  color: #7f94a7;
+  box-shadow: none;
+}
+.logo-mark { width: 28px; height: 36px; position: relative; }
+.logo-mark span { position: absolute; left: 5px; height: 6px; border-radius: 6px; }
+.logo-mark .l1 { top: 3px; width: 20px; background: #cb2b2b; }
+.logo-mark .l2 { top: 11px; width: 15px; background: #f0a11f; }
+.logo-mark .l3 { top: 19px; width: 11px; background: #4e9b4a; }
+.logo-mark .l4 { top: 27px; width: 6px; background: #8b8f92; }
+.page-title { font-size: 21px; line-height: 1; font-weight: 700; color: #203043; }
+.page-tag { color: #708397; font-size: 13px; margin-left: 4px; }
+.header-status {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #26ad62;
+  box-shadow: 0 0 0 4px #e8f7ef;
+  margin-right: 2px;
+}
+.main { padding: 14px 16px 18px; }
+.card {
+  background: #ffffff;
+  border: 1px solid #d8e0e7;
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(35,54,72,.07);
+  overflow: visible;
+}
+.card-head {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dfe5ea;
+  padding: 6px 12px;
+}
+.card-title-wrap { display: flex; align-items: baseline; }
+.card-title { font-weight: 700; font-size: 15px; color: #203043; }
+.record-count { margin-left: 5px; color: #6d8196; font-size: 12px; }
+.work-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e4e9ee;
+  background: #fbfcfd;
+}
+.toolbar-item { margin-right: 7px; margin-bottom: 3px; margin-top: 3px; }
+.search-wrap { position: relative; width: 250px; }
+.search-wrap svg { position: absolute; left: 10px; top: 9px; width: 16px; height: 16px; color: #6e8397; }
+.control {
+  height: 34px;
+  border: 1px solid #aebdcc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #25384a;
+  padding: 0 10px;
+  outline: none;
+}
+.control:focus { border-color: #3f89d7; box-shadow: 0 0 0 2px rgba(63,137,215,.12); }
+.search-input { width: 100%; padding-left: 34px; }
+.filter-select { min-width: 145px; }
+.date-wrap { position: relative; display: inline-block; }
+.date-input { width: 145px; padding-right: 35px; }
+.date-btn {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-left: 1px solid #e2e7eb;
+  background: transparent;
+  color: #4e6983;
+}
+.reset-btn { height: 34px; padding: 0 11px; }
+.action-spacer { flex: 1 1 10px; }
+.drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(11,116,209,.16); }
+.drop-target.drag-over { background: #085fac; transform: translateY(-1px); }
+.icon-btn { width: 36px; padding: 0; height: 34px; }
+.table-shell { width: 100%; overflow: auto; max-height: 500px; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1760px; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 36px;
+  padding: 0 10px;
+  background: #f1f3f5;
+  border-bottom: 1px solid #d5dde4;
+  border-right: 1px solid #e2e7eb;
+  color: #466079;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  user-select: none;
+}
+thead th.sortable { cursor: pointer; }
+thead th.sortable:hover { background: #e9eef2; }
+thead th:last-child { border-right: 0; }
+tbody td {
+  height: 38px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e5eaee;
+  border-right: 1px solid #edf0f2;
+  background: #ffffff;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+tbody td:last-child { border-right: 0; }
+tbody tr:hover td { background: #f7fbff; }
+tbody tr.selected td { background: #eaf4ff; }
+tbody tr.dragging { opacity: .58; }
+.cell-check { width: 40px; text-align: center; }
+.row-check { width: 15px; height: 15px; }
+.link-btn {
+  border: 0;
+  background: transparent;
+  color: #006dcc;
+  text-decoration: underline;
+  font-weight: 700;
+  padding: 0;
+}
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.center { text-align: center; }
+.status-text { color: #9a6700; font-weight: 700; }
+.status-code { color: #6a7d90; margin-right: 4px; }
+.sort-ind { color: #698095; font-size: 10px; margin-left: 4px; }
+.table-footer {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: #687e92;
+  border-top: 1px solid #e4e9ee;
+}
+.pager { display: flex; align-items: center; }
+.pager button {
+  width: 30px;
+  height: 28px;
+  margin-left: 5px;
+  border: 1px solid #d5dde4;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #455f78;
+}
+.pager button:disabled { color: #c0cbd5; background: #fbfcfd; }
+.page-current {
+  height: 28px;
+  min-width: 30px;
+  margin-left: 5px;
+  border: 1px solid #b9c6d1;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #344e67;
+  background: #ffffff;
+}
+.calendar-pop {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid #cbd5de;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(35,54,72,.18);
+  z-index: 20;
+  padding: 10px;
+  display: none;
+}
+.calendar-pop.open { display: block; }
+.cal-head { display: flex; align-items: center; margin-bottom: 8px; }
+.cal-head button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d8e0e7;
+  background: #ffffff;
+  border-radius: 4px;
+}
+.cal-select { height: 30px; border: 1px solid #cbd5de; border-radius: 4px; margin: 0 4px; }
+.cal-month { flex: 1; }
+.cal-year { width: 74px; }
+.cal-grid { display: table; width: 100%; table-layout: fixed; }
+.cal-row { display: table-row; }
+.cal-cell {
+  display: table-cell;
+  height: 31px;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 4px;
+  color: #354f67;
+}
+.cal-day-name { color: #74879a; font-size: 11px; font-weight: 700; }
+.cal-date { cursor: pointer; }
+.cal-date:hover { background: #eef5fb; }
+.cal-date.today { box-shadow: inset 0 0 0 1px #62a3dd; }
+.cal-date.selected { background: #0b74d1; color: #ffffff; font-weight: 700; }
+.cal-date.blank { cursor: default; }
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(24,38,52,.42);
+  z-index: 40;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.overlay.open { display: flex; }
+.modal {
+  width: 620px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 18px 55px rgba(23,37,51,.28);
+  border: 1px solid #d4dce3;
+}
+.modal.detail-modal { width: 800px; }
+.modal-head {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e6ea;
+}
+.modal-title { font-size: 17px; font-weight: 700; color: #203043; }
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  color: #62788e;
+  font-size: 22px;
+}
+.close-btn:hover { background: #f0f4f7; }
+.modal-body { padding: 16px; }
+.section-box {
+  border: 1px solid #dce3e8;
+  border-radius: 7px;
+  padding: 13px;
+  background: #fbfcfd;
+}
+.section-label { font-weight: 700; margin-bottom: 12px; color: #263a4c; }
+.form-row { display: flex; margin: 0 -6px 12px; }
+.field { flex: 1; padding: 0 6px; min-width: 0; }
+.field.wide { flex: 2; }
+.field label { display: block; color: #5e7388; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.field-control {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #b7c5d1;
+  border-radius: 4px;
+  padding: 0 10px;
+  color: #23384c;
+  background: #ffffff;
+}
+.field-control.readonly { background: #f0f3f5; color: #445d73; }
+.field-error { color: #c93d35; font-size: 11px; margin-top: 4px; min-height: 13px; }
+.modal-foot {
+  min-height: 58px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid #e1e6ea;
+}
+.modal-foot button { margin-left: 8px; }
+.detail-grid { display: flex; flex-wrap: wrap; margin: -4px -7px; }
+.detail-item { width: 25%; padding: 7px; }
+.detail-item .k { font-size: 11px; color: #72869a; font-weight: 700; margin-bottom: 4px; }
+.detail-item .v { color: #24394d; word-break: break-word; }
+.toast-wrap { position: fixed; right: 18px; top: 70px; z-index: 80; }
+.toast {
+  min-width: 300px;
+  max-width: 430px;
+  background: #ffffff;
+  border: 1px solid #b9dcca;
+  border-left: 4px solid #27ae60;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(30,50,70,.18);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  color: #274337;
+}
+.empty-state { padding: 40px; text-align: center; color: #72869a; display: none; }
+@media (max-width: 900px) {
+  .page-tag { display: none; }
+  .header-status { display: none; }
+  .main { padding: 10px; }
+  .action-spacer { flex-basis: 100%; height: 0; }
+  .detail-item { width: 50%; }
+  .search-wrap { width: 100%; }
+}
+@media (max-width: 620px) {
+  .page-title { font-size: 17px; }
+  .logo-mark { display: none; }
+  .header-btn span.txt { display: none; }
+  .detail-item { width: 100%; }
+  .form-row { display: block; margin: 0; }
+  .field { padding: 0; margin-bottom: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="app-header">
+  <div class="header-left">
+    <button class="back-btn" id="backBtn" type="button" title="Back">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="none" stroke="currentColor" stroke-width="2" d="M19 12H5m6-6-6 6 6 6"/>
+      </svg>
+      <span style="margin-left:7px">Back</span>
+    </button>
+    <div class="logo-mark" aria-label="FS">
+      <span class="l1"></span><span class="l2"></span><span class="l3"></span><span class="l4"></span>
+    </div>
+    <div class="page-title">NDF Fixing Error Correction</div>
+    <div class="page-tag">FO</div>
+  </div>
+  <div class="header-right">
+    <div class="header-status" title="Application ready"></div>
+    <button class="header-btn" id="refreshBtn" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="none" stroke="currentColor" stroke-width="2" d="M20 11a8 8 0 1 0 2 5M20 4v7h-7"/>
+      </svg>
+      <span class="txt" style="margin-left:7px">Refresh</span>
+    </button>
+  </div>
+</div>
+
+<main class="main">
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title-wrap">
+        <div class="card-title">NDF Fixing Transactions</div>
+        <div class="record-count" id="recordCount">0 records</div>
+      </div>
+    </div>
+
+    <div class="work-toolbar">
+      <div class="toolbar-item search-wrap">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M16.5 16.5L21 21" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <input class="control search-input" id="searchInput" type="text" placeholder="Search transactions...">
+      </div>
+
+      <div class="toolbar-item">
+        <select class="control filter-select" id="companyFilter" title="Company Code">
+          <option value="">Company Code</option>
+        </select>
+      </div>
+
+      <div class="toolbar-item date-wrap" id="dateWrap">
+        <input class="control date-input" id="dateFilter" type="text" value="28-09-2026" placeholder="Fixing Date">
+        <button class="date-btn" id="dateBtn" type="button" title="Choose fixing date">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="none" stroke="currentColor" stroke-width="2" d="M4 6h16v14H4zM8 3v6m8-6v6M4 10h16"/>
+          </svg>
+        </button>
+        <div class="calendar-pop" id="calendarPop"></div>
+      </div>
+
+      <button class="toolbar-item secondary-btn reset-btn" id="resetBtn" type="button">Reset</button>
+      <div class="action-spacer"></div>
+
+      <button class="toolbar-item primary-btn drop-target" id="ndfBtn" type="button" disabled>
+        NDF Rate Correction
+      </button>
+
+      <button class="toolbar-item icon-btn" id="downloadBtn" type="button" title="Download CSV">
+        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="none" stroke="currentColor" stroke-width="2" d="M12 3v12m-5-5 5 5 5-5M5 20h14"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="table-shell" id="tableShell">
+      <table id="txnTable">
+        <thead>
+          <tr>
+            <th class="cell-check"><input id="headerCheck" type="checkbox" disabled title="Single selection"></th>
+            <th class="sortable" data-sort="rfha">Transaction <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="bukrs">CoCode <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="company">Company Name <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="product">Product Type <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="pair">Currency Pair <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="side">Buy/Sell <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="amt1">Amount 1 <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="curr1">Crcy 1 <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="amt2">Amount 2 <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="curr2">Crcy 2 <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="fixDate">Fixing Date <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="fixRef">Fixing Ref <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="oldRate">Old Fixing Rate <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="trader">Trader <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="partner">Business Partner <span class="sort-ind">◆</span></th>
+            <th class="sortable" data-sort="statusText">Status <span class="sort-ind">◆</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">No transactions match the current filters.</div>
+    </div>
+
+    <div class="table-footer">
+      <div id="showingText">Showing 0 of 0</div>
+      <div class="pager">
+        <button id="prevBtn" type="button" title="Previous page">‹</button>
+        <span class="page-current" id="pageNo">1</span>
+        <button id="nextBtn" type="button" title="Next page">›</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="ndfOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">NDF Rate Correction</div>
+      <button class="close-btn" type="button" data-close="ndfOverlay">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-box">
+        <div class="section-label">NDF Details</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Fixing Date</label>
+            <input class="field-control readonly" id="mFixDate" type="text" readonly>
+          </div>
+          <div class="field wide">
+            <label>Fixing Ref</label>
+            <input class="field-control readonly" id="mFixRef" type="text" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Old Fixing Rate</label>
+            <input class="field-control readonly num" id="mOldRate" type="text" readonly>
+          </div>
+          <div class="field">
+            <label>New Fixing Rate</label>
+            <input class="field-control num" id="mNewRate" type="text" inputmode="decimal">
+            <div class="field-error" id="rateError"></div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div class="field wide">
+            <label>Settlement Amt</label>
+            <input class="field-control readonly num" id="mSettlement" type="text" readonly>
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <input class="field-control readonly" id="mSettlementCurr" type="text" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" type="button" data-close="ndfOverlay">Cancel</button>
+      <button class="primary-btn" id="updateBtn" type="button">Update</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detailOverlay" role="dialog" aria-modal="true">
+  <div class="modal detail-modal">
+    <div class="modal-head">
+      <div class="modal-title">Transaction Details</div>
+      <button class="close-btn" type="button" data-close="detailOverlay">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-box">
+        <div class="section-label">Transaction Overview</div>
+        <div class="detail-grid" id="detailGrid"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary-btn" type="button" data-close="detailOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var INITIAL_DATE = '28-09-2026';
+  var PAGE_SIZE = 8;
+  var initialData = [
+    {rfha:'5100841', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'USD/SGD', side:'Buy', amt1:1000000, curr1:'USD', amt2:-742100, curr2:'SGD', fixDate:'28-09-2026', fixRef:'WM_REUTERS_11AM',
+      fixRefName:'WM/Reuters 11:00 Fixing', oldRate:1.346800, trader:'OGA', partner:'BARCLAYS BANK PLC', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'SGD'},
+    {rfha:'5100842', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'EUR/USD', side:'Sell', amt1:-750000, curr1:'EUR', amt2:879600, curr2:'USD', fixDate:'28-09-2026', fixRef:'ECB_1400',
+      fixRefName:'ECB Reference Rate 14:00', oldRate:1.172800, trader:'OGA', partner:'STANDARD CHARTERED BANK', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'},
+    {rfha:'5100843', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'GBP/USD', side:'Buy', amt1:525000, curr1:'GBP', amt2:-707700, curr2:'USD', fixDate:'28-09-2026', fixRef:'WM_REUTERS_4PM',
+      fixRefName:'WM/Reuters 16:00 Fixing', oldRate:1.348000, trader:'OTL', partner:'HSBC BANK MIDDLE EAST', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'},
+    {rfha:'5100844', bukrs:'IN11', company:'Olam Agri India Pvt Ltd', product:'60D', pair:'USD/INR', side:'Sell', amt1:-1200000, curr1:'USD', amt2:14371.26, curr2:'INR', fixDate:'28-09-2026', fixRef:'RBI_FBIL',
+      fixRefName:'FBIL USD/INR Reference Rate', oldRate:83.500000, trader:'OTL', partner:'DBS BANK INDIA', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'INR'},
+    {rfha:'5100845', bukrs:'SG03', company:'Olam International Ltd', product:'60D', pair:'USD/SGD', side:'Sell', amt1:-2250000, curr1:'USD', amt2:1660500, curr2:'SGD', fixDate:'28-09-2026', fixRef:'MAS_1200',
+      fixRefName:'MAS 12:00 Reference Rate', oldRate:1.352900, trader:'OGA', partner:'DBS BANK LTD', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'SGD'},
+    {rfha:'5100846', bukrs:'SG03', company:'Olam International Ltd', product:'60D', pair:'EUR/SGD', side:'Buy', amt1:600000, curr1:'EUR', amt2:-474950, curr2:'SGD', fixDate:'28-09-2026', fixRef:'WM_REUTERS_4PM',
+      fixRefName:'WM/Reuters 16:00 Fixing', oldRate:1.263400, trader:'OTL', partner:'CITIBANK N.A.', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'SGD'},
+    {rfha:'5100847', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'AUD/USD', side:'Buy', amt1:900000, curr1:'AUD', amt2:-585750, curr2:'USD', fixDate:'28-09-2026', fixRef:'RBA_1600',
+      fixRefName:'RBA 16:00 Reference Rate', oldRate:0.649900, trader:'OGA', partner:'BNP PARIBAS', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'},
+    {rfha:'5100848', bukrs:'IN11', company:'Olam Agri India Pvt Ltd', product:'60D', pair:'EUR/INR', side:'Sell', amt1:-350000, curr1:'EUR', amt2:4052.25, curr2:'INR', fixDate:'28-09-2026', fixRef:'RBI_FBIL',
+      fixRefName:'FBIL EUR/INR Reference Rate', oldRate:96.740000, trader:'OTL', partner:'STANDARD CHARTERED BANK INDIA', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'INR'},
+    {rfha:'5100849', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'USD/AED', side:'Buy', amt1:5000000, curr1:'USD', amt2:-1361289, curr2:'AED', fixDate:'28-09-2026', fixRef:'CBUAE_FIX',
+      fixRefName:'Central Bank UAE Reference', oldRate:3.672500, trader:'OGA', partner:'EMIRATES NBD', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'AED'},
+    {rfha:'5100850', bukrs:'SG03', company:'Olam International Ltd', product:'60D', pair:'USD/CNH', side:'Sell', amt1:-1800000, curr1:'USD', amt2:251930, curr2:'CNH', fixDate:'28-09-2026', fixRef:'PBOC_1500',
+      fixRefName:'PBOC Offshore Reference', oldRate:7.145000, trader:'OTL', partner:'BANK OF CHINA', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'CNH'},
+    {rfha:'5100851', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'USD/SGD', side:'Buy', amt1:1250000, curr1:'USD', amt2:-926100, curr2:'SGD', fixDate:'27-09-2026', fixRef:'WM_REUTERS_11AM',
+      fixRefName:'WM/Reuters 11:00 Fixing', oldRate:1.349700, trader:'OGA', partner:'BARCLAYS BANK PLC', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'SGD'},
+    {rfha:'5100852', bukrs:'IN11', company:'Olam Agri India Pvt Ltd', product:'60D', pair:'USD/INR', side:'Buy', amt1:950000, curr1:'USD', amt2:-11397.00, curr2:'INR', fixDate:'27-09-2026', fixRef:'RBI_FBIL',
+      fixRefName:'FBIL USD/INR Reference Rate', oldRate:83.355000, trader:'OTL', partner:'HDFC BANK', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'INR'},
+    {rfha:'5100853', bukrs:'SG03', company:'Olam International Ltd', product:'60D', pair:'USD/SGD', side:'Sell', amt1:-1650000, curr1:'USD', amt2:1220100, curr2:'SGD', fixDate:'29-09-2026', fixRef:'MAS_1200',
+      fixRefName:'MAS 12:00 Reference Rate', oldRate:1.350900, trader:'OGA', partner:'HSBC SINGAPORE', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'SGD'},
+    {rfha:'5100854', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'EUR/USD', side:'Buy', amt1:450000, curr1:'EUR', amt2:-528030, curr2:'USD', fixDate:'29-09-2026', fixRef:'ECB_1400',
+      fixRefName:'ECB Reference Rate 14:00', oldRate:1.173400, trader:'OTL', partner:'DEUTSCHE BANK AG', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'},
+    {rfha:'5100855', bukrs:'SG03', company:'Olam International Ltd', product:'60D', pair:'AUD/USD', side:'Sell', amt1:-700000, curr1:'AUD', amt2:455350, curr2:'USD', fixDate:'30-09-2026', fixRef:'RBA_1600',
+      fixRefName:'RBA 16:00 Reference Rate', oldRate:0.650500, trader:'OGA', partner:'ANZ BANK', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'},
+    {rfha:'5100856', bukrs:'AE13', company:'Olam International DMCC', product:'60D', pair:'GBP/USD', side:'Sell', amt1:-400000, curr1:'GBP', amt2:539360, curr2:'USD', fixDate:'30-09-2026', fixRef:'WM_REUTERS_4PM',
+      fixRefName:'WM/Reuters 16:00 Fixing', oldRate:1.348400, trader:'OTL', partner:'STANDARD CHARTERED BANK', status:'11', statusText:'Pending NDF Fixing', foreignFirst:true, settleCurr:'USD'}
+  ];
+
+  var data = cloneData(initialData);
+  var selectedId = null;
+  var currentPage = 1;
+  var sortKey = 'rfha';
+  var sortDir = -1;
+  var calendarMonth = null;
+  var calendarYear = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tbody = $('tableBody');
+  var searchInput = $('searchInput');
+  var companyFilter = $('companyFilter');
+  var dateFilter = $('dateFilter');
+  var ndfBtn = $('ndfBtn');
+
+  function cloneData(arr) {
+    var out = [];
+    var i;
+    for (i = 0; i < arr.length; i += 1) {
+      var item = {};
+      var k;
+      for (k in arr[i]) {
+        if (arr[i].hasOwnProperty(k)) { item[k] = arr[i][k]; }
+      }
+      out.push(item);
+    }
+    return out;
+  }
+
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function money(v) {
+    var n = Number(v);
+    if (!isFinite(n)) { return ''; }
+    return n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function rate(v) {
+    var n = Number(v);
+    if (!isFinite(n)) { return ''; }
+    return n.toFixed(6);
+  }
+
+  function parseDMY(s) {
+    var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s || '');
+    var d;
+    if (!m) { return null; }
+    d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    if (d.getFullYear() !== Number(m[3])) { return null; }
+    if (d.getMonth() !== Number(m[2]) - 1) { return null; }
+    if (d.getDate() !== Number(m[1])) { return null; }
+    return d;
+  }
+
+  function dmy(d) {
+    var dd = String(d.getDate());
+    var mm = String(d.getMonth() + 1);
+    if (dd.length < 2) { dd = '0' + dd; }
+    if (mm.length < 2) { mm = '0' + mm; }
+    return dd + '-' + mm + '-' + d.getFullYear();
+  }
+
+  function populateCompanies() {
+    var seen = {};
+    var list = [];
+    var i;
+    for (i = 0; i < initialData.length; i += 1) {
+      if (!seen[initialData[i].bukrs]) {
+        seen[initialData[i].bukrs] = true;
+        list.push(initialData[i].bukrs);
+      }
+    }
+    list.sort();
+    for (i = 0; i < list.length; i += 1) {
+      var opt = document.createElement('option');
+      opt.value = list[i];
+      opt.text = list[i];
+      companyFilter.appendChild(opt);
+    }
+  }
+
+  function searchableString(r) {
+    return [r.rfha,r.bukrs,r.company,r.product,r.pair,r.side,r.amt1,r.curr1,
+      r.amt2,r.curr2,r.fixDate,r.fixRef,r.fixRefName,r.oldRate,r.trader,
+      r.partner,r.status,r.statusText].join(' ').toLowerCase();
+  }
+
+  function compareValues(a, b, key) {
+    var va = a[key];
+    var vb = b[key];
+    if (key === 'fixDate') {
+      va = parseDMY(va);
+      vb = parseDMY(vb);
+      va = va ? va.getTime() : 0;
+      vb = vb ? vb.getTime() : 0;
+    }
+    if (typeof va === 'number' && typeof vb === 'number') {
+      return va < vb ? -1 : (va > vb ? 1 : 0);
+    }
+    va = String(va).toLowerCase();
+    vb = String(vb).toLowerCase();
+    return va < vb ? -1 : (va > vb ? 1 : 0);
+  }
+
+  function filteredRows() {
+    var q = searchInput.value.toLowerCase().replace(/^\s+|\s+$/g, '');
+    var co = companyFilter.value;
+    var dt = dateFilter.value.replace(/^\s+|\s+$/g, '');
+    var rows = [];
+    var i;
+    for (i = 0; i < data.length; i += 1) {
+      var r = data[i];
+      if (r.status !== '11') { continue; }
+      if (q && searchableString(r).indexOf(q) === -1) { continue; }
+      if (co && r.bukrs !== co) { continue; }
+      if (dt && r.fixDate !== dt) { continue; }
+      rows.push(r);
+    }
+    rows.sort(function (a, b) { return compareValues(a, b, sortKey) * sortDir; });
+    return rows;
+  }
+
+  function render() {
+    var rows = filteredRows();
+    var total = rows.length;
+    var pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    var start;
+    var end;
+    var html = '';
+    var i;
+    if (currentPage > pages) { currentPage = pages; }
+    start = (currentPage - 1) * PAGE_SIZE;
+    end = Math.min(start + PAGE_SIZE, total);
+
+    for (i = start; i < end; i += 1) {
+      var r = rows[i];
+      var selected = selectedId === r.rfha;
+      html += '<tr draggable="true" data-id="' + esc(r.rfha) + '" class="' + (selected ? 'selected' : '') + '">';
+      html += '<td class="cell-check"><input class="row-check" type="checkbox" ' + (selected ? 'checked' : '') + '></td>';
+      html += '<td><button class="link-btn txn-link" type="button" data-id="' + esc(r.rfha) + '">' + esc(r.rfha) + '</button></td>';
+      html += '<td>' + esc(r.bukrs) + '</td>';
+      html += '<td>' + esc(r.company) + '</td>';
+      html += '<td>' + esc(r.product) + '</td>';
+      html += '<td>' + esc(r.pair) + '</td>';
+      html += '<td>' + esc(r.side) + '</td>';
+      html += '<td class="num">' + money(r.amt1) + '</td>';
+      html += '<td>' + esc(r.curr1) + '</td>';
+      html += '<td class="num">' + money(r.amt2) + '</td>';
+      html += '<td>' + esc(r.curr2) + '</td>';
+      html += '<td>' + esc(r.fixDate) + '</td>';
+      html += '<td title="' + esc(r.fixRefName) + '">' + esc(r.fixRef) + '</td>';
+      html += '<td class="num">' + rate(r.oldRate) + '</td>';
+      html += '<td>' + esc(r.trader) + '</td>';
+      html += '<td>' + esc(r.partner) + '</td>';
+      html += '<td><span class="status-code">' + esc(r.status) + '</span><span class="status-text">' + esc(r.statusText) + '</span></td>';
+      html += '</tr>';
+    }
+
+    tbody.innerHTML = html;
+    $('recordCount').innerHTML = total + (total === 1 ? ' record' : ' records');
+    $('emptyState').style.display = total ? 'none' : 'block';
+    $('txnTable').style.display = total ? 'table' : 'none';
+    $('pageNo').innerHTML = String(currentPage);
+    $('prevBtn').disabled = currentPage <= 1;
+    $('nextBtn').disabled = currentPage >= pages;
+    $('showingText').innerHTML = total ? 'Showing ' + (start + 1) + '–' + end + ' of ' + total : 'Showing 0 of 0';
+    ndfBtn.disabled = !findById(selectedId);
+    bindRowEvents();
+  }
+
+  function findById(id) {
+    var i;
+    if (!id) { return null; }
+    for (i = 0; i < data.length; i += 1) {
+      if (data[i].rfha === id && data[i].status === '11') { return data[i]; }
+    }
+    return null;
+  }
+
+  function selectRow(id) {
+    selectedId = id;
+    render();
+  }
+
+  function bindRowEvents() {
+    var rows = tbody.getElementsByTagName('tr');
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
+      rows[i].onclick = function (e) {
+        var t = e.target || e.srcElement;
+        var id = this.getAttribute('data-id');
+        if (t.className && String(t.className).indexOf('txn-link') >= 0) { return; }
+        selectRow(id);
+      };
+      rows[i].ondblclick = function () {
+        openDetails(this.getAttribute('data-id'));
+      };
+      rows[i].ondragstart = function (e) {
+        var id = this.getAttribute('data-id');
+        selectRow(id);
+        this.className += ' dragging';
+        ndfBtn.className += ' drag-ready';
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', id);
+        }
+      };
+      rows[i].ondragend = function () {
+        this.className = this.className.replace(/\s*dragging/g, '');
+        ndfBtn.className = ndfBtn.className.replace(/\s*drag-ready/g, '').replace(/\s*drag-over/g, '');
+      };
+    }
+
+    var links = document.getElementsByClassName('txn-link');
+    for (i = 0; i < links.length; i += 1) {
+      links[i].onclick = function (e) {
+        if (e.stopPropagation) { e.stopPropagation(); } else { e.cancelBubble = true; }
+        selectRow(this.getAttribute('data-id'));
+        openDetails(this.getAttribute('data-id'));
+      };
+    }
+
+    var checks = document.getElementsByClassName('row-check');
+    for (i = 0; i < checks.length; i += 1) {
+      checks[i].onclick = function (e) {
+        var tr = this.parentNode.parentNode;
+        if (e.stopPropagation) { e.stopPropagation(); } else { e.cancelBubble = true; }
+        selectRow(tr.getAttribute('data-id'));
+      };
+    }
+  }
+
+  function openOverlay(id) { $(id).className += ' open'; }
+  function closeOverlay(id) { $(id).className = $(id).className.replace(/\s*open/g, ''); }
+
+  function openCorrection() {
+    var r = findById(selectedId);
+    if (!r) { showToast('Select a transaction first.', false); return; }
+    $('mFixDate').value = r.fixDate;
+    $('mFixRef').value = r.fixRef + ' — ' + r.fixRefName;
+    $('mOldRate').value = rate(r.oldRate);
+    $('mNewRate').value = rate(r.oldRate);
+    $('mSettlementCurr').value = r.settleCurr;
+    $('rateError').innerHTML = '';
+    recalcSettlement();
+    openOverlay('ndfOverlay');
+    setTimeout(function () { $('mNewRate').focus(); $('mNewRate').select(); }, 20);
+  }
+
+  function specialFactor(curr) {
+    return curr === 'IDR' || curr === 'VND' || curr === 'TWD' ? 100 : 1;
+  }
+
+  function calcSettlement(r, newRate) {
+    var rateValue = Number(newRate);
+    var factor = specialFactor(r.settleCurr);
+    if (!isFinite(rateValue) || rateValue === 0) { return null; }
+    if (r.foreignFirst) {
+      return r.amt2 + ((r.amt1 * factor) / rateValue);
+    }
+    return r.amt1 + ((r.amt2 * factor) / rateValue);
+  }
+
+  function recalcSettlement() {
+    var r = findById(selectedId);
+    var v;
+    if (!r) { return; }
+    v = calcSettlement(r, parseFloat($('mNewRate').value));
+    $('mSettlement').value = v === null ? '' : money(v);
+  }
+
+  function updateFixing() {
+    var r = findById(selectedId);
+    var newRate = parseFloat($('mNewRate').value);
+    if (!r) { return; }
+    if (!isFinite(newRate) || newRate <= 0) {
+      $('rateError').innerHTML = 'Enter a valid new fixing rate greater than zero.';
+      $('mNewRate').focus();
+      return;
+    }
+    r.oldRate = newRate;
+    r.status = '12';
+    r.statusText = 'Fixing Rate Updated';
+    closeOverlay('ndfOverlay');
+    showToast('Fixing rate updated successfully for transaction ' + r.rfha + '.', true);
+    selectedId = null;
+    render();
+  }
+
+  function openDetails(id) {
+    var r = findById(id);
+    var items;
+    var html = '';
+    var i;
+    if (!r) { return; }
+    items = [
+      ['Transaction', r.rfha], ['Company Code', r.bukrs], ['Company Name', r.company], ['Product Type', r.product],
+      ['Currency Pair', r.pair], ['Buy/Sell', r.side], ['Amount 1', money(r.amt1) + ' ' + r.curr1],
+      ['Amount 2', money(r.amt2) + ' ' + r.curr2], ['Fixing Date', r.fixDate], ['Fixing Ref', r.fixRef],
+      ['Fixing Ref Description', r.fixRefName], ['Old Fixing Rate', rate(r.oldRate)], ['Trader', r.trader],
+      ['Business Partner', r.partner], ['Transaction Status', r.status], ['Status Description', r.statusText]
+    ];
+    for (i = 0; i < items.length; i += 1) {
+      html += '<div class="detail-item"><div class="k">' + esc(items[i][0]) + '</div><div class="v">' + esc(items[i][1]) + '</div></div>';
+    }
+    $('detailGrid').innerHTML = html;
+    openOverlay('detailOverlay');
+  }
+
+  function showToast(message, success) {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    if (!success) {
+      t.style.borderColor = '#ead6a6';
+      t.style.borderLeftColor = '#e09218';
+      t.style.color = '#6a501a';
+    }
+    t.innerHTML = esc(message);
+    $('toastWrap').appendChild(t);
+    setTimeout(function () {
+      if (t.parentNode) { t.parentNode.removeChild(t); }
+    }, 3600);
+  }
+
+  function resetWorkbench() {
+    searchInput.value = '';
+    companyFilter.value = '';
+    dateFilter.value = INITIAL_DATE;
+    selectedId = null;
+    currentPage = 1;
+    sortKey = 'rfha';
+    sortDir = -1;
+    render();
+  }
+
+  function refreshWorkbench() {
+    data = cloneData(initialData);
+    resetWorkbench();
+    closeAllOverlays();
+    showToast('Workbench refreshed.', true);
+  }
+
+  function closeAllOverlays() {
+    closeOverlay('ndfOverlay');
+    closeOverlay('detailOverlay');
+    $('calendarPop').className = 'calendar-pop';
+  }
+
+  function downloadCSV() {
+    var rows = filteredRows();
+    var head = ['Transaction','Company Code','Company Name','Product Type','Currency Pair','Buy/Sell','Amount 1','Currency 1','Amount 2','Currency 2','Fixing Date','Fixing Ref','Old Fixing Rate','Trader','Business Partner','Status'];
+    var lines = [head.join(',')];
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
+      var r = rows[i];
+      var vals = [r.rfha,r.bukrs,r.company,r.product,r.pair,r.side,r.amt1,r.curr1,r.amt2,r.curr2,r.fixDate,r.fixRef,rate(r.oldRate),r.trader,r.partner,r.status + ' ' + r.statusText];
+      var j;
+      for (j = 0; j < vals.length; j += 1) {
+        vals[j] = '"' + String(vals[j]).replace(/"/g, '""') + '"';
+      }
+      lines.push(vals.join(','));
+    }
+    var blob = new Blob([lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'ndf_fixing_transactions.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  function initSort() {
+    var ths = document.getElementsByClassName('sortable');
+    var i;
+    for (i = 0; i < ths.length; i += 1) {
+      ths[i].onclick = function () {
+        var key = this.getAttribute('data-sort');
+        if (sortKey === key) { sortDir = sortDir * -1; }
+        else { sortKey = key; sortDir = 1; }
+        currentPage = 1;
+        render();
+      };
+    }
+  }
+
+  function initCalendar() {
+    var date = parseDMY(dateFilter.value) || new Date();
+    calendarMonth = date.getMonth();
+    calendarYear = date.getFullYear();
+    $('dateBtn').onclick = function (e) {
+      var pop = $('calendarPop');
+      if (e.stopPropagation) { e.stopPropagation(); } else { e.cancelBubble = true; }
+      if (pop.className.indexOf('open') >= 0) {
+        pop.className = 'calendar-pop';
+        return;
+      }
+      date = parseDMY(dateFilter.value) || new Date();
+      calendarMonth = date.getMonth();
+      calendarYear = date.getFullYear();
+      renderCalendar();
+      pop.className = 'calendar-pop open';
+    };
+    $('calendarPop').onclick = function (e) {
+      if (e.stopPropagation) { e.stopPropagation(); } else { e.cancelBubble = true; }
+    };
+  }
+
+  function renderCalendar() {
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var selected = parseDMY(dateFilter.value);
+    var today = new Date();
+    var first = new Date(calendarYear, calendarMonth, 1);
+    var last = new Date(calendarYear, calendarMonth + 1, 0);
+    var startDay = first.getDay();
+    var html = '<div class="cal-head">';
+    var i;
+    html += '<button type="button" id="calPrev">‹</button>';
+    html += '<select class="cal-select cal-month" id="calMonth">';
+    for (i = 0; i < months.length; i += 1) {
+      html += '<option value="' + i + '" ' + (i === calendarMonth ? 'selected' : '') + '>' + months[i] + '</option>';
+    }
+    html += '</select>';
+    html += '<select class="cal-select cal-year" id="calYear">';
+    for (i = calendarYear - 5; i <= calendarYear + 5; i += 1) {
+      html += '<option value="' + i + '" ' + (i === calendarYear ? 'selected' : '') + '>' + i + '</option>';
+    }
+    html += '</select>';
+    html += '<button type="button" id="calNext">›</button></div>';
+    html += '<div class="cal-grid"><div class="cal-row">';
+    var dn = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    for (i = 0; i < 7; i += 1) { html += '<div class="cal-cell cal-day-name">' + dn[i] + '</div>'; }
+    html += '</div>';
+    var cell = 0;
+    var day = 1;
+    while (day <= last.getDate()) {
+      html += '<div class="cal-row">';
+      for (i = 0; i < 7; i += 1) {
+        if (cell < startDay || day > last.getDate()) {
+          html += '<div class="cal-cell cal-date blank"></div>';
+        } else {
+          var cd = new Date(calendarYear, calendarMonth, day);
+          var cls = 'cal-cell cal-date';
+          if (today.getFullYear() === calendarYear && today.getMonth() === calendarMonth && today.getDate() === day) {
+            cls += ' today';
+          }
+          if (selected && selected.getFullYear() === calendarYear && selected.getMonth() === calendarMonth && selected.getDate() === day) {
+            cls += ' selected';
+          }
+          html += '<div class="' + cls + '" data-day="' + day + '">' + day + '</div>';
+          day += 1;
+        }
+        cell += 1;
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    $('calendarPop').innerHTML = html;
+    $('calPrev').onclick = function () {
+      calendarMonth -= 1;
+      if (calendarMonth < 0) { calendarMonth = 11; calendarYear -= 1; }
+      renderCalendar();
+    };
+    $('calNext').onclick = function () {
+      calendarMonth += 1;
+      if (calendarMonth > 11) { calendarMonth = 0; calendarYear += 1; }
+      renderCalendar();
+    };
+    $('calMonth').onchange = function () { calendarMonth = Number(this.value); renderCalendar(); };
+    $('calYear').onchange = function () { calendarYear = Number(this.value); renderCalendar(); };
+    var dates = $('calendarPop').getElementsByClassName('cal-date');
+    for (i = 0; i < dates.length; i += 1) {
+      dates[i].onclick = function () {
+        var d = this.getAttribute('data-day');
+        if (!d) { return; }
+        dateFilter.value = dmy(new Date(calendarYear, calendarMonth, Number(d)));
+        $('calendarPop').className = 'calendar-pop';
+        currentPage = 1;
+        selectedId = null;
+        render();
+      };
+    }
+  }
+
+  function initEvents() {
+    searchInput.oninput = function () { currentPage = 1; selectedId = null; render(); };
+    companyFilter.onchange = function () { currentPage = 1; selectedId = null; render(); };
+    dateFilter.oninput = function () {
+      currentPage = 1;
+      selectedId = null;
+      if (dateFilter.value === '' || parseDMY(dateFilter.value)) { render(); }
+    };
+    $('resetBtn').onclick = resetWorkbench;
+    $('refreshBtn').onclick = refreshWorkbench;
+    $('downloadBtn').onclick = downloadCSV;
+    ndfBtn.onclick = openCorrection;
+    $('updateBtn').onclick = updateFixing;
+    $('mNewRate').oninput = function () { $('rateError').innerHTML = ''; recalcSettlement(); };
+    $('prevBtn').onclick = function () { if (currentPage > 1) { currentPage -= 1; render(); } };
+    $('nextBtn').onclick = function () { currentPage += 1; render(); };
+    $('backBtn').onclick = function () { showToast('Back navigation is not connected in this standalone demo.', false); };
+
+    ndfBtn.ondragover = function (e) {
+      if (ndfBtn.disabled) { return; }
+      if (e.preventDefault) { e.preventDefault(); }
+      ndfBtn.className = ndfBtn.className.replace(/\s*drag-over/g, '') + ' drag-over';
+      if (e.dataTransfer) { e.dataTransfer.dropEffect = 'move'; }
+    };
+    ndfBtn.ondragleave = function () {
+      ndfBtn.className = ndfBtn.className.replace(/\s*drag-over/g, '');
+    };
+    ndfBtn.ondrop = function (e) {
+      var id = '';
+      if (e.preventDefault) { e.preventDefault(); }
+      if (e.dataTransfer) { id = e.dataTransfer.getData('text/plain'); }
+      ndfBtn.className = ndfBtn.className.replace(/\s*drag-over/g, '').replace(/\s*drag-ready/g, '');
+      if (id) { selectedId = id; }
+      openCorrection();
+    };
+
+    var closers = document.querySelectorAll('[data-close]');
+    var i;
+    for (i = 0; i < closers.length; i += 1) {
+      closers[i].onclick = function () { closeOverlay(this.getAttribute('data-close')); };
+    }
+    $('ndfOverlay').onclick = function (e) { if ((e.target || e.srcElement) === this) { closeOverlay('ndfOverlay'); } };
+    $('detailOverlay').onclick = function (e) { if ((e.target || e.srcElement) === this) { closeOverlay('detailOverlay'); } };
+    document.onclick = function (e) {
+      var target = e.target || e.srcElement;
+      if (!$('dateWrap').contains(target)) { $('calendarPop').className = 'calendar-pop'; }
+    };
+    document.onkeydown = function (e) {
+      e = e || window.event;
+      if (e.keyCode === 27) { closeAllOverlays(); }
+    };
+  }
+
+  populateCompanies();
+  initSort();
+  initCalendar();
+  initEvents();
+  render();
+}());
+</script>
+</body>
+</html>

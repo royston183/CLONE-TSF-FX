@@ -1,0 +1,316 @@
+/* Night mode for mo-generate-invoices-deal-id, derived from mo-generate-invoices-deal-id.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .invblotter {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .invblotter input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .invblotter select,
+:root[data-theme='dark'] .invblotter textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .invblotter {
+  color: #e6eef8;
+  background: #0d1724;
+}
+:root[data-theme='dark'] .invblotter .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .back-btn,
+:root[data-theme='dark'] .invblotter .hdr-btn,
+:root[data-theme='dark'] .invblotter .icon-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .back-btn:hover,
+:root[data-theme='dark'] .invblotter .hdr-btn:hover,
+:root[data-theme='dark'] .invblotter .icon-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .hdr-btn.danger {
+  color: #ec786f;
+}
+:root[data-theme='dark'] .invblotter .hdr-btn.danger:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .app-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .app-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .live-dot {
+  border: 3px solid #26543a;
+}
+:root[data-theme='dark'] .invblotter .more-menu {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .more-item {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .more-item:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .more-item.danger {
+  color: #ec786f;
+}
+:root[data-theme='dark'] .invblotter .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .section-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .section-meta {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .selection-note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .req {
+  color: #ea7971;
+}
+:root[data-theme='dark'] .invblotter .control {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .control.readonly,
+:root[data-theme='dark'] .invblotter .control:disabled {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .status-control {
+  color: #65f5dd;
+}
+:root[data-theme='dark'] .invblotter .date-value {
+  background: #1b2b3d;
+  border: 1px solid #2d4a6b;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .table-toolbar {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .table-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .search {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .small-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .small-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter thead th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter thead th.sortable:after {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter thead th.sorted-asc:after {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter thead th.sorted-desc:after {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter tbody td {
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .invblotter tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .invblotter .link {
+  color: #5cb4ff;
+}
+:root[data-theme='dark'] .invblotter .status-ok {
+  color: #65f5ca;
+}
+:root[data-theme='dark'] .invblotter .status-warn {
+  color: #ffbd5c;
+}
+:root[data-theme='dark'] .invblotter .status-info {
+  color: #65b4f6;
+}
+:root[data-theme='dark'] .invblotter .status-danger {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .cell-input {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .cell-input:disabled {
+  background: #1b2b3d;
+  border-color: #2d4a6b;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .date-trigger {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .assign-btn {
+  background: #1b2b3d;
+  color: #65b4f6;
+}
+:root[data-theme='dark'] .invblotter .assign-btn:disabled {
+  border-color: #2d4a6b;
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .table-footer {
+  border-top: 1px solid #2d4a6b;
+  color: #7f9bb8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .invblotter .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .page-btn.active {
+  background: #17304a;
+  color: #62b2f9;
+}
+:root[data-theme='dark'] .invblotter .empty {
+  color: #7f9bb8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .invblotter .drop-hover {
+  background: #17304a!important;
+}
+:root[data-theme='dark'] .invblotter .modal {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .modal-footer {
+  border-top: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .action-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .confirm-icon {
+  background: #17304a;
+  color: #62b2f9;
+}
+:root[data-theme='dark'] .invblotter .confirm-text {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .confirm-note {
+  background: #1b2b3d;
+  border: 1px solid #2d4a6b;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .checklist {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .proceed-box {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .mini-grid {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .calendar {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .cal-week span {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .cal-day {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .cal-day:hover {
+  background: #17304a;
+  color: #62b5f8;
+}
+:root[data-theme='dark'] .invblotter .cal-day.muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .view-deals-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .invblotter .view-deals-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .deal-lookup-row:hover td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .invblotter .bl-locked td {
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .bl-locked:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .invblotter .detail-grid {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .invblotter .detail-item {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .invblotter .detail-label {
+  background: #1b2b3d;
+  border-right: 1px solid #2a3d52;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .invblotter .detail-value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .invblotter .hint {
+  color: #7f9bb8;
+}

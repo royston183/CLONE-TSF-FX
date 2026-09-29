@@ -1,0 +1,254 @@
+/* Night mode for mo-deal-id-invoice-status, derived from mo-deal-id-invoice-status.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .modinvstat {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .modinvstat input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .modinvstat select,
+:root[data-theme='dark'] .modinvstat textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --line: #2a3d52;
+  --line-soft: #16243a;
+  --text: #e6eef8;
+  --muted: #7f9bb8;
+  --primary-soft: #17304a;
+  --row-select: #17304a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .modinvstat .topbar {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .back-btn,
+:root[data-theme='dark'] .modinvstat .header-btn,
+:root[data-theme='dark'] .modinvstat .icon-btn,
+:root[data-theme='dark'] .modinvstat .reset-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .back-btn:hover,
+:root[data-theme='dark'] .modinvstat .header-btn:hover,
+:root[data-theme='dark'] .modinvstat .icon-btn:hover,
+:root[data-theme='dark'] .modinvstat .reset-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .title-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .search-wrap svg {
+  stroke: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .control,
+:root[data-theme='dark'] .modinvstat .search-input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .calendar-trigger {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat thead th {
+  background: #1b2b3d;
+  border-right: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .modinvstat thead th.sortable:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .sort-mark {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat tbody td {
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat thead th.sel-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat tbody td.sel-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat tbody tr:hover td.sel-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat thead th.deal-sticky {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat tbody td.deal-sticky {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat tbody tr:hover td.deal-sticky {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .link-cell {
+  color: #5cb3ff;
+}
+:root[data-theme='dark'] .modinvstat .link-cell:hover {
+  color: #5cb1ff;
+}
+:root[data-theme='dark'] .modinvstat .empty-value {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .status-created {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .status-confirmed {
+  color: #6fb5eb;
+}
+:root[data-theme='dark'] .modinvstat .status-closed {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .page-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .page-btn.active {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .calendar-pop {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .cal-nav {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .cal-select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .cal-dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .cal-day {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .modinvstat .cal-day.other {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .detail-item {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .detail-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .deal-action-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .deal-action-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .deal-action-btn.danger {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .analysis-card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvstat .analysis-card-head {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .analysis-card-head .subtle {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .basic-field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .readonly-field {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .readonly-field.strong {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .modinvstat .analysis-select {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .analysis-table th {
+  border-bottom: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .analysis-table td {
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .analysis-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .analysis-table .hot {
+  color: #5cb9ff;
+}
+:root[data-theme='dark'] .modinvstat .analysis-empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .txn-chip {
+  background: #17304a;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .deal-summary-line {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .sap-popup-form label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .sap-popup-form input,
+:root[data-theme='dark'] .modinvstat .sap-popup-form select {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .sap-popup-note {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .dms-choose-btn,
+:root[data-theme='dark'] .modinvstat .dms-clear-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .dms-choose-btn:hover,
+:root[data-theme='dark'] .modinvstat .dms-clear-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvstat .dms-file-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvstat .dms-file-text.empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvstat .dms-code {
+  color: #72e8c9;
+}
+:root[data-theme='dark'] .modinvstat .dms-comment {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .dms-feedback {
+  border: 1px solid #26543a;
+  background: #14321f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvstat .no-rows {
+  color: #7f9bb8;
+}

@@ -1,0 +1,3845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deal ID Invoice Marking</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #f4f7fa;
+  color: #1d2d3e;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+.app-shell {
+  min-height: 100vh;
+}
+.topbar {
+  height: 58px;
+  background: #ffffff;
+  border-bottom: 1px solid #d8e0e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px 0 20px;
+  box-shadow: 0 1px 3px rgba(15, 45, 75, 0.04);
+}
+.top-left,
+.top-actions,
+.brand-wrap,
+.brand-copy,
+.control-row,
+.table-title-row,
+.table-tools,
+.mode-switch,
+.legend,
+.pagination,
+.modal-title-row,
+.toast {
+  display: flex;
+  align-items: center;
+}
+.top-left {
+  min-width: 0;
+  gap: 18px;
+}
+.back-btn,
+.header-btn,
+.icon-btn,
+.secondary-btn,
+.primary-btn {
+  border-radius: 5px;
+  border: 1px solid #9eb0c1;
+  background: #ffffff;
+  color: #415a73;
+  height: 38px;
+  padding: 0 13px;
+  font-weight: 600;
+  line-height: 36px;
+  white-space: nowrap;
+}
+.back-btn:hover,
+.header-btn:hover,
+.icon-btn:hover,
+.secondary-btn:hover {
+  background: #f5f8fb;
+  border-color: #7891aa;
+}
+.back-btn svg,
+.header-btn svg,
+.icon-btn svg,
+.primary-btn svg {
+  vertical-align: -2px;
+  margin-right: 7px;
+}
+.brand-wrap {
+  gap: 13px;
+  min-width: 0;
+}
+.fs-mark {
+  position: relative;
+  width: 27px;
+  height: 33px;
+  flex: 0 0 27px;
+}
+.fs-mark span {
+  position: absolute;
+  left: 2px;
+  height: 6px;
+  border-radius: 5px;
+}
+.fs-mark .m1 {
+  top: 2px;
+  width: 20px;
+  background: #cf2f26;
+}
+.fs-mark .m2 {
+  top: 10px;
+  width: 16px;
+  background: #f3a418;
+}
+.fs-mark .m3 {
+  top: 18px;
+  width: 12px;
+  background: #3a934d;
+}
+.fs-mark .m4 {
+  top: 27px;
+  width: 6px;
+  background: #8294a6;
+}
+.brand-copy {
+  min-width: 0;
+  gap: 13px;
+}
+.brand-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  color: #1f2f42;
+  white-space: nowrap;
+}
+.brand-code {
+  color: #8190a0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.top-actions {
+  gap: 8px;
+}
+.live-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #2ab76b;
+  border: 2px solid #dff4e8;
+  box-shadow: 0 0 0 1px #36a86b;
+  margin: 0 4px;
+}
+.main {
+  padding: 14px 16px 18px;
+}
+.workbench {
+  background: #ffffff;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(37, 61, 86, 0.06);
+  overflow: hidden;
+}
+.table-title-row {
+  min-height: 45px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #dbe3ea;
+}
+.table-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d2d3e;
+  white-space: nowrap;
+}
+.record-count {
+  color: #75879a;
+  font-size: 12px;
+  font-weight: 500;
+}
+.table-tools {
+  gap: 7px;
+}
+.search-wrap {
+  position: relative;
+  width: 230px;
+}
+
+.toolbar-search {
+  flex: 0 0 230px;
+  align-self: flex-end;
+}
+.search-wrap svg {
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  color: #6f8295;
+}
+.search-input,
+.filter-input,
+.filter-select {
+  height: 34px;
+  border: 1px solid #aebdcc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1d2d3e;
+  outline: none;
+}
+.search-input {
+  width: 100%;
+  padding: 0 10px 0 32px;
+}
+.search-input:focus,
+.filter-input:focus,
+.filter-select:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.10);
+}
+.icon-btn {
+  width: 35px;
+  height: 34px;
+  padding: 0;
+  line-height: 32px;
+  text-align: center;
+}
+.icon-btn svg {
+  margin: 0;
+}
+.filter-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 9px 12px 10px;
+  border-bottom: 1px solid #e4e9ee;
+  background: #fbfcfd;
+  overflow-x: auto;
+}
+.field-group {
+  flex: 0 0 auto;
+}
+.field-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #526b84;
+  font-size: 11px;
+  font-weight: 700;
+}
+.req {
+  color: #d63232;
+  margin-left: 2px;
+}
+.date-wrap {
+  position: relative;
+  width: 132px;
+}
+.filter-input,
+.filter-select {
+  padding: 0 28px 0 9px;
+}
+.filter-select {
+  min-width: 115px;
+  padding-right: 28px;
+}
+.w-origin {
+  width: 126px;
+}
+.w-region {
+  width: 92px;
+}
+.w-model {
+  width: 116px;
+}
+.w-layout {
+  width: 118px;
+}
+.date-wrap .filter-input {
+  width: 132px;
+}
+.calendar-trigger {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 29px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: #516c84;
+}
+.calendar-trigger:hover {
+  color: #1f6feb;
+  background: #f1f6fb;
+  border-radius: 3px;
+}
+.mode-switch {
+  height: 34px;
+  border: 1px solid #aebdcc;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ffffff;
+}
+.mode-btn {
+  height: 32px;
+  border: 0;
+  background: #ffffff;
+  color: #526b84;
+  font-weight: 600;
+  padding: 0 11px;
+  white-space: nowrap;
+}
+.mode-btn + .mode-btn {
+  border-left: 1px solid #d8e0e8;
+}
+.mode-btn.active {
+  background: #eaf3ff;
+  color: #1267c4;
+  box-shadow: inset 0 -2px 0 #1f6feb;
+}
+.reset-btn {
+  height: 34px;
+  border: 1px solid #aebdcc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #425c75;
+  padding: 0 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.reset-btn:hover {
+  background: #f4f7fa;
+}
+.primary-btn {
+  height: 34px;
+  line-height: 32px;
+  border-color: #0b6fcc;
+  background: #0877d1;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(8, 119, 209, 0.18);
+  padding: 0 13px;
+}
+.primary-btn:hover {
+  background: #056cbd;
+}
+.primary-btn:disabled {
+  background: #c8d7e5;
+  border-color: #c0cfdd;
+  color: #f7fbff;
+  box-shadow: none;
+}
+.drop-ready {
+  outline: 2px dashed #6ba5e3;
+  outline-offset: 2px;
+}
+.drop-over {
+  background: #005fb3 !important;
+  transform: translateY(-1px);
+}
+.toolbar-spacer {
+  min-width: 3px;
+  flex: 1 0 3px;
+}
+.legend {
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #e4e9ee;
+  background: #ffffff;
+  color: #687c90;
+  font-size: 11px;
+}
+.legend-title {
+  color: #425970;
+  font-weight: 700;
+}
+.legend-item {
+  white-space: nowrap;
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: 0;
+}
+.legend-blue {
+  background: #1f6feb;
+}
+.legend-green {
+  background: #18864b;
+}
+.legend-orange {
+  background: #ec8a13;
+}
+.table-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 260px);
+  min-height: 420px;
+}
+table {
+  width: auto;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 38px;
+  padding: 0 10px;
+  background: #f1f4f6;
+  color: #47627b;
+  border-bottom: 1px solid #d9e1e8;
+  border-right: 1px solid #e1e7ed;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  user-select: none;
+}
+thead th.sortable {
+  cursor: pointer;
+}
+thead th.sortable:hover {
+  background: #e9eef3;
+}
+tbody td {
+  height: 36px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e9edf1;
+  border-right: 1px solid #edf1f4;
+  white-space: nowrap;
+  background: #ffffff;
+  color: #1d2d3e;
+}
+tbody tr:hover td {
+  background: #f7fbff;
+}
+tbody tr.row-selected td {
+  background: #eaf4ff;
+}
+tbody tr.dragging td {
+  opacity: 0.55;
+  background: #eef5fb;
+}
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+.check-col {
+  width: 42px;
+  min-width: 42px;
+  text-align: center;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+thead .check-col {
+  z-index: 6;
+  background: #f1f4f6;
+}
+tbody .check-col {
+  background: #ffffff;
+}
+tbody tr:hover .check-col {
+  background: #f7fbff;
+}
+tbody tr.row-selected .check-col {
+  background: #eaf4ff;
+}
+.deal-col {
+  position: sticky;
+  left: 42px;
+  z-index: 2;
+  min-width: 105px;
+  box-shadow: 1px 0 0 #e2e8ee;
+}
+thead .deal-col {
+  z-index: 5;
+  background: #f1f4f6;
+}
+tbody .deal-col {
+  background: #ffffff;
+}
+tbody tr:hover .deal-col {
+  background: #f7fbff;
+}
+tbody tr.row-selected .deal-col {
+  background: #eaf4ff;
+}
+.row-check,
+#checkAll {
+  width: 15px;
+  height: 15px;
+  vertical-align: middle;
+  accent-color: #1f6feb;
+}
+.hotspot {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.hotspot-deal {
+  color: #117a46;
+}
+.hotspot-mc {
+  color: #096ad3;
+}
+.amount,
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.amount {
+  color: #08723f;
+  font-weight: 600;
+}
+.status-ready {
+  color: #d87600;
+  font-weight: 700;
+}
+.status-marked {
+  color: #137e48;
+  font-weight: 700;
+}
+.days-positive {
+  color: #2c445d;
+}
+.days-negative {
+  color: #c73c34;
+  font-weight: 600;
+}
+.empty-state {
+  display: none;
+  min-height: 320px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #788b9e;
+  gap: 8px;
+}
+.empty-state.show {
+  display: flex;
+}
+.empty-state strong {
+  color: #405973;
+  font-size: 15px;
+}
+.table-footer {
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 12px;
+  border-top: 1px solid #dfe6ec;
+  background: #ffffff;
+}
+.footer-copy {
+  color: #74879a;
+  font-size: 12px;
+}
+.pagination {
+  gap: 5px;
+}
+.page-btn {
+  min-width: 29px;
+  height: 29px;
+  padding: 0 8px;
+  border: 1px solid #d8e0e8;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #4e667d;
+}
+.page-btn.active {
+  border-color: #9fb5c8;
+  background: #f4f8fb;
+  color: #1f4e78;
+  font-weight: 700;
+}
+.page-btn:disabled {
+  color: #b9c5d0;
+  background: #fbfcfd;
+}
+.calendar-popover {
+  position: absolute;
+  z-index: 40;
+  width: 282px;
+  background: #ffffff;
+  border: 1px solid #bfcbd6;
+  border-radius: 7px;
+  box-shadow: 0 10px 28px rgba(30, 52, 74, 0.18);
+  display: none;
+  padding: 10px;
+}
+.calendar-popover.show {
+  display: block;
+}
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.cal-nav {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d2dce5;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #405a72;
+}
+.cal-select {
+  height: 30px;
+  border: 1px solid #c8d3de;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #304b64;
+  padding: 0 5px;
+}
+.cal-month {
+  width: 112px;
+}
+.cal-year {
+  width: 70px;
+}
+.cal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 252px;
+  gap: 2px;
+}
+.cal-dow,
+.cal-day {
+  width: 34px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.cal-dow {
+  height: 24px;
+  color: #7a8da0;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cal-day {
+  border: 0;
+  background: #ffffff;
+  color: #30485f;
+}
+.cal-day:hover {
+  background: #edf5ff;
+  color: #0f66bd;
+}
+.cal-day.muted {
+  color: #bcc7d1;
+}
+.cal-day.today {
+  box-shadow: inset 0 0 0 1px #6da6dd;
+}
+.cal-day.selected {
+  background: #1f6feb;
+  color: #ffffff;
+  font-weight: 700;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(24, 42, 60, 0.38);
+}
+.modal-overlay.show {
+  display: flex;
+}
+.modal {
+  width: 690px;
+  max-width: 96vw;
+  max-height: 88vh;
+  background: #ffffff;
+  border-radius: 9px;
+  box-shadow: 0 18px 48px rgba(17, 35, 54, 0.26);
+  overflow: hidden;
+}
+.modal-head {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 17px;
+  border-bottom: 1px solid #e1e7ed;
+}
+.modal-title-row {
+  gap: 10px;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #203347;
+}
+.modal-tag {
+  font-size: 11px;
+  color: #65809a;
+  background: #f0f5f9;
+  border-radius: 10px;
+  padding: 3px 8px;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #657b90;
+  font-size: 22px;
+}
+.modal-close:hover {
+  background: #f1f5f8;
+  border-radius: 50%;
+}
+.modal-body {
+  padding: 16px 17px 17px;
+  overflow: auto;
+  max-height: calc(88vh - 108px);
+}
+.info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -5px;
+}
+.info-item {
+  width: 33.333%;
+  padding: 5px;
+}
+.info-card {
+  min-height: 65px;
+  border: 1px solid #e0e7ed;
+  border-radius: 6px;
+  background: #fbfcfd;
+  padding: 9px 10px;
+}
+.info-label {
+  color: #6f8498;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+.info-value {
+  color: #20384f;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.modal-foot {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 17px;
+  border-top: 1px solid #e1e7ed;
+  background: #fbfcfd;
+}
+.toast-stack {
+  position: fixed;
+  right: 18px;
+  top: 72px;
+  z-index: 80;
+}
+.toast {
+  min-width: 315px;
+  max-width: 430px;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 11px 13px;
+  border-radius: 6px;
+  border: 1px solid #b9ddca;
+  background: #f1fbf5;
+  color: #205c3b;
+  box-shadow: 0 7px 22px rgba(31, 65, 48, 0.14);
+  animation: toastIn 180ms ease-out;
+}
+.toast.info {
+  border-color: #bfd6ec;
+  background: #f3f8fd;
+  color: #245475;
+}
+.toast.warn {
+  border-color: #f0d5ad;
+  background: #fff8ec;
+  color: #7c551b;
+}
+.toast-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 50%;
+  background: #27ae60;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.toast.info .toast-icon {
+  background: #2d81c4;
+}
+.toast.warn .toast-icon {
+  background: #e39a2b;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 1100px) {
+  .brand-code {
+    display: none;
+  }
+  .filter-toolbar {
+    align-items: flex-end;
+  }
+  .table-scroll {
+    max-height: none;
+  }
+}
+@media (max-width: 760px) {
+  .topbar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .top-left {
+    gap: 8px;
+  }
+  .brand-title {
+    font-size: 16px;
+  }
+  .live-dot {
+    display: none;
+  }
+  .header-btn span {
+    display: none;
+  }
+  .header-btn {
+    width: 38px;
+    padding: 0;
+  }
+  .header-btn svg {
+    margin: 0;
+  }
+  .main {
+    padding: 9px;
+  }
+  .table-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .table-tools,
+  .search-wrap {
+    width: 100%;
+  }
+  .search-wrap {
+    flex: 1;
+  }
+  .legend {
+    overflow-x: auto;
+  }
+  .info-item {
+    width: 50%;
+  }
+}
+
+/* Embedded ZSGTSF_RVIEW_DEAL workspace opened from Deal ID hotspot. */
+.modal-deal {
+  width: 1440px;
+  max-width: 97vw;
+  max-height: 92vh;
+}
+.modal-deal .modal-body {
+  max-height: calc(92vh - 108px);
+  padding: 12px 14px 14px;
+  background: #f5f8fb;
+}
+.modal-deal .modal-foot {
+  background: #ffffff;
+}
+.deal-workspace {
+  min-width: 0;
+}
+.deal-actionbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.deal-action-btn {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #aebdcc;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #405b74;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.deal-action-btn:hover {
+  border-color: #7799b8;
+  background: #f6f9fc;
+}
+.deal-action-btn.primary-action {
+  border-color: #1269bd;
+  background: #0f6fcf;
+  color: #ffffff;
+}
+.deal-section {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #d9e2ea;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(28, 52, 75, 0.04);
+}
+.deal-section:first-child {
+  margin-top: 0;
+}
+.deal-section-head {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e1e7ed;
+  color: #263d54;
+  font-size: 13px;
+  font-weight: 750;
+}
+.deal-section-meta {
+  color: #75899c;
+  font-size: 11px;
+  font-weight: 500;
+}
+.deal-basic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px 12px;
+  padding: 12px;
+}
+.deal-field {
+  min-width: 0;
+}
+.deal-field.wide {
+  grid-column: span 2;
+}
+.deal-field-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #60788f;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+.deal-field-box {
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  overflow: hidden;
+  border: 1px solid #cfd9e2;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #20364b;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.deal-field-box .muted-value {
+  overflow: hidden;
+  color: #6f8396;
+  text-overflow: ellipsis;
+}
+.deal-status-box {
+  color: #18784d;
+  font-weight: 700;
+}
+.deal-table-scroll {
+  overflow: auto;
+  max-height: 255px;
+}
+.deal-table {
+  width: 100%;
+  min-width: 1650px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11px;
+}
+.deal-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 35px;
+  padding: 0 9px;
+  border-right: 1px solid #e3e9ef;
+  border-bottom: 1px solid #dce4eb;
+  background: #f2f5f8;
+  color: #466079;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+.deal-table td {
+  height: 34px;
+  padding: 0 9px;
+  border-right: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
+  color: #1f3549;
+  white-space: nowrap;
+}
+.deal-table tbody tr:hover td {
+  background: #f8fbfe;
+}
+.deal-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.deal-table .hotspot-link {
+  border: 0;
+  background: transparent;
+  color: #0869c5;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.deal-type-cell {
+  color: #0d67ba;
+  font-weight: 750;
+}
+.invoice-type-cell {
+  color: #0d67ba;
+  font-weight: 750;
+}
+.deal-note {
+  padding: 9px 12px;
+  border-top: 1px solid #e7edf2;
+  background: #fbfcfd;
+  color: #708397;
+  font-size: 11px;
+}
+.sub-modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 70;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+  background: rgba(18, 35, 52, 0.38);
+}
+.sub-modal-overlay.show {
+  display: flex;
+}
+.sub-modal {
+  width: 1120px;
+  max-width: 94vw;
+  max-height: 82vh;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 20px 54px rgba(17, 35, 54, 0.3);
+}
+.sub-modal.small {
+  width: 680px;
+}
+.sub-modal-head,
+.sub-modal-foot {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 15px;
+}
+.sub-modal-head {
+  border-bottom: 1px solid #e1e7ed;
+}
+.sub-modal-foot {
+  justify-content: flex-end;
+  border-top: 1px solid #e1e7ed;
+}
+.sub-modal-title {
+  color: #20364b;
+  font-size: 15px;
+  font-weight: 750;
+}
+.sub-modal-body {
+  max-height: calc(82vh - 100px);
+  overflow: auto;
+  padding: 13px;
+}
+.sub-modal-close {
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #647b90;
+  font-size: 21px;
+}
+.sub-modal-close:hover {
+  background: #f1f5f8;
+}
+.txn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.txn-card {
+  min-height: 60px;
+  padding: 9px 10px;
+  border: 1px solid #e0e7ed;
+  border-radius: 5px;
+  background: #fbfcfd;
+}
+.txn-label {
+  margin-bottom: 5px;
+  color: #70859a;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.txn-value {
+  color: #21384d;
+  font-size: 12px;
+  font-weight: 650;
+}
+@media (max-width: 1050px) {
+  .deal-basic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .deal-basic-grid,
+  .txn-grid {
+    grid-template-columns: 1fr;
+  }
+  .deal-field.wide {
+    grid-column: span 1;
+  }
+  .deal-actionbar {
+    justify-content: flex-start;
+  }
+}
+
+
+.workflow-modal {
+  width: 1540px;
+  max-width: 97vw;
+  max-height: 90vh;
+}
+.workflow-modal .sub-modal-body {
+  max-height: calc(90vh - 100px);
+  padding: 12px;
+  background: #f7f9fb;
+}
+.workflow-shell {
+  display: grid;
+  gap: 12px;
+}
+.workflow-actionbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 9px;
+  border: 1px solid #dfe7ee;
+  border-radius: 7px;
+  background: #ffffff;
+}
+.workflow-actionbar .workflow-spacer {
+  flex: 1 1 auto;
+}
+.workflow-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 16px;
+  background: #eaf3ff;
+  color: #0a5dad;
+  font-size: 12px;
+  font-weight: 750;
+}
+.workflow-section {
+  overflow: hidden;
+  border: 1px solid #dfe7ee;
+  border-radius: 7px;
+  background: #ffffff;
+}
+.workflow-section-head {
+  min-height: 39px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e4eaf0;
+  color: #20364b;
+  font-size: 13px;
+  font-weight: 800;
+}
+.workflow-section-meta {
+  color: #718397;
+  font-size: 11px;
+  font-weight: 600;
+}
+.workflow-basic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.workflow-field {
+  min-width: 0;
+}
+.workflow-label {
+  display: block;
+  margin: 0 0 4px;
+  color: #586f85;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.workflow-value {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  padding: 6px 8px;
+  border: 1px solid #dce5ec;
+  border-radius: 5px;
+  background: #fbfcfd;
+  color: #1d2d3e;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.workflow-extra {
+  display: grid;
+  gap: 9px;
+}
+.workflow-extra:empty {
+  display: none;
+}
+.workflow-extra-panel {
+  overflow: hidden;
+  border: 1px solid #cfe0f2;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 7px 22px rgba(35, 63, 88, .08);
+}
+.workflow-extra-head {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 11px;
+  border-bottom: 1px solid #e2e9ef;
+  color: #1f5f9d;
+  font-size: 12px;
+  font-weight: 800;
+}
+.workflow-extra-body {
+  padding: 10px;
+}
+.workflow-input {
+  width: 100%;
+  min-width: 82px;
+  height: 30px;
+  padding: 4px 7px;
+  border: 1px solid #cbd8e3;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1d2d3e;
+  font: inherit;
+  font-size: 12px;
+}
+.workflow-input:focus {
+  outline: 2px solid rgba(31, 111, 235, .14);
+  border-color: #1f6feb;
+}
+.workflow-check {
+  width: 16px;
+  height: 16px;
+  accent-color: #1f6feb;
+}
+.workflow-total-row td {
+  font-weight: 800;
+  background: #f4f8fc;
+}
+.workflow-negative {
+  color: #b23b32;
+  font-weight: 750;
+}
+.workflow-positive {
+  color: #0d7e67;
+  font-weight: 750;
+}
+.workflow-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.workflow-mini-card {
+  padding: 9px 10px;
+  border: 1px solid #e0e7ed;
+  border-radius: 5px;
+  background: #fbfcfd;
+}
+.workflow-mini-label {
+  margin-bottom: 4px;
+  color: #718397;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.workflow-mini-value {
+  color: #20364b;
+  font-size: 12px;
+  font-weight: 700;
+  word-break: break-word;
+}
+.workflow-form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  align-items: end;
+}
+.workflow-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 9px;
+}
+.workflow-hint {
+  color: #73869a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+@media (max-width: 980px) {
+  .workflow-basic-grid,
+  .workflow-mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workflow-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="top-left">
+      <button class="back-btn" id="backBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"></path>
+          <path d="M9 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+        Back
+      </button>
+      <div class="brand-wrap">
+        <div class="fs-mark" aria-hidden="true">
+          <span class="m1"></span><span class="m2"></span><span class="m3"></span><span class="m4"></span>
+        </div>
+        <div class="brand-copy">
+          <div class="brand-title">Deal ID Invoice Marking</div>
+          <div class="brand-code">TSF</div>
+        </div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="live-dot" title="Workbench active"></span>
+      <button class="header-btn" id="refreshBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 6v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"></path>
+          <path d="M19 11a7 7 0 1 0 1 5" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round"></path>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="workbench">
+      <div class="table-title-row">
+        <div class="table-heading">
+          Deal ID List Report: Mark for Invoicing
+          <span class="record-count" id="recordCount">0 records</span>
+        </div>
+        <div class="table-tools">
+          <button class="icon-btn" id="downloadBtn" type="button" title="Download CSV" aria-label="Download CSV">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <path d="M8 10l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"></path>
+              <path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-toolbar">
+        <div class="search-wrap toolbar-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"></circle>
+            <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <input class="search-input" id="searchInput" type="text" placeholder="Search all columns..." autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="dateFrom">Shipment Date From<span class="req">*</span></label>
+          <div class="date-wrap">
+            <input class="filter-input date-input" id="dateFrom" type="text" value="01-09-2026" maxlength="10">
+            <button class="calendar-trigger" data-for="dateFrom" type="button" aria-label="Choose start date">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+                <path d="M8 3v4M16 3v4M4 9h16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="dateTo">Shipment Date To<span class="req">*</span></label>
+          <div class="date-wrap">
+            <input class="filter-input date-input" id="dateTo" type="text" value="31-12-2026" maxlength="10">
+            <button class="calendar-trigger" data-for="dateTo" type="button" aria-label="Choose end date">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+                <path d="M8 3v4M16 3v4M4 9h16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="originFilter">Origin Entity</label>
+          <select class="filter-select w-origin" id="originFilter">
+            <option value="">All origins</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="regionFilter">Region</label>
+          <select class="filter-select w-region" id="regionFilter">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="modelFilter">FX Model</label>
+          <select class="filter-select w-model" id="modelFilter">
+            <option value="">All models</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <span class="field-label">Invoicing Selection</span>
+          <div class="mode-switch" role="group" aria-label="Invoicing selection">
+            <button class="mode-btn active" id="modeManual" type="button" data-mode="manual">Manual Mark</button>
+          </div>
+        </div>
+        <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+        <div class="toolbar-spacer"></div>
+        <button class="primary-btn" id="markBtn" type="button" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12l4 4L19 6" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          Mark for Invoicing
+        </button>
+      </div>
+
+      <div class="legend" aria-label="Color coding">
+        <span class="legend-title">Colour Coding</span>
+        <span class="legend-item"><span class="legend-dot legend-blue"></span>Master Contract</span>
+        <span class="legend-item"><span class="legend-dot legend-green"></span>Deal ID</span>
+        <span class="legend-item"><span class="legend-dot legend-orange"></span>Invoice / Ready</span>
+      </div>
+
+      <div class="table-scroll" id="tableScroll">
+        <table id="dealTable">
+          <thead>
+            <tr id="tableHead"></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">
+          <svg width="42" height="42" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect>
+            <path d="M8 10h8M8 14h5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+          </svg>
+          <strong>No record found</strong>
+          <span>Adjust the live filters or refresh the workbench.</span>
+        </div>
+      </div>
+
+      <div class="table-footer">
+        <div class="footer-copy" id="footerCopy">Showing 0 of 0</div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="calendar-popover" id="calendarPopover" aria-hidden="true"></div>
+<div class="modal-overlay" id="detailOverlay" aria-hidden="true">
+  <div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-head">
+      <div class="modal-title-row">
+        <div class="modal-title" id="detailTitle">Transaction Details</div>
+        <span class="modal-tag" id="detailTag"></span>
+      </div>
+      <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="secondary-btn" id="modalCloseFooter" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="sub-modal-overlay" id="subOverlay" aria-hidden="true">
+  <div class="sub-modal" id="subModal" role="dialog" aria-modal="true" aria-labelledby="subModalTitle">
+    <div class="sub-modal-head">
+      <div class="sub-modal-title" id="subModalTitle">Details</div>
+      <button class="sub-modal-close" id="subModalClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="sub-modal-body" id="subModalBody"></div>
+    <div class="sub-modal-foot">
+      <button class="secondary-btn" id="subModalCloseFooter" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TODAY = new Date(2026, 8, 28);
+  var PAGE_SIZE = 20;
+  var initialData;
+  var data;
+  var selected = {};
+  var mode = 'manual';
+  var sortKey = 'dealId';
+  var sortDir = 1;
+  var currentPage = 1;
+  var calendarState = {
+    inputId: null,
+    year: TODAY.getFullYear(),
+    month: TODAY.getMonth()
+  };
+
+  var columns = [
+    { key: 'check', label: '', type: 'check', width: '42px' },
+    { key: 'dealId', label: 'Deal ID', type: 'deal', width: '105px' },
+    { key: 'dealDesc', label: 'Deal ID Description', width: '210px' },
+    { key: 'mcRef', label: 'MC Ref No', type: 'mc', width: '105px' },
+    { key: 'commodity', label: 'Commodity', width: '150px' },
+    { key: 'dealStart', label: 'Deal Start Date', type: 'date', width: '112px' },
+    { key: 'dealEnd', label: 'Deal End Date', type: 'date', width: '112px' },
+    { key: 'earliestStart', label: 'Earliest Shipment Start', type: 'date', width: '145px' },
+    { key: 'status', label: 'Deal Status', width: '88px' },
+    { key: 'statusDesc', label: 'Deal Status Description', type: 'status', width: '185px' },
+    { key: 'origin', label: 'Origin Entity', width: '105px' },
+    { key: 'model', label: 'FX Model', width: '92px' },
+    { key: 'region', label: 'Region', width: '74px' },
+    { key: 'modelDesc', label: 'FX Model Description', width: '180px' },
+    { key: 'amount', label: 'Deal Amt (USD)', type: 'amount', width: '126px' },
+    { key: 'shipStart', label: 'MC Shipment Start', type: 'date', width: '126px' },
+    { key: 'shipEnd', label: 'MC Shipment End', type: 'date', width: '126px' },
+    { key: 'daysShip', label: 'Days-Ship Start', type: 'num', width: '108px' },
+    { key: 'daysEnd', label: 'Days (Deal End)', type: 'num', width: '112px' },
+    { key: 'daysStart', label: 'Days (Deal Start)', type: 'num', width: '116px' }
+  ];
+
+  var layouts = {
+    'default': [
+      'check', 'dealId', 'dealDesc', 'mcRef', 'commodity', 'dealStart', 'dealEnd',
+      'earliestStart', 'status', 'statusDesc', 'origin', 'model', 'region',
+      'modelDesc', 'amount', 'shipStart', 'shipEnd', 'daysShip', 'daysEnd', 'daysStart'
+    ]
+  };
+
+  function makeRow(id, desc, mc, commodity, ds, de, origin, model, region, amount, ss, se) {
+    return {
+      dealId: id,
+      dealDesc: desc,
+      mcRef: mc,
+      commodity: commodity,
+      dealStart: ds,
+      dealEnd: de,
+      status: '02',
+      statusDesc: 'Ready for Invoicing',
+      origin: origin,
+      model: model,
+      region: region,
+      modelDesc: modelName(model),
+      amount: amount,
+      shipStart: ss,
+      shipEnd: se,
+      autoMarked: false,
+      manualMarked: false
+    };
+  }
+
+  function modelName(code) {
+    var names = {
+      'DSX': 'Direct Shipment FX',
+      'LCP': 'LC Pricing Model',
+      'CCDSX': 'Cross-Company DSX',
+      'FWD': 'Forward Cover Model',
+      'MIXED': 'Mixed Hedge Model'
+    };
+    return names[code] || code;
+  }
+
+  function buildInitialData() {
+    return [
+      makeRow('3000167', 'OSIPL edible oils Q4 hedge', 'MC100067', 'Edible Oils', '10-09-2026', '30-06-2027',
+        'OSIPL', 'DSX', 'APAC', 6284779.05, '01-10-2026', '31-01-2027'),
+      makeRow('3000166', 'DMCC cocoa shipment cover', 'MC100066', 'Cocoa', '18-09-2026', '31-03-2027',
+        'DMCC', 'LCP', 'MEA', 1000000.00, '22-09-2026', '31-12-2026'),
+      makeRow('3000165', 'DMCC coffee shipment cover', 'MC100065', 'Coffee', '15-09-2026', '28-02-2027',
+        'DMCC', 'LCP', 'MEA', 980392.16, '20-09-2026', '30-11-2026'),
+      makeRow('3000164', 'OGA cotton export hedge', 'MC100064', 'Cotton', '01-09-2026', '31-05-2027',
+        'OGA', 'LCP', 'MEA', 1000000.00, '12-10-2026', '31-12-2026'),
+      makeRow('3000163', 'OGA cocoa utilisation', 'MC100063', 'Cocoa', '22-08-2026', '31-03-2027',
+        'OGA', 'LCP', 'MEA', 909090.91, '25-09-2026', '30-12-2026'),
+      makeRow('3000162', 'DMCC grains structured cover', 'MC100062', 'Grains', '14-09-2026', '31-12-2027',
+        'DMCC', 'CCDSX', 'MEA', 7317187.50, '30-11-2026', '31-05-2027'),
+      makeRow('3000161', 'SEDA cocoa shipment hedge', 'MC100061', 'Cocoa', '05-09-2026', '30-09-2027',
+        'SEDA', 'DSX', 'EUR', 4854368.93, '30-09-2026', '31-03-2027'),
+      makeRow('3000160', 'DMCC coffee forward cover', 'MC100060', 'Coffee', '25-08-2026', '30-06-2027',
+        'DMCC', 'DSX', 'MEA', 1000000.00, '18-09-2026', '31-12-2026'),
+      makeRow('3000159', 'PAN cashew shipment cover', 'MC100059', 'Cashew', '11-09-2026', '31-08-2027',
+        'PAN', 'FWD', 'APAC', 4200000.00, '08-10-2026', '28-02-2027'),
+      makeRow('3000158', 'OGA almonds seasonal hedge', 'MC100058', 'Almonds', '20-09-2026', '31-07-2027',
+        'OGA', 'MIXED', 'MEA', 2750000.00, '15-10-2026', '31-03-2027'),
+      makeRow('3000157', 'OSIPL grains procurement hedge', 'MC100057', 'Grains', '12-09-2026', '30-09-2027',
+        'OSIPL', 'DSX', 'APAC', 5850000.00, '01-11-2026', '30-04-2027'),
+      makeRow('3000156', 'SEDA cotton contract hedge', 'MC100056', 'Cotton', '07-09-2026', '31-05-2027',
+        'SEDA', 'LCP', 'EUR', 1750000.00, '18-10-2026', '28-02-2027'),
+      makeRow('3000155', 'DMCC sugar shipment cover', 'MC100055', 'Sugar', '17-08-2026', '31-03-2027',
+        'DMCC', 'FWD', 'MEA', 3125000.00, '26-09-2026', '31-12-2026'),
+      makeRow('3000154', 'OGA rice export hedge', 'MC100054', 'Rice', '03-09-2026', '30-06-2027',
+        'OGA', 'LCP', 'MEA', 2240000.00, '04-10-2026', '31-01-2027'),
+      makeRow('3000153', 'PAN coffee procurement', 'MC100053', 'Coffee', '19-09-2026', '30-11-2027',
+        'PAN', 'CCDSX', 'APAC', 6960000.00, '12-12-2026', '30-06-2027'),
+      makeRow('3000152', 'SEDA cocoa export cover', 'MC100052', 'Cocoa', '04-09-2026', '31-08-2027',
+        'SEDA', 'DSX', 'EUR', 3895000.00, '28-09-2026', '31-03-2027'),
+      makeRow('3000151', 'OSIPL sunflower oil hedge', 'MC100051', 'Edible Oils', '27-08-2026', '31-05-2027',
+        'OSIPL', 'MIXED', 'APAC', 5120000.00, '20-09-2026', '28-02-2027'),
+      makeRow('3000150', 'OGA sesame export hedge', 'MC100050', 'Sesame', '09-09-2026', '31-10-2027',
+        'OGA', 'FWD', 'MEA', 1480000.00, '19-11-2026', '30-04-2027'),
+      makeRow('3000149', 'DMCC pulses shipment hedge', 'MC100049', 'Pulses', '14-08-2026', '31-03-2027',
+        'DMCC', 'LCP', 'MEA', 2450000.00, '15-09-2026', '31-12-2026'),
+      makeRow('3000148', 'PAN spices shipment cover', 'MC100048', 'Spices', '01-09-2026', '31-07-2027',
+        'PAN', 'DSX', 'APAC', 1980000.00, '05-10-2026', '31-03-2027'),
+      makeRow('3000147', 'SEDA coffee seasonal hedge', 'MC100047', 'Coffee', '23-09-2026', '30-09-2027',
+        'SEDA', 'CCDSX', 'EUR', 3640000.00, '22-12-2026', '30-06-2027'),
+      makeRow('3000146', 'OGA wheat export cover', 'MC100046', 'Wheat', '06-09-2026', '31-05-2027',
+        'OGA', 'DSX', 'MEA', 4310000.00, '29-09-2026', '31-03-2027'),
+      makeRow('3000145', 'OSIPL rice procurement hedge', 'MC100045', 'Rice', '16-09-2026', '31-12-2027',
+        'OSIPL', 'LCP', 'APAC', 5880000.00, '10-12-2026', '30-06-2027'),
+      makeRow('3000144', 'DMCC cotton shipment cover', 'MC100044', 'Cotton', '13-08-2026', '31-03-2027',
+        'DMCC', 'FWD', 'MEA', 2050000.00, '11-09-2026', '31-12-2026'),
+      makeRow('3000143', 'SEDA cashew export hedge', 'MC100043', 'Cashew', '10-09-2026', '31-08-2027',
+        'SEDA', 'DSX', 'EUR', 3290000.00, '09-10-2026', '31-03-2027'),
+      makeRow('3000142', 'PAN cocoa structured cover', 'MC100042', 'Cocoa', '24-08-2026', '30-06-2027',
+        'PAN', 'MIXED', 'APAC', 4475000.00, '24-09-2026', '31-12-2026'),
+      makeRow('3000141', 'OGA coffee Q1 hedge', 'MC100041', 'Coffee', '18-09-2026', '31-12-2027',
+        'OGA', 'LCP', 'MEA', 2250000.00, '02-01-2027', '30-06-2027'),
+      makeRow('3000140', 'OSIPL wheat shipment hedge', 'MC100040', 'Wheat', '02-09-2026', '31-07-2027',
+        'OSIPL', 'CCDSX', 'APAC', 6140000.00, '17-10-2026', '31-03-2027'),
+      makeRow('3000139', 'DMCC sugar procurement cover', 'MC100039', 'Sugar', '01-08-2026', '28-02-2027',
+        'DMCC', 'DSX', 'MEA', 1825000.00, '05-09-2026', '30-11-2026')
+    ];
+  }
+
+  function deepCopyRows(rows) {
+    var out = [];
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
+      out.push(copyObject(rows[i]));
+    }
+    return out;
+  }
+
+  function copyObject(obj) {
+    var target = {};
+    var key;
+    for (key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        target[key] = obj[key];
+      }
+    }
+    return target;
+  }
+
+  function parseDate(value) {
+    var match;
+    var day;
+    var month;
+    var year;
+    var d;
+    if (!value) {
+      return null;
+    }
+    match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+    if (!match) {
+      return null;
+    }
+    day = parseInt(match[1], 10);
+    month = parseInt(match[2], 10) - 1;
+    year = parseInt(match[3], 10);
+    d = new Date(year, month, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month || d.getDate() !== day) {
+      return null;
+    }
+    return d;
+  }
+
+  function formatDate(date) {
+    var d = date.getDate();
+    var m = date.getMonth() + 1;
+    return pad2(d) + '-' + pad2(m) + '-' + date.getFullYear();
+  }
+
+  function pad2(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  function addDays(dateValue, days) {
+    var d = parseDate(dateValue);
+    if (!d) {
+      return '';
+    }
+    d.setDate(d.getDate() + days);
+    return formatDate(d);
+  }
+
+  function dateDiff(dateValue, baseDate) {
+    var d = parseDate(dateValue);
+    var oneDay = 86400000;
+    if (!d) {
+      return 0;
+    }
+    return Math.round((d.getTime() - baseDate.getTime()) / oneDay);
+  }
+
+  function enrichRow(row) {
+    row.earliestStart = addDays(row.dealEnd, -270);
+    row.daysShip = dateDiff(row.shipStart, TODAY);
+    row.daysEnd = dateDiff(row.dealEnd, TODAY);
+    row.daysStart = dateDiff(row.dealStart, TODAY);
+    return row;
+  }
+
+  function enrichAll(rows) {
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
+      enrichRow(rows[i]);
+    }
+  }
+
+  function init() {
+    initialData = buildInitialData();
+    enrichAll(initialData);
+    data = deepCopyRows(initialData);
+    populateFilterOptions();
+    renderAll();
+    bindEvents();
+  }
+
+  function populateFilterOptions() {
+    populateSelect('originFilter', uniqueValues(initialData, 'origin'));
+    populateSelect('regionFilter', uniqueValues(initialData, 'region'));
+    populateSelect('modelFilter', uniqueValues(initialData, 'model'));
+  }
+
+  function uniqueValues(rows, key) {
+    var seen = {};
+    var values = [];
+    var i;
+    var value;
+    for (i = 0; i < rows.length; i += 1) {
+      value = rows[i][key];
+      if (!seen[value]) {
+        seen[value] = true;
+        values.push(value);
+      }
+    }
+    values.sort();
+    return values;
+  }
+
+  function populateSelect(id, values) {
+    var select = document.getElementById(id);
+    var i;
+    var option;
+    for (i = 0; i < values.length; i += 1) {
+      option = document.createElement('option');
+      option.value = values[i];
+      option.text = values[i];
+      select.appendChild(option);
+    }
+  }
+
+  function bindEvents() {
+    var liveIds = [
+      'searchInput', 'dateFrom', 'dateTo', 'originFilter', 'regionFilter', 'modelFilter'
+    ];
+    var i;
+    var el;
+    var triggers;
+    for (i = 0; i < liveIds.length; i += 1) {
+      el = document.getElementById(liveIds[i]);
+      el.oninput = filterChanged;
+      el.onchange = filterChanged;
+    }
+    document.getElementById('resetBtn').onclick = resetFilters;
+    document.getElementById('refreshBtn').onclick = refreshWorkbench;
+    document.getElementById('markBtn').onclick = markSelected;
+    document.getElementById('modeManual').onclick = function () { setMode('manual'); };
+    document.getElementById('downloadBtn').onclick = downloadCsv;
+    document.getElementById('backBtn').onclick = function () {
+      showToast('Back navigation is represented in this standalone demo.', 'info');
+    };
+    document.getElementById('modalClose').onclick = closeModal;
+    document.getElementById('modalCloseFooter').onclick = closeModal;
+    document.getElementById('subModalClose').onclick = closeSubModal;
+    document.getElementById('subModalCloseFooter').onclick = closeSubModal;
+    document.getElementById('detailOverlay').onclick = function (event) {
+      if (event.target === this) {
+        closeModal();
+      }
+    };
+    document.getElementById('subOverlay').onclick = function (event) {
+      if (event.target === this) {
+        closeSubModal();
+      }
+    };
+    document.onkeydown = function (event) {
+      event = event || window.event;
+      if (event.keyCode === 27) {
+        if (document.getElementById('subOverlay').className.indexOf('show') >= 0) {
+          closeSubModal();
+        } else {
+          closeModal();
+        }
+        closeCalendar();
+      }
+    };
+    document.onclick = handleDocumentClick;
+    triggers = document.getElementsByClassName('calendar-trigger');
+    for (i = 0; i < triggers.length; i += 1) {
+      triggers[i].onclick = openCalendarFromButton;
+    }
+  }
+
+  function handleDocumentClick(event) {
+    var pop = document.getElementById('calendarPopover');
+    var target = event.target || event.srcElement;
+    if (!pop.className.match(/show/)) {
+      return;
+    }
+    if (isInside(target, pop) || hasClassUp(target, 'calendar-trigger')) {
+      return;
+    }
+    closeCalendar();
+  }
+
+  function isInside(node, parent) {
+    while (node) {
+      if (node === parent) {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
+
+  function hasClassUp(node, className) {
+    while (node && node !== document.body) {
+      if ((' ' + node.className + ' ').indexOf(' ' + className + ' ') >= 0) {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
+
+  function filterChanged() {
+    currentPage = 1;
+    selected = {};
+    renderAll();
+  }
+
+  function setMode(nextMode) {
+    if (nextMode !== 'manual' || nextMode === mode) {
+      return;
+    }
+    mode = 'manual';
+    selected = {};
+    currentPage = 1;
+    updateModeButtons();
+    renderAll();
+  }
+
+  function updateModeButtons() {
+    document.getElementById('modeManual').className = 'mode-btn active';
+    document.getElementById('markBtn').style.display = '';
+  }
+
+  function readFilters(validateDates) {
+    var fromValue = trim(document.getElementById('dateFrom').value);
+    var toValue = trim(document.getElementById('dateTo').value);
+    var fromDate = parseDate(fromValue);
+    var toDate = parseDate(toValue);
+    var valid = true;
+    if (validateDates !== false) {
+      valid = !!fromDate && !!toDate && fromDate.getTime() <= toDate.getTime();
+      setDateValidity('dateFrom', !!fromDate && (!toDate || fromDate.getTime() <= toDate.getTime()));
+      setDateValidity('dateTo', !!toDate && (!fromDate || fromDate.getTime() <= toDate.getTime()));
+    }
+    return {
+      search: trim(document.getElementById('searchInput').value).toLowerCase(),
+      fromDate: fromDate,
+      toDate: toDate,
+      origin: document.getElementById('originFilter').value,
+      region: document.getElementById('regionFilter').value,
+      model: document.getElementById('modelFilter').value,
+      validDates: valid
+    };
+  }
+
+  function setDateValidity(id, valid) {
+    var el = document.getElementById(id);
+    el.style.borderColor = valid ? '' : '#d74a42';
+    el.title = valid ? '' : 'Use a valid dd-mm-yyyy date range';
+  }
+
+  function trim(value) {
+    return String(value || '').replace(/^\s+|\s+$/g, '');
+  }
+
+  function getFilteredRows() {
+    var filters = readFilters(true);
+    var rows = [];
+    var i;
+    if (!filters.validDates) {
+      return rows;
+    }
+    for (i = 0; i < data.length; i += 1) {
+      if (matchesMode(data[i]) && matchesSimpleFilters(data[i], filters, true)) {
+        rows.push(data[i]);
+      }
+    }
+    rows.sort(rowSorter);
+    return rows;
+  }
+
+  function matchesMode(row) {
+    return row.status === '02';
+  }
+
+  function matchesSimpleFilters(row, filters, includeDateRange) {
+    var shipStart;
+    var shipEnd;
+    if (filters.origin && row.origin !== filters.origin) {
+      return false;
+    }
+    if (filters.region && row.region !== filters.region) {
+      return false;
+    }
+    if (filters.model && row.model !== filters.model) {
+      return false;
+    }
+    if (includeDateRange && mode === 'manual') {
+      shipStart = parseDate(row.shipStart);
+      shipEnd = parseDate(row.shipEnd);
+      if (!shipStart || !shipEnd) {
+        return false;
+      }
+      if (filters.fromDate && shipStart.getTime() < filters.fromDate.getTime()) {
+        return false;
+      }
+      if (filters.toDate && shipEnd.getTime() < filters.toDate.getTime()) {
+        return false;
+      }
+    }
+    if (filters.search && searchableText(row).indexOf(filters.search) < 0) {
+      return false;
+    }
+    return true;
+  }
+
+  function searchableText(row) {
+    var parts = [];
+    var i;
+    var key;
+    for (i = 0; i < columns.length; i += 1) {
+      key = columns[i].key;
+      if (key !== 'check') {
+        parts.push(formatRaw(row[key], columns[i].type));
+      }
+    }
+    return parts.join(' ').toLowerCase();
+  }
+
+  function formatRaw(value, type) {
+    if (type === 'amount') {
+      return formatAmount(value);
+    }
+    return value === undefined || value === null ? '' : String(value);
+  }
+
+  function rowSorter(a, b) {
+    var av = a[sortKey];
+    var bv = b[sortKey];
+    var cmp = 0;
+    if (sortKey === 'amount' || sortKey.indexOf('days') === 0) {
+      av = Number(av);
+      bv = Number(bv);
+      cmp = av === bv ? 0 : (av < bv ? -1 : 1);
+    } else if (isDateKey(sortKey)) {
+      av = parseDate(av);
+      bv = parseDate(bv);
+      av = av ? av.getTime() : 0;
+      bv = bv ? bv.getTime() : 0;
+      cmp = av === bv ? 0 : (av < bv ? -1 : 1);
+    } else {
+      av = String(av || '').toLowerCase();
+      bv = String(bv || '').toLowerCase();
+      cmp = av === bv ? 0 : (av < bv ? -1 : 1);
+    }
+    return cmp * sortDir;
+  }
+
+  function isDateKey(key) {
+    return key === 'dealStart' || key === 'dealEnd' || key === 'earliestStart' ||
+      key === 'shipStart' || key === 'shipEnd';
+  }
+
+  function getVisibleColumns() {
+    var keys = layouts['default'];
+    var result = [];
+    var i;
+    var j;
+    for (i = 0; i < keys.length; i += 1) {
+      for (j = 0; j < columns.length; j += 1) {
+        if (columns[j].key === keys[i]) {
+          result.push(columns[j]);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  function renderAll() {
+    var rows = getFilteredRows();
+    var totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+    renderHead(rows);
+    renderBody(rows);
+    renderFooter(rows, totalPages);
+    updateActionState();
+    document.getElementById('recordCount').innerHTML = rows.length + ' records';
+    updateModeButtons();
+  }
+
+  function renderHead(rows) {
+    var head = document.getElementById('tableHead');
+    var cols = getVisibleColumns();
+    var html = '';
+    var i;
+    var arrow;
+    for (i = 0; i < cols.length; i += 1) {
+      if (cols[i].type === 'check') {
+        html += '<th class="check-col"><input id="checkAll" type="checkbox" aria-label="Select all visible deals"></th>';
+      } else {
+        arrow = sortKey === cols[i].key ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        html += '<th class="sortable ' + (cols[i].type === 'deal' ? 'deal-col' : '') + '" data-key="' +
+          escapeHtml(cols[i].key) + '" style="min-width:' + escapeHtml(cols[i].width || '90px') + '">' +
+          escapeHtml(cols[i].label) + '<span class="sort-arrow">' + arrow + '</span></th>';
+      }
+    }
+    head.innerHTML = html;
+    bindHeadEvents(rows);
+  }
+
+  function bindHeadEvents(rows) {
+    var sortHeaders = document.getElementsByClassName('sortable');
+    var i;
+    var checkAll = document.getElementById('checkAll');
+    for (i = 0; i < sortHeaders.length; i += 1) {
+      sortHeaders[i].onclick = sortClick;
+    }
+    if (checkAll) {
+      checkAll.disabled = mode !== 'manual' || rows.length === 0;
+      checkAll.onclick = function (event) {
+        event = event || window.event;
+        if (event.stopPropagation) {
+          event.stopPropagation();
+        }
+        toggleAllFiltered(rows, this.checked);
+      };
+      checkAll.checked = allRowsSelected(rows);
+    }
+  }
+
+  function sortClick() {
+    var key = this.getAttribute('data-key');
+    if (sortKey === key) {
+      sortDir = sortDir * -1;
+    } else {
+      sortKey = key;
+      sortDir = 1;
+    }
+    renderAll();
+  }
+
+  function allRowsSelected(rows) {
+    var i;
+    if (rows.length === 0 || mode !== 'manual') {
+      return false;
+    }
+    for (i = 0; i < rows.length; i += 1) {
+      if (!selected[rows[i].dealId]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function toggleAllFiltered(rows, checked) {
+    var i;
+    if (mode !== 'manual') {
+      return;
+    }
+    for (i = 0; i < rows.length; i += 1) {
+      if (checked) {
+        selected[rows[i].dealId] = true;
+      } else {
+        delete selected[rows[i].dealId];
+      }
+    }
+    renderAll();
+  }
+
+  function renderBody(rows) {
+    var body = document.getElementById('tableBody');
+    var empty = document.getElementById('emptyState');
+    var cols = getVisibleColumns();
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var end = Math.min(start + PAGE_SIZE, rows.length);
+    var html = '';
+    var i;
+    var j;
+    var row;
+    var selectedClass;
+    for (i = start; i < end; i += 1) {
+      row = rows[i];
+      selectedClass = selected[row.dealId] ? ' row-selected' : '';
+      html += '<tr class="deal-row' + selectedClass + '" draggable="' + (mode === 'manual' ? 'true' : 'false') +
+        '" data-id="' + escapeHtml(row.dealId) + '">';
+      for (j = 0; j < cols.length; j += 1) {
+        html += renderCell(row, cols[j]);
+      }
+      html += '</tr>';
+    }
+    body.innerHTML = html;
+    empty.className = rows.length === 0 ? 'empty-state show' : 'empty-state';
+    document.getElementById('dealTable').style.display = rows.length === 0 ? 'none' : 'table';
+    bindBodyEvents();
+  }
+
+  function renderCell(row, col) {
+    var value = row[col.key];
+    var classes = [];
+    var content = '';
+    if (col.type === 'check') {
+      return '<td class="check-col"><input class="row-check" type="checkbox" data-id="' +
+        escapeHtml(row.dealId) + '" ' + (selected[row.dealId] ? 'checked' : '') +
+        (mode !== 'manual' ? ' disabled' : '') + ' aria-label="Select ' + escapeHtml(row.dealId) + '"></td>';
+    }
+    if (col.type === 'deal') {
+      classes.push('deal-col');
+      content = '<button type="button" class="hotspot hotspot-deal" data-action="deal" data-id="' +
+        escapeHtml(row.dealId) + '">' + escapeHtml(value) + '</button>';
+    } else if (col.type === 'mc') {
+      content = '<button type="button" class="hotspot hotspot-mc" data-action="mc" data-id="' +
+        escapeHtml(row.dealId) + '">' + escapeHtml(value) + '</button>';
+    } else if (col.type === 'amount') {
+      classes.push('amount');
+      content = escapeHtml(formatAmount(value));
+    } else if (col.type === 'num') {
+      classes.push('num');
+      classes.push(Number(value) < 0 ? 'days-negative' : 'days-positive');
+      content = Number(value) === 0 ? '' : escapeHtml(String(value));
+    } else if (col.type === 'status') {
+      classes.push(row.status === '03' ? 'status-marked' : 'status-ready');
+      content = escapeHtml(value);
+    } else {
+      content = escapeHtml(value);
+    }
+    return '<td class="' + classes.join(' ') + '">' + content + '</td>';
+  }
+
+  function bindBodyEvents() {
+    var rows = document.getElementsByClassName('deal-row');
+    var checks = document.getElementsByClassName('row-check');
+    var hotspots = document.getElementsByClassName('hotspot');
+    var i;
+    for (i = 0; i < rows.length; i += 1) {
+      rows[i].onclick = rowClick;
+      rows[i].ondragstart = rowDragStart;
+      rows[i].ondragend = rowDragEnd;
+    }
+    for (i = 0; i < checks.length; i += 1) {
+      checks[i].onclick = checkClick;
+    }
+    for (i = 0; i < hotspots.length; i += 1) {
+      hotspots[i].onclick = hotspotClick;
+    }
+    bindDropTarget();
+  }
+
+  function rowClick(event) {
+    var target = event.target || event.srcElement;
+    var id = this.getAttribute('data-id');
+    if (hasClassUp(target, 'hotspot') || hasClassUp(target, 'row-check')) {
+      return;
+    }
+    if (mode !== 'manual') {
+      return;
+    }
+    toggleSelection(id);
+  }
+
+  function checkClick(event) {
+    event = event || window.event;
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    if (mode !== 'manual') {
+      return;
+    }
+    setSelection(this.getAttribute('data-id'), this.checked);
+  }
+
+  function hotspotClick(event) {
+    event = event || window.event;
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    openDetails(this.getAttribute('data-id'), this.getAttribute('data-action'));
+  }
+
+  function toggleSelection(id) {
+    if (selected[id]) {
+      delete selected[id];
+    } else {
+      selected[id] = true;
+    }
+    renderAll();
+  }
+
+  function setSelection(id, value) {
+    if (value) {
+      selected[id] = true;
+    } else {
+      delete selected[id];
+    }
+    renderAll();
+  }
+
+  function selectedCount() {
+    var count = 0;
+    var key;
+    for (key in selected) {
+      if (Object.prototype.hasOwnProperty.call(selected, key) && selected[key]) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  function updateActionState() {
+    var count = selectedCount();
+    var btn = document.getElementById('markBtn');
+    btn.disabled = mode !== 'manual' || count === 0;
+    btn.title = count === 0 ? 'Select one or more deals first' : 'Mark ' + count + ' selected deal(s) for invoicing';
+  }
+
+  function markSelected() {
+    var count = 0;
+    var i;
+    if (mode !== 'manual') {
+      return;
+    }
+    for (i = 0; i < data.length; i += 1) {
+      if (selected[data[i].dealId] && data[i].status === '02') {
+        data[i].status = '03';
+        data[i].statusDesc = 'Deal ID Marked for Invoicing';
+        data[i].manualMarked = true;
+        count += 1;
+      }
+    }
+    if (count === 0) {
+      showToast('Select at least one eligible deal first.', 'warn');
+      return;
+    }
+    selected = {};
+    currentPage = 1;
+    renderAll();
+    showToast('Invoice Marking Updated Successfully — ' + count + ' deal(s) updated.', 'success');
+  }
+
+  function rowDragStart(event) {
+    var id = this.getAttribute('data-id');
+    if (mode !== 'manual') {
+      if (event.preventDefault) {
+        event.preventDefault();
+      }
+      return false;
+    }
+    addClass(this, 'dragging');
+    selected[id] = true;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', id);
+    }
+    addClass(document.getElementById('markBtn'), 'drop-ready');
+    updateActionState();
+    return true;
+  }
+
+  function rowDragEnd() {
+    removeClass(this, 'dragging');
+    removeClass(document.getElementById('markBtn'), 'drop-ready');
+    removeClass(document.getElementById('markBtn'), 'drop-over');
+    renderAll();
+  }
+
+  function bindDropTarget() {
+    var btn = document.getElementById('markBtn');
+    btn.ondragover = function (event) {
+      if (mode !== 'manual') {
+        return;
+      }
+      event = event || window.event;
+      if (event.preventDefault) {
+        event.preventDefault();
+      }
+      addClass(btn, 'drop-over');
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+      return false;
+    };
+    btn.ondragleave = function () {
+      removeClass(btn, 'drop-over');
+    };
+    btn.ondrop = function (event) {
+      var id;
+      event = event || window.event;
+      if (event.preventDefault) {
+        event.preventDefault();
+      }
+      removeClass(btn, 'drop-over');
+      removeClass(btn, 'drop-ready');
+      if (mode !== 'manual') {
+        return false;
+      }
+      if (event.dataTransfer) {
+        id = event.dataTransfer.getData('text/plain');
+        if (id) {
+          selected[id] = true;
+        }
+      }
+      markSelected();
+      return false;
+    };
+  }
+
+  function addClass(el, cls) {
+    if ((' ' + el.className + ' ').indexOf(' ' + cls + ' ') < 0) {
+      el.className += ' ' + cls;
+    }
+  }
+
+  function removeClass(el, cls) {
+    var re = new RegExp('(^|\\s)' + cls + '(?=\\s|$)', 'g');
+    el.className = el.className.replace(re, ' ').replace(/^\s+|\s+$/g, '');
+  }
+
+  function renderFooter(rows, totalPages) {
+    var start = rows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+    var end = Math.min(currentPage * PAGE_SIZE, rows.length);
+    var pagination = document.getElementById('pagination');
+    var html = '';
+    var p;
+    document.getElementById('footerCopy').innerHTML = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+    html += '<button class="page-btn" data-page="prev" ' + (currentPage <= 1 ? 'disabled' : '') + '>&lsaquo;</button>';
+    for (p = 1; p <= totalPages; p += 1) {
+      if (totalPages <= 5 || p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1) {
+        html += '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">' + p + '</button>';
+      }
+    }
+    html += '<button class="page-btn" data-page="next" ' + (currentPage >= totalPages ? 'disabled' : '') + '>&rsaquo;</button>';
+    pagination.innerHTML = html;
+    bindPagination(totalPages);
+  }
+
+  function bindPagination(totalPages) {
+    var buttons = document.getElementsByClassName('page-btn');
+    var i;
+    for (i = 0; i < buttons.length; i += 1) {
+      buttons[i].onclick = function () {
+        var target = this.getAttribute('data-page');
+        if (target === 'prev' && currentPage > 1) {
+          currentPage -= 1;
+        } else if (target === 'next' && currentPage < totalPages) {
+          currentPage += 1;
+        } else if (/^\d+$/.test(target)) {
+          currentPage = parseInt(target, 10);
+        }
+        renderAll();
+        document.getElementById('tableScroll').scrollTop = 0;
+      };
+    }
+  }
+
+  function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('dateFrom').value = '01-09-2026';
+    document.getElementById('dateTo').value = '31-12-2026';
+    document.getElementById('originFilter').value = '';
+    document.getElementById('regionFilter').value = '';
+    document.getElementById('modelFilter').value = '';
+    selected = {};
+    sortKey = 'dealId';
+    sortDir = 1;
+    currentPage = 1;
+    renderAll();
+  }
+
+  function refreshWorkbench() {
+    data = deepCopyRows(initialData);
+    selected = {};
+    mode = 'manual';
+    sortKey = 'dealId';
+    sortDir = 1;
+    currentPage = 1;
+    resetFilters();
+    showToast('Workbench refreshed to the original demo data.', 'info');
+  }
+
+  function openDetails(id, action) {
+    var row = findRow(id);
+    var fields;
+    var modal = document.getElementById('detailModal');
+    if (!row) {
+      return;
+    }
+    closeSubModal();
+    if (action === 'mc') {
+      modal.className = 'modal';
+      fields = [
+        ['MC Ref No', row.mcRef],
+        ['Origin Entity', row.origin],
+        ['Commodity', row.commodity],
+        ['FX Model', row.model],
+        ['FX Model Description', row.modelDesc],
+        ['Region', row.region],
+        ['MC Shipment Start', row.shipStart],
+        ['MC Shipment End', row.shipEnd],
+        ['Earliest Shipment Start', row.earliestStart]
+      ];
+      document.getElementById('detailTitle').innerHTML = 'Master Contract Details';
+      document.getElementById('detailTag').innerHTML = escapeHtml(row.mcRef);
+      document.getElementById('modalBody').innerHTML = renderInfoGrid(fields);
+    } else {
+      modal.className = 'modal modal-deal';
+      document.getElementById('detailTitle').innerHTML = 'View Deal ID';
+      document.getElementById('detailTag').innerHTML = escapeHtml(row.dealId);
+      document.getElementById('modalBody').innerHTML = renderDealWorkspace(row);
+      bindDealWorkspace(row);
+    }
+    document.getElementById('detailOverlay').className = 'modal-overlay show';
+    document.getElementById('detailOverlay').setAttribute('aria-hidden', 'false');
+  }
+
+  function renderDealWorkspace(row) {
+    var detail = buildViewDealData(row);
+    var html = '<div class="deal-workspace">';
+    html += renderDealActions(row);
+    html += '<section class="deal-section">';
+    html += '<div class="deal-section-head"><span>Basic Selection</span>';
+    html += '<span class="deal-section-meta">Single Deal ID</span></div>';
+    html += '<div class="deal-basic-grid">';
+    html += renderDealField('Deal ID', row.dealId, detail.dealRef, true);
+    html += renderDealField('Deal Start Date', row.dealStart, '', false);
+    html += renderDealField('Deal End Date', row.dealEnd, '', false);
+    html += renderDealField('MC Ref No', row.mcRef, detail.mcDesc, true);
+    html += renderDealField('MC Date', detail.mcDate, '', false);
+    html += renderDealField('Ship Start Date', row.shipStart, '', false);
+    html += renderDealField('Ship End Date', row.shipEnd, '', false);
+    html += renderDealField('FX Model ID', row.model, row.modelDesc, true);
+    html += renderDealField('Entity String', detail.entityString, '', false);
+    html += renderDealField('Currency String', detail.currencyString, '', false);
+    html += renderDealField('Trader', detail.traderCode, detail.traderDesc, true);
+    html += renderDealField('Deal ID Status', detail.statusText, '', true, true);
+    html += '</div></section>';
+    html += '<section class="deal-section">';
+    html += '<div class="deal-section-head"><span>FX Deals</span>';
+    html += '<span class="deal-section-meta">' + detail.fxRows.length + ' transaction(s)</span></div>';
+    html += renderFxDealsTable(detail.fxRows);
+    html += '</section>';
+    html += '<section class="deal-section">';
+    html += '<div class="deal-section-head"><span>Invoice Planned / Invoice Amount</span>';
+    html += '<span class="deal-section-meta">' + detail.invoiceRows.length + ' line(s)</span></div>';
+    html += renderInvoiceTable(detail.invoiceRows);
+    html += '</section></div>';
+    return html;
+  }
+
+  function renderDealActions(row) {
+    var status = parseInt(row.status, 10);
+    var html = '<div class="deal-actionbar">';
+    if (status > 4) {
+      html += '<button class="deal-action-btn" type="button" data-view-action="bl">View List of BLs</button>';
+    }
+    if (status === 5) {
+      html += '<button class="deal-action-btn" type="button" data-view-action="invoice">View List of Invoice</button>';
+    }
+    html += '<button class="deal-action-btn" type="button" data-view-action="plan">View Planned P&amp;L</button>';
+    html += '<button class="deal-action-btn" type="button" data-view-action="invoicing">View Invoicing</button>';
+    html += '<button class="deal-action-btn" type="button" data-view-action="settlement">View Settlement</button>';
+    html += '<button class="deal-action-btn primary-action" type="button" data-view-action="refresh">Refresh</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderDealField(label, value, subValue, wide, statusField) {
+    var cls = wide ? 'deal-field wide' : 'deal-field';
+    var boxCls = statusField ? 'deal-field-box deal-status-box' : 'deal-field-box';
+    var html = '<div class="' + cls + '"><span class="deal-field-label">' + escapeHtml(label) + '</span>';
+    html += '<div class="' + boxCls + '"><span>' + escapeHtml(value) + '</span>';
+    if (subValue) {
+      html += '<span class="muted-value">— ' + escapeHtml(subValue) + '</span>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function buildViewDealData(row) {
+    var codeMap = { OGA: 'AE13', DMCC: 'AE13', OSIPL: 'IN11', SEDA: 'ES12', PAN: 'IN11' };
+    var entityMap = {
+      OGA: 'OGA-DMCC-PAN', DMCC: 'DMCC-OGA-PAN', OSIPL: 'OSIPL-OGA-PAN',
+      SEDA: 'SEDA-DMCC-OGA', PAN: 'PAN-OGA-DMCC'
+    };
+    var currencyMap = { APAC: 'USD-INR', MEA: 'USD-AED', EUR: 'USD-EUR' };
+    var traderCode = parseInt(row.dealId.slice(-1), 10) % 2 === 0 ? 'OGA' : 'OTL';
+    var traderDesc = traderCode === 'OGA' ? 'Olam Global Agri' : 'Olam Treasury Limited';
+    return {
+      companyCode: codeMap[row.origin] || 'AE13',
+      dealRef: row.dealDesc,
+      mcDate: addDays(row.shipStart, -20),
+      mcDesc: row.commodity + ' Master Contract',
+      entityString: entityMap[row.origin] || (row.origin + '-OGA-PAN'),
+      currencyString: currencyMap[row.region] || 'USD-INR',
+      traderCode: traderCode,
+      traderDesc: traderDesc,
+      statusText: row.status + ' - ' + row.statusDesc,
+      fxRows: buildFxRows(row, codeMap[row.origin] || 'AE13'),
+      invoiceRows: buildInvoiceRows(row)
+    };
+  }
+
+  function buildFxRows(row, companyCode) {
+    var regionRate = row.region === 'MEA' ? 3.6725 : (row.region === 'EUR' ? 0.9345 : 83.1200);
+    var targetCurr = row.region === 'MEA' ? 'AED' : (row.region === 'EUR' ? 'EUR' : 'INR');
+    var rfha = '20' + row.dealId.slice(-5);
+    var amount2 = row.amount * regionRate;
+    var rows = [{
+      bukrs: companyCode,
+      dealType: 'FX Forward',
+      rfha: rfha,
+      start: row.dealStart,
+      end: row.dealEnd,
+      text: row.commodity + ' hedge',
+      entity: row.origin,
+      side1: 'Buy',
+      curr1: 'USD',
+      amt1: row.amount,
+      side2: 'Sell',
+      curr2: targetCurr,
+      amt2: amount2,
+      spot: regionRate,
+      swap: 0.0125,
+      allIn: regionRate + 0.0125,
+      strike: '',
+      mcRef: row.mcRef,
+      txnStatus: 'Active',
+      premium: '',
+      premiumCurr: ''
+    }];
+    if (row.model === 'MIXED') {
+      rows.push({
+        bukrs: companyCode,
+        dealType: 'FX Option',
+        rfha: String(parseInt(rfha, 10) + 1),
+        start: row.dealStart,
+        end: row.dealEnd,
+        text: row.commodity + ' option leg',
+        entity: row.origin,
+        side1: 'Buy',
+        curr1: 'USD',
+        amt1: row.amount * 0.35,
+        side2: 'Sell',
+        curr2: targetCurr,
+        amt2: row.amount * 0.35 * regionRate,
+        spot: '',
+        swap: '',
+        allIn: '',
+        strike: regionRate + 0.11,
+        mcRef: row.mcRef,
+        txnStatus: 'Active',
+        premium: row.amount * 0.0015,
+        premiumCurr: 'USD'
+      });
+    }
+    return rows;
+  }
+
+  function buildInvoiceRows(row) {
+    var localCurr = row.region === 'MEA' ? 'AED' : (row.region === 'EUR' ? 'EUR' : 'INR');
+    var rate = row.region === 'MEA' ? 3.6725 : (row.region === 'EUR' ? 0.9345 : 83.1200);
+    var shares = [0.4, 0.35, 0.25];
+    var rows = [];
+    var i;
+    var amount;
+    for (i = 0; i < shares.length; i += 1) {
+      amount = row.amount * shares[i];
+      rows.push({
+        ref: 'INV' + row.dealId.slice(-5) + '-' + pad2(i + 1),
+        tradeType: 'T' + (i + 1),
+        dealType: i === 0 ? 'Purchase' : (i === 1 ? 'Sale' : 'Adjustment'),
+        sell: i === 1 ? row.origin : 'OGA',
+        buy: i === 1 ? 'OGA' : row.origin,
+        curr: localCurr,
+        mcPrimary: row.mcRef,
+        mcSecondary: i === 2 ? row.mcRef + '-S' : '',
+        usdAmount: amount,
+        localAmount: amount * rate,
+        exchangeRate: rate
+      });
+    }
+    return rows;
+  }
+
+  function renderFxDealsTable(rows) {
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = [
+      'Company Code', 'Deal Type', 'Transaction No', 'Start Date', 'End Date', 'Text', 'Entity',
+      'B/S 1', 'Curr 1', 'Amount 1', 'B/S 2', 'Curr 2', 'Amount 2', 'Spot', 'Swap',
+      'All in Rate', 'Strike', 'MC Ref No', 'Txn Status', 'Premium Amt', 'Premium Curr'
+    ];
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += renderFxRow(rows[i]);
+    }
+    html += '</tbody></table></div>';
+    html += '<div class="deal-note">Transaction No is the RFHA hotspot from the SAP ALV.</div>';
+    return html;
+  }
+
+  function renderFxRow(row) {
+    var html = '<tr>';
+    html += '<td>' + escapeHtml(row.bukrs) + '</td>';
+    html += '<td class="deal-type-cell">' + escapeHtml(row.dealType) + '</td>';
+    html += '<td><button class="hotspot-link rfha-link" data-rfha="' + escapeHtml(row.rfha) + '" type="button">';
+    html += escapeHtml(row.rfha) + '</button></td>';
+    html += '<td>' + escapeHtml(row.start) + '</td><td>' + escapeHtml(row.end) + '</td>';
+    html += '<td>' + escapeHtml(row.text) + '</td><td>' + escapeHtml(row.entity) + '</td>';
+    html += '<td>' + escapeHtml(row.side1) + '</td><td>' + escapeHtml(row.curr1) + '</td>';
+    html += '<td class="num">' + formatAmount(row.amt1) + '</td><td>' + escapeHtml(row.side2) + '</td>';
+    html += '<td>' + escapeHtml(row.curr2) + '</td><td class="num">' + formatAmount(row.amt2) + '</td>';
+    html += '<td class="num">' + formatRate(row.spot) + '</td><td class="num">' + formatRate(row.swap) + '</td>';
+    html += '<td class="num">' + formatRate(row.allIn) + '</td><td class="num">' + formatRate(row.strike) + '</td>';
+    html += '<td>' + escapeHtml(row.mcRef) + '</td><td>' + escapeHtml(row.txnStatus) + '</td>';
+    html += '<td class="num">' + (row.premium === '' ? '' : formatAmount(row.premium)) + '</td>';
+    html += '<td>' + escapeHtml(row.premiumCurr) + '</td></tr>';
+    return html;
+  }
+
+  function renderInvoiceTable(rows) {
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = [
+      'Invoice Ref', 'Trade Type', 'Deal Type', 'Trade Sell', 'Trade Buy', 'Trade Currency',
+      'MC Ref Primary', 'MC Ref Secondary', 'Inv Amt (USD)', 'Inv Amt Loc Curr', 'Exchange Rate'
+    ];
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr><td>' + escapeHtml(rows[i].ref) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].tradeType) + '</td>';
+      html += '<td class="invoice-type-cell">' + escapeHtml(rows[i].dealType) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].sell) + '</td><td>' + escapeHtml(rows[i].buy) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].curr) + '</td><td>' + escapeHtml(rows[i].mcPrimary) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].mcSecondary) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].usdAmount) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].localAmount) + '</td>';
+      html += '<td class="num">' + formatRate(rows[i].exchangeRate) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function formatRate(value) {
+    if (value === '' || value === null || value === undefined) {
+      return '';
+    }
+    return Number(value).toFixed(6);
+  }
+
+  function bindDealWorkspace(row) {
+    var actions = document.querySelectorAll('#modalBody [data-view-action]');
+    var rfhas = document.querySelectorAll('#modalBody .rfha-link');
+    var i;
+    for (i = 0; i < actions.length; i += 1) {
+      actions[i].onclick = function () {
+        handleViewDealAction(row, this.getAttribute('data-view-action'));
+      };
+    }
+    for (i = 0; i < rfhas.length; i += 1) {
+      rfhas[i].onclick = function () {
+        openTreasuryTransaction(row, this.getAttribute('data-rfha'));
+      };
+    }
+  }
+
+  function handleViewDealAction(row, action) {
+    if (action === 'refresh') {
+      document.getElementById('modalBody').innerHTML = renderDealWorkspace(row);
+      bindDealWorkspace(row);
+      showToast('Deal details refreshed.', 'info');
+      return;
+    }
+    if (action === 'bl') {
+      openBlList(row);
+      return;
+    }
+    if (action === 'invoice') {
+      showToast('View List of Invoice routes to ZSGTSF_RDEAL_ID_INV in SAP.', 'info');
+      return;
+    }
+    if (action === 'plan') {
+      openPlannedPnl(row);
+      return;
+    }
+    if (action === 'invoicing') {
+      openInvoicing(row);
+      return;
+    }
+    if (action === 'settlement') {
+      openSettlement(row);
+    }
+  }
+
+
+  function openWorkflowModal(title, bodyHtml) {
+    var modal = document.getElementById('subModal');
+    modal.className = 'sub-modal workflow-modal';
+    document.getElementById('subModalTitle').innerHTML = escapeHtml(title);
+    document.getElementById('subModalBody').innerHTML = bodyHtml;
+    document.getElementById('subOverlay').className = 'sub-modal-overlay show';
+    document.getElementById('subOverlay').setAttribute('aria-hidden', 'false');
+  }
+
+  function workflowField(label, value) {
+    var html = '<div class="workflow-field">';
+    html += '<span class="workflow-label">' + escapeHtml(label) + '</span>';
+    html += '<div class="workflow-value" title="' + escapeHtml(value) + '">';
+    html += escapeHtml(value) + '</div></div>';
+    return html;
+  }
+
+  function renderWorkflowBasic(row, kind) {
+    var detail = buildViewDealData(row);
+    var html = '<section class="workflow-section">';
+    html += '<div class="workflow-section-head"><span>Basic Selection</span>';
+    html += '<span class="workflow-section-meta">' + escapeHtml(kind) + '</span></div>';
+    html += '<div class="workflow-basic-grid">';
+    html += workflowField('Deal ID', row.dealId);
+    html += workflowField('Deal Description', row.dealDesc);
+    html += workflowField('Deal Start Date', row.dealStart);
+    html += workflowField('Deal End Date', row.dealEnd);
+    html += workflowField('MC Ref No', row.mcRef);
+    html += workflowField('MC Date', detail.mcDate);
+    html += workflowField('Ship Start Date', row.shipStart);
+    html += workflowField('Ship End Date', row.shipEnd);
+    html += workflowField('FX Model ID', row.model);
+    html += workflowField('Entity String', detail.entityString);
+    html += workflowField('Currency String', detail.currencyString);
+    html += workflowField('Trader', detail.traderCode + ' — ' + detail.traderDesc);
+    if (kind === 'Invoice Finalisation') {
+      html += workflowField('FX Inv Model', row.model);
+    }
+    if (kind === 'Settlement') {
+      html += workflowField('Link Model', row.model);
+      html += workflowField('FX Inv Model', row.model);
+    }
+    html += workflowField('Deal ID Status', detail.statusText);
+    html += '</div></section>';
+    return html;
+  }
+
+  function workflowExtraPanel(title, body) {
+    var html = '<div class="workflow-extra-panel">';
+    html += '<div class="workflow-extra-head"><span>' + escapeHtml(title) + '</span>';
+    html += '<button class="deal-action-btn" data-workflow-extra-close="1" type="button">Close panel</button></div>';
+    html += '<div class="workflow-extra-body">' + body + '</div></div>';
+    return html;
+  }
+
+  function setWorkflowExtra(title, body) {
+    var host = document.getElementById('workflowExtraPanel');
+    var close;
+    if (!host) {
+      return;
+    }
+    host.innerHTML = workflowExtraPanel(title, body);
+    close = host.querySelector('[data-workflow-extra-close]');
+    if (close) {
+      close.onclick = function () {
+        host.innerHTML = '';
+      };
+    }
+    if (host.scrollIntoView) {
+      host.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function renderWorkflowFxTable(row, settlementMode) {
+    var detail = buildViewDealData(row);
+    var rows = detail.fxRows;
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = settlementMode ? [
+      'Seq', 'Company Code', 'Deal Type', 'Transaction No', 'Business Partner', 'Start Date', 'End Date',
+      'Entity', 'B/S 1', 'Curr 1', 'Amount 1', 'B/S 2', 'Curr 2', 'Amount 2', 'All in Rate', 'Txn Status'
+    ] : [
+      'Company Code', 'Deal Type', 'Transaction No', 'Start Date', 'End Date', 'Text', 'Entity',
+      'B/S 1', 'Curr 1', 'Amount 1', 'B/S 2', 'Curr 2', 'Amount 2', 'Spot', 'Swap', 'All in Rate', 'Strike',
+      'MC Ref No', 'Txn Status'
+    ];
+    var i;
+    var fx;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      fx = rows[i];
+      html += '<tr>';
+      if (settlementMode) {
+        html += '<td>' + (i + 1) + '</td><td>' + escapeHtml(fx.bukrs) + '</td>';
+        html += '<td class="deal-type-cell">' + escapeHtml(fx.dealType) + '</td>';
+        html += '<td><button class="hotspot-link workflow-rfha" data-rfha="' + escapeHtml(fx.rfha) + '" type="button">';
+        html += escapeHtml(fx.rfha) + '</button></td>';
+        html += '<td>' + escapeHtml(row.origin + ' Treasury') + '</td>';
+        html += '<td>' + escapeHtml(fx.start) + '</td><td>' + escapeHtml(fx.end) + '</td>';
+        html += '<td>' + escapeHtml(fx.entity) + '</td><td>' + escapeHtml(fx.side1) + '</td>';
+        html += '<td>' + escapeHtml(fx.curr1) + '</td><td class="num">' + formatAmount(fx.amt1) + '</td>';
+        html += '<td>' + escapeHtml(fx.side2) + '</td><td>' + escapeHtml(fx.curr2) + '</td>';
+        html += '<td class="num">' + formatAmount(fx.amt2) + '</td>';
+        html += '<td class="num">' + formatRate(fx.allIn || fx.strike) + '</td>';
+        html += '<td>' + escapeHtml(fx.txnStatus) + '</td>';
+      } else {
+        html += '<td>' + escapeHtml(fx.bukrs) + '</td><td class="deal-type-cell">' + escapeHtml(fx.dealType) + '</td>';
+        html += '<td><button class="hotspot-link workflow-rfha" data-rfha="' + escapeHtml(fx.rfha) + '" type="button">';
+        html += escapeHtml(fx.rfha) + '</button></td>';
+        html += '<td>' + escapeHtml(fx.start) + '</td><td>' + escapeHtml(fx.end) + '</td>';
+        html += '<td>' + escapeHtml(fx.text) + '</td><td>' + escapeHtml(fx.entity) + '</td>';
+        html += '<td>' + escapeHtml(fx.side1) + '</td><td>' + escapeHtml(fx.curr1) + '</td>';
+        html += '<td class="num">' + formatAmount(fx.amt1) + '</td><td>' + escapeHtml(fx.side2) + '</td>';
+        html += '<td>' + escapeHtml(fx.curr2) + '</td><td class="num">' + formatAmount(fx.amt2) + '</td>';
+        html += '<td class="num">' + formatRate(fx.spot) + '</td><td class="num">' + formatRate(fx.swap) + '</td>';
+        html += '<td class="num">' + formatRate(fx.allIn) + '</td><td class="num">' + formatRate(fx.strike) + '</td>';
+        html += '<td>' + escapeHtml(fx.mcRef) + '</td><td>' + escapeHtml(fx.txnStatus) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function bindWorkflowRfha(row) {
+    var links = document.querySelectorAll('#subModalBody .workflow-rfha');
+    var i;
+    for (i = 0; i < links.length; i += 1) {
+      links[i].onclick = function () {
+        showWorkflowTransaction(row, this.getAttribute('data-rfha'));
+      };
+    }
+  }
+
+  function showWorkflowTransaction(row, rfha) {
+    var detail = buildViewDealData(row);
+    var fxRows = detail.fxRows;
+    var fx = fxRows[0];
+    var fields;
+    var html = '<div class="workflow-mini-grid">';
+    var i;
+    for (i = 0; i < fxRows.length; i += 1) {
+      if (fxRows[i].rfha === rfha) {
+        fx = fxRows[i];
+        break;
+      }
+    }
+    fields = [
+      ['Company Code', fx.bukrs], ['Transaction No', fx.rfha], ['Deal Type', fx.dealType],
+      ['Start Date', fx.start], ['End Date', fx.end], ['Entity', fx.entity],
+      ['Currency 1', fx.curr1], ['Amount 1', formatAmount(fx.amt1)],
+      ['Currency 2', fx.curr2], ['Amount 2', formatAmount(fx.amt2)],
+      ['All in Rate', formatRate(fx.allIn || fx.strike)], ['Transaction Status', fx.txnStatus]
+    ];
+    for (i = 0; i < fields.length; i += 1) {
+      html += '<div class="workflow-mini-card"><div class="workflow-mini-label">' + escapeHtml(fields[i][0]) + '</div>';
+      html += '<div class="workflow-mini-value">' + escapeHtml(fields[i][1]) + '</div></div>';
+    }
+    html += '</div>';
+    setWorkflowExtra('Treasury Transaction Display', html);
+  }
+
+  function buildPlannedPnlRows(row) {
+    var rate = row.region === 'MEA' ? 3.6725 : (row.region === 'EUR' ? 0.9345 : 83.1200);
+    var localCurr = row.region === 'MEA' ? 'AED' : (row.region === 'EUR' ? 'EUR' : 'INR');
+    var purchase = row.amount * 0.976;
+    var premiumIn = row.model === 'MIXED' ? row.amount * 0.0024 : 0;
+    var premiumOut = row.model === 'MIXED' ? row.amount * -0.0014 : 0;
+    var ndfAdj = row.model === 'FWD' ? row.amount * 0.0008 : 0;
+    var total = row.amount - purchase + premiumIn + premiumOut + ndfAdj;
+    return {
+      localCurr: localCurr,
+      rows: [
+        { type: 'Sale', usd: row.amount, local: row.amount * rate },
+        { type: 'Purchase', usd: -purchase, local: -purchase * rate },
+        { type: 'Option Premium Income', usd: premiumIn, local: premiumIn * rate },
+        { type: 'Option Premium Expense', usd: premiumOut, local: premiumOut * rate },
+        { type: 'NDF Fixing-Profit Adj', usd: ndfAdj, local: ndfAdj * rate },
+        { type: 'Total P&L', usd: total, local: total * rate, total: true }
+      ]
+    };
+  }
+
+  function renderPlannedInvoiceTable(row) {
+    var rows = buildInvoiceRows(row);
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = [
+      'Invoice Ref', 'Trade Type', 'Deal Type', 'Trade Sell', 'Trade Buy', 'Trade Currency',
+      'MC Ref Primary', 'MC Ref Secondary', 'Planned Amount', 'Invoice Amount', 'Exchange Rate'
+    ];
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr><td>' + escapeHtml(rows[i].ref) + '</td><td>' + escapeHtml(rows[i].tradeType) + '</td>';
+      html += '<td class="invoice-type-cell">' + escapeHtml(rows[i].dealType) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].sell) + '</td><td>' + escapeHtml(rows[i].buy) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].curr) + '</td><td>' + escapeHtml(rows[i].mcPrimary) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].mcSecondary) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].usdAmount) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].localAmount) + '</td>';
+      html += '<td class="num">' + formatRate(rows[i].exchangeRate) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderPlannedPnlTable(row) {
+    var dataSet = buildPlannedPnlRows(row);
+    var rows = dataSet.rows;
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    html += '<th>Type</th><th>USD</th><th>' + escapeHtml(dataSet.localCurr) + '</th></tr></thead><tbody>';
+    var i;
+    var cls;
+    for (i = 0; i < rows.length; i += 1) {
+      cls = rows[i].total ? ' class="workflow-total-row"' : '';
+      html += '<tr' + cls + '><td>' + escapeHtml(rows[i].type) + '</td>';
+      html += '<td class="num ' + (rows[i].usd < 0 ? 'workflow-negative' : 'workflow-positive') + '">';
+      html += formatAmount(rows[i].usd) + '</td>';
+      html += '<td class="num ' + (rows[i].local < 0 ? 'workflow-negative' : 'workflow-positive') + '">';
+      html += formatAmount(rows[i].local) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderPlannedPnlWorkspace(row) {
+    var html = '<div class="workflow-shell">';
+    html += '<div class="workflow-actionbar">';
+    html += '<button class="deal-action-btn" data-pnl-action="change" type="button">Change/Confirm</button>';
+    html += '<button class="deal-action-btn" data-pnl-action="premium" type="button">Premium Adjustment</button>';
+    html += '<span class="workflow-spacer"></span>';
+    html += '<button class="deal-action-btn primary-action" data-pnl-action="refresh" type="button">Refresh</button>';
+    html += '</div>';
+    html += renderWorkflowBasic(row, 'Planned P&L');
+    html += '<section class="workflow-section"><div class="workflow-section-head"><span>FX Deals</span>';
+    html += '<span class="workflow-section-meta">Transaction hotspot enabled</span></div>';
+    html += renderWorkflowFxTable(row, false) + '</section>';
+    html += '<section class="workflow-section"><div class="workflow-section-head">';
+    html += '<span>Deal ID: Planned Trade Invoices</span><span class="workflow-section-meta">Invoice plan</span></div>';
+    html += renderPlannedInvoiceTable(row) + '</section>';
+    html += '<section class="workflow-section"><div class="workflow-section-head">';
+    html += '<span>Deal ID: Planned P&amp;L</span><span class="workflow-section-meta">Calculated demo values</span></div>';
+    html += renderPlannedPnlTable(row) + '</section>';
+    html += '<div class="workflow-extra" id="workflowExtraPanel"></div></div>';
+    return html;
+  }
+
+  function openPlannedPnl(row) {
+    openWorkflowModal('Deal ID Analysis — Planned P&L — ' + row.dealId, renderPlannedPnlWorkspace(row));
+    bindPlannedPnl(row);
+  }
+
+  function bindPlannedPnl(row) {
+    var buttons = document.querySelectorAll('#subModalBody [data-pnl-action]');
+    var i;
+    bindWorkflowRfha(row);
+    for (i = 0; i < buttons.length; i += 1) {
+      buttons[i].onclick = function () {
+        var action = this.getAttribute('data-pnl-action');
+        if (action === 'refresh') {
+          openPlannedPnl(row);
+        } else if (action === 'change') {
+          showPnlChangeConfirm(row);
+        } else if (action === 'premium') {
+          showPremiumAdjustment(row);
+        }
+      };
+    }
+  }
+
+  function showPnlChangeConfirm(row) {
+    var html = '<div class="workflow-form-row">';
+    html += '<label><span class="workflow-label">Deal ID</span><input class="workflow-input" value="' + escapeHtml(row.dealId) + '" disabled></label>';
+    html += '<label><span class="workflow-label">Invoice Plan</span><input class="workflow-input" value="' + escapeHtml(row.model) + '" disabled></label>';
+    html += '<label><span class="workflow-label">MC Ref No</span><input class="workflow-input" id="pnlMcRef" value="' + escapeHtml(row.mcRef) + '"></label>';
+    html += '</div><div class="workflow-form-actions">';
+    html += '<button class="secondary-btn" id="pnlChangeBtn" type="button">Change</button>';
+    html += '<button class="primary-btn" id="pnlConfirmBtn" type="button">Confirm</button></div>';
+    setWorkflowExtra('Invoice Plan Change/Confirm', html);
+    document.getElementById('pnlChangeBtn').onclick = function () {
+      showToast('Invoice plan is open for change in the demo.', 'info');
+      document.getElementById('pnlMcRef').focus();
+    };
+    document.getElementById('pnlConfirmBtn').onclick = function () {
+      showToast('Deal confirmed successfully in the demo.', 'success');
+    };
+  }
+
+  function showPremiumAdjustment(row) {
+    var rate = row.region === 'MEA' ? 3.6725 : (row.region === 'EUR' ? 0.9345 : 83.1200);
+    var localCurr = row.region === 'MEA' ? 'AED' : (row.region === 'EUR' ? 'EUR' : 'INR');
+    var premium = row.amount * (row.model === 'MIXED' ? 0.0014 : 0.0006);
+    var fields = [
+      ['Deal Value', formatAmount(row.amount) + ' USD'],
+      ['Net Premium', formatAmount(premium * rate) + ' ' + localCurr],
+      ['RBI Rate', formatRate(rate)],
+      ['Net Premium', formatAmount(premium) + ' USD'],
+      ['Net Premium per USD', formatRate(premium / row.amount)],
+      ['Strike Rate', formatRate(rate + 0.11)],
+      ['Invoice Rate', formatRate(rate + 0.03)]
+    ];
+    var html = '<div class="workflow-mini-grid">';
+    var i;
+    for (i = 0; i < fields.length; i += 1) {
+      html += '<div class="workflow-mini-card"><div class="workflow-mini-label">' + escapeHtml(fields[i][0]) + '</div>';
+      html += '<div class="workflow-mini-value">' + escapeHtml(fields[i][1]) + '</div></div>';
+    }
+    html += '</div>';
+    setWorkflowExtra('Premium Adjustments', html);
+  }
+
+  function buildAdjustedInvoiceRows(row) {
+    var base = buildInvoiceRows(row);
+    var rows = [];
+    var i;
+    var qty;
+    var price;
+    for (i = 0; i < base.length; i += 1) {
+      qty = 2500 + (i * 750);
+      price = base[i].usdAmount / qty;
+      rows.push({
+        ttype: base[i].tradeType,
+        dealType: base[i].dealType,
+        invType: i === 2 ? 'ADJ' : 'STD',
+        sell: base[i].sell,
+        buy: base[i].buy,
+        commodity: row.commodity,
+        curr: base[i].curr,
+        qty: qty,
+        usdPrice: price,
+        rate: base[i].exchangeRate,
+        invDate: addDays(row.shipStart, i * 3),
+        dueDate: addDays(row.shipStart, 30 + (i * 3)),
+        finalInv: base[i].usdAmount,
+        invUsd: base[i].usdAmount,
+        planned: base[i].usdAmount,
+        partnerBank: i === 0 ? '0001' : (i === 1 ? '0003' : '0005')
+      });
+    }
+    return rows;
+  }
+
+  function renderAdjustedInvoiceTable(row) {
+    var rows = buildAdjustedInvoiceRows(row);
+    var headers = [
+      'Trade Type', 'Deal Type', 'Inv Type', 'Seller', 'Buyer', 'Commodity', 'Currency', 'Qty',
+      'Price(USD)', 'Rate', 'Invoice Date', 'Due Date', 'Final Inv Amt', 'Inv Amt(USD)', 'Planned Inv Amt', 'Partner Bank'
+    ];
+    var html = '<div class="deal-table-scroll"><table class="deal-table" id="invoiceAdjustTable"><thead><tr>';
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr data-inv-row="' + i + '">';
+      html += '<td>' + escapeHtml(rows[i].ttype) + '</td><td class="deal-type-cell">' + escapeHtml(rows[i].dealType) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].invType) + '</td><td>' + escapeHtml(rows[i].sell) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].buy) + '</td><td>' + escapeHtml(rows[i].commodity) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].curr) + '</td>';
+      html += '<td><input class="workflow-input invoice-calc-input" data-calc="qty" value="' + rows[i].qty.toFixed(2) + '"></td>';
+      html += '<td><input class="workflow-input invoice-calc-input" data-calc="price" value="' + rows[i].usdPrice.toFixed(6) + '"></td>';
+      html += '<td><input class="workflow-input invoice-calc-input" data-calc="rate" value="' + rows[i].rate.toFixed(6) + '"></td>';
+      html += '<td><input class="workflow-input" value="' + escapeHtml(rows[i].invDate) + '"></td>';
+      html += '<td>' + escapeHtml(rows[i].dueDate) + '</td>';
+      html += '<td class="num invoice-final">' + formatAmount(rows[i].finalInv) + '</td>';
+      html += '<td class="num invoice-usd">' + formatAmount(rows[i].invUsd) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].planned) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].partnerBank) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderInvoiceDifferenceTable(row) {
+    var rows = buildAdjustedInvoiceRows(row);
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = ['Trade Type', 'Final Amt', 'Inv Curr', 'Planned Amt', 'Difference', 'Deal Type', 'FX Deal Amt', 'Diff2 Amt'];
+    var i;
+    var difference;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      difference = rows[i].finalInv - rows[i].planned;
+      html += '<tr><td>' + escapeHtml(rows[i].ttype) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].finalInv) + '</td><td>USD</td>';
+      html += '<td class="num">' + formatAmount(rows[i].planned) + '</td>';
+      html += '<td class="num">' + formatAmount(difference) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].dealType) + '</td>';
+      html += '<td class="num">' + formatAmount(row.amount * (i === 0 ? 0.4 : (i === 1 ? 0.35 : 0.25))) + '</td>';
+      html += '<td class="num">' + formatAmount(difference) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderWorkflowBlTable(row) {
+    var rows = buildBlRows(row);
+    var headers = ['TF No', 'TF Split', 'BL No', 'BL Split', 'BL Date', 'Invoice Commodity', 'TRM Commodity ID', 'Incoterm', 'Invoice Date', 'Quantity', 'Unit', 'Price', 'Trade Value'];
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr><td>' + escapeHtml(rows[i].tfNo) + '</td><td>' + escapeHtml(rows[i].tfSplit) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].blNo) + '</td><td>' + escapeHtml(rows[i].blSplit) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].blDate) + '</td><td>' + escapeHtml(rows[i].commodity) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].commodityId) + '</td><td>' + escapeHtml(rows[i].incoterm) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].invoiceDate) + '</td><td class="num">' + formatAmount(rows[i].qty) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].unit) + '</td><td class="num">' + formatAmount(rows[i].price) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].tradeValue) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderInvoicingWorkspace(row) {
+    var html = '<div class="workflow-shell">';
+    html += '<div class="workflow-actionbar">';
+    html += '<button class="deal-action-btn" data-invoice-action="bl" type="button">View List of BLs</button>';
+    html += '<button class="deal-action-btn" data-invoice-action="diff" type="button">Invoice Difference</button>';
+    html += '<button class="deal-action-btn" data-invoice-action="recalc" type="button">Re-calculate and Update</button>';
+    html += '<button class="deal-action-btn" data-invoice-action="save" type="button">Save</button>';
+    html += '<span class="workflow-spacer"></span>';
+    html += '<button class="deal-action-btn primary-action" data-invoice-action="refresh" type="button">Refresh</button>';
+    html += '</div>';
+    html += renderWorkflowBasic(row, 'Invoice Finalisation');
+    html += '<section class="workflow-section"><div class="workflow-section-head"><span>FX Deals</span>';
+    html += '<span class="workflow-section-meta">RFHA hotspot enabled</span></div>';
+    html += renderWorkflowFxTable(row, false) + '</section>';
+    html += '<section class="workflow-section"><div class="workflow-section-head"><span>Adjusted Price/Qty</span>';
+    html += '<span class="workflow-section-meta">Editable demo fields follow the SAP ALV edit behavior</span></div>';
+    html += renderAdjustedInvoiceTable(row) + '</section>';
+    html += '<div class="workflow-extra" id="workflowExtraPanel"></div></div>';
+    return html;
+  }
+
+  function openInvoicing(row) {
+    openWorkflowModal('Invoice Finalisation Blotter — ' + row.dealId, renderInvoicingWorkspace(row));
+    bindInvoicing(row);
+  }
+
+  function bindInvoicing(row) {
+    var buttons = document.querySelectorAll('#subModalBody [data-invoice-action]');
+    var inputs = document.querySelectorAll('#subModalBody .invoice-calc-input');
+    var i;
+    bindWorkflowRfha(row);
+    for (i = 0; i < inputs.length; i += 1) {
+      inputs[i].oninput = recalcInvoiceTable;
+    }
+    for (i = 0; i < buttons.length; i += 1) {
+      buttons[i].onclick = function () {
+        var action = this.getAttribute('data-invoice-action');
+        if (action === 'refresh') {
+          openInvoicing(row);
+        } else if (action === 'bl') {
+          setWorkflowExtra('View List of BLs', renderWorkflowBlTable(row));
+        } else if (action === 'diff') {
+          setWorkflowExtra('Invoice Difference', renderInvoiceDifferenceTable(row));
+        } else if (action === 'recalc') {
+          recalcInvoiceTable();
+          showToast('Adjusted invoice values recalculated and updated in the demo.', 'success');
+        } else if (action === 'save') {
+          showToast('Invoice finalisation changes saved in the demo.', 'success');
+        }
+      };
+    }
+  }
+
+  function recalcInvoiceTable() {
+    var rows = document.querySelectorAll('#invoiceAdjustTable tbody tr');
+    var i;
+    var qty;
+    var price;
+    var rate;
+    var amount;
+    for (i = 0; i < rows.length; i += 1) {
+      qty = parseFloat(rows[i].querySelector('[data-calc="qty"]').value) || 0;
+      price = parseFloat(rows[i].querySelector('[data-calc="price"]').value) || 0;
+      rate = parseFloat(rows[i].querySelector('[data-calc="rate"]').value) || 0;
+      amount = qty * price;
+      rows[i].querySelector('.invoice-usd').innerHTML = formatAmount(amount);
+      rows[i].querySelector('.invoice-final').innerHTML = formatAmount(amount * (rate ? 1 : 1));
+    }
+  }
+
+  function buildSettlementInvoiceRows(row) {
+    var base = buildInvoiceRows(row);
+    var fx = buildViewDealData(row).fxRows;
+    var rows = [];
+    var i;
+    for (i = 0; i < base.length; i += 1) {
+      rows.push({
+        seq: i + 1,
+        transfer: i === 0 ? 'Bank Transfer' : (i === 1 ? 'Customer Receipt' : 'Adjustment'),
+        linked: fx[i % fx.length].rfha,
+        receipt: i === 1 ? 'Receipt' : 'Payment',
+        invAmt: base[i].usdAmount,
+        invCurr: 'USD',
+        payAmt: base[i].localAmount,
+        payCurr: base[i].curr,
+        fiDoc: i === 0 ? '1900' + row.dealId.slice(-6) : '',
+        docMsg: i === 0 ? 'Document ready' : 'Not posted',
+        settlement: i === 0,
+        posting: i === 0
+      });
+    }
+    return rows;
+  }
+
+  function renderSettlementInvoiceTable(row) {
+    var rows = buildSettlementInvoiceRows(row);
+    var headers = [
+      'Seq', 'Transfer Type', 'Linked FX Deal', 'Receipt/Payment', 'Invoice Amt', 'Inv Curr',
+      'Payment Amt', 'Settlement Curr', 'FI Doc', 'Doc Msg', 'Settlement', 'FI Posting'
+    ];
+    var html = '<div class="deal-table-scroll"><table class="deal-table" id="settlementInvoiceTable"><thead><tr>';
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr><td>' + rows[i].seq + '</td><td>' + escapeHtml(rows[i].transfer) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].linked) + '</td><td>' + escapeHtml(rows[i].receipt) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].invAmt) + '</td><td>' + escapeHtml(rows[i].invCurr) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].payAmt) + '</td><td>' + escapeHtml(rows[i].payCurr) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].fiDoc) + '</td><td>' + escapeHtml(rows[i].docMsg) + '</td>';
+      html += '<td><input class="workflow-check settlement-check" type="checkbox" ' + (rows[i].settlement ? 'checked' : '') + '></td>';
+      html += '<td><input class="workflow-check posting-check" type="checkbox" ' + (rows[i].posting ? 'checked' : '') + '></td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderSettlementPnl(row) {
+    var detail = buildPlannedPnlRows(row);
+    var total = detail.rows[detail.rows.length - 1];
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    html += '<th>Currency</th><th>Amount</th><th>Value Date</th><th>Roll Type</th></tr></thead><tbody>';
+    html += '<tr><td>USD</td><td class="num">' + formatAmount(total.usd) + '</td>';
+    html += '<td>' + escapeHtml(row.dealEnd) + '</td><td>' + escapeHtml(row.model) + '</td></tr>';
+    html += '<tr><td>' + escapeHtml(detail.localCurr) + '</td><td class="num">' + formatAmount(total.local) + '</td>';
+    html += '<td>' + escapeHtml(row.dealEnd) + '</td><td>' + escapeHtml(row.model) + '</td></tr>';
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderSettlementWorkspace(row) {
+    var html = '<div class="workflow-shell">';
+    html += '<div class="workflow-actionbar">';
+    html += '<button class="deal-action-btn primary-action" data-set-action="init" type="button">Initiate Settlement</button>';
+    html += '<button class="deal-action-btn" data-set-action="invoice" type="button">View Trade Invoice</button>';
+    html += '<button class="deal-action-btn" data-set-action="diff" type="button">FX-Invoice Difference</button>';
+    html += '<button class="deal-action-btn" data-set-action="pnl" type="button">View P&amp;L</button>';
+    html += '<button class="deal-action-btn" data-set-action="amend" type="button">Amend End Date</button>';
+    html += '<button class="deal-action-btn" data-set-action="complete" type="button" disabled>Execution Complete</button>';
+    html += '<span class="workflow-spacer"></span><span class="workflow-status" id="settlementStatus">Ready</span>';
+    html += '<button class="deal-action-btn" data-set-action="refresh" type="button">Refresh</button>';
+    html += '</div>';
+    html += renderWorkflowBasic(row, 'Settlement');
+    html += '<section class="workflow-section"><div class="workflow-section-head"><span>FX Deal Settlement</span>';
+    html += '<span class="workflow-section-meta">RFHA hotspot enabled</span></div>';
+    html += renderWorkflowFxTable(row, true) + '</section>';
+    html += '<section class="workflow-section"><div class="workflow-section-head"><span>Trade Invoice Settlement</span>';
+    html += '<span class="workflow-section-meta">Settlement and FI Posting controls</span></div>';
+    html += renderSettlementInvoiceTable(row) + '</section>';
+    html += '<div class="workflow-extra" id="workflowExtraPanel"></div></div>';
+    return html;
+  }
+
+  function openSettlement(row) {
+    openWorkflowModal('MO: Execute Settlement for Deal ID — ' + row.dealId, renderSettlementWorkspace(row));
+    bindSettlement(row);
+  }
+
+  function bindSettlement(row) {
+    var buttons = document.querySelectorAll('#subModalBody [data-set-action]');
+    var checks = document.querySelectorAll('#subModalBody .settlement-check');
+    var i;
+    bindWorkflowRfha(row);
+    for (i = 0; i < checks.length; i += 1) {
+      checks[i].onchange = updateSettlementCompleteState;
+    }
+    for (i = 0; i < buttons.length; i += 1) {
+      buttons[i].onclick = function () {
+        var action = this.getAttribute('data-set-action');
+        if (action === 'refresh') {
+          openSettlement(row);
+        } else if (action === 'init') {
+          document.getElementById('settlementStatus').innerHTML = 'Settlement Initiated';
+          showToast('Settlement initiated in the demo.', 'success');
+        } else if (action === 'invoice') {
+          setWorkflowExtra('View Trade Invoice', renderPlannedInvoiceTable(row));
+        } else if (action === 'diff') {
+          setWorkflowExtra('Invoice Difference', renderInvoiceDifferenceTable(row));
+        } else if (action === 'pnl') {
+          setWorkflowExtra('View P&L Amount', renderSettlementPnl(row));
+        } else if (action === 'amend') {
+          showSettlementEndDate(row);
+        } else if (action === 'complete') {
+          document.getElementById('settlementStatus').innerHTML = 'Execution Complete';
+          showToast('Settlement execution completed in the demo.', 'success');
+        }
+      };
+    }
+    updateSettlementCompleteState();
+  }
+
+  function updateSettlementCompleteState() {
+    var checks = document.querySelectorAll('#subModalBody .settlement-check');
+    var button = document.querySelector('#subModalBody [data-set-action="complete"]');
+    var all = checks.length > 0;
+    var i;
+    for (i = 0; i < checks.length; i += 1) {
+      if (!checks[i].checked) {
+        all = false;
+      }
+    }
+    if (button) {
+      button.disabled = !all;
+    }
+  }
+
+  function showSettlementEndDate(row) {
+    var html = '<div class="workflow-form-row">';
+    html += '<label><span class="workflow-label">Deal ID</span><input class="workflow-input" value="' + escapeHtml(row.dealId) + '" disabled></label>';
+    html += '<label><span class="workflow-label">Deal End Date</span><input class="workflow-input" id="settlementEndDate" value="' + escapeHtml(row.dealEnd) + '"></label>';
+    html += '<div class="workflow-form-actions"><button class="primary-btn" id="settlementEndUpdate" type="button">Update Deal End Date</button></div>';
+    html += '</div>';
+    setWorkflowExtra('Amend Deal End Date', html);
+    document.getElementById('settlementEndUpdate').onclick = function () {
+      var value = document.getElementById('settlementEndDate').value;
+      if (!parseDate(value)) {
+        showToast('Enter the date in dd-mm-yyyy format.', 'error');
+        return;
+      }
+      showToast('Deal end date updated to ' + value + ' in the demo.', 'success');
+    };
+  }
+
+  function openBlList(row) {
+    var rows = buildBlRows(row);
+    var html = '<div class="deal-table-scroll"><table class="deal-table"><thead><tr>';
+    var headers = [
+      'TF No', 'TF Split', 'BL No', 'BL Split', 'BL Date', 'Invoice Commodity', 'TRM Commodity ID',
+      'Incoterm', 'Invoice Date', 'Quantity', 'Unit', 'Price', 'Trade Value'
+    ];
+    var i;
+    for (i = 0; i < headers.length; i += 1) {
+      html += '<th>' + escapeHtml(headers[i]) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < rows.length; i += 1) {
+      html += '<tr><td>' + escapeHtml(rows[i].tfNo) + '</td><td>' + escapeHtml(rows[i].tfSplit) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].blNo) + '</td><td>' + escapeHtml(rows[i].blSplit) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].blDate) + '</td><td>' + escapeHtml(rows[i].commodity) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].commodityId) + '</td><td>' + escapeHtml(rows[i].incoterm) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].invoiceDate) + '</td><td class="num">' + formatAmount(rows[i].qty) + '</td>';
+      html += '<td>' + escapeHtml(rows[i].unit) + '</td><td class="num">' + formatAmount(rows[i].price) + '</td>';
+      html += '<td class="num">' + formatAmount(rows[i].tradeValue) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    openSubModal('View List of BLs — ' + row.dealId, html, false);
+  }
+
+  function buildBlRows(row) {
+    var rows = [];
+    var weights = [0.34, 0.33, 0.33];
+    var i;
+    var qty;
+    var price = 975.25;
+    for (i = 0; i < weights.length; i += 1) {
+      qty = Math.round((row.amount / price) * weights[i]);
+      rows.push({
+        tfNo: 'TF' + row.dealId.slice(-5),
+        tfSplit: String(i + 1),
+        blNo: 'BL' + row.dealId.slice(-5) + pad2(i + 1),
+        blSplit: '01',
+        blDate: addDays(row.shipStart, i * 6),
+        commodity: row.commodity,
+        commodityId: row.commodity.substring(0, 3).toUpperCase(),
+        incoterm: i === 0 ? 'CIF' : 'FOB',
+        invoiceDate: addDays(row.shipStart, 12 + i * 4),
+        qty: qty,
+        unit: 'MT',
+        price: price,
+        tradeValue: qty * price
+      });
+    }
+    return rows;
+  }
+
+  function openTreasuryTransaction(row, rfha) {
+    var detail = buildViewDealData(row);
+    var fxRows = detail.fxRows;
+    var fx = fxRows[0];
+    var i;
+    for (i = 0; i < fxRows.length; i += 1) {
+      if (fxRows[i].rfha === rfha) {
+        fx = fxRows[i];
+        break;
+      }
+    }
+    var fields = [
+      ['Company Code', fx.bukrs], ['Transaction No', fx.rfha], ['Deal Type', fx.dealType],
+      ['Product', fx.text], ['Start Date', fx.start], ['End Date', fx.end],
+      ['Currency 1', fx.curr1], ['Amount 1', formatAmount(fx.amt1)],
+      ['Currency 2', fx.curr2], ['Amount 2', formatAmount(fx.amt2)],
+      ['All in Rate', formatRate(fx.allIn || fx.strike)], ['Transaction Status', fx.txnStatus]
+    ];
+    var html = '<div class="txn-grid">';
+    for (i = 0; i < fields.length; i += 1) {
+      html += '<div class="txn-card"><div class="txn-label">' + escapeHtml(fields[i][0]) + '</div>';
+      html += '<div class="txn-value">' + escapeHtml(fields[i][1]) + '</div></div>';
+    }
+    html += '</div>';
+    openSubModal('Treasury Transaction Display', html, true);
+  }
+
+  function openSubModal(title, bodyHtml, small) {
+    var modal = document.getElementById('subModal');
+    modal.className = small ? 'sub-modal small' : 'sub-modal';
+    document.getElementById('subModalTitle').innerHTML = escapeHtml(title);
+    document.getElementById('subModalBody').innerHTML = bodyHtml;
+    document.getElementById('subOverlay').className = 'sub-modal-overlay show';
+    document.getElementById('subOverlay').setAttribute('aria-hidden', 'false');
+  }
+
+  function closeSubModal() {
+    var overlay = document.getElementById('subOverlay');
+    overlay.className = 'sub-modal-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function renderInfoGrid(fields) {
+    var html = '<div class="info-grid">';
+    var i;
+    for (i = 0; i < fields.length; i += 1) {
+      html += '<div class="info-item"><div class="info-card"><div class="info-label">' +
+        escapeHtml(fields[i][0]) + '</div><div class="info-value">' + escapeHtml(fields[i][1]) +
+        '</div></div></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function closeModal() {
+    var overlay = document.getElementById('detailOverlay');
+    closeSubModal();
+    overlay.className = 'modal-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function findRow(id) {
+    var i;
+    for (i = 0; i < data.length; i += 1) {
+      if (data[i].dealId === id) {
+        return data[i];
+      }
+    }
+    return null;
+  }
+
+  function downloadCsv() {
+    var rows = getFilteredRows();
+    var cols = getVisibleColumns();
+    var csv = [];
+    var header = [];
+    var i;
+    var j;
+    var row;
+    var line;
+    for (i = 0; i < cols.length; i += 1) {
+      if (cols[i].key !== 'check') {
+        header.push(csvQuote(cols[i].label));
+      }
+    }
+    csv.push(header.join(','));
+    for (i = 0; i < rows.length; i += 1) {
+      row = rows[i];
+      line = [];
+      for (j = 0; j < cols.length; j += 1) {
+        if (cols[j].key !== 'check') {
+          line.push(csvQuote(formatRaw(row[cols[j].key], cols[j].type)));
+        }
+      }
+      csv.push(line.join(','));
+    }
+    saveTextFile('deal_id_invoice_marking.csv', csv.join('\r\n'));
+  }
+
+  function csvQuote(value) {
+    return '"' + String(value === undefined ? '' : value).replace(/"/g, '""') + '"';
+  }
+
+  function saveTextFile(filename, content) {
+    var blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    var url;
+    if (window.navigator && window.navigator.msSaveBlob) {
+      window.navigator.msSaveBlob(blob, filename);
+      return;
+    }
+    url = window.URL.createObjectURL(blob);
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(function () {
+      window.URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function formatAmount(value) {
+    var num = Number(value || 0);
+    var parts = num.toFixed(2).split('.');
+    var integer = parts[0];
+    var result = '';
+    var count = 0;
+    var i;
+    for (i = integer.length - 1; i >= 0; i -= 1) {
+      result = integer.charAt(i) + result;
+      count += 1;
+      if (count === 3 && i !== 0) {
+        result = ',' + result;
+        count = 0;
+      }
+    }
+    return result + '.' + parts[1];
+  }
+
+  function escapeHtml(value) {
+    return String(value === undefined || value === null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function showToast(message, kind) {
+    var stack = document.getElementById('toastStack');
+    var toast = document.createElement('div');
+    var icon = kind === 'warn' ? '!' : (kind === 'info' ? 'i' : '&#10003;');
+    toast.className = 'toast' + (kind && kind !== 'success' ? ' ' + kind : '');
+    toast.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + escapeHtml(message) + '</span>';
+    stack.appendChild(toast);
+    window.setTimeout(function () {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 3600);
+  }
+
+  function openCalendarFromButton(event) {
+    var button = event.currentTarget || event.srcElement;
+    var inputId = button.getAttribute('data-for');
+    var input = document.getElementById(inputId);
+    var parsed = parseDate(input.value);
+    var pop = document.getElementById('calendarPopover');
+    var rect;
+    if (parsed) {
+      calendarState.year = parsed.getFullYear();
+      calendarState.month = parsed.getMonth();
+    } else {
+      calendarState.year = TODAY.getFullYear();
+      calendarState.month = TODAY.getMonth();
+    }
+    calendarState.inputId = inputId;
+    renderCalendar();
+    rect = button.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left - 245 + rect.width) + window.pageXOffset + 'px';
+    pop.style.top = rect.bottom + 5 + window.pageYOffset + 'px';
+    pop.className = 'calendar-popover show';
+    pop.setAttribute('aria-hidden', 'false');
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
+
+  function closeCalendar() {
+    var pop = document.getElementById('calendarPopover');
+    pop.className = 'calendar-popover';
+    pop.setAttribute('aria-hidden', 'true');
+    calendarState.inputId = null;
+  }
+
+  function renderCalendar() {
+    var pop = document.getElementById('calendarPopover');
+    var monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    var dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    var html = '<div class="calendar-head">';
+    var i;
+    var first;
+    var start;
+    var cell;
+    var cellDate;
+    var inputValue;
+    var selectedDate;
+    html += '<button type="button" class="cal-nav" id="calPrev">&lsaquo;</button>';
+    html += '<select class="cal-select cal-month" id="calMonth">';
+    for (i = 0; i < 12; i += 1) {
+      html += '<option value="' + i + '"' + (i === calendarState.month ? ' selected' : '') + '>' +
+        monthNames[i] + '</option>';
+    }
+    html += '</select>';
+    html += '<select class="cal-select cal-year" id="calYear">';
+    for (i = calendarState.year - 5; i <= calendarState.year + 5; i += 1) {
+      html += '<option value="' + i + '"' + (i === calendarState.year ? ' selected' : '') + '>' + i + '</option>';
+    }
+    html += '</select>';
+    html += '<button type="button" class="cal-nav" id="calNext">&rsaquo;</button>';
+    html += '</div><div class="cal-grid">';
+    for (i = 0; i < dayNames.length; i += 1) {
+      html += '<div class="cal-dow">' + dayNames[i] + '</div>';
+    }
+    first = new Date(calendarState.year, calendarState.month, 1);
+    start = new Date(calendarState.year, calendarState.month, 1 - first.getDay());
+    inputValue = calendarState.inputId ? document.getElementById(calendarState.inputId).value : '';
+    selectedDate = parseDate(inputValue);
+    for (cell = 0; cell < 42; cell += 1) {
+      cellDate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + cell);
+      html += '<button type="button" class="cal-day' +
+        (cellDate.getMonth() !== calendarState.month ? ' muted' : '') +
+        (sameDate(cellDate, TODAY) ? ' today' : '') +
+        (selectedDate && sameDate(cellDate, selectedDate) ? ' selected' : '') +
+        '" data-date="' + formatDate(cellDate) + '">' + cellDate.getDate() + '</button>';
+    }
+    html += '</div>';
+    pop.innerHTML = html;
+    bindCalendarEvents();
+  }
+
+  function bindCalendarEvents() {
+    var days = document.getElementsByClassName('cal-day');
+    var i;
+    document.getElementById('calPrev').onclick = function (event) {
+      changeCalendarMonth(-1);
+      stopEvent(event);
+    };
+    document.getElementById('calNext').onclick = function (event) {
+      changeCalendarMonth(1);
+      stopEvent(event);
+    };
+    document.getElementById('calMonth').onchange = function (event) {
+      calendarState.month = parseInt(this.value, 10);
+      renderCalendar();
+      stopEvent(event);
+    };
+    document.getElementById('calYear').onchange = function (event) {
+      calendarState.year = parseInt(this.value, 10);
+      renderCalendar();
+      stopEvent(event);
+    };
+    for (i = 0; i < days.length; i += 1) {
+      days[i].onclick = selectCalendarDay;
+    }
+  }
+
+  function changeCalendarMonth(delta) {
+    calendarState.month += delta;
+    if (calendarState.month < 0) {
+      calendarState.month = 11;
+      calendarState.year -= 1;
+    } else if (calendarState.month > 11) {
+      calendarState.month = 0;
+      calendarState.year += 1;
+    }
+    renderCalendar();
+  }
+
+  function selectCalendarDay(event) {
+    var value = this.getAttribute('data-date');
+    var input;
+    var d = parseDate(value);
+    if (!calendarState.inputId) {
+      return;
+    }
+    input = document.getElementById(calendarState.inputId);
+    input.value = value;
+    if (d) {
+      calendarState.year = d.getFullYear();
+      calendarState.month = d.getMonth();
+    }
+    closeCalendar();
+    filterChanged();
+    stopEvent(event);
+  }
+
+  function stopEvent(event) {
+    event = event || window.event;
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
+
+  function sameDate(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  init();
+}());
+</script>
+</body>
+</html>

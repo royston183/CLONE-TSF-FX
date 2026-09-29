@@ -1,0 +1,368 @@
+/* Original stylesheet of ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html, scoped under .fondfec.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.fondfec { margin: 0; padding: 0; height: 100%; }
+.fondfec {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  color: #1d2d3e;
+  background: #f5f7f9;
+  font-size: 13px;
+}
+.fondfec *, .fondfec { box-sizing: border-box; }
+.fondfec button, .fondfec input, .fondfec select { font: inherit; }
+.fondfec button { cursor: pointer; }
+.fondfec button:disabled { cursor: not-allowed; }
+.fondfec .app-header {
+  height: 58px;
+  background: #ffffff;
+  border-bottom: 1px solid #dce3e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+.fondfec .header-left, .fondfec .header-right { display: flex; align-items: center; }
+.fondfec .header-left > * { margin-right: 14px; }
+.fondfec .header-right > * { margin-left: 8px; }
+.fondfec .back-btn, .fondfec .header-btn, .fondfec .icon-btn, .fondfec .secondary-btn {
+  border: 1px solid #9fb0c0;
+  background: #ffffff;
+  color: #3f5870;
+  border-radius: 5px;
+  height: 38px;
+  padding: 0 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fondfec .back-btn:hover, .fondfec .header-btn:hover, .fondfec .icon-btn:hover, .fondfec .secondary-btn:hover {
+  background: #f6f9fc;
+}
+.fondfec .primary-btn {
+  border: 1px solid #0b6fcf;
+  background: #0b74d1;
+  color: #ffffff;
+  border-radius: 5px;
+  height: 36px;
+  padding: 0 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(11,116,209,.18);
+}
+.fondfec .primary-btn:hover { background: #0968bc; }
+.fondfec .primary-btn:disabled {
+  border-color: #b9c9d6;
+  background: #dfe8ef;
+  color: #7f94a7;
+  box-shadow: none;
+}
+.fondfec .logo-mark { width: 28px; height: 36px; position: relative; }
+.fondfec .logo-mark span { position: absolute; left: 5px; height: 6px; border-radius: 6px; }
+.fondfec .logo-mark .l1 { top: 3px; width: 20px; background: #cb2b2b; }
+.fondfec .logo-mark .l2 { top: 11px; width: 15px; background: #f0a11f; }
+.fondfec .logo-mark .l3 { top: 19px; width: 11px; background: #4e9b4a; }
+.fondfec .logo-mark .l4 { top: 27px; width: 6px; background: #8b8f92; }
+.fondfec .page-title { font-size: 21px; line-height: 1; font-weight: 700; color: #203043; }
+.fondfec .page-tag { color: #708397; font-size: 13px; margin-left: 4px; }
+.fondfec .header-status {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #26ad62;
+  box-shadow: 0 0 0 4px #e8f7ef;
+  margin-right: 2px;
+}
+.fondfec .main { padding: 14px 16px 18px; }
+.fondfec .card {
+  background: #ffffff;
+  border: 1px solid #d8e0e7;
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(35,54,72,.07);
+  overflow: visible;
+}
+.fondfec .card-head {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dfe5ea;
+  padding: 6px 12px;
+}
+.fondfec .card-title-wrap { display: flex; align-items: baseline; }
+.fondfec .card-title { font-weight: 700; font-size: 15px; color: #203043; }
+.fondfec .record-count { margin-left: 5px; color: #6d8196; font-size: 12px; }
+.fondfec .work-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e4e9ee;
+  background: #fbfcfd;
+}
+.fondfec .toolbar-item { margin-right: 7px; margin-bottom: 3px; margin-top: 3px; }
+.fondfec .search-wrap { position: relative; width: 250px; }
+.fondfec .search-wrap svg { position: absolute; left: 10px; top: 9px; width: 16px; height: 16px; color: #6e8397; }
+.fondfec .control {
+  height: 34px;
+  border: 1px solid #aebdcc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #25384a;
+  padding: 0 10px;
+  outline: none;
+}
+.fondfec .control:focus { border-color: #3f89d7; box-shadow: 0 0 0 2px rgba(63,137,215,.12); }
+.fondfec .search-input { width: 100%; padding-left: 34px; }
+.fondfec .filter-select { min-width: 145px; }
+.fondfec .date-wrap { position: relative; display: inline-block; }
+.fondfec .date-input { width: 145px; padding-right: 35px; }
+.fondfec .date-btn {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-left: 1px solid #e2e7eb;
+  background: transparent;
+  color: #4e6983;
+}
+.fondfec .reset-btn { height: 34px; padding: 0 11px; }
+.fondfec .action-spacer { flex: 1 1 10px; }
+.fondfec .drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(11,116,209,.16); }
+.fondfec .drop-target.drag-over { background: #085fac; transform: translateY(-1px); }
+.fondfec .icon-btn { width: 36px; padding: 0; height: 34px; }
+.fondfec .table-shell { width: 100%; overflow: auto; max-height: 500px; }
+.fondfec table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1760px; }
+.fondfec thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 36px;
+  padding: 0 10px;
+  background: #f1f3f5;
+  border-bottom: 1px solid #d5dde4;
+  border-right: 1px solid #e2e7eb;
+  color: #466079;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  user-select: none;
+}
+.fondfec thead th.sortable { cursor: pointer; }
+.fondfec thead th.sortable:hover { background: #e9eef2; }
+.fondfec thead th:last-child { border-right: 0; }
+.fondfec tbody td {
+  height: 38px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e5eaee;
+  border-right: 1px solid #edf0f2;
+  background: #ffffff;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.fondfec tbody td:last-child { border-right: 0; }
+.fondfec tbody tr:hover td { background: #f7fbff; }
+.fondfec tbody tr.selected td { background: #eaf4ff; }
+.fondfec tbody tr.dragging { opacity: .58; }
+.fondfec .cell-check { width: 40px; text-align: center; }
+.fondfec .row-check { width: 15px; height: 15px; }
+.fondfec .link-btn {
+  border: 0;
+  background: transparent;
+  color: #006dcc;
+  text-decoration: underline;
+  font-weight: 700;
+  padding: 0;
+}
+.fondfec .num { text-align: right; font-variant-numeric: tabular-nums; }
+.fondfec .center { text-align: center; }
+.fondfec .status-text { color: #9a6700; font-weight: 700; }
+.fondfec .status-code { color: #6a7d90; margin-right: 4px; }
+.fondfec .sort-ind { color: #698095; font-size: 10px; margin-left: 4px; }
+.fondfec .table-footer {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: #687e92;
+  border-top: 1px solid #e4e9ee;
+}
+.fondfec .pager { display: flex; align-items: center; }
+.fondfec .pager button {
+  width: 30px;
+  height: 28px;
+  margin-left: 5px;
+  border: 1px solid #d5dde4;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #455f78;
+}
+.fondfec .pager button:disabled { color: #c0cbd5; background: #fbfcfd; }
+.fondfec .page-current {
+  height: 28px;
+  min-width: 30px;
+  margin-left: 5px;
+  border: 1px solid #b9c6d1;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #344e67;
+  background: #ffffff;
+}
+.fondfec .calendar-pop {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid #cbd5de;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(35,54,72,.18);
+  z-index: 20;
+  padding: 10px;
+  display: none;
+}
+.fondfec .calendar-pop.open { display: block; }
+.fondfec .cal-head { display: flex; align-items: center; margin-bottom: 8px; }
+.fondfec .cal-head button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d8e0e7;
+  background: #ffffff;
+  border-radius: 4px;
+}
+.fondfec .cal-select { height: 30px; border: 1px solid #cbd5de; border-radius: 4px; margin: 0 4px; }
+.fondfec .cal-month { flex: 1; }
+.fondfec .cal-year { width: 74px; }
+.fondfec .cal-grid { display: table; width: 100%; table-layout: fixed; }
+.fondfec .cal-row { display: table-row; }
+.fondfec .cal-cell {
+  display: table-cell;
+  height: 31px;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 4px;
+  color: #354f67;
+}
+.fondfec .cal-day-name { color: #74879a; font-size: 11px; font-weight: 700; }
+.fondfec .cal-date { cursor: pointer; }
+.fondfec .cal-date:hover { background: #eef5fb; }
+.fondfec .cal-date.today { box-shadow: inset 0 0 0 1px #62a3dd; }
+.fondfec .cal-date.selected { background: #0b74d1; color: #ffffff; font-weight: 700; }
+.fondfec .cal-date.blank { cursor: default; }
+.fondfec .overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(24,38,52,.42);
+  z-index: 40;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.fondfec .overlay.open { display: flex; }
+.fondfec .modal {
+  width: 620px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 18px 55px rgba(23,37,51,.28);
+  border: 1px solid #d4dce3;
+}
+.fondfec .modal.detail-modal { width: 800px; }
+.fondfec .modal-head {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e6ea;
+}
+.fondfec .modal-title { font-size: 17px; font-weight: 700; color: #203043; }
+.fondfec .close-btn {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  color: #62788e;
+  font-size: 22px;
+}
+.fondfec .close-btn:hover { background: #f0f4f7; }
+.fondfec .modal-body { padding: 16px; }
+.fondfec .section-box {
+  border: 1px solid #dce3e8;
+  border-radius: 7px;
+  padding: 13px;
+  background: #fbfcfd;
+}
+.fondfec .section-label { font-weight: 700; margin-bottom: 12px; color: #263a4c; }
+.fondfec .form-row { display: flex; margin: 0 -6px 12px; }
+.fondfec .field { flex: 1; padding: 0 6px; min-width: 0; }
+.fondfec .field.wide { flex: 2; }
+.fondfec .field label { display: block; color: #5e7388; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.fondfec .field-control {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #b7c5d1;
+  border-radius: 4px;
+  padding: 0 10px;
+  color: #23384c;
+  background: #ffffff;
+}
+.fondfec .field-control.readonly { background: #f0f3f5; color: #445d73; }
+.fondfec .field-error { color: #c93d35; font-size: 11px; margin-top: 4px; min-height: 13px; }
+.fondfec .modal-foot {
+  min-height: 58px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid #e1e6ea;
+}
+.fondfec .modal-foot button { margin-left: 8px; }
+.fondfec .detail-grid { display: flex; flex-wrap: wrap; margin: -4px -7px; }
+.fondfec .detail-item { width: 25%; padding: 7px; }
+.fondfec .detail-item .k { font-size: 11px; color: #72869a; font-weight: 700; margin-bottom: 4px; }
+.fondfec .detail-item .v { color: #24394d; word-break: break-word; }
+.fondfec .toast-wrap { position: fixed; right: 18px; top: 70px; z-index: 80; }
+.fondfec .toast {
+  min-width: 300px;
+  max-width: 430px;
+  background: #ffffff;
+  border: 1px solid #b9dcca;
+  border-left: 4px solid #27ae60;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(30,50,70,.18);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  color: #274337;
+}
+.fondfec .empty-state { padding: 40px; text-align: center; color: #72869a; display: none; }
+@media (max-width: 900px) {
+.fondfec .page-tag { display: none; }
+.fondfec .header-status { display: none; }
+.fondfec .main { padding: 10px; }
+.fondfec .action-spacer { flex-basis: 100%; height: 0; }
+.fondfec .detail-item { width: 50%; }
+.fondfec .search-wrap { width: 100%; }
+}
+@media (max-width: 620px) {
+.fondfec .page-title { font-size: 17px; }
+.fondfec .logo-mark { display: none; }
+.fondfec .header-btn span.txt { display: none; }
+.fondfec .detail-item { width: 100%; }
+.fondfec .form-row { display: block; margin: 0; }
+.fondfec .field { padding: 0; margin-bottom: 12px; }
+}

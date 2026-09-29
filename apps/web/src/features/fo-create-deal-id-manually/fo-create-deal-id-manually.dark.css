@@ -1,0 +1,193 @@
+/* Night mode for fo-create-deal-id-manually, derived from fo-create-deal-id-manually.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .dealanal {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .dealanal input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .dealanal select,
+:root[data-theme='dark'] .dealanal textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal {
+  color: #e6eef8;
+  background: #0d1724;
+}
+:root[data-theme='dark'] .dealanal {
+  --blue-dark: #7cc0f8;
+  --border: #2a3d52;
+  --line: #2a3d52;
+  --muted: #7f9bb8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .dealanal .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .page-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .btn.ghost {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .btn.danger {
+  color: #ec786f;
+}
+:root[data-theme='dark'] .dealanal .btn.drop-hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .dealanal .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .card-head {
+  border-bottom: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .selection-note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .input,
+:root[data-theme='dark'] .dealanal .select {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .input[readonly],
+:root[data-theme='dark'] .dealanal .select:disabled {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .view-deals-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .view-deals-btn:hover {
+  background: #1b2b3d;
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table-wrap {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table tbody tr:hover td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-id {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .compact-select {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal th,
+:root[data-theme='dark'] .dealanal td {
+  border-right: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal th.sortable:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal td {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .dealanal .hotspot {
+  color: #5cadff;
+}
+:root[data-theme='dark'] .dealanal .deal-type-accent {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .status-created {
+  color: #ffb95c;
+}
+:root[data-theme='dark'] .dealanal .status-confirmed {
+  color: #71e9b1;
+}
+:root[data-theme='dark'] .dealanal .status-closed {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .card-foot {
+  color: #7f9bb8;
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .page-btn.active {
+  color: #e6eef8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .empty-state {
+  color: #7f9bb8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .modal-close {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .modal-foot {
+  border-top: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .modal-section {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .modal-section-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .help-note {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .toast {
+  color: #e6eef8;
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .txn-kv {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div:nth-child(odd) {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}

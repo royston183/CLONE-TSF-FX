@@ -1,0 +1,163 @@
+/* Original stylesheet of ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html, scoped under .foasb.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.foasb {margin:0;padding:0;height:100%;font-family:Inter,Arial,Helvetica,sans-serif;background:#f4f7fa;color:#1d2d3e;font-size:13px}
+.foasb *, .foasb {box-sizing:border-box}
+.foasb button, .foasb input, .foasb select {font-family:inherit;font-size:13px}
+.foasb button {cursor:pointer}
+.foasb button:disabled {cursor:not-allowed;opacity:.48}
+.foasb .app {min-height:100%;background:#f4f7fa}
+.foasb .header {height:57px;background:#fff;border-bottom:1px solid #d9e0e7;display:flex;align-items:center;padding:0 16px;box-shadow:0 1px 4px rgba(20,40,60,.04)}
+.foasb .header-left {display:flex;align-items:center;min-width:0}
+.foasb .back-btn {height:38px;padding:0 13px;border:1px solid #a8b7c7;background:#fff;border-radius:5px;color:#425b75;display:flex;align-items:center;font-weight:600}
+.foasb .back-btn svg {width:15px;height:15px;margin-right:8px}
+.foasb .brand {display:flex;align-items:center;margin-left:18px;min-width:0}
+.foasb .brand-mark {width:27px;height:34px;position:relative;margin-right:12px}
+.foasb .brand-mark span {position:absolute;left:0;height:6px;border-radius:5px}
+.foasb .brand-mark .r {top:1px;width:21px;background:#c73b2f}
+.foasb .brand-mark .o {top:10px;width:17px;background:#f39c12}
+.foasb .brand-mark .g {top:19px;width:13px;background:#2eaa63}
+.foasb .brand-mark .k {top:28px;width:7px;background:#788995}
+.foasb .brand-title {font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.foasb .brand-sub {margin-left:12px;color:#73869a;font-size:14px}
+.foasb .header-right {margin-left:auto;display:flex;align-items:center}
+.foasb .header-right .btn {margin-left:8px}
+.foasb .header-note {font-size:12px;color:#73869a;margin-right:10px}
+.foasb .live-dot {width:10px;height:10px;border-radius:50%;background:#30ad69;box-shadow:0 0 0 4px rgba(48,173,105,.12)}
+.foasb .content {padding:13px 16px 18px}
+.foasb .card {background:#fff;border:1px solid #dce4eb;border-radius:9px;box-shadow:0 1px 4px rgba(28,55,80,.05);overflow:hidden}
+.foasb .card-head {min-height:45px;padding:0 12px;display:flex;align-items:center;border-bottom:1px solid #dce4eb}
+.foasb .card-title {font-size:15px;font-weight:700}
+.foasb .record-count {font-size:12px;color:#73869a;margin-left:5px}
+.foasb .key-date-note {margin-left:auto;font-size:12px;color:#60758a}
+.foasb .head-actions {display:flex;align-items:center;margin-left:10px}
+.foasb .icon-btn {width:34px;padding:0;border:1px solid #b9c6d2;background:#fff;color:#48627c;border-radius:5px}
+.foasb .icon-btn svg {width:15px;height:15px}
+.foasb .toolbar {padding:8px 10px;border-bottom:1px solid #e2e8ee;display:flex;align-items:center;flex-wrap:wrap;background:#fff}
+.foasb .toolbar-item {margin-right:7px;margin-bottom:2px;margin-top:2px}
+.foasb .search-wrap {position:relative;width:225px}
+.foasb .search-wrap svg {position:absolute;left:10px;top:10px;width:15px;height:15px;color:#75899e}
+.foasb .control {height:34px;border:1px solid #b9c6d2;border-radius:5px;background:#fff;color:#25384c;outline:none}
+.foasb .control:focus {border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.10)}
+.foasb .search {width:100%;padding:0 10px 0 31px}
+.foasb .filter-input {width:136px;padding:0 9px}
+.foasb .date-shell .filter-input {width:100%;padding-right:34px}
+.foasb .deal-filter {width:145px}
+.foasb .status-filter {height:34px;display:flex;align-items:center;border:1px solid #b9c6d2;border-radius:5px;padding:0 8px;background:#fff}
+.foasb .status-filter label {white-space:nowrap;color:#40576e;margin-right:10px;cursor:pointer}
+.foasb .status-filter label:last-child {margin-right:0}
+.foasb .status-filter input {vertical-align:-2px;margin:0 4px 0 0}
+.foasb .btn {height:34px;border:1px solid #9eb0c2;background:#fff;color:#405a74;border-radius:5px;padding:0 11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+.foasb .btn svg {width:14px;height:14px;margin-right:6px}
+.foasb .btn:hover:not(:disabled) {background:#f6f9fc;border-color:#7f98b2}
+.foasb .btn-primary {background:#0f72cf;color:#fff;border-color:#0f72cf;box-shadow:0 2px 6px rgba(15,114,207,.18)}
+.foasb .btn-primary:hover:not(:disabled) {background:#0d67ba;border-color:#0d67ba}
+.foasb .btn-danger {color:#b83a30;border-color:#d9aaa6}
+.foasb .action-wrap {margin-left:auto;margin-right:0}
+.foasb .action-wrap.drag-ready .btn-primary {box-shadow:0 0 0 3px rgba(31,111,235,.18),0 2px 6px rgba(15,114,207,.18)}
+.foasb .action-wrap.drag-over .btn-primary {transform:translateY(-1px);box-shadow:0 0 0 4px rgba(31,111,235,.24),0 5px 12px rgba(15,114,207,.23)}
+.foasb .table-scroll {overflow:auto;max-height:584px}
+.foasb table {border-collapse:separate;border-spacing:0;min-width:2180px;width:100%}
+.foasb th, .foasb td {padding:8px 10px;border-bottom:1px solid #e6ebf0;border-right:1px solid #edf1f4;text-align:left;white-space:nowrap;vertical-align:middle}
+.foasb th {background:#f5f7f9;color:#3e5871;font-size:12px;font-weight:700;cursor:pointer;user-select:none}
+.foasb th.no-sort {cursor:default}
+.foasb th:first-child, .foasb td:first-child {border-left:0}
+.foasb th:last-child, .foasb td:last-child {border-right:0}
+.foasb tbody tr {background:#fff;transition:background .12s ease,box-shadow .12s ease}
+.foasb tbody tr:hover {background:#f7fbff}
+.foasb tbody tr.selected {background:#eaf4ff;box-shadow:inset 3px 0 0 #1f6feb}
+.foasb tbody tr.dragging {opacity:.48}
+.foasb .check-col {width:38px;text-align:center}
+.foasb .check-col input {width:15px;height:15px}
+.foasb .num {text-align:right;font-variant-numeric:tabular-nums}
+.foasb .link {color:#0670cf;text-decoration:underline;font-weight:700;cursor:pointer}
+.foasb .link.created {color:#16865b}
+.foasb .muted {color:#8493a2}
+.foasb .side-buy {font-weight:700;color:#197149}
+.foasb .side-sell {font-weight:700;color:#b45b1a}
+.foasb .footer {min-height:43px;display:flex;align-items:center;padding:0 12px;color:#667c91;font-size:12px;background:#fff}
+.foasb .pagination {margin-left:auto;display:flex;align-items:center}
+.foasb .page-btn {width:29px;height:29px;margin-left:4px;border:1px solid #d7e0e8;background:#fff;border-radius:4px;color:#51687e}
+.foasb .page-btn.active {border-color:#b5c5d5;background:#f7f9fb;color:#1f3d59}
+.foasb .page-btn:disabled {opacity:.35}
+.foasb .sort-arrow {font-size:10px;margin-left:4px;color:#71879c}
+.foasb .empty {padding:45px 15px;text-align:center;color:#73869a;display:none}
+.foasb .toast-wrap {position:fixed;right:18px;top:70px;z-index:5000;width:330px}
+.foasb .toast {background:#fff;border:1px solid #d9e2ea;border-left:4px solid #27ae60;border-radius:7px;box-shadow:0 8px 24px rgba(20,45,70,.16);padding:12px 14px;margin-bottom:9px;line-height:1.45}
+.foasb .toast.error {border-left-color:#e74c3c}
+.foasb .toast.info {border-left-color:#1f6feb}
+.foasb .overlay {position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(20,35,50,.38);z-index:3000;display:none;overflow:auto;padding:34px 14px}
+.foasb .modal {width:760px;max-width:100%;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 18px 45px rgba(16,35,53,.25);overflow:hidden}
+.foasb .modal.small {width:620px}
+.foasb .modal-head {height:51px;padding:0 18px;display:flex;align-items:center;border-bottom:1px solid #e0e7ed}
+.foasb .modal-title {font-size:16px;font-weight:700}
+.foasb .modal-close {margin-left:auto;border:0;background:transparent;color:#61778d;width:32px;height:32px;border-radius:50%;font-size:23px;line-height:28px}
+.foasb .modal-close:hover {background:#f1f5f8}
+.foasb .modal-body {padding:16px 18px 13px;max-height:73vh;overflow:auto}
+.foasb .modal-footer {min-height:57px;padding:10px 18px;display:flex;align-items:center;justify-content:flex-end;border-top:1px solid #e0e7ed;background:#fbfcfd}
+.foasb .modal-footer .btn {margin-left:8px}
+.foasb .section-label {font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#70849a;font-weight:700;margin:0 0 9px}
+.foasb .grid {display:flex;flex-wrap:wrap;margin:0 -6px}
+.foasb .field {width:33.333%;padding:0 6px;margin-bottom:12px}
+.foasb .field.half {width:50%}
+.foasb .field.full {width:100%}
+.foasb .field label {display:block;font-size:12px;color:#526a81;font-weight:600;margin:0 0 5px}
+.foasb .field .req {color:#df493e}
+.foasb .field input, .foasb .field select {width:100%;height:36px;border:1px solid #b9c7d3;border-radius:5px;padding:0 9px;color:#21374b;background:#fff;outline:none}
+.foasb .field input:focus, .foasb .field select:focus {border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.10)}
+.foasb .field input[readonly] {background:#f4f6f8;color:#63788d}
+.foasb .field-error {font-size:11px;color:#d94136;min-height:13px;margin-top:3px}
+.foasb .amount-panel {border:1px solid #dce4eb;border-radius:7px;overflow:hidden;margin-top:4px}
+.foasb .amount-row {display:flex;align-items:center;min-height:46px;border-bottom:1px solid #e6ebf0;padding:7px 10px;background:#fbfcfd}
+.foasb .amount-row:last-child {border-bottom:0}
+.foasb .amount-side {width:90px;font-weight:700}
+.foasb .amount-curr {width:80px;color:#4e667d;font-weight:700}
+.foasb .amount-value {margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.foasb .meta-note {font-size:11px;color:#8191a0;margin-top:8px}
+.foasb .detail-grid {display:flex;flex-wrap:wrap;border:1px solid #e1e7ed;border-radius:7px;overflow:hidden}
+.foasb .detail-item {width:33.333%;padding:11px 12px;border-right:1px solid #e7ecf1;border-bottom:1px solid #e7ecf1;min-height:61px}
+.foasb .detail-item:nth-child(3n) {border-right:0}
+.foasb .detail-item .k {font-size:11px;color:#74889b;margin-bottom:5px}
+.foasb .detail-item .v {font-weight:700;color:#273c50;word-break:break-word;white-space:normal}
+.foasb .calendar {position:fixed;z-index:4200;width:292px;background:#fff;border:1px solid #d7e0e8;border-radius:8px;box-shadow:0 10px 28px rgba(30,52,73,.18);padding:10px;display:none}
+.foasb .cal-top {display:flex;align-items:center;margin-bottom:8px}
+.foasb .cal-nav {width:30px;height:30px;border:1px solid #d9e2e9;background:#fff;border-radius:5px;color:#4c657d}
+.foasb .cal-select {height:30px;border:1px solid #d9e2e9;border-radius:5px;background:#fff;color:#294158;margin-left:5px;padding:0 5px}
+.foasb .cal-month {width:112px}
+.foasb .cal-year {width:75px}
+.foasb .cal-grid {width:100%;border-collapse:collapse;min-width:0}
+.foasb .cal-grid th, .foasb .cal-grid td {border:0!important;padding:0!important;text-align:center;background:#fff;cursor:default}
+.foasb .cal-grid th {height:26px;color:#788c9f;font-size:11px}
+.foasb .cal-day {width:34px;height:32px;border:0;background:transparent;border-radius:5px;color:#2a4156;cursor:pointer}
+.foasb .cal-day:hover {background:#eef5fc}
+.foasb .cal-day.other {color:#b6c0ca}
+.foasb .cal-day.today {box-shadow:inset 0 0 0 1px #1f6feb}
+.foasb .cal-day.selected {background:#1f6feb;color:#fff}
+.foasb .date-shell {position:relative}
+.foasb .date-shell input {padding-right:32px}
+.foasb .cal-icon {position:absolute;right:1px;top:1px;width:32px;height:32px;border:0;background:transparent;color:#607891;cursor:pointer}
+.foasb .field.date-shell .cal-icon {top:24px}
+@media(max-width:1000px) {
+.foasb .action-wrap {margin-left:0}
+.foasb .field {width:50%}
+.foasb .brand-sub {display:none}
+}
+@media(max-width:650px) {
+.foasb .content {padding:8px}
+.foasb .header {padding:0 8px}
+.foasb .brand {margin-left:9px}
+.foasb .brand-title {font-size:16px}
+.foasb .header-note {display:none}
+.foasb .search-wrap {width:100%}
+.foasb .toolbar-item {width:100%;margin-right:0}
+.foasb .filter-input, .foasb .deal-filter {width:100%}
+.foasb .status-filter {width:100%}
+.foasb .action-wrap {width:100%}
+.foasb .action-wrap .btn {width:100%}
+.foasb .field, .foasb .field.half {width:100%}
+.foasb .detail-item {width:50%}
+.foasb .detail-item:nth-child(3n) {border-right:1px solid #e7ecf1}
+.foasb .detail-item:nth-child(2n) {border-right:0}
+}

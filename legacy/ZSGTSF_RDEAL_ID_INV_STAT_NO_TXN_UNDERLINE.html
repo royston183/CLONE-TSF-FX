@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal ID Invoice Status</title>
+<style>
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --line: #d7e0e8;
+  --line-soft: #e7edf2;
+  --text: #14263a;
+  --muted: #657a90;
+  --head: #405b76;
+  --primary: #0878d1;
+  --primary-dark: #0564b1;
+  --primary-soft: #eaf5fe;
+  --success: #168a67;
+  --warning: #d47b00;
+  --danger: #cf4040;
+  --row-select: #edf6ff;
+  --shadow: 0 1px 3px rgba(21, 45, 70, 0.08);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+.topbar {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.back-btn, .header-btn, .icon-btn, .reset-btn {
+  min-height: 36px;
+  border: 1px solid #9db0c3;
+  border-radius: 5px;
+  background: #fff;
+  color: #405b76;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-weight: 600;
+}
+.back-btn { padding: 0 14px; }
+.back-btn:hover, .header-btn:hover, .icon-btn:hover, .reset-btn:hover {
+  background: #f6f9fb;
+  border-color: #718aa3;
+}
+.brand-mark {
+  width: 28px;
+  height: 34px;
+  position: relative;
+  flex: 0 0 auto;
+}
+.brand-mark span {
+  position: absolute;
+  left: 1px;
+  height: 6px;
+  border-radius: 5px;
+}
+.brand-mark .m1 { top: 2px; width: 20px; background: #c7332c; }
+.brand-mark .m2 { top: 10px; width: 15px; background: #f19b19; }
+.brand-mark .m3 { top: 18px; width: 10px; background: #739b44; }
+.brand-mark .m4 { top: 26px; width: 6px; background: #86949f; }
+.title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.title-wrap h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+.title-sub {
+  color: #72859a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.header-btn { padding: 0 13px; }
+.header-btn svg, .back-btn svg, .icon-btn svg, .reset-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+}
+.app {
+  padding: 13px 16px 18px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+  overflow: visible;
+}
+.card-titlebar {
+  min-height: 45px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+.record-count { color: var(--muted); }
+.card-title-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 7px;
+}
+.icon-btn {
+  width: 36px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+.toolbar {
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-soft);
+}
+.search-wrap {
+  position: relative;
+  width: 250px;
+  flex: 0 0 250px;
+}
+.search-wrap svg {
+  position: absolute;
+  top: 9px;
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  stroke: #6e8195;
+  fill: none;
+  stroke-width: 1.8;
+  pointer-events: none;
+}
+.control, .search-input {
+  height: 35px;
+  border: 1px solid #9fb1c2;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+.control:focus, .search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(8, 120, 209, 0.12);
+}
+.search-input {
+  width: 100%;
+  padding: 0 10px 0 32px;
+}
+.select-wrap { position: relative; }
+.control {
+  min-width: 134px;
+  padding: 0 29px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.select-wrap:after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #577087;
+  pointer-events: none;
+}
+.date-wrap {
+  position: relative;
+  width: 148px;
+}
+.date-input {
+  width: 100%;
+  padding: 0 34px 0 10px;
+}
+.calendar-trigger {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  width: 33px;
+  height: 33px;
+  border: 0;
+  background: transparent;
+  color: #526b83;
+}
+.calendar-trigger svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+}
+.reset-btn { height: 35px; padding: 0 11px; }
+.toolbar-spacer { flex: 1 1 12px; }
+.table-wrap {
+  width: 100%;
+  max-height: 535px;
+  overflow: auto;
+  position: relative;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  table-layout: fixed;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 36px;
+  padding: 0 10px;
+  background: #f1f4f6;
+  color: var(--head);
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid #e1e7ec;
+  white-space: nowrap;
+  user-select: none;
+}
+thead th.sortable { cursor: pointer; }
+thead th.sortable:hover { background: #eaf0f4; }
+.sort-mark { margin-left: 4px; font-size: 10px; color: #758a9f; }
+tbody td {
+  height: 38px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+  border-right: 1px solid #eef2f5;
+  background: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tbody tr:hover td { background: #f8fbfd; }
+tbody tr.selected td { background: var(--row-select); }
+th.sel-col, td.sel-col {
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  text-align: center;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+thead th.sel-col { z-index: 6; background: #f1f4f6; }
+tbody td.sel-col { background: #fff; }
+tbody tr:hover td.sel-col { background: #f8fbfd; }
+tbody tr.selected td.sel-col { background: var(--row-select); }
+th.deal-sticky, td.deal-sticky {
+  position: sticky;
+  left: 42px;
+  z-index: 2;
+}
+thead th.deal-sticky { z-index: 5; background: #f1f4f6; }
+tbody td.deal-sticky { background: #fff; }
+tbody tr:hover td.deal-sticky { background: #f8fbfd; }
+tbody tr.selected td.deal-sticky { background: var(--row-select); }
+.row-check { width: 15px; height: 15px; accent-color: var(--primary); }
+.link-cell {
+  color: #006ac6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link-cell:hover { color: #004f98; }
+.amount { text-align: right; font-variant-numeric: tabular-nums; }
+.code { font-variant-numeric: tabular-nums; }
+.empty-value { color: #9aa8b5; }
+.status-text { font-weight: 700; }
+.status-created { color: #715bd8; }
+.status-confirmed { color: #1972b8; }
+.status-active { color: var(--success); }
+.status-closed { color: #5b6f82; }
+.footer {
+  min-height: 44px;
+  padding: 7px 11px;
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+.pager {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.page-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: #526b83;
+}
+.page-btn.active {
+  border-color: #abc6dd;
+  background: #f3f8fc;
+  color: var(--text);
+}
+.page-btn:disabled { opacity: 0.42; cursor: default; }
+.calendar-pop {
+  position: absolute;
+  z-index: 50;
+  top: 39px;
+  left: 0;
+  width: 288px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(20, 38, 58, 0.17);
+  padding: 10px;
+  display: none;
+}
+.calendar-pop.open { display: block; }
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.cal-nav {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: #4a647d;
+}
+.cal-select {
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  padding: 0 6px;
+  color: var(--text);
+}
+.cal-month { flex: 1 1 auto; }
+.cal-year { width: 78px; }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-dow, .cal-day {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-dow {
+  color: #71869a;
+  font-size: 11px;
+  font-weight: 700;
+}
+.cal-day {
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--text);
+}
+.cal-day:hover { background: #eaf5fe; }
+.cal-day.other { color: #b7c0c9; }
+.cal-day.today { box-shadow: inset 0 0 0 1px #72a9d3; }
+.cal-day.selected { background: var(--primary); color: #fff; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(18, 37, 56, 0.34);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  width: min(760px, 96vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 55px rgba(16, 38, 61, 0.24);
+}
+.modal-head {
+  min-height: 50px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.modal-head h2 { margin: 0; font-size: 17px; }
+.modal-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #657a90;
+  font-size: 21px;
+}
+.modal-close:hover { background: #f2f5f7; }
+.modal-body { padding: 15px 16px 17px; }
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+.detail-item {
+  border: 1px solid var(--line-soft);
+  background: #fafcfd;
+  border-radius: 6px;
+  padding: 9px 10px;
+  min-height: 57px;
+}
+.detail-label {
+  color: #667d92;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.detail-value {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.modal-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+.primary-btn {
+  height: 35px;
+  padding: 0 14px;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+.primary-btn:hover { background: var(--primary-dark); }
+
+.deal-workspace {
+  position: fixed;
+  inset: 0;
+  z-index: 72;
+  display: none;
+  flex-direction: column;
+  background: var(--bg);
+}
+.deal-workspace.open { display: flex; }
+.deal-workspace .topbar { flex: 0 0 58px; }
+.deal-workspace-main {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 12px 16px 18px;
+}
+.deal-workspace-content {
+  min-width: 1080px;
+}
+.deal-action-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.deal-action-btn {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #aebdca;
+  border-radius: 5px;
+  background: #fff;
+  color: #3c5670;
+  font-weight: 700;
+}
+.deal-action-btn:hover { background: #f5f9fc; border-color: #8299ae; }
+.deal-action-btn.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+.deal-action-btn.primary:hover { background: var(--primary-dark); }
+.deal-action-btn.danger { color: #b13b36; border-color: #e3b5b1; }
+.deal-action-btn:disabled { opacity: .48; cursor: not-allowed; }
+.analysis-card {
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(25, 50, 75, .06);
+}
+.analysis-card-head {
+  min-height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 800;
+  color: #263c52;
+}
+.analysis-card-head .subtle {
+  font-size: 11px;
+  font-weight: 500;
+  color: #71859a;
+}
+.basic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+  padding: 12px;
+}
+.basic-field label {
+  display: block;
+  margin-bottom: 4px;
+  color: #5b7187;
+  font-size: 11px;
+  font-weight: 700;
+}
+.readonly-field {
+  min-height: 35px;
+  padding: 8px 10px;
+  border: 1px solid #c7d3de;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #20364d;
+  overflow-wrap: anywhere;
+}
+.readonly-field.strong { font-weight: 800; color: #0a6ed1; }
+.analysis-select {
+  width: 100%;
+  height: 35px;
+  padding: 0 9px;
+  border: 1px solid #c7d3de;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #20364d;
+}
+.analysis-table-wrap { overflow: auto; max-height: 245px; }
+.analysis-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+.analysis-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 34px;
+  padding: 0 9px;
+  border-bottom: 1px solid #c8d3de;
+  background: #eef3f7;
+  color: #3f5c78;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+.analysis-table td {
+  height: 34px;
+  padding: 0 9px;
+  border-bottom: 1px solid #e8edf2;
+  color: #263e55;
+  white-space: nowrap;
+}
+.analysis-table tbody tr:hover { background: #f5f9fc; }
+.analysis-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.analysis-table .hot { color: #0064b0; text-decoration: underline; font-weight: 700; }
+.analysis-empty {
+  padding: 20px;
+  color: #73879a;
+  text-align: center;
+}
+.txn-chip {
+  margin-left: 4px;
+  padding: 3px 7px;
+  border-radius: 12px;
+  background: #eaf3fb;
+  color: #46637e;
+  font-size: 11px;
+  font-weight: 700;
+}
+.deal-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #5d7389;
+  font-size: 12px;
+}
+.deal-status-inline { font-weight: 800; }
+.sap-popup-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+.sap-popup-form .full { grid-column: 1 / -1; }
+.sap-popup-form label {
+  display: block;
+  margin-bottom: 4px;
+  color: #5b7187;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sap-popup-form input,
+.sap-popup-form select {
+  width: 100%;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid #c5d1dc;
+  border-radius: 4px;
+  background: #fff;
+  color: #243b52;
+}
+.sap-popup-note {
+  margin-top: 11px;
+  padding: 9px 10px;
+  border: 1px solid #dce5ed;
+  border-radius: 5px;
+  background: #f7fafc;
+  color: #61788e;
+  font-size: 12px;
+}
+.modal.dms-modal { width: min(1120px, 98vw); }
+.dms-file-box {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 330px;
+}
+.dms-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.dms-choose-btn, .dms-clear-btn {
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid #aebdca;
+  border-radius: 4px;
+  background: #fff;
+  color: #35516b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dms-choose-btn:hover, .dms-clear-btn:hover {
+  border-color: #4388c7;
+  background: #f1f7fc;
+}
+.dms-clear-btn:disabled {
+  opacity: .42;
+  cursor: default;
+}
+.dms-file-text {
+  min-width: 0;
+  max-width: 260px;
+  overflow: hidden;
+  color: #344f68;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dms-file-text.empty { color: #8a9aab; }
+.dms-code {
+  color: #147c60;
+  font-weight: 800;
+}
+.dms-comment {
+  width: 210px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #c5d1dc;
+  border-radius: 4px;
+  color: #263e55;
+}
+.dms-feedback {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid #d7e8df;
+  border-radius: 5px;
+  background: #f2fbf6;
+  color: #296c54;
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .basic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.no-rows {
+  height: 90px;
+  text-align: center;
+  color: #75899c;
+}
+@media (max-width: 900px) {
+  .topbar { padding: 0 10px; gap: 8px; }
+  .title-wrap h1 { font-size: 17px; }
+  .title-sub { display: none; }
+  .app { padding: 10px; }
+  .search-wrap { width: 100%; flex-basis: 100%; }
+  .toolbar-spacer { display: none; }
+  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .header-actions .header-btn span { display: none; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .control, .date-wrap { width: 100%; min-width: 100%; }
+  .select-wrap { width: 100%; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="back-btn" id="backBtn" type="button" title="Back">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+    <span>Back</span>
+  </button>
+  <div class="brand-mark" aria-label="Fourth Signal">
+    <span class="m1"></span><span class="m2"></span><span class="m3"></span><span class="m4"></span>
+  </div>
+  <div class="title-wrap">
+    <h1>Deal ID Invoice Status</h1>
+    <span class="title-sub">FX</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" id="refreshBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11a8 8 0 10-2.3 5.7"></path><path d="M20 5v6h-6"></path>
+      </svg>
+      <span>Refresh</span>
+    </button>
+  </div>
+</header>
+<main class="app">
+  <section class="card" aria-label="Deal ID List Report: Invoice Status">
+    <div class="card-titlebar">
+      <div class="card-title">Deal ID List Report: Invoice Status</div>
+      <div class="record-count" id="titleCount"></div>
+      <div class="card-title-actions">
+        <button class="icon-btn" id="downloadBtn" type="button" title="Download CSV">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path>
+        </svg>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search Deal IDs..." autocomplete="off">
+      </div>
+      <div class="select-wrap">
+        <select class="control" id="originFilter" title="Origin Entity">
+          <option value="">Origin Entity</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select class="control" id="regionFilter" title="Region">
+          <option value="">Region</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select class="control" id="modelFilter" title="FX Model">
+          <option value="">FX Model</option>
+        </select>
+      </div>
+      <div class="date-wrap" id="dateWrap">
+        <input class="control date-input" id="keyDateInput" type="text" placeholder="Key Date" maxlength="10" autocomplete="off">
+        <button class="calendar-trigger" id="calendarTrigger" type="button" title="Choose key date">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+            <path d="M8 3v4M16 3v4M3 10h18"></path>
+          </svg>
+        </button>
+        <div class="calendar-pop" id="calendarPop"></div>
+      </div>
+      <button class="reset-btn" id="resetBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 4v6h6"></path><path d="M5.5 9A8 8 0 1120 13"></path>
+        </svg>
+        Reset
+      </button>
+      <div class="toolbar-spacer"></div>
+    </div>
+    <div class="table-wrap" id="tableWrap">
+      <table id="dataTable">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="footer">
+      <span id="showingText"></span>
+      <div class="pager" id="pager"></div>
+    </div>
+  </section>
+</main>
+
+<div class="deal-workspace" id="dealWorkspace" aria-hidden="true">
+  <header class="topbar">
+    <button class="back-btn" id="dealBackBtn" type="button" title="Back to Invoice Status">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+      <span>Back</span>
+    </button>
+    <div class="brand-mark" aria-label="Fourth Signal">
+      <span class="m1"></span><span class="m2"></span><span class="m3"></span><span class="m4"></span>
+    </div>
+    <div class="title-wrap">
+      <h1>Deal ID Analysis</h1>
+      <span class="title-sub">ZSGTSF_PDEAL_ID_ANALYS</span>
+    </div>
+  </header>
+  <main class="deal-workspace-main">
+    <div class="deal-workspace-content" id="dealWorkspaceBody"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Details</h2>
+      <button class="modal-close" id="modalClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="primary-btn" id="modalDone" type="button">Close</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var DMS_STATE = {};
+
+  var STATUS_MAP = {
+    '01': 'FO: FX Deals Created',
+    '04': 'BL Assigned to Deal ID for Invoicing',
+    '05': 'Invoice Created in TRM',
+    '07': 'Partial Invoice Created in TRM',
+    '20': 'Settlement Initiated',
+    '21': 'Settlement Completed - Execution',
+    '30': 'Deal ID Cancelled'
+  };
+
+  var ORIGIN_OPTIONS = [
+    { id: 'AMBER', desc: 'Amber Foods Limited' },
+    { id: 'DMCC', desc: 'Olam International DMCC' },
+    { id: 'OAL', desc: 'Olam Global Agri Americas' },
+    { id: 'OGA', desc: 'Olam Global Agri Pte. Ltd' },
+    { id: 'OGAT', desc: 'Olam Global Agri Treasury' },
+    { id: 'OSIPL', desc: 'Olam Agri India Pvt Ltd' },
+    { id: 'OSL', desc: 'Olam Shanghai Limited' },
+    { id: 'OTL', desc: 'Olam (Thailand) Ltd' },
+    { id: 'OVL', desc: 'Olam Vietnam Limited' },
+    { id: 'PAN', desc: 'Panasia International FZE' },
+    { id: 'SEDA', desc: 'SEDA OUTSPAN IBERIA S.L.U' }
+  ];
+
+  var REGION_OPTIONS = [
+    { id: 'R01', desc: 'South-East Asia' },
+    { id: 'R02', desc: 'China' },
+    { id: 'R03', desc: 'United States of America' },
+    { id: 'R04', desc: 'Middle East & Africa' },
+    { id: 'R05', desc: 'Europe' },
+    { id: 'R06', desc: 'United Kingdom' },
+    { id: 'R07', desc: 'Latin America' },
+    { id: 'R08', desc: 'Brazil' },
+    { id: 'R09', desc: 'Canada' }
+  ];
+
+  var MODELS = [
+    { id: 'M032', desc: 'INR Long Forward' },
+    { id: 'M033', desc: 'INR-INR-INR Forward' },
+    { id: 'M034', desc: 'INR - INR Staggered Call & Put Option' },
+    { id: 'M035', desc: 'INR-INR-Put & Call Option' },
+    { id: 'M036', desc: 'USD-INR-INR-Put & Call Option' },
+    { id: 'M037', desc: 'INR Short Forward' },
+    { id: 'M041', desc: 'INR - INR Staggered Call & Put Option' }
+  ];
+
+  var COMPANY_CODES = {
+    'OGA': 'SG03',
+    'DMCC': 'AE13',
+    'OSIPL': 'IN11',
+    'OTL': 'TH10',
+    'OVL': 'VN10',
+    'SEDA': 'ES12',
+    'PAN': 'AE11'
+  };
+
+  function sampleRow(id, desc, mc, start, end, r1, r2, r3, r4, status, model, amount) {
+    return {
+      dealId: id,
+      dealDesc: desc,
+      mcRef: mc,
+      startDate: start,
+      endDate: end,
+      rfha1: r1 || '',
+      rfha2: r2 || '',
+      rfha3: r3 || '',
+      rfha4: r4 || '',
+      rfha5: '',
+      dealStatus: status,
+      dealStatusDesc: STATUS_MAP[status] || status,
+      origin: 'OSIPL',
+      modelId: model,
+      region: 'R01',
+      modelDesc: modelDescription(model),
+      utiAmt: amount,
+      invStatus: '',
+      t1Amt: null,
+      bukrs1: 'IN11',
+      bukrs2: 'SG03'
+    };
+  }
+
+  function modelDescription(id) {
+    var i;
+    for (i = 0; i < MODELS.length; i += 1) {
+      if (MODELS[i].id === id) { return MODELS[i].desc; }
+    }
+    return id;
+  }
+
+  function buildSampleData() {
+    return [
+      sampleRow('1100000031', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000027', '2024-10-17', '2025-10-19',
+        '640200000011', '640200000044', '', '', '21', 'M036', 4825000),
+      sampleRow('1100000001', 'Niranjan K_OSIPL_2024/OGA-OSIPL-DMCC', '2000000013', '2024-10-16', '2024-12-30',
+        '620500000005', '630200000019', '', '', '30', 'M033', 2150000),
+      sampleRow('1100000004', 'Niranjan K_OSIPL_2024/OGA-OSIPL-DMCC', '2000000017', '2024-10-16', '2025-12-30',
+        '620500000002', '630200000023', '', '', '20', 'M037', 3670000),
+      sampleRow('1100000005', 'Niranjan K_OSIPL_2024/OGA-DMCC-OSIPL', '2000000012', '2024-10-16', '2025-12-30',
+        '620500000003', '630200000024', '', '', '30', 'M032', 3026000),
+      sampleRow('1100000012', 'Vaishnavi J_OSIPL_2024/OGA-DMCC-OSIPL', '2000000021', '2024-10-16', '2024-11-29',
+        '640200000017', '640200000018', '', '', '01', 'M034', 2289000),
+      sampleRow('1100000262', 'Niranjan K_OSIPL_2024/OGA-DMCC-OSIPL', '2000000012', '2024-11-10', '2024-12-20',
+        '620500000057', '630200000195', '', '', '01', 'M032', 4860200),
+      sampleRow('1100000009', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000021', '2024-10-16', '2024-11-30',
+        '640200000015', '640200000016', '', '', '01', 'M034', 3739100),
+      sampleRow('1100000010', 'Niranjan K_OSIPL_2024/OGA-DMCC-OSIPL', '2000000012', '2024-10-17', '2025-12-30',
+        '620500000005', '630200000026', '', '', '01', 'M032', 2028000),
+      sampleRow('1100000014', 'Antony N_OSIPL_2024/OGA-OSIPL-DMCC', '2000000017', '2024-10-16', '2024-11-30',
+        '640200000008', '640200000032', '', '', '01', 'M037', 1676300),
+      sampleRow('1100000015', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000021', '2024-10-16', '2024-11-30',
+        '640200000021', '640200000022', '', '', '01', 'M034', 3422200),
+      sampleRow('1100000072', 'Niranjan K_OSIPL_2024/OGA-OSIPL-DMCC', '2000000016', '2024-10-24', '2025-12-30',
+        '600500000064', '630200000092', '600500000009', '', '21', 'M033', 3078700),
+      sampleRow('1100000018', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000025', '2024-10-17', '2025-10-19',
+        '640200000003', '640200000028', '', '', '01', 'M035', 4475800),
+      sampleRow('1100000034', 'Vaishnavi J_OSIPL_2024/OGA-OSIPL-DMCC', '2000000021', '2024-10-18', '2024-11-30',
+        '640200000050', '640200000051', '', '', '01', 'M034', 1090400),
+      sampleRow('1100000019', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000027', '2024-10-17', '2025-10-19',
+        '640200000005', '640200000032', '', '', '01', 'M036', 2502100),
+      sampleRow('1100000023', 'Antony N_OSIPL_2024/OGA-OSIPL-DMCC', '2000000025', '2024-10-17', '2024-11-30',
+        '640200000006', '640200000035', '', '', '07', 'M035', 4852400),
+      sampleRow('1100000035', 'Vaishnavi J_OSIPL_2024/OGA-OSIPL-DMCC', '2000000021', '2024-10-18', '2024-11-30',
+        '640200000053', '640200000054', '', '', '01', 'M034', 3691200),
+      sampleRow('1100000029', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000025', '2024-10-17', '2025-10-19',
+        '640200000009', '640200000040', '', '', '07', 'M035', 4070000),
+      sampleRow('1100000134', 'Antony N_OSIPL_2024/OGA-DMCC-OSIPL', '2000000027', '2024-11-26', '2026-12-30',
+        '640200000021', '640200000097', '', '640200000099', '04', 'M036', 1833500),
+      sampleRow('1100000002', 'Niranjan K_OSIPL_2024/OGA-DMCC-OSIPL', '2000000013', '2024-10-16', '2024-12-30',
+        '620500000006', '630200000020', '', '', '05', 'M033', 2883800),
+      sampleRow('1100000021', 'Niranjan K_OSIPL_2024/OGA-OSIPL-DMCC', '2000000012', '2024-10-17', '2025-12-30',
+        '620500000011', '630200000035', '600500000006', '', '20', 'M032', 3305000),
+      sampleRow('1100000032', 'Vaishnavi J_OSIPL_2024/OGA-OSIPL-DMCC', '2000000025', '2024-10-18', '2024-11-30',
+        '640200000012', '640200000046', '', '640200000048', '01', 'M035', 1245000)
+    ];
+  }
+
+  var INITIAL_DATA = buildSampleData();
+  var data = INITIAL_DATA.slice(0);
+  var currentPage = 1;
+  var pageSize = 20;
+  var selectedId = null;
+  var sortKey = '';
+  var sortDir = 'asc';
+  var calendarMonth = null;
+  var calendarYear = null;
+
+  var columns = [
+    { key: 'dealId', label: 'Deal ID', width: 118, hotspot: 'deal', sticky: true },
+    { key: 'dealDesc', label: 'Deal ID Desc', width: 185 },
+    { key: 'mcRef', label: 'MC Ref No', width: 118 },
+    { key: 'startDate', label: 'Start Date', width: 105, date: true },
+    { key: 'endDate', label: 'End Date', width: 105, date: true },
+    { key: 'rfha1', label: 'FX Deal 1', width: 112 },
+    { key: 'rfha2', label: 'FX Deal 2', width: 112 },
+    { key: 'rfha3', label: 'FX Deal 3', width: 112 },
+    { key: 'rfha4', label: 'FX Deal 4', width: 112 },
+    { key: 'rfha5', label: 'FX Deal 5', width: 112 },
+    { key: 'dealStatus', label: 'Deal Status', width: 104 },
+    { key: 'dealStatusDesc', label: 'Deal Status Desc', width: 142, status: true },
+    { key: 'origin', label: 'Origin Entity', width: 112 },
+    { key: 'modelId', label: 'FX Model', width: 100 },
+    { key: 'region', label: 'Region', width: 88 },
+    { key: 'modelDesc', label: 'FX Model Desc', width: 150 },
+    { key: 'utiAmt', label: 'D1(USD)', width: 122, amount: true },
+    { key: 'invStatus', label: 'Inv Status', width: 105, hotspot: 'invoice' },
+    { key: 't1Amt', label: 'T1(USD)', width: 122, amount: true }
+  ];
+
+  var els = {
+    search: document.getElementById('searchInput'),
+    origin: document.getElementById('originFilter'),
+    region: document.getElementById('regionFilter'),
+    model: document.getElementById('modelFilter'),
+    keyDate: document.getElementById('keyDateInput'),
+    tableHead: document.getElementById('tableHead'),
+    tableBody: document.getElementById('tableBody'),
+    showing: document.getElementById('showingText'),
+    titleCount: document.getElementById('titleCount'),
+    pager: document.getElementById('pager'),
+    calendarPop: document.getElementById('calendarPop'),
+    modalOverlay: document.getElementById('modalOverlay'),
+    modalTitle: document.getElementById('modalTitle'),
+    modalBody: document.getElementById('modalBody'),
+    dealWorkspace: document.getElementById('dealWorkspace'),
+    dealWorkspaceBody: document.getElementById('dealWorkspaceBody')
+  };
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function toDisplayDate(iso) {
+    if (!iso) { return ''; }
+    var p = iso.split('-');
+    return p[2] + '-' + p[1] + '-' + p[0];
+  }
+
+  function parseDisplayDate(value) {
+    var m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value || '');
+    var d;
+    if (!m) { return null; }
+    d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    if (d.getFullYear() !== Number(m[3])) { return null; }
+    if (d.getMonth() !== Number(m[2]) - 1) { return null; }
+    if (d.getDate() !== Number(m[1])) { return null; }
+    return d;
+  }
+
+  function pad(value, size) {
+    var s = String(value);
+    while (s.length < size) { s = '0' + s; }
+    return s;
+  }
+
+  function dateToIso(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1, 2) + '-' + pad(d.getDate(), 2);
+  }
+
+  function formatAmount(value) {
+    if (value === null || value === undefined || value === '') { return '—'; }
+    return Number(value).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function getVisibleColumns() {
+    return columns.slice(0);
+  }
+
+  function uniqueValues(key) {
+    var map = {};
+    var out = [];
+    data.forEach(function (row) {
+      var v = row[key];
+      if (v && !map[v]) { map[v] = true; out.push(v); }
+    });
+    return out.sort();
+  }
+
+  function fillSelect(select, values, placeholder) {
+    var current = select.value;
+    select.innerHTML = '<option value="">' + escapeHtml(placeholder) + '</option>';
+    values.forEach(function (v) {
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      select.appendChild(opt);
+    });
+    select.value = current;
+  }
+
+  function fillSelectOptions(select, options, placeholder) {
+    var current = select.value;
+    select.innerHTML = '<option value="">' + escapeHtml(placeholder) + '</option>';
+    options.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.id + ' — ' + item.desc;
+      select.appendChild(opt);
+    });
+    select.value = current;
+  }
+
+  function initFilters() {
+    fillSelectOptions(els.origin, ORIGIN_OPTIONS, 'Origin Entity');
+    fillSelectOptions(els.region, REGION_OPTIONS, 'Region');
+    fillSelectOptions(els.model, MODELS, 'FX Model');
+  }
+
+  function allRenderedText(row, visibleCols) {
+    return visibleCols.map(function (c) {
+      if (c.date) { return toDisplayDate(row[c.key]); }
+      return row[c.key] === null || row[c.key] === undefined ? '' : String(row[c.key]);
+    }).join(' ').toLowerCase();
+  }
+
+  function getFilteredRows() {
+    var visibleCols = getVisibleColumns();
+    var q = (els.search.value || '').toLowerCase().trim();
+    var keyDateObj = parseDisplayDate(els.keyDate.value.trim());
+    var keyIso = keyDateObj ? dateToIso(keyDateObj) : '';
+    var rows = data.filter(function (row) {
+      if (q && allRenderedText(row, visibleCols).indexOf(q) === -1) { return false; }
+      if (els.origin.value && row.origin !== els.origin.value) { return false; }
+      if (els.region.value && row.region !== els.region.value) { return false; }
+      if (els.model.value && row.modelId !== els.model.value) { return false; }
+      if (keyIso && (row.startDate > keyIso || row.endDate < keyIso)) { return false; }
+      return true;
+    });
+    if (sortKey) {
+      rows.sort(function (a, b) {
+      var av = a[sortKey];
+      var bv = b[sortKey];
+      if (av === null || av === undefined) { av = ''; }
+      if (bv === null || bv === undefined) { bv = ''; }
+      if (typeof av === 'number' && typeof bv === 'number') {
+        return sortDir === 'asc' ? av - bv : bv - av;
+      }
+      av = String(av).toLowerCase();
+      bv = String(bv).toLowerCase();
+      if (av < bv) { return sortDir === 'asc' ? -1 : 1; }
+      if (av > bv) { return sortDir === 'asc' ? 1 : -1; }
+        return 0;
+      });
+    }
+    return rows;
+  }
+
+  function renderHead() {
+    var visibleCols = getVisibleColumns();
+    var html = '<th class="sel-col"><span title="Single-row selection">☐</span></th>';
+    visibleCols.forEach(function (col) {
+      var cls = 'sortable';
+      var mark = '↕';
+      if (col.sticky) { cls += ' deal-sticky'; }
+      if (sortKey === col.key) { mark = sortDir === 'asc' ? '▲' : '▼'; }
+      html += '<th class="' + cls + '" data-key="' + col.key + '" style="width:';
+      html += col.width + 'px;min-width:' + col.width + 'px;max-width:' + col.width + 'px">';
+      html += escapeHtml(col.label) + '<span class="sort-mark">' + mark + '</span></th>';
+    });
+    els.tableHead.innerHTML = html;
+    Array.prototype.forEach.call(els.tableHead.querySelectorAll('th.sortable'), function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-key');
+        if (sortKey === key) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+        else { sortKey = key; sortDir = 'asc'; }
+        currentPage = 1;
+        render();
+      });
+    });
+  }
+
+  function statusClass(value) {
+    if (value === 'FO: FX Deals Created') { return 'status-created'; }
+    if (value === 'Settlement Initiated') { return 'status-confirmed'; }
+    if (value === 'Settlement Completed - Execution') { return 'status-active'; }
+    if (value === 'Deal ID Cancelled') { return 'status-closed'; }
+    if (value.indexOf('Invoice') !== -1 || value.indexOf('BL Assigned') !== -1) {
+      return 'status-confirmed';
+    }
+    return 'status-active';
+  }
+
+  function buildCell(row, col) {
+    var value = row[col.key];
+    var display = value;
+    var classes = [];
+    var action = '';
+    if (col.date) { display = toDisplayDate(value); }
+    if (col.amount) { display = formatAmount(value); classes.push('amount'); }
+    if (col.status) { classes.push('status-text', statusClass(value)); }
+    if (!display && display !== 0) { display = '—'; classes.push('empty-value'); }
+    if (col.hotspot === 'deal' && value) { action = 'deal'; }
+    if (col.hotspot === 'invoice' && value) { action = 'invoice'; }
+    if (action) { classes.push('link-cell'); }
+    if (col.sticky) { classes.push('deal-sticky'); }
+    return '<td class="' + classes.join(' ') + '" data-action="' + action + '" title="' +
+      escapeHtml(display) + '">' + escapeHtml(display) + '</td>';
+  }
+
+  function renderBody(rows) {
+    var visibleCols = getVisibleColumns();
+    var start = (currentPage - 1) * pageSize;
+    var pageRows = rows.slice(start, start + pageSize);
+    var html = '';
+    if (!pageRows.length) {
+      html = '<tr><td class="no-rows" colspan="' + (visibleCols.length + 1) + '">No record found</td></tr>';
+      els.tableBody.innerHTML = html;
+      return;
+    }
+    pageRows.forEach(function (row) {
+      var selected = selectedId === row.dealId ? ' selected' : '';
+      html += '<tr class="data-row' + selected + '" data-id="' + escapeHtml(row.dealId) + '">';
+      html += '<td class="sel-col"><input class="row-check" type="checkbox" ';
+      html += selected ? 'checked' : '';
+      html += ' aria-label="Select ' + escapeHtml(row.dealId) + '"></td>';
+      visibleCols.forEach(function (col) { html += buildCell(row, col); });
+      html += '</tr>';
+    });
+    els.tableBody.innerHTML = html;
+    bindRowEvents();
+  }
+
+  function findRow(id) {
+    var result = null;
+    data.some(function (row) {
+      if (row.dealId === id) { result = row; return true; }
+      return false;
+    });
+    return result;
+  }
+
+  function bindRowEvents() {
+    Array.prototype.forEach.call(document.querySelectorAll('.data-row'), function (tr) {
+      tr.addEventListener('click', function (event) {
+        var target = event.target;
+        var action = target.getAttribute('data-action');
+        var id = tr.getAttribute('data-id');
+        var row = findRow(id);
+        if (action) {
+          event.stopPropagation();
+          selectedId = id;
+          if (action === 'deal') { openDeal(row); }
+          if (action === 'txn1') { openTxn(row, 1); }
+          if (action === 'txn2') { openTxn(row, 2); }
+          if (action === 'invoice') { openInvoice(row); }
+          render();
+          return;
+        }
+        selectedId = id;
+        render();
+      });
+      tr.addEventListener('dblclick', function (event) {
+        if (event.target.getAttribute('data-action')) { return; }
+        openDeal(findRow(tr.getAttribute('data-id')));
+      });
+      var check = tr.querySelector('.row-check');
+      check.addEventListener('click', function (event) {
+        event.stopPropagation();
+        selectedId = tr.getAttribute('data-id');
+        render();
+      });
+    });
+  }
+
+  function renderPager(total) {
+    var totalPages = Math.max(1, Math.ceil(total / pageSize));
+    var html = '';
+    var p;
+    if (currentPage > totalPages) { currentPage = totalPages; }
+    html += '<button class="page-btn" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>‹</button>';
+    for (p = 1; p <= totalPages; p += 1) {
+      html += '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">';
+      html += p + '</button>';
+    }
+    html += '<button class="page-btn" data-page="next" ';
+    html += currentPage === totalPages ? 'disabled' : '';
+    html += '>›</button>';
+    els.pager.innerHTML = html;
+    Array.prototype.forEach.call(els.pager.querySelectorAll('.page-btn'), function (btn) {
+      btn.addEventListener('click', function () {
+        var v = btn.getAttribute('data-page');
+        if (v === 'prev' && currentPage > 1) { currentPage -= 1; }
+        else if (v === 'next' && currentPage < totalPages) { currentPage += 1; }
+        else if (/^\d+$/.test(v)) { currentPage = Number(v); }
+        render();
+        document.getElementById('tableWrap').scrollTop = 0;
+      });
+    });
+  }
+
+  function render() {
+    var rows = getFilteredRows();
+    var total = rows.length;
+    var start = total ? ((currentPage - 1) * pageSize) + 1 : 0;
+    var end = Math.min(currentPage * pageSize, total);
+    renderHead();
+    renderBody(rows);
+    renderPager(total);
+    els.titleCount.textContent = total + (total === 1 ? ' record' : ' records');
+    els.showing.textContent = total ? 'Showing ' + start + '–' + end + ' of ' + total : 'Showing 0 of 0';
+  }
+
+  function resetState() {
+    data = INITIAL_DATA.slice(0);
+    els.search.value = '';
+    els.origin.value = '';
+    els.region.value = '';
+    els.model.value = '';
+    els.keyDate.value = '';
+    selectedId = null;
+    sortKey = '';
+    sortDir = 'asc';
+    currentPage = 1;
+    closeCalendar();
+    closeModal();
+    closeDealWorkspace();
+    render();
+  }
+
+  function addDetail(label, value) {
+    var v = value === null || value === undefined || value === '' ? '—' : value;
+    return '<div class="detail-item"><div class="detail-label">' + escapeHtml(label) + '</div>' +
+      '<div class="detail-value">' + escapeHtml(v) + '</div></div>';
+  }
+
+  function openModal(title, html) {
+    var modal = els.modalOverlay.querySelector('.modal');
+    modal.classList.remove('dms-modal');
+    els.modalTitle.textContent = title;
+    els.modalBody.innerHTML = html;
+    els.modalOverlay.classList.add('open');
+    els.modalOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    els.modalOverlay.classList.remove('open');
+    els.modalOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function dealEntityString(row) {
+    var p = row.dealDesc.split('/');
+    return p.length > 1 ? p[1] : 'OGA-DMCC-OSIPL';
+  }
+
+  function traderForRow(row) {
+    if (row.dealDesc.indexOf('Antony N') === 0) { return { code: 'ANT', desc: 'Antony N' }; }
+    if (row.dealDesc.indexOf('Vaishnavi J') === 0) { return { code: 'VAI', desc: 'Vaishnavi J' }; }
+    return { code: 'NIR', desc: 'Niranjan K' };
+  }
+
+  function currencyStringForModel(model) {
+    var map = {
+      'M032': 'USD-USD-INR',
+      'M033': 'INR-INR-INR',
+      'M034': 'INR-INR-INR',
+      'M035': 'INR-INR-USD',
+      'M036': 'USD-INR-INR',
+      'M037': 'USD-USD-INR',
+      'M041': 'INR-INR-INR'
+    };
+    return map[model] || 'USD-INR';
+  }
+
+  function entityCompany(entity) {
+    return COMPANY_CODES[entity] || 'IN11';
+  }
+
+  function isoShift(iso, days) {
+    var d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return dateToIso(d);
+  }
+
+  function compactAmount(value) {
+    var n = Number(value || 0);
+    if (n >= 1000000) { return (n / 1000000).toFixed(1) + 'M'; }
+    if (n >= 1000) { return Math.round(n / 1000) + 'K'; }
+    return String(Math.round(n));
+  }
+
+  function basicField(label, value, strong) {
+    return '<div class="basic-field"><label>' + escapeHtml(label) + '</label>' +
+      '<div class="readonly-field' + (strong ? ' strong' : '') + '">' +
+      escapeHtml(value || '—') + '</div></div>';
+  }
+
+  function analysisTable(columnsDef, rows) {
+    var html = '<div class="analysis-table-wrap"><table class="analysis-table"><thead><tr>';
+    columnsDef.forEach(function (c) { html += '<th>' + escapeHtml(c.label) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    if (!rows.length) {
+      html += '<tr><td class="analysis-empty" colspan="' + columnsDef.length + '">No records</td></tr>';
+    } else {
+      rows.forEach(function (row) {
+        html += '<tr>';
+        columnsDef.forEach(function (c) {
+          var v = row[c.key];
+          var cls = c.num ? ' class="num"' : '';
+          if (c.hot && v) { cls = ' class="hot"'; }
+          html += '<td' + cls + '>' + escapeHtml(v === null || v === undefined || v === '' ? '—' : v) + '</td>';
+        });
+        html += '</tr>';
+      });
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function buildFxRows(row) {
+    var entityParts = dealEntityString(row).split('-');
+    var rfhas = [row.rfha1, row.rfha2, row.rfha3, row.rfha4, row.rfha5];
+    var rows = [];
+    var i;
+    var amount;
+    var rate;
+    var entity;
+    rfhas.forEach(function (rfha, index) {
+      if (!rfha) { return; }
+      i = index + 1;
+      entity = entityParts[index % entityParts.length] || row.origin;
+      amount = Math.max(100000, Math.round(row.utiAmt * (1 - (index * 0.08))));
+      rate = 82.5 + (index * 0.35) + ((Number(row.dealId.slice(-2)) % 7) * 0.03);
+      rows.push({
+        type: 'D' + i,
+        entity: entity,
+        bukrs: entityCompany(entity),
+        partner: index % 2 ? 'DBS BANK LTD' : 'STANDARD CHARTERED BANK SINGAPORE',
+        rfha: rfha,
+        product: row.modelId === 'M032' || row.modelId === 'M037' ? '619' : '631',
+        txn: row.modelId === 'M032' || row.modelId === 'M037' ? 'Forward-TSF' : 'FX Option-TSF',
+        start: toDisplayDate(row.startDate),
+        end: toDisplayDate(row.endDate),
+        bs1: index % 2 ? 'Sell' : 'Buy',
+        curr1: 'USD',
+        amt1: formatAmount(amount),
+        bs2: index % 2 ? 'Buy' : 'Sell',
+        curr2: 'INR',
+        amt2: formatAmount(amount * rate),
+        rate: rate.toFixed(6),
+        status: row.dealStatus === '30' ? '30 - Cancelled' : '03 - Confirmed'
+      });
+    });
+    return rows;
+  }
+
+  function buildInvoiceRows(row) {
+    if (row.dealStatus === '30') { return []; }
+    var base = Math.max(100000, Math.round(row.utiAmt / 2));
+    var rate = 83.25 + ((Number(row.dealId.slice(-2)) % 5) * 0.06);
+    return [
+      {
+        ttype: 'T1', dtype: 'D1', sell: 'OGA', buy: 'OSIPL', curr: 'USD',
+        amt: formatAmount(base), ex: rate.toFixed(7), inv: formatAmount(base * rate),
+        ref: row.dealId + '-T1'
+      },
+      {
+        ttype: 'T2', dtype: 'D2', sell: 'OSIPL', buy: 'DMCC', curr: 'USD',
+        amt: formatAmount(base), ex: (rate + 0.12).toFixed(7), inv: formatAmount(base * (rate + 0.12)),
+        ref: row.dealId + '-T2'
+      }
+    ];
+  }
+
+  function buildPlRows(row) {
+    if (row.dealStatus === '30') { return []; }
+    var p1 = Math.round(row.utiAmt * 0.0035);
+    var p2 = Math.round(row.utiAmt * 0.0012);
+    var optionModel = ['M034', 'M035', 'M036', 'M041'].indexOf(row.modelId) !== -1;
+    var rows = [
+      { type: 'FX Deal P&L', f1: formatAmount(p1), l1: formatAmount(p1 * 83.2), f2: '—', l2: '—' }
+    ];
+    if (optionModel) {
+      rows.push({ type: 'Option Premium Income', f1: formatAmount(p2), l1: formatAmount(p2 * 83.2), f2: '—', l2: '—' });
+      rows.push({ type: 'Option Premium Expense', f1: formatAmount(p2 * 0.65), l1: formatAmount(p2 * 0.65 * 83.2), f2: '—', l2: '—' });
+    }
+    rows.push({
+      type: 'Total P&L',
+      f1: formatAmount(p1 + (optionModel ? p2 * 0.35 : 0)),
+      l1: formatAmount((p1 + (optionModel ? p2 * 0.35 : 0)) * 83.2),
+      f2: '—', l2: '—'
+    });
+    return rows;
+  }
+
+  function buildDealActions(row) {
+    var html = '<div class="deal-action-strip">';
+    if (row.dealStatus === '01') {
+      html += '<button class="deal-action-btn primary" data-deal-action="change" type="button">Change/Confirm</button>';
+      html += '<button class="deal-action-btn" data-deal-action="edit" type="button">Edit Deal Pair</button>';
+      html += '<button class="deal-action-btn danger" data-deal-action="cancel" type="button">Cancel Deal ID</button>';
+    }
+    html += '<button class="deal-action-btn" data-deal-action="premium" type="button">Premium Adjustment</button>';
+    if (row.dealStatus === '02' || row.dealStatus === '03') {
+      html += '<button class="deal-action-btn" data-deal-action="reverse" type="button">Reverse MO Confirmation</button>';
+    }
+    html += '<button class="deal-action-btn" data-deal-action="dms" type="button">DMS</button>';
+    html += '<button class="deal-action-btn" data-deal-action="refresh" type="button">Refresh</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function dealStatusSelect(row) {
+    var options = ['01', '04', '05', '07', '20', '21', '30'];
+    var html = '<select class="analysis-select" disabled>';
+    options.forEach(function (code) {
+      html += '<option value="' + code + '"' + (code === row.dealStatus ? ' selected' : '') + '>';
+      html += escapeHtml(code + ' - ' + (STATUS_MAP[code] || code)) + '</option>';
+    });
+    html += '</select>';
+    return html;
+  }
+
+  function renderDealWorkspace(row) {
+    var trader = traderForRow(row);
+    var modelDesc = modelDescription(row.modelId);
+    var entityString = dealEntityString(row);
+    var mcDesc = row.origin + '_Multi-Commodity_' + row.modelId + '_' + compactAmount(row.utiAmt);
+    var fxCols = [
+      { key: 'type', label: 'Deal Type' }, { key: 'entity', label: 'Entity' },
+      { key: 'bukrs', label: 'Company Code' }, { key: 'partner', label: 'Business Partner' },
+      { key: 'rfha', label: 'Transaction' }, { key: 'product', label: 'Txn Type' },
+      { key: 'txn', label: 'Description' }, { key: 'start', label: 'Start Date' },
+      { key: 'end', label: 'End Date' }, { key: 'bs1', label: 'B/S 1' },
+      { key: 'curr1', label: 'Curr 1' }, { key: 'amt1', label: 'Amount 1', num: true },
+      { key: 'bs2', label: 'B/S 2' }, { key: 'curr2', label: 'Curr 2' },
+      { key: 'amt2', label: 'Amount 2', num: true }, { key: 'rate', label: 'All in Rate', num: true },
+      { key: 'status', label: 'Txn Status' }
+    ];
+    var invCols = [
+      { key: 'ttype', label: 'Trade Type' }, { key: 'dtype', label: 'Deal Type' },
+      { key: 'sell', label: 'Sell' }, { key: 'buy', label: 'Buy' },
+      { key: 'curr', label: 'Invoice Currency' }, { key: 'amt', label: 'Invoice Amount (USD)', num: true },
+      { key: 'ex', label: 'Exchange Rate', num: true }, { key: 'inv', label: 'Inv Amount', num: true },
+      { key: 'ref', label: 'Inv TRM Ref No' }
+    ];
+    var plCols = [
+      { key: 'type', label: 'Type' }, { key: 'f1', label: 'Foreign Amt 1', num: true },
+      { key: 'l1', label: 'Local Amt 1', num: true }, { key: 'f2', label: 'Foreign Amt 2', num: true },
+      { key: 'l2', label: 'Local Amt 2', num: true }
+    ];
+    var html = buildDealActions(row);
+    html += '<div class="deal-summary-line"><span class="txn-chip">Selected Deal ID</span>';
+    html += '<strong>' + escapeHtml(row.dealId) + '</strong><span>from Invoice Status report</span></div>';
+    html += '<section class="analysis-card"><div class="analysis-card-head">Basic Selection</div>';
+    html += '<div class="basic-grid">';
+    html += basicField('Deal ID', row.dealId, true);
+    html += basicField('Deal ID Description', row.dealDesc, false);
+    html += basicField('Deal Start Date', toDisplayDate(row.startDate), false);
+    html += basicField('Deal End Date', toDisplayDate(row.endDate), false);
+    html += basicField('MC Ref No', row.mcRef, false);
+    html += basicField('MC Description', mcDesc, false);
+    html += basicField('MC Date', toDisplayDate(isoShift(row.startDate, -30)), false);
+    html += basicField('Ship Start Date', toDisplayDate(row.startDate), false);
+    html += basicField('Ship End Date', toDisplayDate(row.endDate), false);
+    html += basicField('FX Model ID', row.modelId, false);
+    html += basicField('Model Description', modelDesc, false);
+    html += basicField('Entity String', entityString, false);
+    html += basicField('Currency String', currencyStringForModel(row.modelId), false);
+    html += basicField('Trader', trader.code + ' — ' + trader.desc, false);
+    html += '<div class="basic-field"><label>Deal ID Status</label>' + dealStatusSelect(row) + '</div>';
+    html += '</div></section>';
+    html += '<section class="analysis-card"><div class="analysis-card-head">FX Deals';
+    html += '<span class="subtle">' + buildFxRows(row).length + ' linked transaction(s)</span></div>';
+    html += analysisTable(fxCols, buildFxRows(row)) + '</section>';
+    if (row.dealStatus !== '30') {
+      html += '<section class="analysis-card"><div class="analysis-card-head">Deal ID: Planned Trade Invoices</div>';
+      html += analysisTable(invCols, buildInvoiceRows(row)) + '</section>';
+      html += '<section class="analysis-card"><div class="analysis-card-head">Deal ID: Planned P&L</div>';
+      html += analysisTable(plCols, buildPlRows(row)) + '</section>';
+    }
+    els.dealWorkspaceBody.innerHTML = html;
+    bindDealActions(row);
+  }
+
+  function openDeal(row) {
+    if (!row) { return; }
+    renderDealWorkspace(row);
+    els.dealWorkspace.classList.add('open');
+    els.dealWorkspace.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDealWorkspace() {
+    els.dealWorkspace.classList.remove('open');
+    els.dealWorkspace.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function popupField(label, value, editable, full) {
+    var cls = full ? ' class="full"' : '';
+    var attr = editable ? '' : ' readonly';
+    return '<div' + cls + '><label>' + escapeHtml(label) + '</label><input value="' +
+      escapeHtml(value || '') + '"' + attr + '></div>';
+  }
+
+  function openActionInfo(title, message) {
+    openModal(title, '<div class="sap-popup-note">' + escapeHtml(message) + '</div>');
+  }
+
+  function openChangeConfirm(row) {
+    var html = '<div class="sap-popup-form">';
+    html += popupField('Deal ID', row.dealId, false, false);
+    html += popupField('Deal ID Description', row.dealDesc, false, false);
+    html += popupField('Invoice Plan', row.modelId, true, false);
+    html += popupField('MC Ref No', row.mcRef, true, false);
+    html += '</div><div class="sap-popup-note">This mirrors screen 9001. Demo changes are not persisted.</div>';
+    openModal('Change/Confirm', html);
+  }
+
+  function openPremium(row) {
+    var base = Math.max(100000, Math.round(row.utiAmt * 0.01));
+    var html = '<div class="sap-popup-form">';
+    html += popupField('Deal Value', formatAmount(row.utiAmt), false, false);
+    html += popupField('Deal Currency', 'USD', false, false);
+    html += popupField('Net Premium', formatAmount(base), false, false);
+    html += popupField('Premium Currency', 'USD', false, false);
+    html += popupField('RBI Rate', '83.2500000', false, false);
+    html += popupField('RBI Rate Date', toDisplayDate(row.startDate), false, false);
+    html += popupField('Net Premium per USD', (base / row.utiAmt).toFixed(7), false, false);
+    html += popupField('Strike Rate', '83.2500000', false, false);
+    html += popupField('Invoice Rate', '83.3700000', false, false);
+    html += '</div>';
+    openModal('Premium Adjustment', html);
+  }
+
+  function openEditPair(row) {
+    var fx = buildFxRows(row)[0] || {};
+    var html = '<div class="sap-popup-form">';
+    html += popupField('Deal Type', fx.type || 'D1', false, false);
+    html += popupField('Company Code', fx.bukrs || 'IN11', false, false);
+    html += popupField('Old Transaction', fx.rfha || '', false, false);
+    html += popupField('New Transaction', '', true, false);
+    html += '</div><div class="sap-popup-note">New Transaction has F4/value-help in SAP screen 9004.</div>';
+    openModal('Edit Deal Pair', html);
+  }
+
+  function openCancelDeal(row) {
+    var trader = traderForRow(row);
+    var html = '<div class="sap-popup-form">';
+    html += popupField('Deal ID', row.dealId, false, false);
+    html += popupField('MC Ref No', row.mcRef, false, false);
+    html += popupField('FX Model ID', row.modelId, false, false);
+    html += popupField('Trader', trader.code, false, false);
+    html += '</div><div class="sap-popup-note">Cancel Deal ID is available for status 01 in the attached SAP program.</div>';
+    openModal('Cancel Deal ID', html);
+  }
+
+  function dmsDocs() {
+    return [
+      ['D01', 'Bank Trade Recap confirmed by trader'],
+      ['D02', 'Signed Long Form Confirmation from Bank'],
+      ['D03', 'Miscellaneous 1'],
+      ['D19', 'Miscellaneous 2'],
+      ['D20', 'Miscellaneous 3'],
+      ['D21', 'Miscellaneous 4'],
+      ['D22', 'Miscellaneous 5']
+    ];
+  }
+
+  function dmsStateFor(row) {
+    var docs = dmsDocs();
+    var state;
+    var i;
+    if (!DMS_STATE[row.dealId]) { DMS_STATE[row.dealId] = {}; }
+    state = DMS_STATE[row.dealId];
+    for (i = 0; i < docs.length; i += 1) {
+      if (!state[docs[i][0]]) {
+        state[docs[i][0]] = {
+          fileName: '',
+          filePath: '',
+          fileSize: 0,
+          dmsCode: '',
+          comment: ''
+        };
+      }
+    }
+    return state;
+  }
+
+  function dmsFileSize(bytes) {
+    if (!bytes) { return ''; }
+    if (bytes < 1024) { return bytes + ' B'; }
+    if (bytes < 1048576) { return (bytes / 1024).toFixed(1) + ' KB'; }
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function dmsCodeFor(row, docCode) {
+    return 'DMS-' + row.dealId.slice(-4) + '-' + docCode;
+  }
+
+  function dmsFileCell(row, docCode, item) {
+    var inputId = 'dmsFile_' + row.dealId + '_' + docCode;
+    var label = item.fileName ? 'Replace' : 'Choose file';
+    var path = item.filePath || 'No file selected';
+    var textClass = item.filePath ? 'dms-file-text' : 'dms-file-text empty';
+    var html = '<div class="dms-file-box">';
+    html += '<input class="dms-file-input" id="' + inputId + '" type="file" ';
+    html += 'data-dms-file="' + docCode + '">';
+    html += '<label class="dms-choose-btn" for="' + inputId + '">' + label + '</label>';
+    html += '<span class="' + textClass + '" title="' + escapeHtml(path) + '">';
+    html += escapeHtml(path) + '</span>';
+    html += '<button class="dms-clear-btn" data-dms-clear="' + docCode + '" type="button"';
+    if (!item.fileName) { html += ' disabled'; }
+    html += '>Clear</button></div>';
+    if (item.fileName) {
+      html += '<div class="dms-file-meta">Selected: ' + escapeHtml(item.fileName);
+      if (item.fileSize) { html += ' · ' + dmsFileSize(item.fileSize); }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function renderDmsBody(row, feedback) {
+    var docs = dmsDocs();
+    var state = dmsStateFor(row);
+    var item;
+    var html = '';
+    var i;
+    if (feedback) {
+      html += '<div class="dms-feedback">' + escapeHtml(feedback) + '</div>';
+    }
+    html += '<div class="detail-grid">';
+    html += addDetail('Deal ID', row.dealId);
+    html += addDetail('Deal Status', row.dealStatus + ' - ' + row.dealStatusDesc);
+    html += '</div><div style="height:10px"></div>';
+    html += '<div class="analysis-table-wrap"><table class="analysis-table"><thead><tr>';
+    html += '<th>Doc Type</th><th>Doc Type Desc</th><th>Doc Date</th>';
+    html += '<th>File Path</th><th>DMS Code</th><th>Comment</th>';
+    html += '</tr></thead><tbody>';
+    for (i = 0; i < docs.length; i += 1) {
+      item = state[docs[i][0]];
+      html += '<tr data-dms-row="' + docs[i][0] + '">';
+      html += '<td>' + docs[i][0] + '</td><td>' + escapeHtml(docs[i][1]) + '</td>';
+      html += '<td>28.09.2026</td><td>' + dmsFileCell(row, docs[i][0], item) + '</td>';
+      html += '<td class="dms-code">' + escapeHtml(item.dmsCode || '-') + '</td>';
+      html += '<td><input class="dms-comment" data-dms-comment="' + docs[i][0] + '" ';
+      html += 'value="' + escapeHtml(item.comment) + '" placeholder="Add comment"></td></tr>';
+    }
+    html += '</tbody></table></div>';
+    html += '<div class="sap-popup-note">Demo only: files remain in the browser session and are not uploaded to SAP or DMS.</div>';
+    return html;
+  }
+
+  function bindDmsEvents(row) {
+    var state = dmsStateFor(row);
+    var fileInputs = els.modalBody.querySelectorAll('[data-dms-file]');
+    var clearBtns = els.modalBody.querySelectorAll('[data-dms-clear]');
+    var comments = els.modalBody.querySelectorAll('[data-dms-comment]');
+    Array.prototype.forEach.call(fileInputs, function (input) {
+      input.addEventListener('change', function () {
+        var code = input.getAttribute('data-dms-file');
+        var file = input.files && input.files[0];
+        if (!file) { return; }
+        state[code].fileName = file.name;
+        state[code].filePath = 'C:\\fakepath\\' + file.name;
+        state[code].fileSize = file.size || 0;
+        state[code].dmsCode = dmsCodeFor(row, code);
+        els.modalBody.innerHTML = renderDmsBody(row, file.name + ' selected for ' + code + '.');
+        bindDmsEvents(row);
+      });
+    });
+    Array.prototype.forEach.call(clearBtns, function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.getAttribute('data-dms-clear');
+        state[code].fileName = '';
+        state[code].filePath = '';
+        state[code].fileSize = 0;
+        state[code].dmsCode = '';
+        els.modalBody.innerHTML = renderDmsBody(row, 'Attachment cleared for ' + code + '.');
+        bindDmsEvents(row);
+      });
+    });
+    Array.prototype.forEach.call(comments, function (input) {
+      input.addEventListener('input', function () {
+        var code = input.getAttribute('data-dms-comment');
+        state[code].comment = input.value;
+      });
+    });
+  }
+
+  function openDms(row) {
+    var modal;
+    openModal('DMS', renderDmsBody(row, ''));
+    modal = els.modalOverlay.querySelector('.modal');
+    modal.classList.add('dms-modal');
+    bindDmsEvents(row);
+  }
+
+  function bindDealActions(row) {
+    Array.prototype.forEach.call(els.dealWorkspaceBody.querySelectorAll('[data-deal-action]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-deal-action');
+        if (action === 'change') { openChangeConfirm(row); }
+        else if (action === 'premium') { openPremium(row); }
+        else if (action === 'edit') { openEditPair(row); }
+        else if (action === 'cancel') { openCancelDeal(row); }
+        else if (action === 'dms') { openDms(row); }
+        else if (action === 'refresh') { renderDealWorkspace(row); }
+        else if (action === 'reverse') {
+          openActionInfo('Reverse MO Confirmation', 'Confirmation is required before reversing MO confirmation.');
+        }
+      });
+    });
+  }
+
+  function openTxn(row, slot) {
+    var rfha = slot === 1 ? row.rfha1 : row.rfha2;
+    var bukrs = slot === 1 ? row.bukrs1 : row.bukrs2;
+    var html = '<div class="detail-grid">';
+    html += addDetail('Company Code', bukrs);
+    html += addDetail('Financial Transaction', rfha);
+    html += addDetail('Related Deal ID', row.dealId);
+    html += addDetail('Transaction Slot', 'FX Deal ' + slot);
+    html += '</div>';
+    openModal('Transaction Display', html);
+  }
+
+  function openInvoice(row) {
+    var html = '<div class="detail-grid">';
+    html += addDetail('Deal ID', row.dealId);
+    html += addDetail('Invoice Status', row.invStatus || '—');
+    html += addDetail('T1 (USD)', formatAmount(row.t1Amt));
+    html += '</div>';
+    openModal('Invoice Status', html);
+  }
+
+  function downloadCsv() {
+    var rows = getFilteredRows();
+    var visibleCols = getVisibleColumns();
+    var csv = [];
+    var blob;
+    var url;
+    var a;
+    csv.push(visibleCols.map(function (c) { return '"' + c.label.replace(/"/g, '""') + '"'; }).join(','));
+    rows.forEach(function (row) {
+      csv.push(visibleCols.map(function (c) {
+        var v = row[c.key];
+        if (c.date) { v = toDisplayDate(v); }
+        if (c.amount && v !== null && v !== '') { v = Number(v).toFixed(2); }
+        if (v === null || v === undefined) { v = ''; }
+        return '"' + String(v).replace(/"/g, '""') + '"';
+      }).join(','));
+    });
+    blob = new Blob([csv.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    url = URL.createObjectURL(blob);
+    a = document.createElement('a');
+    a.href = url;
+    a.download = 'deal_id_invoice_status.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function renderCalendar() {
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December'];
+    var dow = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    var first = new Date(calendarYear, calendarMonth, 1);
+    var start = new Date(calendarYear, calendarMonth, 1 - first.getDay());
+    var selected = parseDisplayDate(els.keyDate.value.trim());
+    var today = new Date();
+    var html = '<div class="cal-head">';
+    var i;
+    var d;
+    html += '<button class="cal-nav" id="calPrev" type="button">‹</button>';
+    html += '<select class="cal-select cal-month" id="calMonth">';
+    for (i = 0; i < 12; i += 1) {
+      html += '<option value="' + i + '"' + (i === calendarMonth ? ' selected' : '') + '>';
+      html += monthNames[i] + '</option>';
+    }
+    html += '</select><select class="cal-select cal-year" id="calYear">';
+    for (i = calendarYear - 7; i <= calendarYear + 7; i += 1) {
+      html += '<option value="' + i + '"' + (i === calendarYear ? ' selected' : '') + '>' + i + '</option>';
+    }
+    html += '</select><button class="cal-nav" id="calNext" type="button">›</button></div>';
+    html += '<div class="cal-grid">';
+    dow.forEach(function (name) { html += '<div class="cal-dow">' + name + '</div>'; });
+    for (i = 0; i < 42; i += 1) {
+      d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      var cls = 'cal-day';
+      if (d.getMonth() !== calendarMonth) { cls += ' other'; }
+      if (sameDay(d, today)) { cls += ' today'; }
+      if (selected && sameDay(d, selected)) { cls += ' selected'; }
+      html += '<button class="' + cls + '" type="button" data-date="' + dateToIso(d) + '">';
+      html += d.getDate() + '</button>';
+    }
+    html += '</div>';
+    els.calendarPop.innerHTML = html;
+    bindCalendarEvents();
+  }
+
+  function sameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function bindCalendarEvents() {
+    document.getElementById('calPrev').addEventListener('click', function () {
+      calendarMonth -= 1;
+      if (calendarMonth < 0) { calendarMonth = 11; calendarYear -= 1; }
+      renderCalendar();
+    });
+    document.getElementById('calNext').addEventListener('click', function () {
+      calendarMonth += 1;
+      if (calendarMonth > 11) { calendarMonth = 0; calendarYear += 1; }
+      renderCalendar();
+    });
+    document.getElementById('calMonth').addEventListener('change', function (e) {
+      calendarMonth = Number(e.target.value);
+      renderCalendar();
+    });
+    document.getElementById('calYear').addEventListener('change', function (e) {
+      calendarYear = Number(e.target.value);
+      renderCalendar();
+    });
+    Array.prototype.forEach.call(els.calendarPop.querySelectorAll('.cal-day'), function (btn) {
+      btn.addEventListener('click', function () {
+        var d = new Date(btn.getAttribute('data-date') + 'T00:00:00');
+        els.keyDate.value = toDisplayDate(dateToIso(d));
+        currentPage = 1;
+        closeCalendar();
+        render();
+      });
+    });
+  }
+
+  function openCalendar() {
+    var parsed = parseDisplayDate(els.keyDate.value.trim());
+    var base = parsed || new Date();
+    calendarMonth = base.getMonth();
+    calendarYear = base.getFullYear();
+    renderCalendar();
+    els.calendarPop.classList.add('open');
+  }
+
+  function closeCalendar() {
+    els.calendarPop.classList.remove('open');
+  }
+
+  function bindEvents() {
+    var filterEls = [els.search, els.origin, els.region, els.model];
+    filterEls.forEach(function (el) {
+      var eventName = el.tagName === 'INPUT' ? 'input' : 'change';
+      el.addEventListener(eventName, function () {
+        currentPage = 1;
+        render();
+      });
+    });
+    els.keyDate.addEventListener('input', function () {
+      if (!els.keyDate.value || parseDisplayDate(els.keyDate.value.trim())) {
+        currentPage = 1;
+        render();
+      }
+    });
+    els.keyDate.addEventListener('blur', function () {
+      var v = els.keyDate.value.trim();
+      if (v && !parseDisplayDate(v)) {
+        els.keyDate.setCustomValidity('Use dd-mm-yyyy');
+      } else {
+        els.keyDate.setCustomValidity('');
+      }
+    });
+    document.getElementById('calendarTrigger').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (els.calendarPop.classList.contains('open')) { closeCalendar(); }
+      else { openCalendar(); }
+    });
+    document.getElementById('resetBtn').addEventListener('click', resetState);
+    document.getElementById('refreshBtn').addEventListener('click', resetState);
+    document.getElementById('downloadBtn').addEventListener('click', downloadCsv);
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalDone').addEventListener('click', closeModal);
+    document.getElementById('dealBackBtn').addEventListener('click', closeDealWorkspace);
+    document.getElementById('backBtn').addEventListener('click', function () {
+      if (window.history.length > 1) { window.history.back(); }
+    });
+    els.modalOverlay.addEventListener('click', function (e) {
+      if (e.target === els.modalOverlay) { closeModal(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('dateWrap').contains(e.target)) { closeCalendar(); }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closeCalendar(); closeModal(); closeDealWorkspace(); }
+    });
+  }
+
+  initFilters();
+  bindEvents();
+  render();
+}());
+</script>
+</body>
+</html>
