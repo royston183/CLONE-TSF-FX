@@ -1,0 +1,447 @@
+/* Night mode for mo-deal-id-invoice-mark, derived from mo-deal-id-invoice-mark.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .modinvmark {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .modinvmark input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .modinvmark select,
+:root[data-theme='dark'] .modinvmark textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modinvmark .back-btn,
+:root[data-theme='dark'] .modinvmark .header-btn,
+:root[data-theme='dark'] .modinvmark .icon-btn,
+:root[data-theme='dark'] .modinvmark .secondary-btn,
+:root[data-theme='dark'] .modinvmark .primary-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .back-btn:hover,
+:root[data-theme='dark'] .modinvmark .header-btn:hover,
+:root[data-theme='dark'] .modinvmark .icon-btn:hover,
+:root[data-theme='dark'] .modinvmark .secondary-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .brand-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .brand-code {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .live-dot {
+  border: 2px solid #26543a;
+}
+:root[data-theme='dark'] .modinvmark .workbench {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modinvmark .table-title-row {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modinvmark .table-heading {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .search-wrap svg {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .search-input,
+:root[data-theme='dark'] .modinvmark .filter-input,
+:root[data-theme='dark'] .modinvmark .filter-select {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .filter-toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .field-label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .req {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .calendar-trigger {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .calendar-trigger:hover {
+  color: #699ff2;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .mode-switch {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .mode-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .mode-btn + .mode-btn {
+  border-left: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .modinvmark .mode-btn.active {
+  background: #17304a;
+  color: #6aaaf1;
+}
+:root[data-theme='dark'] .modinvmark .reset-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .reset-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .primary-btn:disabled {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .modinvmark .legend {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .legend-title {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark thead th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2d4a6b;
+  border-right: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .modinvmark thead th.sortable:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody tr.row-selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .modinvmark tbody tr.dragging td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .modinvmark thead .check-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody .check-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark tbody tr:hover .check-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody tr.row-selected .check-col {
+  background: #17304a;
+}
+:root[data-theme='dark'] .modinvmark .deal-col {
+  box-shadow: 1px 0 0 #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark thead .deal-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody .deal-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark tbody tr:hover .deal-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark tbody tr.row-selected .deal-col {
+  background: #17304a;
+}
+:root[data-theme='dark'] .modinvmark .hotspot-deal {
+  color: #70ebae;
+}
+:root[data-theme='dark'] .modinvmark .hotspot-mc {
+  color: #62aaf8;
+}
+:root[data-theme='dark'] .modinvmark .amount {
+  color: #67f4b0;
+}
+:root[data-theme='dark'] .modinvmark .status-ready {
+  color: #ffb55c;
+}
+:root[data-theme='dark'] .modinvmark .status-marked {
+  color: #71eaad;
+}
+:root[data-theme='dark'] .modinvmark .days-positive {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .days-negative {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .empty-state {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .empty-state strong {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .table-footer {
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .footer-copy {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .page-btn.active {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .page-btn:disabled {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .calendar-popover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .cal-dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .cal-day {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .cal-day:hover {
+  background: #17304a;
+  color: #68adf3;
+}
+:root[data-theme='dark'] .modinvmark .cal-day.muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .modal-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .modinvmark .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .modal-tag {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .info-card {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .info-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .info-value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .modal-foot {
+  border-top: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .toast {
+  background: #14321f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .toast.info {
+  border-color: #2d4a6b;
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .toast.warn {
+  background: #3a2a12;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .modal-deal .modal-body {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .modal-deal .modal-foot {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .deal-action-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .deal-action-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .deal-section {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .deal-section-head {
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .deal-section-meta {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .deal-field-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .deal-field-box {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .deal-field-box .muted-value {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .deal-status-box {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .deal-table th {
+  border-right: 1px solid #2a3d52;
+  border-bottom: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .deal-table td {
+  border-right: 1px solid #2a3d52;
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .deal-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .deal-table .hotspot-link {
+  color: #62aff9;
+}
+:root[data-theme='dark'] .modinvmark .deal-type-cell {
+  color: #66b0f4;
+}
+:root[data-theme='dark'] .modinvmark .invoice-type-cell {
+  color: #66b0f4;
+}
+:root[data-theme='dark'] .modinvmark .deal-note {
+  border-top: 1px solid #2a3d52;
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal-foot {
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .sub-modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .txn-card {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .txn-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .txn-value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-modal .sub-modal-body {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .workflow-actionbar {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .workflow-status {
+  background: #17304a;
+  color: #65aff6;
+}
+:root[data-theme='dark'] .modinvmark .workflow-section {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .workflow-section-head {
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-section-meta {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .workflow-value {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-extra-panel {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .modinvmark .workflow-extra-head {
+  border-bottom: 1px solid #2d4a6b;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .workflow-input {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-total-row td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .workflow-negative {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .modinvmark .workflow-positive {
+  color: #6bf0d5;
+}
+:root[data-theme='dark'] .modinvmark .workflow-mini-card {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .modinvmark .workflow-mini-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-mini-value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .modinvmark .workflow-hint {
+  color: #7f9bb8;
+}

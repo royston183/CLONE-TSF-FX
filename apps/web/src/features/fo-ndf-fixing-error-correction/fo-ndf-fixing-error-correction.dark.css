@@ -1,0 +1,199 @@
+/* Night mode for fo-ndf-fixing-error-correction, derived from fo-ndf-fixing-error-correction.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .fondfec {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .fondfec input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .fondfec select,
+:root[data-theme='dark'] .fondfec textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fondfec {
+  color: #e6eef8;
+  background: #0d1724;
+}
+:root[data-theme='dark'] .fondfec .app-header {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fondfec .back-btn,
+:root[data-theme='dark'] .fondfec .header-btn,
+:root[data-theme='dark'] .fondfec .icon-btn,
+:root[data-theme='dark'] .fondfec .secondary-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec .back-btn:hover,
+:root[data-theme='dark'] .fondfec .header-btn:hover,
+:root[data-theme='dark'] .fondfec .icon-btn:hover,
+:root[data-theme='dark'] .fondfec .secondary-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec .primary-btn:disabled {
+  background: #17304a;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .page-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .page-tag {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .header-status {
+  box-shadow: 0 0 0 4px #14321f;
+}
+:root[data-theme='dark'] .fondfec .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fondfec .card-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fondfec .card-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .work-toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec .search-wrap svg {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .control {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .date-btn {
+  border-left: 1px solid #2a3d52;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec thead th {
+  background: #1b2b3d;
+  border-bottom: 1px solid #2d4a6b;
+  border-right: 1px solid #2a3d52;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec thead th.sortable:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec tbody td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fondfec tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fondfec .link-btn {
+  color: #5cb3ff;
+}
+:root[data-theme='dark'] .fondfec .status-text {
+  color: #ffc95c;
+}
+:root[data-theme='dark'] .fondfec .status-code {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .sort-ind {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .table-footer {
+  color: #7f9bb8;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fondfec .pager button {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec .pager button:disabled {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec .page-current {
+  color: #a9c2dd;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fondfec .calendar-pop {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fondfec .cal-head button {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fondfec .cal-select {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fondfec .cal-cell {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec .cal-day-name {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .cal-date:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fondfec .modal {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fondfec .modal-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fondfec .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .close-btn {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .close-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec .section-box {
+  border: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fondfec .section-label {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .field label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .field-control {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fondfec .field-control.readonly {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fondfec .field-error {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .modal-foot {
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fondfec .detail-item .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fondfec .detail-item .v {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .toast {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fondfec .empty-state {
+  color: #7f9bb8;
+}

@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Additional Spot Booking</title>
+<style>
+html,body{margin:0;padding:0;height:100%;font-family:Inter,Arial,Helvetica,sans-serif;background:#f4f7fa;color:#1d2d3e;font-size:13px}
+*{box-sizing:border-box}
+button,input,select{font-family:inherit;font-size:13px}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.48}
+.app{min-height:100%;background:#f4f7fa}
+.header{height:57px;background:#fff;border-bottom:1px solid #d9e0e7;display:flex;align-items:center;padding:0 16px;box-shadow:0 1px 4px rgba(20,40,60,.04)}
+.header-left{display:flex;align-items:center;min-width:0}
+.back-btn{height:38px;padding:0 13px;border:1px solid #a8b7c7;background:#fff;border-radius:5px;color:#425b75;display:flex;align-items:center;font-weight:600}
+.back-btn svg{width:15px;height:15px;margin-right:8px}
+.brand{display:flex;align-items:center;margin-left:18px;min-width:0}
+.brand-mark{width:27px;height:34px;position:relative;margin-right:12px}
+.brand-mark span{position:absolute;left:0;height:6px;border-radius:5px}
+.brand-mark .r{top:1px;width:21px;background:#c73b2f}
+.brand-mark .o{top:10px;width:17px;background:#f39c12}
+.brand-mark .g{top:19px;width:13px;background:#2eaa63}
+.brand-mark .k{top:28px;width:7px;background:#788995}
+.brand-title{font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{margin-left:12px;color:#73869a;font-size:14px}
+.header-right{margin-left:auto;display:flex;align-items:center}
+.header-right .btn{margin-left:8px}
+.header-note{font-size:12px;color:#73869a;margin-right:10px}
+.live-dot{width:10px;height:10px;border-radius:50%;background:#30ad69;box-shadow:0 0 0 4px rgba(48,173,105,.12)}
+.content{padding:13px 16px 18px}
+.card{background:#fff;border:1px solid #dce4eb;border-radius:9px;box-shadow:0 1px 4px rgba(28,55,80,.05);overflow:hidden}
+.card-head{min-height:45px;padding:0 12px;display:flex;align-items:center;border-bottom:1px solid #dce4eb}
+.card-title{font-size:15px;font-weight:700}
+.record-count{font-size:12px;color:#73869a;margin-left:5px}
+.key-date-note{margin-left:auto;font-size:12px;color:#60758a}
+.head-actions{display:flex;align-items:center;margin-left:10px}
+.icon-btn{width:34px;padding:0;border:1px solid #b9c6d2;background:#fff;color:#48627c;border-radius:5px}
+.icon-btn svg{width:15px;height:15px}
+.toolbar{padding:8px 10px;border-bottom:1px solid #e2e8ee;display:flex;align-items:center;flex-wrap:wrap;background:#fff}
+.toolbar-item{margin-right:7px;margin-bottom:2px;margin-top:2px}
+.search-wrap{position:relative;width:225px}
+.search-wrap svg{position:absolute;left:10px;top:10px;width:15px;height:15px;color:#75899e}
+.control{height:34px;border:1px solid #b9c6d2;border-radius:5px;background:#fff;color:#25384c;outline:none}
+.control:focus{border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.10)}
+.search{width:100%;padding:0 10px 0 31px}
+.filter-input{width:136px;padding:0 9px}.date-shell .filter-input{width:100%;padding-right:34px}
+.deal-filter{width:145px}
+.status-filter{height:34px;display:flex;align-items:center;border:1px solid #b9c6d2;border-radius:5px;padding:0 8px;background:#fff}
+.status-filter label{white-space:nowrap;color:#40576e;margin-right:10px;cursor:pointer}
+.status-filter label:last-child{margin-right:0}
+.status-filter input{vertical-align:-2px;margin:0 4px 0 0}
+.btn{height:34px;border:1px solid #9eb0c2;background:#fff;color:#405a74;border-radius:5px;padding:0 11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+.btn svg{width:14px;height:14px;margin-right:6px}
+.btn:hover:not(:disabled){background:#f6f9fc;border-color:#7f98b2}
+.btn-primary{background:#0f72cf;color:#fff;border-color:#0f72cf;box-shadow:0 2px 6px rgba(15,114,207,.18)}
+.btn-primary:hover:not(:disabled){background:#0d67ba;border-color:#0d67ba}
+.btn-danger{color:#b83a30;border-color:#d9aaa6}
+.action-wrap{margin-left:auto;margin-right:0}
+.action-wrap.drag-ready .btn-primary{box-shadow:0 0 0 3px rgba(31,111,235,.18),0 2px 6px rgba(15,114,207,.18)}
+.action-wrap.drag-over .btn-primary{transform:translateY(-1px);box-shadow:0 0 0 4px rgba(31,111,235,.24),0 5px 12px rgba(15,114,207,.23)}
+.table-scroll{overflow:auto;max-height:584px}
+table{border-collapse:separate;border-spacing:0;min-width:2180px;width:100%}
+th,td{padding:8px 10px;border-bottom:1px solid #e6ebf0;border-right:1px solid #edf1f4;text-align:left;white-space:nowrap;vertical-align:middle}
+th{background:#f5f7f9;color:#3e5871;font-size:12px;font-weight:700;cursor:pointer;user-select:none}
+th.no-sort{cursor:default}
+th:first-child,td:first-child{border-left:0}
+th:last-child,td:last-child{border-right:0}
+tbody tr{background:#fff;transition:background .12s ease,box-shadow .12s ease}
+tbody tr:hover{background:#f7fbff}
+tbody tr.selected{background:#eaf4ff;box-shadow:inset 3px 0 0 #1f6feb}
+tbody tr.dragging{opacity:.48}
+.check-col{width:38px;text-align:center}
+.check-col input{width:15px;height:15px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.link{color:#0670cf;text-decoration:underline;font-weight:700;cursor:pointer}
+.link.created{color:#16865b}
+.muted{color:#8493a2}
+.side-buy{font-weight:700;color:#197149}
+.side-sell{font-weight:700;color:#b45b1a}
+.footer{min-height:43px;display:flex;align-items:center;padding:0 12px;color:#667c91;font-size:12px;background:#fff}
+.pagination{margin-left:auto;display:flex;align-items:center}
+.page-btn{width:29px;height:29px;margin-left:4px;border:1px solid #d7e0e8;background:#fff;border-radius:4px;color:#51687e}
+.page-btn.active{border-color:#b5c5d5;background:#f7f9fb;color:#1f3d59}
+.page-btn:disabled{opacity:.35}
+.sort-arrow{font-size:10px;margin-left:4px;color:#71879c}
+.empty{padding:45px 15px;text-align:center;color:#73869a;display:none}
+.toast-wrap{position:fixed;right:18px;top:70px;z-index:5000;width:330px}
+.toast{background:#fff;border:1px solid #d9e2ea;border-left:4px solid #27ae60;border-radius:7px;box-shadow:0 8px 24px rgba(20,45,70,.16);padding:12px 14px;margin-bottom:9px;line-height:1.45}
+.toast.error{border-left-color:#e74c3c}
+.toast.info{border-left-color:#1f6feb}
+.overlay{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(20,35,50,.38);z-index:3000;display:none;overflow:auto;padding:34px 14px}
+.modal{width:760px;max-width:100%;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 18px 45px rgba(16,35,53,.25);overflow:hidden}
+.modal.small{width:620px}
+.modal-head{height:51px;padding:0 18px;display:flex;align-items:center;border-bottom:1px solid #e0e7ed}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{margin-left:auto;border:0;background:transparent;color:#61778d;width:32px;height:32px;border-radius:50%;font-size:23px;line-height:28px}
+.modal-close:hover{background:#f1f5f8}
+.modal-body{padding:16px 18px 13px;max-height:73vh;overflow:auto}
+.modal-footer{min-height:57px;padding:10px 18px;display:flex;align-items:center;justify-content:flex-end;border-top:1px solid #e0e7ed;background:#fbfcfd}
+.modal-footer .btn{margin-left:8px}
+.section-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#70849a;font-weight:700;margin:0 0 9px}
+.grid{display:flex;flex-wrap:wrap;margin:0 -6px}
+.field{width:33.333%;padding:0 6px;margin-bottom:12px}
+.field.half{width:50%}
+.field.full{width:100%}
+.field label{display:block;font-size:12px;color:#526a81;font-weight:600;margin:0 0 5px}
+.field .req{color:#df493e}
+.field input,.field select{width:100%;height:36px;border:1px solid #b9c7d3;border-radius:5px;padding:0 9px;color:#21374b;background:#fff;outline:none}
+.field input:focus,.field select:focus{border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.10)}
+.field input[readonly]{background:#f4f6f8;color:#63788d}
+.field-error{font-size:11px;color:#d94136;min-height:13px;margin-top:3px}
+.amount-panel{border:1px solid #dce4eb;border-radius:7px;overflow:hidden;margin-top:4px}
+.amount-row{display:flex;align-items:center;min-height:46px;border-bottom:1px solid #e6ebf0;padding:7px 10px;background:#fbfcfd}
+.amount-row:last-child{border-bottom:0}
+.amount-side{width:90px;font-weight:700}
+.amount-curr{width:80px;color:#4e667d;font-weight:700}
+.amount-value{margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.meta-note{font-size:11px;color:#8191a0;margin-top:8px}
+.detail-grid{display:flex;flex-wrap:wrap;border:1px solid #e1e7ed;border-radius:7px;overflow:hidden}
+.detail-item{width:33.333%;padding:11px 12px;border-right:1px solid #e7ecf1;border-bottom:1px solid #e7ecf1;min-height:61px}
+.detail-item:nth-child(3n){border-right:0}
+.detail-item .k{font-size:11px;color:#74889b;margin-bottom:5px}
+.detail-item .v{font-weight:700;color:#273c50;word-break:break-word;white-space:normal}
+.calendar{position:fixed;z-index:4200;width:292px;background:#fff;border:1px solid #d7e0e8;border-radius:8px;box-shadow:0 10px 28px rgba(30,52,73,.18);padding:10px;display:none}
+.cal-top{display:flex;align-items:center;margin-bottom:8px}
+.cal-nav{width:30px;height:30px;border:1px solid #d9e2e9;background:#fff;border-radius:5px;color:#4c657d}
+.cal-select{height:30px;border:1px solid #d9e2e9;border-radius:5px;background:#fff;color:#294158;margin-left:5px;padding:0 5px}
+.cal-month{width:112px}
+.cal-year{width:75px}
+.cal-grid{width:100%;border-collapse:collapse;min-width:0}
+.cal-grid th,.cal-grid td{border:0!important;padding:0!important;text-align:center;background:#fff;cursor:default}
+.cal-grid th{height:26px;color:#788c9f;font-size:11px}
+.cal-day{width:34px;height:32px;border:0;background:transparent;border-radius:5px;color:#2a4156;cursor:pointer}
+.cal-day:hover{background:#eef5fc}
+.cal-day.other{color:#b6c0ca}
+.cal-day.today{box-shadow:inset 0 0 0 1px #1f6feb}
+.cal-day.selected{background:#1f6feb;color:#fff}
+.date-shell{position:relative}
+.date-shell input{padding-right:32px}
+.cal-icon{position:absolute;right:1px;top:1px;width:32px;height:32px;border:0;background:transparent;color:#607891;cursor:pointer}
+.field.date-shell .cal-icon{top:24px}
+@media(max-width:1000px){.action-wrap{margin-left:0}.field{width:50%}.brand-sub{display:none}}
+@media(max-width:650px){
+.content{padding:8px}
+.header{padding:0 8px}
+.brand{margin-left:9px}
+.brand-title{font-size:16px}
+.header-note{display:none}
+.search-wrap{width:100%}
+.toolbar-item{width:100%;margin-right:0}
+.filter-input,.deal-filter{width:100%}
+.status-filter{width:100%}
+.action-wrap{width:100%}
+.action-wrap .btn{width:100%}
+.field,.field.half{width:100%}
+.detail-item{width:50%}
+.detail-item:nth-child(3n){border-right:1px solid #e7ecf1}
+.detail-item:nth-child(2n){border-right:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" id="backBtn" type="button" title="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        Back
+      </button>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="r"></span><span class="o"></span><span class="g"></span><span class="k"></span>
+        </div>
+        <div class="brand-title">Additional Spot Booking</div>
+        <div class="brand-sub">SPOT</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="header-note"></span>
+      <span class="live-dot" title="Demo ready"></span>
+      <button class="btn" id="refreshBtn" type="button" title="Refresh workbench data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 11a8 8 0 1 0 2 5"></path><path d="M20 4v7h-7"></path>
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">List of Additional Spot Booking</div>
+        <div class="record-count" id="recordCount"></div>
+        <div class="key-date-note">Key Date: <span id="keyDateLabel">All dates</span></div>
+        <div class="head-actions">
+          <button class="btn" id="downloadBtn" type="button" title="Download current rows as CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path>
+            </svg>
+            Download CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-item search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.4-3.4"></path>
+          </svg>
+          <input class="control search" id="searchInput" type="text" placeholder="Search all columns...">
+        </div>
+
+        <div class="toolbar-item date-shell" style="width:160px">
+          <input class="control filter-input date-field" id="keyDateInput" type="text" placeholder="Upto Trade Date" autocomplete="off">
+          <button class="cal-icon" type="button" data-date-target="keyDateInput" title="Choose date">▣</button>
+        </div>
+
+        <div class="toolbar-item">
+          <input class="control deal-filter" id="dealFilter" type="text" placeholder="Deal ID / range">
+        </div>
+
+        <div class="toolbar-item status-filter" title="SAP status selection">
+          <label><input id="newSpotCheck" type="checkbox" checked>New Spot</label>
+          <label><input id="createdSpotCheck" type="checkbox">Spot Created</label>
+        </div>
+
+
+        <div class="toolbar-item">
+          <button class="btn" id="resetBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4v6h6"></path><path d="M20 20v-6h-6"></path>
+              <path d="M5.5 15a7 7 0 0 0 11.7 2.4L20 14"></path>
+              <path d="M18.5 9A7 7 0 0 0 6.8 6.6L4 10"></path>
+            </svg>
+            Reset
+          </button>
+        </div>
+
+        <div class="toolbar-item action-wrap" id="createDropTarget">
+          <button class="btn btn-primary" id="createSpotBtn" type="button" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14"></path><path d="M5 12h14"></path>
+            </svg>
+            Create Spot Txn
+          </button>
+        </div>
+      </div>
+
+      <div class="table-scroll" id="tableScroll">
+        <table id="spotTable">
+          <thead>
+            <tr>
+              <th class="check-col no-sort">☐</th>
+              <th data-key="dealId">Deal ID<span class="sort-arrow">↕</span></th>
+              <th data-key="modelId">Model<span class="sort-arrow">↕</span></th>
+              <th data-key="dealType">FX Deal<span class="sort-arrow">↕</span></th>
+              <th data-key="dssType">DSS Deal<span class="sort-arrow">↕</span></th>
+              <th data-key="companyCode">Company Code<span class="sort-arrow">↕</span></th>
+              <th data-key="originalTxn">Original Txn<span class="sort-arrow">↕</span></th>
+              <th data-key="tradeType">Trade Type<span class="sort-arrow">↕</span></th>
+              <th data-key="finalAmt" class="num">Final Amt<span class="sort-arrow">↕</span></th>
+              <th data-key="fxDealAmt" class="num">FX Deal Amt<span class="sort-arrow">↕</span></th>
+              <th data-key="currency">Crcy<span class="sort-arrow">↕</span></th>
+              <th data-key="diffAmt" class="num">Diff Inv Amt<span class="sort-arrow">↕</span></th>
+              <th data-key="spotTxn">Spot Txn<span class="sort-arrow">↕</span></th>
+              <th data-key="tradeDate">Trade Date<span class="sort-arrow">↕</span></th>
+              <th data-key="valueDate">Value Date<span class="sort-arrow">↕</span></th>
+              <th data-key="partner">Business Partner<span class="sort-arrow">↕</span></th>
+              <th data-key="group">Group<span class="sort-arrow">↕</span></th>
+              <th data-key="companyName">Company Name<span class="sort-arrow">↕</span></th>
+              <th data-key="side">Side<span class="sort-arrow">↕</span></th>
+              <th data-key="tsfEntity">TSF Entity<span class="sort-arrow">↕</span></th>
+              <th data-key="createdBy">Created By<span class="sort-arrow">↕</span></th>
+              <th data-key="createdDate">Created Date<span class="sort-arrow">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty" id="emptyState">No data found for the selected criteria.</div>
+      </div>
+
+      <div class="footer">
+        <span id="showingText"></span>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="overlay" id="createOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Create Spot</div>
+      <button class="modal-close" type="button" data-close="createOverlay">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-label">Deal Context</div>
+      <div class="grid">
+        <div class="field">
+          <label>Deal ID</label>
+          <input id="mDealId" type="text" readonly>
+        </div>
+        <div class="field">
+          <label>FX Deal Type</label>
+          <input id="mFxDeal" type="text" readonly>
+        </div>
+        <div class="field">
+          <label>DSS Deal Type</label>
+          <input id="mDssDeal" type="text" readonly>
+        </div>
+      </div>
+
+      <div class="section-label">Spot Transaction</div>
+      <div class="grid">
+        <div class="field">
+          <label>Company Code <span class="req">*</span></label>
+          <select id="mCompany"></select>
+          <div class="field-error" id="eCompany"></div>
+        </div>
+        <div class="field">
+          <label>Transaction Type <span class="req">*</span></label>
+          <select id="mTxnType"></select>
+          <div class="field-error" id="eTxnType"></div>
+        </div>
+        <div class="field">
+          <label>Business Partner <span class="req">*</span></label>
+          <select id="mPartner"></select>
+          <div class="field-error" id="ePartner"></div>
+        </div>
+        <div class="field date-shell">
+          <label>Trade Date <span class="req">*</span></label>
+          <input class="date-field" id="mTradeDate" type="text" autocomplete="off">
+          <button class="cal-icon" type="button" data-date-target="mTradeDate" title="Choose date">▣</button>
+          <div class="field-error" id="eTradeDate"></div>
+        </div>
+        <div class="field date-shell">
+          <label>Value Date <span class="req">*</span></label>
+          <input class="date-field" id="mValueDate" type="text" autocomplete="off">
+          <button class="cal-icon" type="button" data-date-target="mValueDate" title="Choose date">▣</button>
+          <div class="field-error" id="eValueDate"></div>
+        </div>
+        <div class="field">
+          <label>Spot Rate <span class="req">*</span></label>
+          <input id="mRate" type="text" inputmode="decimal" placeholder="Enter spot rate">
+          <div class="field-error" id="eRate"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Currency Amounts</div>
+      <div class="amount-panel">
+        <div class="amount-row">
+          <div class="amount-side side-buy">Buy</div>
+          <div class="amount-curr" id="buyCurr"></div>
+          <div class="amount-value" id="buyAmt">0.00</div>
+        </div>
+        <div class="amount-row">
+          <div class="amount-side side-sell">Sell</div>
+          <div class="amount-curr" id="sellCurr"></div>
+          <div class="amount-value" id="sellAmt">0.00</div>
+        </div>
+      </div>
+      <div class="meta-note">Amounts are derived from the selected difference amount and the entered spot rate.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" type="button" data-close="createOverlay">Cancel</button>
+      <button class="btn btn-primary" id="confirmCreateBtn" type="button">Create Spot</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detailOverlay">
+  <div class="modal small">
+    <div class="modal-head">
+      <div class="modal-title">Transaction Details</div>
+      <button class="modal-close" type="button" data-close="detailOverlay">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" type="button" data-close="detailOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="calendar" id="calendar">
+  <div class="cal-top">
+    <button class="cal-nav" id="calPrev" type="button">‹</button>
+    <select class="cal-select cal-month" id="calMonth"></select>
+    <select class="cal-select cal-year" id="calYear"></select>
+    <button class="cal-nav" id="calNext" type="button" style="margin-left:auto">›</button>
+  </div>
+  <table class="cal-grid">
+    <thead><tr><th>Su</th><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th></tr></thead>
+    <tbody id="calBody"></tbody>
+  </table>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var PAGE_SIZE = 20;
+  var originalData = [];
+  var data = [];
+  var selectedId = null;
+  var currentPage = 1;
+  var sortKey = 'dealId';
+  var sortDir = -1;
+  var activeModalRow = null;
+  var nextSpotNumber = 61002001;
+
+  var companyOptions = [
+    {key:'AE13',text:'Olam International DMCC'},
+    {key:'AE11',text:'Olam Treasury Services DMCC'},
+    {key:'SG03',text:'Olam International Limited'},
+    {key:'IN11',text:'Olam Agri India Pvt Ltd'},
+    {key:'ES12',text:'SEDA OUTSPAN IBERIA S.L.U'}
+  ];
+
+  var partnerOptions = [
+    {key:'0000000003',text:'BARCLAYS BANK PLC'},
+    {key:'0660000680',text:'STANDARD CHARTERED BANK SINGAPORE'},
+    {key:'0660000645',text:'DBS BANK LTD'},
+    {key:'0660000807',text:'HSBC SINGAPORE'},
+    {key:'0660000810',text:'STANDARD CHARTERED BANK SINGAPORE'}
+  ];
+
+  var txnTypeOptions = [
+    {key:'300',text:'FX Spot Settlement'},
+    {key:'301',text:'FX Spot - External'},
+    {key:'302',text:'FX Spot - Intercompany'}
+  ];
+
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var calTarget = null;
+  var calViewYear = 2026;
+  var calViewMonth = 8;
+
+  function pad2(n){ return n < 10 ? '0' + n : String(n); }
+  function cloneDate(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function formatDate(d){ return pad2(d.getDate()) + '-' + pad2(d.getMonth()+1) + '-' + d.getFullYear(); }
+
+  function parseDate(s){
+    var m, d;
+    if(!s){ return null; }
+    m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+    if(!m){ return null; }
+    d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+    if(d.getFullYear() !== Number(m[3]) || d.getMonth() !== Number(m[2])-1 || d.getDate() !== Number(m[1])){ return null; }
+    return d;
+  }
+
+  function addDays(d, days){
+    var x = cloneDate(d);
+    x.setDate(x.getDate()+days);
+    return x;
+  }
+
+  function fmtAmount(n){
+    var v = Math.abs(Number(n) || 0).toFixed(2).split('.');
+    v[0] = v[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (Number(n) < 0 ? '-' : '') + v.join('.');
+  }
+
+  function findCompanyName(code){
+    var i;
+    for(i=0;i<companyOptions.length;i++){
+      if(companyOptions[i].key === code){ return companyOptions[i].text; }
+    }
+    return code;
+  }
+
+  function makeData(){
+    var rows = [];
+    var currencies = ['USD','EUR','GBP','USD','USD'];
+    var otherCurrencies = ['INR','USD','USD','AED','SGD'];
+    var dealTypes = ['FX01','FX02','FX03'];
+    var dssTypes = ['DSS1','DSS2'];
+    var tradeTypes = ['FWD','NDF','SWAP','HEDGE'];
+    var groups = ['G01','G02','G03'];
+    var i, created, company, partner, curr, amount, diff, trade, value;
+
+    for(i=0;i<29;i++){
+      created = (i % 5 === 1 || i % 7 === 0);
+      company = companyOptions[i % companyOptions.length];
+      partner = partnerOptions[i % partnerOptions.length];
+      curr = currencies[i % currencies.length];
+      amount = 850000 + (i * 175000);
+      diff = (i % 2 === 0 ? 1 : -1) * (65000 + (i * 9750));
+      if(i === 11){ diff = 0; }
+      value = new Date(2026 + Math.floor(i/13), (8 + i) % 12, 7 + (i % 18));
+      trade = addDays(value, -2);
+
+      rows.push({
+        id:'row-' + (i+1),
+        modelId:'M' + pad2((i%8)+1) + '-TSF',
+        dealId:String(700120 - i),
+        dealType:dealTypes[i % dealTypes.length],
+        dssType:dssTypes[i % dssTypes.length],
+        companyCode:company.key,
+        companyName:company.text,
+        originalTxn:String(5003100 + i),
+        tradeType:tradeTypes[i % tradeTypes.length],
+        finalAmt:amount + diff,
+        fxDealAmt:amount,
+        currency:curr,
+        otherCurrency:otherCurrencies[i % otherCurrencies.length],
+        diffAmt:diff,
+        spotTxn:created ? String(6100100 + i) : '',
+        tradeDate:formatDate(trade),
+        valueDate:formatDate(value),
+        partner:partner.key,
+        partnerName:partner.text,
+        group:groups[i % groups.length],
+        side:i % 3 === 0 ? 'Sell' : 'Buy',
+        tsfEntity:['OGA','DMCC','PAN','OSIPL','SEDA'][i % 5],
+        createdBy:created ? ['FSL071','FSL089','FSL044'][i % 3] : '',
+        createdDate:created ? formatDate(addDays(trade, 1)) : '',
+        defaultTxnType:'300'
+      });
+    }
+    return rows;
+  }
+
+  function deepCopyRows(rows){
+    var out = [], i, k, obj;
+    for(i=0;i<rows.length;i++){
+      obj = {};
+      for(k in rows[i]){
+        if(Object.prototype.hasOwnProperty.call(rows[i],k)){ obj[k] = rows[i][k]; }
+      }
+      out.push(obj);
+    }
+    return out;
+  }
+
+  function esc(v){
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function rowSearchText(r){
+    return [r.dealId,r.modelId,r.dealType,r.dssType,r.companyCode,r.companyName,r.originalTxn,r.tradeType,
+      r.finalAmt,r.fxDealAmt,r.currency,r.diffAmt,r.spotTxn,r.tradeDate,r.valueDate,r.partner,r.partnerName,
+      r.group,r.side,r.tsfEntity,r.createdBy,r.createdDate].join(' ').toLowerCase();
+  }
+
+  function dealRangeMatch(id, raw){
+    var value = String(raw || '').replace(/\s/g,'');
+    var parts, low, high, n;
+    if(!value){ return true; }
+    if(value.indexOf('-') > 0){
+      parts = value.split('-');
+      if(parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])){
+        low = Number(parts[0]);
+        high = Number(parts[1]);
+        n = Number(id);
+        if(low > high){ n = low; low = high; high = n; n = Number(id); }
+        return n >= low && n <= high;
+      }
+    }
+    return String(id).toLowerCase().indexOf(value.toLowerCase()) !== -1;
+  }
+
+  function getFilteredRows(){
+    var q = document.getElementById('searchInput').value.toLowerCase().replace(/^\s+|\s+$/g,'');
+    var deal = document.getElementById('dealFilter').value;
+    var showNew = document.getElementById('newSpotCheck').checked;
+    var showCreated = document.getElementById('createdSpotCheck').checked;
+    var rows = [], i, r, statusOk;
+
+    for(i=0;i<data.length;i++){
+      r = data[i];
+      statusOk = (!r.spotTxn && showNew) || (!!r.spotTxn && showCreated);
+      if(!statusOk){ continue; }
+      if(q && rowSearchText(r).indexOf(q) === -1){ continue; }
+      if(!dealRangeMatch(r.dealId, deal)){ continue; }
+      rows.push(r);
+    }
+
+    rows.sort(function(a,b){
+      var av = a[sortKey], bv = b[sortKey];
+      if(typeof av === 'number' || typeof bv === 'number'){
+        av = Number(av) || 0; bv = Number(bv) || 0;
+      }else{
+        av = String(av || '').toLowerCase(); bv = String(bv || '').toLowerCase();
+      }
+      if(av < bv){ return -1 * sortDir; }
+      if(av > bv){ return 1 * sortDir; }
+      return 0;
+    });
+    return rows;
+  }
+
+  function canCreate(r){
+    return !!r && !r.spotTxn && Number(r.diffAmt) !== 0;
+  }
+
+  function getRowById(id){
+    var i;
+    for(i=0;i<data.length;i++){
+      if(data[i].id === id){ return data[i]; }
+    }
+    return null;
+  }
+
+  function render(){
+    var rows = getFilteredRows();
+    var totalPages = Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
+    var start, pageRows, html = '', i, r, isSel, createdClass, check;
+    if(currentPage > totalPages){ currentPage = totalPages; }
+    start = (currentPage-1)*PAGE_SIZE;
+    pageRows = rows.slice(start,start+PAGE_SIZE);
+
+    for(i=0;i<pageRows.length;i++){
+      r = pageRows[i];
+      isSel = selectedId === r.id;
+      createdClass = r.spotTxn ? ' created' : '';
+      check = isSel ? ' checked' : '';
+      html += '<tr data-id="' + esc(r.id) + '" draggable="true" class="' + (isSel ? 'selected' : '') + '">';
+      html += '<td class="check-col"><input class="row-check" type="checkbox"' + check + '></td>';
+      html += '<td><b>' + esc(r.dealId) + '</b></td>';
+      html += '<td>' + esc(r.modelId) + '</td>';
+      html += '<td>' + esc(r.dealType) + '</td>';
+      html += '<td>' + esc(r.dssType) + '</td>';
+      html += '<td>' + esc(r.companyCode) + '</td>';
+      html += '<td><span class="link txn-link" data-kind="original">' + esc(r.originalTxn) + '</span></td>';
+      html += '<td>' + esc(r.tradeType) + '</td>';
+      html += '<td class="num">' + fmtAmount(r.finalAmt) + '</td>';
+      html += '<td class="num">' + fmtAmount(r.fxDealAmt) + '</td>';
+      html += '<td>' + esc(r.currency) + '</td>';
+      html += '<td class="num">' + fmtAmount(r.diffAmt) + '</td>';
+      html += '<td>' + (r.spotTxn ? '<span class="link txn-link' + createdClass + '" data-kind="spot">' + esc(r.spotTxn) + '</span>' : '<span class="muted">—</span>') + '</td>';
+      html += '<td>' + esc(r.tradeDate) + '</td>';
+      html += '<td>' + esc(r.valueDate) + '</td>';
+      html += '<td title="' + esc(r.partnerName) + '">' + esc(r.partner) + '</td>';
+      html += '<td>' + esc(r.group) + '</td>';
+      html += '<td>' + esc(r.companyName) + '</td>';
+      html += '<td class="' + (r.side === 'Buy' ? 'side-buy' : 'side-sell') + '">' + esc(r.side) + '</td>';
+      html += '<td>' + esc(r.tsfEntity) + '</td>';
+      html += '<td>' + (r.createdBy ? esc(r.createdBy) : '<span class="muted">—</span>') + '</td>';
+      html += '<td>' + (r.createdDate ? esc(r.createdDate) : '<span class="muted">—</span>') + '</td>';
+      html += '</tr>';
+    }
+
+    document.getElementById('tableBody').innerHTML = html;
+    document.getElementById('emptyState').style.display = pageRows.length ? 'none' : 'block';
+    document.getElementById('spotTable').style.display = pageRows.length ? 'table' : 'none';
+    document.getElementById('recordCount').innerHTML = rows.length + ' records';
+    document.getElementById('showingText').innerHTML = rows.length ?
+      'Showing ' + (start+1) + '–' + Math.min(start+PAGE_SIZE,rows.length) + ' of ' + rows.length : 'Showing 0 of 0';
+    renderPagination(totalPages);
+    bindRows();
+    updateActionState();
+  }
+
+  function renderPagination(totalPages){
+    var html = '', i;
+    html += '<button class="page-btn" data-page="prev"' + (currentPage === 1 ? ' disabled' : '') + '>‹</button>';
+    for(i=1;i<=totalPages;i++){
+      html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+    }
+    html += '<button class="page-btn" data-page="next"' + (currentPage === totalPages ? ' disabled' : '') + '>›</button>';
+    document.getElementById('pagination').innerHTML = html;
+    bindPagination();
+  }
+
+  function bindPagination(){
+    var buttons = document.getElementById('pagination').getElementsByTagName('button');
+    var i;
+    for(i=0;i<buttons.length;i++){
+      buttons[i].onclick = function(){
+        var p = this.getAttribute('data-page');
+        var max = Math.max(1,Math.ceil(getFilteredRows().length/PAGE_SIZE));
+        if(p === 'prev'){ currentPage = Math.max(1,currentPage-1); }
+        else if(p === 'next'){ currentPage = Math.min(max,currentPage+1); }
+        else{ currentPage = Number(p); }
+        render();
+      };
+    }
+  }
+
+  function selectRow(id){
+    selectedId = id;
+    render();
+  }
+
+  function bindRows(){
+    var rows = document.getElementById('tableBody').getElementsByTagName('tr');
+    var i;
+    for(i=0;i<rows.length;i++){
+      rows[i].onclick = function(e){
+        var target = e.target || e.srcElement;
+        var id = this.getAttribute('data-id');
+        if(hasClass(target,'txn-link')){ return; }
+        selectedId = id;
+        render();
+      };
+      rows[i].ondragstart = function(e){
+        var id = this.getAttribute('data-id');
+        var row = getRowById(id);
+        selectedId = id;
+        addClass(this,'dragging');
+        if(e.dataTransfer){ e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed = 'move'; }
+        if(canCreate(row)){ addClass(document.getElementById('createDropTarget'),'drag-ready'); }
+        updateActionState();
+      };
+      rows[i].ondragend = function(){
+        removeClass(this,'dragging');
+        removeClass(document.getElementById('createDropTarget'),'drag-ready');
+        removeClass(document.getElementById('createDropTarget'),'drag-over');
+        render();
+      };
+    }
+
+    var checks = document.getElementById('tableBody').getElementsByClassName('row-check');
+    for(i=0;i<checks.length;i++){
+      checks[i].onclick = function(e){
+        var tr = this.parentNode.parentNode;
+        if(e.stopPropagation){ e.stopPropagation(); } else { e.cancelBubble = true; }
+        selectedId = tr.getAttribute('data-id');
+        render();
+      };
+    }
+
+    var links = document.getElementById('tableBody').getElementsByClassName('txn-link');
+    for(i=0;i<links.length;i++){
+      links[i].onclick = function(e){
+        var tr = this.parentNode.parentNode;
+        var id = tr.getAttribute('data-id');
+        if(e.stopPropagation){ e.stopPropagation(); } else { e.cancelBubble = true; }
+        openTransaction(getRowById(id), this.getAttribute('data-kind'));
+      };
+    }
+  }
+
+  function hasClass(el,cls){ return (' ' + el.className + ' ').indexOf(' ' + cls + ' ') !== -1; }
+  function addClass(el,cls){ if(!hasClass(el,cls)){ el.className += (el.className ? ' ' : '') + cls; } }
+  function removeClass(el,cls){ el.className = (' ' + el.className + ' ').replace(' ' + cls + ' ',' ').replace(/^\s+|\s+$/g,''); }
+
+  function updateActionState(){
+    var r = getRowById(selectedId);
+    document.getElementById('createSpotBtn').disabled = !canCreate(r);
+  }
+
+  function showToast(message,type){
+    var wrap = document.getElementById('toastWrap');
+    var node = document.createElement('div');
+    node.className = 'toast ' + (type || '');
+    node.innerHTML = esc(message);
+    wrap.appendChild(node);
+    window.setTimeout(function(){ if(node.parentNode){ node.parentNode.removeChild(node); } },3600);
+  }
+
+  function fillSelect(id,options,selected){
+    var el = document.getElementById(id), html = '<option value="">Select ...</option>', i;
+    for(i=0;i<options.length;i++){
+      html += '<option value="' + esc(options[i].key) + '"' + (options[i].key === selected ? ' selected' : '') + '>';
+      html += esc(options[i].key + ' — ' + options[i].text) + '</option>';
+    }
+    el.innerHTML = html;
+  }
+
+  function openCreate(){
+    var r = getRowById(selectedId);
+    if(!r){ showToast('Select a transaction first.','info'); return; }
+    if(r.spotTxn){ showToast('Spot already created for the selected data.','info'); return; }
+    if(Number(r.diffAmt) === 0){ showToast('Spot cannot be created for the selected data.','error'); return; }
+    activeModalRow = r;
+    document.getElementById('mDealId').value = r.dealId;
+    document.getElementById('mFxDeal').value = r.dealType;
+    document.getElementById('mDssDeal').value = r.dssType;
+    fillSelect('mCompany',companyOptions,r.companyCode);
+    fillSelect('mTxnType',txnTypeOptions,r.defaultTxnType);
+    fillSelect('mPartner',partnerOptions,r.partner);
+    document.getElementById('mTradeDate').value = r.tradeDate;
+    document.getElementById('mValueDate').value = r.valueDate;
+    document.getElementById('mRate').value = '';
+    clearErrors();
+    recalcAmounts();
+    openOverlay('createOverlay');
+  }
+
+  function clearErrors(){
+    var ids = ['eCompany','eTxnType','ePartner','eTradeDate','eValueDate','eRate'];
+    var i;
+    for(i=0;i<ids.length;i++){ document.getElementById(ids[i]).innerHTML = ''; }
+  }
+
+  function recalcAmounts(){
+    var r = activeModalRow;
+    var rate = Number(String(document.getElementById('mRate').value).replace(/,/g,''));
+    var base, other, buyCurr, sellCurr, buyAmt, sellAmt;
+    if(!r){ return; }
+    base = Math.abs(Number(r.diffAmt));
+    other = rate > 0 ? (r.currency === 'USD' ? base * rate : base / rate) : 0;
+    if(r.side === 'Buy'){
+      buyCurr = r.currency; sellCurr = r.otherCurrency;
+      buyAmt = base; sellAmt = other;
+    }else{
+      buyCurr = r.otherCurrency; sellCurr = r.currency;
+      buyAmt = other; sellAmt = base;
+    }
+    document.getElementById('buyCurr').innerHTML = esc(buyCurr);
+    document.getElementById('sellCurr').innerHTML = esc(sellCurr);
+    document.getElementById('buyAmt').innerHTML = fmtAmount(buyAmt);
+    document.getElementById('sellAmt').innerHTML = fmtAmount(sellAmt);
+  }
+
+  function validateCreate(){
+    var ok = true, rate = Number(String(document.getElementById('mRate').value).replace(/,/g,''));
+    clearErrors();
+    if(!document.getElementById('mCompany').value){ document.getElementById('eCompany').innerHTML='Required'; ok=false; }
+    if(!document.getElementById('mTxnType').value){ document.getElementById('eTxnType').innerHTML='Required'; ok=false; }
+    if(!document.getElementById('mPartner').value){ document.getElementById('ePartner').innerHTML='Required'; ok=false; }
+    if(!parseDate(document.getElementById('mTradeDate').value)){ document.getElementById('eTradeDate').innerHTML='Enter dd-mm-yyyy'; ok=false; }
+    if(!parseDate(document.getElementById('mValueDate').value)){ document.getElementById('eValueDate').innerHTML='Enter dd-mm-yyyy'; ok=false; }
+    if(!(rate > 0)){ document.getElementById('eRate').innerHTML='Enter a valid rate'; ok=false; }
+    return ok;
+  }
+
+  function confirmCreate(){
+    var r = activeModalRow;
+    if(!r || !validateCreate()){ return; }
+    r.companyCode = document.getElementById('mCompany').value;
+    r.companyName = findCompanyName(r.companyCode);
+    r.partner = document.getElementById('mPartner').value;
+    r.tradeDate = document.getElementById('mTradeDate').value;
+    r.valueDate = document.getElementById('mValueDate').value;
+    r.spotTxn = String(nextSpotNumber++);
+    r.createdBy = 'DEMOUSER';
+    r.createdDate = formatDate(new Date(2026,8,28));
+    closeOverlay('createOverlay');
+    selectedId = r.id;
+    showToast('Spot Created Successfully. Confirmation Sent.','');
+    render();
+  }
+
+  function openTransaction(r,kind){
+    var txn = kind === 'spot' ? r.spotTxn : r.originalTxn;
+    var status = kind === 'spot' ? 'Created Spot Transaction' : 'Original FX Transaction';
+    var items = [
+      ['Transaction',txn],['View',status],['Company Code',r.companyCode],
+      ['Deal ID',r.dealId],['Product Type',kind === 'spot' ? '12A' : r.dealType],['Trade Type',r.tradeType],
+      ['Trade Date',r.tradeDate],['Value Date',r.valueDate],['Business Partner',r.partner + ' — ' + r.partnerName],
+      ['Currency',r.currency],['Amount',fmtAmount(kind === 'spot' ? Math.abs(r.diffAmt) : r.fxDealAmt)],['TSF Entity',r.tsfEntity]
+    ];
+    var html = '', i;
+    for(i=0;i<items.length;i++){
+      html += '<div class="detail-item"><div class="k">' + esc(items[i][0]) + '</div><div class="v">' + esc(items[i][1] || '—') + '</div></div>';
+    }
+    document.getElementById('detailGrid').innerHTML = html;
+    openOverlay('detailOverlay');
+  }
+
+  function openOverlay(id){
+    document.getElementById(id).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOverlay(id){
+    document.getElementById(id).style.display = 'none';
+    if(document.getElementById('createOverlay').style.display !== 'block' &&
+       document.getElementById('detailOverlay').style.display !== 'block'){
+      document.body.style.overflow = '';
+    }
+  }
+
+  function resetFilters(){
+    selectedId = null;
+    currentPage = 1;
+    sortKey = 'dealId';
+    sortDir = -1;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('dealFilter').value = '';
+    document.getElementById('keyDateInput').value = '';
+    document.getElementById('newSpotCheck').checked = true;
+    document.getElementById('createdSpotCheck').checked = false;
+    document.getElementById('keyDateLabel').innerHTML = 'All dates';
+    closeCalendar();
+    render();
+  }
+
+  function refreshData(){
+    data = deepCopyRows(originalData);
+    resetFilters();
+    showToast('Workbench refreshed.','info');
+  }
+
+  function downloadCsv(){
+    var rows = getFilteredRows();
+    var headers = ['Deal ID','Model','FX Deal','DSS Deal','Company Code','Original Txn','Trade Type','Final Amt',
+      'FX Deal Amt','Currency','Diff Inv Amt','Spot Txn','Trade Date','Value Date','Business Partner','Group',
+      'Company Name','Side','TSF Entity','Created By','Created Date'];
+    var keys = ['dealId','modelId','dealType','dssType','companyCode','originalTxn','tradeType','finalAmt','fxDealAmt',
+      'currency','diffAmt','spotTxn','tradeDate','valueDate','partner','group','companyName','side','tsfEntity','createdBy','createdDate'];
+    var lines = [headers.join(',')], i, j, vals, v, blob, url, a;
+    for(i=0;i<rows.length;i++){
+      vals = [];
+      for(j=0;j<keys.length;j++){
+        v = rows[i][keys[j]];
+        if(keys[j] === 'finalAmt' || keys[j] === 'fxDealAmt' || keys[j] === 'diffAmt'){ v = Number(v || 0).toFixed(2); }
+        vals.push('"' + String(v === null || v === undefined ? '' : v).replace(/"/g,'""') + '"');
+      }
+      lines.push(vals.join(','));
+    }
+    blob = new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+    if(window.navigator && window.navigator.msSaveBlob){ window.navigator.msSaveBlob(blob,'additional_spot_booking.csv'); return; }
+    url = window.URL.createObjectURL(blob);
+    a = document.createElement('a');
+    a.href = url; a.download = 'additional_spot_booking.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    window.setTimeout(function(){ window.URL.revokeObjectURL(url); },1000);
+  }
+
+  function applyFilters(){ currentPage = 1; selectedId = null; render(); }
+
+  function setupSort(){
+    var heads = document.getElementById('spotTable').getElementsByTagName('th');
+    var i;
+    for(i=0;i<heads.length;i++){
+      if(heads[i].getAttribute('data-key')){
+        heads[i].onclick = function(){
+          var key = this.getAttribute('data-key');
+          if(sortKey === key){ sortDir = sortDir * -1; }
+          else{ sortKey = key; sortDir = 1; }
+          currentPage = 1;
+          render();
+        };
+      }
+    }
+  }
+
+  function setupDragTarget(){
+    var target = document.getElementById('createDropTarget');
+    target.ondragover = function(e){
+      var r = getRowById(selectedId);
+      if(canCreate(r)){
+        if(e.preventDefault){ e.preventDefault(); }
+        addClass(target,'drag-over');
+        if(e.dataTransfer){ e.dataTransfer.dropEffect = 'move'; }
+        return false;
+      }
+      return true;
+    };
+    target.ondragleave = function(){ removeClass(target,'drag-over'); };
+    target.ondrop = function(e){
+      if(e.preventDefault){ e.preventDefault(); }
+      removeClass(target,'drag-over');
+      removeClass(target,'drag-ready');
+      if(canCreate(getRowById(selectedId))){ openCreate(); }
+      else{ showToast('This action requires a new spot transaction row with a non-zero difference amount.','info'); }
+      return false;
+    };
+  }
+
+  function setupCalendar(){
+    var i, btns, inputs;
+    document.getElementById('calMonth').innerHTML = '';
+    for(i=0;i<12;i++){
+      document.getElementById('calMonth').options.add(new Option(months[i],i));
+    }
+    for(i=2022;i<=2034;i++){
+      document.getElementById('calYear').options.add(new Option(i,i));
+    }
+    document.getElementById('calPrev').onclick = function(){ moveMonth(-1); };
+    document.getElementById('calNext').onclick = function(){ moveMonth(1); };
+    document.getElementById('calMonth').onchange = function(){ calViewMonth = Number(this.value); renderCalendar(); };
+    document.getElementById('calYear').onchange = function(){ calViewYear = Number(this.value); renderCalendar(); };
+
+    btns = document.getElementsByClassName('cal-icon');
+    for(i=0;i<btns.length;i++){
+      btns[i].onclick = function(e){
+        if(e.stopPropagation){ e.stopPropagation(); } else { e.cancelBubble = true; }
+        openCalendar(this.getAttribute('data-date-target'),this);
+      };
+    }
+    inputs = document.getElementsByClassName('date-field');
+    for(i=0;i<inputs.length;i++){
+      inputs[i].onclick = function(e){
+        if(e.stopPropagation){ e.stopPropagation(); } else { e.cancelBubble = true; }
+        openCalendar(this.id,this);
+      };
+    }
+    document.onclick = function(e){
+      var c = document.getElementById('calendar');
+      var target = e.target || e.srcElement;
+      if(c.style.display === 'block' && !isInside(target,c)){ closeCalendar(); }
+    };
+  }
+
+  function isInside(node,parent){
+    while(node){ if(node === parent){ return true; } node = node.parentNode; }
+    return false;
+  }
+
+  function openCalendar(targetId,anchor){
+    var input = document.getElementById(targetId), parsed = parseDate(input.value), now = new Date(2026,8,28), rect, cal;
+    calTarget = input;
+    if(parsed){ calViewYear = parsed.getFullYear(); calViewMonth = parsed.getMonth(); }
+    else{ calViewYear = now.getFullYear(); calViewMonth = now.getMonth(); }
+    renderCalendar();
+    cal = document.getElementById('calendar');
+    rect = anchor.getBoundingClientRect();
+    cal.style.left = Math.min(window.innerWidth-304,Math.max(8,rect.left)) + 'px';
+    cal.style.top = Math.min(window.innerHeight-330,rect.bottom+5) + 'px';
+    cal.style.display = 'block';
+  }
+
+  function closeCalendar(){ document.getElementById('calendar').style.display='none'; calTarget=null; }
+
+  function moveMonth(delta){
+    calViewMonth += delta;
+    if(calViewMonth < 0){ calViewMonth = 11; calViewYear--; }
+    if(calViewMonth > 11){ calViewMonth = 0; calViewYear++; }
+    renderCalendar();
+  }
+
+  function sameDay(a,b){
+    return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }
+
+  function renderCalendar(){
+    var first = new Date(calViewYear,calViewMonth,1);
+    var start = new Date(calViewYear,calViewMonth,1-first.getDay());
+    var selected = calTarget ? parseDate(calTarget.value) : null;
+    var today = new Date(2026,8,28);
+    var html='', w, d, day, cls;
+    document.getElementById('calMonth').value = String(calViewMonth);
+    document.getElementById('calYear').value = String(calViewYear);
+    for(w=0;w<6;w++){
+      html += '<tr>';
+      for(d=0;d<7;d++){
+        day = addDays(start,w*7+d);
+        cls = 'cal-day';
+        if(day.getMonth() !== calViewMonth){ cls += ' other'; }
+        if(sameDay(day,today)){ cls += ' today'; }
+        if(sameDay(day,selected)){ cls += ' selected'; }
+        html += '<td><button class="' + cls + '" type="button" data-date="' + formatDate(day) + '">' + day.getDate() + '</button></td>';
+      }
+      html += '</tr>';
+    }
+    document.getElementById('calBody').innerHTML = html;
+    bindCalendarDays();
+  }
+
+  function bindCalendarDays(){
+    var buttons = document.getElementById('calBody').getElementsByTagName('button'), i;
+    for(i=0;i<buttons.length;i++){
+      buttons[i].onclick = function(e){
+        var value = this.getAttribute('data-date');
+        if(e.stopPropagation){ e.stopPropagation(); } else { e.cancelBubble = true; }
+        if(calTarget){
+          calTarget.value = value;
+          if(calTarget.id === 'keyDateInput'){
+            document.getElementById('keyDateLabel').innerHTML = esc(value);
+          }
+          if(calTarget.onchange){ calTarget.onchange(); }
+          if(calTarget.id === 'mTradeDate' || calTarget.id === 'mValueDate'){ clearErrors(); }
+        }
+        closeCalendar();
+      };
+    }
+  }
+
+  function bindStaticEvents(){
+    document.getElementById('searchInput').onkeyup = applyFilters;
+    document.getElementById('dealFilter').onkeyup = applyFilters;
+    document.getElementById('newSpotCheck').onchange = applyFilters;
+    document.getElementById('createdSpotCheck').onchange = applyFilters;
+    document.getElementById('keyDateInput').onchange = function(){
+      document.getElementById('keyDateLabel').innerHTML = this.value ? esc(this.value) : 'All dates';
+    };
+    document.getElementById('resetBtn').onclick = resetFilters;
+    document.getElementById('refreshBtn').onclick = refreshData;
+    document.getElementById('downloadBtn').onclick = downloadCsv;
+    document.getElementById('createSpotBtn').onclick = openCreate;
+    document.getElementById('confirmCreateBtn').onclick = confirmCreate;
+    document.getElementById('mRate').onkeyup = function(){ clearErrors(); recalcAmounts(); };
+    document.getElementById('mRate').onchange = recalcAmounts;
+    document.getElementById('backBtn').onclick = function(){
+      if(window.history.length > 1){ window.history.back(); }
+      else{ showToast('Back navigation is available when this page is opened from the application shell.','info'); }
+    };
+
+    var closers = document.querySelectorAll('[data-close]'), i;
+    for(i=0;i<closers.length;i++){
+      closers[i].onclick = function(){ closeOverlay(this.getAttribute('data-close')); };
+    }
+    document.getElementById('createOverlay').onclick = function(e){ if(e.target === this){ closeOverlay('createOverlay'); } };
+    document.getElementById('detailOverlay').onclick = function(e){ if(e.target === this){ closeOverlay('detailOverlay'); } };
+  }
+
+  originalData = makeData();
+  data = deepCopyRows(originalData);
+  bindStaticEvents();
+  setupSort();
+  setupDragTarget();
+  setupCalendar();
+  render();
+}());
+</script>
+</body>
+</html>

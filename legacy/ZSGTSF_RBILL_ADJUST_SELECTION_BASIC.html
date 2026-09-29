@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Finalisation Blotter</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#1D2D3E;background:#F4F8FC;overflow:hidden}
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  button:disabled{cursor:not-allowed;opacity:.45}
+  .app{height:100%;display:flex;flex-direction:column}
+  .topbar{height:58px;min-height:58px;background:#fff;border-bottom:1px solid #DCE5EE;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px;box-shadow:0 1px 3px rgba(21,41,63,.05);z-index:20}
+  .top-left,.top-right{display:flex;align-items:center;gap:9px;min-width:0}
+  .back-btn,.hdr-btn,.icon-btn{height:38px;border:1px solid #A9BACB;background:#fff;color:#415C76;border-radius:5px;padding:0 13px;display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+  .back-btn:hover,.hdr-btn:hover,.icon-btn:hover{background:#F7FAFD;border-color:#7F97AF}
+  .hdr-btn.primary{background:#0876D8;color:#fff;border-color:#0876D8;box-shadow:0 3px 8px rgba(8,118,216,.18)}
+  .hdr-btn.primary:hover{background:#0669C1}
+  .hdr-btn.danger{color:#B42318;border-color:#E1A29D}
+  .hdr-btn.danger:hover{background:#FFF6F5}
+  .hdr-btn svg,.back-btn svg,.icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .brand-mark{width:28px;height:30px;position:relative;margin-left:5px;flex:0 0 auto}
+  .brand-mark span{position:absolute;left:0;height:6px;border-radius:4px}
+  .brand-mark .b1{top:1px;width:21px;background:#D6422D}
+  .brand-mark .b2{top:9px;width:16px;background:#F29D27}
+  .brand-mark .b3{top:17px;width:11px;background:#3F8E59}
+  .brand-mark .b4{top:25px;width:6px;background:#7B828A}
+  .title-wrap{display:flex;align-items:baseline;gap:12px;min-width:0}
+  .app-title{font-size:20px;font-weight:700;color:#172B3E;white-space:nowrap}
+  .app-sub{font-size:12px;color:#6C7F92;white-space:nowrap}
+  .live-dot{width:12px;height:12px;background:#2EB26A;border:3px solid #DDF5E8;border-radius:50%;margin:0 2px}
+  .more-wrap{position:relative}
+  .more-menu{display:none;position:absolute;right:0;top:43px;width:230px;background:#fff;border:1px solid #CBD8E5;border-radius:8px;box-shadow:0 12px 28px rgba(24,48,72,.18);padding:6px;z-index:100}
+  .more-menu.open{display:block}
+  .more-item{width:100%;border:0;background:#fff;text-align:left;padding:10px 11px;border-radius:5px;color:#29435C;display:flex;align-items:center;justify-content:space-between}
+  .more-item:hover{background:#F2F7FC}
+  .more-item.danger{color:#B42318}
+  .more-item:disabled{display:none}
+  .workspace{flex:1;min-height:0;padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+  .card{background:#fff;border:1px solid #D7E0E9;border-radius:10px;box-shadow:0 1px 4px rgba(26,48,70,.07);min-height:0}
+  .context-card{flex:0 0 auto}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .section-title{font-weight:700;color:#20364C;font-size:14px}
+  .section-meta{color:#6E8194;font-size:12px}
+  .selection-card{padding:10px 12px 11px}
+  .selection-card .section-head{margin-bottom:9px}
+  .selection-grid{display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:14px;align-items:end}
+  .selection-note{font-size:12px;color:#6E8194;padding-bottom:8px}
+  #basicCard{align-self:flex-start;width:1360px;max-width:100%;padding:10px 12px 11px;height:auto;min-height:0}
+  .basic-grid{display:flex;flex-direction:column;gap:8px;height:auto;min-height:0}
+  .basic-row{display:grid;grid-template-columns:140px 170px 170px 170px 140px 140px 180px 140px;gap:10px;align-items:end;justify-content:start;width:max-content;max-width:100%}
+  .basic-row.row-deal .field:nth-child(1){grid-column:1 / span 4}
+  .basic-row.row-deal .field:nth-child(2){grid-column:5}
+  .basic-row.row-deal .field:nth-child(3){grid-column:6}
+  .basic-row.row-deal .field:nth-child(4){grid-column:7 / span 2}
+  .basic-row.row-contract .field:nth-child(1){grid-column:1}
+  .basic-row.row-contract .field:nth-child(2){grid-column:2 / span 3}
+  .basic-row.row-contract .field:nth-child(3){grid-column:5}
+  .basic-row.row-contract .field:nth-child(4){grid-column:6}
+  .basic-row.row-contract .field:nth-child(5){grid-column:7}
+  .basic-row.row-structure .field:nth-child(1){grid-column:1 / span 2}
+  .basic-row.row-structure .field:nth-child(2){grid-column:3}
+  .basic-row.row-structure .field:nth-child(3){grid-column:4}
+  .basic-row.row-structure .field:nth-child(4){grid-column:5 / span 2}
+  .basic-row.row-structure .field:nth-child(5){grid-column:7}
+  .basic-row.row-structure .field:nth-child(6){grid-column:8}
+  .basic-row.row-model .field:nth-child(1){grid-column:1 / span 3}
+  .field{min-width:0}
+  .field label{display:block;font-size:11px;font-weight:700;color:#516B83;margin:0 0 4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .req{color:#D92D20}
+  .control{height:33px;border:1px solid #B9C8D6;border-radius:5px;background:#fff;color:#223C53;padding:0 9px;width:100%;outline:none;min-width:0}
+  .control:focus{border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.13)}
+  .control.readonly,.control:disabled{background:#F4F7FA;color:#4D6174;border-color:#D3DEE8;opacity:1}
+  .status-control{font-weight:700;color:#087F6B}
+  .date-value{height:33px;background:#F7F9FB;border:1px solid #D3DEE8;border-radius:5px;padding:8px 9px;color:#4D6174;white-space:nowrap}
+  .tables{flex:1;min-height:0;display:grid;grid-template-rows:minmax(180px,.88fr) minmax(245px,1.12fr);gap:10px}
+  .table-card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .table-toolbar{height:46px;min-height:46px;border-bottom:1px solid #DCE5ED;display:flex;align-items:center;justify-content:space-between;padding:0 11px;gap:12px}
+  .table-title{font-size:14px;font-weight:700;color:#1F344A;white-space:nowrap}
+  .count{font-size:12px;font-weight:400;color:#6F8396;margin-left:4px}
+  .toolbar-tools{display:flex;align-items:center;gap:6px;min-width:0}
+  .search{height:33px;width:218px;border:1px solid #AEBFCE;border-radius:5px;padding:0 10px;color:#1E344A;outline:none}
+  .search:focus{border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.12)}
+  .small-btn{height:33px;border:1px solid #AEBFCE;border-radius:5px;background:#fff;color:#36516A;padding:0 10px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+  .small-btn:hover{background:#F4F8FC}
+  .small-btn.primary{background:#0876D8;border-color:#0876D8;color:#fff}
+  .small-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .grid-wrap{flex:1;min-height:0;overflow:auto;position:relative}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;font-size:12.5px}
+  thead th{position:sticky;top:0;z-index:3;background:#F2F5F8;color:#405B74;font-size:11.5px;font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid #D7E1EA;white-space:nowrap;user-select:none}
+  thead th.sortable{cursor:pointer;padding-right:22px}
+  thead th.sortable:after{content:'↕';position:absolute;right:8px;color:#8294A5;font-weight:400}
+  thead th.sorted-asc:after{content:'↑';color:#256FAE}
+  thead th.sorted-desc:after{content:'↓';color:#256FAE}
+  tbody td{padding:7px 10px;border-bottom:1px solid #E5EBF1;color:#20384E;white-space:nowrap;background:#fff;vertical-align:middle}
+  tbody tr:hover td{background:#F8FBFE}
+  tbody tr.selected td{background:#EAF4FF}
+  tbody tr.dragging{opacity:.55}
+  .select-cell{width:38px;text-align:center;padding-left:8px!important;padding-right:8px!important}
+  .row-check{width:14px;height:14px;accent-color:#0876D8;vertical-align:middle}
+  .link{color:#006BC7;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .center{text-align:center}
+  .status-text{font-weight:700}
+  .status-ok{color:#087F5B}.status-warn{color:#C77700}.status-info{color:#0B66B2}.status-danger{color:#C2342B}
+  .editable-cell{padding:4px 6px!important}
+  .cell-input{height:28px;border:1px solid #AFC0CF;border-radius:4px;padding:0 7px;background:#fff;color:#20384E;width:108px;outline:none;text-align:right}
+  .cell-input.date{width:102px;text-align:left;padding-right:26px}
+  .cell-input:disabled{background:#F1F4F7;border-color:#D5DFE8;color:#6B7B8C}
+  .cell-input:focus{border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.1)}
+  .date-cell{position:relative;display:inline-block}
+  .date-trigger{position:absolute;right:4px;top:3px;width:22px;height:22px;border:0;background:transparent;color:#557089;padding:2px}
+  .assign-btn{border:1px solid #8FB4D5;background:#F5FAFF;color:#0B66B2;border-radius:4px;height:27px;padding:0 8px;font-weight:700}
+  .assign-btn:disabled{border-color:#D5DFE7;color:#96A5B3;background:#F5F7F9}
+  .table-footer{height:38px;min-height:38px;border-top:1px solid #DDE5EC;display:flex;align-items:center;justify-content:space-between;padding:0 11px;color:#6B7F92;font-size:12px;background:#fff}
+  .pager{display:flex;align-items:center;gap:4px}
+  .page-btn{width:29px;height:27px;border:1px solid #D0DAE4;background:#fff;border-radius:4px;color:#52697E}
+  .page-btn.active{border-color:#86AED2;background:#EFF7FF;color:#075FAD;font-weight:700}
+  .page-btn:disabled{opacity:.35}
+  .empty{padding:30px;text-align:center;color:#708296;background:#fff}
+  .drop-ready{box-shadow:0 0 0 2px rgba(8,118,216,.18)!important;border-color:#4C9CE2!important}
+  .drop-hover{background:#E8F4FF!important;box-shadow:0 0 0 3px rgba(8,118,216,.24)!important}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,39,58,.32);z-index:400;align-items:center;justify-content:center;padding:24px}
+  .modal-overlay.open{display:flex}
+  .modal{background:#fff;border:1px solid #C9D6E2;border-radius:10px;box-shadow:0 22px 55px rgba(15,34,52,.24);width:min(920px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal.sm{width:min(520px,94vw)}
+  .modal.md{width:min(720px,94vw)}
+  .modal.lg{width:min(1100px,96vw)}
+  .modal-head{height:50px;min-height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #DCE5ED}
+  .modal-title{font-size:16px;font-weight:700;color:#20364A}
+  .modal-close{border:0;background:transparent;width:32px;height:32px;border-radius:50%;color:#667D92;font-size:22px;line-height:29px}
+  .modal-close:hover{background:#F0F4F8}
+  .modal-body{padding:15px 16px;overflow:auto;min-height:0}
+  .modal-footer{height:55px;min-height:55px;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 16px;border-top:1px solid #DCE5ED;background:#FBFCFD}
+  .action-btn{height:34px;border:1px solid #AEBECD;background:#fff;color:#3E5870;border-radius:5px;padding:0 13px;font-weight:700}
+  .action-btn.primary{background:#0876D8;border-color:#0876D8;color:#fff}
+  .action-btn.danger{background:#C83B32;border-color:#C83B32;color:#fff}
+  .action-btn:disabled{opacity:.4}
+  .confirm-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF4FF;color:#0876D8;font-size:22px;margin-bottom:10px}
+  .confirm-text{font-size:14px;line-height:1.55;color:#30485F}
+  .confirm-note{margin-top:8px;padding:9px 10px;background:#F7F9FB;border:1px solid #DEE7EF;border-radius:6px;color:#536A7F;font-size:12px}
+  .checklist{margin:0;padding-left:22px;color:#334B61;line-height:1.45}
+  .checklist li{padding:5px 0 5px 2px}
+  .proceed-box{margin-top:12px;padding:10px 12px;border:1px solid #CCE0F1;background:#F5FAFF;border-radius:7px;font-weight:700;color:#295372}
+  .modal-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .modal-form .span2{grid-column:1/-1}
+  textarea.control{height:86px;padding:9px;resize:vertical}
+  .mini-grid{border:1px solid #D9E3EB;border-radius:7px;overflow:auto;max-height:390px}
+  .mini-grid table{min-width:900px}
+  .mini-grid thead th{top:0}
+  .calendar{display:none;position:fixed;width:286px;background:#fff;border:1px solid #C7D5E1;border-radius:8px;box-shadow:0 14px 32px rgba(22,44,65,.2);z-index:700;padding:10px}
+  .calendar.open{display:block}
+  .cal-head{display:grid;grid-template-columns:32px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:8px}
+  .cal-nav{height:30px;border:1px solid #CBD7E2;background:#fff;border-radius:5px;color:#4B657D}
+  .cal-select{height:30px;border:1px solid #CBD7E2;border-radius:5px;background:#fff;color:#324D65;padding:0 5px}
+  .cal-week,.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal-week span{text-align:center;font-size:10px;color:#718497;font-weight:700;padding:5px 0}
+  .cal-day{height:31px;border:0;border-radius:5px;background:#fff;color:#324B62}
+  .cal-day:hover{background:#EDF6FF;color:#086CBD}
+  .cal-day.muted{color:#B6C1CB}
+  .cal-day.today{box-shadow:inset 0 0 0 1px #7FAED6}
+  .cal-day.selected{background:#0876D8;color:#fff}
+  .toast-wrap{position:fixed;right:18px;top:68px;z-index:900;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .toast{min-width:280px;max-width:430px;background:#fff;border:1px solid #CFDCE7;border-left:4px solid #2F9E69;border-radius:7px;box-shadow:0 10px 26px rgba(20,42,63,.17);padding:11px 12px;color:#334B61;animation:fadein .18s ease-out}
+  .toast.error{border-left-color:#D8493F}.toast.warn{border-left-color:#EA8A16}.toast.info{border-left-color:#2B78C5}
+  @keyframes fadein{from{transform:translateY(-6px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .deal-picker{display:flex;align-items:center;gap:5px;min-width:0}
+  .deal-picker .control{flex:1;min-width:0}
+  .view-deals-btn{height:33px;min-width:66px;border:1px solid #AEBFCE;border-radius:5px;background:#fff;color:#36516A;padding:0 7px;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .view-deals-btn:hover{background:#F4F8FC;border-color:#7F97AF}
+  .deal-lookup-row{cursor:pointer}
+  .deal-lookup-row:hover td{background:#EEF7FF}
+  .bl-locked td{background:#F7F9FB;color:#7E8C99}
+  .bl-locked:hover td{background:#F7F9FB}
+  .bl-locked .row-check{cursor:not-allowed}
+  .txn-modal{width:min(620px,94vw)}
+  .detail-grid{display:flex;flex-direction:column;gap:0;border:1px solid #D9E3EB;border-radius:7px;overflow:hidden}
+  .detail-item{display:grid;grid-template-columns:175px 1fr;min-width:0;background:#fff;border:0;border-bottom:1px solid #E4EAF0;border-radius:0;padding:0}
+  .detail-item:last-child{border-bottom:0}
+  .detail-label{display:flex;align-items:center;padding:9px 11px;background:#F7F9FB;border-right:1px solid #E4EAF0;font-size:10px;text-transform:uppercase;letter-spacing:.35px;color:#74879A;font-weight:700;margin:0}
+  .detail-value{display:flex;align-items:center;padding:9px 11px;font-size:13px;color:#243F57;overflow:visible;text-overflow:clip;white-space:normal;word-break:break-word}
+  .hint{font-size:11px;color:#73869A;margin-top:8px}
+  @media(max-width:1450px){#basicCard{width:100%}.basic-row{grid-template-columns:130px 155px 155px 155px 130px 130px 165px 130px}.hdr-btn .txt-hide{display:none}.hdr-btn{padding:0 10px}}
+  @media(max-width:1100px){body{overflow:auto}.app{height:auto;min-height:100%}.workspace{overflow:visible}.tables{display:flex;flex-direction:column}.table-card{min-height:320px}.selection-grid{grid-template-columns:minmax(300px,480px) 1fr}.basic-row{display:flex;flex-wrap:wrap;width:100%}.basic-row .field{flex:0 0 180px}.basic-row .field:first-child{flex-basis:360px}.topbar{position:sticky;top:0}.top-right{overflow-x:auto}.search{width:170px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="top-left">
+      <button class="back-btn" id="backBtn" title="Back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Back</span>
+      </button>
+      <div class="brand-mark" aria-label="FourthSignal"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span></div>
+      <div class="title-wrap"><div class="app-title">Invoice Finalisation Blotter</div></div>
+    </div>
+    <div class="top-right">
+      <button class="hdr-btn primary action-drop" id="confirmInvoiceBtn" data-action="confirm" disabled>
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Confirm Invoice</span>
+      </button>
+      <span class="live-dot" title="Workbench active"></span>
+      <button class="hdr-btn action-drop" id="viewBlBtn" data-action="viewbl" disabled>
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16M8 5v14"/></svg><span>View BLs</span>
+      </button>
+      <button class="hdr-btn" id="invDiffBtn" disabled>
+        <svg viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7"/></svg><span>Invoice Difference</span>
+      </button>
+      <button class="hdr-btn" id="refreshBtn">
+        <svg viewBox="0 0 24 24"><path d="M20 6v5h-5M19 11a7 7 0 10.2 4"/></svg><span>Refresh</span>
+      </button>
+      <div class="more-wrap">
+        <button class="icon-btn" id="moreBtn" title="More actions"><span style="font-size:18px;line-height:1">⋯</span></button>
+        <div class="more-menu" id="moreMenu">
+          <button class="more-item" id="saveBtn">Save Initial Data</button>
+          <button class="more-item" id="calcUpdateBtn">Re-calculate &amp; Update</button>
+          <button class="more-item" id="amendBtn">Amendment</button>
+          <button class="more-item" id="amendConfirmBtn">Amendment Confirm</button>
+          <button class="more-item" id="amendDealBtn">Amend Deal Status</button>
+          <button class="more-item" id="importLetterBtn">Import Letter</button>
+          <button class="more-item" id="exportLetterBtn">Export Letter</button>
+          <button class="more-item danger" id="cancelInvoiceBtn">Cancel TRM Invoice</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="card context-card selection-card" id="selectionCard">
+      <div class="section-head">
+        <div class="section-title">Selection Criteria</div>
+        <div class="section-meta">Select a Deal ID to load invoice data</div>
+      </div>
+      <div class="selection-grid">
+        <div class="field">
+          <label>Deal ID <span class="req">*</span></label>
+          <div class="deal-picker">
+            <input class="control" id="dealSelect" list="dealOptions" placeholder="Type / select Deal ID..." autocomplete="off">
+            <datalist id="dealOptions"></datalist>
+            <button class="view-deals-btn" id="viewDealsBtn" type="button">View Deals</button>
+          </div>
+        </div>
+        <div class="selection-note">Type a Deal ID and press Enter, or use View Deals to search and select.</div>
+      </div>
+    </section>
+
+    <section class="card context-card" id="basicCard">
+      <div class="section-head">
+        <div class="section-title">Basic Details</div>
+        <div class="section-meta" id="contextMeta">Select a Deal ID to load invoice data</div>
+      </div>
+      <div class="basic-grid">
+        <div class="basic-row row-deal">
+          <div class="field"><label>Deal ID Reference</label><input class="control readonly" id="dealRef" disabled></div>
+          <div class="field"><label>Deal Start Date</label><div class="date-value" id="dealStart">—</div></div>
+          <div class="field"><label>Deal End Date</label><div class="date-value" id="dealEnd">—</div></div>
+          <div class="field"><label>Deal ID Status</label><select class="control status-control" id="dealStatus" disabled></select></div>
+        </div>
+
+        <div class="basic-row row-contract">
+          <div class="field"><label>MC Ref No</label><input class="control readonly" id="mcRef" disabled></div>
+          <div class="field"><label>MC Description</label><input class="control readonly" id="mcDesc" disabled></div>
+          <div class="field"><label>MC Date</label><div class="date-value" id="mcDate">—</div></div>
+          <div class="field"><label>Ship Start Date</label><div class="date-value" id="shipStart">—</div></div>
+          <div class="field"><label>Ship End Date</label><div class="date-value" id="shipEnd">—</div></div>
+        </div>
+
+        <div class="basic-row row-structure">
+          <div class="field"><label>Entity String</label><input class="control readonly" id="entityString" disabled></div>
+          <div class="field"><label>Currency String</label><input class="control readonly" id="currencyString" disabled></div>
+          <div class="field"><label>Trader</label><input class="control readonly" id="trader" disabled></div>
+          <div class="field"><label>Trader Name</label><input class="control readonly" id="traderDesc" disabled></div>
+          <div class="field"><label>FX Model ID</label><input class="control readonly" id="modelId" disabled></div>
+          <div class="field"><label>FX Inv Model</label><input class="control readonly" id="fxInvModel" disabled></div>
+        </div>
+
+        <div class="basic-row row-model">
+          <div class="field"><label>Model Description</label><input class="control readonly" id="modelDesc" disabled></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="tables">
+      <section class="card table-card">
+        <div class="table-toolbar">
+          <div class="table-title">FX Deals <span class="count" id="fxCount">0 records</span></div>
+          <div class="toolbar-tools"><input class="search" id="fxSearch" placeholder="Search FX deals..." disabled></div>
+        </div>
+        <div class="grid-wrap" id="fxGrid"></div>
+        <div class="table-footer"><span id="fxShowing">Showing 0 of 0</span><div class="pager" id="fxPager"></div></div>
+      </section>
+
+      <section class="card table-card">
+        <div class="table-toolbar">
+          <div class="table-title">Adjusted Price / Qty <span class="count" id="invCount">0 records</span></div>
+          <div class="toolbar-tools">
+            <input class="search" id="invSearch" placeholder="Search adjusted invoice..." disabled>
+            <button class="small-btn primary action-drop" id="calculateBtn" data-action="calculate" disabled>
+              <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h2M12 12h2M16 12h1M8 16h2M12 16h2M16 16h1"/></svg>Calculate
+            </button>
+          </div>
+        </div>
+        <div class="grid-wrap" id="invGrid"></div>
+        <div class="table-footer"><span id="invShowing">Showing 0 of 0</span><div class="pager" id="invPager"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="calendar" id="calendar"></div>
+
+<!-- Generic confirm modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal sm">
+    <div class="modal-head"><div class="modal-title" id="confirmTitle">Confirm</div><button class="modal-close" data-close="confirmModal">×</button></div>
+    <div class="modal-body"><div class="confirm-icon">?</div><div class="confirm-text" id="confirmText"></div><div class="confirm-note" id="confirmNote" style="display:none"></div></div>
+    <div class="modal-footer"><button class="action-btn" data-close="confirmModal">No</button><button class="action-btn primary" id="confirmYes">Yes</button></div>
+  </div>
+</div>
+
+<!-- BL compliance modal -->
+<div class="modal-overlay" id="complianceModal">
+  <div class="modal lg">
+    <div class="modal-head"><div class="modal-title">BL Compliance Checklist</div><button class="modal-close" data-close="complianceModal">×</button></div>
+    <div class="modal-body">
+      <ol class="checklist">
+        <li>Port of loading, Port of Discharge, Commodity and shipment date for the selected BL shall match the requirements of the Master Contract for which the BL is being selected.</li>
+        <li>Load Port, Discharge Port and Origin of goods shall not be from any of the Countries in the OFAC list.</li>
+        <li>Scanned copies of OBL shall be used for TSF Merchanting book. No Seaway Bills / Draft BLs are accepted for FX invoicing.</li>
+        <li>Consignee should be “To Order”. If Consignee is “third party BL” or “Bank” on the BL, such BL shall not be acceptable unless approved otherwise. If approved, the bank on face of BL and Bank for TSF transaction shall be different.</li>
+        <li>If the BL has LC details, the bank handling BU documentation should not be the same as that of TSF.</li>
+        <li>If BU is routing documents through Bank on Buy or Sell Leg, TSF cannot use these BL for invoicing the FX transaction with these banks.</li>
+        <li>There cannot be an overlap between BU banks and TSF banks for the same BL.</li>
+        <li>The date of PO / Contract shall be in line with the title date.</li>
+        <li>The title of the goods must be with OIL on the date of TSF invoicing.</li>
+        <li>Shipment / vessel should be in transit at the time of bundling the invoice. The TSF invoice date cannot be after the vessel discharge date.</li>
+      </ol>
+      <div class="proceed-box" id="complianceSummary">Do you want to proceed?</div>
+    </div>
+    <div class="modal-footer"><button class="action-btn" data-close="complianceModal">Cancel</button><button class="action-btn primary" id="complianceProceed">Proceed</button></div>
+  </div>
+</div>
+
+<!-- BL list modal -->
+<div class="modal-overlay" id="blModal">
+  <div class="modal lg">
+    <div class="modal-head"><div class="modal-title">View List of BLs</div><button class="modal-close" data-close="blModal">×</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <input class="search" id="blSearch" placeholder="Search BLs..." style="width:280px">
+        <button class="action-btn danger action-drop" id="deassignBtn" data-action="deassign" disabled>De-assign</button>
+      </div>
+      <div class="mini-grid" id="blGrid"></div>
+      <div class="hint">Select a BL row (or checkbox) before de-assigning. Dragging a selected BL onto De-assign triggers the same workflow.</div>
+    </div>
+    <div class="modal-footer"><button class="action-btn" data-close="blModal">Close</button></div>
+  </div>
+</div>
+
+<!-- BL remark -->
+<div class="modal-overlay" id="remarkModal">
+  <div class="modal sm">
+    <div class="modal-head"><div class="modal-title">BL De-Assign Status</div><button class="modal-close" data-close="remarkModal">×</button></div>
+    <div class="modal-body"><div class="field"><label>Remark</label><textarea class="control" id="remarkText" placeholder="Enter de-assignment remark..."></textarea></div></div>
+    <div class="modal-footer"><button class="action-btn" data-close="remarkModal">Cancel</button><button class="action-btn primary" id="remarkUpdate">Update</button></div>
+  </div>
+</div>
+
+<!-- Invoice difference -->
+<div class="modal-overlay" id="diffModal">
+  <div class="modal md">
+    <div class="modal-head"><div class="modal-title">Invoice Difference</div><button class="modal-close" data-close="diffModal">×</button></div>
+    <div class="modal-body"><div class="mini-grid" id="diffGrid" style="max-height:430px"></div></div>
+    <div class="modal-footer"><button class="action-btn" data-close="diffModal">Close</button></div>
+  </div>
+</div>
+
+<!-- House Bank -->
+<div class="modal-overlay" id="bankModal">
+  <div class="modal md">
+    <div class="modal-head"><div class="modal-title">Update House Bank / Account ID</div><button class="modal-close" data-close="bankModal">×</button></div>
+    <div class="modal-body">
+      <div class="modal-form">
+        <div class="field"><label>Trade Type</label><input class="control readonly" id="bankTradeType" disabled></div>
+        <div class="field"><label>Inv Type</label><input class="control readonly" id="bankInvType" disabled></div>
+        <div class="field"><label>Seller</label><input class="control readonly" id="bankSeller" disabled></div>
+        <div class="field"><label>Buyer</label><input class="control readonly" id="bankBuyer" disabled></div>
+        <div class="field"><label>House Bank</label><select class="control" id="houseBank"><option value="">Select House Bank...</option><option>H001 - Standard Chartered</option><option>H002 - DBS Bank</option><option>H003 - HSBC Singapore</option></select></div>
+        <div class="field"><label>Account ID</label><select class="control" id="accountId"><option value="">Select Account ID...</option><option>USD01</option><option>USD02</option><option>EUR01</option></select></div>
+        <div class="field span2"><label>Partner Bank</label><select class="control" id="partnerBank"><option value="">Select Partner Bank...</option><option value="0001">0001 - Standard Chartered Bank Singapore</option><option value="0002">0002 - DBS Bank Ltd</option><option value="0003">0003 - HSBC Singapore</option></select></div>
+      </div>
+      <div class="hint">As in SAP, entering House Bank/Account ID disables Partner Bank; entering Partner Bank disables House Bank/Account ID.</div>
+    </div>
+    <div class="modal-footer"><button class="action-btn" data-close="bankModal">Cancel</button><button class="action-btn primary" id="bankUpdate">Update</button></div>
+  </div>
+</div>
+
+<!-- Transaction detail -->
+<div class="modal-overlay" id="txnModal">
+  <div class="modal txn-modal">
+    <div class="modal-head"><div class="modal-title">Transaction Details</div><button class="modal-close" data-close="txnModal">×</button></div>
+    <div class="modal-body"><div class="detail-grid" id="txnDetails"></div></div>
+    <div class="modal-footer"><button class="action-btn" data-close="txnModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Deal ID lookup -->
+<div class="modal-overlay" id="dealLookupModal">
+  <div class="modal md">
+    <div class="modal-head"><div class="modal-title">View Deals</div><button class="modal-close" data-close="dealLookupModal">×</button></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input class="search" id="dealLookupSearch" placeholder="Search Deal ID, reference, model, entity or status..." style="width:100%">
+      </div>
+      <div class="mini-grid" id="dealLookupGrid" style="max-height:430px"></div>
+      <div class="hint">Click a deal row to load it into the Invoice Finalisation Blotter.</div>
+    </div>
+    <div class="modal-footer"><button class="action-btn" data-close="dealLookupModal">Close</button></div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  'use strict';
+
+  var STATUS_TEXT = {
+    '04':'04',
+    '05':'05 - Invoice created in TRM',
+    '07':'07 - Partial Invoice created in TRM'
+  };
+
+  var DEALS = {
+    '5100231841':{
+      dealId:'5100231841', dealRef:'REF-FX-260184', mcRef:'MC24001987', mcDesc:'Merchanting FX Cover - OGA / DMCC',
+      modelId:'M034-02', modelDesc:'Merchanting FX Invoice Model', entityString:'OGA-DMCC-PAN', currencyString:'USD-AED',
+      trader:'OGA', traderDesc:'OGA Treasury', status:'04', fxInvModel:'M034', dealStart:'04-09-2026',dealEnd:'31-12-2026',mcDate:'18-08-2026',shipStart:'10-09-2026',shipEnd:'15-12-2026',
+      dm:false, tolerance:2.00,
+      fx:[
+        {dealType:'D1',roll:'',bukrs:'AE13',bp:'Barclays Bank PLC',partner:'0000000003',rfha:'2200015842',start:'04-09-2026',end:'31-12-2026',entity:'OGA',pc1:'B',bs1:'Buy',curr1:'USD',amt1:3500000,bs2:'Sell',pc2:'S',curr2:'AED',amt2:12853750,allIn:3.672500000,strike:3.672500000,mc:'MC24001987',txn:'Active'},
+        {dealType:'D2',roll:'',bukrs:'AE13',bp:'Standard Chartered Bank Singapore',partner:'0660000680',rfha:'2200015843',start:'04-09-2026',end:'31-12-2026',entity:'DMCC',pc1:'S',bs1:'Sell',curr1:'USD',amt1:3500000,bs2:'Buy',pc2:'B',curr2:'AED',amt2:12850250,allIn:3.671500000,strike:3.671500000,mc:'MC24001987',txn:'Active'}
+      ],
+      inv:[
+        {ttype:'T1',invType:'EXP',seller:'OGA',buyer:'DMCC',bp:'0000000003',partnerBank:'',houseBank:'H001',accountId:'USD01',invDate:'22-09-2026',dueDate:'22-10-2026',commodity:'CRUDE OIL',gtComm:'C101',qty:18000,usdPrice:72.250000000,rate:3.672500000,price:265.240625000,amt:4774331.25,amtUsd:1300500.00,planned:1300000.00,invNo:'',pc:'',locked:false},
+        {ttype:'T2',invType:'IMP',seller:'DMCC',buyer:'OGA',bp:'0660000680',partnerBank:'0001',houseBank:'',accountId:'',invDate:'22-09-2026',dueDate:'22-10-2026',commodity:'CRUDE OIL',gtComm:'C101',qty:17800,usdPrice:73.500000000,rate:3.671500000,price:269.855250000,amt:4803423.45,amtUsd:1308300.00,planned:1308500.00,invNo:'',pc:'',locked:false},
+        {ttype:'T3',invType:'EXP',seller:'OGA',buyer:'DMCC',bp:'0000000003',partnerBank:'',houseBank:'H001',accountId:'USD01',invDate:'28-09-2026',dueDate:'28-10-2026',commodity:'GAS OIL',gtComm:'G203',qty:11200,usdPrice:79.750000000,rate:3.672500000,price:292.881875000,amt:3280277.00,amtUsd:893200.00,planned:892500.00,invNo:'',pc:'',locked:false}
+      ],
+      bl:[
+        {blNo:'BL2600901',blDate:'12-09-2026',lot:'01',tfNo:'TF2604511',tfSplit:'01',vessel:'PACIFIC DAWN',pol:'Fujairah',pod:'Jebel Ali',commodity:'CRUDE OIL',qty:9200,status:'Assigned',invType:'EXP',invDate:'22-09-2026',reuse:''},
+        {blNo:'BL2600902',blDate:'13-09-2026',lot:'01',tfNo:'TF2604511',tfSplit:'02',vessel:'PACIFIC DAWN',pol:'Fujairah',pod:'Jebel Ali',commodity:'CRUDE OIL',qty:8800,status:'Assigned',invType:'EXP',invDate:'22-09-2026',reuse:''},
+        {blNo:'BL2600914',blDate:'18-09-2026',lot:'02',tfNo:'TF2604540',tfSplit:'01',vessel:'ORION BAY',pol:'Sohar',pod:'Jebel Ali',commodity:'GAS OIL',qty:11200,status:'Assigned',invType:'EXP',invDate:'28-09-2026',reuse:''}
+      ]
+    },
+    '5100231776':{
+      dealId:'5100231776',dealRef:'REF-FX-260169',mcRef:'MC24001921',mcDesc:'TSF FX Hedge - OGA / PAN',modelId:'M035-01',modelDesc:'FX Invoice Model - PAN',entityString:'OGA-PAN',currencyString:'USD-INR',trader:'OTL',traderDesc:'OTL Treasury',status:'05',fxInvModel:'M035',dealStart:'15-08-2026',dealEnd:'30-11-2026',mcDate:'02-08-2026',shipStart:'20-08-2026',shipEnd:'20-11-2026',dm:false,tolerance:2.00,
+      fx:[{dealType:'D1',roll:'R1-D1',bukrs:'IN11',bp:'HSBC Singapore',partner:'0660000807',rfha:'2200015710',start:'15-08-2026',end:'30-11-2026',entity:'OGA',pc1:'B',bs1:'Buy',curr1:'USD',amt1:2500000,bs2:'Sell',pc2:'S',curr2:'INR',amt2:224875000,allIn:89.950000000,strike:89.950000000,mc:'MC24001921',txn:'Active'}],
+      inv:[{ttype:'T1',invType:'EXP',seller:'OGA',buyer:'PAN',bp:'0660000807',partnerBank:'',houseBank:'H003',accountId:'USD02',invDate:'25-08-2026',dueDate:'25-09-2026',commodity:'CRUDE OIL',gtComm:'C101',qty:25000,usdPrice:100.000000000,rate:89.950000000,price:8995.000000000,amt:224875000.00,amtUsd:2500000.00,planned:2500000.00,invNo:'9000048121',pc:'C',locked:true}],
+      bl:[{blNo:'BL2600830',blDate:'20-08-2026',lot:'01',tfNo:'TF2604388',tfSplit:'01',vessel:'EASTERN STAR',pol:'Ruwais',pod:'Mundra',commodity:'CRUDE OIL',qty:25000,status:'Invoiced',invType:'EXP',invDate:'25-08-2026',reuse:''}]
+    },
+    '5100231664':{
+      dealId:'5100231664',dealRef:'REF-FX-260148',mcRef:'MC24001873',mcDesc:'Partial Invoice Hedge - DMCC / OGA',modelId:'M034-03',modelDesc:'Merchanting FX Invoice Model',entityString:'DMCC-OGA',currencyString:'USD-AED',trader:'OGA',traderDesc:'OGA Treasury',status:'07',fxInvModel:'M034',dealStart:'03-08-2026',dealEnd:'31-10-2026',mcDate:'22-07-2026',shipStart:'05-08-2026',shipEnd:'25-10-2026',dm:false,tolerance:2.00,
+      fx:[{dealType:'D1',roll:'R1-D1',bukrs:'AE13',bp:'DBS Bank Ltd',partner:'0660000645',rfha:'2200015599',start:'03-08-2026',end:'31-10-2026',entity:'DMCC',pc1:'B',bs1:'Buy',curr1:'USD',amt1:4000000,bs2:'Sell',pc2:'S',curr2:'AED',amt2:14686000,allIn:3.671500000,strike:3.671500000,mc:'MC24001873',txn:'Active'}],
+      inv:[{ttype:'T1',invType:'EXP',seller:'DMCC',buyer:'OGA',bp:'0660000645',partnerBank:'0002',houseBank:'',accountId:'',invDate:'14-08-2026',dueDate:'14-09-2026',commodity:'GAS OIL',gtComm:'G203',qty:32000,usdPrice:95.000000000,rate:3.671500000,price:348.792500000,amt:111613600.00,amtUsd:3040000.00,planned:3040000.00,invNo:'9000047988',pc:'P',locked:true}],
+      bl:[{blNo:'BL2600772',blDate:'09-08-2026',lot:'01',tfNo:'TF2604210',tfSplit:'01',vessel:'SEA MERIDIAN',pol:'Sohar',pod:'Fujairah',commodity:'GAS OIL',qty:32000,status:'Invoiced',invType:'EXP',invDate:'14-08-2026',reuse:''}]
+    }
+  };
+
+  var initialState = JSON.stringify(DEALS);
+  var state = {dealId:'',fxSearch:'',invSearch:'',fxSort:{key:'dealType',dir:1},invSort:{key:'ttype',dir:1},fxPage:1,invPage:1,pageSize:8,selectedFx:-1,selectedInv:-1,selectedBl:-1,bankRow:-1,amendMode:false,pendingConfirm:null,pendingInvoiceStatus:'05',pendingInvoiceMessage:''};
+
+  function byId(id){return document.getElementById(id)}
+  function cloneDeals(){return JSON.parse(initialState)}
+  function escapeHtml(v){return String(v==null?'':v).replace(/[&<>\"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]})}
+  function formatNum(v,d){var n=Number(v||0);return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function upper(v){return String(v==null?'':v).toUpperCase()}
+  function openModal(id){byId(id).className='modal-overlay open'}
+  function closeModal(id){byId(id).className='modal-overlay'}
+  function showToast(msg,type){var t=document.createElement('div');t.className='toast '+(type||'');t.innerHTML=escapeHtml(msg);byId('toastWrap').appendChild(t);setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t)},3200)}
+  function currentDeal(){return state.dealId?DEALS[state.dealId]:null}
+  function statusText(code){return STATUS_TEXT[code]||code}
+  function getDealUsdAmount(d){var i,row;if(!d)return 0;for(i=0;i<d.fx.length;i++){row=d.fx[i];if(row.dealType==='D1'){return row.curr1==='USD'?Math.abs(row.amt1):Math.abs(row.amt2)}}return 0}
+  function getInvoiceUsdAmount(d){var sum=0,i;for(i=0;i<d.inv.length;i++){sum+=Math.abs(Number(d.inv[i].amtUsd||0))}return sum}
+
+  function populateDealSelect(){var list=byId('dealOptions'),k,o;list.innerHTML='';for(k in DEALS){if(DEALS.hasOwnProperty(k)){o=document.createElement('option');o.value=k;o.label=DEALS[k].entityString+' — '+statusText(DEALS[k].status);list.appendChild(o)}}}
+
+  function setContextEmpty(){var ids=['dealRef','mcRef','modelId','entityString','currencyString','trader','fxInvModel','mcDesc','modelDesc','traderDesc'];var i;for(i=0;i<ids.length;i++)byId(ids[i]).value='';byId('dealStatus').innerHTML='';byId('dealStatus').disabled=true;var ds=['dealStart','dealEnd','mcDate','shipStart','shipEnd'];for(i=0;i<ds.length;i++)byId(ds[i]).innerHTML='—';byId('contextMeta').innerHTML='Select a Deal ID to load invoice data'}
+
+  function renderContext(){var d=currentDeal(),s,i;if(!d){setContextEmpty();updateActionState();return}byId('dealRef').value=d.dealRef;byId('mcRef').value=d.mcRef;byId('modelId').value=d.modelId;byId('entityString').value=d.entityString;byId('currencyString').value=d.currencyString;byId('trader').value=d.trader;byId('fxInvModel').value=d.fxInvModel;byId('mcDesc').value=d.mcDesc;byId('modelDesc').value=d.modelDesc;byId('traderDesc').value=d.traderDesc;byId('dealStart').innerHTML=d.dealStart;byId('dealEnd').innerHTML=d.dealEnd;byId('mcDate').innerHTML=d.mcDate;byId('shipStart').innerHTML=d.shipStart;byId('shipEnd').innerHTML=d.shipEnd;
+    s=byId('dealStatus');s.innerHTML='';var allowed=['04','05','07'];for(i=0;i<allowed.length;i++){var o=document.createElement('option');o.value=allowed[i];o.text=statusText(allowed[i]);if(allowed[i]===d.status)o.selected=true;s.appendChild(o)}s.disabled=true;
+    byId('contextMeta').innerHTML='Deal '+escapeHtml(d.dealId)+' • '+escapeHtml(statusText(d.status))+' • Tolerance '+formatNum(d.tolerance,2)+'%';updateActionState()}
+
+  function updateActionState(){var d=currentDeal(),loaded=!!d,status=d?d.status:'',amendable=status==='05'||status==='07',canCancel=status==='04'||status==='05'||status==='07',hasRollover=false,i;if(d){for(i=0;i<d.fx.length;i++){if(d.fx[i].roll==='R1-D1'||d.fx[i].roll==='R1-D2')hasRollover=true}}
+    byId('confirmInvoiceBtn').disabled=!loaded||d.dm||!(status<='04');
+    byId('viewBlBtn').disabled=!loaded||d.dm;
+    byId('invDiffBtn').disabled=!loaded;
+    byId('calculateBtn').disabled=!loaded;
+    byId('fxSearch').disabled=!loaded;byId('invSearch').disabled=!loaded;
+    byId('saveBtn').disabled=!loaded;byId('calcUpdateBtn').disabled=!loaded;
+    byId('amendBtn').disabled=!loaded||!amendable;byId('amendConfirmBtn').disabled=!loaded||!amendable||!state.amendMode;
+    byId('amendDealBtn').disabled=!loaded||!amendable||!hasRollover;
+    byId('importLetterBtn').disabled=!loaded||!(Number(status)>4);byId('exportLetterBtn').disabled=!loaded||!(Number(status)>4);
+    byId('cancelInvoiceBtn').disabled=!loaded||!canCancel;
+  }
+
+  function sortRows(rows,sort){rows.sort(function(a,b){var av=a[sort.key],bv=b[sort.key];if(typeof av==='number'&&typeof bv==='number')return (av-bv)*sort.dir;av=upper(av);bv=upper(bv);return (av<bv?-1:av>bv?1:0)*sort.dir});return rows}
+  function searchRows(rows,q,keys){if(!q)return rows;var u=upper(q);return rows.filter(function(r){var i;for(i=0;i<keys.length;i++){if(upper(r[keys[i]]).indexOf(u)>=0)return true}return false})}
+  function pagerHtml(page,total,pageSize,prefix){var pages=Math.max(1,Math.ceil(total/pageSize));if(page>pages)page=pages;var h='<button class="page-btn" data-page="'+prefix+'" data-go="'+(page-1)+'" '+(page<=1?'disabled':'')+'>‹</button>';var i;for(i=1;i<=pages&&i<=5;i++)h+='<button class="page-btn '+(i===page?'active':'')+'" data-page="'+prefix+'" data-go="'+i+'">'+i+'</button>';h+='<button class="page-btn" data-page="'+prefix+'" data-go="'+(page+1)+'" '+(page>=pages?'disabled':'')+'>›</button>';return h}
+
+  var fxCols=[
+    {key:'dealType',label:'Deal Type'},{key:'roll',label:'Roll Deal Type'},{key:'bukrs',label:'CoCode'},{key:'bp',label:'Business Partner'},{key:'rfha',label:'Transaction No'},{key:'start',label:'Start Date'},{key:'end',label:'End Date'},{key:'entity',label:'Entity'},{key:'bs1',label:'Side 1'},{key:'curr1',label:'Crcy 1'},{key:'amt1',label:'Amount 1',num:2},{key:'bs2',label:'Side 2'},{key:'curr2',label:'Crcy 2'},{key:'amt2',label:'Amount 2',num:2},{key:'allIn',label:'All in Rate',num:9},{key:'strike',label:'Strike',num:9},{key:'mc',label:'MC Ref No'},{key:'txn',label:'Txn Status'}
+  ];
+  function renderFx(){var d=currentDeal(),grid=byId('fxGrid');if(!d){grid.innerHTML='<div class="empty">Select a Deal ID to view FX deals.</div>';byId('fxCount').innerHTML='0 records';byId('fxShowing').innerHTML='Showing 0 of 0';byId('fxPager').innerHTML='';return}var rows=searchRows(d.fx.slice(),state.fxSearch,fxCols.map(function(c){return c.key}));sortRows(rows,state.fxSort);var total=rows.length,start=(state.fxPage-1)*state.pageSize;if(start>=total&&total){state.fxPage=1;start=0}var pageRows=rows.slice(start,start+state.pageSize);var h='<table><thead><tr><th class="select-cell"></th>';fxCols.forEach(function(c){h+='<th class="sortable '+(state.fxSort.key===c.key?(state.fxSort.dir===1?'sorted-asc':'sorted-desc'):'')+'" data-fxsort="'+c.key+'">'+c.label+'</th>'});h+='</tr></thead><tbody>';var i,j,r,c;for(i=0;i<pageRows.length;i++){r=pageRows[i];var original=d.fx.indexOf(r);h+='<tr data-fxrow="'+original+'" draggable="true" class="'+(state.selectedFx===original?'selected':'')+'"><td class="select-cell"><input class="row-check" type="checkbox" data-fxcheck="'+original+'" '+(state.selectedFx===original?'checked':'')+'></td>';for(j=0;j<fxCols.length;j++){c=fxCols[j];var val=r[c.key];var cls=c.num!=null?'num':'';if(c.key==='rfha')h+='<td><span class="link" data-txn="'+original+'">'+escapeHtml(val)+'</span></td>';else if(c.key==='txn')h+='<td><span class="status-text status-ok">'+escapeHtml(val)+'</span></td>';else h+='<td class="'+cls+'">'+(c.num!=null?formatNum(val,c.num):escapeHtml(val))+'</td>'}h+='</tr>'}h+='</tbody></table>';grid.innerHTML=h;byId('fxCount').innerHTML=total+' record'+(total===1?'':'s');byId('fxShowing').innerHTML='Showing '+(total?start+1:0)+'–'+Math.min(start+state.pageSize,total)+' of '+total;byId('fxPager').innerHTML=pagerHtml(state.fxPage,total,state.pageSize,'fx')}
+
+  var invCols=[
+    {key:'ttype',label:'Trade Type'},{key:'invType',label:'Inv Type'},{key:'seller',label:'Seller'},{key:'buyer',label:'Buyer'},{key:'bp',label:'Business Partner'},{key:'bank',label:'Partner Bank'},{key:'assign',label:'Assign House Bank'},{key:'invDate',label:'Invoice Date'},{key:'dueDate',label:'Due Date'},{key:'commodity',label:'Invoice Commodity'},{key:'gtComm',label:'GT Commodity ID'},{key:'qty',label:'Quantity',num:2},{key:'usdPrice',label:'Price (USD)',num:9},{key:'rate',label:'Exchange Rate',num:9},{key:'price',label:'Price',num:9},{key:'amt',label:'Final Inv Amt',num:2},{key:'amtUsd',label:'Inv Amt (USD)',num:2},{key:'planned',label:'Planned Inv Amt',num:2},{key:'invNo',label:'Invoice No'},{key:'pc',label:'P/C'}
+  ];
+  function invSearchText(r,key){if(key==='bank')return r.partnerBank||r.houseBank||'';if(key==='assign')return 'Assign House Bank';return r[key]}
+  function renderInv(){var d=currentDeal(),grid=byId('invGrid');if(!d){grid.innerHTML='<div class="empty">Select a Deal ID to view adjusted price / quantity.</div>';byId('invCount').innerHTML='0 records';byId('invShowing').innerHTML='Showing 0 of 0';byId('invPager').innerHTML='';return}var rows=d.inv.slice();if(state.invSearch){var u=upper(state.invSearch);rows=rows.filter(function(r){var j;for(j=0;j<invCols.length;j++){if(upper(invSearchText(r,invCols[j].key)).indexOf(u)>=0)return true}return false})}sortRows(rows,state.invSort);var total=rows.length,start=(state.invPage-1)*state.pageSize;if(start>=total&&total){state.invPage=1;start=0}var pageRows=rows.slice(start,start+state.pageSize);var h='<table><thead><tr><th class="select-cell"></th>';invCols.forEach(function(c){if(c.key==='assign')h+='<th>'+c.label+'</th>';else h+='<th class="sortable '+(state.invSort.key===c.key?(state.invSort.dir===1?'sorted-asc':'sorted-desc'):'')+'" data-invsort="'+c.key+'">'+c.label+'</th>'});h+='</tr></thead><tbody>';var i,j,r,c,idx,canEdit;for(i=0;i<pageRows.length;i++){r=pageRows[i];idx=d.inv.indexOf(r);canEdit=(!r.locked&&Number(d.status)<=4)||state.amendMode;h+='<tr data-invrow="'+idx+'" draggable="true" class="'+(state.selectedInv===idx?'selected':'')+'"><td class="select-cell"><input class="row-check" type="checkbox" data-invcheck="'+idx+'" '+(state.selectedInv===idx?'checked':'')+'></td>';for(j=0;j<invCols.length;j++){c=invCols[j];if(c.key==='bank'){h+='<td>'+escapeHtml(r.partnerBank||r.houseBank||'—')+'</td>'}else if(c.key==='assign'){h+='<td><button class="assign-btn" data-bank="'+idx+'" '+(r.locked&&!state.amendMode?'disabled':'')+'>Assign</button></td>'}else if(c.key==='invDate'){var editDate=canEdit;h+='<td class="editable-cell"><span class="date-cell"><input class="cell-input date" data-edit="invDate" data-row="'+idx+'" value="'+escapeHtml(r.invDate)+'" '+(!editDate?'disabled':'')+'><button class="date-trigger" data-date-row="'+idx+'" '+(!editDate?'disabled':'')+' title="Choose date">▦</button></span></td>'}else if(c.key==='usdPrice'||c.key==='qty'||c.key==='rate'){var enabled=canEdit;if(state.amendMode&&c.key!=='usdPrice')enabled=false;if(c.key==='rate'&&r.partnerBank)enabled=false;h+='<td class="editable-cell"><input class="cell-input" data-edit="'+c.key+'" data-row="'+idx+'" value="'+formatNum(r[c.key],c.key==='qty'?2:9)+'" '+(!enabled?'disabled':'')+'></td>'}else if(c.key==='dueDate'){h+='<td>'+escapeHtml(r.dueDate)+'</td>'}else if(c.num!=null){h+='<td class="num">'+formatNum(r[c.key],c.num)+'</td>'}else if(c.key==='pc'){h+='<td><span class="status-text '+(r.pc==='C'?'status-ok':r.pc==='P'?'status-warn':'status-info')+'">'+escapeHtml(r.pc||'—')+'</span></td>'}else h+='<td>'+escapeHtml(r[c.key]||'—')+'</td>'}h+='</tr>'}h+='</tbody></table>';grid.innerHTML=h;byId('invCount').innerHTML=total+' record'+(total===1?'':'s');byId('invShowing').innerHTML='Showing '+(total?start+1:0)+'–'+Math.min(start+state.pageSize,total)+' of '+total;byId('invPager').innerHTML=pagerHtml(state.invPage,total,state.pageSize,'inv')}
+
+  function calculateInvoices(showMessage){var d=currentDeal(),i,r;if(!d)return;for(i=0;i<d.inv.length;i++){r=d.inv[i];r.price=Number(r.usdPrice)*Number(r.rate);r.amt=Number(r.qty)*Number(r.price);r.amtUsd=Number(r.qty)*Number(r.usdPrice)}renderInv();if(showMessage)showToast('Adjusted Price / Qty recalculated.','info')}
+
+  function renderDiff(){var d=currentDeal(),h='<table><thead><tr><th>Trade Type</th><th class="num">Final Inv Amt</th><th>Currency</th><th class="num">Planned Inv Amt</th><th class="num">Diff1 Amt</th><th>Deal Type</th><th class="num">FX Deal Amt</th><th class="num">Diff2 Amt</th></tr></thead><tbody>';if(d){var dealAmt=getDealUsdAmount(d),i,r,diff1,diff2;for(i=0;i<d.inv.length;i++){r=d.inv[i];diff1=r.amtUsd-r.planned;diff2=r.amtUsd-dealAmt;h+='<tr><td>'+escapeHtml(r.ttype)+'</td><td class="num">'+formatNum(r.amtUsd,2)+'</td><td>USD</td><td class="num">'+formatNum(r.planned,2)+'</td><td class="num">'+formatNum(diff1,2)+'</td><td>D1</td><td class="num">'+formatNum(dealAmt,2)+'</td><td class="num">'+formatNum(diff2,2)+'</td></tr>'}}h+='</tbody></table>';byId('diffGrid').innerHTML=h}
+
+  function renderBl(){var d=currentDeal(),q=upper(byId('blSearch').value),rows=d?d.bl.slice():[];if(q)rows=rows.filter(function(r){var s=[r.blNo,r.blDate,r.tfNo,r.tfSplit,r.vessel,r.pol,r.pod,r.commodity,r.qty,r.status,r.invType,r.invDate].join(' ');return upper(s).indexOf(q)>=0});var h='<table><thead><tr><th class="select-cell">Check</th><th>BL No</th><th>BL Date</th><th>BL Lot</th><th>Trade Flow ID</th><th>TF Split</th><th>Vessel</th><th>Port of Loading</th><th>Port of Destination</th><th>Commodity</th><th class="num">Quantity</th><th>Status</th><th>Inv Type</th><th>Invoice Date</th></tr></thead><tbody>';var i,r,idx,isDeassigned,selectedValid=false;for(i=0;i<rows.length;i++){r=rows[i];idx=d.bl.indexOf(r);isDeassigned=r.status==='De-assigned';if(state.selectedBl===idx&&!isDeassigned)selectedValid=true;h+='<tr data-blrow="'+idx+'" draggable="'+(isDeassigned?'false':'true')+'" class="'+(isDeassigned?'bl-locked ':'')+(state.selectedBl===idx&&!isDeassigned?'selected':'')+'"><td class="select-cell"><input class="row-check" data-blcheck="'+idx+'" type="checkbox" '+(state.selectedBl===idx&&!isDeassigned?'checked':'')+' '+(isDeassigned?'disabled title="Already de-assigned"':'')+'></td><td>'+escapeHtml(r.blNo)+'</td><td>'+escapeHtml(r.blDate)+'</td><td>'+escapeHtml(r.lot)+'</td><td>'+escapeHtml(r.tfNo)+'</td><td>'+escapeHtml(r.tfSplit)+'</td><td>'+escapeHtml(r.vessel)+'</td><td>'+escapeHtml(r.pol)+'</td><td>'+escapeHtml(r.pod)+'</td><td>'+escapeHtml(r.commodity)+'</td><td class="num">'+formatNum(r.qty,2)+'</td><td><span class="status-text '+(r.status==='Invoiced'?'status-ok':isDeassigned?'':'status-info')+'">'+escapeHtml(r.status)+'</span></td><td>'+escapeHtml(r.invType)+'</td><td>'+escapeHtml(r.invDate)+'</td></tr>'}if(!selectedValid)state.selectedBl=-1;h+='</tbody></table>';byId('blGrid').innerHTML=h;byId('deassignBtn').disabled=state.selectedBl<0}
+
+  function openTransaction(idx){var d=currentDeal(),r=d.fx[idx],items=[['Company Code',r.bukrs],['Transaction No',r.rfha],['Deal Type',r.dealType],['Roll Deal Type',r.roll||'—'],['Business Partner',r.partner+' — '+r.bp],['Start Date',r.start],['End Date',r.end],['Entity',r.entity],['Currency 1',r.curr1],['Amount 1',formatNum(r.amt1,2)],['Currency 2',r.curr2],['Amount 2',formatNum(r.amt2,2)],['All in Rate',formatNum(r.allIn,9)],['Strike',formatNum(r.strike,9)],['MC Ref No',r.mc],['Transaction Status',r.txn]],h='',i;for(i=0;i<items.length;i++)h+='<div class="detail-item"><div class="detail-label">'+escapeHtml(items[i][0])+'</div><div class="detail-value">'+escapeHtml(items[i][1])+'</div></div>';byId('txnDetails').innerHTML=h;openModal('txnModal')}
+
+  function renderDealLookup(){var q=upper(byId('dealLookupSearch').value),h='<table><thead><tr><th>Deal ID</th><th>Deal Reference</th><th>FX Model</th><th>Entity String</th><th>Status</th></tr></thead><tbody>',k,d,count=0;for(k in DEALS){if(DEALS.hasOwnProperty(k)){d=DEALS[k];var text=[d.dealId,d.dealRef,d.modelId,d.entityString,statusText(d.status),d.mcRef,d.trader].join(' ');if(q&&upper(text).indexOf(q)<0)continue;count++;h+='<tr class="deal-lookup-row" data-pick-deal="'+escapeHtml(d.dealId)+'"><td><strong>'+escapeHtml(d.dealId)+'</strong></td><td>'+escapeHtml(d.dealRef)+'</td><td>'+escapeHtml(d.modelId)+'</td><td>'+escapeHtml(d.entityString)+'</td><td>'+escapeHtml(statusText(d.status))+'</td></tr>'}}if(!count)h+='<tr><td colspan="5" class="empty">No matching Deal IDs found.</td></tr>';h+='</tbody></table>';byId('dealLookupGrid').innerHTML=h}
+
+  function openDealLookup(){byId('dealLookupSearch').value='';renderDealLookup();openModal('dealLookupModal');setTimeout(function(){byId('dealLookupSearch').focus()},0)}
+
+  function loadTypedDeal(value){var id=String(value||'').replace(/^\s+|\s+$/g,'');if(!id){selectDeal('');return}if(DEALS[id]){selectDeal(id);return}showToast('Deal ID '+id+' was not found. Use View Deals to search.','warn')}
+
+  function confirmDialog(title,text,note,yesLabel,callback){byId('confirmTitle').innerHTML=escapeHtml(title);byId('confirmText').innerHTML=escapeHtml(text);if(note){byId('confirmNote').style.display='block';byId('confirmNote').innerHTML=escapeHtml(note)}else byId('confirmNote').style.display='none';byId('confirmYes').innerHTML=escapeHtml(yesLabel||'Yes');state.pendingConfirm=callback;openModal('confirmModal')}
+
+  function initiateInvoiceConfirmation(){var d=currentDeal();if(!d)return;calculateInvoices(false);var invAmt=getInvoiceUsdAmount(d),dealAmt=getDealUsdAmount(d),tol=d.tolerance,upperLimit=dealAmt+(dealAmt*tol/100),diff=Math.abs(invAmt-dealAmt),rate=dealAmt?((dealAmt-invAmt)/dealAmt)*100:0,msg,status;
+    if(invAmt>dealAmt){status='05';msg='Inv Amt exceeds FX Deal Amt by USD '+formatNum(diff,2)+(invAmt<upperLimit?' within tol limit ('+formatNum(tol,2)+'%). Do you want to confirm invoice?':' exceeds tol limit ('+formatNum(tol,2)+'%). Do you want to confirm invoice?')}
+    else if(Math.abs(invAmt-dealAmt)<0.005){status='05';msg='Inv Amt same as FX Deal Amt. Within tol limit ('+formatNum(tol,2)+'%). Do you want to generate invoice?'}
+    else if(rate<=tol){status='05';msg='Inv Amt less than FX Deal Amt by USD '+formatNum(diff,2)+' within tol limit ('+formatNum(tol,2)+'%). Do you want to confirm invoice?'}
+    else{status='07';msg='Inv Amt less than FX Deal Amt by USD '+formatNum(diff,2)+' exceeds tol limit ('+formatNum(tol,2)+'%). Do you want to confirm partial Invoice?'}
+    state.pendingInvoiceStatus=status;state.pendingInvoiceMessage=msg;confirmDialog('Generate Invoice',msg,'FX Deal Amount: USD '+formatNum(dealAmt,2)+' • Invoice Amount: USD '+formatNum(invAmt,2), 'Yes',function(){closeModal('confirmModal');byId('complianceSummary').innerHTML='Do you want to proceed? Resulting Deal ID status: <strong>'+escapeHtml(statusText(status))+'</strong>';openModal('complianceModal')})
+  }
+
+  function saveInvoice(){var d=currentDeal(),i,r,base=9000051200;if(!d)return;for(i=0;i<d.inv.length;i++){r=d.inv[i];if(!r.invNo)r.invNo=String(base+i+1);r.pc=state.pendingInvoiceStatus==='07'?'P':'C';r.locked=true}d.status=state.pendingInvoiceStatus;state.amendMode=false;renderContext();renderInv();renderBl();closeModal('complianceModal');showToast('SAP GT Invoice Data Updated Successfully','');}
+
+  function cancelInvoice(){var d=currentDeal();if(!d)return;confirmDialog('Cancel TRM Invoice','Do you really want to cancel the invoice?','Deal ID '+d.dealId,'Yes',function(){var i;for(i=0;i<d.inv.length;i++){d.inv[i].invNo='';d.inv[i].pc='';d.inv[i].locked=false}d.status='04';state.amendMode=false;closeModal('confirmModal');renderContext();renderInv();showToast('TRM Invoice has been canceled successfully.','warn')})}
+
+  function toggleAmendDeal(){var d=currentDeal();if(!d)return;var next=d.status==='05'?'07':'05';confirmDialog('Amend Deal Status','Deal ID '+d.dealId+' status will change to '+statusText(next)+'.','This action mirrors the source-proven amendment status toggle.','Yes',function(){d.status=next;closeModal('confirmModal');renderContext();renderInv();showToast('Deal status amended to '+statusText(next)+'.','info')})}
+
+  function openBank(row){var d=currentDeal(),r=d.inv[row];state.bankRow=row;byId('bankTradeType').value=r.ttype;byId('bankInvType').value=r.invType;byId('bankSeller').value=r.seller;byId('bankBuyer').value=r.buyer;byId('houseBank').value=r.houseBank?(r.houseBank==='H001'?'H001 - Standard Chartered':r.houseBank==='H002'?'H002 - DBS Bank':'H003 - HSBC Singapore'):'';byId('accountId').value=r.accountId||'';byId('partnerBank').value=r.partnerBank||'';syncBankInputs();openModal('bankModal')}
+  function syncBankInputs(){var hb=byId('houseBank').value,aid=byId('accountId').value,pb=byId('partnerBank').value;byId('partnerBank').disabled=!!(hb||aid);byId('houseBank').disabled=!!pb;byId('accountId').disabled=!!pb}
+  function saveBank(){var d=currentDeal(),r=d.inv[state.bankRow],hb=byId('houseBank').value,pb=byId('partnerBank').value;r.houseBank=hb?hb.substr(0,4):'';r.accountId=byId('accountId').value;r.partnerBank=pb;closeModal('bankModal');renderInv();showToast('House Bank / Partner Bank updated.','')}
+
+  function openBl(){state.selectedBl=-1;byId('blSearch').value='';renderBl();openModal('blModal')}
+  function deassignSelected(){var d=currentDeal(),bl;if(!d||state.selectedBl<0){showToast('Select an assigned BL first.','warn');return}bl=d.bl[state.selectedBl];if(!bl||bl.status==='De-assigned'){state.selectedBl=-1;renderBl();showToast('This BL is already de-assigned.','info');return}byId('remarkText').value='';openModal('remarkModal')}
+  function saveRemark(){var d=currentDeal();if(!d||state.selectedBl<0)return;var bl=d.bl[state.selectedBl];if(!bl||bl.status==='De-assigned'){closeModal('remarkModal');state.selectedBl=-1;renderBl();showToast('This BL is already de-assigned.','info');return}bl.status='De-assigned';bl.remark=byId('remarkText').value;bl.invType='';bl.invDate='';closeModal('remarkModal');state.selectedBl=-1;renderBl();showToast('BL de-assigned and status updated.','')}
+
+  function enableAmendment(){state.amendMode=true;renderInv();updateActionState();showToast('Amendment mode enabled: Invoice Date and Price (USD) are editable.','info')}
+  function confirmAmendment(){var d=currentDeal(),i;if(!d)return;for(i=0;i<d.inv.length;i++)d.inv[i].locked=true;state.amendMode=false;renderInv();updateActionState();showToast('Amendment confirmed for Deal ID '+d.dealId+'.','')}
+  function saveInitial(){showToast('Initial invoice data saved for Deal ID '+currentDeal().dealId+'.','')}
+  function recalcUpdate(){calculateInvoices(false);showToast('Invoice values recalculated and updated.','')}
+  function letter(kind){var d=currentDeal();showToast(kind+' letter prepared for Deal ID '+d.dealId+'.','info')}
+
+  function selectDeal(id){state.dealId=id;byId('dealSelect').value=id||'';state.fxSearch='';state.invSearch='';state.fxPage=1;state.invPage=1;state.selectedFx=-1;state.selectedInv=-1;state.selectedBl=-1;state.amendMode=false;byId('fxSearch').value='';byId('invSearch').value='';renderContext();renderFx();renderInv()}
+  function refreshAll(){DEALS=cloneDeals();state.dealId='';state.fxSearch='';state.invSearch='';state.fxPage=1;state.invPage=1;state.selectedFx=-1;state.selectedInv=-1;state.selectedBl=-1;state.amendMode=false;byId('dealSelect').value='';byId('fxSearch').value='';byId('invSearch').value='';setContextEmpty();renderFx();renderInv();updateActionState();closeAllModals();showToast('Workbench refreshed to its initial state.','info')}
+  function closeAllModals(){var ms=document.getElementsByClassName('modal-overlay'),i;for(i=0;i<ms.length;i++)ms[i].className='modal-overlay';byId('moreMenu').className='more-menu';byId('calendar').className='calendar'}
+
+  function validDMY(s){var m=/^(\d{2})-(\d{2})-(\d{4})$/.exec(s);if(!m)return false;var d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));return d.getFullYear()===Number(m[3])&&d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[1])}
+  function parseNum(s){return Number(String(s).replace(/,/g,''))}
+
+  var cal={row:-1,month:0,year:0};
+  function openCalendar(row,anchor){var d=currentDeal(),v=d.inv[row].invDate,m=/^(\d{2})-(\d{2})-(\d{4})$/.exec(v),dt=m?new Date(Number(m[3]),Number(m[2])-1,Number(m[1])):new Date();cal.row=row;cal.month=dt.getMonth();cal.year=dt.getFullYear();renderCalendar();var r=anchor.getBoundingClientRect(),el=byId('calendar'),left=Math.min(window.innerWidth-296,Math.max(8,r.left-180)),top=Math.min(window.innerHeight-320,r.bottom+5);el.style.left=left+'px';el.style.top=top+'px';el.className='calendar open'}
+  function renderCalendar(){var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],h='<div class="cal-head"><button class="cal-nav" data-calnav="-1">‹</button><select class="cal-select" id="calMonth">',i;for(i=0;i<12;i++)h+='<option value="'+i+'" '+(i===cal.month?'selected':'')+'>'+months[i]+'</option>';h+='</select><select class="cal-select" id="calYear">';for(i=2024;i<=2032;i++)h+='<option '+(i===cal.year?'selected':'')+'>'+i+'</option>';h+='</select><button class="cal-nav" data-calnav="1">›</button></div><div class="cal-week"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div><div class="cal-days">';var first=new Date(cal.year,cal.month,1),start=first.getDay(),days=new Date(cal.year,cal.month+1,0).getDate(),prevDays=new Date(cal.year,cal.month,0).getDate(),today=new Date(),selected=currentDeal()?currentDeal().inv[cal.row].invDate:'';for(i=0;i<42;i++){var day,mm=cal.month,yy=cal.year,muted=false;if(i<start){day=prevDays-start+i+1;mm=cal.month-1;muted=true;if(mm<0){mm=11;yy--}}else if(i>=start+days){day=i-start-days+1;mm=cal.month+1;muted=true;if(mm>11){mm=0;yy++}}else day=i-start+1;var val=(day<10?'0':'')+day+'-'+((mm+1)<10?'0':'')+(mm+1)+'-'+yy,isToday=day===today.getDate()&&mm===today.getMonth()&&yy===today.getFullYear();h+='<button class="cal-day '+(muted?'muted ':'')+(isToday?'today ':'')+(val===selected?'selected':'')+'" data-caldate="'+val+'">'+day+'</button>'}h+='</div>';byId('calendar').innerHTML=h}
+
+  document.addEventListener('click',function(e){var t=e.target,close=t.getAttribute('data-close');if(close){closeModal(close);return}
+    var p=t.getAttribute('data-page');if(p){var go=Number(t.getAttribute('data-go'));if(p==='fx'){state.fxPage=go;renderFx()}else{state.invPage=go;renderInv()}return}
+    var fs=t.getAttribute('data-fxsort');if(fs){state.fxSort.dir=state.fxSort.key===fs?-state.fxSort.dir:1;state.fxSort.key=fs;renderFx();return}
+    var is=t.getAttribute('data-invsort');if(is){state.invSort.dir=state.invSort.key===is?-state.invSort.dir:1;state.invSort.key=is;renderInv();return}
+    var txn=t.getAttribute('data-txn');if(txn!=null){openTransaction(Number(txn));return}
+    var bank=t.getAttribute('data-bank');if(bank!=null){openBank(Number(bank));return}
+    var dr=t.getAttribute('data-date-row');if(dr!=null&&!t.disabled){openCalendar(Number(dr),t);e.stopPropagation();return}
+    var nav=t.getAttribute('data-calnav');if(nav){cal.month+=Number(nav);if(cal.month<0){cal.month=11;cal.year--}if(cal.month>11){cal.month=0;cal.year++}renderCalendar();return}
+    var cd=t.getAttribute('data-caldate');if(cd){var d=currentDeal();d.inv[cal.row].invDate=cd;byId('calendar').className='calendar';renderInv();return}
+    if(!t.closest || !t.closest('.more-wrap'))byId('moreMenu').className='more-menu';
+    if(byId('calendar').className.indexOf('open')>=0 && (!t.closest || !t.closest('#calendar')))byId('calendar').className='calendar';
+  });
+
+  document.addEventListener('change',function(e){var t=e.target;if(t.id==='dealSelect'){loadTypedDeal(t.value);return}if(t.id==='houseBank'||t.id==='accountId'||t.id==='partnerBank'){syncBankInputs();return}if(t.id==='calMonth'){cal.month=Number(t.value);renderCalendar();return}if(t.id==='calYear'){cal.year=Number(t.value);renderCalendar();return}
+    var edit=t.getAttribute('data-edit');if(edit){var d=currentDeal(),row=Number(t.getAttribute('data-row')),r=d.inv[row],v=t.value;if(edit==='invDate'){if(!validDMY(v)){showToast('Use a valid date in dd-mm-yyyy format.','error');renderInv();return}r.invDate=v}else{var n=parseNum(v);if(isNaN(n)||n<0){showToast('Enter a valid non-negative number.','error');renderInv();return}r[edit]=n;calculateInvoices(false)}renderInv();return}
+    var fxcheck=t.getAttribute('data-fxcheck');if(fxcheck!=null){state.selectedFx=t.checked?Number(fxcheck):-1;renderFx();return}var invcheck=t.getAttribute('data-invcheck');if(invcheck!=null){state.selectedInv=t.checked?Number(invcheck):-1;renderInv();return}var blcheck=t.getAttribute('data-blcheck');if(blcheck!=null){var bd=currentDeal(),bi=Number(blcheck);if(!bd||!bd.bl[bi]||bd.bl[bi].status==='De-assigned'){state.selectedBl=-1;renderBl();return}state.selectedBl=t.checked?bi:-1;renderBl();return}
+  });
+
+  document.addEventListener('input',function(e){var t=e.target;if(t.id==='fxSearch'){state.fxSearch=t.value;state.fxPage=1;renderFx()}else if(t.id==='invSearch'){state.invSearch=t.value;state.invPage=1;renderInv()}else if(t.id==='blSearch')renderBl();else if(t.id==='dealLookupSearch')renderDealLookup()});
+
+  document.addEventListener('keydown',function(e){var t=e.target||e.srcElement;if(t&&t.id==='dealSelect'&&e.keyCode===13){if(e.preventDefault)e.preventDefault();loadTypedDeal(t.value)}});
+
+  document.addEventListener('dblclick',function(e){var tr=e.target.closest?e.target.closest('tr[data-fxrow]'):null;if(tr)openTransaction(Number(tr.getAttribute('data-fxrow')))});
+  document.addEventListener('click',function(e){var t=e.target,tr,pick=t.getAttribute('data-pick-deal');if(pick==null&&t.closest){var prow=t.closest('tr[data-pick-deal]');if(prow)pick=prow.getAttribute('data-pick-deal')}if(pick!=null){byId('dealSelect').value=pick;selectDeal(pick);closeModal('dealLookupModal');return}if(t.tagName==='INPUT'||t.tagName==='BUTTON'||t.tagName==='SELECT'||t.getAttribute('data-txn')!=null)return;tr=t.closest?t.closest('tr[data-fxrow]'):null;if(tr){state.selectedFx=Number(tr.getAttribute('data-fxrow'));renderFx();return}tr=t.closest?t.closest('tr[data-invrow]'):null;if(tr){state.selectedInv=Number(tr.getAttribute('data-invrow'));renderInv();return}tr=t.closest?t.closest('tr[data-blrow]'):null;if(tr){var bi=Number(tr.getAttribute('data-blrow')),bd=currentDeal();if(!bd||!bd.bl[bi]||bd.bl[bi].status==='De-assigned')return;state.selectedBl=bi;renderBl();return}});
+
+  document.addEventListener('dragstart',function(e){var tr=e.target.closest?e.target.closest('tr[data-blrow],tr[data-invrow],tr[data-fxrow]'):null;if(!tr)return;if(tr.getAttribute('data-blrow')!=null){var bi=Number(tr.getAttribute('data-blrow')),bd=currentDeal();if(!bd||!bd.bl[bi]||bd.bl[bi].status==='De-assigned'){if(e.preventDefault)e.preventDefault();return false}}tr.className+=' dragging';if(tr.getAttribute('data-blrow')!=null){state.selectedBl=Number(tr.getAttribute('data-blrow'));e.dataTransfer.setData('text/plain','bl:'+state.selectedBl);renderBl()}else if(tr.getAttribute('data-invrow')!=null){state.selectedInv=Number(tr.getAttribute('data-invrow'));e.dataTransfer.setData('text/plain','inv:'+state.selectedInv);renderInv()}else{state.selectedFx=Number(tr.getAttribute('data-fxrow'));e.dataTransfer.setData('text/plain','fx:'+state.selectedFx);renderFx()}var acts=document.getElementsByClassName('action-drop'),i;for(i=0;i<acts.length;i++)if(!acts[i].disabled)acts[i].className+=' drop-ready'});
+  document.addEventListener('dragend',function(){var acts=document.getElementsByClassName('action-drop'),i;for(i=0;i<acts.length;i++)acts[i].className=acts[i].className.replace(/\s*drop-ready/g,'').replace(/\s*drop-hover/g,'')});
+  document.addEventListener('dragover',function(e){var b=e.target.closest?e.target.closest('.action-drop'):null;if(b&&!b.disabled){e.preventDefault();if(b.className.indexOf('drop-hover')<0)b.className+=' drop-hover'}});
+  document.addEventListener('dragleave',function(e){var b=e.target.closest?e.target.closest('.action-drop'):null;if(b)b.className=b.className.replace(/\s*drop-hover/g,'')});
+  document.addEventListener('drop',function(e){var b=e.target.closest?e.target.closest('.action-drop'):null;if(!b||b.disabled)return;e.preventDefault();var data=e.dataTransfer.getData('text/plain'),action=b.getAttribute('data-action');if(action==='deassign'&&data.indexOf('bl:')===0)deassignSelected();else if(action==='calculate'&&data.indexOf('inv:')===0)calculateInvoices(true);else if(action==='viewbl'&&data.indexOf('fx:')===0)openBl();else if(action==='confirm'&&(data.indexOf('inv:')===0||data.indexOf('fx:')===0))initiateInvoiceConfirmation();else showToast('This action is not compatible with the dragged row.','warn')});
+
+  byId('moreBtn').onclick=function(e){e.stopPropagation();byId('moreMenu').className=byId('moreMenu').className.indexOf('open')>=0?'more-menu':'more-menu open'};
+  byId('confirmInvoiceBtn').onclick=initiateInvoiceConfirmation;
+  byId('viewBlBtn').onclick=openBl;
+  byId('invDiffBtn').onclick=function(){renderDiff();openModal('diffModal')};
+  byId('refreshBtn').onclick=refreshAll;
+  byId('viewDealsBtn').onclick=openDealLookup;
+  byId('calculateBtn').onclick=function(){calculateInvoices(true)};
+  byId('confirmYes').onclick=function(){if(state.pendingConfirm){var f=state.pendingConfirm;state.pendingConfirm=null;f()}};
+  byId('complianceProceed').onclick=saveInvoice;
+  byId('deassignBtn').onclick=deassignSelected;
+  byId('remarkUpdate').onclick=saveRemark;
+  byId('bankUpdate').onclick=saveBank;
+  byId('saveBtn').onclick=saveInitial;
+  byId('calcUpdateBtn').onclick=recalcUpdate;
+  byId('amendBtn').onclick=enableAmendment;
+  byId('amendConfirmBtn').onclick=confirmAmendment;
+  byId('amendDealBtn').onclick=toggleAmendDeal;
+  byId('importLetterBtn').onclick=function(){letter('Import')};
+  byId('exportLetterBtn').onclick=function(){letter('Export')};
+  byId('cancelInvoiceBtn').onclick=cancelInvoice;
+  byId('backBtn').onclick=function(){showToast('Back action triggered. This standalone demo has no parent screen.','info')};
+  byId('houseBank').onchange=syncBankInputs;byId('accountId').onchange=syncBankInputs;byId('partnerBank').onchange=syncBankInputs;
+
+  populateDealSelect();setContextEmpty();renderFx();renderInv();updateActionState();
+  byId('dealSelect').value='5100231841';selectDeal('5100231841');
+})();
+</script>
+</body>
+</html>

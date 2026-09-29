@@ -134,6 +134,13 @@
             "tag": "Transaction",
             "desc": "ZSGTSFR050",
             "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR025",
+            "title": "AE1: TSF FO Error Correction - NDF Fixing",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR025",
+            "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
           }
         ]
       }
@@ -196,7 +203,36 @@
       },
       {
         "label": "FX Trade Invoicing",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSFR014",
+            "title": "MO: Check Invoice Status of Deal IDs",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR014",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR015",
+            "title": "MO: Mark Deal IDs for Invoicing",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR015",
+            "icon": "M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"
+          },
+          {
+            "code": "ZSGTSFR008",
+            "title": "MO: View List of Deal IDs for Invoicing",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR008",
+            "icon": "M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"
+          },
+          {
+            "code": "ZSGTSFR033",
+            "title": "MO: Generate Invoices for Deal ID (Single Deal ID)",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR033",
+            "icon": "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+          }
+        ]
       }
     ]
   },

@@ -1,0 +1,237 @@
+/* Night mode for fo-additional-spot-booking, derived from fo-additional-spot-booking.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .foasb {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .foasb input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .foasb select,
+:root[data-theme='dark'] .foasb textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .app {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb .header {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .back-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .brand-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .header-note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .card-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .key-date-note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .icon-btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .search-wrap svg {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .control {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .status-filter {
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .status-filter label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .btn:hover:not(:disabled) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb .btn-danger {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb th,
+:root[data-theme='dark'] .foasb td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .foasb th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb tbody tr {
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb tbody tr.selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .foasb .link {
+  color: #60b2fa;
+}
+:root[data-theme='dark'] .foasb .link.created {
+  color: #73e8bb;
+}
+:root[data-theme='dark'] .foasb .muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .side-buy {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .side-sell {
+  color: #eaa470;
+}
+:root[data-theme='dark'] .foasb .footer {
+  color: #7f9bb8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .page-btn.active {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .sort-arrow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb .modal-footer {
+  border-top: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb .section-label {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .field .req {
+  color: #e87b73;
+}
+:root[data-theme='dark'] .foasb .field input,
+:root[data-theme='dark'] .foasb .field select {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .field input[readonly] {
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .field-error {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .amount-panel {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .amount-row {
+  border-bottom: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .foasb .amount-curr {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .meta-note {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .detail-grid {
+  border: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .foasb .detail-item {
+  border-right: 1px solid #2a3d52;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .foasb .detail-item .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .detail-item .v {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .calendar {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .foasb .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .foasb .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .cal-grid th,
+:root[data-theme='dark'] .foasb .cal-grid td {
+  background: #14212f;
+}
+:root[data-theme='dark'] .foasb .cal-grid th {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .cal-day {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .foasb .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .foasb .cal-day.other {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .foasb .cal-icon {
+  color: #7f9bb8;
+}
+@media(max-width:650px) {
+:root[data-theme='dark'] .foasb .detail-item:nth-child(3n) {
+  border-right: 1px solid #2a3d52;
+}
+}
