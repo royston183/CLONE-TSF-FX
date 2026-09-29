@@ -29,7 +29,8 @@ export function CreateDealModal({
   onCreate: () => void
 }) {
   const model = mc ? modelOf(mc.fxModel) : undefined
-  const [range, interval] = lastDealSeq === null ? ['ZSGSLCNR03', '01'] : ['ZSGTSFNR01', '01']
+  // ZSGTSFNR01/01 either way: the ABAP's GEN_NO_DEAL object, mirrored by the middleware's range.
+  const [range, interval] = ['ZSGTSFNR01', '01']
   return (
     <Overlay id="deal-overlay" open={open} onClose={onClose}>
       <div className="modal-card" style={{ maxWidth: 560 }}>

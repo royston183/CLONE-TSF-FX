@@ -240,7 +240,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     if (!mc) return
     const now = new Date()
     if (source === 'mysql') {
-      // GEN_NO_DEAL: the middleware draws the Deal ID from ZSGSLCNR03/01 — the local counter
+      // GEN_NO_DEAL: the middleware draws the Deal ID from ZSGTSFNR01/01 — the local counter
       // is not used. UPDATE_DEAL_ID then moves the MC to 04.
       const draft = createDeal(mc, dealAmount, lastDealSeq, now).deal
       busy.current = true
