@@ -93,7 +93,7 @@ export const TRADE_CODE = 'TRD-014'
  * are numbered; the first seed deal is therefore 0000009089.
  *
  * Dummy mode only. Against MySQL every Deal ID comes from the middleware's range
- * (ZSGSLCNR03/01, 8 digits) and this counter is never used.
+ * (ZSGTSFNR01/01, 10 digits) and this counter is never used.
  */
 export const INITIAL_DEAL_SEQ = 9088
 

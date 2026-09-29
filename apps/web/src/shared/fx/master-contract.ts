@@ -9,7 +9,7 @@ import { changedStamp, createdStamp } from './sap.ts'
  *
  *   masterContract  ZSGTSFTR_MAS_CON   key ZMC_REF_NO   (range ZSGTSFNR03/01, 2000000001-2999999999)
  *   mcChild         ZSGTSFTR_MCCHILD   key ZMC_REF + ZMC_CHILD + ZCHILD_TYPE
- *   tsfDealId       ZSGTSFTR_DEALID    key ZDEAL_ID + ZDEAL_TYPE + ZSUB_TYPE   (range ZSGSLCNR03/01)
+ *   tsfDealId       ZSGTSFTR_DEALID    key ZDEAL_ID + ZDEAL_TYPE + ZSUB_TYPE   (range ZSGTSFNR01/01)
  *   mcDocument      ZSGTSFTR_MC_DMS    key ZDMS_CAT + ZDMS_TYPE + ZMC_REF_NO
  *
  * ZSGTSFV_FX — the view that turns linked Treasury deals into an MC's utilized amount — reads
@@ -98,7 +98,7 @@ export async function listDeals(mcRefs?: readonly string[], signal?: AbortSignal
   return out
 }
 
-/** Creates a Deal ID and returns the number drawn from the Deal ID range (ZSGSLCNR03/01). */
+/** Creates a Deal ID and returns the number drawn from the Deal ID range (ZSGTSFNR01/01). */
 export async function createDeal(data: Record<string, unknown>): Promise<string> {
   if (!(await fxHasNumberRange('tsfDealId'))) {
     throw new Error('No number range is bound to tsfDealId.ZDEAL_ID, so a new Deal ID cannot be issued.')

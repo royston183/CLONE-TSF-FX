@@ -311,7 +311,7 @@
         "middleware"
       ],
       "legacy": "legacy/deal_id_workbench.html",
-      "note": "Short Straddle MCs from ZSGTSFTR_MAS_CON and their Deal IDs from ZSGTSFTR_DEALID through the SLC middleware; Create Deal ID draws from range ZSGSLCNR03/01 and moves the MC to 04. Trader (AT100) and ZSGTSFV_FX amounts stay dummy."
+      "note": "Short Straddle MCs from ZSGTSFTR_MAS_CON and their Deal IDs from ZSGTSFTR_DEALID through the SLC middleware; Create Deal ID draws from range ZSGTSFNR01/01 and moves the MC to 04. Trader (AT100) and ZSGTSFV_FX amounts stay dummy."
     },
     {
       "code": "ZSGTSFP008",

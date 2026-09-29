@@ -5,7 +5,7 @@
  * Mirrors the report: the Short Straddle models from ZSGTSFTR_RULE_BT (ZSS = 'X'), the Master
  * Contracts booked under them from ZSGTSFTR_MAS_CON, their Deal IDs from ZSGTSFTR_DEALID and
  * their documents from ZSGTSFTR_MC_DMS / ZSGTSFTR_TSF_DMS. Create Deal ID inserts into
- * ZSGTSFTR_DEALID with the number drawn from the middleware's range (ZSGSLCNR03/01) and moves
+ * ZSGTSFTR_DEALID with the number drawn from the middleware's range (ZSGTSFNR01/01) and moves
  * the MC to 04; Reverse MC writes 21 with the MO remark; Edit MC writes the amount, payment
  * terms and model back to MAS_CON.
  *
