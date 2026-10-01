@@ -451,9 +451,11 @@
       "route": "/apps/mo-fx-deal-confirmation",
       "title": "TSF MO Deal Confirmation - FX & Options",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx"
+      ],
       "legacy": "legacy/fx-deal-confirmation.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "FX deals are read from the FxTransaction OData service (ZFS_SB_TRMFX_O4_API) and Match & Release settles them through its Settle action (BAPI_FTR_FXT_SETTLE); activity category 20 is Unmatched and 30 Matched & Released. Not covered by that service, so not saved: the External / Internal Ref and remark (BAPI_FTR_FXT_CHANGE) and Correction Required, which stays on this screen only. The Options rows are still dummy data; the options BAPIs are out of scope."
     },
     {
       "code": "ZSGTSFR026",
