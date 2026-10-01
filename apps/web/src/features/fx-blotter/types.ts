@@ -9,6 +9,8 @@ export type Entity = {
   currency: string
   defaultProfitCenter: string
   businessArea: string
+  /** ZORIGIN = 'X': an entity a Master Contract is raised for, so Auto Deal offers it as an origin. */
+  origin: boolean
 }
 /** `group` is 'ALL' for the internal counterparties. Upload adds partners it does not know. */
 export type BusinessPartner = { code: string; short: string; name: string; group: string }
@@ -33,7 +35,11 @@ export type CodeLabel = { code: string; label: string }
 export type Portfolio = { code: string; desc: string; group: string }
 export type FixingReference = { code: string; pair: string }
 
-export type LegTemplate = { from: string; to: string; bs1: string; bs2: string }
+/**
+ * One leg of an FX model. `from` is the entity that books the leg; `txnType` the blotter transaction
+ * type it books as (FWD, NDF, ...), left out for the models that still book plain forwards.
+ */
+export type LegTemplate = { from: string; to: string; bs1: string; bs2: string; txnType?: string }
 /**
  * An FX model: its 3-entity Entity String and currency pair, plus the D1 / D2 leg template
  * each Master Contract under it expects (D1 the financing leg, D2 the offsetting one).
@@ -65,6 +71,8 @@ export type McSeed = {
 /** A Master Contract; FX legs draw its USD balance (amtUSD − utilizedUSD) down. */
 export type MasterContract = {
   mcNumber: string
+  /** ZORIGIN: the origin entity the contract was raised for (e.g. OSIPL). */
+  origin: string
   fxModel: string
   modelDesc: string
   entities: string[]
@@ -76,6 +84,9 @@ export type MasterContract = {
   shipEnd: Date
   amtUSD: number
   utilizedUSD: number
+  /** ZCURR_ID / ZCURR_DESC: the contract's currency string id and text, written to the Deal ID row. */
+  currencyId?: string
+  currencyDesc?: string
   /** What the contract had drawn when it was loaded; Refresh (hard reset) returns utilizedUSD to it. */
   baseUtilizedUSD?: number
   group: string

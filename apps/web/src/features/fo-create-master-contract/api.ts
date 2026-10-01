@@ -58,16 +58,28 @@ let statuses: readonly McStatusRow[] = []
 
 export type MasterSources = Record<'entities' | 'commodities' | 'paymentTerms' | 'ports' | 'fxModels' | 'tolerance', MasterSource>
 
+/**
+ * Company codes offered as an origin although the company master (ZSGTSFTR_COMP) does not flag
+ * them ZORIGIN = 'X'. SG03 (OGA) is the one company code of the test systems that exists in SAP, so
+ * a Master Contract raised for it can be used there. The original program lists only the flagged
+ * entities: when the master data flags SG03 itself this entry changes nothing, and it can be removed.
+ */
+export const EXTRA_ORIGIN_COMPANY_CODES: readonly string[] = ['SG03']
+
+/** The origin entities an MC can be raised for: those flagged ZORIGIN = 'X', plus the extra company codes above. */
+export function toOriginEntities(rows: readonly FxRow[]) {
+  return rows
+    .filter((r) => txt(r, 'ZORIGIN') === 'X' || EXTRA_ORIGIN_COMPANY_CODES.includes(txt(r, 'ZBUKRS')))
+    .map((r) => ({ code: txt(r, 'ZCOM_ID'), companyCode: txt(r, 'ZBUKRS'), name: txt(r, 'ZBUTXT'), currency: txt(r, 'ZWAERS') }))
+}
+
 /** Loads every value help and swaps it into data.ts in place. */
 export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> {
   const [entities, commodities, terms, ports, models, tolerance, mcStatuses] = await Promise.all([
     loadMaster(
       'comp',
-      // ZORIGIN = 'X' marks the origin entities an MC can be raised for.
-      (rows) =>
-        rows
-          .filter((r) => txt(r, 'ZORIGIN') === 'X')
-          .map((r) => ({ code: txt(r, 'ZCOM_ID'), companyCode: txt(r, 'ZBUKRS'), name: txt(r, 'ZBUTXT'), currency: txt(r, 'ZWAERS') })),
+      // ZORIGIN = 'X' marks the origin entities an MC can be raised for (plus EXTRA_ORIGIN_COMPANY_CODES).
+      toOriginEntities,
       ORIGIN_ENTITIES,
       { signal },
     ),

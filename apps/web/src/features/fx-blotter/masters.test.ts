@@ -1,9 +1,10 @@
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import type { FxRow } from '../../shared/fx/mw.ts'
-import { BUSINESS_AREAS, BUSINESS_PARTNERS, COMMODITIES, ENTITIES, FX_MODELS, GROUPS, PROFIT_CENTERS, TRADERS, entityOf, modelOf } from './data.ts'
+import { BUSINESS_AREAS, BUSINESS_PARTNERS, COMMODITIES, ENTITIES, FX_MODELS, GROUPS, PROFIT_CENTERS, TRADERS, TRANSACTION_TYPES, entityOf, modelOf } from './data.ts'
 import {
   MasterLoadError,
+  RULE_TABLE_LEGS,
   USABLE_MC_STATUSES,
   buildMasters,
   entityStringParts,
@@ -17,17 +18,18 @@ import {
   toProfitCenters,
   toTolerance,
 } from './masters.ts'
-import { spotPartners } from './logic.ts'
+import { toCreatePayload } from './api.ts'
+import { autoEligible, autoOrigins, confirmAutoDeal, initAutoLegs, initialBlotter, spotPartners } from './logic.ts'
 
 // Rows shaped like the live middleware answers (columns trimmed to the ones the blotter reads).
 const comp = (over: FxRow): FxRow => ({
   ZCOM_ID: 'OGA', ZBUKRS: 'SG03', ZBUTXT: 'Olam Global Agri Pte. Ltd', ZWAERS: 'USD',
-  ZFX_PC_NAME: 'FX', ZBA_NAME: 'SINGAPORE', ZBA_NAME_O: '', ZBA_NAME_B: '', ZBA_NAME_CT: '', ...over,
+  ZFX_PC_NAME: 'FX', ZBA_NAME: 'SINGAPORE', ZBA_NAME_O: '', ZBA_NAME_B: '', ZBA_NAME_CT: '', ZORIGIN: '', ...over,
 })
 const COMP_ROWS: FxRow[] = [
   comp({}),
   comp({ ZCOM_ID: 'DMCC', ZBUKRS: 'AE13', ZBUTXT: 'Olam International DMCC', ZWAERS: 'AED', ZFX_PC_NAME: 'TSF-FX', ZBA_NAME: 'OLAM INTERNATIONAL DMCC', ZBA_NAME_O: 'OLAM INTERNATIONAL DMCC', ZBA_NAME_B: 'Olam Outspan TSF' }),
-  comp({ ZCOM_ID: 'OSIPL', ZBUKRS: 'IN11', ZBUTXT: 'Olam Agri India Pvt Ltd', ZWAERS: 'INR', ZFX_PC_NAME: 'TSF - FX', ZBA_NAME: 'OLAM AGRI INDIA PRIVATE LIMITE', ZBA_NAME_O: 'HCMC Head Office' }),
+  comp({ ZCOM_ID: 'OSIPL', ZBUKRS: 'IN11', ZBUTXT: 'Olam Agri India Pvt Ltd', ZWAERS: 'INR', ZFX_PC_NAME: 'TSF - FX', ZBA_NAME: 'OLAM AGRI INDIA PRIVATE LIMITE', ZBA_NAME_O: 'HCMC Head Office', ZORIGIN: 'X' }),
   comp({ ZCOM_ID: 'SEDA', ZBUKRS: 'ES12', ZBUTXT: 'SEDA OUTSPAN IBERIA S.L.U', ZWAERS: 'EUR', ZFX_PC_NAME: '', ZBA_NAME: '', ZBA_NAME_O: 'SEDA OUTSPAN IBERIA S.L.' }),
   comp({ ZCOM_ID: 'ORPHAN', ZBUKRS: '' }),
   comp({ ZCOM_ID: '', ZBUKRS: 'XX99' }),
@@ -42,7 +44,7 @@ const MODEL_ROWS: FxRow[] = [
 ]
 
 const MC_ROWS: FxRow[] = [
-  { ZMC_REF_NO: '2000000005', ZMOD_ID: 'M032', ZMOD_DESC: 'INR Long Forward', ZENT_DESC: 'OGA-DMCC-OSIPL', ZCURR: 'USD', ZOCURR: 'INR', ZCOMMODITY: 'C105', ZCOM_DESC: 'CORN', ZCOM_DESC_LONG: 'CORN (YELLOW)', ZMC_DATE: '2026-08-22', ZSHIP_START: '2026-08-22', ZSHIP_END: '2026-10-15', ZAMT: '100000.00', ZUTI_AMT: '25000.00', ZPOS: 'Mumbai', ZPOD: 'Singapore', ZMC_STAT: '04' },
+  { ZMC_REF_NO: '2000000005', ZORIGIN: 'OSIPL', ZMOD_ID: 'M032', ZMOD_DESC: 'INR Long Forward', ZENT_DESC: 'OGA-DMCC-OSIPL', ZCURR: 'USD', ZOCURR: 'INR', ZCOMMODITY: 'C105', ZCOM_DESC: 'CORN', ZCOM_DESC_LONG: 'CORN (YELLOW)', ZMC_DATE: '2026-08-22', ZSHIP_START: '2026-08-22', ZSHIP_END: '2026-10-15', ZAMT: '100000.00', ZUTI_AMT: '25000.00', ZPOS: 'Mumbai', ZPOD: 'Singapore', ZMC_STAT: '04' },
   { ZMC_REF_NO: '2000000009', ZMOD_ID: 'M032', ZMOD_DESC: 'INR Long Forward', ZENT_DESC: 'OGA-DMCC-OSIPL', ZCURR: 'EUR', ZOCURR: 'INR', ZMC_DATE: '2026-08-22', ZSHIP_START: '2026-08-22', ZSHIP_END: '2026-10-15', ZAMT: '100.00', ZMC_STAT: '03' },
   { ZMC_REF_NO: '2000000010', ZMOD_ID: 'M032', ZCURR: 'USD', ZOCURR: 'INR', ZMC_DATE: '2026-08-22', ZSHIP_START: null, ZSHIP_END: '2026-10-15', ZAMT: '100.00', ZMC_STAT: '03' },
   { ZMC_REF_NO: '', ZCURR: 'USD', ZOCURR: 'INR', ZMC_DATE: '2026-08-22', ZSHIP_START: '2026-08-22', ZSHIP_END: '2026-10-15' },
@@ -62,8 +64,8 @@ const COMMODITY_ROWS: FxRow[] = [
 describe('comp -> entities', () => {
   it('maps entity code, SAP company code, name, currency, profit centre and business area', () => {
     const e = toEntities(COMP_ROWS)
-    deepStrictEqual(e[0], { code: 'OGA', cocode: 'SG03', name: 'Olam Global Agri Pte. Ltd', currency: 'USD', defaultProfitCenter: 'FX', businessArea: 'SINGAPORE' })
-    deepStrictEqual(e[1], { code: 'DMCC', cocode: 'AE13', name: 'Olam International DMCC', currency: 'AED', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM INTERNATIONAL DMCC' })
+    deepStrictEqual(e[0], { code: 'OGA', cocode: 'SG03', name: 'Olam Global Agri Pte. Ltd', currency: 'USD', defaultProfitCenter: 'FX', businessArea: 'SINGAPORE', origin: false })
+    deepStrictEqual(e[1], { code: 'DMCC', cocode: 'AE13', name: 'Olam International DMCC', currency: 'AED', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM INTERNATIONAL DMCC', origin: false })
   })
 
   it('keeps the entity code and the company code apart, and skips a row missing either', () => {
@@ -120,8 +122,8 @@ describe('fxModel', () => {
     deepStrictEqual(m.map((x) => x.code), ['M032', 'M037', 'M042', 'M099'])
     const a = m[0]!
     deepStrictEqual(a.entities, ['OGA', 'DMCC', 'OSIPL'])
-    deepStrictEqual(a.d1, { from: 'OGA', to: 'DMCC', bs1: 'B', bs2: 'S' })
-    deepStrictEqual(a.d2, { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' })
+    deepStrictEqual(a.d1, { from: 'OSIPL', to: 'OGA', bs1: 'B', bs2: 'S', txnType: 'FWD' })
+    deepStrictEqual(a.d2, { from: 'OGA', to: 'OSIPL', bs1: 'S', bs2: 'B', txnType: 'NDF' })
     strictEqual(a.pair, 'USD/INR')
     strictEqual(a.tolerancePct, 5)
     strictEqual(a.valueDateToleranceDays, 5)
@@ -173,6 +175,7 @@ describe('masterContract', () => {
     const [mc] = toMasterContracts(MC_ROWS)
     ok(mc)
     strictEqual(mc.mcNumber, '2000000005')
+    strictEqual(mc.origin, 'OSIPL')
     strictEqual(mc.fxModel, 'M032')
     strictEqual(mc.modelDesc, 'INR Long Forward')
     deepStrictEqual(mc.entities, ['OGA', 'DMCC', 'OSIPL'])
@@ -304,5 +307,98 @@ describe('installMasters', () => {
     deepStrictEqual(TRADERS.filter((t) => t.group === 'G03').map((t) => t.code), ['TER', 'RAY', 'SUN'])
     ok(BUSINESS_PARTNERS.some((b) => b.code === 'BP1001'))
     deepStrictEqual(spotPartners(BUSINESS_PARTNERS).map((b) => b.code), ['400000002'])
+  })
+})
+
+describe('Auto Deal origin: the contract origin, not the first entity of the model', () => {
+  const load = () => installMasters(buildMasters({ comp: COMP_ROWS, fxModel: MODEL_ROWS, commodity: COMMODITY_ROWS, masterContract: MC_ROWS, tolerance: TOL_ROWS }))
+
+  it('flags an entity as an origin from ZORIGIN = X, as the original origin help does', () => {
+    const byCode = new Map(toEntities(COMP_ROWS).map((e) => [e.code, e.origin]))
+    strictEqual(byCode.get('OSIPL'), true)
+    strictEqual(byCode.get('OGA'), false)
+    strictEqual(byCode.get('DMCC'), false)
+  })
+
+  it('offers only the origin entities: OSIPL here, never OGA, which is the first entity of the string', () => {
+    load()
+    deepStrictEqual(autoOrigins(), ['OSIPL'])
+  })
+
+  it('lists under an origin the contracts raised for it, whatever their entity string starts with', () => {
+    load()
+    const [mc] = toMasterContracts(MC_ROWS)
+    ok(mc)
+    deepStrictEqual(mc.entities, ['OGA', 'DMCC', 'OSIPL'])
+    deepStrictEqual(autoEligible([mc], 'OSIPL').map((m) => m.mcNumber), ['2000000005'])
+    deepStrictEqual(autoEligible([mc], 'OGA'), [])
+  })
+
+  it('still hides a contract with nothing left to use', () => {
+    const [mc] = toMasterContracts(MC_ROWS)
+    ok(mc)
+    deepStrictEqual(autoEligible([{ ...mc, utilizedUSD: mc.amtUSD }], 'OSIPL'), [])
+  })
+})
+
+describe('legs from the real ZSGTSFTR_RULE_BT (SE16): M032 and M033', () => {
+  const M033_ROW: FxRow = { ZMOD_ID: 'M033', ZMOD_DESC: 'INR-INR-INR Forward', ZENT_DESC: 'OGA-OSIPL-DMCC', ZCURR_DESC: 'INR-INR-INR', ZD1_BUKRS: 'IN11', ZD1_SFHAART: '600', ZD1_BCURR: 'USD', ZD2_BUKRS: 'SG10', ZD2_SFHAART: '600', ZD2_BCURR: 'INR', ZSS: 'N' }
+
+  it('uses blotter transaction types that are SAP 619 Forward-TSF and 631 NDF-TSF', () => {
+    const sap = (code: string) => TRANSACTION_TYPES.find((t) => t.code === code)
+    strictEqual(sap('FWD')?.sapType, '619')
+    strictEqual(sap('NDF')?.sapType, '631')
+    for (const m of Object.values(RULE_TABLE_LEGS)) {
+      ok(TRANSACTION_TYPES.some((t) => t.code === m.d1.txnType) && TRANSACTION_TYPES.some((t) => t.code === m.d2.txnType))
+    }
+  })
+
+  it('books both M033 legs on OGA: Deal 1 a forward, Deal 2 an NDF, whatever placeholders the cloud copy holds', () => {
+    const [m] = toFxModels([M033_ROW], 5)
+    ok(m)
+    deepStrictEqual(m.entities, ['OGA', 'OSIPL', 'DMCC'])
+    strictEqual(m.pair, 'USD/INR')
+    strictEqual(m.d1.from, 'OGA')
+    strictEqual(m.d1.txnType, 'FWD')
+    strictEqual(m.d2.from, 'OGA')
+    strictEqual(m.d2.txnType, 'NDF')
+    deepStrictEqual([m.d1.bs1, m.d2.bs1], ['B', 'S'])
+  })
+
+  it('books M032 Deal 1 on OSIPL, which SAP does not have, and Deal 2 on OGA', () => {
+    const [m] = toFxModels([{ ...M033_ROW, ZMOD_ID: 'M032', ZENT_DESC: 'OGA-DMCC-OSIPL' }], 5)
+    ok(m)
+    strictEqual(m.d1.from, 'OSIPL')
+    strictEqual(m.d2.from, 'OGA')
+  })
+
+  it('leaves every other model on its entity string, booking plain forwards', () => {
+    const [m] = toFxModels([{ ...M033_ROW, ZMOD_ID: 'M037', ZENT_DESC: 'OGA-OSIPL-DMCC' }], 5)
+    ok(m)
+    strictEqual(m.d1.from, 'OGA')
+    strictEqual(m.d2.from, 'OSIPL')
+    strictEqual(m.d1.txnType, undefined)
+    strictEqual(m.d2.txnType, undefined)
+  })
+
+  it('creates a Master Contract-driven M033 pair that SAP can take: SG03 / 12B 619 then SG03 / 12D 631', () => {
+    installMasters(buildMasters({ comp: COMP_ROWS, fxModel: [M033_ROW], commodity: COMMODITY_ROWS, masterContract: [], tolerance: TOL_ROWS }))
+    const mcRow: FxRow = { ...MC_ROWS[0]!, ZMC_REF_NO: '2000000030', ZMOD_ID: 'M033', ZENT_DESC: 'OGA-OSIPL-DMCC', ZCURR_DESC: 'INR-INR-INR', ZORIGIN: 'OSIPL', ZAMT: '100000.00', ZUTI_AMT: '0.00' }
+    const [mc] = toMasterContracts([mcRow])
+    ok(mc)
+    const legs = initAutoLegs(mc, new Date(2026, 9, 1))
+    deepStrictEqual(legs.map((l) => [l.entity, l.txnType, l.bs, l.curr1, l.curr2]), [
+      ['OGA', 'FWD', 'B', 'USD', 'INR'],
+      ['OGA', 'NDF', 'S', 'USD', 'INR'],
+    ])
+    const b = initialBlotter(new Date(2026, 9, 1), [mc], [...BUSINESS_PARTNERS])
+    const out = confirmAutoDeal(b, mc.mcNumber, legs)
+    ok(out)
+    const ids = out.blotter.deals[out.blotter.deals.length - 1]!.legs
+    const payloads = ids.map((id) => toCreatePayload(out.blotter.rows.find((r) => r.id === id)!))
+    deepStrictEqual(payloads.map((p) => [p['CompanyCode'], p['ProductType'], p['TransactionType'], p['BuyCurrency'], p['SellCurrency']]), [
+      ['SG03', '12B', '619', 'USD', 'INR'],
+      ['SG03', '12D', '631', 'INR', 'USD'],
+    ])
   })
 })

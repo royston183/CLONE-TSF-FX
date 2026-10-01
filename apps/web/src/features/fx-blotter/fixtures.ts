@@ -10,15 +10,16 @@
 import { COMMODITIES, ENTITIES, FX_MODELS, PROFIT_CENTERS, BUSINESS_AREAS } from './data.ts'
 import type { CodeDesc, CodeLabel, Entity, FxModel, McSeed } from './types.ts'
 
+// origin: the old seed contracts took their model's first entity as origin, so those four are the origins here.
 export const ENTITIES_FIXTURE: Entity[] = [
-  { code: 'OGA', cocode: 'SG03', name: 'Olam Global Agri Pte. Ltd', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE' },
-  { code: 'OGAT', cocode: 'SG39', name: 'Olam Global Agri Treasury', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE' },
-  { code: 'DMCC', cocode: 'AE13', name: 'Olam International DMCC', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM INTERNATIONAL DMCC' },
-  { code: 'OSIPL', cocode: 'IN11', name: 'Olam Agri India Pvt Ltd', currency: 'INR', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM AGRI INDIA PRIVATE LIMITED' },
-  { code: 'OTL', cocode: 'TH10', name: 'Olam (Thailand) Ltd', currency: 'THB', defaultProfitCenter: 'FX', businessArea: 'OLAM (THAILAND) LIMITED' },
-  { code: 'OVL', cocode: 'VN10', name: 'Olam Vietnam Limited', currency: 'VND', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM VIETNAM LIMITED' },
-  { code: 'OAL', cocode: 'US40', name: 'Olam Global Agri Americas', currency: 'USD', defaultProfitCenter: 'FX', businessArea: 'OLAM GLOBAL AGRI AMERICAS LLC' },
-  { code: 'SEDA', cocode: 'ES12', name: 'SEDA OUTSPAN IBERIA S.L.U', currency: 'EUR', defaultProfitCenter: 'TSF-FX', businessArea: 'PANASIA INTERNATIONAL FZCO' },
+  { code: 'OGA', cocode: 'SG03', name: 'Olam Global Agri Pte. Ltd', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE', origin: true },
+  { code: 'OGAT', cocode: 'SG39', name: 'Olam Global Agri Treasury', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE', origin: true },
+  { code: 'DMCC', cocode: 'AE13', name: 'Olam International DMCC', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM INTERNATIONAL DMCC', origin: false },
+  { code: 'OSIPL', cocode: 'IN11', name: 'Olam Agri India Pvt Ltd', currency: 'INR', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM AGRI INDIA PRIVATE LIMITED', origin: false },
+  { code: 'OTL', cocode: 'TH10', name: 'Olam (Thailand) Ltd', currency: 'THB', defaultProfitCenter: 'FX', businessArea: 'OLAM (THAILAND) LIMITED', origin: false },
+  { code: 'OVL', cocode: 'VN10', name: 'Olam Vietnam Limited', currency: 'VND', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM VIETNAM LIMITED', origin: false },
+  { code: 'OAL', cocode: 'US40', name: 'Olam Global Agri Americas', currency: 'USD', defaultProfitCenter: 'FX', businessArea: 'OLAM GLOBAL AGRI AMERICAS LLC', origin: true },
+  { code: 'SEDA', cocode: 'ES12', name: 'SEDA OUTSPAN IBERIA S.L.U', currency: 'EUR', defaultProfitCenter: 'TSF-FX', businessArea: 'PANASIA INTERNATIONAL FZCO', origin: true },
 ]
 
 export const PROFIT_CENTERS_FIXTURE: CodeLabel[] = [

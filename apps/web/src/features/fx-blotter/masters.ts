@@ -59,6 +59,7 @@ export function toEntities(rows: readonly FxRow[]): Entity[] {
       currency: txt(r, 'ZWAERS'),
       defaultProfitCenter: txt(r, 'ZFX_PC_NAME'),
       businessArea: txt(r, 'ZBA_NAME'),
+      origin: txt(r, 'ZORIGIN') === 'X',
     }))
 }
 
@@ -100,6 +101,24 @@ export const entityStringParts = (value: string): string[] =>
 
 const USD = 'USD'
 
+/** A leg as ZSGTSFTR_RULE_BT holds it: the entity that books it, the transaction type and the base currency. */
+type RuleLeg = { entity: string; txnType: string; currency: string }
+
+/**
+ * The legs of the models the test systems use, as SAP's own ZSGTSFTR_RULE_BT shows them (SE16, 01.10.2026).
+ * The cloud copy of that table (middleware "fxModel") has not caught up: for every model its leg columns
+ * hold placeholders (entity IN11 / SG10, transaction type 600), and it lacks M038 to M044. Until it is
+ * refreshed these two models take their legs from here; every other model still derives them from its
+ * entity string, as before. Transaction types are blotter codes: FWD is 619 Forward-TSF, NDF is 631 NDF-TSF.
+ *
+ *   M032  D1 OSIPL 619 USD  ->  D2 OGA 631 INR     (D1 books on IN11, which SAP does not have)
+ *   M033  D1 OGA   619 USD  ->  D2 OGA 631 INR     (both legs on SG03: bookable here)
+ */
+export const RULE_TABLE_LEGS: Readonly<Record<string, { d1: RuleLeg; d2: RuleLeg }>> = {
+  M032: { d1: { entity: 'OSIPL', txnType: 'FWD', currency: 'USD' }, d2: { entity: 'OGA', txnType: 'NDF', currency: 'INR' } },
+  M033: { d1: { entity: 'OGA', txnType: 'FWD', currency: 'USD' }, d2: { entity: 'OGA', txnType: 'NDF', currency: 'INR' } },
+}
+
 /**
  * Buy or Sell of a leg's first currency, as the original Auto Deal sets it (include
  * ZSGTSF_PFX_BLOTTER_AUTO_DEAL, FORM process_auto_data; c_1 is Buy, c_2 is Sell). Each leg buys
@@ -119,21 +138,22 @@ export function toFxModels(rows: readonly FxRow[], tolerancePct: number): FxMode
     .filter((r) => txt(r, 'ZMOD_ID'))
     .map((r) => {
       const entities = entityStringParts(txt(r, 'ZENT_DESC'))
-      const base1 = txt(r, 'ZD1_BCURR')
-      const base2 = txt(r, 'ZD2_BCURR')
+      const rule = RULE_TABLE_LEGS[txt(r, 'ZMOD_ID')]
+      const base1 = rule?.d1.currency ?? txt(r, 'ZD1_BCURR')
+      const base2 = rule?.d2.currency ?? txt(r, 'ZD2_BCURR')
       // USD leads when either leg is in USD, as the program quotes it.
       const pair = base2 === USD ? `${base2}/${base1}` : `${base1}/${base2}`
-      const leg = (from: string | undefined, to: string | undefined, base: string): LegTemplate => {
+      const leg = (from: string | undefined, to: string | undefined, base: string, txnType?: string): LegTemplate => {
         const [bs1, bs2] = legSigns(base)
-        return { from: from ?? '', to: to ?? '', bs1, bs2 }
+        return { from: from ?? '', to: to ?? '', bs1, bs2, ...(txnType ? { txnType } : {}) }
       }
       return {
         code: txt(r, 'ZMOD_ID'),
         desc: txt(r, 'ZMOD_DESC'),
         entities,
         pair: pairOf(pair) ? pair : '',
-        d1: leg(entities[0], entities[1], base1),
-        d2: leg(entities[1], entities[2], base2),
+        d1: rule ? leg(rule.d1.entity, rule.d2.entity, base1, rule.d1.txnType) : leg(entities[0], entities[1], base1),
+        d2: rule ? leg(rule.d2.entity, entities[2], base2, rule.d2.txnType) : leg(entities[1], entities[2], base2),
         spreadBp: SPREAD_BP,
         ssEligible: txt(r, 'ZSS') === 'X',
         tolerancePct,
@@ -158,10 +178,13 @@ export function toMasterContracts(rows: readonly FxRow[]): MasterContract[] {
     const utilized = num(r['ZUTI_AMT'])
     out.push({
       mcNumber: txt(r, 'ZMC_REF_NO'),
+      origin: txt(r, 'ZORIGIN'),
       fxModel: txt(r, 'ZMOD_ID'),
       modelDesc: txt(r, 'ZMOD_DESC'),
       entities: entityStringParts(txt(r, 'ZENT_DESC')),
       currPair: `${txt(r, 'ZCURR')}/${txt(r, 'ZOCURR')}`,
+      currencyId: txt(r, 'ZCURR_ID'),
+      currencyDesc: txt(r, 'ZCURR_DESC'),
       commodityCode: txt(r, 'ZCOMMODITY'),
       commodityDesc: txt(r, 'ZCOM_DESC_LONG') || txt(r, 'ZCOM_DESC'),
       mcDate,
