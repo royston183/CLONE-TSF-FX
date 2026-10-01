@@ -8,19 +8,31 @@
  * date, or the MC's shipment end for a Short Straddle deal — stays in logic.ts, as before.
  *
  * Read-only, like the report. Utilization (ZSGTSFCDS_FX / _OPTION) is 0: the FX view has no
- * deals in MySQL yet. Region texts come from REGION_TEXT, since no region master is migrated.
+ * deals in MySQL yet. Regions carry no text: no region master (the table behind ZSGTSFSH_REGION)
+ * is migrated, so the codes stand alone rather than wear invented names.
+ *
+ * Nothing falls back to sample data: when ZSGTSFTR_DEALID cannot be read the table stays empty
+ * and says WAITING FOR DEAL ID API.
  */
-import { replaceInPlace, txt, type MasterSource } from '../../shared/fx/masters.ts'
-import { loadTransactions, type DealRow } from '../../shared/fx/master-contract.ts'
-import { dealJoin, dealStatusText, listDealIds, loadDealContext, OPTION_SUB_TYPE, REGION_TEXT, type DealContext } from '../../shared/fx/deal-id.ts'
+import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
+import type { DealRow } from '../../shared/fx/master-contract.ts'
+import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { FORWARD_SUB_TYPE, OPTION_SUB_TYPE, dealJoin, dealStatusText, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
 import { dateFromIso, num } from '../../shared/fx/sap.ts'
-import { ENTITIES, MODELS, REGIONS, STATUSES, loadDeals } from './data.ts'
-import type { Deal, Flag, StatusCode } from './types.ts'
+import { ENTITIES, MODELS, REGIONS, STATUSES } from './data.ts'
+import type { Deal, Entity, Flag, FxModel, Region, Status, StatusCode } from './types.ts'
 
 /** The report's base selection: WHERE zdeal_stat IN ('01','02'). */
 export const STATUS_FILTER = { 'ZDEAL_STAT[in]': '01,02' }
 
-export type Loaded = { deals: Deal[]; source: MasterSource }
+/** FORM modify_drop_down: WHERE zsub_type = 'FX1' AND zdeal_stat <= '02'. */
+export const STATUS_HELP_MAX = '02'
+
+export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
+
+/** 'sap': ZSGTSFTR_DEALID and its masters were read; 'unavailable': they could not be. */
+export type DataSource = 'sap' | 'unavailable'
+export type Loaded = { deals: Deal[]; source: DataSource }
 
 const EPOCH = new Date(0)
 const day = (value: string | null | undefined): Date => dateFromIso(value) ?? EPOCH
@@ -31,55 +43,71 @@ const flag = (value: string): Flag => (value === 'X' ? 'X' : '')
  * screen's option lists and lookups see MySQL's rows; a middleware failure keeps the seed.
  */
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
-  let ctx: DealContext | undefined
-  const { rows, source } = await loadTransactions(
-    async () => {
-      const [context, deals] = await Promise.all([loadDealContext(signal), listDealIds(STATUS_FILTER, signal)])
-      ctx = context
-      return deals.map((d) => toDeal(d, context))
-    },
-    loadDeals,
-    'Deal IDs for confirmation',
-  )
-  if (ctx) applyMasters(ctx)
-  return { deals: rows, source }
+  try {
+    const [ctx, deals] = await Promise.all([loadDealContext(signal), listDealIds(STATUS_FILTER, signal)])
+    applyMasters(ctx)
+    return { deals: deals.map((d) => toDeal(d, ctx)), source: 'sap' }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[fx] Deal IDs for confirmation: ZSGTSFTR_DEALID unavailable', error)
+    replaceInPlace(REGIONS, [])
+    replaceInPlace(ENTITIES, [])
+    replaceInPlace(MODELS, [])
+    replaceInPlace(STATUSES, [])
+    return { deals: [], source: 'unavailable' }
+  }
 }
 
+const byId = <T extends { id: string }>(a: T, b: T) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+
+/** ZSGTSFSH_ENTITY: ZSGTSFTR_COMP. */
+export function entityHelp(comp: readonly FxRow[]): Entity[] {
+  return comp
+    .map((r) => ({ id: txt(r, 'ZCOM_ID'), name: txt(r, 'ZBUTXT'), region: txt(r, 'ZREG_ID'), currency: txt(r, 'ZWAERS') }))
+    .filter((e) => e.id)
+    .sort(byId)
+}
+
+/** ZSGTSFSH_REGION: the region codes the TSF entities carry (COMP-ZREG_ID); no text master exists. */
+export function regionHelp(comp: readonly FxRow[]): Region[] {
+  return [...new Set(comp.map((r) => txt(r, 'ZREG_ID')).filter(Boolean))].map((id) => ({ id, desc: '' })).sort(byId)
+}
+
+/** ZSGTSFSH_MODEL: ZSGTSFTR_RULE_BT, one row per model. */
+export function modelHelp(models: readonly FxRow[]): FxModel[] {
+  return models
+    .map((r) => ({
+      id: txt(r, 'ZMOD_ID'),
+      desc: txt(r, 'ZMOD_DESC'),
+      type: txt(r, 'ZSUB_TYPE') === OPTION_SUB_TYPE ? ('OPTION' as const) : ('FORWARD' as const),
+    }))
+    .filter((m) => m.id)
+    .sort(byId)
+}
+
+/** P_STAT's list box, exactly as FORM modify_drop_down selects it. */
+export function statusHelp(statuses: readonly FxRow[]): Status[] {
+  return statuses
+    .filter((r) => txt(r, 'ZSUB_TYPE') === FORWARD_SUB_TYPE && txt(r, 'ZDEAL_STAT') !== '' && txt(r, 'ZDEAL_STAT') <= STATUS_HELP_MAX)
+    .map((r) => ({ code: txt(r, 'ZDEAL_STAT') as StatusCode, desc: txt(r, 'ZDEAL_SDESC') }))
+    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+}
+
+/** The masters are swapped in place, so every list and lookup the screen imported sees SAP's rows. */
 function applyMasters(ctx: DealContext): void {
   const comp = [...ctx.comp.values()]
-  if (comp.length) {
-    replaceInPlace(
-      ENTITIES,
-      comp.map((r) => ({ id: txt(r, 'ZCOM_ID'), name: txt(r, 'ZBUTXT'), region: txt(r, 'ZREG_ID'), currency: txt(r, 'ZWAERS') })),
-    )
-    const used = new Set(comp.map((r) => txt(r, 'ZREG_ID')).filter(Boolean))
-    replaceInPlace(
-      REGIONS,
-      Object.entries(REGION_TEXT)
-        .filter(([id]) => used.has(id))
-        .map(([id, desc]) => ({ id, desc })),
-    )
-  }
-  const models = [...ctx.models.values()]
-  if (models.length) {
-    replaceInPlace(
-      MODELS,
-      models.map((r) => ({
-        id: txt(r, 'ZMOD_ID'),
-        desc: txt(r, 'ZMOD_DESC'),
-        type: txt(r, 'ZSUB_TYPE') === OPTION_SUB_TYPE ? ('OPTION' as const) : ('FORWARD' as const),
-      })),
-    )
-  }
-  const statuses = STATUSES.map((s) => ({ ...s, desc: dealStatusText(ctx, '', s.code) || s.desc }))
-  replaceInPlace(STATUSES, statuses)
+  replaceInPlace(ENTITIES, entityHelp(comp))
+  replaceInPlace(REGIONS, regionHelp(comp))
+  replaceInPlace(MODELS, modelHelp([...ctx.models.values()]))
+  replaceInPlace(STATUSES, statusHelp(ctx.statuses))
 }
 
 export function toDeal(d: DealRow, ctx: DealContext): Deal {
   const { mc, comp, model } = dealJoin(ctx, d)
   const subType = txt(d, 'ZSUB_TYPE')
   const status = txt(d, 'ZDEAL_STAT') as StatusCode
-  const modelId = txt(d, 'ZTSF_MODEL') || (mc ? txt(mc, 'ZMOD_ID') : '')
+  // b~zmod_id: the model is the Master Contract's (S_MOD filters on it), not ZSGTSFTR_DEALID-ZTSF_MODEL.
+  const modelId = mc ? txt(mc, 'ZMOD_ID') : ''
   const plLocal = txt(d, 'ZPL_LCURR') || (comp ? txt(comp, 'ZWAERS') : '')
   return {
     zdeal_type: subType === OPTION_SUB_TYPE ? 'OPTION' : 'FORWARD',
@@ -91,7 +119,8 @@ export function toDeal(d: DealRow, ctx: DealContext): Deal {
     zrev_dedate: dateFromIso(d['ZREV_DEDATE']),
     zmc_ref: txt(d, 'ZMC_REF'),
     zdeal_stat: status,
-    zdeal_sdesc: dealStatusText(ctx, subType, status),
+    // LEFT OUTER JOIN zsgtsftr_deal_st ON zdeal_stat = a~zdeal_stat AND zsub_type = 'FX1'.
+    zdeal_sdesc: dealStatusText(ctx, FORWARD_SUB_TYPE, status),
     zconfirm: flag(txt(d, 'ZCONFIRM')),
     zss: flag(txt(d, 'ZSS')),
     zship_start: day(mc?.['ZSHIP_START']),

@@ -351,9 +351,9 @@
       "route": "/apps/fo-early-delivery-unwind-rollover",
       "title": "FO: Create Early Delivery/Unwinding/Rollover",
       "status": "scaffold",
-      "services": [],
+      "services": ["middleware"],
       "legacy": "legacy/unwindroll.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Reads SAP data only, via the middleware (api.ts): deal legs from ZSGTSFCDS_FX (tsfvFx), Txn Type from TVARVC ZSGTSFP_PRE_MATURE_EARLY_DDOWN, Bank BP from ZSGTRMTR_BP_GRP x ZSGTRMTR_BPEXT for the leg's ZGRP. WAITING FOR API: tsfvFx (ZSGTSFV_FX) lacks ZTSF_DEAL_ID and the VTBFHA extension fields and holds no rows; TVARVC has no rows for the variable; the three creates have no backend action."
     },
     {
       "code": "ZSGTSFR094",
@@ -361,9 +361,9 @@
       "route": "/apps/fo-additional-spot-booking",
       "title": "FO: Additional Spot Booking",
       "status": "scaffold",
-      "services": [],
+      "services": ["trmfx", "trmmaster", "slctsfbpbank", "companycode", "businesspartner", "middleware"],
       "legacy": "legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html",
-      "note": "Legacy page never called an API — no fetch, no XMLHttpRequest. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP wiring for the underlying FX/DSS deal tables and the spot-booking write is a follow-up once those entities are defined."
+      "note": "Create Spot books through FxTransaction (trmfx). Its drop-downs read SAP (valueHelps.ts): Company Code = A_CompanyCode limited to the TSF entities in ZSGTSFTR_COMP; Transaction Type = TransactionType under 12A/12B; Business Partner = SlcTsfBpBank for the picked company code, named from A_BusinessPartner. The deal rows are still the legacy seed data — no SAP entity serves the FX/DSS deal tables yet."
     },
     {
       "code": "ZSGTSFR008",
@@ -486,9 +486,9 @@
       "route": "/apps/mo-view-deal-ids-for-confirmation",
       "title": "MO: View List of Deal IDs for Confirmation",
       "status": "scaffold",
-      "services": [],
+      "services": ["middleware"],
       "legacy": "legacy/view list of deal ids.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "ZSGTSF_RDEAL_LIST_CONF over the SLC middleware: ZSGTSFTR_DEALID at ZDEAL_STAT 01/02 joined to MAS_CON, COMP and DEAL_ST (FX1). Filters read SAP only: Region = COMP-ZREG_ID codes (no region text master is migrated), Origin Entity = ZSGTSFTR_COMP, FX Model = ZSGTSFTR_RULE_BT, Status = DEAL_ST FX1 <= 02. No sample fallback: an unreadable Deal ID table shows WAITING FOR DEAL ID API. Utilized Amt stays 0 until ZSGTSFCDS_FX / _OPTION carry ZTSF_DEAL_ID."
     },
     {
       "code": "ZSGTSFP017",

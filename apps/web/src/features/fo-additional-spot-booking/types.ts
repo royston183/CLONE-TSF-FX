@@ -19,6 +19,8 @@ export type SpotRow = {
   diffAmt: number
   /** The spot transaction number once created, '' while the row is still "New Spot". */
   spotTxn: string
+  /** The FTR product type the spot was booked with, once created. */
+  spotProductType?: string
   tradeDate: string
   valueDate: string
   partner: string
@@ -32,6 +34,12 @@ export type SpotRow = {
 }
 
 export type CodeLabel = { key: string; text: string }
+
+/** A Create Spot transaction type: the code is unique, and it carries the product type it books under. */
+export type TxnTypeOption = CodeLabel & { productType: string }
+
+/** A Create Spot drop-down read from SAP (valueHelps.ts). */
+export type ValueHelp<T extends CodeLabel> = { state: 'loading' } | { state: 'ok'; options: T[] } | { state: 'error'; message: string }
 
 export type SortKey =
   | 'dealId'

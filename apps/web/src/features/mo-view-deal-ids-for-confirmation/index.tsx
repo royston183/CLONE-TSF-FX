@@ -5,9 +5,8 @@ import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DealModal, McModal } from './DetailModals.tsx'
-import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { loadScreen } from './api.ts'
+import { WAITING_DEAL_ID_API, loadScreen, type DataSource } from './api.ts'
 import { ENTITIES, MODELS, REGIONS, STATUSES } from './data.ts'
 import { fmtDate, parseDMY } from './format.ts'
 import {
@@ -52,7 +51,7 @@ type Msel = { key: MultiFilterKey; label: string; wide: boolean; options: MselOp
 /** Built per load: REGIONS / ENTITIES / MODELS are swapped for MySQL's rows once they arrive. */
 function buildMsels(): Msel[] {
   return [
-    { key: 'region', label: 'Region', wide: false, options: REGIONS.map((r) => ({ id: r.id, label: r.desc })), placeholder: 'Select region...' },
+    { key: 'region', label: 'Region', wide: false, options: REGIONS.map((r) => ({ id: r.id, label: r.desc || r.id })), placeholder: 'Select region...' },
     { key: 'entity', label: 'Origin Entity', wide: true, options: ENTITIES.map((e) => ({ id: e.id, label: e.name, sub: e.region })), placeholder: 'Select entity...' },
     { key: 'model', label: 'FX Model', wide: true, options: MODELS.map((m) => ({ id: m.id, label: m.desc })), placeholder: 'Select FX model...' },
   ]
@@ -88,14 +87,14 @@ function RefreshIcon({ size }: { size?: number }) {
  *
  * A read-only workbench: the deals active as of the Key Date with status 01 Pending
  * Confirmation / 02 Confirmed, narrowed by the Basic Selection, quick filters and search.
- * The deals come from ZSGTSFTR_DEALID through the SLC middleware (api.ts); the 46 seeded
- * deals in data.ts are shown only when it cannot be reached. Deal ID and MC Reference No.
+ * The deals and every filter's values come from SAP's tables through the SLC middleware
+ * (api.ts); when ZSGTSFTR_DEALID cannot be read the list stays empty — no sample rows. Deal ID and MC Reference No.
  * open read-only detail popups.
  */
 export default function MoViewDealIdsForConfirmation() {
   const [deals, setDeals] = useState<Deal[]>([])
-  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
-  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Where the rows came from; 'unavailable' means ZSGTSFTR_DEALID could not be read. */
+  const [source, setSource] = useState<DataSource | 'loading'>('loading')
   useEffect(() => {
     const controller = new AbortController()
     loadScreen(controller.signal)
@@ -457,13 +456,13 @@ export default function MoViewDealIdsForConfirmation() {
   )
 }
 
-/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
-function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+/** Says where the rows came from, or that the Deal ID list could not be read. */
+function SourceNote({ source }: { source: DataSource | 'loading' }) {
   const text =
     source === 'loading'
       ? 'Loading from MySQL…'
-      : source === 'mysql'
+      : source === 'sap'
         ? 'ZSGTSFTR_DEALID · MySQL'
-        : 'Dummy data — the middleware could not be reached'
+        : `${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read from the SLC middleware`
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

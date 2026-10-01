@@ -3,7 +3,7 @@
  * component only holds state.
  */
 import { fmtAmount, parseAmountInput, parseDate } from './format.ts'
-import type { CreateFormErrors, CreateFormValues, Filters, Side, Sort, SortKey, SpotRow } from './types.ts'
+import type { CodeLabel, CreateFormErrors, CreateFormValues, Filters, Side, Sort, SortKey, SpotRow, TxnTypeOption } from './types.ts'
 
 // ---------------------------------------------------------------- filtering / sorting
 
@@ -84,8 +84,23 @@ export function canCreate(r: SpotRow | null | undefined): boolean {
   return !!r && !r.spotTxn && Number(r.diffAmt) !== 0
 }
 
-export function blankCreateForm(r: SpotRow): CreateFormValues {
-  return { companyCode: r.companyCode, txnType: r.defaultTxnType, partner: r.partner, tradeDate: r.tradeDate, valueDate: r.valueDate, rate: '' }
+/** A code is kept only while SAP's drop-down offers it ('' otherwise). */
+export const offered = (options: readonly CodeLabel[], code: string): string => (options.some((o) => o.key === code) ? code : '')
+
+/**
+ * The seed rows still carry legacy codes SAP refuses, so only a code SAP's drop-downs offer is
+ * kept. Partners depend on the company code and load after the popup opens, so they are
+ * matched then (see partnerAfterLoad).
+ */
+export function blankCreateForm(r: SpotRow, companies: readonly CodeLabel[], txnTypes: readonly CodeLabel[]): CreateFormValues {
+  return {
+    companyCode: offered(companies, r.companyCode),
+    txnType: offered(txnTypes, r.defaultTxnType),
+    partner: '',
+    tradeDate: r.tradeDate,
+    valueDate: r.valueDate,
+    rate: '',
+  }
 }
 
 /**
@@ -116,8 +131,24 @@ export function validateCreateForm(values: CreateFormValues): { valid: boolean; 
   return { valid: Object.keys(errors).length === 0, errors }
 }
 
+/** Once a company code's partners arrive: keep the pick if offered, else the row's own partner if offered, else none. */
+export const partnerAfterLoad = (current: string, rowPartner: string, partners: readonly CodeLabel[]): string =>
+  offered(partners, current) || offered(partners, rowPartner)
+
+/** The product type a transaction type books under in SAP's list; '' when it is not offered. */
+export const productTypeOf = (txnTypes: readonly TxnTypeOption[], txnType: string): string =>
+  txnTypes.find((o) => o.key === txnType)?.productType ?? ''
+
 /** The row as Create Spot leaves it: the picked company/partner/dates, and a fresh spot number. */
-export function applyCreate(r: SpotRow, values: CreateFormValues, spotTxn: string, createdBy: string, createdDate: string, companyName: string): SpotRow {
+export function applyCreate(
+  r: SpotRow,
+  values: CreateFormValues,
+  spotTxn: string,
+  createdBy: string,
+  createdDate: string,
+  companyName: string,
+  productType: string,
+): SpotRow {
   return {
     ...r,
     companyCode: values.companyCode,
@@ -126,6 +157,7 @@ export function applyCreate(r: SpotRow, values: CreateFormValues, spotTxn: strin
     tradeDate: values.tradeDate,
     valueDate: values.valueDate,
     spotTxn,
+    spotProductType: productType,
     createdBy,
     createdDate,
   }
@@ -142,7 +174,7 @@ export function detailItems(r: SpotRow, kind: 'original' | 'spot'): Array<[strin
     ['View', status],
     ['Company Code', r.companyCode],
     ['Deal ID', r.dealId],
-    ['Product Type', kind === 'spot' ? '12A' : r.dealType],
+    ['Product Type', kind === 'spot' ? (r.spotProductType ?? '') : r.dealType],
     ['Trade Type', r.tradeType],
     ['Trade Date', r.tradeDate],
     ['Value Date', r.valueDate],
