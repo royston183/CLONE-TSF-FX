@@ -84,6 +84,15 @@ export function isAbort(error: unknown): boolean {
   return ((error as { body?: { name?: string } } | null)?.body as { name?: string } | null)?.name === 'AbortError'
 }
 
+/** The column names a resource serves, as its registry entry lists them. */
+export async function fxColumns(resource: string, signal?: AbortSignal): Promise<string[]> {
+  const meta = await apiFetch<{ columns?: { name?: string }[] }>(
+    middlewareApi(`meta/resources/${resource}`),
+    signal ? { signal } : undefined,
+  )
+  return (meta?.columns ?? []).map((c) => String(c.name ?? '')).filter(Boolean)
+}
+
 /** Whether a resource has a number range bound, so a blank key is safe to send. */
 export async function fxHasNumberRange(resource: string, signal?: AbortSignal): Promise<boolean> {
   const meta = await apiFetch<{ numberRange?: { initialised?: boolean } | null }>(

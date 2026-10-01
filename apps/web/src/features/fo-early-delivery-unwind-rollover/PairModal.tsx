@@ -1,7 +1,7 @@
-import { DateField, Dropdown } from './controls.tsx'
-import { BP_OPTIONS, TYPE_OPTIONS, pairCurrencies } from './logic.ts'
+import { DateField, SapDropdown } from './controls.tsx'
+import { pairCurrencies } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
-import type { BookingForm, Leg, PairForm } from './types.ts'
+import type { Avail, BookingForm, DdOption, Leg, PairForm } from './types.ts'
 
 function BookingSection({
   title,
@@ -10,6 +10,8 @@ function BookingSection({
   form,
   buyCcy,
   sellCcy,
+  typeOptions,
+  bpOptions,
   onChange,
 }: {
   title: string
@@ -19,6 +21,8 @@ function BookingSection({
   form: BookingForm
   buyCcy: string
   sellCcy: string
+  typeOptions: Avail<readonly DdOption[]>
+  bpOptions: Avail<readonly DdOption[]>
   onChange: (patch: Partial<BookingForm>) => void
 }) {
   return (
@@ -33,7 +37,7 @@ function BookingSection({
             Txn Type<span className="req">*</span>
           </label>
           <div className="ctrl-slot">
-            <Dropdown options={TYPE_OPTIONS} value={form.type} placeholder="Select txn type..." onChange={(type) => onChange({ type })} />
+            <SapDropdown avail={typeOptions} value={form.type} placeholder="Select txn type..." onChange={(type) => onChange({ type })} />
           </div>
           {requiredMsg ? <div className="error-msg">Required.</div> : null}
         </div>
@@ -60,7 +64,7 @@ function BookingSection({
         <div className="field">
           <label>Bank BP</label>
           <div className="ctrl-slot">
-            <Dropdown options={BP_OPTIONS} value={form.bp} placeholder="Select BP..." onChange={(bp) => onChange({ bp })} />
+            <SapDropdown avail={bpOptions} value={form.bp} placeholder="Select BP..." onChange={(bp) => onChange({ bp })} />
           </div>
         </div>
       </div>
@@ -109,6 +113,8 @@ export function PairModal({
   leg,
   form,
   bodyKey,
+  typeOptions,
+  bpOptions,
   onChange,
   onSubmit,
 }: {
@@ -119,6 +125,10 @@ export function PairModal({
   leg: Leg | null
   form: PairForm
   bodyKey: number
+  /** TVARVC ZSGTSFP_PRE_MATURE_EARLY_DDOWN (FORM txn_type). */
+  typeOptions: Avail<readonly DdOption[]>
+  /** ZSGTRMTR_BP_GRP ⋈ ZSGTRMTR_BPEXT for the leg's trader group (FORM bp). */
+  bpOptions: Avail<readonly DdOption[]>
   onChange: (form: PairForm) => void
   onSubmit: () => void
 }) {
@@ -163,6 +173,8 @@ export function PairModal({
               form={form.newTxn}
               buyCcy={ccy.newBuy}
               sellCcy={ccy.newSell}
+              typeOptions={typeOptions}
+              bpOptions={bpOptions}
               onChange={(p) => onChange({ ...form, newTxn: { ...form.newTxn, ...p } })}
             />
             <BookingSection
@@ -172,6 +184,8 @@ export function PairModal({
               form={form.cancel}
               buyCcy={ccy.cancelBuy}
               sellCcy={ccy.cancelSell}
+              typeOptions={typeOptions}
+              bpOptions={bpOptions}
               onChange={(p) => onChange({ ...form, cancel: { ...form.cancel, ...p } })}
             />
           </div>

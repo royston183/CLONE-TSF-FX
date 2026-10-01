@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { formatDateDMY, isoOf, todayIsoUtc } from './format.ts'
-import type { DdOption } from './types.ts'
+import type { Avail, DdOption } from './types.ts'
 
 /** Closes a popup on any click outside `wrap` (the legacy page's shared document listener). */
 function useOutsideClose(open: boolean, wrapRef: RefObject<HTMLElement | null>, close: () => void) {
@@ -72,6 +72,37 @@ export function Dropdown({
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * A Dropdown whose options are read from SAP. Until they are, it offers nothing and says why:
+ * a value help is never filled with made-up entries.
+ */
+export function SapDropdown({
+  avail,
+  value,
+  placeholder,
+  onChange,
+}: {
+  avail: Avail<readonly DdOption[]>
+  value: string
+  placeholder: string
+  onChange: (value: string) => void
+}) {
+  const options = avail.state === 'ok' ? avail.value : []
+  const shown =
+    avail.state === 'ok' ? placeholder : avail.state === 'loading' ? 'Loading…' : avail.state === 'waiting' ? 'WAITING FOR API' : 'Unavailable'
+  return (
+    <>
+      <Dropdown options={options} value={value} placeholder={shown} onChange={onChange} />
+      {avail.state === 'waiting' || avail.state === 'error' ? (
+        <div className="hint" title={avail.reason}>
+          {avail.state === 'waiting' ? 'WAITING FOR API: ' : ''}
+          {avail.reason}
+        </div>
+      ) : null}
+    </>
   )
 }
 

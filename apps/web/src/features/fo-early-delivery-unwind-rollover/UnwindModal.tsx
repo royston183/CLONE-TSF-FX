@@ -1,7 +1,6 @@
-import { DateField, Dropdown } from './controls.tsx'
-import { BP_OPTIONS } from './logic.ts'
+import { DateField, SapDropdown } from './controls.tsx'
 import { Overlay, type Modal } from './modal.tsx'
-import type { Leg, UnwindForm } from './types.ts'
+import type { Avail, DdOption, Leg, UnwindForm } from './types.ts'
 
 /**
  * Unwinding (screen 9002): one reversing txn. The Buy/Sell labels are the original leg's
@@ -12,6 +11,7 @@ export function UnwindModal({
   leg,
   form,
   bodyKey,
+  bpOptions,
   onChange,
   onSubmit,
 }: {
@@ -19,6 +19,8 @@ export function UnwindModal({
   leg: Leg | null
   form: UnwindForm
   bodyKey: number
+  /** ZSGTRMTR_BP_GRP ⋈ ZSGTRMTR_BPEXT for the leg's trader group (FORM drop_down_9002). */
+  bpOptions: Avail<readonly DdOption[]>
   onChange: (form: UnwindForm) => void
   onSubmit: () => void
 }) {
@@ -79,7 +81,7 @@ export function UnwindModal({
                 Bank BP<span className="req">*</span>
               </label>
               <div className="ctrl-slot">
-                <Dropdown options={BP_OPTIONS} value={form.bp} placeholder="Select BP..." onChange={(bp) => set({ bp })} />
+                <SapDropdown avail={bpOptions} value={form.bp} placeholder="Select BP..." onChange={(bp) => set({ bp })} />
               </div>
             </div>
           </div>

@@ -1,13 +1,14 @@
 /**
  * Seed data, verbatim from the legacy page's makeData() and its option lists. The page never
- * called an API — no fetch, no XMLHttpRequest — so this is the only source of rows; SAP OData
- * wiring (the FX deal / DSS deal tables ZSGTSFR094 reads, and the spot-booking write) is a
- * follow-up once those entities are defined, same as sblc-allocate-bank and fx-blotter.
+ * called an API — no fetch, no XMLHttpRequest — so this is still the only source of rows; the
+ * FX deal / DSS deal tables ZSGTSFR094 reads have no OData entity yet. The spot-booking write
+ * itself goes to SAP (api.ts).
  */
 import { addDays, formatDate } from './format.ts'
 import type { CodeLabel, SpotRow } from './types.ts'
 
-export const COMPANY_OPTIONS: CodeLabel[] = [
+/** The legacy page's company list — still the source of the seed rows' company code and name. */
+const LEGACY_COMPANIES: CodeLabel[] = [
   { key: 'AE13', text: 'Olam International DMCC' },
   { key: 'AE11', text: 'Olam Treasury Services DMCC' },
   { key: 'SG03', text: 'Olam International Limited' },
@@ -15,7 +16,7 @@ export const COMPANY_OPTIONS: CodeLabel[] = [
   { key: 'ES12', text: 'SEDA OUTSPAN IBERIA S.L.U' },
 ]
 
-export const PARTNER_OPTIONS: CodeLabel[] = [
+const LEGACY_PARTNERS: CodeLabel[] = [
   { key: '0000000003', text: 'BARCLAYS BANK PLC' },
   { key: '0660000680', text: 'STANDARD CHARTERED BANK SINGAPORE' },
   { key: '0660000645', text: 'DBS BANK LTD' },
@@ -23,16 +24,12 @@ export const PARTNER_OPTIONS: CodeLabel[] = [
   { key: '0660000810', text: 'STANDARD CHARTERED BANK SINGAPORE' },
 ]
 
-export const TXN_TYPE_OPTIONS: CodeLabel[] = [
-  { key: '300', text: 'FX Spot Settlement' },
-  { key: '301', text: 'FX Spot - External' },
-  { key: '302', text: 'FX Spot - Intercompany' },
-]
+/** FTR 12A 600 "Spot": the type a new row opens with. The Create Spot list itself is read from SAP (valueHelps.ts). */
+const DEFAULT_TXN_TYPE = '600'
 
-export const findCompanyName = (code: string): string => COMPANY_OPTIONS.find((c) => c.key === code)?.text ?? code
-
-/** The next spot transaction number a Create hands out, same starting point as the legacy page. */
-export const FIRST_SPOT_NUMBER = 61002001
+/** A company code's name: from SAP's list when it is loaded, else the seed rows' own names. */
+export const findCompanyName = (code: string, sap: readonly CodeLabel[] = []): string =>
+  [...sap, ...LEGACY_COMPANIES].find((c) => c.key === code)?.text ?? code
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'USD', 'USD']
 const OTHER_CURRENCIES = ['INR', 'USD', 'USD', 'AED', 'SGD']
@@ -48,8 +45,8 @@ export function makeData(): SpotRow[] {
   const rows: SpotRow[] = []
   for (let i = 0; i < 29; i++) {
     const created = i % 5 === 1 || i % 7 === 0
-    const company = COMPANY_OPTIONS[i % COMPANY_OPTIONS.length]!
-    const partner = PARTNER_OPTIONS[i % PARTNER_OPTIONS.length]!
+    const company = LEGACY_COMPANIES[i % LEGACY_COMPANIES.length]!
+    const partner = LEGACY_PARTNERS[i % LEGACY_PARTNERS.length]!
     const amount = 850000 + i * 175000
     let diff = (i % 2 === 0 ? 1 : -1) * (65000 + i * 9750)
     if (i === 11) diff = 0
@@ -81,7 +78,7 @@ export function makeData(): SpotRow[] {
       tsfEntity: TSF_ENTITIES[i % TSF_ENTITIES.length]!,
       createdBy: created ? CREATORS[i % CREATORS.length]! : '',
       createdDate: created ? formatDate(addDays(trade, 1)) : '',
-      defaultTxnType: '300',
+      defaultTxnType: DEFAULT_TXN_TYPE,
     })
   }
   return rows

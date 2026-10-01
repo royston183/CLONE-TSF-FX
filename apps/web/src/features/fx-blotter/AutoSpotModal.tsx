@@ -1,16 +1,19 @@
+import { SPOT_PRODUCT_TYPE, SPOT_TRANSACTION_TYPE } from './api.ts'
 import { ENTITIES } from './data.ts'
 import { partnerLabel } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoSpotForm, BusinessPartner } from './types.ts'
 
 /**
- * Create Spot: the visible fields of the external Auto Spot program (ZSGTSFR_SPOT_CREATE),
- * whose source was never supplied, so nothing is booked.
+ * Create Spot: the visible fields of the external Auto Spot program (ZSGTSFR_SPOT_CREATE).
+ * Create books a real FTR deal through ZFS_SB_TRMFX (api.ts); a refusal lists SAP's messages.
  */
 export function AutoSpotModal({
   modals,
   form,
   partners,
+  errors,
+  busy,
   onChange,
   onCreate,
 }: {
@@ -18,6 +21,9 @@ export function AutoSpotModal({
   form: AutoSpotForm
   /** The bank partners only. */
   partners: BusinessPartner[]
+  /** Why SAP refused the last Create, one BAPI message per line. */
+  errors: readonly string[]
+  busy: boolean
   onChange: (patch: Partial<AutoSpotForm>) => void
   onCreate: () => void
 }) {
@@ -27,7 +33,7 @@ export function AutoSpotModal({
       <div className="modal-card" style={{ maxWidth: 620 }}>
         <ModalHeader
           title="Create Spot"
-          subtitle="Additional Spot Booking - visual simulation of the external Auto Spot program"
+          subtitle="Additional Spot Booking - booked in SAP FTR"
           onClose={close}
         />
         <div className="modal-body">
@@ -38,7 +44,7 @@ export function AutoSpotModal({
             </div>
             <div className="form-field">
               <label>FX Deal Type</label>
-              <input id="spot-fx-type" type="text" value="DS1" readOnly />
+              <input id="spot-fx-type" type="text" value={SPOT_PRODUCT_TYPE} readOnly />
             </div>
             <div className="form-field">
               <label>DSS Deal Type</label>
@@ -56,7 +62,7 @@ export function AutoSpotModal({
             </div>
             <div className="form-field span2">
               <label>Transaction Type</label>
-              <input id="spot-txn-type" type="text" value="609 SPOT-SETTLEMENT" readOnly />
+              <input id="spot-txn-type" type="text" value={`${SPOT_TRANSACTION_TYPE} FX SPOT / FORWARD`} readOnly />
             </div>
             <div className="form-field">
               <label>Trade Date</label>
@@ -113,17 +119,23 @@ export function AutoSpotModal({
               />
             </div>
           </div>
-          <div className="validation-box warn" style={{ marginBottom: 0 }}>
-            The supplied ABAP delegates Auto Spot to <strong>ZSGTSFR_SPOT_CREATE</strong>. This popup reproduces the
-            visible fields from the screenshot; creation remains a standalone simulation.
-          </div>
+          {errors.length ? (
+            <div className="validation-box warn" role="alert" style={{ marginBottom: 0 }}>
+              <strong>SAP did not create the spot:</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {errors.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn-cancel" onClick={close}>
+          <button type="button" className="btn-cancel" onClick={close} disabled={busy}>
             Cancel
           </button>
-          <button type="button" className="btn-confirm" onClick={onCreate}>
-            Create Spot
+          <button type="button" className="btn-confirm" onClick={onCreate} disabled={busy}>
+            {busy ? 'Creating in SAP…' : 'Create Spot'}
           </button>
         </div>
       </div>

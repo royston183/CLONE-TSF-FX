@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { createSpotTransaction, toCreatePayload } from './api.ts'
 import { CreateSpotModal } from './CreateSpotModal.tsx'
-import { findCompanyName, FIRST_SPOT_NUMBER, makeData } from './data.ts'
+import { findCompanyName, makeData } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
 import { formatDate } from './format.ts'
@@ -13,18 +14,20 @@ import {
   canCreate,
   filterSortRows,
   nextSort,
+  offered,
+  partnerAfterLoad,
+  productTypeOf,
   validateCreateForm,
 } from './logic.ts'
+import { loadCompanies, loadPartners, loadTxnTypes } from './valueHelps.ts'
 import { SpotTable } from './SpotTable.tsx'
 import './fo-additional-spot-booking.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-additional-spot-booking.dark.css'
-import type { CreateFormErrors, CreateFormValues, DetailKind, Filters, Sort, SpotRow, Toast } from './types.ts'
+import type { CodeLabel, CreateFormErrors, CreateFormValues, DetailKind, Filters, Sort, SpotRow, Toast, TxnTypeOption, ValueHelp } from './types.ts'
 
 const PAGE_SIZE = 20
-/** The legacy page's fixed "today" — used for the calendar's highlight and Create's stamp. */
-const DEMO_TODAY = new Date(2026, 8, 28)
 
 const DEFAULT_FILTERS: Filters = { q: '', dealFilter: '', showNew: true, showCreated: false }
 const DEFAULT_SORT: Sort = { key: 'dealId', dir: -1 }
@@ -33,15 +36,13 @@ const DEFAULT_SORT: Sort = { key: 'dealId', dir: -1 }
  * FO: Additional Spot Booking (ZSGTSFR094), converted from
  * legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html.
  *
- * The legacy page never called an API — no fetch, no XMLHttpRequest — so it stays a UI-only
- * React shell with its seed data quarantined in data.ts, same as sblc-allocate-bank and
- * fx-blotter; SAP OData wiring (the underlying FX/DSS deal tables and the spot-booking write)
- * is a follow-up once those entities are defined.
+ * Create Spot Txn books a real FTR deal through ZFS_SB_TRMFX (api.ts) and shows every BAPI
+ * message when SAP refuses it. The list itself is still the legacy seed data in data.ts: the
+ * FX/DSS deal tables it reads have no OData entity yet.
  */
 export default function FoAdditionalSpotBooking() {
   const [rows, setRows] = useState<SpotRow[]>(() => makeData())
   const seedRef = useRef(rows)
-  const nextSpotNumber = useRef(FIRST_SPOT_NUMBER)
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [keyDate, setKeyDate] = useState('')
@@ -54,7 +55,51 @@ export default function FoAdditionalSpotBooking() {
   const [createRow, setCreateRow] = useState<SpotRow | null>(null)
   const [createValues, setCreateValues] = useState<CreateFormValues | null>(null)
   const [createErrors, setCreateErrors] = useState<CreateFormErrors>({})
+  const [sapErrors, setSapErrors] = useState<string[]>([])
+  const [creating, setCreating] = useState(false)
   const [detail, setDetail] = useState<{ row: SpotRow; kind: DetailKind } | null>(null)
+
+  // The Create Spot drop-downs, read from SAP (valueHelps.ts).
+  const [companies, setCompanies] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
+  const [txnTypes, setTxnTypes] = useState<ValueHelp<TxnTypeOption>>({ state: 'loading' })
+  const [partners, setPartners] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
+  const companyList = companies.state === 'ok' ? companies.options : []
+  const txnTypeList = txnTypes.state === 'ok' ? txnTypes.options : []
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadCompanies(ctrl.signal).then(setCompanies, () => undefined)
+    loadTxnTypes(ctrl.signal).then(setTxnTypes, () => undefined)
+    return () => ctrl.abort()
+  }, [])
+
+  // A popup opened before the lists arrived gets the row's defaults once they do.
+  useEffect(() => {
+    if (!createRow) return
+    setCreateValues((v) =>
+      v
+        ? {
+            ...v,
+            companyCode: v.companyCode || offered(companyList, createRow.companyCode),
+            txnType: v.txnType || offered(txnTypeList, createRow.defaultTxnType),
+          }
+        : v,
+    )
+  }, [companies, txnTypes, createRow])
+
+  // Business partners belong to the picked company code: reload them whenever it changes.
+  const pickedCompany = createValues?.companyCode ?? ''
+  useEffect(() => {
+    if (!createRow) return
+    const ctrl = new AbortController()
+    setPartners({ state: 'loading' })
+    loadPartners(pickedCompany, ctrl.signal).then((help) => {
+      setPartners(help)
+      const list = help.state === 'ok' ? help.options : []
+      setCreateValues((v) => (v ? { ...v, partner: partnerAfterLoad(v.partner, createRow.partner, list) } : v))
+    }, () => undefined)
+    return () => ctrl.abort()
+  }, [pickedCompany, createRow])
 
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
@@ -128,24 +173,47 @@ export default function FoAdditionalSpotBooking() {
       return
     }
     setCreateRow(r)
-    setCreateValues(blankCreateForm(r))
+    setCreateValues(blankCreateForm(r, companyList, txnTypeList))
     setCreateErrors({})
   }
 
-  const confirmCreate = () => {
-    if (!createRow || !createValues) return
+  const closeCreate = () => {
+    setCreateRow(null)
+    setCreateValues(null)
+    setSapErrors([])
+  }
+
+  const confirmCreate = async () => {
+    if (!createRow || !createValues || creating) return
     const { valid, errors } = validateCreateForm(createValues)
     if (!valid) {
       setCreateErrors(errors)
       return
     }
-    const spotTxn = String(nextSpotNumber.current++)
-    const updated = applyCreate(createRow, createValues, spotTxn, 'DEMOUSER', formatDate(DEMO_TODAY), findCompanyName(createValues.companyCode))
+    setCreating(true)
+    setSapErrors([])
+    const productType = productTypeOf(txnTypeList, createValues.txnType)
+    const out = await createSpotTransaction(toCreatePayload(createRow, createValues, productType))
+    setCreating(false)
+    if (!out.ok) {
+      setSapErrors(out.messages)
+      pushToast('Spot was not created in SAP — see the messages in the popup.', 'error')
+      return
+    }
+    const values = { ...createValues, companyCode: out.companyCode }
+    const updated = applyCreate(
+      createRow,
+      values,
+      out.transaction,
+      'DEMOUSER',
+      formatDate(new Date()),
+      findCompanyName(out.companyCode, companyList),
+      productType,
+    )
     setRows((all) => all.map((r) => (r.id === updated.id ? updated : r)))
     setSelectedId(updated.id)
-    setCreateRow(null)
-    setCreateValues(null)
-    pushToast('Spot Created Successfully. Confirmation Sent.')
+    closeCreate()
+    pushToast(`Spot ${out.transaction} created in company code ${out.companyCode}.`)
   }
 
   // ------------------------------------------------------------------ drag onto Create Spot Txn
@@ -327,14 +395,16 @@ export default function FoAdditionalSpotBooking() {
         <CreateSpotModal
           row={createRow}
           values={createValues}
+          companies={companies}
+          txnTypes={txnTypes}
+          partners={partners}
           errors={createErrors}
           onChange={(patch) => setCreateValues((v) => (v ? { ...v, ...patch } : v))}
+          sapErrors={sapErrors}
+          busy={creating}
           onClearErrors={() => setCreateErrors({})}
-          onCancel={() => {
-            setCreateRow(null)
-            setCreateValues(null)
-          }}
-          onConfirm={confirmCreate}
+          onCancel={closeCreate}
+          onConfirm={() => void confirmCreate()}
         />
       ) : null}
 

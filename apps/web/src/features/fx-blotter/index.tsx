@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { AutoDealModal } from './AutoDealModal.tsx'
 import { AutoSpotModal } from './AutoSpotModal.tsx'
+import { createSpotDeal, toSpotPayload } from './api.ts'
 import { BlotterTable, type TableHandlers } from './BlotterTable.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
 import { ContextDatePicker } from './ContextDatePicker.tsx'
@@ -178,6 +179,8 @@ export default function FxBlotter() {
   // Not reset between openings, as in the original.
   const [noInvoice, setNoInvoice] = useState(false)
   const [spot, setSpot] = useState<AutoSpotForm>(() => autoSpotForm([], b))
+  const [spotErrors, setSpotErrors] = useState<string[]>([])
+  const [spotBusy, setSpotBusy] = useState(false)
   const [listCrit, setListCrit] = useState<TxnListCriteria>(() => defaultListCriteria(b.ctx, '', ''))
   const [listResult, setListResult] = useState<BlotterRow[] | null>(null)
   const [upload, setUpload] = useState<UploadState>(() => freshUpload(b, 0))
@@ -489,15 +492,27 @@ export default function FxBlotter() {
 
   const openAutoSpot = () => {
     setSpot(autoSpotForm(sel, b))
+    setSpotErrors([])
     modals.open('autospot')
   }
 
-  const createSpot = () => {
+  const createSpot = async () => {
+    const { payload, problems } = toSpotPayload(spot)
+    if (!payload) {
+      setSpotErrors(problems)
+      return
+    }
+    setSpotBusy(true)
+    setSpotErrors([])
+    const out = await createSpotDeal(payload)
+    setSpotBusy(false)
+    if (!out.ok) {
+      setSpotErrors(out.messages)
+      showToast('Spot deal was not created in SAP — see the messages in the popup.', 'error')
+      return
+    }
     modals.close('autospot')
-    showToast(
-      'Auto Spot UI simulated from the supplied screenshot; the underlying ZSGTSFR_SPOT_CREATE program was not supplied, so no separate SAP spot record is created.',
-      'warn',
-    )
+    showToast(`Spot deal ${out.transaction} created in company code ${out.companyCode}.`, 'success')
   }
 
   // ------------------------------------------------------------------ FX Txn List
@@ -1043,8 +1058,10 @@ export default function FxBlotter() {
         modals={modals}
         form={spot}
         partners={spotPartners(b.partners)}
+        errors={spotErrors}
+        busy={spotBusy}
         onChange={(patch) => setSpot((s) => ({ ...s, ...patch }))}
-        onCreate={createSpot}
+        onCreate={() => void createSpot()}
       />
       <TxnListModal
         modals={modals}

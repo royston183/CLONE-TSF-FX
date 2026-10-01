@@ -240,6 +240,8 @@ export default function FoCreateMasterContract() {
     const { store, children } = ensureChildContracts(childStore, contract)
     if (source === 'mysql') {
       try {
+        // A blank MC Reference defaults from the MC number, which only exists after the insert.
+        if (!formValues.mcReference) await updateContract(contract)
         await saveChildren(children, contract)
       } catch (error) {
         showToast(`Master Contract ${mcNumber} was created, but its child contracts were not saved: ${messageOf(error)}`, true)

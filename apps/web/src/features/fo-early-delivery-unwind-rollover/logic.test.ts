@@ -1,12 +1,10 @@
-import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { DEAL_DIRECTORY, genDealLegs, seedFromString } from './data.ts'
 import { fmtAmt, formatDateDMY, isoOf } from './format.ts'
 import {
   DEFAULT_FILTERS,
   DEFAULT_SORT,
   MSG,
-  TYPE_FILTER_OPTIONS,
   applyEarly,
   applyRollover,
   applyUnwind,
@@ -16,18 +14,21 @@ import {
   gateRollover,
   gateUnwind,
   kpis,
-  loadDeal,
   loadToast,
   nextSort,
+  normalizeDealId,
   paginate,
   pairCurrencies,
   pairFormFor,
   rolloverEvent,
   sapeventUrl,
   sortIndicator,
+  statusOptions,
   statusTextClass,
   toggleSelection,
   txnCount,
+  typeFilterOptions,
+  typeLabel,
   unwindEvent,
   unwindFormFor,
   validateEarly,
@@ -37,11 +38,40 @@ import {
 } from './logic.ts'
 import type { Leg, PairForm } from './types.ts'
 
-const legsOf = (id: string): Leg[] => {
-  const res = loadDeal(id)
-  if (!res.ok) throw new Error(res.message)
-  return res.legs
+/*
+ * Test fixtures: the legacy page's three sample deals, kept here so the rules stay pinned to
+ * the same cases. The screen itself reads SAP (api.ts) and ships no sample legs.
+ */
+function leg(
+  rfha: string, bukrs: string, butxt: string, sfhaart: string, xtext: string, dblfz: string, delfz: string,
+  cpair: string, bs1: string, curr1: string, amt1: number, bs2: string, curr2: string, amt2: number, rate: number,
+  kontrh: string, bpName: string, txnDesc: string, dealType: string, zroll: string, pm: boolean, unw: boolean,
+): Leg {
+  return {
+    rfha, bukrs, butxt, sfhaart, xtext, dblfz, delfz, cpair, bs1, curr1, amt1, bs2, curr2, amt2,
+    otot_rate: rate, kontrh, bpName, txnStatus: '03', txnDesc, dealType, zgrp: 'G02', zuonr: rfha, zroll,
+    ztsf_pre_mature: pm, ztsf_unwind: unw,
+  }
 }
+
+// prettier-ignore
+const DEALS: Readonly<Record<string, readonly Leg[]>> = {
+  TSF10045: [
+    leg('1000004521','IN11','Olam Agri India Pvt Ltd','619','FWD','2026-08-01','2027-02-01','USD-INR','Buy','USD',1000000,'Sell','INR',89650000,89.65,'2001','HSBC Bank','Active','00','',false,false),
+    leg('1000004522','IN11','Olam Agri India Pvt Ltd','605','SPOT','2026-08-01','2026-08-05','USD-INR','Sell','USD',250000,'Buy','INR',22400000,89.60,'2002','Citi Bank N.A.','Confirmed','00','',false,false),
+  ],
+  TSF10078: [
+    leg('1000004610','TH10','Olam (Thailand) Ltd','619','FWD','2026-06-15','2026-12-15','USD-INR','Buy','USD',2000000,'Sell','INR',179400000,89.70,'2003','Standard Chartered Bank','Active','00','',false,false),
+    leg('1000004611','TH10','Olam (Thailand) Ltd','619','FWD','2026-12-15','2027-06-15','USD-INR','Buy','USD',2000000,'Sell','INR',180200000,90.10,'2003','Standard Chartered Bank','Rolled Over','01','R1-D1',false,false),
+    leg('1000004609','TH10','Olam (Thailand) Ltd','619','FWD','2026-01-15','2026-06-15','USD-INR','Buy','USD',2000000,'Sell','INR',178100000,89.05,'2003','Standard Chartered Bank','Pre-Matured','00','',true,false),
+  ],
+  TSF10112: [
+    leg('1000004780','VN10','Olam Vietnam Limited','631','NDF','2026-09-01','2027-03-01','EUR-USD','Buy','EUR',500000,'Sell','USD',542500,1.0850,'2004','JPMorgan Chase Bank','Confirmed','00','',false,false),
+    leg('1000004781','VN10','Olam Vietnam Limited','608','TOM','2026-09-25','2026-09-27','EUR-USD','Sell','EUR',120000,'Buy','USD',130200,1.0850,'2005','Deutsche Bank AG','Unwound','00','',false,true),
+  ],
+}
+
+const legsOf = (id: string): Leg[] => (DEALS[id] ?? []).map((l) => ({ ...l }))
 const find = (list: readonly Leg[], rfha: string): Leg => {
   const l = list.find((x) => x.rfha === rfha)
   if (!l) throw new Error(`no leg ${rfha}`)
@@ -71,56 +101,10 @@ describe('format', () => {
   })
 })
 
-describe('data', () => {
-  it('generates the same legs for the same Deal ID, case-insensitively', () => {
-    deepStrictEqual(genDealLegs('ABC123'), genDealLegs('abc123'))
-    notDeepStrictEqual(genDealLegs('ABC123'), genDealLegs('ABC124'))
-    const legs = genDealLegs('ZZ999')
-    ok(legs.length >= 1 && legs.length <= 3)
-    strictEqual(legs[0]?.sfhaart, '619')
-    strictEqual(legs[0]?.txnDesc, 'Active')
-    ok(legs.every((l) => /^10000\d{4}$/.test(l.rfha) && l.zuonr === l.rfha))
-  })
-
-  it('keeps the legacy PRNG sequence byte-identical', () => {
-    const r = seedFromString('TSF1')
-    const seq = [r(), r(), r()]
-    const again = seedFromString('TSF1')
-    deepStrictEqual([again(), again(), again()], seq)
-    ok(seq.every((n) => n >= 0 && n < 1))
-    strictEqual(seedFromString('TSF1')().toFixed(12), legacySeed('TSF1')().toFixed(12))
-  })
-})
-
-/** Verbatim port of the legacy function, as an independent oracle. */
-function legacySeed(str: string) {
-  let h = 1779033703 ^ str.length
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353)
-    h = (h << 13) | (h >>> 19)
-  }
-  return function () {
-    h = Math.imul(h ^ (h >>> 16), 2246822519)
-    h = Math.imul(h ^ (h >>> 13), 3266489917)
-    h ^= h >>> 16
-    return (h >>> 0) / 4294967296
-  }
-}
-
-describe('loadDeal', () => {
-  it('asks for a Deal ID when blank', () => {
-    deepStrictEqual(loadDeal('   '), { ok: false, message: 'Please enter a Deal ID.' })
-  })
-
-  it('trims, upper-cases and copies directory legs', () => {
-    const res = loadDeal('  tsf10078 ')
-    ok(res.ok)
-    strictEqual(res.dealId, 'TSF10078')
-    strictEqual(res.legs.length, 3)
-    const first = res.legs[0]
-    ok(first)
-    first.txnDesc = 'mutated'
-    strictEqual(DEAL_DIRECTORY.TSF10078?.[0]?.txnDesc, 'Active')
+describe('deal id', () => {
+  it('asks for a Deal ID when blank, else trims and upper-cases it', () => {
+    deepStrictEqual(normalizeDealId('   '), { ok: false, message: 'Please enter a Deal ID.' })
+    deepStrictEqual(normalizeDealId('  tsf10078 '), { ok: true, dealId: 'TSF10078' })
   })
 
   it('builds the load texts', () => {
@@ -165,11 +149,17 @@ describe('table', () => {
     strictEqual(filterSort(legs, '', { type: '605', status: '' }, DEFAULT_SORT).length, 0)
   })
 
-  it('orders the type filter like the legacy Object.keys walk', () => {
-    deepStrictEqual(
-      TYPE_FILTER_OPTIONS.map((o) => o.value),
-      ['605', '607', '608', '619', '631'],
-    )
+  it('builds the type and status filters from the loaded legs, labelled with their SAP text', () => {
+    const all = [...legsOf('TSF10045'), ...legsOf('TSF10078'), ...legsOf('TSF10112')]
+    deepStrictEqual(typeFilterOptions(all), [
+      { value: '605', label: 'SPOT' },
+      { value: '608', label: 'TOM' },
+      { value: '619', label: 'FWD' },
+      { value: '631', label: 'NDF' },
+    ])
+    deepStrictEqual(typeFilterOptions([]), [])
+    deepStrictEqual(statusOptions(legs), ['Active', 'Pre-Matured', 'Rolled Over'])
+    strictEqual(typeLabel({ ...find(legs, '1000004610'), xtext: '' }), '619')
   })
 
   it('paginates and clamps the page to the last one', () => {

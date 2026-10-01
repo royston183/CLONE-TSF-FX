@@ -1,18 +1,35 @@
 import { DateField } from './DateField.tsx'
-import { COMPANY_OPTIONS, PARTNER_OPTIONS, TXN_TYPE_OPTIONS } from './data.ts'
 import { recalcAmounts } from './logic.ts'
-import type { CodeLabel, CreateFormErrors, CreateFormValues, SpotRow } from './types.ts'
+import type { CodeLabel, CreateFormErrors, CreateFormValues, SpotRow, TxnTypeOption, ValueHelp } from './types.ts'
 
-function OptionSelect({ id, options, value, onChange }: { id: string; options: readonly CodeLabel[]; value: string; onChange: (v: string) => void }) {
+/** A drop-down read from SAP: "Loading…" until it arrives, SAP's reason when it cannot be read. */
+function OptionSelect({
+  id,
+  help,
+  value,
+  onChange,
+}: {
+  id: string
+  /** A transaction type shows its product type in front of the code: "12A 600 — Spot". */
+  help: ValueHelp<CodeLabel> | ValueHelp<TxnTypeOption>
+  value: string
+  onChange: (v: string) => void
+}) {
+  const options: readonly (CodeLabel | TxnTypeOption)[] = help.state === 'ok' ? help.options : []
+  const empty = help.state === 'loading' ? 'Loading from SAP…' : help.state === 'error' ? 'Not available' : 'Select ...'
   return (
-    <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">Select ...</option>
+    <>
+    <select id={id} value={value} disabled={help.state !== 'ok'} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{empty}</option>
       {options.map((o) => (
         <option key={o.key} value={o.key}>
+          {'productType' in o ? `${o.productType} ` : ''}
           {o.key} — {o.text}
         </option>
       ))}
     </select>
+    {help.state === 'error' ? <div className="field-error">{help.message}</div> : null}
+    </>
   )
 }
 
@@ -20,7 +37,12 @@ function OptionSelect({ id, options, value, onChange }: { id: string; options: r
 export function CreateSpotModal({
   row,
   values,
+  companies,
+  txnTypes,
+  partners,
   errors,
+  sapErrors,
+  busy,
   onChange,
   onClearErrors,
   onCancel,
@@ -28,7 +50,16 @@ export function CreateSpotModal({
 }: {
   row: SpotRow
   values: CreateFormValues
+  /** API_COMPANYCODE_SRV, limited to the TSF entities. */
+  companies: ValueHelp<CodeLabel>
+  /** ZFS_SB_TRMMASTER TransactionType under 12A / 12B. */
+  txnTypes: ValueHelp<TxnTypeOption>
+  /** SlcTsfBpBank for the picked company code. */
+  partners: ValueHelp<CodeLabel>
   errors: CreateFormErrors
+  /** Why SAP refused the last Create, one BAPI message per line. */
+  sapErrors: readonly string[]
+  busy: boolean
   onChange: (patch: Partial<CreateFormValues>) => void
   onClearErrors: () => void
   onCancel: () => void
@@ -69,21 +100,21 @@ export function CreateSpotModal({
               <label>
                 Company Code <span className="req">*</span>
               </label>
-              <OptionSelect id="mCompany" options={COMPANY_OPTIONS} value={values.companyCode} onChange={(v) => onChange({ companyCode: v })} />
+              <OptionSelect id="mCompany" help={companies} value={values.companyCode} onChange={(v) => onChange({ companyCode: v, partner: '' })} />
               <div className="field-error">{errors.company}</div>
             </div>
             <div className="field">
               <label>
                 Transaction Type <span className="req">*</span>
               </label>
-              <OptionSelect id="mTxnType" options={TXN_TYPE_OPTIONS} value={values.txnType} onChange={(v) => onChange({ txnType: v })} />
+              <OptionSelect id="mTxnType" help={txnTypes} value={values.txnType} onChange={(v) => onChange({ txnType: v })} />
               <div className="field-error">{errors.txnType}</div>
             </div>
             <div className="field">
               <label>
                 Business Partner <span className="req">*</span>
               </label>
-              <OptionSelect id="mPartner" options={PARTNER_OPTIONS} value={values.partner} onChange={(v) => onChange({ partner: v })} />
+              <OptionSelect id="mPartner" help={partners} value={values.partner} onChange={(v) => onChange({ partner: v })} />
               <div className="field-error">{errors.partner}</div>
             </div>
             <div className="field date-shell">
@@ -133,13 +164,23 @@ export function CreateSpotModal({
             </div>
           </div>
           <div className="meta-note">Amounts are derived from the selected difference amount and the entered spot rate.</div>
+          {sapErrors.length ? (
+            <div className="field-error" role="alert">
+              <strong>SAP did not create the spot:</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {sapErrors.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
         <div className="modal-footer">
-          <button className="btn" type="button" onClick={onCancel}>
+          <button className="btn" type="button" onClick={onCancel} disabled={busy}>
             Cancel
           </button>
-          <button className="btn btn-primary" type="button" onClick={onConfirm}>
-            Create Spot
+          <button className="btn btn-primary" type="button" onClick={onConfirm} disabled={busy}>
+            {busy ? 'Creating in SAP…' : 'Create Spot'}
           </button>
         </div>
       </div>

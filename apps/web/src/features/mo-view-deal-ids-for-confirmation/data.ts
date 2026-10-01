@@ -1,18 +1,25 @@
 /*
- * Every dummy master and the generated deal list of the legacy page, quarantined here.
- * The original never called a service (loadDeals() carried a "replace with fetch()" note),
- * so this is the seam where a real API would plug in.
+ * The screen's live masters (REGIONS, ENTITIES, MODELS, STATUSES) start empty and are filled
+ * only from SAP's tables by api.ts — a filter never offers a made-up value.
+ *
+ * The legacy page's dummy masters and its generated deal list stay below as test fixtures
+ * (logic.test.ts); nothing on the screen shows them.
  */
 import { pad } from './format.ts'
 import type { Column, Currency, Deal, Entity, FxModel, Region, Status, StatusCode } from './types.ts'
 
-export const REGIONS: Region[] = [
-  { id: 'APAC', desc: 'Asia Pacific' },
-  { id: 'EMEA', desc: 'Europe, ME & Africa' },
-  { id: 'AMER', desc: 'Americas' },
-]
+/** COMP-ZREG_ID values (ZSGTSFSH_REGION), filled by api.ts. */
+export const REGIONS: Region[] = []
+/** ZSGTSFTR_COMP (ZSGTSFSH_ENTITY), filled by api.ts. */
+export const ENTITIES: Entity[] = []
+/** ZSGTSFTR_RULE_BT (ZSGTSFSH_MODEL), filled by api.ts. */
+export const MODELS: FxModel[] = []
+/** ZSGTSFTR_DEAL_ST WHERE zsub_type = 'FX1' AND zdeal_stat <= '02' (FORM modify_drop_down), filled by api.ts. */
+export const STATUSES: Status[] = []
 
-export const ENTITIES: Entity[] = [
+/* ---------------- Test fixtures: the legacy page's dummy masters ---------------- */
+
+const SEED_ENTITIES: Entity[] = [
   { id: 'OSIPL', name: 'Olam Agri India Pvt Ltd', region: 'APAC', currency: 'INR' },
   { id: 'OTL', name: 'Olam (Thailand) Ltd', region: 'APAC', currency: 'THB' },
   { id: 'OVL', name: 'Olam Vietnam Limited', region: 'APAC', currency: 'VND' },
@@ -20,7 +27,7 @@ export const ENTITIES: Entity[] = [
   { id: 'DMCC', name: 'Olam International DMCC', region: 'EMEA', currency: 'AED' },
 ]
 
-export const MODELS: FxModel[] = [
+const SEED_MODELS: FxModel[] = [
   { id: 'M032', desc: 'INR Long Forward', type: 'FORWARD' },
   { id: 'M033', desc: 'INR-INR Forward', type: 'FORWARD' },
   { id: 'M034', desc: 'INR–INR Staggered Call & Put Option', type: 'OPTION' },
@@ -30,7 +37,7 @@ export const MODELS: FxModel[] = [
   { id: 'M041', desc: 'INR–INR Staggered Call & Put Option', type: 'OPTION' },
 ]
 
-export const STATUSES: Status[] = [
+const SEED_STATUSES: Status[] = [
   { code: '01', desc: 'Pending Confirmation' },
   { code: '02', desc: 'Confirmed' },
 ]
@@ -118,8 +125,8 @@ export function generateDeals(count: number): Deal[] {
   const anchor = defaultKeyDate()
   const out: Deal[] = []
   for (let i = 1; i <= count; i++) {
-    const entity = randPick(ENTITIES)
-    const model = randPick(MODELS)
+    const entity = randPick(SEED_ENTITIES)
+    const model = randPick(SEED_MODELS)
     const statusRoll = rnd()
     const status: StatusCode = statusRoll < 0.62 ? '01' : '02'
 
@@ -176,7 +183,7 @@ export function generateDeals(count: number): Deal[] {
       zrev_dedate: revisedEnd,
       zmc_ref: mcRefNo,
       zdeal_stat: status,
-      zdeal_sdesc: lookupStatus(status)?.desc ?? '',
+      zdeal_sdesc: SEED_STATUSES.find((s) => s.code === status)?.desc ?? '',
       zconfirm: confirm,
       zss: shortStraddle,
       zship_start: shipStart,
