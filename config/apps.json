@@ -319,9 +319,11 @@
       "route": "/apps/fx-blotter",
       "title": "DE6: TSF FX Blotter",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx"
+      ],
       "legacy": "legacy/fx-deal-blotter.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Create Transaction, Create Spot, Auto Deal (both legs), Reverse and the initial load run against the FxTransaction OData service (ZFS_SB_TRMFX_O4_API, FTR BAPIs, general valuation class 0011). Product/transaction types follow the SAP value help (12A spot 600-609, 12B forward 619, 12D NDF 631/632). Entities, profit centres, business areas, FX models, commodities, Master Contracts and the MC tolerance load from the SLC middleware (comp, fxModel, commodity, masterContract, tolerance) and the screen shows an error rather than dummy data if they cannot. Group, trader, business partner, Release to MO, Deal IDs, Short Straddle and Upload are still dummy data in data.ts."
     },
     {
       "code": "ZSGTSFR052",

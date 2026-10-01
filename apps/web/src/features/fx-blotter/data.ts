@@ -11,8 +11,8 @@ import type {
   FixingReference,
   FxModel,
   Group,
-  McSeed,
   Portfolio,
+  SpotTxnType,
   Trader,
   TransactionType,
 } from './types.ts'
@@ -41,16 +41,8 @@ export const GROUPS: Group[] = [
   { code: 'G07', desc: 'TSF - Brazil' },
 ]
 
-export const ENTITIES: Entity[] = [
-  { code: 'OGA', cocode: 'SG03', name: 'Olam Global Agri Pte. Ltd', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE' },
-  { code: 'OGAT', cocode: 'SG39', name: 'Olam Global Agri Treasury', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'SINGAPORE' },
-  { code: 'DMCC', cocode: 'AE13', name: 'Olam International DMCC', currency: 'USD', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM INTERNATIONAL DMCC' },
-  { code: 'OSIPL', cocode: 'IN11', name: 'Olam Agri India Pvt Ltd', currency: 'INR', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM AGRI INDIA PRIVATE LIMITED' },
-  { code: 'OTL', cocode: 'TH10', name: 'Olam (Thailand) Ltd', currency: 'THB', defaultProfitCenter: 'FX', businessArea: 'OLAM (THAILAND) LIMITED' },
-  { code: 'OVL', cocode: 'VN10', name: 'Olam Vietnam Limited', currency: 'VND', defaultProfitCenter: 'TSF-FX', businessArea: 'OLAM VIETNAM LIMITED' },
-  { code: 'OAL', cocode: 'US40', name: 'Olam Global Agri Americas', currency: 'USD', defaultProfitCenter: 'FX', businessArea: 'OLAM GLOBAL AGRI AMERICAS LLC' },
-  { code: 'SEDA', cocode: 'ES12', name: 'SEDA OUTSPAN IBERIA S.L.U', currency: 'EUR', defaultProfitCenter: 'TSF-FX', businessArea: 'PANASIA INTERNATIONAL FZCO' },
-]
+/** Filled from the middleware (comp) before the screen opens; see masters.ts. */
+export const ENTITIES: Entity[] = []
 
 /** The starting list; Upload appends partners it cannot match, so the page keeps its own copy. */
 export const BUSINESS_PARTNERS: BusinessPartner[] = [
@@ -59,17 +51,46 @@ export const BUSINESS_PARTNERS: BusinessPartner[] = [
   { code: 'BP1003', short: 'JPM IN', name: 'JPMorgan Chase Bank', group: 'G02' },
   { code: 'BP1004', short: 'CITI SG', name: 'Citibank N.A.', group: 'G03' },
   { code: 'BP1007', short: 'RABO SG', name: 'Rabobank', group: 'G03' },
+  // A real SAP partner: Create Transaction sends the code as Partner, so only SAP numbers work there.
+  { code: '400000002', short: '400000002', name: '400000002', group: 'G03' },
   { code: 'BP1005', short: 'Internal', name: 'Internal Group Entity', group: 'ALL' },
   { code: 'BP1006', short: 'Internal', name: 'Internal Group Entity', group: 'ALL' },
 ]
 
+/**
+ * Each blotter type with the SAP product type / transaction type it books as (see SPOT_TXN_TYPES).
+ * SWAP has no counterpart in that value help, so it has none and cannot be created in SAP.
+ */
 export const TRANSACTION_TYPES: TransactionType[] = [
-  { code: 'SPOT', desc: 'Spot', sapType: '620', valueDateOffset: 2, ndf: false },
-  { code: 'TOM', desc: 'Tomorrow (TOM)', sapType: '621', valueDateOffset: 1, ndf: false },
-  { code: 'FWD', desc: 'Outright Forward', sapType: '625', valueDateOffset: 30, ndf: false },
-  { code: 'NDF', desc: 'Non-Deliverable Fwd', sapType: '632', valueDateOffset: 30, ndf: true },
-  { code: 'DNDF', desc: 'Deliverable NDF', sapType: '632', valueDateOffset: 30, ndf: true },
-  { code: 'SWAP', desc: 'FX Swap', sapType: '640', valueDateOffset: 30, ndf: false },
+  { code: 'SPOT', desc: 'Spot', product: '12A', sapType: '609', valueDateOffset: 2, ndf: false },
+  { code: 'TOM', desc: 'Tomorrow (TOM)', product: '12A', sapType: '602', valueDateOffset: 1, ndf: false },
+  { code: 'FWD', desc: 'Outright Forward', product: '12B', sapType: '619', valueDateOffset: 30, ndf: false },
+  { code: 'NDF', desc: 'Non-Deliverable Fwd', product: '12D', sapType: '631', valueDateOffset: 30, ndf: true },
+  { code: 'DNDF', desc: 'Deliverable NDF', product: '12D', sapType: '632', valueDateOffset: 30, ndf: true },
+  { code: 'SWAP', desc: 'FX Swap', product: '', sapType: '', valueDateOffset: 30, ndf: false },
+]
+
+/** The Create Spot popup books only these company codes, and this one partner. */
+export const SPOT_COMPANY_CODES: readonly string[] = ['SG03', 'AE13']
+export const SPOT_PARTNER_CODE = '400000002'
+
+/**
+ * The Create Spot popup's Transaction Type list, copied from the SAP value help (product type,
+ * transaction type, name). Names are as the value help printed them, including the three it cut
+ * off at its column width ("Exercis" twice, "Settlement S").
+ */
+export const SPOT_TXN_TYPES: SpotTxnType[] = [
+  { product: '12A', code: '600', desc: 'FX Spot: External-Spot' },
+  { product: '12A', code: '601', desc: 'FX Spot: External-Cash' },
+  { product: '12A', code: '602', desc: 'FX Spot: External-TOM' },
+  { product: '12A', code: '603', desc: 'FX Spot: External-Spot-Exercis' },
+  { product: '12A', code: '604', desc: 'FX Spot: External-Spot-Exercis' },
+  { product: '12A', code: '605', desc: 'FX Spot: External-Spot - TSF' },
+  { product: '12A', code: '607', desc: 'FX Spot: External-Cash - TSF' },
+  { product: '12A', code: '609', desc: 'FX Spot: External-Settlement S' },
+  { product: '12B', code: '619', desc: 'FX Forwards: External-Forward' },
+  { product: '12D', code: '631', desc: 'FX NDF: External-NDF - TSF' },
+  { product: '12D', code: '632', desc: 'FX NDF: External-DNDF - TSF' },
 ]
 
 export const CURRENCY_PAIRS: CurrencyPair[] = [
@@ -94,24 +115,11 @@ export const ASSIGNMENTS: CodeDesc[] = [
   { code: 'PLUTO', desc: 'Pluto' },
 ]
 
-export const PROFIT_CENTERS: CodeLabel[] = [
-  { code: 'TSF-FX', label: 'TSF-FX' },
-  { code: 'TSF - FX', label: 'TSF - FX' },
-  { code: 'FX', label: 'FX' },
-]
+/** Filled from the middleware (comp, the FX profit centre name) before the screen opens; see masters.ts. */
+export const PROFIT_CENTERS: CodeLabel[] = []
 
-export const BUSINESS_AREAS: CodeLabel[] = [
-  { code: 'OLAM AGRI INDIA PRIVATE LIMITED', label: 'OLAM AGRI INDIA PRIVATE LIMITED' },
-  { code: 'OLAM VIETNAM LIMITED', label: 'OLAM VIETNAM LIMITED' },
-  { code: 'OLAM (THAILAND) LIMITED', label: 'OLAM (THAILAND) LIMITED' },
-  { code: 'PANASIA INTERNATIONAL FZCO', label: 'PANASIA INTERNATIONAL FZCO' },
-  { code: 'OLAM INTERNATIONAL DMCC', label: 'OLAM INTERNATIONAL DMCC' },
-  { code: 'OLAM GLOBAL AGRI AMERICAS LLC', label: 'OLAM GLOBAL AGRI AMERICAS LLC' },
-  { code: 'SINGAPORE', label: 'SINGAPORE' },
-  { code: 'OLAM OUTSPAN TSF', label: 'Olam Outspan TSF' },
-  { code: 'HCMC HEAD OFFICE', label: 'HCMC Head Office' },
-  { code: 'KAMOLKHI - THAILAND', label: 'Kamolkhi - Thailand' },
-]
+/** Filled from the middleware (comp, the business area columns) before the screen opens; see masters.ts. */
+export const BUSINESS_AREAS: CodeLabel[] = []
 
 export const FIXING_REFERENCES: FixingReference[] = [
   { code: 'FBIL', pair: 'USD/INR' },
@@ -123,36 +131,14 @@ export const FIXING_REFERENCES: FixingReference[] = [
 /** Static factory-calendar holidays (illustrative, not exhaustive), as YYYY-MM-DD. */
 export const HOLIDAYS = ['2026-01-01', '2026-01-26', '2026-03-25', '2026-08-15', '2026-10-02', '2026-12-25']
 
-/** Tolerances default to 5% and 5 days where the original's model list left them out. */
-export const FX_MODELS: FxModel[] = [
-  { code: 'M017', desc: 'USD Long Forward', entities: ['OAL', 'DMCC', 'OTL'], pair: 'USD/THB', d1: { from: 'OAL', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OTL', bs1: 'S', bs2: 'B' }, spreadBp: 35, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M021', desc: 'INR Long Forward', entities: ['OGA', 'DMCC', 'OSIPL'], pair: 'USD/INR', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' }, spreadBp: 28, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M025', desc: 'EUR Long Forward', entities: ['SEDA', 'DMCC', 'OVL'], pair: 'USD/EUR', d1: { from: 'SEDA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OVL', bs1: 'S', bs2: 'B' }, spreadBp: 22, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M032', desc: 'INR Long Forward (Alt)', entities: ['OGA', 'DMCC', 'OSIPL'], pair: 'USD/INR', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' }, spreadBp: 30, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M034', desc: 'INR-INR Staggered Option', entities: ['OGA', 'DMCC', 'OSIPL'], pair: 'USD/INR', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' }, spreadBp: 40, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M041', desc: 'INR Short Forward', entities: ['OGAT', 'DMCC', 'OSIPL'], pair: 'USD/INR', d1: { from: 'OGAT', to: 'DMCC', bs1: 'B', bs2: 'S' }, d2: { from: 'DMCC', to: 'OSIPL', bs1: 'B', bs2: 'S' }, spreadBp: 25, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M052', desc: 'VND Long Forward', entities: ['OGA', 'DMCC', 'OVL'], pair: 'USD/VND', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OVL', bs1: 'S', bs2: 'B' }, spreadBp: 45, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M061', desc: 'IDR Long Forward', entities: ['OGA', 'DMCC', 'OTL'], pair: 'USD/IDR', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OTL', bs1: 'S', bs2: 'B' }, spreadBp: 50, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M070', desc: 'TWD Short Straddle', entities: ['OGA', 'DMCC', 'OTL'], pair: 'USD/TWD', d1: { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OTL', bs1: 'S', bs2: 'B' }, spreadBp: 38, ssEligible: true, tolerancePct: 5, valueDateToleranceDays: 5 },
-  { code: 'M081', desc: 'THB Long Forward', entities: ['OAL', 'DMCC', 'OSIPL'], pair: 'USD/THB', d1: { from: 'OAL', to: 'DMCC', bs1: 'S', bs2: 'B' }, d2: { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' }, spreadBp: 33, tolerancePct: 5, valueDateToleranceDays: 5 },
-]
+/** Filled from the middleware (fxModel) before the screen opens; see masters.ts. */
+export const FX_MODELS: FxModel[] = []
 
-export const COMMODITIES: CodeDesc[] = [
-  { code: 'C110', desc: 'Soyabean Oil' },
-  { code: 'C102', desc: 'Wheat' },
-  { code: 'C125', desc: 'Rice' },
-  { code: 'C140', desc: 'Sugar' },
-]
+/** Filled from the middleware (commodity) before the screen opens; see masters.ts. */
+export const COMMODITIES: CodeDesc[] = []
 
-/** Seed Master Contracts; ship dates are offsets in days from the day the page opens. */
-export const MC_SEED: McSeed[] = [
-  { n: 'MC-7001', model: 'M021', comm: 'C110', desc: '5,000 MT Soyabean Oil - OSIPL', amtUSD: 5000000, shipStartOff: 20, shipDur: 90, group: 'G02' },
-  { n: 'MC-7014', model: 'M017', comm: 'C102', desc: 'Wheat Financing - OTL', amtUSD: 8000000, shipStartOff: 15, shipDur: 60, group: 'G03' },
-  { n: 'MC-7028', model: 'M052', comm: 'C125', desc: 'Rice Financing - OVL', amtUSD: 3000000, shipStartOff: 10, shipDur: 75, group: 'G03' },
-  { n: 'MC-7033', model: 'M025', comm: 'C140', desc: 'Sugar Financing - OVL(EUR)', amtUSD: 4500000, shipStartOff: 25, shipDur: 100, group: 'G03' },
-  { n: 'MC-7041', model: 'M041', comm: 'C110', desc: 'Soyabean Oil Short Fwd - OSIPL', amtUSD: 2500000, shipStartOff: 5, shipDur: 45, group: 'G02' },
-  { n: 'MC-7052', model: 'M070', comm: 'C102', desc: 'TWD Straddle - OTL', amtUSD: 6000000, shipStartOff: 12, shipDur: 80, group: 'G03' },
-]
+// The Master Contracts are not constants: they are read from the middleware (masterContract) and
+// handed to the screen by the loader in masters.ts.
 
 /** The counters' starting values, which Refresh (hard reset) returns to. */
 export const INITIAL_COUNTERS = { rfha: 8100001, dealId: 9080, ssDealId: 500, draft: 1, seq: 1 } as const

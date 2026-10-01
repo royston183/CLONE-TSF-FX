@@ -1,11 +1,11 @@
-import { ENTITIES } from './data.ts'
-import { partnerLabel } from './logic.ts'
+import { partnerLabel, spotEntities, spotTxnOptions } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoSpotForm, BusinessPartner } from './types.ts'
 
 /**
  * Create Spot: the visible fields of the external Auto Spot program (ZSGTSFR_SPOT_CREATE),
- * whose source was never supplied, so nothing is booked.
+ * booked through the FxTransaction OData service. Company Code offers SG03 and AE13, Business
+ * Partner the one SAP partner, and Transaction Type the SAP value help with its product types.
  */
 export function AutoSpotModal({
   modals,
@@ -47,16 +47,22 @@ export function AutoSpotModal({
             <div className="form-field">
               <label>Company Code</label>
               <select id="spot-company" value={form.company} onChange={(e) => onChange({ company: e.target.value })}>
-                {ENTITIES.map((e) => (
+                {spotEntities().map((e) => (
                   <option key={e.code} value={e.code}>
-                    {e.code} - {e.name}
+                    {e.cocode} - {e.name}
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-field span2">
               <label>Transaction Type</label>
-              <input id="spot-txn-type" type="text" value="609 SPOT-SETTLEMENT" readOnly />
+              <select id="spot-txn-type" value={form.txnType} onChange={(e) => onChange({ txnType: e.target.value })}>
+                {spotTxnOptions().map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-field">
               <label>Trade Date</label>
@@ -114,8 +120,8 @@ export function AutoSpotModal({
             </div>
           </div>
           <div className="validation-box warn" style={{ marginBottom: 0 }}>
-            The supplied ABAP delegates Auto Spot to <strong>ZSGTSFR_SPOT_CREATE</strong>. This popup reproduces the
-            visible fields from the screenshot; creation remains a standalone simulation.
+            Create Spot books the transaction in SAP through the <strong>FxTransaction</strong> OData service, with the
+            product type shown beside the chosen transaction type. SAP&apos;s own message is shown if it refuses.
           </div>
         </div>
         <div className="modal-footer">
