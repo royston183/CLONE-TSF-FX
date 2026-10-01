@@ -144,7 +144,9 @@ export function filterDeals(
       list = list.filter((d) => d.coCode === selection.companyCode)
     }
   }
-  if (selection.trader) list = list.filter((d) => d.traderCode === selection.trader)
+  // A deal read from SAP carries no trader (the service has none), so the trader choice cannot apply
+  // to it: it stays listed rather than vanishing, and only the dummy Options rows are narrowed.
+  if (selection.trader) list = list.filter((d) => d.live || d.traderCode === selection.trader)
 
   const f = filters
   if (f.coCode) list = list.filter((d) => d.coCode === f.coCode)
@@ -240,6 +242,25 @@ export function applyDragRange(
  * changes, so this can include deals the table is not currently showing.
  */
 export const selectedDeals = (deals: readonly Deal[], selected: ReadonlySet<string>) => deals.filter((d) => selected.has(d.id))
+
+// ---------------------------------------------------------------- deals from SAP
+
+/**
+ * The queue after (re)reading the FX deals from SAP: the SAP deals replace every FX row, the Options rows
+ * (dummy data) are kept, and a deal this session sent back for correction stays in Correction Required
+ * while SAP still has it unmatched — SAP has no field for that status, so it lives only here.
+ */
+export function mergeLiveDeals(current: readonly Deal[], live: readonly Deal[]): Deal[] {
+  const corrected = new Map(current.filter((d) => d.live && d.status === STATUS.CORRECTION).map((d) => [d.id, d]))
+  const fx = live.map((d) => {
+    const c = corrected.get(d.id)
+    return c && d.status === STATUS.UNMATCHED ? { ...d, status: STATUS.CORRECTION, moRemark: c.moRemark } : d
+  })
+  return [...fx, ...current.filter((d) => d.dealType !== 'FX')]
+}
+
+/** The Options rows alone: the starting queue before the FX deals have been read from SAP. */
+export const withoutFxDeals = (deals: readonly Deal[]): Deal[] => deals.filter((d) => d.dealType !== 'FX')
 
 // ---------------------------------------------------------------- match & release / correction
 

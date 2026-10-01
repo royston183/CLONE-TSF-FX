@@ -84,6 +84,8 @@ export type MasterContract = {
   desc: string
   entity: string
   currency: string
+  /** ZCURR_ID: the id of the currency string, written to the Deal ID row. */
+  currencyId?: string
 }
 
 export type PoolTxn = {

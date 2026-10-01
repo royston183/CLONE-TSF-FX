@@ -319,9 +319,11 @@
       "route": "/apps/fx-blotter",
       "title": "DE6: TSF FX Blotter",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx"
+      ],
       "legacy": "legacy/fx-deal-blotter.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Create Transaction, Create Spot, Auto Deal (both legs), Reverse and the initial load run against the FxTransaction OData service (ZFS_SB_TRMFX_O4_API, FTR BAPIs, general valuation class 0011). Product/transaction types follow the SAP value help (12A spot 600-609, 12B forward 619, 12D NDF 631/632). Entities, profit centres, business areas, FX models, commodities, Master Contracts and the MC tolerance load from the SLC middleware (comp, fxModel, commodity, masterContract, tolerance) and the screen shows an error rather than dummy data if they cannot. Group, trader, business partner, Release to MO, Deal IDs, Short Straddle and Upload are still dummy data in data.ts."
     },
     {
       "code": "ZSGTSFR052",
@@ -419,9 +421,12 @@
       "route": "/apps/fo-create-deal-id-manually",
       "title": "FO: Create Deal ID Manually",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx",
+        "middleware"
+      ],
       "legacy": "legacy/ZSGTSF_PCREATE_DEAL_ANAL_SELECTION_BASIC_TIGHT_CARD.html",
-      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; covers the Deal ID Analysis workbench (Basic Details, FX Deals/Planned Trade Invoices/Planned P&L tables, Create Deal with cascading Origin/MC/transaction selects, Change/Confirm, Premium Adjustment, and drag-and-drop Edit Deal Pair). SAP wiring (the MC/FX/invoice tables this reads/writes) is a follow-up once those entities are defined."
+      "note": "Master Contracts (masterContract, status 03/04), existing Deal IDs (tsfDealId), traders (trmTrader), company-to-entity (comp) and the Treasury transactions for Deal 1 / Deal 2 (FxTransaction OData, minus those already on a Deal ID) are live. Create Deal ID draws the number from range ZSGTSFNR01/01, writes ZSGTSFTR_DEALID with both linked transactions and moves the MC to 04. NOT done: stamping the Deal ID onto the two Treasury transactions (BAPI_FTR_FXT_CHANGE) - the OData service has no field or action for it. Planned invoices, planned P&L and the FX Deal P&L row have no source yet (ZSGTSFTR_INV_REF is empty, ZSGTSFV_FX has no resource) and show empty; Change / Confirm, Edit Deal Pair and Premium Adjustment still change the screen only."
     },
     {
       "code": "ZSGTSFP002",
@@ -449,9 +454,11 @@
       "route": "/apps/mo-fx-deal-confirmation",
       "title": "TSF MO Deal Confirmation - FX & Options",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx"
+      ],
       "legacy": "legacy/fx-deal-confirmation.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "FX deals are read from the FxTransaction OData service (ZFS_SB_TRMFX_O4_API) and Match & Release settles them through its Settle action (BAPI_FTR_FXT_SETTLE); activity category 20 is Unmatched and 30 Matched & Released. Not covered by that service, so not saved: the External / Internal Ref and remark (BAPI_FTR_FXT_CHANGE) and Correction Required, which stays on this screen only. The Options rows are still dummy data; the options BAPIs are out of scope."
     },
     {
       "code": "ZSGTSFR026",

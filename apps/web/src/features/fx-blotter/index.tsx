@@ -1,30 +1,40 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { installMasters, loadBlotterMasters } from './masters.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { AutoDealModal } from './AutoDealModal.tsx'
+import {
+  companyCodeOf,
+  createDeal,
+  createSpotDeal,
+  fromFxTransaction,
+  loadDeals,
+  reverseDeal,
+  sapMessage,
+  toCreatePayload,
+} from './api.ts'
 import { AutoSpotModal } from './AutoSpotModal.tsx'
-import { createSpotDeal, toSpotPayload } from './api.ts'
 import { BlotterTable, type TableHandlers } from './BlotterTable.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
 import { ContextDatePicker } from './ContextDatePicker.tsx'
-import { BUSINESS_PARTNERS, GROUPS, MC_SEED, modelOf } from './data.ts'
+import { BUSINESS_PARTNERS, GROUPS, modelOf } from './data.ts'
 import { fmtCompactUsd, fmtDate } from './format.ts'
 import {
   STATUS_LABEL,
+  applyCreated,
   assignCheck,
   assignMc,
   assignToDeal,
   autoEligible,
   autoOrigins,
   autoSpotForm,
-  buildMasterContracts,
   changeGroup,
   checkedRows,
   computeKpis,
   confirmAutoDeal,
   confirmShortStraddle,
   copyRow,
-  createDrafts,
   defaultListCriteria,
   deleteDrafts,
   editDate,
@@ -39,6 +49,7 @@ import {
   isSpreadsheetFile,
   loadContext,
   mcCandidates,
+  mergeLiveRows,
   nextSort,
   openDealsFor,
   pagerWindow,
@@ -86,6 +97,7 @@ import type {
   Blotter,
   BlotterRow,
   DropAction,
+  MasterContract,
   Sort,
   StatusFilter,
   ToastKind,
@@ -144,10 +156,10 @@ function uploadTrader(group: string, ctxTrader: string): string {
  * screen: every row, counter and Master Contract balance lives in component state for the
  * session, and Refresh (hard reset) puts them back.
  */
-export default function FxBlotter() {
+function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   const [b, setB] = useState<Blotter>(() => {
     const now = new Date()
-    return initialBlotter(now, buildMasterContracts(now, MC_SEED), [...BUSINESS_PARTNERS])
+    return initialBlotter(now, contracts, [...BUSINESS_PARTNERS])
   })
   /** The latest blotter, for handlers that run after an await or from a stored confirm. */
   const latest = useRef(b)
@@ -179,8 +191,6 @@ export default function FxBlotter() {
   // Not reset between openings, as in the original.
   const [noInvoice, setNoInvoice] = useState(false)
   const [spot, setSpot] = useState<AutoSpotForm>(() => autoSpotForm([], b))
-  const [spotErrors, setSpotErrors] = useState<string[]>([])
-  const [spotBusy, setSpotBusy] = useState(false)
   const [listCrit, setListCrit] = useState<TxnListCriteria>(() => defaultListCriteria(b.ctx, '', ''))
   const [listResult, setListResult] = useState<BlotterRow[] | null>(null)
   const [upload, setUpload] = useState<UploadState>(() => freshUpload(b, 0))
@@ -198,6 +208,41 @@ export default function FxBlotter() {
     showToast(`Blotter loaded for ${latest.current.ctx.trader} (${latest.current.ctx.group}).`)
     return () => clearTimeout(toastTimer.current)
   }, [showToast])
+
+  /**
+   * Adds the day's deals from SAP to the grid. A failure leaves the blotter as it was: the
+   * rest of the screen still works on its own data, so the toast is the only signal.
+   */
+  const loadLive = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const cur = latest.current
+        const deals = await loadDeals(cur.ctx.date, signal)
+        let partners = cur.partners
+        const rows: Parameters<typeof mergeLiveRows>[1] = []
+        for (const d of deals) {
+          const out = fromFxTransaction(d, cur.ctx, partners)
+          if (!out) continue
+          partners = out.partners
+          rows.push(out.row)
+        }
+        if (signal?.aborted || !rows.length) return
+        commit(mergeLiveRows(latest.current, rows, partners))
+      } catch (e) {
+        if (signal?.aborted) return
+        showToast(`Could not load FX deals from SAP: ${sapMessage(e)}`, 'warn')
+      }
+    },
+    // commit only touches refs and setState, so it is stable in effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showToast],
+  )
+
+  useEffect(() => {
+    const ctl = new AbortController()
+    void loadLive(ctl.signal)
+    return () => ctl.abort()
+  }, [loadLive])
 
   // Escape closes the top-most popup.
   useEffect(() => {
@@ -219,6 +264,21 @@ export default function FxBlotter() {
     if (refilter) setPage(1)
   }
   const refilter = () => commit(latest.current)
+
+  /** True while a SAP write is running: the confirm dialog closes at once, so a second click must not start another. */
+  const sapBusy = useRef(false)
+  const guarded = (run: () => Promise<void>) => async () => {
+    if (sapBusy.current) {
+      showToast('A SAP request is still running — wait for it to finish.', 'warn')
+      return
+    }
+    sapBusy.current = true
+    try {
+      await run()
+    } finally {
+      sapBusy.current = false
+    }
+  }
 
   const askConfirm = (title: string, body: string, run: () => void) => {
     setConfirm({ title, body, run })
@@ -249,6 +309,7 @@ export default function FxBlotter() {
     commit(blotter)
     setCtxNote(loadedNote(loaded))
     showToast(`Blotter loaded for ${blotter.ctx.trader} (${blotter.ctx.group}).`)
+    void loadLive()
   }
 
   const reset = () => {
@@ -302,11 +363,21 @@ export default function FxBlotter() {
     if (!row || !(row.status === 'CREATED' || row.status === 'RELEASED')) return
     askConfirm(
       'Reverse Transaction',
-      `This will mark transaction ${row.transactionNumber} as reversed. This cannot be undone in this session.`,
-      () => {
+      row.live
+        ? `This will reverse transaction ${row.transactionNumber} in SAP (reason 04, Other reasons). This cannot be undone.`
+        : `This will mark transaction ${row.transactionNumber} as reversed. This cannot be undone in this session.`,
+      guarded(async () => {
+        if (row.live) {
+          try {
+            await reverseDeal(companyCodeOf(row), row.transactionNumber)
+          } catch (e) {
+            showToast(`SAP did not reverse ${row.transactionNumber}: ${sapMessage(e)}`, 'error')
+            return
+          }
+        }
         commit(reverseTxn(latest.current, id))
         showToast(`Transaction ${row.transactionNumber} reversed.`, 'error')
-      },
+      }),
     )
   }
 
@@ -320,16 +391,28 @@ export default function FxBlotter() {
     }
     askConfirm(
       'Create Transaction(s)',
-      `Create ${drafts.length} transaction(s)? Each will be assigned a mock RFHA number and become mostly read-only.`,
-      () => {
-        commit(
-          createDrafts(
-            latest.current,
-            drafts.map((r) => r.id),
-          ),
-        )
-        showToast(`${drafts.length} transaction(s) created.`, 'success')
-      },
+      `Create ${drafts.length} transaction(s) in SAP? Each will receive its SAP transaction number and become mostly read-only.`,
+      guarded(async () => {
+        // One deal at a time, in the order the rows were checked. Each is its own SAP commit,
+        // so a failure stops the run and the deals already booked stay booked.
+        const created = new Map<string, { companyCode: string; transaction: string }>()
+        let failure = ''
+        for (const r of drafts) {
+          try {
+            created.set(r.id, await createDeal(r))
+          } catch (e) {
+            failure = sapMessage(e)
+            break
+          }
+        }
+        if (created.size) commit(applyCreated(latest.current, created))
+        if (failure) {
+          showToast(created.size ? `${created.size} of ${drafts.length} created. Stopped: ${failure}` : failure, 'error')
+          return
+        }
+        const numbers = [...created.values()].map((c) => c.transaction).join(', ')
+        showToast(`${drafts.length} transaction(s) created in SAP: ${numbers}.`, 'success')
+      }),
     )
   }
 
@@ -476,44 +559,75 @@ export default function FxBlotter() {
   const autoMc = auto.mcNumber ? findMc(b.contracts, auto.mcNumber) : undefined
   const autoMsgs = autoMc && auto.legs ? validateAutoLegs(autoMc, auto.legs) : []
 
-  const confirmAuto = () => {
+  /** The two leg rows an Auto Deal result holds, Deal 1 first. */
+  const autoLegRows = (blotter: Blotter): BlotterRow[] => {
+    const ids = blotter.deals[blotter.deals.length - 1]?.legs ?? []
+    return ids.map((id) => blotter.rows.find((r) => r.id === id)).filter((r): r is BlotterRow => !!r)
+  }
+
+  /**
+   * Books Deal 1 then Deal 2 in SAP; only when both are in does the pair get its Deal ID and
+   * draw down the Master Contract (both of which exist on this screen only). If Deal 2 is
+   * refused, Deal 1 stays booked — nothing is reversed on the user's behalf — and is shown in
+   * the grid so it can be reversed or kept. The popup stays open in every failure case.
+   */
+  const confirmAuto = guarded(async () => {
     if (!autoMc || !auto.legs) return
-    const out = confirmAutoDeal(b, autoMc.mcNumber, auto.legs)
+    const preview = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs)
+    if (!preview) return
+    const legs = autoLegRows(preview.blotter)
+    try {
+      legs.forEach((r) => toCreatePayload(r))
+    } catch (e) {
+      showToast(sapMessage(e), 'error')
+      return
+    }
+    const created: Array<{ companyCode: string; transaction: string }> = []
+    for (const [i, r] of legs.entries()) {
+      try {
+        created.push(await createDeal(r))
+      } catch (e) {
+        const booked = created[0]
+        showToast(
+          booked
+            ? `Deal 1 was created in SAP as ${booked.transaction}, but Deal 2 failed: ${sapMessage(e)} Deal 1 stays booked — reverse it in the grid if you do not want it.`
+            : `Deal ${i + 1} failed: ${sapMessage(e)} Nothing was booked.`,
+          'error',
+        )
+        if (booked) void loadLive()
+        return
+      }
+    }
+    // Rebuilt on the blotter as it is now, in case it changed while SAP was answering.
+    const out = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs)
     if (!out) return
+    const ids = autoLegRows(out.blotter).map((r) => r.id)
     modals.close('auto')
-    commit(out.blotter)
+    commit(applyCreated(out.blotter, new Map(ids.map((id, i) => [id, created[i]!]))))
     showToast(
-      `Auto Deal complete: both legs created under ${out.dealId}. Select the Created transaction(s) in this blotter and use Release to MO when ready.`,
+      `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
       'success',
     )
-  }
+  })
 
   // ------------------------------------------------------------------ auto spot
 
   const openAutoSpot = () => {
     setSpot(autoSpotForm(sel, b))
-    setSpotErrors([])
     modals.open('autospot')
   }
 
-  const createSpot = async () => {
-    const { payload, problems } = toSpotPayload(spot)
-    if (!payload) {
-      setSpotErrors(problems)
-      return
+  // The popup stays open when SAP refuses, so the partner, type or amounts can be changed and retried.
+  const createSpot = guarded(async () => {
+    try {
+      const { transaction } = await createSpotDeal(spot)
+      modals.close('autospot')
+      showToast(`Spot created in SAP: ${transaction}.`, 'success')
+      void loadLive()
+    } catch (e) {
+      showToast(sapMessage(e), 'error')
     }
-    setSpotBusy(true)
-    setSpotErrors([])
-    const out = await createSpotDeal(payload)
-    setSpotBusy(false)
-    if (!out.ok) {
-      setSpotErrors(out.messages)
-      showToast('Spot deal was not created in SAP — see the messages in the popup.', 'error')
-      return
-    }
-    modals.close('autospot')
-    showToast(`Spot deal ${out.transaction} created in company code ${out.companyCode}.`, 'success')
-  }
+  })
 
   // ------------------------------------------------------------------ FX Txn List
 
@@ -1058,10 +1172,8 @@ export default function FxBlotter() {
         modals={modals}
         form={spot}
         partners={spotPartners(b.partners)}
-        errors={spotErrors}
-        busy={spotBusy}
         onChange={(patch) => setSpot((s) => ({ ...s, ...patch }))}
-        onCreate={() => void createSpot()}
+        onCreate={createSpot}
       />
       <TxnListModal
         modals={modals}
@@ -1084,6 +1196,55 @@ export default function FxBlotter() {
         onProcess={runUpload}
         onViewRfha={viewUploadedRfha}
       />
+    </div>
+  )
+}
+
+type MastersState =
+  | { phase: 'loading' }
+  | { phase: 'error'; message: string }
+  | { phase: 'ready'; contracts: MasterContract[] }
+
+/**
+ * DE6: TSF FX Blotter (ZSGTSFP008). The entity, profit centre, business area, FX model,
+ * commodity and Master Contract lists come from the middleware, so the screen opens only once
+ * they have loaded. A failed read is shown with a Retry — never replaced by stand-in values,
+ * which would let a deal be booked against entities or contracts SAP does not hold.
+ */
+export default function FxBlotter() {
+  const [attempt, setAttempt] = useState(0)
+  const [state, setState] = useState<MastersState>({ phase: 'loading' })
+
+  useEffect(() => {
+    const ctl = new AbortController()
+    setState({ phase: 'loading' })
+    loadBlotterMasters(ctl.signal)
+      .then((masters) => {
+        if (ctl.signal.aborted) return
+        installMasters(masters)
+        setState({ phase: 'ready', contracts: masters.contracts })
+      })
+      .catch((error: unknown) => {
+        if (ctl.signal.aborted || isAbort(error)) return
+        setState({ phase: 'error', message: error instanceof Error ? error.message : String(error) })
+      })
+    return () => ctl.abort()
+  }, [attempt])
+
+  if (state.phase === 'ready') return <FxBlotterScreen key={attempt} contracts={state.contracts} />
+  return (
+    <div className="fx-blotter" style={{ minHeight: '100vh', padding: 24 }}>
+      {state.phase === 'loading' ? (
+        <div role="status">Loading FX master data…</div>
+      ) : (
+        <div role="alert">
+          <p>{state.message}</p>
+          <p>The FX Deal Blotter needs these masters to open. Nothing has been substituted for them.</p>
+          <button type="button" className="btn-confirm" onClick={() => setAttempt((n) => n + 1)}>
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   )
 }

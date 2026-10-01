@@ -41,6 +41,8 @@ export type Deal = {
   fixRefId: string
   foRemark: string
   moRemark: string
+  /** True for a deal read from SAP (FxTransaction); the Options rows are dummy data. */
+  live?: boolean
 }
 
 /**
@@ -101,7 +103,7 @@ export type Sort = { key: SortKey | null; dir: SortDir }
 export type Column =
   | { key: 'select'; label: string; sortable?: undefined; type?: undefined }
   | { key: SortKey; label: string; sortable: true; type?: ColumnType }
-  | { key: Exclude<keyof Deal, 'dealType'>; label: string; sortable?: false; type?: ColumnType }
+  | { key: Exclude<keyof Deal, 'dealType' | 'live'>; label: string; sortable?: false; type?: ColumnType }
 
 /** Checkbox-column drag: the anchor row's state decides whether the sweep selects or clears. */
 export type DragMode = 'select' | 'deselect'
