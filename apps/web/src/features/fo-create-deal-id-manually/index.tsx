@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './fo-create-deal-id-manually.legacy.css'
@@ -10,7 +10,8 @@ import { DealPickerModal } from './DealPickerModal.tsx'
 import { EditPairModal } from './EditPairModal.tsx'
 import { PremiumModal } from './PremiumModal.tsx'
 import { TxnModal } from './TxnModal.tsx'
-import { DEFAULT_DEAL_ID, FIRST_NEW_DEAL_NUMBER, INITIAL_DEALS, INITIAL_MASTER_CONTRACTS, TRANSACTION_POOL } from './data.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { createDealId, loadWorkbench, type Workbench } from './api.ts'
 import { dealStatusLabel, money } from './format.ts'
 import {
   derivePnlRows,
@@ -85,12 +86,19 @@ function Pager({ page, pages, kind, onPage }: { page: number; pages: number; kin
   )
 }
 
-export default function FoCreateDealIdManually() {
-  const [deals, setDeals] = useState<Record<string, Deal>>(INITIAL_DEALS)
-  const [masterContracts, setMasterContracts] = useState<MasterContract[]>(INITIAL_MASTER_CONTRACTS)
-  const [nextDealNumber, setNextDealNumber] = useState(FIRST_NEW_DEAL_NUMBER)
-  const [currentDealId, setCurrentDealId] = useState(DEFAULT_DEAL_ID)
-  const [dealLookup, setDealLookup] = useState(DEFAULT_DEAL_ID)
+/**
+ * The workbench on the data read from SAP. Changes made here that have no write path yet (Change /
+ * Confirm, Edit Deal Pair, the invoice rates) stay on the screen; Create Deal ID is real, and
+ * reloads everything from the sources afterwards.
+ */
+function WorkbenchScreen({ data, startDealId, onReload }: { data: Workbench; startDealId: string; onReload: (dealId: string) => void }) {
+  const [deals, setDeals] = useState<Record<string, Deal>>(data.deals)
+  const [masterContracts] = useState<MasterContract[]>(data.masterContracts)
+  const pool = data.pool
+  const firstDealId = startDealId && data.deals[startDealId] ? startDealId : (Object.keys(data.deals)[0] ?? '')
+  const [currentDealId, setCurrentDealId] = useState(firstDealId)
+  const [dealLookup, setDealLookup] = useState(firstDealId)
+  const [creating, setCreating] = useState(false)
   const [selectedFxIndex, setSelectedFxIndex] = useState(-1)
   const [dragOver, setDragOver] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -187,7 +195,7 @@ export default function FoCreateDealIdManually() {
 
   const updateDealPair = (newRfha: string) => {
     if (!deal) return
-    const replacement = txnByRfha(TRANSACTION_POOL, newRfha)
+    const replacement = txnByRfha(pool, newRfha)
     updateDeal(deal.id, (d) => ({
       ...d,
       fxRows: d.fxRows.map((r, idx) => {
@@ -215,48 +223,24 @@ export default function FoCreateDealIdManually() {
     toast('Deal pair updated in the demo.', 'success')
   }
 
-  const createDeal = (mc: MasterContract, a: PoolTxn, b: PoolTxn) => {
-    const id = String(nextDealNumber)
-    const ref = `${a.trader}_FX_${id.substring(0, 4)} / ${mc.entity}`
-    const trader = a.trader === 'OGA' ? 'Nidhi S' : 'TERRY TAY'
-    const traderCode = a.trader === 'OGA' ? 'NIDHI' : 'TERRY'
-    const maxAmt = Math.max(a.amt1, b.amt1)
-    const newDeal: Deal = {
-      id,
-      ref,
-      description: ref,
-      startDate: a.start,
-      endDate: a.end,
-      status: '01',
-      mcRef: mc.ref,
-      mcDesc: mc.desc,
-      mcDate: mc.mcDate,
-      shipEnd: mc.shipEnd,
-      fxModel: mc.model,
-      entityString: mc.entity,
-      currencyString: mc.currency,
-      trader,
-      traderCode,
-      origin: mc.origin,
-      fxOp: 'FX1',
-      fxRows: [
-        { dealType: 'D1', bukrs: a.bukrs, rfha: a.rfha, sfhaart: a.sfhaart, start: a.start, end: a.end, text: `${a.side1} ${a.curr1} / ${a.side2} ${a.curr2}`, entity: a.entity, side1: a.side1, curr1: a.curr1, amt1: a.amt1, side2: a.side2, curr2: a.curr2, amt2: a.amt2, spot: 83.55, swap: 0.12, allIn: 83.67, mcRef: mc.ref, txnStatus: '07' },
-        { dealType: 'D2', bukrs: b.bukrs, rfha: b.rfha, sfhaart: b.sfhaart, start: b.start, end: b.end, text: `${b.side1} ${b.curr1} / ${b.side2} ${b.curr2}`, entity: b.entity, side1: b.side1, curr1: b.curr1, amt1: b.amt1, side2: b.side2, curr2: b.curr2, amt2: b.amt2, spot: 83.60, swap: 0.13, allIn: 83.73, mcRef: mc.ref, txnStatus: '07' },
-        { dealType: 'FX Deal P&L', bukrs: '', rfha: '', sfhaart: '', start: '', end: '', text: '', entity: '', side1: '', curr1: 'USD', amt1: maxAmt, side2: '', curr2: 'INR', amt2: 0, spot: '', swap: '', allIn: 83.65, mcRef: '', txnStatus: '' },
-      ],
-      invoices: [
-        { tradeType: 'T1', dealType: 'D1', sell: a.entity, buy: b.entity, currency: 'USD', amount: 400000, exchangeRate: 83.70, invAmount: 33480000, invTrmNo: `${id}-T1`, mcPurchase: mc.ref, mcSale: mc.ref },
-        { tradeType: 'T2', dealType: 'D2', sell: b.entity, buy: a.entity, currency: 'USD', amount: 350000, exchangeRate: 83.76, invAmount: 29316000, invTrmNo: `${id}-T2`, mcPurchase: mc.ref, mcSale: mc.ref },
-        { tradeType: 'T3', dealType: 'D2', sell: b.entity, buy: a.entity, currency: 'USD', amount: 250000, exchangeRate: 83.82, invAmount: 20955000, invTrmNo: `${id}-T3`, mcPurchase: mc.ref, mcSale: mc.ref },
-      ],
-      premium: { dealValue: maxAmt, dealCurr: 'USD', localNet: 0, localCurr: 'INR', rbi: 83.52, rbiDate: '28-09-2026', foreignNet: 0, foreignCurr: 'USD', perUsd: 0, strike: 83.67, invoiceRate: 83.76 },
+  /**
+   * Creates the Deal ID in SAP's tables (number drawn from the range, MC moved to In Use) and then
+   * reloads the screen from them, opened on the new Deal ID. It stops the dialog from being
+   * submitted twice while the number is being drawn.
+   */
+  const createDeal = async (mc: MasterContract, a: PoolTxn, b: PoolTxn) => {
+    if (creating) return
+    setCreating(true)
+    try {
+      const { dealId } = await createDealId(mc, a, b)
+      setCreateOpen(false)
+      toast(`Created Deal ID ${dealId}.`, 'success')
+      onReload(dealId)
+    } catch (error) {
+      toast(error instanceof Error ? error.message : String(error), 'error')
+    } finally {
+      setCreating(false)
     }
-    setDeals((prev) => ({ ...prev, [id]: newDeal }))
-    setMasterContracts((prev) => prev.map((m) => (m.ref === mc.ref ? { ...m, balance: Math.max(0, m.balance - maxAmt) } : m)))
-    setNextDealNumber((n) => n + 1)
-    setCreateOpen(false)
-    loadDeal(id)
-    toast(`Created Deal ID ${id} in this demo.`, 'success')
   }
 
   const calculateInvoices = () => {
@@ -273,13 +257,7 @@ export default function FoCreateDealIdManually() {
     updateDeal(deal.id, (d) => ({ ...d, invoices: d.invoices.map((r, i) => (i === index ? { ...r, exchangeRate: rate } : r)) }))
   }
 
-  const refreshAll = () => {
-    setDeals(INITIAL_DEALS)
-    setMasterContracts(INITIAL_MASTER_CONTRACTS)
-    setNextDealNumber(FIRST_NEW_DEAL_NUMBER)
-    loadDeal(DEFAULT_DEAL_ID)
-    toast('Workbench refreshed to its initial demo state.', 'info')
-  }
+  const refreshAll = () => onReload(currentDealId)
 
   const selectedRow = deal && selectedFxIndex >= 0 ? deal.fxRows[selectedFxIndex] : null
 
@@ -738,8 +716,54 @@ export default function FoCreateDealIdManually() {
       {txnRow ? <TxnModal row={txnRow} onClose={() => setTxnRow(null)} /> : null}
       {changeOpen && deal ? <ChangeModal deal={deal} masterContracts={masterContracts} onClose={() => setChangeOpen(false)} onConfirm={confirmDeal} /> : null}
       {premiumOpen && deal ? <PremiumModal premium={deal.premium} onClose={() => setPremiumOpen(false)} /> : null}
-      {editPairOpen && selectedRow ? <EditPairModal row={selectedRow} pool={TRANSACTION_POOL} onClose={() => setEditPairOpen(false)} onUpdate={updateDealPair} /> : null}
-      {createOpen ? <CreateModal masterContracts={masterContracts} pool={TRANSACTION_POOL} onClose={() => setCreateOpen(false)} onCreate={createDeal} /> : null}
+      {editPairOpen && selectedRow ? <EditPairModal row={selectedRow} pool={pool} onClose={() => setEditPairOpen(false)} onUpdate={updateDealPair} /> : null}
+      {createOpen ? <CreateModal masterContracts={masterContracts} pool={pool} onClose={() => setCreateOpen(false)} onCreate={createDeal} /> : null}
+    </div>
+  )
+}
+
+type State = { phase: 'loading' } | { phase: 'error'; message: string } | { phase: 'ready'; data: Workbench }
+
+/**
+ * FO: Create Deal ID Manually (ZSGTSFR079). The Master Contracts, Deal IDs and the Treasury
+ * transactions come from SAP, so the workbench opens once they have loaded. A failed read is shown
+ * with a Retry; no stand-in contracts or transactions are ever offered, since a Deal ID created
+ * against them would be written to the real tables.
+ */
+export default function FoCreateDealIdManually() {
+  const [load, setLoad] = useState({ attempt: 0, dealId: '' })
+  const [state, setState] = useState<State>({ phase: 'loading' })
+
+  useEffect(() => {
+    const ctl = new AbortController()
+    setState({ phase: 'loading' })
+    loadWorkbench(ctl.signal)
+      .then((data) => {
+        if (!ctl.signal.aborted) setState({ phase: 'ready', data })
+      })
+      .catch((error: unknown) => {
+        if (ctl.signal.aborted || isAbort(error)) return
+        setState({ phase: 'error', message: error instanceof Error ? error.message : String(error) })
+      })
+    return () => ctl.abort()
+  }, [load])
+
+  if (state.phase === 'ready') {
+    return <WorkbenchScreen key={load.attempt} data={state.data} startDealId={load.dealId} onReload={(dealId) => setLoad((l) => ({ attempt: l.attempt + 1, dealId }))} />
+  }
+  return (
+    <div className="dealanal" style={{ minHeight: '100vh', padding: 24 }}>
+      {state.phase === 'loading' ? (
+        <div role="status">Loading Master Contracts, Deal IDs and transactions…</div>
+      ) : (
+        <div role="alert">
+          <p>{state.message}</p>
+          <p>The workbench needs these to open. Nothing has been substituted for them.</p>
+          <button className="btn primary" type="button" onClick={() => setLoad((l) => ({ attempt: l.attempt + 1, dealId: '' }))}>
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,19 +1,16 @@
-import { SPOT_PRODUCT_TYPE, SPOT_TRANSACTION_TYPE } from './api.ts'
-import { ENTITIES } from './data.ts'
-import { partnerLabel } from './logic.ts'
+import { partnerLabel, spotEntities, spotTxnOptions } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoSpotForm, BusinessPartner } from './types.ts'
 
 /**
- * Create Spot: the visible fields of the external Auto Spot program (ZSGTSFR_SPOT_CREATE).
- * Create books a real FTR deal through ZFS_SB_TRMFX (api.ts); a refusal lists SAP's messages.
+ * Create Spot: the visible fields of the external Auto Spot program (ZSGTSFR_SPOT_CREATE),
+ * booked through the FxTransaction OData service. Company Code offers SG03 and AE13, Business
+ * Partner the one SAP partner, and Transaction Type the SAP value help with its product types.
  */
 export function AutoSpotModal({
   modals,
   form,
   partners,
-  errors,
-  busy,
   onChange,
   onCreate,
 }: {
@@ -21,9 +18,6 @@ export function AutoSpotModal({
   form: AutoSpotForm
   /** The bank partners only. */
   partners: BusinessPartner[]
-  /** Why SAP refused the last Create, one BAPI message per line. */
-  errors: readonly string[]
-  busy: boolean
   onChange: (patch: Partial<AutoSpotForm>) => void
   onCreate: () => void
 }) {
@@ -33,7 +27,7 @@ export function AutoSpotModal({
       <div className="modal-card" style={{ maxWidth: 620 }}>
         <ModalHeader
           title="Create Spot"
-          subtitle="Additional Spot Booking - booked in SAP FTR"
+          subtitle="Additional Spot Booking - visual simulation of the external Auto Spot program"
           onClose={close}
         />
         <div className="modal-body">
@@ -44,7 +38,7 @@ export function AutoSpotModal({
             </div>
             <div className="form-field">
               <label>FX Deal Type</label>
-              <input id="spot-fx-type" type="text" value={SPOT_PRODUCT_TYPE} readOnly />
+              <input id="spot-fx-type" type="text" value="DS1" readOnly />
             </div>
             <div className="form-field">
               <label>DSS Deal Type</label>
@@ -53,16 +47,22 @@ export function AutoSpotModal({
             <div className="form-field">
               <label>Company Code</label>
               <select id="spot-company" value={form.company} onChange={(e) => onChange({ company: e.target.value })}>
-                {ENTITIES.map((e) => (
+                {spotEntities().map((e) => (
                   <option key={e.code} value={e.code}>
-                    {e.code} - {e.name}
+                    {e.cocode} - {e.name}
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-field span2">
               <label>Transaction Type</label>
-              <input id="spot-txn-type" type="text" value={`${SPOT_TRANSACTION_TYPE} FX SPOT / FORWARD`} readOnly />
+              <select id="spot-txn-type" value={form.txnType} onChange={(e) => onChange({ txnType: e.target.value })}>
+                {spotTxnOptions().map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-field">
               <label>Trade Date</label>
@@ -119,23 +119,17 @@ export function AutoSpotModal({
               />
             </div>
           </div>
-          {errors.length ? (
-            <div className="validation-box warn" role="alert" style={{ marginBottom: 0 }}>
-              <strong>SAP did not create the spot:</strong>
-              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
-                {errors.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          <div className="validation-box warn" style={{ marginBottom: 0 }}>
+            Create Spot books the transaction in SAP through the <strong>FxTransaction</strong> OData service, with the
+            product type shown beside the chosen transaction type. SAP&apos;s own message is shown if it refuses.
+          </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn-cancel" onClick={close} disabled={busy}>
+          <button type="button" className="btn-cancel" onClick={close}>
             Cancel
           </button>
-          <button type="button" className="btn-confirm" onClick={onCreate} disabled={busy}>
-            {busy ? 'Creating in SAP…' : 'Create Spot'}
+          <button type="button" className="btn-confirm" onClick={onCreate}>
+            Create Spot
           </button>
         </div>
       </div>

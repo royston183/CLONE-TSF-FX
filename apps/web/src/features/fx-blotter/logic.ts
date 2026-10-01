@@ -14,11 +14,15 @@ import {
   CURRENCY_PAIRS,
   ENTITIES,
   FIXING_REFERENCES,
+  FX_MODELS,
   GROUPS,
   HOLIDAYS,
   INITIAL_COUNTERS,
   PORTFOLIOS,
   PROFIT_CENTERS,
+  SPOT_COMPANY_CODES,
+  SPOT_PARTNER_CODE,
+  SPOT_TXN_TYPES,
   TRADERS,
   TRANSACTION_TYPES,
   entityOf,
@@ -97,8 +101,12 @@ export const bsText = (v: string): string => (v === 'B' ? 'Buy' : 'Sell')
 export const entityOptions = (): Option[] => ENTITIES.map((e) => ({ value: e.code, label: `${e.code} - ${e.name}` }))
 export const bpOptions = (partners: BusinessPartner[]): Option[] =>
   partners.map((b) => ({ value: b.code, label: partnerLabel(b) }))
+/** Each option leads with the SAP product type and transaction type it books as, e.g. "12B 619 - FWD - Outright Forward". */
 export const txnTypeOptions = (): Option[] =>
-  TRANSACTION_TYPES.map((t) => ({ value: t.code, label: `${t.code} - ${t.desc}` }))
+  TRANSACTION_TYPES.map((t) => ({
+    value: t.code,
+    label: `${t.product ? `${t.product} ${t.sapType} - ` : ''}${t.code} - ${t.desc}`,
+  }))
 export const bsOptions = (): Option[] => [
   { value: 'B', label: 'Buy' },
   { value: 'S', label: 'Sell' },
@@ -368,13 +376,15 @@ export function settle(b: Blotter): Blotter {
 export function loadContext(b: Blotter): { blotter: Blotter; loaded: number } {
   const c = { ...b.counters }
   const { group, trader } = b.ctx
+  // The two seeded legs belong to the OGA-DMCC model; the first loaded model with that start stands in for it.
+  const seedModel = FX_MODELS.find((m) => m.entities[0] === 'OGA' && m.entities[1] === 'DMCC')?.code ?? ''
   const seeded: RowOpts = {
     status: 'CREATED',
     txnType: 'FWD',
     curr1: 'USD',
     amt1: 2500000,
     portfolio: 'TRADING',
-    model: 'M021',
+    model: seedModel,
     group,
     trader,
   }
@@ -415,7 +425,7 @@ export function initialBlotter(now: Date, contracts: MasterContract[], partners:
 export function hardReset(b: Blotter, now: Date): Blotter {
   return initialBlotter(
     now,
-    b.contracts.map((mc) => ({ ...mc, utilizedUSD: 0 })),
+    b.contracts.map((mc) => ({ ...mc, utilizedUSD: mc.baseUtilizedUSD ?? 0 })),
     b.partners,
   )
 }
@@ -715,6 +725,48 @@ export function createDrafts(b: Blotter, ids: string[]): Blotter {
   }
 }
 
+/** SAP's answer to Create for the rows it accepted: they take the real transaction number. */
+export function applyCreated(b: Blotter, created: Map<string, { companyCode: string; transaction: string }>): Blotter {
+  return {
+    ...b,
+    rows: b.rows.map((r) => {
+      const c = created.get(r.id)
+      return c
+        ? { ...r, status: 'CREATED', transactionNumber: c.transaction, companyCode: c.companyCode, live: true, draftLabel: '' }
+        : r
+    }),
+    checked: b.checked.filter((id) => !created.has(id)),
+  }
+}
+
+/**
+ * Puts the deals read from SAP on the grid. A deal already shown (created in this session, or
+ * read by an earlier load) is kept as it is, not listed twice: SAP knows nothing of its Deal ID,
+ * Master Contract or release, which live only on this screen. The one thing SAP decides is a
+ * reversal, so that is applied to the row already there.
+ */
+export function mergeLiveRows(
+  b: Blotter,
+  incoming: Array<Omit<BlotterRow, 'id' | 'seq'>>,
+  partners: BusinessPartner[],
+): Blotter {
+  const key = (r: { companyCode?: string | undefined; transactionNumber: string }) =>
+    `${r.companyCode ?? ''}/${r.transactionNumber}`
+  const shown = new Map(b.rows.filter((r) => r.live).map((r) => [key(r), r]))
+  const reversed = new Set(incoming.filter((r) => r.status === 'REVERSED').map(key))
+  const c = { ...b.counters }
+  const added = incoming
+    .filter((r) => !shown.has(key(r)))
+    .map((r) => {
+      const seq = c.seq++
+      return { ...r, id: `R${seq}`, seq } as BlotterRow
+    })
+  const existing = b.rows.map((r) =>
+    r.live && reversed.has(key(r)) && r.status !== 'REVERSED' ? { ...r, status: 'REVERSED' as const } : r,
+  )
+  return settle({ ...b, partners, rows: [...added, ...existing], counters: c })
+}
+
 // ---------------------------------------------------------------- release to MO
 
 /** Auto Deal legs already carry their MC and Deal ID, so Release only changes the status. */
@@ -894,7 +946,8 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
   const valueDate = nextWorkingDay(addDays(ctxDate, 32))
   const base = {
     txnType: 'FWD',
-    partner: 'BP1005',
+    // The legs are booked in SAP, where only a real partner number is accepted.
+    partner: SPOT_PARTNER_CODE,
     curr1: p.lead,
     curr2: p.follow,
     amt1: amt,
@@ -1080,9 +1133,11 @@ export function confirmShortStraddle(
 /** The Create Spot popup's starting values: from the one selected row, else its defaults. */
 export function autoSpotForm(sel: BlotterRow[], b: Blotter): AutoSpotForm {
   const r = sel.length === 1 ? sel[0] : undefined
+  const entities = spotEntities()
   return {
     dealId: r?.dealId || b.deals[0]?.dealId || '1100000106',
-    company: r && ENTITIES.some((e) => e.code === r.entity) ? r.entity : (ENTITIES[0]?.code ?? ''),
+    company: r && entities.some((e) => e.code === r.entity) ? r.entity : (entities[0]?.code ?? ''),
+    txnType: txnTypeOf('SPOT')?.sapType ?? SPOT_TXN_TYPES[0]?.code ?? '',
     bp: spotPartners(b.partners)[0]?.code ?? '',
     tradeDate: fmtDate(b.ctx.date),
     valueDate: fmtDate(nextWorkingDay(addDays(b.ctx.date, 2))),
@@ -1094,9 +1149,17 @@ export function autoSpotForm(sel: BlotterRow[], b: Blotter): AutoSpotForm {
   }
 }
 
-/** Auto Spot books with a bank, so the two internal partners are left out. */
+/** Create Spot books with one SAP partner only. */
 export const spotPartners = (partners: BusinessPartner[]): BusinessPartner[] =>
-  partners.filter((p) => p.code !== 'BP1005' && p.code !== 'BP1006')
+  partners.filter((p) => p.code === SPOT_PARTNER_CODE)
+
+/** The entities whose company codes Create Spot offers (SG03, AE13). */
+export const spotEntities = (): Entity[] =>
+  SPOT_COMPANY_CODES.map((cc) => ENTITIES.find((e) => e.cocode === cc)).filter((e): e is Entity => !!e)
+
+/** The Transaction Type list, each line with its product type: "12A 600 - FX Spot: External-Spot". */
+export const spotTxnOptions = (): Option[] =>
+  SPOT_TXN_TYPES.map((t) => ({ value: t.code, label: `${t.product} ${t.code} - ${t.desc}` }))
 
 // ---------------------------------------------------------------- FX Txn List (ZSGTSF_RFX_LIST)
 
@@ -1332,7 +1395,7 @@ export function uploadEntity(company: string): Entity {
   const x = String(company || '')
     .trim()
     .toUpperCase()
-  return ENTITIES.find((e) => e.cocode.toUpperCase() === x || e.code.toUpperCase() === x) ?? ENTITIES[0]!
+  return ENTITIES.find((e) => e.cocode.toUpperCase() === x || e.code.toUpperCase() === x) ?? entityOf('OGA') ?? ENTITIES[0]!
 }
 
 export function validateUploadRows(rows: UploadRow[]): { errors: string[]; warnings: string[] } {

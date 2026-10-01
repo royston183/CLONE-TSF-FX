@@ -12,8 +12,20 @@ export type Entity = {
 }
 /** `group` is 'ALL' for the internal counterparties. Upload adds partners it does not know. */
 export type BusinessPartner = { code: string; short: string; name: string; group: string }
-/** valueDateOffset is calendar days from the trade date; `ndf` turns on the fixing fields. */
-export type TransactionType = { code: string; desc: string; sapType: string; valueDateOffset: number; ndf: boolean }
+/**
+ * valueDateOffset is calendar days from the trade date; `ndf` turns on the fixing fields.
+ * `product` / `sapType` are the SAP product type and transaction type ('' when SAP has none for it).
+ */
+export type TransactionType = {
+  code: string
+  desc: string
+  product: string
+  sapType: string
+  valueDateOffset: number
+  ndf: boolean
+}
+/** One line of the SAP Transaction Type value help: product type, transaction type, name. */
+export type SpotTxnType = { product: string; code: string; desc: string }
 /** quotePer is 100 for the currencies quoted per 100 units (IDR / KWA / VND / TWD). */
 export type CurrencyPair = { pair: string; lead: string; follow: string; quotePer: number; baseRate: number }
 export type CodeDesc = { code: string; desc: string }
@@ -64,6 +76,8 @@ export type MasterContract = {
   shipEnd: Date
   amtUSD: number
   utilizedUSD: number
+  /** What the contract had drawn when it was loaded; Refresh (hard reset) returns utilizedUSD to it. */
+  baseUtilizedUSD?: number
   group: string
   portShipment: string
   portDestination: string
@@ -132,6 +146,8 @@ export type BlotterRow = {
   dealSequence?: string
   uploaded?: boolean
   settled?: boolean
+  /** True for a row that exists in SAP (created through, or read from, the FxTransaction service). */
+  live?: boolean
 }
 
 export type TextField =
@@ -208,6 +224,8 @@ export type AutoLegField =
 export type AutoSpotForm = {
   dealId: string
   company: string
+  /** The SAP transaction type code (600, 609, ...); its product type follows from SPOT_TXN_TYPES. */
+  txnType: string
   bp: string
   tradeDate: string
   valueDate: string

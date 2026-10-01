@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { BUSINESS_PARTNERS, MC_SEED } from './data.ts'
+import { BUSINESS_PARTNERS } from './data.ts'
+import { MC_SEED_FIXTURE as MC_SEED, installFixtures } from './fixtures.ts'
 import { fmtCompactUsd, fmtDate, fmtNum, parseGridDate, parseUiDate } from './format.ts'
 import {
   assignCheck,
@@ -53,6 +54,9 @@ import {
   workingDaysBetween,
 } from './logic.ts'
 import type { Blotter, BlotterRow } from './types.ts'
+
+// The running screen loads these lists from the middleware; the rules are tested against the values the lists used to hold.
+installFixtures()
 
 // A Friday; Monday 26-10-2026 is 31 days on, so the seeded legs value on 27 and 28 October.
 const NOW = new Date(2026, 8, 25)
@@ -399,7 +403,7 @@ describe('upload', () => {
   it('adds unknown partners and processes rows to the top at the chosen level', () => {
     const b = fresh()
     const bp = uploadBpCode(b.partners, 'New Bank')
-    strictEqual(bp.code, 'UPL8')
+    strictEqual(bp.code, `UPL${BUSINESS_PARTNERS.length + 1}`)
     strictEqual(uploadBpCode(b.partners, 'dbs sg').code, 'BP1001')
     const out = processUpload(b, sampleUploadRows(NOW), 'CONTRACT', 'G03', 'TER')!
     strictEqual(out.results.length, 2)
@@ -430,7 +434,7 @@ describe('hard reset', () => {
     )
     strictEqual(reset.deals.length, 0)
     strictEqual(reset.contracts[0]?.utilizedUSD, 0)
-    strictEqual(reset.partners.length, 8)
+    strictEqual(reset.partners.length, BUSINESS_PARTNERS.length + 1)
     strictEqual(reset.ctx.group, 'G02')
     deepStrictEqual(checkedRows(reset), [])
     strictEqual(sortRows(reset.rows, BY_SEQ)[0]?.transactionNumber, '8100002')

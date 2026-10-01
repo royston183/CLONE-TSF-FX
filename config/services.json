@@ -95,6 +95,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata/sap/API_BUSINESS_PARTNER",
       "description": "API_BUSINESS_PARTNER (OData V2) — A_BusinessPartner; read here only for partner names"
     },
+    "fx": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfx_o4_api/srvd_a2x/sap/zfs_sd_trmfx/0001",
+      "description": "ZFS_SB_TRMFX_O4_API — FxTransaction (create / read / reverse via the FTR BAPIs, Settle action)"
+    },
     "middleware": {
       "kind": "rest",
       "base": "https://slc-middleware-c3d8g8cteug0c6e6.centralindia-01.azurewebsites.net/api/v1",

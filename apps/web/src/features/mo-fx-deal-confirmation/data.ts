@@ -36,6 +36,24 @@ export const TXN_TYPES: TxnType[] = [
   { code: '605', desc: 'Spot- TSF' },
 ]
 
+/**
+ * The SAP transaction type value help, for naming a deal read from SAP. TXN_TYPES above stays the
+ * dummy list for the Options rows; a code missing here shows as the bare code.
+ */
+export const SAP_TXN_DESC: Record<string, string> = {
+  '600': 'FX Spot: External-Spot',
+  '601': 'FX Spot: External-Cash',
+  '602': 'FX Spot: External-TOM',
+  '603': 'FX Spot: External-Spot-Exercis',
+  '604': 'FX Spot: External-Spot-Exercis',
+  '605': 'FX Spot: External-Spot - TSF',
+  '607': 'FX Spot: External-Cash - TSF',
+  '609': 'FX Spot: External-Settlement S',
+  '619': 'FX Forwards: External-Forward',
+  '631': 'FX NDF: External-NDF - TSF',
+  '632': 'FX NDF: External-DNDF - TSF',
+}
+
 export const TRADERS: Trader[] = [
   { code: 'C27', name: 'Akshay Mohnot', shortName: 'Akshay M' },
   { code: 'C33', name: 'Pooja Pednekar', shortName: 'Pooja P' },
