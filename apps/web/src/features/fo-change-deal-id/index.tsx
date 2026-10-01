@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
-import { CANCELLED_STATUS, MASTER_CONTRACTS, PREMIUMS, seedDeals } from './data.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import type { DealRow } from '../../shared/fx/master-contract.ts'
+import { cancelDealRow, changeMc, loadScreen, type Loaded } from './api.ts'
+import { CANCELLED_STATUS, PREMIUMS } from './data.ts'
 import { recordCount } from './format.ts'
 import {
   CalculatorIcon,
@@ -18,11 +21,13 @@ import {
 import {
   CANCEL_CONFIRM_MSG,
   MC_CHANGE_BLOCKED_MSG,
-  buildPlTable,
+  MC_STATUS_UNKNOWN_MSG,
   cancelDeal,
+  hasUnverifiedLegs,
   isDealOpen,
   isMcChangeBlocked,
   loadDeal,
+  mcChangeError,
   premiumFields,
   recalculateInvoices,
   searchDeals,
@@ -51,21 +56,29 @@ import './fo-change-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-change-deal-id.dark.css'
-import type { Deal, DealStore, MasterContract, PickedMc, Toast } from './types.ts'
+import type { Deal, DealStore, MasterContract, PickedMc, PlTable as PlTableData, Toast } from './types.ts'
 
 let toastSeq = 0
 
 /**
  * ZSGTSFP013: FO: Change Deal ID, converted from legacy/FO_Change_Deal_ID.html.
  *
- * The original never called an API, so this is the same UI-only screen: the deal table,
- * Master Contract F4 help and Premium lookup are the page's dummy data (data.ts), held in
- * component state for the session. Changes made through the popups (MC Ref No, deal pair,
- * cancellation) are written to that in-memory deal table, so Refresh reloads them; invoice
- * exchange-rate edits and Calculate only touch the loaded copy, as in the original.
+ * The Deal IDs, their Master Contracts, the MC picker (status 03 / 04), the linked FX
+ * transactions and the invoice plan come from MySQL through the SLC middleware (api.ts).
+ * Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both
+ * stop at MySQL, because the program's stamp on the Treasury transactions is an SAP call.
+ * Edit Deal Pair is not saved at all (it is that same SAP write), invoice exchange-rate edits
+ * and Calculate only touch the loaded copy as in the original, and the Premium and planned
+ * P&L cards have no source yet and stay empty. There is no seed data: when the Deal IDs
+ * cannot be read the screen says so.
  */
 export default function FoChangeDealId() {
-  const [store, setStore] = useState<DealStore>(seedDeals)
+  const [store, setStore] = useState<DealStore>({})
+  const [contracts, setContracts] = useState<MasterContract[]>([])
+  /** The DEALID rows behind the store: Change and Cancel write against their keys. */
+  const dealRows = useRef<ReadonlyMap<string, DealRow>>(new Map())
+  const [source, setSource] = useState<'loading' | 'sap' | 'unavailable'>('loading')
+  const busy = useRef(false)
   const [deal, setDeal] = useState<Deal | null>(null)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [search, setSearch] = useState('')
@@ -134,8 +147,26 @@ export default function FoChangeDealId() {
 
   // ------------------------------------------------------------------ deal loading
 
-  const openDeal = (dealId: string) => {
-    const d = loadDeal(store, dealId)
+  /** Reads MySQL; resolves to the loaded result so a caller can re-open its deal from it. */
+  const reload = async (signal?: AbortSignal): Promise<Loaded> => {
+    const loaded = await loadScreen(signal)
+    dealRows.current = loaded.rows
+    setStore(loaded.store)
+    setContracts(loaded.contracts)
+    setSource(loaded.source)
+    return loaded
+  }
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    reload(ctrl.signal).catch((error: unknown) => {
+      if (!isAbort(error)) console.error('[fx] Change Deal ID failed to load', error)
+    })
+    return () => ctrl.abort()
+  }, [])
+
+  const openDealFrom = (from: DealStore, dealId: string) => {
+    const d = loadDeal(from, dealId)
     if (!d) {
       toast('Deal ID not found.', true)
       return
@@ -144,6 +175,8 @@ export default function FoChangeDealId() {
     setSelectedIdx(null)
     setInvGeneration((g) => g + 1)
   }
+
+  const openDeal = (dealId: string) => openDealFrom(store, dealId)
 
   const onSearchInput = (term: string) => {
     setSearch(term)
@@ -162,12 +195,18 @@ export default function FoChangeDealId() {
     setSearch('')
   }
 
-  const refresh = () => {
-    if (!deal) {
+  const refresh = async () => {
+    const dealId = deal?.dealId
+    const loaded = await reload().catch(() => undefined)
+    if (!loaded) {
+      toast('Could not reload from MySQL.', true)
+      return
+    }
+    if (!dealId) {
       toast('Screen refreshed.')
       return
     }
-    openDeal(deal.dealId)
+    openDealFrom(loaded.store, dealId)
     toast('Workbench data refreshed.')
   }
 
@@ -229,18 +268,48 @@ export default function FoChangeDealId() {
     mcPickerModal.close()
   }
 
-  const confirmChange = () => {
-    if (!deal) return
+  const confirmChange = async () => {
+    if (!deal || busy.current) return
+    // A leg whose status the source cannot give cannot be shown to be matched.
+    if (hasUnverifiedLegs(deal)) {
+      setChangeError(MC_STATUS_UNKNOWN_MSG)
+      return
+    }
     if (isMcChangeBlocked(deal)) {
       setChangeError(MC_CHANGE_BLOCKED_MSG)
       return
     }
-    if (pickedMc) {
-      setStore((s) => updateMcRef(s, deal.dealId, pickedMc.ref, pickedMc.desc))
-      setDeal({ ...deal, mcRef: pickedMc.ref, mcDesc: pickedMc.desc })
+    if (!pickedMc) {
+      changeModal.close()
+      return
     }
+    const picked = contracts.find((c) => c.ref === pickedMc.ref)
+    const mismatch = picked ? mcChangeError(deal, picked) : null
+    if (mismatch) {
+      setChangeError(mismatch)
+      return
+    }
+    const row = dealRows.current.get(deal.dealId)
+    if (source === 'sap' && row) {
+      busy.current = true
+      try {
+        await changeMc(row, pickedMc.ref)
+      } catch (error) {
+        setChangeError(error instanceof Error ? error.message : String(error))
+        return
+      } finally {
+        busy.current = false
+      }
+    }
+    setStore((s) => updateMcRef(s, deal.dealId, pickedMc.ref, pickedMc.desc))
+    setDeal({ ...deal, mcRef: pickedMc.ref, mcDesc: pickedMc.desc })
     changeModal.close()
-    toast('MC Ref No updated successfully.')
+    // The new MC's dates and strings come from MySQL.
+    if (source === 'sap') {
+      const loaded = await reload().catch(() => undefined)
+      if (loaded) openDealFrom(loaded.store, deal.dealId)
+    }
+    toast('MC Ref No saved in ZSGTSFTR_DEALID. The Treasury transactions are not re-stamped (SAP).')
   }
 
   // ------------------------------------------------------------------ Edit Deal Pair (Screen 9004)
@@ -266,7 +335,7 @@ export default function FoChangeDealId() {
     setStore((s) => updateDealPair(s, deal.dealId, idx, v.value))
     setDeal({ ...deal, top: deal.top.map((r, i) => (i === idx ? { ...r, rfha: v.value } : r)) })
     editPairModal.close()
-    toast('Deal pair updated successfully.')
+    toast('Deal pair changed on this screen only — it is not saved (needs the SAP transaction change).')
   }
 
   // ------------------------------------------------------------------ Cancel Deal ID (Screen 9005)
@@ -282,10 +351,23 @@ export default function FoChangeDealId() {
     if (!deal) return
     const dealId = deal.dealId
     cancelDealModal.close()
-    showConfirm('Cancel Deal ID', CANCEL_CONFIRM_MSG, () => {
+    showConfirm('Cancel Deal ID', CANCEL_CONFIRM_MSG, async () => {
+      if (busy.current) return
+      const row = dealRows.current.get(dealId)
+      if (source === 'sap' && row) {
+        busy.current = true
+        try {
+          await cancelDealRow(row)
+        } catch (error) {
+          toast(error instanceof Error ? error.message : String(error), true)
+          return
+        } finally {
+          busy.current = false
+        }
+      }
       setStore((s) => cancelDeal(s, dealId))
       setDeal((d) => (d ? { ...d, status: CANCELLED_STATUS } : d))
-      toast(`Deal ID ${dealId} cancelled.`)
+      toast(`Deal ID ${dealId} cancelled (ZSGTSFTR_DEALID). The Treasury transactions are not released in SAP.`)
     })
   }
 
@@ -375,7 +457,12 @@ export default function FoChangeDealId() {
                 </div>
               </div>
               <span className="sub" style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                Search by Deal ID, entity string or trader to open the Deal ID analysis workbench.
+                Search by Deal ID, entity string or trader to open the Deal ID analysis workbench.{' '}
+                {source === 'loading'
+                  ? 'Loading from MySQL…'
+                  : source === 'sap'
+                    ? 'ZSGTSFTR_DEALID · MySQL'
+                    : 'ZSGTSFTR_DEALID could not be read — no Deal IDs to show.'}
               </span>
             </div>
           </div>
@@ -499,7 +586,7 @@ export default function FoChangeDealId() {
                 </div>
 
                 {/* Deal P&L table */}
-                <PlCard deal={deal} />
+                <PlCard />
               </>
             ) : null}
           </div>
@@ -526,7 +613,12 @@ export default function FoChangeDealId() {
         onOpenPicker={openMcPicker}
         onConfirm={confirmChange}
       />
-      <McPickerModal modal={mcPickerModal} contracts={MASTER_CONTRACTS} onPick={pickMc} />
+      <McPickerModal
+        modal={mcPickerModal}
+        // Only MCs under the deal's own FX model are offered (see mcChangeError).
+        contracts={deal ? contracts.filter((c) => !c.model || !deal.modId || c.model === deal.modId) : contracts}
+        onPick={pickMc}
+      />
       <PremiumModal modal={premiumModal} fields={premiumFields(deal ? PREMIUMS[deal.dealId] : undefined)} />
       <EditPairModal
         modal={editPairModal}
@@ -569,18 +661,23 @@ export default function FoChangeDealId() {
   )
 }
 
-function PlCard({ deal }: { deal: Deal }) {
-  const data = buildPlTable(deal.inv)
+/**
+ * The legacy page derived these rows from the invoice amounts with fixed mock factors. That is
+ * not a P&L, so the card stays empty until the real source (the P&L program's tables) exists.
+ */
+const NO_PL: PlTableData = { empty: true }
+
+function PlCard() {
   return (
     <div className="card">
       <div className="card-head">
         <div className="htitle">
           <h2>Deal ID: Planned P&amp;L</h2>
-          <span className="count">{data.empty ? '0 records' : `${data.count} records`}</span>
+          <span className="count">0 records</span>
         </div>
       </div>
       <div className="table-scroll">
-        <PlTable data={data} />
+        <PlTable data={NO_PL} />
       </div>
     </div>
   )
