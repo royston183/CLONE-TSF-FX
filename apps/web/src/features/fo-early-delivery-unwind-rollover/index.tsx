@@ -3,19 +3,15 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { DealTable } from './DealTable.tsx'
+import { WAITING, loadBankPartners, loadDealLegs, loadTxnTypes } from './api.ts'
 import {
+  ACTION_WAITING,
   DEFAULT_FILTERS,
   DEFAULT_PAGE_SIZE,
   DEFAULT_SORT,
   EMPTY_STATE_NO_DEAL,
   EMPTY_STATE_NO_MATCH,
-  MSG,
   PAGE_SIZES,
-  STATUS_OPTIONS,
-  TYPE_FILTER_OPTIONS,
-  applyEarly,
-  applyRollover,
-  applyUnwind,
   dragGhostText,
   earlyEvent,
   emptyPairForm,
@@ -25,15 +21,17 @@ import {
   gateRollover,
   gateUnwind,
   kpis,
-  loadDeal,
   loadToast,
   nextSort,
+  normalizeDealId,
   paginate,
   pairFormFor,
   rolloverEvent,
   sapeventUrl,
+  statusOptions,
   toggleSelection,
   txnCount,
+  typeFilterOptions,
   unwindEvent,
   unwindFormFor,
   validateEarly,
@@ -48,14 +46,13 @@ import './fo-early-delivery-unwind-rollover.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-early-delivery-unwind-rollover.dark.css'
-import type { Filters, Leg, PairForm, Sort, SortField, Toast, ToastKind, UnwindForm } from './types.ts'
+import type { Avail, DdOption, Filters, Leg, PairForm, Sort, SortField, Toast, ToastKind, UnwindForm } from './types.ts'
 
 const TOAST_MS = 3200
 const FLASH_MS = 1800
-const QUICK_LOAD = ['TSF10045', 'TSF10078', 'TSF10112'] as const
 
 type DropTarget = 'early' | 'unwind' | 'roll'
-type Banner = { dealId: string; count: string; cpair: string }
+type Banner = { dealId: string; count: string; cpair: string } | { dealId: string; waiting: string }
 
 /** Where the legacy fired `window.location.href = 'sapevent:…'`; inside the SPA that would navigate away. */
 function fireSapevent(event: string) {
@@ -66,10 +63,13 @@ function fireSapevent(event: string) {
  * ZSGTSFP015: FO Create Early Delivery / Unwinding / Rollover ("Premature Settlement"),
  * converted from legacy/unwindroll.html.
  *
- * The original never called an API: a Deal ID loads its legs from the page's dummy directory
- * (or deterministic generated legs for any other ID), and the three actions — Early Delivery
- * (screen 9001), Unwinding (9002) and Rollover (9003) — validate, fire a sapevent and update
- * the leg in memory. The sapevent strings are now only built and logged (see logic.ts).
+ * Reads SAP data only (see api.ts): the Deal ID's legs from ZSGTSFCDS_FX, the Txn Type help
+ * from TVARVC and the Bank BP help from ZSGTRMTR_BP_GRP ⋈ ZSGTRMTR_BPEXT for the leg's trader
+ * group. Whatever the middleware cannot serve yet shows as WAITING FOR API with the reason.
+ *
+ * The three actions — Early Delivery (screen 9001), Unwinding (9002) and Rollover (9003) —
+ * validate and build their sapevent as before, but have no backend action to post to, so
+ * they say so and leave the deal untouched instead of reporting a success that never happened.
  */
 export default function FoEarlyDeliveryUnwindRollover() {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -105,13 +105,23 @@ export default function FoEarlyDeliveryUnwindRollover() {
   const [rollForm, setRollForm] = useState<PairForm>(emptyPairForm)
   const [unwindForm, setUnwindForm] = useState<UnwindForm>(emptyUnwindForm)
 
-  useEffect(
-    () => () => {
+  const [loading, setLoading] = useState(false)
+  const loadAbort = useRef<AbortController | null>(null)
+  const [txnTypes, setTxnTypes] = useState<Avail<DdOption[]>>({ state: 'loading' })
+  const [bankPartners, setBankPartners] = useState<Avail<DdOption[]>>({ state: 'loading' })
+  const bpAbort = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadTxnTypes(ctrl.signal).then(setTxnTypes, () => undefined)
+    return () => {
+      ctrl.abort()
+      loadAbort.current?.abort()
+      bpAbort.current?.abort()
       clearTimeout(toastTimer.current)
       clearTimeout(flashTimer.current)
-    },
-    [],
-  )
+    }
+  }, [])
 
   const showToast = useCallback((msg: string, kind?: ToastKind) => {
     setToast({ msg, kind })
@@ -134,18 +144,47 @@ export default function FoEarlyDeliveryUnwindRollover() {
 
   /* ---------- Basic Selection ---------- */
 
-  const doLoad = (raw: string) => {
-    const res = loadDeal(raw)
+  const doLoad = async (raw: string) => {
+    const res = normalizeDealId(raw)
     if (!res.ok) {
       showToast(res.message, 'warn')
       return
     }
-    setLegs(res.legs)
+    loadAbort.current?.abort()
+    const ctrl = new AbortController()
+    loadAbort.current = ctrl
+    setLoading(true)
+    let read: Avail<Leg[]>
+    try {
+      read = await loadDealLegs(res.dealId, ctrl.signal)
+    } catch {
+      return // aborted by a newer load or by leaving the screen
+    } finally {
+      if (loadAbort.current === ctrl) setLoading(false)
+    }
+    setLegs(read.state === 'ok' ? read.value : [])
     setSelectedRfha(null)
     setPage(1)
-    setBanner({ dealId: res.dealId, count: txnCount(res.legs.length), cpair: res.legs[0] ? res.legs[0].cpair : '-' })
-    setBannerShown(true)
-    showToast(loadToast(res.legs.length, res.dealId))
+    if (read.state === 'ok') {
+      setBanner({ dealId: res.dealId, count: txnCount(read.value.length), cpair: read.value[0] ? read.value[0].cpair : '-' })
+      setBannerShown(true)
+      showToast(loadToast(read.value.length, res.dealId))
+    } else if (read.state === 'waiting') {
+      setBanner({ dealId: res.dealId, waiting: read.reason })
+      setBannerShown(true)
+    } else if (read.state === 'error') {
+      setBannerShown(false)
+      showToast(read.reason, 'error')
+    }
+  }
+
+  /** FORM bp: the selected leg's trader group decides which banks are offered. */
+  const loadPartnersFor = (l: Leg) => {
+    bpAbort.current?.abort()
+    const ctrl = new AbortController()
+    bpAbort.current = ctrl
+    setBankPartners({ state: 'loading' })
+    loadBankPartners(l.zgrp, ctrl.signal).then(setBankPartners, () => undefined)
   }
 
   const clearValues = () => {
@@ -169,6 +208,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
     setModalLeg(l)
     setModalSeq((n) => n + 1)
     setEarlyForm(pairFormFor(l))
+    loadPartnersFor(l)
     earlyModal.open()
   }
   const tryOpenUnwind = () => {
@@ -182,6 +222,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
     setModalLeg(l)
     setModalSeq((n) => n + 1)
     setUnwindForm(unwindFormFor(l))
+    loadPartnersFor(l)
     unwindModal.open()
   }
   const tryOpenRollover = () => {
@@ -195,6 +236,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
     setModalLeg(l)
     setModalSeq((n) => n + 1)
     setRollForm(pairFormFor(l))
+    loadPartnersFor(l)
     rollModal.open()
   }
 
@@ -207,10 +249,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
       return
     }
     fireSapevent(earlyEvent(l, earlyForm))
-    setLegs((prev) => applyEarly(prev, l.rfha))
-    earlyModal.close()
-    flashRow(l.rfha)
-    showToast(MSG.earlyDone)
+    showToast(ACTION_WAITING.early, 'warn')
   }
   const submitUnwind = () => {
     const l = selectedLeg
@@ -221,10 +260,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
       return
     }
     fireSapevent(unwindEvent(l, unwindForm))
-    setLegs((prev) => applyUnwind(prev, l.rfha))
-    unwindModal.close()
-    flashRow(l.rfha)
-    showToast(MSG.unwindDone)
+    showToast(ACTION_WAITING.unwind, 'warn')
   }
   const submitRollover = () => {
     const l = selectedLeg
@@ -235,10 +271,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
       return
     }
     fireSapevent(rolloverEvent(l, rollForm))
-    setLegs((prev) => applyRollover(prev, l.rfha))
-    rollModal.close()
-    flashRow(l.rfha)
-    showToast(MSG.rollDone)
+    showToast(ACTION_WAITING.roll, 'warn')
   }
 
   /* ---------- Drag and drop ---------- */
@@ -317,12 +350,12 @@ export default function FoEarlyDeliveryUnwindRollover() {
                 </label>
                 <input
                   className="control"
-                  placeholder="e.g. TSF10045"
+                  placeholder="Deal ID"
                   autoComplete="off"
                   value={dealInput}
                   onChange={(e) => setDealInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') doLoad(dealInput)
+                    if (e.key === 'Enter') void doLoad(dealInput)
                   }}
                 />
               </div>
@@ -330,29 +363,12 @@ export default function FoEarlyDeliveryUnwindRollover() {
                 <button className="btn btn-secondary" type="button" onClick={clearValues}>
                   Clear Values
                 </button>
-                <button className="btn btn-primary" type="button" onClick={() => doLoad(dealInput)}>
-                  Load Deal
+                <button className="btn btn-primary" type="button" disabled={loading} onClick={() => void doLoad(dealInput)}>
+                  {loading ? 'Loading…' : 'Load Deal'}
                 </button>
               </div>
               <div className="field" style={{ flex: '1 1 auto', alignSelf: 'flex-end' }}>
-                <span className="hint">
-                  Try:{' '}
-                  {QUICK_LOAD.map((id, i) => (
-                    <span key={id}>
-                      {i > 0 ? ' · ' : null}
-                      <button
-                        className="btn-ghost"
-                        type="button"
-                        onClick={() => {
-                          setDealInput(id)
-                          doLoad(id)
-                        }}
-                      >
-                        {id}
-                      </button>
-                    </span>
-                  ))}
-                </span>
+                <span className="hint">ZSGTSFCDS_FX · SLC middleware</span>
               </div>
             </div>
           </div>
@@ -367,9 +383,15 @@ export default function FoEarlyDeliveryUnwindRollover() {
 
         <div className={`success-banner${bannerShown ? ' show' : ''}`}>
           <span>ℹ</span>
-          <span>
-            Deal <b>{banner?.dealId}</b> loaded — <span>{banner?.count}</span> transaction(s), currency pair <b>{banner?.cpair}</b>.
-          </span>
+          {banner && 'waiting' in banner ? (
+            <span>
+              <b>{WAITING}</b> — Deal <b>{banner.dealId}</b> cannot be read: {banner.waiting}
+            </span>
+          ) : (
+            <span>
+              Deal <b>{banner?.dealId}</b> loaded — <span>{banner?.count}</span> transaction(s), currency pair <b>{banner?.cpair}</b>.
+            </span>
+          )}
           <span className="spacer"></span>
           <button className="btn btn-secondary btn-sm" type="button" onClick={() => setBannerShown(false)}>
             Dismiss
@@ -404,7 +426,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
               }}
             >
               <option value="">All txn types</option>
-              {TYPE_FILTER_OPTIONS.map((o) => (
+              {typeFilterOptions(legs).map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -420,7 +442,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
               }}
             >
               <option value="">All statuses</option>
-              {STATUS_OPTIONS.map((s) => (
+              {statusOptions(legs).map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -529,6 +551,8 @@ export default function FoEarlyDeliveryUnwindRollover() {
         leg={modalLeg}
         form={earlyForm}
         bodyKey={modalSeq}
+        typeOptions={txnTypes}
+        bpOptions={bankPartners}
         onChange={setEarlyForm}
         onSubmit={submitEarly}
       />
@@ -537,6 +561,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
         leg={modalLeg}
         form={unwindForm}
         bodyKey={modalSeq}
+        bpOptions={bankPartners}
         onChange={setUnwindForm}
         onSubmit={submitUnwind}
       />
@@ -548,6 +573,8 @@ export default function FoEarlyDeliveryUnwindRollover() {
         leg={modalLeg}
         form={rollForm}
         bodyKey={modalSeq}
+        typeOptions={txnTypes}
+        bpOptions={bankPartners}
         onChange={setRollForm}
         onSubmit={submitRollover}
       />

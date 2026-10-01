@@ -18,7 +18,7 @@
     "sap-ds4": {
       "kind": "basic",
       "systemId": "DS4_100_NIIF",
-      "user": "FS_DEV3",
+      "user": "FS_DEV",
       "passwordEnv": "SAP_DS4_100_NIIF_PASSWORD"
     }
   },
@@ -54,6 +54,46 @@
       "tlsVerify": false,
       "base": "https://vhnlqds4ap01.sap.niififl.in:44300/sap/opu/odata4/sap/zfs_sb_trdflow_o4_api/srvd_a2x/sap/zfs_sd_trdflow/0001",
       "description": "ZFS_SB_TRDFLOW_O4_API — TrdFlow, ChComm"
+    },
+    "trmfx": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfx_o4_api/srvd_a2x/sap/zfs_sd_trmfx/0001",
+      "description": "ZFS_SB_TRMFX_O4_API — TrmFx (FTR FX deal CRUD + Settle over BAPI_FTR_FXT_*)"
+    },
+    "trmmaster": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmmaster_o4_api/srvd_a2x/sap/zfs_sd_trmmaster/0001",
+      "description": "ZFS_SB_TRMMASTER_O4_API — FTR customizing: ContractType, ProductCategory, ProductType, TransactionType, FlowType"
+    },
+    "slctsfbpbank": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_slctsfbpbank_o4_api/srvd_a2x/sap/zfs_sd_slctsfbpbank/0001",
+      "description": "ZFS_SB_SLCTSFBPBANK_O4_API — SlcTsfBpBank (business partner bank details per company code)"
+    },
+    "companycode": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata/sap/API_COMPANYCODE_SRV",
+      "description": "API_COMPANYCODE_SRV (OData V2) — A_CompanyCode"
+    },
+    "businesspartner": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata/sap/API_BUSINESS_PARTNER",
+      "description": "API_BUSINESS_PARTNER (OData V2) — A_BusinessPartner; read here only for partner names"
     },
     "middleware": {
       "kind": "rest",

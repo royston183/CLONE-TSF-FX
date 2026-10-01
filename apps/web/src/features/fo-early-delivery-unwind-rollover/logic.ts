@@ -2,24 +2,29 @@
  * Pure business rules of the Premature Settlement screen, lifted from the legacy script so
  * they can be unit-tested and later wired to a backend. No React, no DOM.
  */
-import { BP_MASTER, DEAL_DIRECTORY, TXN_TYPE_LABEL, TXN_TYPE_MASTER, genDealLegs } from './data.ts'
 import { fmtAmt } from './format.ts'
-import type { BookingForm, DdOption, Filters, Kpis, Leg, PairForm, Sort, SortField, UnwindForm } from './types.ts'
+import type { BookingForm, Filters, Kpis, Leg, PairForm, Sort, SortField, UnwindForm } from './types.ts'
 
+/** c_619: the only type Early Delivery and Rollover accept. */
 export const FORWARD = '619'
 export const DEFAULT_SORT: Sort = { field: 'rfha', dir: 'asc' }
 export const DEFAULT_FILTERS: Filters = { type: '', status: '' }
 export const PAGE_SIZES = [5, 10, 25] as const
 export const DEFAULT_PAGE_SIZE = 10
-export const STATUS_OPTIONS = ['Active', 'Confirmed', 'Pre-Matured', 'Rolled Over', 'Unwound'] as const
-/** Same key order the legacy page appended the options in (Object.keys of the label map). */
-export const TYPE_FILTER_OPTIONS: readonly { value: string; label: string }[] = Object.keys(TXN_TYPE_LABEL).map((code) => ({
-  value: code,
-  label: TXN_TYPE_LABEL[code] ?? code,
-}))
 
-export const BP_OPTIONS: readonly DdOption[] = BP_MASTER.map((b) => ({ value: b.bp, primary: b.bp, secondary: b.shortName }))
-export const TYPE_OPTIONS: readonly DdOption[] = TXN_TYPE_MASTER.map((t) => ({ value: t.code, primary: t.text }))
+const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+
+/** Txn Type filter: the types on the loaded deal, by code, labelled with their SAP text. */
+export function typeFilterOptions(legs: readonly Leg[]): { value: string; label: string }[] {
+  const seen = new Map<string, string>()
+  for (const l of legs) if (l.sfhaart && !seen.has(l.sfhaart)) seen.set(l.sfhaart, typeLabel(l))
+  return [...seen.keys()].sort(byText).map((value) => ({ value, label: seen.get(value) ?? value }))
+}
+
+/** Status filter: the status texts on the loaded deal. */
+export function statusOptions(legs: readonly Leg[]): string[] {
+  return [...new Set(legs.map((l) => l.txnDesc).filter(Boolean))].sort(byText)
+}
 
 export const EMPTY_STATE_NO_DEAL = 'Enter a Deal ID in Basic Selection and click Load Deal to see its transactions.'
 export const EMPTY_STATE_NO_MATCH = 'No transactions match your search or filters.'
@@ -41,17 +46,25 @@ export const MSG = {
   rollDone: 'Rollover transaction created successfully.',
 } as const
 
+/**
+ * The three creates have no API yet: each is a chain of BAPI_FTR_FXT_GETDETAIL, two or one
+ * BAPI_FTR_FXT_CREATE and a BAPI_FTR_FXT_CHANGE of the original, every step carrying VTBFHA
+ * extension fields through ZSGTRMFM_VTBFHA_EXPORT in the same session. FxTransaction's
+ * single-deal create cannot carry those, so nothing is posted and nothing is marked done.
+ */
+export const ACTION_WAITING = {
+  early: 'WAITING FOR API — Create Early Delivery (FORM create_txn) has no backend action yet. Nothing was posted to SAP.',
+  unwind: 'WAITING FOR API — Create Unwinding Txn (FORM create_unwind) has no backend action yet. Nothing was posted to SAP.',
+  roll: 'WAITING FOR API — Rollover (FORM create_roll_txn) has no backend action yet. Nothing was posted to SAP.',
+} as const
+
 /* ---------------- Load deal ---------------- */
 
-export type LoadResult = { ok: true; dealId: string; legs: Leg[] } | { ok: false; message: string }
-
-/** Known deals come from the directory; anything else is generated deterministically. Always copies. */
-export function loadDeal(raw: string): LoadResult {
+/** GV_DEAL: trimmed and upper-cased, as the dynpro field holds it. */
+export function normalizeDealId(raw: string): { ok: true; dealId: string } | { ok: false; message: string } {
   const trimmed = raw.trim()
   if (!trimmed) return { ok: false, message: MSG.enterDealId }
-  const dealId = trimmed.toUpperCase()
-  const legs = (DEAL_DIRECTORY[dealId] ?? genDealLegs(dealId)).map((l) => ({ ...l }))
-  return { ok: true, dealId, legs }
+  return { ok: true, dealId: trimmed.toUpperCase() }
 }
 
 export const loadToast = (count: number, dealId: string) => `${count} transaction(s) loaded for Deal ${dealId}.`
@@ -79,7 +92,8 @@ export function statusTextClass(txnDesc: string): string {
   return 'status-text-confirmed'
 }
 
-export const typeLabel = (code: string) => TXN_TYPE_LABEL[code] ?? code
+/** The leg's own SAP text for its transaction type; the code when the text is blank. */
+export const typeLabel = (l: Leg) => l.xtext || l.sfhaart
 
 export function filterSort(legs: readonly Leg[], search: string, filters: Filters, sort: Sort): Leg[] {
   let list = legs.slice()

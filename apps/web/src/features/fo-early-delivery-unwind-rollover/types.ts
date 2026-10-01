@@ -3,8 +3,10 @@ export type Leg = {
   rfha: string
   bukrs: string
   butxt: string
-  /** Product/txn type code: 619 Forward, 605 Spot, 631 Option, 607 Cash, 608 Tom. */
+  /** FTR transaction type; the screen reads 605 Spot, 607 Cash, 608 Tom, 619 Fwd and 631 NDF. */
   sfhaart: string
+  /** The transaction type's text (ZSGTSFCDS_FX-XTEXT). */
+  xtext: string
   /** Trade date, ISO yyyy-mm-dd. */
   dblfz: string
   /** Value date, ISO yyyy-mm-dd. */
@@ -19,8 +21,12 @@ export type Leg = {
   otot_rate: number
   kontrh: string
   bpName: string
+  /** VTBFHA TXN_STATUS (03, 07, 49, 61 …); txnDesc is its text. */
+  txnStatus: string
   txnDesc: string
   dealType: string
+  /** Trader group (VTBFHA-ZGRP); restricts the Bank BP drop-downs to ZSGTRMTR_BP_GRP. */
+  zgrp: string
   zuonr: string
   zroll: string
   ztsf_pre_mature: boolean
@@ -65,3 +71,13 @@ export type UnwindForm = {
 }
 
 export type Kpis = { total: number; eligible: number; pm: number; unw: number }
+
+/**
+ * A value help or list read from SAP data. `waiting` means the API the original reads from
+ * does not exist (or holds no rows) yet; `reason` names exactly what is missing.
+ */
+export type Avail<T> =
+  | { state: 'loading' }
+  | { state: 'ok'; value: T }
+  | { state: 'waiting'; reason: string }
+  | { state: 'error'; reason: string }

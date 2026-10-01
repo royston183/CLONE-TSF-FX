@@ -113,7 +113,7 @@ export function DealTable({
               <td>{l.bukrs}</td>
               <td>{l.bpName}</td>
               <td>
-                <span className="status-pill pill-info">{typeLabel(l.sfhaart)}</span>
+                <span className="status-pill pill-info">{typeLabel(l)}</span>
               </td>
               <td className="mono">{formatDateDMY(l.dblfz)}</td>
               <td className="mono">{formatDateDMY(l.delfz)}</td>
