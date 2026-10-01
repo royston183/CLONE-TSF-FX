@@ -25,7 +25,7 @@ const LEGACY_PARTNERS: CodeLabel[] = [
 ]
 
 /** FTR 12A 600 "Spot": the type a new row opens with. The Create Spot list itself is read from SAP (valueHelps.ts). */
-const DEFAULT_TXN_TYPE = '600'
+export const DEFAULT_TXN_TYPE = '600'
 
 /** A company code's name: from SAP's list when it is loaded, else the seed rows' own names. */
 export const findCompanyName = (code: string, sap: readonly CodeLabel[] = []): string =>

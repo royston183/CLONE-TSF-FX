@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { isAbort } from '../../shared/fx/mw.ts'
 import { createSpotTransaction, toCreatePayload } from './api.ts'
 import { CreateSpotModal } from './CreateSpotModal.tsx'
-import { findCompanyName, makeData } from './data.ts'
+import { findCompanyName } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
 import { formatDate } from './format.ts'
@@ -19,6 +20,7 @@ import {
   productTypeOf,
   validateCreateForm,
 } from './logic.ts'
+import { loadSpotRows, recordSpot } from './spotList.ts'
 import { loadCompanies, loadPartners, loadTxnTypes } from './valueHelps.ts'
 import { SpotTable } from './SpotTable.tsx'
 import './fo-additional-spot-booking.legacy.css'
@@ -37,12 +39,33 @@ const DEFAULT_SORT: Sort = { key: 'dealId', dir: -1 }
  * legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html.
  *
  * Create Spot Txn books a real FTR deal through ZFS_SB_TRMFX (api.ts) and shows every BAPI
- * message when SAP refuses it. The list itself is still the legacy seed data in data.ts: the
- * FX/DSS deal tables it reads have no OData entity yet.
+ * message when SAP refuses it; the new spot number then goes back on the ZSGTSFTR_IN_SPOT row
+ * (spotList.ts). The list is ZSGTSFTR_IN_SPOT from MySQL, joined to ZSGTSFV_FX for dates and
+ * partner. There is no seed fallback: a seed row could book a real deal.
  */
 export default function FoAdditionalSpotBooking() {
-  const [rows, setRows] = useState<SpotRow[]>(() => makeData())
-  const seedRef = useRef(rows)
+  const [rows, setRows] = useState<SpotRow[]>([])
+  /** 'error': ZSGTSFTR_IN_SPOT could not be read, so there are no rows to book against. */
+  const [loadState, setLoadState] = useState<'loading' | 'ok' | 'error'>('loading')
+  /** Bumped by Refresh, which re-reads MySQL. */
+  const [generation, setGeneration] = useState(0)
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setLoadState('loading')
+    loadSpotRows(ctrl.signal).then(
+      (loaded) => {
+        setRows(loaded.rows)
+        setLoadState('ok')
+      },
+      (error: unknown) => {
+        if (isAbort(error)) return
+        console.error('[fx] Additional Spot Booking: ZSGTSFTR_IN_SPOT unavailable', error)
+        setRows([])
+        setLoadState('error')
+      },
+    )
+    return () => ctrl.abort()
+  }, [generation])
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [keyDate, setKeyDate] = useState('')
@@ -138,9 +161,9 @@ export default function FoAdditionalSpotBooking() {
   }
 
   const refresh = () => {
-    setRows(seedRef.current.map((r) => ({ ...r })))
+    setGeneration((g) => g + 1)
     resetFilters()
-    pushToast('Workbench refreshed.', 'info')
+    pushToast('Workbench reloaded from MySQL.', 'info')
   }
 
   const downloadCsv = () => {
@@ -213,6 +236,15 @@ export default function FoAdditionalSpotBooking() {
     setRows((all) => all.map((r) => (r.id === updated.id ? updated : r)))
     setSelectedId(updated.id)
     closeCreate()
+    // The deal now exists in SAP. IN_SPOT has to say so, or the next load offers the row again.
+    const writeBack = await recordSpot(createRow, out.transaction)
+    if (writeBack) {
+      pushToast(
+        `Spot ${out.transaction} was booked in SAP, but IN_SPOT was not updated (${writeBack}). Note the number: the row will show as New Spot until it is.`,
+        'error',
+      )
+      return
+    }
     pushToast(`Spot ${out.transaction} created in company code ${out.companyCode}.`)
   }
 
@@ -267,7 +299,16 @@ export default function FoAdditionalSpotBooking() {
           <div className="card">
             <div className="card-head">
               <div className="card-title">List of Additional Spot Booking</div>
-              <div className="record-count">{filteredRows.length} records</div>
+              <div className="record-count">
+                {filteredRows.length} records
+                <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>
+                  {loadState === 'loading'
+                    ? 'Loading from MySQL…'
+                    : loadState === 'ok'
+                      ? 'ZSGTSFTR_IN_SPOT · MySQL'
+                      : 'ZSGTSFTR_IN_SPOT could not be read — nothing to book against'}
+                </span>
+              </div>
               <div className="key-date-note">Key Date: <span>{keyDate || 'All dates'}</span></div>
               <div className="head-actions">
                 <button className="btn" type="button" title="Download current rows as CSV" onClick={downloadCsv}>
