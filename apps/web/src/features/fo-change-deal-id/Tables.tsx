@@ -5,7 +5,7 @@ import type { InvoiceLine, PlTable as PlTableData, TopRow } from './types.ts'
 
 export function StatusPill({ code }: { code: string }) {
   const s = statusMeta(code)
-  return <span className={`pill ${s.css}`}>{s.label}</span>
+  return <span className={`pill ${s.css}`}>{s.label || '–'}</span>
 }
 
 /** FX Deals. A row is draggable only while it is the single selected row. */

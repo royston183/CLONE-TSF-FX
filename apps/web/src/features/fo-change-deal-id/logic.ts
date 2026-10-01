@@ -4,7 +4,7 @@
  */
 import { CANCELLED_STATUS, MATCHED_COLOR, OPEN_STATUS, PL_ROW_FACTORS, PL_ROW_LABELS, STATUS_MAP } from './data.ts'
 import { fixed4, fmtAmt } from './format.ts'
-import type { Deal, DealStore, Field, InvoiceLine, PlCell, PlTable, Premium, StatusMeta, TopRow } from './types.ts'
+import type { Deal, DealStore, Field, InvoiceLine, MasterContract, PlCell, PlTable, Premium, StatusMeta, TopRow } from './types.ts'
 
 export function statusMeta(code: string): StatusMeta {
   return STATUS_MAP[code] ?? { label: code, css: 'pill-gray' }
@@ -12,6 +12,8 @@ export function statusMeta(code: string): StatusMeta {
 
 /** The status shown on an FX deal leg: '02' and '03' both show as Confirmed, anything else Open. */
 export function legStatus(r: TopRow): string {
+  // '' = the source gave no TXN_STATUS: unknown, not Open.
+  if (r.txnStatus === '') return ''
   return r.txnStatus === '02' ? '02' : r.txnStatus === '03' ? '02' : '01'
 }
 
@@ -76,6 +78,29 @@ export function showsInvoicePl(d: Deal): boolean {
  */
 export function isMcChangeBlocked(d: Deal): boolean {
   return d.top.some((r) => r.txnStatus !== '03' && !r.color)
+}
+
+/**
+ * A leg whose TXN_STATUS the source does not carry cannot be shown to be matched, so the rule
+ * above cannot be passed. Kept apart so the message says what is missing rather than that the
+ * legs are "not yet matched".
+ */
+export function hasUnverifiedLegs(d: Deal): boolean {
+  return d.top.some((r) => r.txnStatus === '' && !r.color)
+}
+
+export const MC_STATUS_UNKNOWN_MSG =
+  'Unable to update the MC Ref No – the status of the FX deal legs cannot be read yet (TXN_STATUS is not in ZSGTSFV_FX), so they cannot be shown to be matched.'
+
+/**
+ * The new MC has to carry the deal's own FX model, entity string and currency string: the
+ * Deal ID keeps its model (ZTSF_MODEL) when only ZMC_REF changes. Null when it is acceptable.
+ */
+export function mcChangeError(d: Deal, mc: MasterContract): string | null {
+  if (mc.model !== undefined && d.modId && mc.model !== d.modId) return `MC ${mc.ref} is under FX model ${mc.model}; this Deal ID is under ${d.modId}.`
+  if (mc.entstr && d.entStr && mc.entstr !== d.entStr) return `MC ${mc.ref} has entity string ${mc.entstr}; this Deal ID has ${d.entStr}.`
+  if (mc.currStr && d.currStr && mc.currStr !== d.currStr) return `MC ${mc.ref} has currency string ${mc.currStr}; this Deal ID has ${d.currStr}.`
+  return null
 }
 
 export const MC_CHANGE_BLOCKED_MSG = 'Unable to update the MC Ref No – one or more FX deal legs are not yet matched.'

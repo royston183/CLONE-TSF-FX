@@ -343,7 +343,7 @@
       "status": "scaffold",
       "services": [],
       "legacy": "legacy/FO_Change_Deal_ID.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Deal IDs (tsfDealId), their Master Contracts and the MC picker (masterContract, status 03/04, offered only under the deal's own FX model), the linked transactions (tsfvFx, joined on company code + ZRFHA1-8), the invoice plan (invRef), traders (trmTrader) and status texts (tsfDealStatus) are live. Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both stop at MySQL - the program's stamp on the Treasury transactions (BAPI_FTR_FXT_CHANGE) is not done. Change MC is refused while a leg's TXN_STATUS cannot be read (ZSGTSFV_FX has no TXN_STATUS yet). Edit Deal Pair is not saved. Premium (ZSGTSFCDS_OPTION), strike and the planned P&L have no source and stay empty. No seed fallback."
     },
     {
       "code": "ZSGTSFP015",
