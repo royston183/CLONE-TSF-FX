@@ -1,26 +1,20 @@
-/**
- * Seed data, verbatim from the legacy page's initialData. The page never called an API, so
- * this stays the only source of rows.
+/*
+ * Constants of ZSGTSF_RFX_NDF_FIX_FO. The rows, companies and fixing-reference texts are read
+ * from SAP by api.ts; nothing here invents a value.
  */
-import type { NdfRow } from './types.ts'
 
-export const INITIAL_DATE = '28-09-2026'
+/**
+ * ZSGTRMFM_LEAD_CURR / ZSGTRMFM_LEAD_CURR_S (lead and following / settlement currency) are custom
+ * FMs that are not in the export and have no API. Until the backend exposes them, the lead
+ * currency follows this market-convention ranking (KEPT STATIC — needs backend parity): the
+ * higher-ranked currency leads, USD leads any currency not listed.
+ */
+export const LEAD_RANK = ['EUR', 'GBP', 'AUD', 'NZD', 'USD'] as const
 
-export const INITIAL_DATA: NdfRow[] = [
-  { rfha: '5100841', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'USD/SGD', side: 'Buy', amt1: 1000000, curr1: 'USD', amt2: -742100, curr2: 'SGD', fixDate: '28-09-2026', fixRef: 'WM_REUTERS_11AM', fixRefName: 'WM/Reuters 11:00 Fixing', oldRate: 1.3468, trader: 'OGA', partner: 'BARCLAYS BANK PLC', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'SGD' },
-  { rfha: '5100842', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'EUR/USD', side: 'Sell', amt1: -750000, curr1: 'EUR', amt2: 879600, curr2: 'USD', fixDate: '28-09-2026', fixRef: 'ECB_1400', fixRefName: 'ECB Reference Rate 14:00', oldRate: 1.1728, trader: 'OGA', partner: 'STANDARD CHARTERED BANK', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-  { rfha: '5100843', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'GBP/USD', side: 'Buy', amt1: 525000, curr1: 'GBP', amt2: -707700, curr2: 'USD', fixDate: '28-09-2026', fixRef: 'WM_REUTERS_4PM', fixRefName: 'WM/Reuters 16:00 Fixing', oldRate: 1.348, trader: 'OTL', partner: 'HSBC BANK MIDDLE EAST', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-  { rfha: '5100844', bukrs: 'IN11', company: 'Olam Agri India Pvt Ltd', product: '60D', pair: 'USD/INR', side: 'Sell', amt1: -1200000, curr1: 'USD', amt2: 14371.26, curr2: 'INR', fixDate: '28-09-2026', fixRef: 'RBI_FBIL', fixRefName: 'FBIL USD/INR Reference Rate', oldRate: 83.5, trader: 'OTL', partner: 'DBS BANK INDIA', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'INR' },
-  { rfha: '5100845', bukrs: 'SG03', company: 'Olam International Ltd', product: '60D', pair: 'USD/SGD', side: 'Sell', amt1: -2250000, curr1: 'USD', amt2: 1660500, curr2: 'SGD', fixDate: '28-09-2026', fixRef: 'MAS_1200', fixRefName: 'MAS 12:00 Reference Rate', oldRate: 1.3529, trader: 'OGA', partner: 'DBS BANK LTD', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'SGD' },
-  { rfha: '5100846', bukrs: 'SG03', company: 'Olam International Ltd', product: '60D', pair: 'EUR/SGD', side: 'Buy', amt1: 600000, curr1: 'EUR', amt2: -474950, curr2: 'SGD', fixDate: '28-09-2026', fixRef: 'WM_REUTERS_4PM', fixRefName: 'WM/Reuters 16:00 Fixing', oldRate: 1.2634, trader: 'OTL', partner: 'CITIBANK N.A.', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'SGD' },
-  { rfha: '5100847', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'AUD/USD', side: 'Buy', amt1: 900000, curr1: 'AUD', amt2: -585750, curr2: 'USD', fixDate: '28-09-2026', fixRef: 'RBA_1600', fixRefName: 'RBA 16:00 Reference Rate', oldRate: 0.6499, trader: 'OGA', partner: 'BNP PARIBAS', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-  { rfha: '5100848', bukrs: 'IN11', company: 'Olam Agri India Pvt Ltd', product: '60D', pair: 'EUR/INR', side: 'Sell', amt1: -350000, curr1: 'EUR', amt2: 4052.25, curr2: 'INR', fixDate: '28-09-2026', fixRef: 'RBI_FBIL', fixRefName: 'FBIL EUR/INR Reference Rate', oldRate: 96.74, trader: 'OTL', partner: 'STANDARD CHARTERED BANK INDIA', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'INR' },
-  { rfha: '5100849', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'USD/AED', side: 'Buy', amt1: 5000000, curr1: 'USD', amt2: -1361289, curr2: 'AED', fixDate: '28-09-2026', fixRef: 'CBUAE_FIX', fixRefName: 'Central Bank UAE Reference', oldRate: 3.6725, trader: 'OGA', partner: 'EMIRATES NBD', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'AED' },
-  { rfha: '5100850', bukrs: 'SG03', company: 'Olam International Ltd', product: '60D', pair: 'USD/CNH', side: 'Sell', amt1: -1800000, curr1: 'USD', amt2: 251930, curr2: 'CNH', fixDate: '28-09-2026', fixRef: 'PBOC_1500', fixRefName: 'PBOC Offshore Reference', oldRate: 7.145, trader: 'OTL', partner: 'BANK OF CHINA', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'CNH' },
-  { rfha: '5100851', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'USD/SGD', side: 'Buy', amt1: 1250000, curr1: 'USD', amt2: -926100, curr2: 'SGD', fixDate: '27-09-2026', fixRef: 'WM_REUTERS_11AM', fixRefName: 'WM/Reuters 11:00 Fixing', oldRate: 1.3497, trader: 'OGA', partner: 'BARCLAYS BANK PLC', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'SGD' },
-  { rfha: '5100852', bukrs: 'IN11', company: 'Olam Agri India Pvt Ltd', product: '60D', pair: 'USD/INR', side: 'Buy', amt1: 950000, curr1: 'USD', amt2: -11397.0, curr2: 'INR', fixDate: '27-09-2026', fixRef: 'RBI_FBIL', fixRefName: 'FBIL USD/INR Reference Rate', oldRate: 83.355, trader: 'OTL', partner: 'HDFC BANK', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'INR' },
-  { rfha: '5100853', bukrs: 'SG03', company: 'Olam International Ltd', product: '60D', pair: 'USD/SGD', side: 'Sell', amt1: -1650000, curr1: 'USD', amt2: 1220100, curr2: 'SGD', fixDate: '29-09-2026', fixRef: 'MAS_1200', fixRefName: 'MAS 12:00 Reference Rate', oldRate: 1.3509, trader: 'OGA', partner: 'HSBC SINGAPORE', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'SGD' },
-  { rfha: '5100854', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'EUR/USD', side: 'Buy', amt1: 450000, curr1: 'EUR', amt2: -528030, curr2: 'USD', fixDate: '29-09-2026', fixRef: 'ECB_1400', fixRefName: 'ECB Reference Rate 14:00', oldRate: 1.1734, trader: 'OTL', partner: 'DEUTSCHE BANK AG', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-  { rfha: '5100855', bukrs: 'SG03', company: 'Olam International Ltd', product: '60D', pair: 'AUD/USD', side: 'Sell', amt1: -700000, curr1: 'AUD', amt2: 455350, curr2: 'USD', fixDate: '30-09-2026', fixRef: 'RBA_1600', fixRefName: 'RBA 16:00 Reference Rate', oldRate: 0.6505, trader: 'OGA', partner: 'ANZ BANK', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-  { rfha: '5100856', bukrs: 'AE13', company: 'Olam International DMCC', product: '60D', pair: 'GBP/USD', side: 'Sell', amt1: -400000, curr1: 'GBP', amt2: 539360, curr2: 'USD', fixDate: '30-09-2026', fixRef: 'WM_REUTERS_4PM', fixRefName: 'WM/Reuters 16:00 Fixing', oldRate: 1.3484, trader: 'OTL', partner: 'STANDARD CHARTERED BANK', status: '11', statusText: 'Pending NDF Fixing', foreignFirst: true, settleCurr: 'USD' },
-]
+export function leadCurr(c1: string, c2: string): { lead: string; follow: string } {
+  const rank = (c: string) => {
+    const i = (LEAD_RANK as readonly string[]).indexOf(c)
+    return i < 0 ? 99 : i
+  }
+  return rank(c1) <= rank(c2) ? { lead: c1, follow: c2 } : { lead: c2, follow: c1 }
+}

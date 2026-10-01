@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CalendarField } from './CalendarField.tsx'
-import { COMPANY_CODES, TRADERS, makeData } from './data.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadCompanies, loadFixingReferences, loadRbiRate, loadTcurf, loadTraders, loadWorklist, type Avail, type Option } from './api.ts'
 import { fmtDate, money, rate } from './format.ts'
-import { applyFilters, calcCashSettlement, statusClass, toCsv } from './logic.ts'
+import { applyFilters, statusClass, toCsv, type Tcurf } from './logic.ts'
 import { CorrectionModal, MatchReleaseModal, NdfFixModal, RefreshModal, ViewTxnModal } from './Modals.tsx'
 import './tsf-ndf-fixing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -21,13 +22,22 @@ type OpenModal = 'ndfFix' | 'match' | 'correction' | 'viewTxn' | 'refresh' | nul
 /**
  * UA1: TSF NDF Fixing (ZSGTSFR050), converted from legacy/tsf-ndf-fixing.html.
  *
- * The original never called an API, so this is the same UI-only screen: the deals are the
- * page's generated dummy data and live in component state for the session. There is no
- * Basic Selection step here (unlike ZSGTSFR026's Confirm NDF Fixing) — the table loads with
- * a full dummy dataset and the toolbar filters/searches it directly.
+ * Reads SAP only (api.ts): Company Code from T001, Trader from ZSGTRMTR_TRD_GRP, the worklist
+ * from ZSGTSFV_FX exactly as GET_DATA selects it (TXN_STATUS 07, SAKTIV <> 3, V_DATE = the Fixing
+ * Date, NDF product types, trader). The view does not serve those fields yet, so the worklist
+ * says WAITING FOR API rather than listing unrelated FX deals. Save Fixing needs
+ * BAPI_FTR_FXT_NDF_FIXING + TX02 behind an API (WAITING FOR ACTION API) and posts nothing.
  */
+const ACTION_WAITING =
+  'WAITING FOR ACTION API \u2014 NDF Fixing (ZSGTRMFM_VTBFHA_EXPORT TXN_STATUS 10, BAPI_FTR_FXT_NDF_FIXING, BAPI_TRANSACTION_COMMIT, TX02 settle rate) has no API yet. Nothing was posted to SAP.'
 export default function TsfNdfFixing() {
-  const [deals, setDeals] = useState<NdfDeal[]>(makeData)
+  const [deals, setDeals] = useState<NdfDeal[]>([])
+  const [companies, setCompanies] = useState<Avail<Option[]> | null>(null)
+  const [traders, setTraders] = useState<Avail<Option[]> | null>(null)
+  const [worklistNote, setWorklistNote] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [tcurf, setTcurf] = useState<Tcurf>({})
+  const [fixRefTexts, setFixRefTexts] = useState<Record<string, string>>({})
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, fixingDate: fmtDate(new Date()) })
   const [sortAsc, setSortAsc] = useState(false)
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
@@ -51,11 +61,48 @@ export default function TsfNdfFixing() {
 
   const draggingId = useRef<string | null>(null)
 
+  /* Screen 1000's value helps and 9001's lookups, once. */
+  useEffect(() => {
+    const ctrl = new AbortController()
+    const ok = <T,>(p: Promise<T>, set: (v: T) => void) =>
+      p.then(set, (e: unknown) => {
+        if (!isAbort(e)) console.warn(e)
+      })
+    ok(loadCompanies(ctrl.signal), setCompanies)
+    ok(loadTraders(ctrl.signal), setTraders)
+    ok(loadTcurf(ctrl.signal), setTcurf)
+    ok(loadFixingReferences(ctrl.signal), setFixRefTexts)
+    return () => ctrl.abort()
+  }, [])
+
+  /* GET_DATA for the selected Fixing Date (P_DATE); Refresh runs it again. */
+  const worklistAbort = useRef<AbortController | null>(null)
+  const loadDeals = useCallback(async (fixingDate: string) => {
+    worklistAbort.current?.abort()
+    const ctrl = new AbortController()
+    worklistAbort.current = ctrl
+    setLoading(true)
+    try {
+      const res = await loadWorklist(fixingDate, ctrl.signal)
+      setDeals(res.state === 'ok' ? res.value : [])
+      setWorklistNote(res.state === 'ok' ? '' : res.reason)
+    } catch (error) {
+      if (!isAbort(error)) console.warn(error)
+    } finally {
+      if (worklistAbort.current === ctrl) setLoading(false)
+    }
+  }, [])
+
   const showToast = (variant: Toast['variant'], message: string) => {
     const id = ++toastSeq
     setToasts((t) => [...t, { id, variant, message }])
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3400)
   }
+
+  useEffect(() => {
+    void loadDeals(filters.fixingDate)
+    return () => worklistAbort.current?.abort()
+  }, [filters.fixingDate, loadDeals])
 
   const visible = useMemo(() => applyFilters(deals, filters, sortAsc), [deals, filters, sortAsc])
   const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE))
@@ -106,12 +153,16 @@ export default function TsfNdfFixing() {
       return
     }
     setModalDealId(r.id)
-    setFixRateText(r.fixRate ? rate(r.fixRate) : '')
+    setFixRateText('')
     setFixRefText(r.ref || '')
     setFoRemarksText(r.foRemarks || '')
     setInvalidFixRate(false)
     setInvalidFixRef(false)
     setOpenModal('ndfFix')
+    // gv_ndf_rate: TCURR kurst RBI on the Fixing Date, for USD:INR only.
+    void loadRbiRate(r, filters.fixingDate).then((rbi) => {
+      if (rbi) setFixRateText((cur) => cur || String(rbi))
+    })
   }
 
   const openMatch = () => {
@@ -159,17 +210,9 @@ export default function TsfNdfFixing() {
     setInvalidFixRate(rateInvalid)
     setInvalidFixRef(!ref)
     if (rateInvalid || !ref) return
-    const cashSettlement = calcCashSettlement(deal, fix)
-    setDeals((ds) =>
-      ds.map((d) =>
-        d.id === deal.id
-          ? { ...d, fixRate: fix, cashSettlement, ndf: cashSettlement, ref, foRemarks: foRemarksText.trim(), status: 'Rate Fixed' }
-          : d,
-      ),
-    )
-    setSelected(new Set())
-    closeModal()
-    showToast('success', `NDF rate fixed for transaction ${deal.id}.`)
+    // FORM save_data posts through BAPI_FTR_FXT_NDF_FIXING and TX02 (07 -> 10). Without that API
+    // nothing changes here: the row is reloaded from SAP once a fixing has really been posted.
+    showToast('error', ACTION_WAITING)
   }
 
   const confirmMatch = () => {
@@ -199,10 +242,11 @@ export default function TsfNdfFixing() {
   }
 
   const refreshAll = () => {
-    setDeals(makeData())
     setSelected(new Set())
     setPage(1)
-    setFilters({ ...EMPTY_FILTERS, fixingDate: fmtDate(new Date()) })
+    const fixingDate = fmtDate(new Date())
+    setFilters({ ...EMPTY_FILTERS, fixingDate })
+    void loadDeals(fixingDate)
     setOpenModal('refresh')
   }
 
@@ -271,10 +315,14 @@ export default function TsfNdfFixing() {
                     patchFilters({ company: e.target.value })
                   }}
                 >
-                  <option value="">All Company Codes</option>
-                  {COMPANY_CODES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
+                  <option value="">{companies && companies.state !== 'ok' ? companies.reason : 'All Company Codes'}</option>
+                  {companies?.state === 'ok'
+                    ? companies.value.map((c) => (
+                        <option key={c.value} value={c.value} title={c.title}>
+                          {c.label}
+                        </option>
+                      ))
+                    : null}
                 </select>
                 <CalendarField
                   value={filters.fixingDate}
@@ -292,10 +340,14 @@ export default function TsfNdfFixing() {
                     patchFilters({ trader: e.target.value })
                   }}
                 >
-                  <option value="">All Traders</option>
-                  {TRADERS.map((t) => (
-                    <option key={t}>{t}</option>
-                  ))}
+                  <option value="">{traders && traders.state !== 'ok' ? traders.reason : 'All Traders'}</option>
+                  {traders?.state === 'ok'
+                    ? traders.value.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))
+                    : null}
                 </select>
               </div>
               <div className="toolbar-right">
@@ -413,7 +465,9 @@ export default function TsfNdfFixing() {
                   ))}
                 </tbody>
               </table>
-              {rows.length === 0 ? <div className="empty">No NDF deals match the current selection.</div> : null}
+              {rows.length === 0 ? (
+                <div className="empty">{loading ? 'Loading NDF deals from SAP\u2026' : worklistNote || 'No NDF deals match the current selection.'}</div>
+              ) : null}
             </div>
             <div className="footer">
               <div>
@@ -452,14 +506,12 @@ export default function TsfNdfFixing() {
         deal={modalDeal}
         fixRate={fixRateText}
         fixRef={fixRefText}
+        fixRefText={fixRefTexts[fixRefText] ?? ''}
+        tcurf={tcurf}
         foRemarks={foRemarksText}
         invalidRate={invalidFixRate}
         invalidRef={invalidFixRef}
         onFixRateChange={setFixRateText}
-        onFixRefChange={(v) => {
-          setFixRefText(v)
-          setInvalidFixRef(false)
-        }}
         onFoRemarksChange={setFoRemarksText}
         onClose={closeModal}
         onConfirm={confirmNdfFix}

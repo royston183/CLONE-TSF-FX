@@ -19,6 +19,7 @@ import {
   recalcSpotAmounts,
   setCoverTxn,
   spotRateFor,
+  ssSpotFor,
   txnTypeText,
   updateTxnStatus,
 } from './logic.ts'
@@ -184,6 +185,7 @@ export function RatePopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
     const hasInvoice = !!(inv && inv.fAmt)
     const cs = cash ? calcCashSettlement(txn, rv) : 0
     const go = () => {
+      if (!wb.post(decision === 'Exercise' ? 'exercise' : 'expire')) return
       frame.onClose()
       if (decision === 'Exercise') runExercise(wb, ctx, txn, rv, cs)
       else runExpire(wb, ctx, txn, rv)
@@ -298,6 +300,8 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
+    /* 9003 books through create_bapi (ORDERCREATE + ORDEREXECUTE); 9011 / 9012 through FXT_CREATE */
+    if (!wb.post(spec.variant === 'ndo' ? 'spotOrder' : 'spotNdf')) return
     const rfha = bookSpot(wb, {
       dealId: spec.ctx.dealId,
       dealType: txn.dealType,
@@ -352,14 +356,15 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
   const txn = findTxn(wb.get(), spec.ctx.rfha)
   const [init] = useState(() => {
     if (!txn) return null
-    const def = LOOKUPS.ssSpot[txn.pc1] || LOOKUPS.ssSpot.Put!
+    const deal = findDeal(wb.get(), spec.ctx.dealId)
+    const def = ssSpotFor(deal?.model ?? '', txn.sfhaart, txn.pc1)
     let sp: SpotDraft = {
       bukrs: txn.bukrs,
       bp: txn.cpty,
-      curr1: def.curr1,
-      curr2: def.curr2,
-      bs1: def.bs1,
-      bs2: def.bs2,
+      curr1: def?.curr1 ?? '',
+      curr2: def?.curr2 ?? '',
+      bs1: def?.bs1 ?? '',
+      bs2: def?.bs2 ?? '',
       amt1: 0,
       amt2: 0,
       rate: txn.strike,
@@ -409,6 +414,7 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
+    if (!wb.post('spotOrder')) return
     const base = { dealId: spec.ctx.dealId, dealType: txn.dealType, sourceRfha: txn.rfha, sfhaart: spec.sfhaart || '605' }
     const made = [
       bookSpot(wb, {
@@ -564,6 +570,7 @@ export function FwdSsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: E
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
+    if (!wb.post('spotOrder')) return
     const rfha = bookSpot(wb, {
       dealId: spec.ctx.dealId,
       dealType: txn.dealType,
@@ -635,6 +642,7 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
       setMsg({ text: 'Enter the fixing rate to update the transaction.', kind: 'error' })
       return
     }
+    if (!wb.post('ndfFixing')) return
     const out = calcNdfSettlement(txn, rv)
     wb.set(updateTxnStatus(wb.get(), txn.rfha, '10', { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr }))
     frame.onClose()
@@ -719,6 +727,7 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
 
   const create = () => {
     if (!rec || !rec.dAmt) return
+    if (!wb.post('settlementSpot')) return
     const other = txn.curr1 === rec.curr ? txn.curr2 : txn.curr1
     const rate = spotRateFor(rec.curr, other)
     const amt1 = Math.abs(rec.dAmt)

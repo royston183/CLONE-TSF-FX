@@ -3,8 +3,8 @@
  * legacy/trader-workbench.html (which mirrors ZSGTSFR_SET_WSPACE). Pure: every function takes
  * the data it reads, and the mutations return a new AppData instead of editing in place.
  */
-import { DEMO_USER, KPI_AS_OF, KPI_DUE_DAYS, LOOKUPS, mkTxn } from './data.ts'
-import { dmyToIso, formatAmount, formatRate, isoToDMY, kpiCompact, parseDMY } from './format.ts'
+import { KPI_DUE_DAYS, LOOKUPS, mkTxn } from './data.ts'
+import { dmyToIso, formatAmount, formatRate, isoToDMY, kpiCompact, parseDMY, todayIso } from './format.ts'
 import type { ActionItem, AppData, Deal, Filters, InSpot, Sort, SpotDraft, StatusInfo, Txn, TxnRow } from './types.ts'
 
 /* ---------------- lookups ---------------- */
@@ -12,6 +12,8 @@ import type { ActionItem, AppData, Deal, Filters, InSpot, Sort, SpotDraft, Statu
 export const modelDesc = (id: string) => LOOKUPS.models.find((m) => m.id === id)?.desc ?? ''
 export const dealStatusInfo = (code: string): StatusInfo =>
   LOOKUPS.dealStatus.find((s) => s.code === code) ?? { code, desc: code, cls: 'status-text-draft' }
+/** Whether a deal status counts as settled for the KPIs (DEAL_ST: "Settlement Completed …"). */
+export const isClosedStatus = (code: string) => !!LOOKUPS.dealStatus.find((s) => s.code === code)?.closed
 export const txnStatusInfo = (code: string): StatusInfo => LOOKUPS.txnStatus[code] ?? { desc: code, cls: 'status-text-draft' }
 export const companyName = (code: string) => LOOKUPS.companies.find((c) => c.code === code)?.name ?? ''
 export const bpName = (bp: string) => LOOKUPS.bps.find((b) => b.bp === bp)?.name ?? bp
@@ -33,16 +35,27 @@ export function convertViaRate(amt: number, from: string, to: string, rate: numb
   return leadCurr(from, to).lead === from ? amt * rate : amt / rate
 }
 
-export function spotRateFor(a: string, b: string): number {
-  const lc = leadCurr(a, b)
-  return LOOKUPS.spotRates[`${lc.lead}-${lc.follow}`] || 0
+/**
+ * TCURR kurst M for a lead/follow pair on a date. TCURR keeps GDATU inverted, so the ABAP's
+ * "gdatu >= <inverted date>" with SELECT SINGLE reads the latest rate dated on or before it.
+ */
+export function rateOn(lead: string, follow: string, isoDate: string): number {
+  const rows = LOOKUPS.marketRates[`${lead}-${follow}`] || []
+  let r = 0
+  for (const row of rows) if (row.d <= isoDate) r = row.r
+  return r
 }
 
-/** TCURR kurst M: the first row dated on or after the expiry date. */
+/** Today's market rate for a pair (the settlement spot and the KPIs' USD equivalents). */
+export function spotRateFor(a: string, b: string, asOf: string = todayIso()): number {
+  const lc = leadCurr(a, b)
+  return rateOn(lc.lead, lc.follow, asOf)
+}
+
+/** OPTION_EXERCISE_EXPIRE: TCURR kurst M on the execution date. */
 export function marketRate(txn: Txn): number {
   const lc = leadCurr(txn.curr1, txn.curr2)
-  const rows = LOOKUPS.marketRates[`${lc.lead}-${lc.follow}`] || []
-  return rows.find((r) => r.d >= txn.eDate)?.r ?? 0
+  return txn.eDate ? rateOn(lc.lead, lc.follow, txn.eDate) : 0
 }
 
 /* ---------------- deal list (FETCH_DEAL_DETAILS) ---------------- */
@@ -159,9 +172,12 @@ export function fetchTransactions(data: AppData, dealId: string): TxnRow[] {
   return out.sort((a, b) => (a.sfhaart < b.sfhaart ? -1 : a.sfhaart > b.sfhaart ? 1 : 0))
 }
 
-/** AUTHORITY-CHECK F_BKPF_BUK (ACTVT 03) for every company code of the deal. */
-export const isAuthorized = (txns: readonly Txn[], authorized: readonly string[] = DEMO_USER.authorizedCompanyCodes) =>
-  txns.every((t) => authorized.includes(t.bukrs))
+/**
+ * AUTHORITY-CHECK F_BKPF_BUK (ACTVT 03) for every company code of the deal. The browser has no
+ * source for the user's authorisations (WAITING FOR AUTH), so without a list nothing is refused.
+ */
+export const isAuthorized = (txns: readonly Txn[], authorized: readonly string[] | null = null) =>
+  authorized === null || txns.every((t) => authorized.includes(t.bukrs))
 
 /** COLOR_DETAILS: green transaction number when status > 07, spot types 604/605/609, or settlement spot done. */
 export function txnLinkClass(t: TxnRow): string {
@@ -236,7 +252,7 @@ export function fetchActionItems(data: AppData, deal: Deal, txns: readonly TxnRo
     if (d) {
       it.invAmt = d.fAmt
       it.invCurr = d.curr
-      it.bs = d.bs
+      it.bs = d.bs.charAt(0) === 'S' ? 'Sell' : d.bs /* IF bs+0(1) = 'S'. bs = 'Sell'. */
       it.diffAmt = d.dAmt
     }
     /* COLOR_CODE_ACTION_ITEMS */
@@ -258,10 +274,20 @@ export function fetchActionItems(data: AppData, deal: Deal, txns: readonly TxnRo
 export const inSpotFor = (data: AppData, dealId: string, dealType: string) =>
   data.inSpot.find((s) => s.dealId === dealId && s.dealType === dealType) ?? null
 
-/** SELECT SINGLE zf_amt ... zrfha = space; deal type D3 is read as D2. */
+/** SELECT SINGLE zf_amt ... WHERE zdeal_type = … AND zrfha = space; deal type D3 is read as D2. */
 export function invoiceAmountFor(data: AppData, dealId: string, dealType: string): InSpot | null {
-  const s = inSpotFor(data, dealId, dealType === 'D3' ? 'D2' : dealType)
-  return s && !s.spotTxn ? s : null
+  const dt = dealType === 'D3' ? 'D2' : dealType
+  return data.inSpot.find((s) => s.dealId === dealId && s.dealType === dt && !s.rfha) ?? null
+}
+
+/**
+ * PROCESS_SS_SPOT: ZSGTSFTR_SS_SPOT for the deal's model, the option side (645/646 -> 01,
+ * 643 -> 02) and put/call (Put -> 1, Call -> 2). Null when no row matches, as in the ABAP.
+ */
+export function ssSpotFor(model: string, sfhaart: string, pc1: string) {
+  const opBs = sfhaart === '645' || sfhaart === '646' ? '01' : sfhaart === '643' ? '02' : ''
+  const pc = pc1 === 'Put' ? '1' : pc1 === 'Call' ? '2' : ''
+  return LOOKUPS.ssSpot.find((r) => r.model === model && r.opBs === opBs && r.pc === pc) ?? null
 }
 
 /* ---------------- mutations (return a new AppData) ---------------- */
@@ -479,10 +505,10 @@ export function kpiDaysBetween(aIso: string, bIso: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86400000)
 }
 
-export function kpiToUsd(amt: number, curr: string): number {
+export function kpiToUsd(amt: number, curr: string, asOf: string = todayIso()): number {
   if (!amt) return 0
   if (curr === 'USD') return amt
-  const r = spotRateFor(curr, 'USD')
+  const r = spotRateFor(curr, 'USD', asOf)
   return r ? convertViaRate(amt, curr, 'USD', r) : 0
 }
 
@@ -506,7 +532,7 @@ export type Kpis = {
   totalItems: number
 }
 
-export function computeKpis(data: AppData, deals: readonly Deal[], asOf: string = KPI_AS_OF): Kpis {
+export function computeKpis(data: AppData, deals: readonly Deal[], asOf: string = todayIso()): Kpis {
   const k: Kpis = {
     deals: [...deals],
     count: deals.length,
@@ -527,18 +553,18 @@ export function computeKpis(data: AppData, deals: readonly Deal[], asOf: string 
     totalItems: 0,
   }
   for (const d of deals) {
-    k.notionalUsd += kpiToUsd(d.mcAmt, d.mcCurr)
+    k.notionalUsd += kpiToUsd(d.mcAmt, d.mcAmtCurr, asOf)
     const st = dealStatusInfo(d.status).desc
     k.byStatus[st] = (k.byStatus[st] || 0) + 1
     k.byModel[d.model] = (k.byModel[d.model] || 0) + 1
 
     const left = kpiDaysBetween(asOf, d.end)
-    const open = d.status !== '40'
+    const open = !isClosedStatus(d.status)
     if (open && left >= 0 && left <= KPI_DUE_DAYS) k.due.push({ deal: d, days: left })
     if (open && left < 0) k.overdue.push({ deal: d, days: -left })
 
     if (d.pl) {
-      const usd = kpiToUsd(d.pl, d.plCurr)
+      const usd = kpiToUsd(d.pl, d.plCurr, asOf)
       k.pl.push({ deal: d, usd })
       k.plTotal += usd
       if (usd >= 0) k.gains++

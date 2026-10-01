@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { DEFAULT_FILTERS, SEED_DEALS, freshData } from './data.ts'
+import { DEFAULT_FILTERS, setLookups } from './data.ts'
+import { DEMO_USER, FIXTURE_AS_OF, FIXTURE_LOOKUPS, SEED_DEALS, fixtureData as freshData } from './fixtures.ts'
 import { dmyToIso, formatAmount, isoToDMY, kpiCompact, parseDMY, parseNum } from './format.ts'
 import {
   buildNdoSpot,
@@ -22,10 +23,14 @@ import {
   nextSort,
   recalcSpotAmounts,
   scaledRate,
+  ssSpotFor,
   txnLinkClass,
   updateTxnStatus,
 } from './logic.ts'
 import type { Filters } from './types.ts'
+
+// The rules run against the legacy page's dummy data, loaded as if SAP had served it.
+setLookups(FIXTURE_LOOKUPS)
 
 const F: Filters = { ...DEFAULT_FILTERS }
 const ids = (list: readonly { id: string }[]) => list.map((d) => d.id)
@@ -87,8 +92,9 @@ describe('transactions and action items', () => {
   })
 
   it('checks company code authorisation and colours settled transactions', () => {
-    strictEqual(isAuthorized(fetchTransactions(data, 'DL26000113')), false)
-    strictEqual(isAuthorized(fetchTransactions(data, 'DL26000101')), true)
+    strictEqual(isAuthorized(fetchTransactions(data, 'DL26000113'), DEMO_USER.authorizedCompanyCodes), false)
+    strictEqual(isAuthorized(fetchTransactions(data, 'DL26000101'), DEMO_USER.authorizedCompanyCodes), true)
+    strictEqual(isAuthorized(fetchTransactions(data, 'DL26000113')), true) // no SAP source for the user's authorisations
     const [fwd, spot] = fetchTransactions(data, 'DL26000109').sort((a, b) => (a.rfha < b.rfha ? -1 : 1))
     strictEqual(txnLinkClass(fwd!), 'cell-green') // status 30 > 07
     strictEqual(txnLinkClass(spot!), 'cell-green')
@@ -117,7 +123,9 @@ describe('calculations', () => {
   it('lead currency, market rate and the exercise decision', () => {
     deepStrictEqual(leadCurr('INR', 'USD'), { lead: 'USD', follow: 'INR' })
     deepStrictEqual(leadCurr('EUR', 'USD'), { lead: 'EUR', follow: 'USD' })
-    strictEqual(marketRate(txn('1700004201')), 91.25) // first TCURR row on/after 20-10-2026
+    strictEqual(marketRate(txn('1700004201')), 91.25) // latest TCURR M row on/before 20-10-2026
+    strictEqual(marketRate({ ...txn('1700004201'), eDate: '2026-10-26' }), 91.25) // not the 27-10 row
+    strictEqual(marketRate({ ...txn('1700004201'), eDate: '2026-10-27' }), 94.1)
     strictEqual(decideExercise({ pc1: 'Call', strike: 90 }, 91.25), 'Exercise')
     strictEqual(decideExercise({ pc1: 'Put', strike: 86 }, 91.25), 'Expire')
     strictEqual(decideExercise({ pc1: 'Call', strike: 90 }, 0), '')
@@ -149,7 +157,9 @@ describe('calculations', () => {
     const put = buildNdoSpot(txn('1700004202'), { invoice: null, rate: 0 })
     deepStrictEqual([put.curr1, put.bs1, put.amt1, put.rate], ['USD', 'Sell', 250000, 86])
     strictEqual(recalcSpotAmounts({ ...s, rate: 0 }).amt2, 0)
-    strictEqual(invoiceAmountFor(data, 'DL26000108', 'D1'), null) // spot already booked
+    strictEqual(invoiceAmountFor(data, 'DL26000108', 'D1'), null) // ZRFHA set: already settled
+    deepStrictEqual(ssSpotFor('M036', '646', 'Call'), { model: 'M036', opBs: '01', pc: '2', bs1: 'Sell', curr1: 'USD', bs2: 'Buy', curr2: 'INR' })
+    strictEqual(ssSpotFor('M032', '646', 'Call'), null) // no SS_SPOT row for the model
   })
 })
 
@@ -174,9 +184,9 @@ describe('mutations', () => {
 describe('KPIs', () => {
   it('counts the listed deals as of 01-10-2026', () => {
     const data = freshData()
-    const k = computeKpis(data, fetchDeals(data.deals, F))
+    const k = computeKpis(data, fetchDeals(data.deals, F), FIXTURE_AS_OF)
     strictEqual(k.count, 12)
-    deepStrictEqual(k.noAuth.map((d) => d.id), ['DL26000113'])
+    deepStrictEqual(k.noAuth.map((d) => d.id), []) // WAITING FOR AUTH: no F_BKPF_BUK source, nothing excluded
     deepStrictEqual(k.due.map((x) => x.deal.id), ['DL26000110']) // 108 ends in 8 days; 109 is settled
     deepStrictEqual(k.overdue.map((x) => x.deal.id), ['DL26000111'])
     strictEqual(k.gains, 4)

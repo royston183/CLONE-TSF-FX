@@ -4,10 +4,11 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { FwdSsSpotPopup, NdfPopup, RatePopup, SettlementSpotPopup, SpotPopup, SsSpotPopup } from './ActionPopups.tsx'
 import { DateField, Dropdown } from './controls.tsx'
-import { DEFAULT_FILTERS, LOOKUPS, freshData } from './data.ts'
+import { loadWorkbench } from './api.ts'
+import { DEFAULT_FILTERS, LOOKUPS, emptyData, setLookups } from './data.ts'
 import { DealModal } from './DealModal.tsx'
 import { dropCls, useDnd } from './dnd.ts'
-import { openDeal, type Wb } from './flows.ts'
+import { WRITE_ACTIONS, openDeal, type Wb } from './flows.ts'
 import { todayIso } from './format.ts'
 import { KpiDetailModal, SettlementDataModal, TxnDetailsModal } from './InfoModals.tsx'
 import {
@@ -23,6 +24,7 @@ import {
   type KpiId,
 } from './logic.ts'
 import { ConfirmModal, type FrameProps, type Popup, type PopupSpec } from './modal.tsx'
+import { isAbort } from '../../shared/fx/mw.ts'
 import './fo-trader-workbench.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -39,14 +41,18 @@ const CLOSE_MS = 150
  *
  * Settles FX deals, options and NDFs: the Deal ID list with its KPI strip, and per deal the
  * transactions and action items, from which options are exercised or expired, NDFs fixed and
- * settlement spots created. Everything runs on the dummy data in data.ts — the original
- * called no service — and every change lives in memory until Refresh.
+ * settlement spots created.
+ *
+ * Reads SAP only (api.ts): the deals, their masters, the filters' and popups' value helps,
+ * the settlement data and the rates. The deal's transactions (ZSGTSFCDS_FX / _OPTION) and every
+ * posting (exercise, expiry, NDF fixing, spot creation) have no API yet: the grids say so and
+ * the actions report WAITING FOR API instead of posting.
  */
 export default function FoTraderWorkbench() {
   const rootRef = useRef<HTMLDivElement>(null)
 
   /* ---------- data (in memory, from the seed) ---------- */
-  const [data, setData] = useState<AppData>(freshData)
+  const [data, setData] = useState<AppData>(emptyData)
   const dataRef = useRef(data)
   const setAppData = useCallback((next: AppData) => {
     dataRef.current = next
@@ -108,7 +114,46 @@ export default function FoTraderWorkbench() {
     }
   }, [closePopup])
 
+  /* ---------- SAP load (FETCH_DEAL_DETAILS and the masters); Refresh reloads ---------- */
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [txnNote, setTxnNote] = useState('')
+  const loadAbort = useRef<AbortController | null>(null)
+  const reload = useCallback(
+    async (onDone?: () => void) => {
+      loadAbort.current?.abort()
+      const ctrl = new AbortController()
+      loadAbort.current = ctrl
+      setLoading(true)
+      setLoadError('')
+      try {
+        const res = await loadWorkbench(todayIso(), ctrl.signal)
+        setLookups(res.lookups)
+        setAppData(res.data)
+        setTxnNote(res.txnWaiting)
+        onDone?.()
+      } catch (error) {
+        if (isAbort(error)) return
+        console.error('[trader-workbench] load failed', error)
+        setAppData(emptyData())
+        setLoadError('The Deal IDs could not be read from the SLC middleware.')
+        showToast('The Deal IDs could not be read from the SLC middleware.', 'error')
+      } finally {
+        if (loadAbort.current === ctrl) setLoading(false)
+      }
+    },
+    [setAppData, showToast],
+  )
+  useEffect(() => {
+    void reload()
+    return () => loadAbort.current?.abort()
+  }, [reload])
+
   const wb: Wb = {
+    post: (action) => {
+      showToast(`WAITING FOR API — ${WRITE_ACTIONS[action]}. Nothing was posted to SAP.`, 'error')
+      return false
+    },
     get: () => dataRef.current,
     set: setAppData,
     toast: showToast,
@@ -156,9 +201,8 @@ export default function FoTraderWorkbench() {
   /* Refresh = reload the whole workbench: reset data mutations + filters + open popups */
   const refreshWorkbench = () => {
     setPopups([])
-    setAppData(freshData())
     resetFilters()
-    showToast('Workbench refreshed')
+    void reload(() => showToast('Workbench refreshed'))
   }
 
   const viewSettlement = () => {
@@ -183,7 +227,7 @@ export default function FoTraderWorkbench() {
     const s = p.spec
     switch (s.kind) {
       case 'deal':
-        return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
+        return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
       case 'txn':
         return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} wb={wb} />
       case 'settlementData':
@@ -418,7 +462,11 @@ export default function FoTraderWorkbench() {
             </div>
             <div className="empty-state" style={{ display: total === 0 ? 'block' : 'none' }}>
               <div className="big">&#128196;</div>
-              <span>{datesOk ? 'No deals match the selected settlement dates, filters or search.' : 'Enter a valid settlement date range to list deals.'}</span>
+              <span>
+                {loading
+                  ? 'Loading Deal IDs from SAP…'
+                  : loadError || (datesOk ? 'No deals match the selected settlement dates, filters or search.' : 'Enter a valid settlement date range to list deals.')}
+              </span>
             </div>
 
             <div className="table-footer">

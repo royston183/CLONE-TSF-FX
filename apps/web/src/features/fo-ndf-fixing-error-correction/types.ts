@@ -1,4 +1,4 @@
-/** One row of the legacy page's initialData: an NDF transaction pending or already fixed. */
+/** One ZSGTSFV_FX row of the error-correction queue (TXN_STATUS 11). */
 export type NdfRow = {
   rfha: string
   bukrs: string
@@ -17,7 +17,8 @@ export type NdfRow = {
   oldRate: number
   trader: string
   partner: string
-  status: '11' | '12'
+  /** Custom TSF TXN_STATUS: 11 = waiting for correction, 12 = corrected. */
+  status: string
   statusText: string
   /** Whether amt1/curr1 is the foreign leg the settlement formula divides by the new rate. */
   foreignFirst: boolean

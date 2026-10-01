@@ -12,6 +12,8 @@ export type Deal = {
   mcRef: string
   mcDate: string
   mcAmt: number
+  /** ZSGTSFTR_MAS_CON-ZCURR: the currency of mcAmt. */
+  mcAmtCurr: string
   start: string
   end: string
   trader: string
@@ -80,6 +82,8 @@ export type Txn = {
 export type InSpot = {
   dealId: string
   dealType: string
+  /** ZRFHA: the transaction the record was settled against; blank while no spot exists. */
+  rfha: string
   dssType: string
   fAmt: number
   fxAmt: number
@@ -155,3 +159,32 @@ export type SpotDraft = {
 export type ActionCtx = { dealId: string; rfha: string; fromAction: boolean }
 
 export type SpotVariant = 'ndo' | 'ndf' | 'dndf'
+
+/**
+ * The masters the workbench reads (ZSGTSFTR_COMP, _RULE_BT, _DEAL_ST, _TRDWAI, _SS_SPOT,
+ * ZSGTRMTR_BP_GRP x _BPEXT, TCURR, TCURF). Filled by api.ts; the tests fill them from fixtures.
+ */
+export type Lookups = {
+  companies: { code: string; name: string; entity: string }[]
+  models: { id: string; desc: string }[]
+  /** DEAL_ST at sub type FX1; closed = a settlement-completed status (KPIs only). */
+  dealStatus: { code: string; desc: string; cls: string; closed: boolean }[]
+  /** txn_status -> text (ZSGTSFCDS_FX / _OPTION ext_stat_desc). */
+  txnStatus: Record<string, { desc: string; cls: string }>
+  /** sfhaart -> text (ZSGTSFCDS_FX / _OPTION xtext). */
+  txnTypes: Record<string, string>
+  bps: { bp: string; name: string; grp: string }[]
+  actionTexts: { sf: string; code: string; text: string }[]
+  /** ZMOD_ID -> ZSUB_TYPE (first RULE_BT row of the model). */
+  ruleBt: Record<string, string>
+  /** TCURF kurst MTM, keyed "from>to". */
+  tcurf: Record<string, { ffact: number; tfact: number }>
+  /** TCURR kurst M by "lead-follow" pair, ascending by date. */
+  marketRates: Record<string, { d: string; r: number }[]>
+  /** TCURR kurst RBI for USD:INR by date. */
+  rbiRates: Record<string, number>
+  /** ZSGTSFTR_SS_SPOT: model, option side (01 645/646, 02 643), put/call (1 Put, 2 Call). */
+  ssSpot: { model: string; opBs: string; pc: string; bs1: string; curr1: string; bs2: string; curr2: string }[]
+  /** ZSGTRMFM_LEAD_CURR ranking (KEPT STATIC: the FM is not in the export). */
+  leadRank: string[]
+}

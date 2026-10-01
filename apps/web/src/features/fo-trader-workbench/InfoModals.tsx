@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { KPI_AS_OF, KPI_DUE_DAYS } from './data.ts'
+import { KPI_DUE_DAYS } from './data.ts'
 import { findDeal, findTxn, type Wb } from './flows.ts'
-import { formatAmount, formatRate, isoToDMY } from './format.ts'
+import { formatAmount, formatRate, isoToDMY, todayIso } from './format.ts'
 import { KPI_DEFS, companyName, dealStatusInfo, kpiCountRows, kpiToUsd, modelDesc, txnStatusInfo, txnTypeText, type KpiId, type Kpis } from './logic.ts'
 import { ModalFrame, type FrameProps } from './modal.tsx'
 import type { Deal } from './types.ts'
@@ -208,7 +208,7 @@ const signed = (n: number) => (n > 0 ? '+' : '') + formatAmount(n)
 
 export function KpiDetailModal({ frame, id, k, onOpenDeal }: { frame: FrameProps; id: KpiId; k: Kpis; onOpenDeal: (dealId: string) => void }) {
   const def = KPI_DEFS.find((d) => d.id === id)!
-  const sub = `${k.count}${k.count === 1 ? ' deal' : ' deals'} in the current view · as of ${isoToDMY(KPI_AS_OF)}`
+  const sub = `${k.count}${k.count === 1 ? ' deal' : ' deals'} in the current view · as of ${isoToDMY(todayIso())}`
   const noAuthNote = k.noAuth.length ? (
     <div className="kpi-note">
       {k.noAuth.length} deal(s) excluded: no authorization for the company code ({k.noAuth.map((d) => d.id).join(', ')}).

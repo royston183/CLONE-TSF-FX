@@ -89,12 +89,15 @@ export function DealModal({
   spec,
   wb,
   dnd,
+  txnNote,
   onSelectTxn,
 }: {
   frame: FrameProps
   spec: Extract<PopupSpec, { kind: 'deal' }>
   wb: Wb
   dnd: Dnd
+  /** Why the transaction grids are empty when no service serves them (WAITING FOR API). */
+  txnNote: string
   onSelectTxn: (rfha: string | null) => void
 }) {
   const data = wb.get()
@@ -165,7 +168,7 @@ export function DealModal({
               {txns.length === 0 ? (
                 <tr className="no-hover">
                   <td colSpan={TXN_COLS.length + 1} className="empty-row">
-                    No transactions for this deal.
+                    {txnNote || 'No transactions for this deal.'}
                   </td>
                 </tr>
               ) : (
@@ -251,7 +254,7 @@ export function DealModal({
               {items.length === 0 ? (
                 <tr className="no-hover">
                   <td colSpan={ACT_COLS.length} className="empty-row">
-                    No action items for this deal.
+                    {txnNote || 'No action items for this deal.'}
                   </td>
                 </tr>
               ) : (

@@ -6,8 +6,25 @@ import { buildNdoSpot, createSpotTransaction, fetchTransactions, isAuthorized, u
 import type { PopupSpec } from './modal.tsx'
 import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './types.ts'
 
+/**
+ * The SAP postings each workbench action makes (ZSGTSFR_SET_WSPACE). None is exposed by a
+ * service: FxTransaction offers create (one FX deal, no VTBFHA extension fields) and Settle
+ * only, so every write is WAITING FOR API and nothing is posted.
+ */
+export const WRITE_ACTIONS = {
+  exercise: 'Option exercise — BAPI_FTR_EXERCISE_FXOPTIONS (TI86 for cash settlement, BAPI_FTR_SETTLE_FXOPTIONS)',
+  expire: 'Option expiry — BAPI_FTR_EXPIRE_FXOPTIONS (+ BAPI_FTR_SETTLE_FXOPTIONS)',
+  ndfFixing: 'NDF fixing — BAPI_FTR_FXT_NDF_FIXING (+ TX02)',
+  spotOrder: 'Spot creation — BAPI_FTR_FXT_ORDERCREATE + BAPI_FTR_FXT_ORDEREXECUTE with ZSGTRMFM_VTBFHA_EXPORT and the ZSGTSFTR_IN_SPOT update',
+  spotNdf: 'NDF/DNDF spot — BAPI_FTR_FXT_GETDETAIL + BAPI_FTR_FXT_CREATE with ZSGTRMFM_VTBFHA_EXPORT',
+  settlementSpot: 'Settlement spot — SUBMIT ZSGTSFR_SPOT_CREATE (FORM create_sett_spot)',
+} as const
+export type WriteAction = keyof typeof WRITE_ACTIONS
+
 /** What the flows and popups need from the screen. */
 export type Wb = {
+  /** Posts an action to SAP; false (with the reason shown) while no API exposes it. */
+  post: (action: WriteAction) => boolean
   get: () => AppData
   set: (next: AppData) => void
   toast: (msg: string, kind?: ToastKind) => void
@@ -129,6 +146,7 @@ export function runExpire(wb: Wb, ctx: ActionCtx, txn: Txn, rate: number) {
 
 /** Physical exercise: a spot at the strike without a popup (CREATE_SPOT_NEW_MAIN). */
 function createAutoSpot(wb: Wb, ctx: ActionCtx, txn: Txn, sfhaart: string) {
+  if (!wb.post('spotOrder')) return
   const sp = buildNdoSpot(txn, { invoice: null, rate: txn.strike })
   const rfha = bookSpot(wb, {
     dealId: ctx.dealId,
