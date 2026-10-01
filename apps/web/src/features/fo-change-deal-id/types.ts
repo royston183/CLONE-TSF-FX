@@ -8,6 +8,9 @@ export type MasterContract = {
   amt: number
   curr: string
   entstr: string
+  /** The MC's FX model and currency string; the seed contracts leave them out. */
+  model?: string
+  currStr?: string
 }
 
 /** One FX deal leg (the top table). Field names are the legacy page's (ABAP) ones. */
@@ -38,6 +41,7 @@ export type TopRow = {
   /** '' when the leg has no strike (forwards/swaps). */
   strike: number | ''
   mcRefNo: string
+  /** TXN_STATUS of the leg; '' when the source does not carry it (ZSGTSFV_FX has no TXN_STATUS yet). */
   txnStatus: string
 }
 
