@@ -421,9 +421,12 @@
       "route": "/apps/fo-create-deal-id-manually",
       "title": "FO: Create Deal ID Manually",
       "status": "scaffold",
-      "services": [],
+      "services": [
+        "fx",
+        "middleware"
+      ],
       "legacy": "legacy/ZSGTSF_PCREATE_DEAL_ANAL_SELECTION_BASIC_TIGHT_CARD.html",
-      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; covers the Deal ID Analysis workbench (Basic Details, FX Deals/Planned Trade Invoices/Planned P&L tables, Create Deal with cascading Origin/MC/transaction selects, Change/Confirm, Premium Adjustment, and drag-and-drop Edit Deal Pair). SAP wiring (the MC/FX/invoice tables this reads/writes) is a follow-up once those entities are defined."
+      "note": "Master Contracts (masterContract, status 03/04), existing Deal IDs (tsfDealId), traders (trmTrader), company-to-entity (comp) and the Treasury transactions for Deal 1 / Deal 2 (FxTransaction OData, minus those already on a Deal ID) are live. Create Deal ID draws the number from range ZSGTSFNR01/01, writes ZSGTSFTR_DEALID with both linked transactions and moves the MC to 04. NOT done: stamping the Deal ID onto the two Treasury transactions (BAPI_FTR_FXT_CHANGE) - the OData service has no field or action for it. Planned invoices, planned P&L and the FX Deal P&L row have no source yet (ZSGTSFTR_INV_REF is empty, ZSGTSFV_FX has no resource) and show empty; Change / Confirm, Edit Deal Pair and Premium Adjustment still change the screen only."
     },
     {
       "code": "ZSGTSFP002",
