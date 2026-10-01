@@ -354,6 +354,16 @@
       "note": "Reads SAP data only, via the middleware (api.ts): deal legs from ZSGTSFCDS_FX (tsfvFx), Txn Type from TVARVC ZSGTSFP_PRE_MATURE_EARLY_DDOWN, Bank BP from ZSGTRMTR_BP_GRP x ZSGTRMTR_BPEXT for the leg's ZGRP. WAITING FOR API: tsfvFx (ZSGTSFV_FX) lacks ZTSF_DEAL_ID and the VTBFHA extension fields and holds no rows; TVARVC has no rows for the variable; the three creates have no backend action."
     },
     {
+      "code": "ZSGTSFR100",
+      "id": "fo-trader-workbench",
+      "route": "/apps/fo-trader-workbench",
+      "title": "FO: Trader Workbench",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/trader-workbench.html",
+      "note": "ZSGTSFR_SET_WSPACE. Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts (deals, transactions, settlement-spot records, lookups and rates). Exercise/expire, NDF fixing and spot creation change the data in memory until Refresh. SAP wiring (ZSGTSFTR_DEALID, ZSGTSFCDS_FX/_OPTION, ZSGTSFTR_IN_SPOT, DEAL_ST, TRDWAI, TCURR, FxTransaction) is a follow-up."
+    },
+    {
       "code": "ZSGTSFR094",
       "id": "fo-additional-spot-booking",
       "route": "/apps/fo-additional-spot-booking",
