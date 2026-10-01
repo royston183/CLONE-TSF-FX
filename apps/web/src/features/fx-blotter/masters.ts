@@ -98,34 +98,42 @@ export const entityStringParts = (value: string): string[] =>
     .map((p) => p.trim())
     .filter(Boolean)
 
-/**
- * A Long forward sells the first currency in its first leg; a Short one buys it. The rule table
- * has no buy / sell column, so this is read from the model's name — the same split the old list
- * had (its only Short model opened with Buy).
- */
-const legSigns = (desc: string): [string, string] => (/\bshort\b/i.test(desc) ? ['B', 'S'] : ['S', 'B'])
+const USD = 'USD'
 
 /**
- * The entity string gives the legs (first to second entity is D1, second to third is D2) and
- * the two legs' base currencies the pair. Models whose pair is not one the blotter quotes keep
- * an empty pair, and so offer no Auto Deal legs.
+ * Buy or Sell of a leg's first currency, as the original Auto Deal sets it (include
+ * ZSGTSF_PFX_BLOTTER_AUTO_DEAL, FORM process_auto_data; c_1 is Buy, c_2 is Sell). Each leg buys
+ * when its own base currency is USD and sells otherwise, so a model with D1 in USD and D2 in INR
+ * has D1 Buy and D2 Sell. The rule table has no buy / sell column of its own: this is the
+ * program's rule, not a guess. The second currency takes the opposite side.
+ */
+const legSigns = (baseCurrency: string): [string, string] => (baseCurrency === USD ? ['B', 'S'] : ['S', 'B'])
+
+/**
+ * The entity string gives the legs (first to second entity is D1, second to third is D2); the
+ * two legs' base currencies give the pair and each leg's direction. Models whose pair is not one
+ * the blotter quotes keep an empty pair, and so offer no Auto Deal legs.
  */
 export function toFxModels(rows: readonly FxRow[], tolerancePct: number): FxModel[] {
   return rows
     .filter((r) => txt(r, 'ZMOD_ID'))
     .map((r) => {
       const entities = entityStringParts(txt(r, 'ZENT_DESC'))
-      const pair = `${txt(r, 'ZD1_BCURR')}/${txt(r, 'ZD2_BCURR')}`
-      const desc = txt(r, 'ZMOD_DESC')
-      const [bs1, bs2] = legSigns(desc)
-      const leg = (from: string | undefined, to: string | undefined): LegTemplate => ({ from: from ?? '', to: to ?? '', bs1, bs2 })
+      const base1 = txt(r, 'ZD1_BCURR')
+      const base2 = txt(r, 'ZD2_BCURR')
+      // USD leads when either leg is in USD, as the program quotes it.
+      const pair = base2 === USD ? `${base2}/${base1}` : `${base1}/${base2}`
+      const leg = (from: string | undefined, to: string | undefined, base: string): LegTemplate => {
+        const [bs1, bs2] = legSigns(base)
+        return { from: from ?? '', to: to ?? '', bs1, bs2 }
+      }
       return {
         code: txt(r, 'ZMOD_ID'),
-        desc,
+        desc: txt(r, 'ZMOD_DESC'),
         entities,
         pair: pairOf(pair) ? pair : '',
-        d1: leg(entities[0], entities[1]),
-        d2: leg(entities[1], entities[2]),
+        d1: leg(entities[0], entities[1], base1),
+        d2: leg(entities[1], entities[2], base2),
         spreadBp: SPREAD_BP,
         ssEligible: txt(r, 'ZSS') === 'X',
         tolerancePct,

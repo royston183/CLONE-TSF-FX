@@ -120,18 +120,35 @@ describe('fxModel', () => {
     deepStrictEqual(m.map((x) => x.code), ['M032', 'M037', 'M042', 'M099'])
     const a = m[0]!
     deepStrictEqual(a.entities, ['OGA', 'DMCC', 'OSIPL'])
-    deepStrictEqual(a.d1, { from: 'OGA', to: 'DMCC', bs1: 'S', bs2: 'B' })
+    deepStrictEqual(a.d1, { from: 'OGA', to: 'DMCC', bs1: 'B', bs2: 'S' })
     deepStrictEqual(a.d2, { from: 'DMCC', to: 'OSIPL', bs1: 'S', bs2: 'B' })
     strictEqual(a.pair, 'USD/INR')
     strictEqual(a.tolerancePct, 5)
     strictEqual(a.valueDateToleranceDays, 5)
   })
 
-  it('reads a Short model as Buy then Sell, and the self-settled flag from ZSS', () => {
+  it('reads the self-settled flag from ZSS', () => {
     const m = toFxModels(MODEL_ROWS, 5)
-    deepStrictEqual(m[1]!.d1, { from: 'OGA', to: 'OSIPL', bs1: 'B', bs2: 'S' })
     strictEqual(m[0]!.ssEligible, false)
     strictEqual(m[2]!.ssEligible, true)
+  })
+
+  // The original Auto Deal (FORM process_auto_data): a leg buys its first currency when its own
+  // base currency is USD and sells otherwise, and USD is quoted first. The model's name plays no part.
+  it('sets Deal 1 to Buy and Deal 2 to Sell USD for a USD-then-INR model, whatever the model is called', () => {
+    for (const m of toFxModels(MODEL_ROWS, 5).slice(0, 3)) {
+      strictEqual(m.pair, 'USD/INR')
+      deepStrictEqual([m.d1.bs1, m.d1.bs2], ['B', 'S'])
+      deepStrictEqual([m.d2.bs1, m.d2.bs2], ['S', 'B'])
+    }
+  })
+
+  it('quotes USD first and reverses both legs for an INR-then-USD model', () => {
+    const [m] = toFxModels([{ ZMOD_ID: 'M901', ZMOD_DESC: 'Reversed', ZENT_DESC: 'OGA-DMCC-OSIPL', ZD1_BCURR: 'INR', ZD2_BCURR: 'USD' }], 5)
+    ok(m)
+    strictEqual(m.pair, 'USD/INR')
+    deepStrictEqual([m.d1.bs1, m.d1.bs2], ['S', 'B'])
+    deepStrictEqual([m.d2.bs1, m.d2.bs2], ['B', 'S'])
   })
 
   it('gives a model whose pair the blotter does not quote no pair, and skips one without an ID', () => {
