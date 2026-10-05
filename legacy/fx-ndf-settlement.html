@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FX NDF Settlement</title>
+<style>
+/* =========================================================
+   Design system
+   ========================================================= */
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --teal:#17BEBB;
+  --teal-tint:#E7FAF9;
+  --purple:#8E44AD;
+  --purple-tint:#F5EAFA;
+  --gray-tint:#EEF2F6;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(22,39,64,0.04), 0 4px 14px rgba(22,39,64,0.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,0.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:12.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:var(--font);}
+input,select,textarea{font-family:var(--font);}
+
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* =========================================================
+   Layout
+   ========================================================= */
+.app{
+  max-width:100%;
+  margin:0;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+
+.table-col{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 210px);
+}
+.table-col > .card{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  margin-bottom:0;
+}
+.table-col .table-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+}
+@media (max-width:1080px){
+  .table-col{
+    max-height:none;
+  }
+  .table-col .table-scroll{max-height:520px;}
+}
+
+.page-actions-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+
+/* KPI cards */
+.kpi-row{
+  display:flex;
+  gap:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.kpi-card{
+  flex:1 1 180px;
+  min-width:170px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-left:4px solid var(--primary);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);
+  padding:22px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  min-height:64px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-left-color .18s ease;
+}
+.kpi-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(22,39,64,0.08), 0 10px 22px rgba(22,39,64,0.09);
+  border-left-color:var(--primary-dark);
+}
+.kpi-card .kpi-value{
+  font-size:30px;
+  font-weight:700;
+  color:var(--primary-dark);
+  line-height:1.15;
+}
+.kpi-card .kpi-label{
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+
+.create-card{border-left-color:var(--primary);}
+.create-card .create-icon-circle{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;
+  font-weight:700;
+  line-height:1;
+  transition:background .18s ease, transform .18s ease;
+}
+.create-card .kpi-label{color:var(--text);font-weight:700;font-size:13px;}
+.create-card:hover .create-icon-circle{
+  background:var(--primary-dark);
+  transform:scale(1.08);
+}
+.create-card:hover{border-left-color:var(--primary-dark);}
+
+/* Header */
+.page-header{
+  margin-bottom:12px;
+  background:#EAF3FF;
+  border:1px solid #D7E9FF;
+  border-radius:var(--radius-md);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.page-header .logo-img{
+  height:40px;
+  width:auto;
+  max-width:120px;
+  object-fit:contain;
+  flex:none;
+}
+.page-header .logo-placeholder{
+  height:36px;
+  width:36px;
+  flex:none;
+  border-radius:8px;
+  border:1px dashed var(--border-strong);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-faint);
+}
+.page-header .header-text{display:flex;flex-direction:column;}
+
+/* Compact form rows with variable-width fields */
+.form-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin-bottom:12px;
+}
+.form-row:last-child{margin-bottom:0;}
+.form-row > .field{flex:1 1 160px;min-width:0;}
+.field.w-sm{flex:0 1 100px;}
+.field.w-sm-md{flex:0 1 124px;}
+.field.w-md{flex:0 1 154px;}
+.field.w-md-wide{flex:0 1 184px;}
+.field.w-wide{flex:1 1 190px;min-width:165px;}
+.field.w-date{flex:0 0 156px;min-width:156px;}
+.form-row.no-wrap{flex-wrap:nowrap;}
+.form-row.no-wrap > .field{min-width:0;}
+.field.fx-field{flex:1 1 0;min-width:130px;}
+
+/* 12-column responsive grid for the Create Master Contract modal.
+   Each field gets a span sized to what its value actually needs,
+   rather than forcing every field to equal width. */
+.form-grid-12{
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:10px 12px;
+  margin-bottom:14px;
+}
+.form-grid-12:last-child{margin-bottom:0;}
+.form-grid-12 > .field{min-width:0;}
+.gc-3{grid-column:span 3;}
+.gc-4{grid-column:span 4;}
+.gc-5{grid-column:span 5;}
+.gc-6{grid-column:span 6;}
+.gc-7{grid-column:span 7;}
+@media (max-width:700px){
+  .form-grid-12{grid-template-columns:repeat(6, 1fr);}
+  .gc-3{grid-column:span 3;}
+  .gc-4{grid-column:span 3;}
+  .gc-5{grid-column:span 6;}
+  .gc-6{grid-column:span 6;}
+  .gc-7{grid-column:span 6;}
+}
+@media (max-width:460px){
+  .form-grid-12{grid-template-columns:1fr;}
+  .gc-3, .gc-4, .gc-5, .gc-6, .gc-7{grid-column:span 1;}
+}
+.page-header h1{
+  font-size:19px;
+  font-weight:700;
+  margin:0 0 3px;
+  letter-spacing:-0.2px;
+}
+.page-header p{
+  margin:0;
+  color:var(--text-muted);
+  font-size:12.5px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  margin-bottom:12px;
+  overflow:visible;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  font-weight:700;
+  color:var(--primary-dark);
+  letter-spacing:0.3px;
+}
+.section-title .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;
+}
+.section-body{
+  padding:12px 16px 14px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px 14px;
+}
+.form-grid.cols-1{grid-template-columns:1fr;}
+.form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+}
+.field label{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+  line-height:1.2;
+}
+.field label .req{color:var(--error);margin-left:2px;}
+.field .hint{font-size:11px;color:var(--text-faint);}
+.field .error-msg{
+  font-size:11px;
+  color:var(--error);
+  display:none;
+  margin-top:-2px;
+}
+.field.has-error .error-msg{display:block;}
+.field.has-error input,
+.field.has-error .select-display,
+.field.has-error .dd-input{
+  border-color:var(--error) !important;
+  background:var(--error-tint);
+}
+
+.control{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 11px;
+  font-size:12.5px;
+  color:var(--text);
+  background:#fff;
+  width:100%;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.control::placeholder{color:var(--text-faint);}
+.control:hover{border-color:#AFC2D8;}
+.control:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-tint);
+}
+.control[readonly]{
+  background:var(--gray-tint);
+  color:var(--text-muted);
+  cursor:default;
+}
+.control:disabled{
+  background:var(--gray-tint);
+  color:var(--text-faint);
+  cursor:not-allowed;
+}
+
+.input-with-suffix{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.input-with-suffix .control{padding-right:58px;}
+.input-with-suffix .suffix{
+  position:absolute;
+  right:8px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--primary-dark);
+  background:var(--primary-tint);
+  padding:3px 7px;
+  border-radius:6px;
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+/* Searchable dropdown */
+.dd{position:relative;}
+.dd-input{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 32px 0 11px;
+  font-size:12.5px;
+  width:100%;
+  outline:none;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+  cursor:pointer;
+  transition:border-color .15s, box-shadow .15s;
+}
+.dd-input::placeholder{color:var(--text-faint);}
+.dd-input:hover{border-color:#AFC2D8;}
+.dd-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.dd.disabled .dd-input{background-color:var(--gray-tint);color:var(--text-faint);cursor:not-allowed;}
+
+.dd-panel{
+  position:absolute;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  min-width:200px;
+  max-height:240px;
+  overflow-y:auto;
+  z-index:210;
+  display:none;
+  padding:6px;
+}
+.dd.open .dd-panel{display:block;}
+.dd-item{
+  padding:8px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.dd-item:hover, .dd-item.active{background:var(--primary-tint);}
+.dd-item .primary-line{font-weight:600;font-size:12.5px;color:var(--text);}
+.dd-item .secondary-line{font-size:11px;color:var(--text-muted);}
+.dd-empty{padding:14px 10px;text-align:center;color:var(--text-faint);font-size:11.5px;}
+
+/* Date field */
+.date-field{position:relative;}
+.date-field .control{padding-right:34px;}
+.date-icon{
+  position:absolute;
+  right:6px;top:50%;
+  transform:translateY(-50%);
+  width:24px;height:24px;
+  border:none;background:transparent;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  color:var(--text-muted);
+  font-size:13px;
+}
+.date-icon:hover{background:var(--primary-tint);color:var(--primary);}
+.date-popup{
+  position:absolute;
+  width:250px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  z-index:210;
+  padding:10px;
+  display:none;
+}
+.date-popup.open{display:block;}
+.cal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
+.cal-head button{
+  width:24px;height:24px;border:none;background:var(--gray-tint);
+  border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);
+}
+.cal-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.cal-head .cal-title{font-weight:700;font-size:12px;}
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.cal-grid .dow{
+  text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;
+}
+.cal-grid .day{
+  text-align:center;
+  font-size:11.5px;
+  padding:6px 0;
+  border-radius:6px;
+  cursor:pointer;
+  color:var(--text);
+}
+.cal-grid .day:hover{background:var(--primary-tint);}
+.cal-grid .day.muted{color:var(--text-faint);}
+.cal-grid .day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.cal-grid .day.today:not(.selected){box-shadow:inset 0 0 0 1px var(--primary-light);}
+
+/* Buttons */
+.btn{
+  height:32px;
+  padding:0 16px;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid transparent;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:0 2px 6px rgba(31,111,235,0.25);}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-strong);}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(22,39,64,0.08);}
+.btn-danger{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-danger:hover{background:var(--error-tint);}
+.btn-ghost{background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.btn-ghost:hover{text-decoration:underline;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
+
+.actions-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:12px 16px;
+}
+
+/* Success banner */
+.success-banner{
+  display:none;
+  align-items:center;
+  gap:10px;
+  margin:0 0 12px;
+  padding:9px 14px;
+  background:var(--success-tint);
+  border:1px solid #BFE8D0;
+  border-radius:var(--radius-md);
+  color:#1E7A46;
+  font-size:12px;
+}
+.success-banner.show{display:flex;}
+.success-banner b{font-weight:700;}
+.success-banner .spacer{flex:1;}
+
+/* =========================================================
+   Master Contracts table section
+   ========================================================= */
+.table-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px 10px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+}
+.search-box{
+  position:relative;
+  flex:1 1 260px;
+  min-width:200px;
+}
+.search-box input{
+  height:32px;
+  width:100%;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;
+  font-size:12.5px;
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.search-box .icon{
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-faint);font-size:13px;
+}
+.toolbar-spacer{flex:1 0 8px;}
+.result-count{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+
+.filter-select{
+  flex:0 1 122px;
+  min-width:88px;
+  height:32px;
+  cursor:pointer;
+}
+
+.table-scroll{
+  overflow-x:auto;
+}
+table.mc-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1060px;
+}
+table.mc-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:10px 14px;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+  z-index:5;
+}
+table.mc-table thead th:hover{color:var(--primary-dark);}
+table.mc-table thead th.no-sort{cursor:default;}
+table.mc-table thead th.no-sort:hover{color:var(--text-muted);}
+table.mc-table thead th.action-col, table.mc-table td.action-col{
+  width:40px;
+  text-align:center;
+  padding-left:10px;
+  padding-right:10px;
+}
+.row-select-checkbox{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  vertical-align:middle;
+}
+table.mc-table thead th .sort-ind{
+  display:inline-block;
+  margin-left:4px;
+  font-size:9px;
+  color:var(--text-faint);
+}
+table.mc-table thead th.sorted .sort-ind{color:var(--primary);}
+table.mc-table thead th.num,
+table.mc-table td.num{text-align:right;}
+table.mc-table tbody td{
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  white-space:nowrap;
+}
+table.mc-table tbody tr{cursor:pointer;transition:background .18s ease;}
+table.mc-table tbody tr:hover{background:#F7FAFD;}
+table.mc-table tbody tr:hover .mc-link{color:var(--primary);}
+table.mc-table tbody tr.selected{background:var(--primary-tint);}
+table.mc-table tbody tr.row-new{animation:flashNew 1.8s ease-out;}
+@keyframes flashNew{
+  0%{background:#DFF3E6;}
+  100%{background:transparent;}
+}
+.mc-link{color:var(--primary-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+.mc-link:hover{text-decoration:underline;color:var(--primary);}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.status-pill .status-dot{width:6px;height:6px;border-radius:50%;}
+.status-in-use{background:var(--success-tint);color:#1E7A46;}
+.status-in-use .status-dot{background:var(--success);}
+.status-confirmed{background:var(--primary-tint);color:var(--primary-dark);}
+.status-confirmed .status-dot{background:var(--primary);}
+.status-draft{background:var(--gray-tint);color:var(--text-muted);}
+.status-draft .status-dot{background:var(--text-faint);}
+.status-pending{background:var(--warning-tint);color:#9A5300;}
+.status-pending .status-dot{background:var(--warning);}
+.status-rejected{background:var(--error-tint);color:#B4362A;}
+.status-rejected .status-dot{background:var(--error);}
+.status-settled{background:var(--teal-tint);color:#0E8785;}
+.status-settled .status-dot{background:var(--teal);}
+.status-matured{background:var(--purple-tint);color:#6C3488;}
+.status-matured .status-dot{background:var(--purple);}
+
+/* Plain-text status presentation (Master Contracts table) */
+.status-text{font-weight:600;font-size:12px;white-space:nowrap;}
+.status-text-in-use{color:var(--success);}
+.status-text-confirmed{color:var(--primary);}
+.status-text-draft{color:var(--text-muted);}
+.status-text-pending{color:var(--warning);}
+.status-text-rejected{color:var(--error);}
+.status-text-settled{color:var(--teal);}
+.status-text-matured{color:var(--purple);}
+
+.empty-state{
+  padding:40px 20px;
+  text-align:center;
+  color:var(--text-muted);
+}
+.empty-state .big{font-size:28px;margin-bottom:6px;}
+
+.table-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px 12px;
+  flex-wrap:wrap;
+  gap:10px;
+  flex:0 0 auto;
+  border-top:1px solid var(--border);
+}
+.page-size-select{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.page-size-select select{height:28px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;padding:0 6px;}
+
+.pagination{display:flex;align-items:center;gap:4px;}
+.pagination button{
+  min-width:28px;height:28px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:6px;
+  font-size:11.5px;
+  cursor:pointer;
+  color:var(--text);
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;
+}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pagination button:active:not(:disabled){transform:translateY(1px);}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(16,26,41,0.5);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-overlay.closing{display:flex;}
+.modal{
+  background:#fff;
+  border-radius:var(--radius-lg);
+  width:380px;
+  max-width:100%;
+  box-shadow:var(--shadow-pop);
+  padding:26px 24px 22px;
+  text-align:center;
+  animation:popIn .18s ease-out;
+}
+@keyframes popIn{from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.modal-overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+.modal .check-circle{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--success-tint);
+  color:var(--success);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin:0 auto 14px;
+}
+.modal h2{font-size:15.5px;margin:0 0 6px;}
+.modal p{margin:0 0 16px;color:var(--text-muted);font-size:12.5px;}
+.modal .deal-id-box{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px;
+  margin-bottom:18px;
+}
+.modal .deal-id-box .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:700;margin-bottom:4px;}
+.modal .deal-id-box .value{font-size:19px;font-weight:700;color:var(--primary-dark);letter-spacing:0.4px;}
+.modal .modal-actions{display:flex;gap:10px;}
+.modal .modal-actions .btn{flex:1;}
+
+.modal.modal-left{text-align:left;}
+.modal-head-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.modal-head-row h2{margin:0;}
+.modal-close-btn{
+  border:none;
+  background:transparent;
+  font-size:18px;
+  line-height:1;
+  color:var(--text-muted);
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:6px;
+  transition:background .15s ease, color .15s ease;
+}
+.modal-close-btn:hover{background:var(--gray-tint);color:var(--text);}
+.commodity-check-list{
+  max-height:260px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:6px;
+}
+.commodity-check-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--text);
+}
+.commodity-check-item:hover{background:var(--primary-tint);}
+.commodity-check-item input[type="checkbox"]{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  flex:none;
+}
+
+/* Scrollable detail popups (KPI detail, Master Contract detail) */
+.modal.modal-scrollable{
+  display:flex;
+  flex-direction:column;
+  max-height:92vh;
+}
+.modal.modal-scrollable .modal-head-row{flex:0 0 auto;}
+.modal.modal-scrollable .modal-body-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding-right:2px;
+}
+.modal.modal-scrollable .modal-actions{flex:0 0 auto;margin-top:14px;}
+.kpi-detail-modal{width:520px;}
+.contract-detail-modal{width:720px;}
+.child-contract-modal{width:min(860px, calc(100vw - 40px));max-width:96vw;}
+.contract-detail-actions,.child-modal-actions{flex-wrap:wrap;justify-content:flex-end;}
+.contract-detail-actions .btn,.child-modal-actions .btn{flex:0 0 auto;min-width:110px;}
+.child-parent-summary{margin-bottom:12px;padding:9px 11px;background:var(--primary-tint);border:1px solid #D7E9FF;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted);}
+.child-parent-summary b{color:var(--primary-dark);}
+.modal.modal-scrollable.create-contract-modal{
+  width:min(720px, calc(100vw - 40px));
+  max-width:96vw;
+  max-height:97vh;
+  padding:20px 22px 16px;
+}
+.create-modal-actions{
+  justify-content:flex-end;
+}
+.create-modal-actions .btn{
+  flex:0 0 auto;
+  min-width:120px;
+}
+
+.form-section{margin-bottom:14px;}
+.form-section:last-child{margin-bottom:0;}
+.form-section .section-title{
+  padding:0 0 6px;
+  border:none;
+  font-size:12.5px;
+}
+.form-section .section-body{padding:0;}
+
+/* KPI summary key/value list */
+.kv-list{display:flex;flex-direction:column;gap:1px;}
+.kv-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+}
+.kv-row:last-child{border-bottom:none;}
+.kv-row .kv-label{color:var(--text-muted);}
+.kv-row .kv-value{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.kv-row.kv-total{background:var(--primary-tint);border-radius:6px;padding:8px 10px;margin:2px 0;}
+.kv-row.kv-total .kv-label{color:var(--primary-dark);font-weight:700;}
+.kv-row.kv-total .kv-value{color:var(--primary-dark);font-size:13.5px;}
+
+/* Compact table used inside KPI list popups */
+.popup-table-wrap{
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:auto;
+  max-height:360px;
+}
+table.popup-table{width:100%;border-collapse:collapse;min-width:560px;}
+table.popup-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.3px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:8px 10px;
+  white-space:nowrap;
+}
+table.popup-table thead th.num{text-align:right;}
+table.popup-table td{
+  padding:7px 10px;
+  border-bottom:1px solid var(--border);
+  font-size:11.5px;
+  white-space:nowrap;
+}
+table.popup-table td.num{text-align:right;}
+table.popup-table tbody tr:hover{background:#F7FAFD;}
+.popup-empty{text-align:center !important;color:var(--text-faint);padding:18px !important;}
+
+/* Contract detail sections */
+.detail-section{margin-bottom:16px;}
+.detail-section:last-child{margin-bottom:0;}
+.detail-section-title{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  font-weight:700;
+  color:var(--primary-dark);
+  margin-bottom:8px;
+  padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.detail-item{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.detail-item.full{grid-column:1 / -1;}
+.detail-item .detail-label{font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.detail-item .detail-value{font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+
+/* Validation summary toast */
+.toast{
+  position:fixed;
+  bottom:22px;left:50%;
+  transform:translateX(-50%);
+  background:#2A3B4D;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:var(--radius-md);
+  font-size:12.5px;
+  box-shadow:var(--shadow-pop);
+  z-index:300;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.toast.show{display:flex;}
+.toast.error{background:#5A2420;}
+
+/* Utility */
+.mono{font-variant-numeric:tabular-nums;}
+.text-right{text-align:right;}
+.icon-btn{
+  width:34px;height:34px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);
+  font-size:14px;
+}
+.icon-btn:hover{border-color:var(--primary);color:var(--primary);}
+.icon-btn.active{background:var(--primary-tint);border-color:var(--primary);color:var(--primary);}
+
+@media (max-width:900px){
+  .form-grid{grid-template-columns:repeat(2,1fr);}
+  .filter-select{flex:1 1 130px;}
+}
+@media (max-width:600px){
+  .app{padding:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .actions-row{flex-direction:column-reverse;}
+  .actions-row .btn{width:100%;}
+}
+</style>
+<style>
+/* =========================================================
+   OTTK visual theme — CSS-ONLY override block.
+   This block is appended last so its rules win the cascade
+   over the original stylesheet above (same selectors, later
+   source order, no specificity tricks needed). Nothing in the
+   HTML or JavaScript is touched; every rule below only changes
+   how existing elements look.
+   ========================================================= */
+
+/* ---- 1. Design tokens: remap the app's CSS variables to the
+   OTTK palette. Because the entire original stylesheet is
+   built on these custom properties, this alone re-themes the
+   vast majority of components (buttons, inputs, dropdowns,
+   cards, borders, focus rings, shadows, radii, etc). ---- */
+:root{
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+
+/* ---- 2. Type scale: match OTTK's actual component sizes, not
+   just the 13px body base — OTTK sets its own explicit sizes
+   for titles, labels, meta text and table headers rather than
+   inheriting one size everywhere. ---- */
+body{ font-size:13px; }
+.control,
+.dd-input,
+.dd-item .primary-line,
+.btn,
+.search-box input{ font-size:13px; }
+.field label,
+.section-title{ font-size:13px; }
+.filter-select{ font-size:13px; }
+.page-header h1{ font-size:16px; }
+.page-header p{ font-size:15px; }
+.modal h2{ font-size:14px; }
+.kpi-card .kpi-label{ font-size:12px; }
+
+/* ---- 3. Header: remove the light-blue strip — sits flush on
+   the page background like the rest of OTTK's chrome ---- */
+.page-header{
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+}
+
+/* ---- 4. Buttons: tighter, SAP-compact padding and hover feedback ---- */
+.btn{ padding:0 12px; border-radius:var(--radius-sm); }
+.btn-secondary:hover{ box-shadow:0 1px 4px rgba(34,53,72,.1); }
+.btn-primary:hover{ box-shadow:0 2px 6px rgba(10,110,209,.22); }
+
+/* ---- 5. KPI / action cards: same OTTK panel look (white surface,
+   thin border, compact shadow, 8px radius) ---- */
+.kpi-card{ box-shadow:var(--shadow-card); }
+.kpi-card:hover{
+  box-shadow:0 4px 10px rgba(34,53,72,.1), 0 10px 22px rgba(34,53,72,.1);
+}
+
+/* ---- 6. Inputs & dropdowns: OTTK hover/focus border tone ---- */
+.control:hover,
+.dd-input:hover{ border-color:#A6B0B9; }
+
+/* ---- 7. Search box + filter selects: compact SAP sizing ---- */
+.search-box input,
+.filter-select{ border-radius:var(--radius-sm); }
+
+/* ---- 8. Table: SAP-grid look — muted uppercase header on a
+   secondary surface, tighter row padding, subtle row hover ---- */
+table.mc-table thead th{
+  background:var(--gray-tint);
+  padding:8px 10px;
+  font-size:13px;
+}
+table.mc-table tbody td{
+  padding:8px 10px;
+  font-size:14px;
+}
+table.mc-table tbody tr:hover{ background:#F7FBFF; }
+.popup-table-wrap table thead th,
+table.popup-table thead th{ background:var(--gray-tint); font-size:13px; }
+table.popup-table td{ font-size:14px; }
+table.popup-table tbody tr:hover{ background:#F7FBFF; }
+
+/* ---- 9. Status presentation: align the semantic shades used
+   for both the plain-text table status and the pill variant
+   (details popup) to the OTTK palette ---- */
+.status-text-in-use{ color:var(--success); }
+.status-text-confirmed{ color:var(--primary); }
+.status-text-pending{ color:#9B6B00; }
+.status-text-rejected{ color:var(--error); }
+.status-in-use{ color:var(--success); }
+.status-pending{ color:#9B6B00; }
+.status-rejected{ color:var(--error); }
+
+/* ---- 10. Pagination: compact square SAP-style buttons ---- */
+.pagination button{ border-radius:var(--radius-sm); }
+
+/* ---- 11. Modals / popups: OTTK modal shadow + radius (via
+   --radius-lg / --shadow-pop above) plus a matching close-icon
+   hover and success-state accent ---- */
+.modal{ border:1px solid #B9C2C9; }
+.modal .check-circle{ background:var(--success-tint); color:var(--success); }
+.modal-close-btn:hover{ background:var(--gray-tint); }
+
+/* ---- 12. Success banner + toast: OTTK green accent / dark toast ---- */
+.success-banner{ border-color:#C5E0CD; color:var(--success); }
+.toast{ background:#243B53; }
+.toast.error{ background:#4A211D; }
+
+/* ---- 13. Scrollbar + misc chrome ---- */
+::-webkit-scrollbar-thumb{ background:#B7C2CB; }
+.child-parent-summary{ border-color:#BEE0F7; }
+
+/* ---- 14. Table: lighter cell borders + subtle hover "lift" ---- */
+table.mc-table thead th{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody td{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody tr{
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.mc-table tbody tr:hover{
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF;
+  position:relative;
+  z-index:2;
+}
+table.mc-table tbody tr.selected{ background:#EAF3FC; }
+table.mc-table tbody tr.selected:hover{
+  background:#EAF3FC;
+  box-shadow:0 3px 9px rgba(10,110,209,.14);
+}
+table.mc-table tbody tr.dragging{ opacity:.5; }
+
+/* ---- 15. KPI value: neutral dark text instead of blue ---- */
+.kpi-card .kpi-value{ color:var(--text); }
+
+/* ---- 16. KPI description: small, secondary, bottom-right of the card ---- */
+.kpi-card{ position:relative; }
+.kpi-description{
+  position:absolute;
+  right:16px;
+  bottom:12px;
+  max-width:62%;
+  font-size:13px;
+  line-height:1.3;
+  color:var(--text-faint);
+  text-align:right;
+  font-weight:500;
+}
+
+/* ---- 17. Drag and drop: compact ghost label + drop-target feedback ---- */
+.drag-ghost{
+  position:fixed;
+  top:-1000px;
+  left:-1000px;
+  padding:6px 10px;
+  background:#1D2D3E;
+  color:#fff;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family:var(--font);
+  pointer-events:none;
+}
+.btn.drag-over{
+  border-color:var(--primary) !important;
+  background:var(--primary-tint) !important;
+  color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+</style>
+<style>
+/* =========================================================
+   FX NDF Settlement — additions on top of the OTTK reference
+   (workbench toolbar, multi-select, calendar, letter preview)
+   ========================================================= */
+.app{padding:0.3rem 0.2rem 0.5rem;}
+.table-col{max-height:calc(100vh - 92px);}
+.page-header .btn{margin-left:auto;}
+
+/* ---- Toolbar: labelled compact filters ---- */
+.table-toolbar{align-items:flex-end;gap:10px 8px;padding:12px 16px 8px;}
+.tb-field{display:flex;flex-direction:column;gap:3px;position:relative;min-width:0;}
+.tb-field > label{font-size:11px;font-weight:600;color:var(--text-muted);line-height:1.2;white-space:nowrap;}
+.tb-field > label .req{color:var(--error);margin-left:2px;}
+.tb-field > label .opt{color:var(--text-faint);font-weight:500;margin-left:3px;}
+.tb-field .control,.tb-field .dd-input{height:32px;font-size:13px;}
+.tb-field.has-error .control,
+.tb-field.has-error .dd-input,
+.tb-field.has-error .ms-trigger{border-color:var(--error) !important;background:var(--error-tint);}
+.tb-search{flex:1 1 220px;min-width:190px;max-width:340px;}
+.tb-search .search-box{flex:none;width:100%;min-width:0;}
+.tb-w-co{flex:0 0 168px;}
+.tb-w-date{flex:0 0 138px;}
+.tb-w-rfha{flex:0 0 156px;}
+.tb-w-layout{flex:0 0 136px;}
+.tb-actions{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-left:10px;}
+.table-toolbar .btn{height:32px;font-size:13px;}
+
+.date-field .control{padding-right:30px;}
+.date-field .date-icon{width:22px;height:22px;}
+
+/* Segmented control (Posting Type radio group) */
+.seg{display:inline-flex;height:32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;background:#fff;}
+.seg button{border:none;background:#fff;color:var(--text);font-size:13px;padding:0 12px;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background .15s ease,color .15s ease;}
+.seg button + button{border-left:1px solid var(--border-strong);}
+.seg button:hover:not(.active){background:var(--primary-tint);color:var(--primary);}
+.seg button.active{background:var(--primary);color:#fff;font-weight:600;}
+.seg button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
+
+/* Multi-select (Company Code select-option) */
+.ms{position:relative;}
+.ms-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;text-align:left;cursor:pointer;
+  height:32px;width:100%;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:#fff;padding:0 11px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.ms-trigger:hover{border-color:#A6B0B9;}
+.ms-trigger:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.ms-trigger .ms-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-trigger .ms-text.placeholder{color:var(--text-faint);}
+.ms-trigger .caret{flex:none;width:10px;height:6px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat center;}
+.ms-panel,.dd-panel.tb-panel{
+  position:absolute;top:calc(100% + 4px);left:0;min-width:260px;max-height:280px;overflow-y:auto;
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-pop);
+  z-index:220;display:none;padding:6px;
+}
+.ms.open .ms-panel{display:block;}
+.dd.open .dd-panel.tb-panel{display:block;}
+.ms-panel.align-right,.dd-panel.tb-panel.align-right{left:auto;right:0;}
+.ms-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;}
+.ms-item:hover{background:var(--primary-tint);}
+.ms-item input{width:14px;height:14px;accent-color:var(--primary);cursor:pointer;flex:none;}
+.ms-item .ms-code{font-weight:700;min-width:38px;}
+.ms-item .ms-name{color:var(--text-muted);font-size:12px;}
+.ms-foot{display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding:6px 4px 2px;}
+.dd-item.selected-item .primary-line{color:var(--primary-dark);}
+
+/* Calendar with month / year selectors */
+.date-popup{width:262px;}
+.cal-head{gap:4px;}
+.cal-head .cal-sel{flex:1 1 auto;display:flex;gap:4px;min-width:0;}
+.cal-head select{
+  height:24px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:11.5px;font-weight:600;
+  color:var(--text);padding:0 2px;font-family:var(--font);cursor:pointer;min-width:0;
+}
+.cal-head select.cal-month{flex:1 1 auto;}
+.cal-head select.cal-year{flex:0 0 64px;}
+.cal-head select:focus{outline:none;border-color:var(--primary);}
+
+/* Criteria validation line */
+.criteria-error{display:none;margin:0 16px 8px;padding:6px 10px;border:1px solid #F3C6C0;background:var(--error-tint);color:var(--error);border-radius:var(--radius-sm);font-size:12px;}
+.criteria-error.show{display:block;}
+.criteria-error ul{margin:0;padding-left:16px;}
+
+/* Table additions */
+table.mc-table{min-width:0;}
+table.mc-table tbody tr{background:#fff;}
+table.mc-table tbody tr:hover{background:#F7FBFF;}
+table.mc-table tbody tr.selected,
+table.mc-table tbody tr.selected:hover{background:#EAF3FC;}
+table.mc-table tbody tr:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
+table.mc-table th.sticky-a,table.mc-table td.sticky-a{position:sticky;left:0;z-index:4;background:inherit;}
+table.mc-table th.sticky-b,table.mc-table td.sticky-b{position:sticky;left:40px;z-index:4;background:inherit;box-shadow:1px 0 0 var(--border);}
+table.mc-table thead th.sticky-a,table.mc-table thead th.sticky-b{z-index:8;background:var(--gray-tint);}
+table.mc-table tbody td{white-space:nowrap;}
+.hotspot{color:var(--primary-dark);font-weight:700;cursor:pointer;background:none;border:none;padding:0;font:inherit;font-weight:700;}
+.hotspot:hover{text-decoration:underline;color:var(--primary);}
+.cell-muted{color:var(--text-faint);}
+.status-text-fixed{color:var(--purple);}
+.status-text-posted{color:var(--success);}
+.neg{color:var(--error);}
+.btn.drop-ready{border-style:dashed;border-color:var(--primary-light);}
+.table-footer .showing{font-size:11.5px;color:var(--text-muted);margin-left:14px;}
+.table-footer .left{display:flex;align-items:center;}
+
+/* Modals */
+.modal.w-sm{width:440px;}
+.modal.w-md{width:min(760px, calc(100vw - 40px));}
+.modal.w-lg{width:min(920px, calc(100vw - 40px));}
+.modal .modal-sub{margin:-6px 0 12px;font-size:12px;color:var(--text-muted);}
+.modal .modal-actions{justify-content:flex-end;}
+.modal .modal-actions .btn{flex:0 0 auto;min-width:96px;}
+.modal p.confirm-body{margin:0 0 6px;color:var(--text);font-size:13px;line-height:1.55;}
+.modal .param-table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+.modal .param-table td{padding:5px 8px;border-bottom:1px solid var(--border);font-size:12.5px;}
+.modal .param-table td:first-child{color:var(--text-muted);width:38%;}
+.modal .param-table td:last-child{font-weight:600;}
+.run-note{margin-top:10px;padding:8px 10px;background:var(--primary-tint);border:1px solid #BEE0F7;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted);}
+.run-summary{display:flex;gap:16px;margin:0 0 10px;font-size:12.5px;}
+.run-summary b{font-weight:700;}
+.res-ok{color:var(--success);font-weight:600;}
+.res-info{color:var(--primary);font-weight:600;}
+.res-warn{color:var(--warning);font-weight:600;}
+.popup-table-wrap{max-height:300px;}
+table.popup-table{min-width:0;}
+
+/* Bank settlement letter (screen 9001) */
+.letter{border:1px solid var(--border);border-radius:var(--radius-md);background:#fff;padding:18px 22px;font-size:13px;line-height:1.55;}
+.letter .l-date{text-align:right;color:var(--text-muted);margin-bottom:10px;}
+.letter .l-bank{font-weight:700;}
+.letter .l-attn{font-weight:700;margin-top:8px;}
+.letter .l-re{margin-top:12px;}
+.letter .l-re b{margin-right:6px;}
+.letter .l-vdate{font-weight:700;margin-bottom:12px;}
+.letter .l-grid{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;}
+.letter table.popup-table{width:100%;}
+.letter .l-sign{margin-top:18px;}
+.letter .l-sign .l-auth{font-weight:600;}
+.letter .l-sign .l-faith{margin-top:26px;}
+.letter .l-sign .l-co{font-weight:700;margin-top:4px;}
+
+/* Hover lift without scaling so pinned (sticky) columns stay pixel-aligned */
+table.mc-table tbody tr:hover{transform:translateY(-1px);}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="page-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="Logo">
+    <div class="header-text">
+      <h1>FX NDF Settlement</h1>
+      <p>Bank settlement of TSF NDF deals</p>
+    </div>
+    <button class="btn btn-secondary" id="btnRefresh" title="Reload deals from the database">↻ Refresh</button>
+  </div>
+
+  <div class="table-col">
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>NDF Deals for Bank Settlement</div>
+
+    <div class="table-toolbar" id="toolbar">
+      <div class="tb-field tb-search">
+        <div class="search-box">
+          <span class="icon">🔍</span>
+          <input id="tableSearch" placeholder="Search deals..." autocomplete="off" aria-label="Search deals">
+        </div>
+      </div>
+
+      <div class="tb-field tb-w-co" id="field-bukrs">
+        <label>Company Code<span class="req">*</span></label>
+        <div class="ms" id="ms-bukrs">
+          <button type="button" class="ms-trigger" id="msTrigger" aria-haspopup="listbox"><span class="ms-text" id="msText"></span><span class="caret"></span></button>
+          <div class="ms-panel" id="msPanel" role="listbox"></div>
+        </div>
+      </div>
+
+      <div class="tb-field tb-w-date" id="field-dateFrom">
+        <label>Value Date From<span class="req">*</span></label>
+        <div class="date-field">
+          <input class="control" id="input-dateFrom" placeholder="dd-mm-yyyy" maxlength="10" autocomplete="off">
+          <button type="button" class="date-icon" data-target="dateFrom" aria-label="Pick From date">📅</button>
+          <div class="date-popup" id="popup-dateFrom"></div>
+        </div>
+      </div>
+
+      <div class="tb-field tb-w-date" id="field-dateTo">
+        <label>Value Date To<span class="opt">optional</span></label>
+        <div class="date-field">
+          <input class="control" id="input-dateTo" placeholder="dd-mm-yyyy" maxlength="10" autocomplete="off">
+          <button type="button" class="date-icon" data-target="dateTo" aria-label="Pick To date">📅</button>
+          <div class="date-popup" id="popup-dateTo"></div>
+        </div>
+      </div>
+
+      <div class="tb-field tb-w-rfha" id="field-rfha">
+        <label>Transaction No<span class="opt">optional</span></label>
+        <div class="dd" id="dd-rfha">
+          <input class="dd-input" id="input-rfha" placeholder="Select ..." autocomplete="off">
+          <div class="dd-panel tb-panel" id="panel-rfha"></div>
+        </div>
+      </div>
+
+      <div class="tb-field" id="field-posting">
+        <label>Posting Type</label>
+        <div class="seg" id="segPosting" role="radiogroup" aria-label="Posting Type">
+          <button type="button" data-mode="view" role="radio" class="active">View Only</button>
+          <button type="button" data-mode="post" role="radio">View With Posting</button>
+        </div>
+      </div>
+
+      <div class="tb-field" id="field-execute" style="display:none;">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" id="btnExecute" title="Post all deals in the current selection, then reload the list">Execute</button>
+      </div>
+
+      <div class="tb-field tb-w-layout" id="field-layout">
+        <label>Layout</label>
+        <div class="dd" id="dd-layout">
+          <input class="dd-input" id="input-layout" placeholder="Select ..." readonly autocomplete="off">
+          <div class="dd-panel tb-panel" id="panel-layout"></div>
+        </div>
+      </div>
+
+      <div class="tb-field">
+        <label>&nbsp;</label>
+        <button class="btn btn-secondary" id="btnReset" title="Restore the default selection, search, sort and page">Reset</button>
+      </div>
+
+      <div class="tb-actions" id="actionBar">
+        <button class="btn btn-secondary" id="btnPreview" data-action="preview" disabled title="Preview the bank settlement letter for the selected deal">Preview Document</button>
+        <button class="btn btn-secondary" id="btnPdf" data-action="pdf" disabled title="Generate the bank settlement letter as PDF">PDF</button>
+        <button class="btn btn-secondary" id="btnTest" data-action="test" disabled title="Posting run in test mode for the selected deal">TBB1 Test Run</button>
+        <button class="btn btn-primary" id="btnPost" data-action="post" disabled title="Posting run (update) for the selected deal">TBB1 Post</button>
+      </div>
+    </div>
+
+    <div class="criteria-error" id="criteriaError" role="alert"></div>
+
+    <div class="table-scroll">
+      <table class="mc-table" id="dealTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="big">📄</div>
+      <span id="emptyText">No NDF deals match the current selection.</span>
+    </div>
+
+    <div class="table-footer">
+      <div class="left">
+        <div class="page-size-select">
+          Rows per page
+          <select id="pageSizeSelect">
+            <option value="8">8</option>
+            <option value="12">12</option>
+            <option value="20" selected>20</option>
+          </select>
+        </div>
+        <span class="showing" id="showingText"></span>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+<!-- Transaction details (hotspot: Transaction No) -->
+<div class="modal-overlay" id="dealModal">
+  <div class="modal modal-left modal-scrollable w-md">
+    <div class="modal-head-row"><h2>Transaction Details</h2><button type="button" class="modal-close-btn" data-close="dealModal" aria-label="Close">×</button></div>
+    <div class="modal-sub" id="dealModalSub"></div>
+    <div class="modal-body-scroll" id="dealModalBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" data-close="dealModal">Close</button></div>
+  </div>
+</div>
+
+<!-- FI document (hotspot: FI Document) -->
+<div class="modal-overlay" id="fiModal">
+  <div class="modal modal-left modal-scrollable w-sm">
+    <div class="modal-head-row"><h2>FI Document</h2><button type="button" class="modal-close-btn" data-close="fiModal" aria-label="Close">×</button></div>
+    <div class="modal-body-scroll" id="fiModalBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" data-close="fiModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Bank settlement letter (screen 9001) -->
+<div class="modal-overlay" id="letterModal">
+  <div class="modal modal-left modal-scrollable w-lg">
+    <div class="modal-head-row"><h2>Bank Settlement</h2><button type="button" class="modal-close-btn" data-close="letterModal" aria-label="Close">×</button></div>
+    <div class="modal-body-scroll" id="letterBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" data-close="letterModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Posting run result -->
+<div class="modal-overlay" id="runModal">
+  <div class="modal modal-left modal-scrollable w-md">
+    <div class="modal-head-row"><h2 id="runModalTitle">Posting Run</h2><button type="button" class="modal-close-btn" data-close="runModal" aria-label="Close">×</button></div>
+    <div class="modal-body-scroll" id="runModalBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" data-close="runModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Confirmation -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal modal-left w-sm">
+    <div class="modal-head-row"><h2 id="confirmTitle">Confirm</h2><button type="button" class="modal-close-btn" data-close="confirmModal" aria-label="Close">×</button></div>
+    <div id="confirmBody"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-secondary" data-close="confirmModal">Cancel</button>
+      <button class="btn btn-primary" id="btnConfirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Helpers
+   ========================================================= */
+function esc(s){
+  return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function pad2(n){ return (n<10?'0':'')+n; }
+function isoToDate(iso){ var p=iso.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function dateToIso(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function isoToDmy(iso){ if(!iso) return ''; var p=iso.split('-'); return p[2]+'-'+p[1]+'-'+p[0]; }
+function addDays(iso,n){ var d=isoToDate(iso); d.setDate(d.getDate()+n); return dateToIso(d); }
+function rollBackWeekend(iso){ var d=isoToDate(iso); while(d.getDay()===0||d.getDay()===6){ d.setDate(d.getDate()-1); } return dateToIso(d); }
+function prevBusinessDay(iso,n){
+  var d=isoToDate(iso), c=0;
+  while(c<n){ d.setDate(d.getDate()-1); var w=d.getDay(); if(w!==0&&w!==6) c++; }
+  return dateToIso(d);
+}
+/* Lenient date parser: dd-mm-yyyy (also / . separators or ddmmyyyy) -> ISO or null */
+function parseDateInput(str){
+  var s=String(str||'').replace(/^\s+|\s+$/g,'');
+  if(!s) return null;
+  var m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(s);
+  if(!m) m=/^(\d{2})(\d{2})(\d{4})$/.exec(s);
+  if(!m) return null;
+  var d=+m[1], mo=+m[2], y=+m[3];
+  var dt=new Date(y,mo-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
+  return y+'-'+pad2(mo)+'-'+pad2(d);
+}
+function formatAmount(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function formatRate(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:6,maximumFractionDigits:6}); }
+function round(n,dec){ var f=Math.pow(10,dec); return Math.round(n*f)/f; }
+function padLeft(s,len,ch){ s=String(s); while(s.length<len) s=ch+s; return s; }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* =========================================================
+   Shared lookup datasets (dummy data)
+   Dependent values are derived from these, never hard-coded per row.
+   ========================================================= */
+var AS_OF = '2026-10-05';   /* fixed "today" so demo data stays consistent */
+
+var companies = [
+  {code:'IN11', name:'Olam Agri India Pvt Ltd', tsfEntity:'OSIPL', pair:'USD/INR', local:'INR', ba:'1100', baName:'Agri Trading India',   pc:'PC11000', pcName:'India Origination', acct:'0044-271093-006'},
+  {code:'TH10', name:'Olam (Thailand) Ltd',     tsfEntity:'OTL',   pair:'USD/THB', local:'THB', ba:'2100', baName:'Agri Trading Thailand', pc:'PC21000', pcName:'Thailand Origination', acct:'0185-402219-310'},
+  {code:'VN10', name:'Olam Vietnam Limited',    tsfEntity:'OVL',   pair:'USD/VND', local:'VND', ba:'3100', baName:'Agri Trading Vietnam',  pc:'PC31000', pcName:'Vietnam Origination', acct:'0721-118806-554'}
+];
+var partners = [
+  {id:'100231', name:'HSBC',                    contact:'Rahul Mehta',   swift:'HSBCINBB',
+   formal:'The Hongkong and Shanghai Banking Corporation Ltd', addr:['52/60 Mahatma Gandhi Road, Fort','Mumbai - 400001','India'],
+   attn:'Attn: FX Settlements - Global Markets Operations'},
+  {id:'100245', name:'Citibank N.A.',           contact:'Priya Nair',    swift:'CITIINBX',
+   formal:'Citibank N.A.', addr:['FIFC, C-54 & 55, G Block, Bandra Kurla Complex','Mumbai - 400051','India'],
+   attn:'Attn: Treasury Services - Derivatives Settlements'},
+  {id:'100258', name:'Standard Chartered Bank', contact:'Daniel Tan',    swift:'SCBLSG22',
+   formal:'Standard Chartered Bank', addr:['8 Marina Boulevard, Marina Bay Financial Centre','Singapore - 018981','Singapore'],
+   attn:'Attn: Financial Markets Operations - NDF Desk'},
+  {id:'100267', name:'JPMorgan Chase Bank',     contact:'Vikram Shah',   swift:'CHASINBX',
+   formal:'JPMorgan Chase Bank, N.A.', addr:['J.P. Morgan Tower, Off C.S.T. Road, Kalina','Mumbai - 400098','India'],
+   attn:'Attn: Markets Operations - FX Confirmations'},
+  {id:'100274', name:'Deutsche Bank AG',        contact:'Anita Kulkarni',swift:'DEUTINBB',
+   formal:'Deutsche Bank AG', addr:['Hazarimal Somani Marg, Fort','Mumbai - 400001','India'],
+   attn:'Attn: Global Transaction Banking - FX Settlements'}
+];
+var portfolios = [
+  {rportb:'FXHDG-EXP', xportb:'Cash Flow Hedge'},
+  {rportb:'FXHDG-IMP', xportb:'Cash Flow Hedge'},
+  {rportb:'FXECON-01', xportb:'Economic Hedge'}
+];
+var traders = ['RPATEL','SNAIR','AGUPTA','MDESAI'];
+var foRemarks = ['Hedge for export receivables','Rollover of earlier maturity','Hedge for rice import payables','Cotton shipment cover','Palm olein payables cover','Fertilizer import cover'];
+var moRemarks = ['Confirmed with counterparty','Confirmation received','Limit checked','Docs verified'];
+var fixFoRemarks = ['Fixing as per official reference rate','Fixing rate accepted','Fixing verified by front office'];
+var fixMoRemarks = ['Rate verified against market page','Rate matched with bank advice','Fixing checked by middle office'];
+/* txn_status descriptions (dummy: SAP status text table was not part of the export) */
+var txnStatusMeta = {
+  '13':{text:'Fixed',  cls:'status-text-fixed'},
+  '50':{text:'Posted', cls:'status-text-posted'}
+};
+
+function findCompany(code){ return companies.filter(function(c){return c.code===code;})[0]; }
+function findPartner(id){ return partners.filter(function(p){return p.id===String(id).replace(/^0+/,'');})[0]; }
+
+/* =========================================================
+   Mock database (stands in for VTBFHA / ZSGTSFV_FX, VTBFHAPO, BKPF)
+   Later this whole block is replaced by REST calls.
+   ========================================================= */
+/* seed: rfha, company, partnerIdx, buy/sell, notional USD, contract rate, fixing rate, value date, tenor days, txn_status, saktiv, sgsart, MC ref, trader idx */
+var dealSeeds = [
+  ['5000004101','IN11',0,'B',2500000,90.2150,90.8800,'2026-10-01',90,'13','1','12D','2000002728',0],
+  ['5000004102','IN11',1,'S',1800000,90.5400,90.1275,'2026-10-01',60,'13','1','12D','2000002727',1],
+  ['5000004103','IN11',2,'B',3200000,89.9600,90.4120,'2026-10-05',120,'13','1','12D','2000002726',2],
+  ['5000004104','IN11',3,'B',1250000,90.1000,89.7340,'2026-10-06',45,'13','1','12D','2000002725',3],
+  ['5000004105','IN11',4,'S',4000000,90.8800,91.2600,'2026-10-07',150,'13','2','12D','2000002724',0],
+  ['5000004106','IN11',0,'B',2000000,90.3300,90.9100,'2026-10-08',90,'13','1','12D','2000002723',1],
+  ['5000004107','IN11',1,'B',5000000,89.8500,90.0200,'2026-10-09',180,'13','1','12D','2000002722',2],
+  ['5000004108','IN11',2,'S',750000,90.7200,90.3300,'2026-10-12',30,'13','1','12D','2000002719',3],
+  ['5000004109','IN11',3,'B',2750000,90.4400,90.6600,'2026-10-13',75,'13','1','12D','2000002718',0],
+  ['5000004110','IN11',4,'B',1600000,90.0900,90.4800,'2026-10-14',60,'13','1','12D','2000002717',1],
+  ['5000004111','IN11',0,'S',3300000,91.0100,90.7500,'2026-10-15',120,'13','1','12D','2000002716',2],
+  ['5000004112','IN11',1,'B',6000000,90.2600,90.9900,'2026-10-16',90,'13','1','12D','2000002715',3],
+  ['5000004113','IN11',2,'B',900000,90.5000,90.4200,'2026-10-19',30,'13','1','12D','2000002714',0],
+  ['5000004114','IN11',3,'S',2200000,90.9500,91.4000,'2026-10-20',100,'13','1','12D','2000002713',1],
+  ['5000004115','IN11',4,'B',1000000,90.3800,90.2300,'2026-10-21',45,'13','1','12D','2000002712',2],
+  ['5000004116','IN11',0,'B',2900000,90.1700,90.6100,'2026-10-22',80,'13','1','12D','2000002711',3],
+  ['5000004117','IN11',1,'S',1400000,91.0500,91.2200,'2026-10-26',60,'13','1','12D','2000002710',0],
+  ['5000004118','IN11',2,'B',3600000,90.4700,90.8300,'2026-10-28',130,'13','1','12D','2000002709',1],
+  ['5000004201','VN10',0,'B',1500000,26180.00,26275.50,'2026-10-02',90,'13','1','12D','2000002708',2],
+  ['5000004202','VN10',3,'S',2000000,26310.00,26244.00,'2026-10-06',60,'13','1','12D','2000002702',3],
+  ['5000004203','VN10',1,'B',1000000,26220.00,26338.25,'2026-10-09',120,'13','1','12D','2000002701',0],
+  ['5000004204','VN10',2,'B',2400000,26150.00,26190.00,'2026-10-14',45,'13','1','12D','2000002700',1],
+  ['5000004205','VN10',4,'S',800000,26405.00,26352.00,'2026-10-16',75,'13','1','12D','2000002699',2],
+  ['5000004206','VN10',0,'B',1750000,26260.00,26420.75,'2026-10-23',150,'13','2','12D','2000002691',3],
+  ['5000004207','VN10',1,'S',1200000,26385.00,26298.00,'2026-10-27',90,'13','1','12D','2000002689',0],
+  ['5000004301','TH10',2,'B',1000000,34.8200,35.1450,'2026-10-02',60,'13','1','12D','2000002688',1],
+  ['5000004302','TH10',0,'S',1300000,35.2500,34.9100,'2026-10-07',90,'13','1','12D','2000002728',2],
+  ['5000004303','TH10',3,'B',900000,34.6500,34.7200,'2026-10-12',30,'13','1','12D','2000002727',3],
+  ['5000004304','TH10',1,'B',1600000,35.0100,35.3600,'2026-10-15',120,'13','1','12D','2000002726',0],
+  ['5000004305','TH10',4,'S',700000,35.4200,35.1800,'2026-10-21',45,'13','1','12D','2000002725',1],
+  ['5000004306','TH10',2,'B',1100000,34.9500,35.2200,'2026-10-29',100,'13','1','12D','2000002724',2],
+  /* outside the default value-date range */
+  ['5000004098','IN11',0,'B',2000000,90.0500,89.9100,'2026-09-29',90,'13','1','12D','2000002723',3],
+  ['5000004099','VN10',1,'S',1000000,26120.00,26190.00,'2026-09-30',60,'13','1','12D','2000002722',0],
+  ['5000004119','IN11',3,'B',1500000,91.2000,91.5500,'2026-11-04',90,'13','1','12D','2000002719',1],
+  ['5000004308','TH10',0,'B',800000,35.5000,35.3000,'2026-11-10',60,'13','1','12D','2000002718',2],
+  /* removed by the report's own selection rules (status / active flag / product type) */
+  ['5000004120','IN11',1,'B',2000000,90.3000,90.5000,'2026-10-10',60,'05','1','12D','2000002717',3],
+  ['5000004121','IN11',2,'S',1500000,90.6000,90.2000,'2026-10-12',60,'08','1','12D','2000002716',0],
+  ['5000004122','IN11',4,'B',1800000,90.2000,90.4000,'2026-10-13',60,'12','1','12D','2000002715',1],
+  ['5000004123','VN10',0,'B',900000,26200.00,26260.00,'2026-10-14',60,'07','1','12D','2000002714',2],
+  ['5000004124','IN11',3,'B',2300000,90.1100,90.4400,'2026-10-15',60,'50','1','12D','2000002713',3],
+  ['5000004125','TH10',1,'B',650000,35.0000,35.2000,'2026-10-16',60,'13','3','12D','2000002712',0],
+  ['5000004126','IN11',0,'S',1900000,90.7000,90.3000,'2026-10-19',60,'13','1','11D','2000002711',1]
+];
+
+/* Net NDF settlement in USD: Buy USD = N*(F-K)/F, Sell USD = opposite sign */
+function calcNdfCashAmount(bs, notionalUsd, contractRate, fixingRate){
+  var amt = notionalUsd * (fixingRate - contractRate) / fixingRate;
+  if(bs==='S') amt = -amt;
+  return round(amt,2);
+}
+
+function buildDeal(seed, idx){
+  var co = findCompany(seed[1]), bank = partners[seed[2]];
+  var bs = seed[3], N = seed[4], K = seed[5], F = seed[6], vdate = seed[7], tenor = seed[8];
+  var swap = round(K*0.0025*tenor/90, 4);
+  var pf = portfolios[idx % portfolios.length];
+  var trader = traders[seed[13]];
+  var tradeDate = rollBackWeekend(addDays(vdate,-tenor));
+  var fixDate = prevBusinessDay(vdate,2);
+  var n = idx+1;
+  return {
+    bukrs:co.code, rfha:seed[0], saktiv:seed[10], sgsart:seed[11], rfhazul:'00001',
+    butxt:co.code+' - '+co.name, ltx:'FX Non-Deliverable Fwd', sfhaart:'NDF', xtext:'Non-Deliverable Forward',
+    kontrh:bank.id, bp_name:bank.name, gsppart:bank.contact,
+    blotter_date:tradeDate, prctr:co.pc, pc_name:co.pcName, rbusa:co.ba, ba_name:co.baName,
+    rportb:pf.rportb, xportb:pf.xportb,
+    refer:'TSF-NDF-'+padLeft(n,4,'0'), nordext:bank.name.substr(0,4).toUpperCase()+'/NDF/26/'+padLeft(n*7+120,4,'0'),
+    dblfz:tradeDate, delfz:vdate,
+    zcom_id:co.tsfEntity, rdealer:trader, txn_status:seed[9],
+    ztsf_deal_id:'D26-'+co.code.substr(0,2)+'-'+padLeft(n*13+300,4,'0'), ztsf_mc_ref_no:seed[12],
+    ndf_date:fixDate, ndf_ref:'FIX-'+fixDate.replace(/-/g,'')+'-'+padLeft(n,3,'0'), ndf_rate:F,
+    fo_remark:foRemarks[idx%foRemarks.length], mo_remark:moRemarks[idx%moRemarks.length],
+    ndf_fo_rem:fixFoRemarks[idx%fixFoRemarks.length], ndf_mo_rem:fixMoRemarks[idx%fixMoRemarks.length],
+    bs:bs, bs_1:bs==='B'?'Buy':'Sell', bs_2:bs==='B'?'Sell':'Buy',
+    curr1:'USD', amt1:N, curr2:co.local, amt2:round(N*K,2),
+    ospot:round(K-swap,4), oswap:swap, otot_rate:K, spot:round(K-swap,4), swap:swap, tot_rate:K, t_rate:K,
+    cpair:co.pair, zwaers:co.local,
+    cash_curr:'USD', zcash_amt:calcNdfCashAmount(bs,N,K,F),
+    cruser:trader, dcrdat:tradeDate, upuser:traders[(seed[13]+1)%traders.length], dupdat:fixDate,
+    fi_doc:''
+  };
+}
+
+/* BKPF: [bukrs, belnr, gjahr, xblnr(=rfha), waers, blart, budat, xref2_hd, xreversal, xreversing] */
+var bkpfSeeds = [
+  ['IN11','1400004210','2026','5000004101','USD','TR','2026-10-01','TSF','','' ],
+  ['IN11','1400004211','2026','5000004103','USD','TR','2026-10-05','TSF','','' ],
+  ['IN11','1400004215','2026','5000004106','USD','TR','2026-10-08','TSF','','' ],
+  ['IN11','1400004219','2026','5000004109','USD','TR','2026-10-13','TSF','','' ],
+  ['VN10','1400004222','2026','5000004201','USD','TR','2026-10-02','TSF','','' ],
+  ['TH10','1400004230','2026','5000004301','USD','TR','2026-10-02','TSF','','' ],
+  ['IN11','1400004205','2026','5000004112','USD','TR','2026-09-29','TSF','','' ],  /* posted before the default date range */
+  ['IN11','1400004208','2026','5000004105','USD','TR','2026-10-07','TSF','2','' ], /* reversed document - ignored by the report */
+  ['IN11','1400004209','2026','5000004115','USD','TR','2026-10-21','TSF','','X']   /* reversal document - ignored by the report */
+];
+/* VTBFHAPO flow rows with posting status '2' (posted) */
+var flowSeeds = ['5000004101','5000004103','5000004106','5000004109','5000004201','5000004301'];
+
+function buildMockDb(){
+  var db = {vtbfha:[], vtbfhapo:[], bkpf:[], nextDocNo:1400004300};
+  dealSeeds.forEach(function(s,i){ db.vtbfha.push(buildDeal(s,i)); });
+  bkpfSeeds.forEach(function(b){
+    db.bkpf.push({bukrs:b[0],belnr:b[1],gjahr:b[2],xblnr:b[3],waers:b[4],blart:b[5],budat:b[6],xref2_hd:b[7],xreversal:b[8],xreversing:b[9]});
+  });
+  flowSeeds.forEach(function(r){
+    var d = db.vtbfha.filter(function(x){return x.rfha===r;})[0];
+    db.vtbfhapo.push({bukrs:d.bukrs,rfha:r,rfhazu:d.rfhazul,sbewebe:'2'});
+    d.txn_status = '50';   /* already posted deals carry status 50, so the report never lists them */
+  });
+  return db;
+}
+var mockDb = buildMockDb();
+
+/* =========================================================
+   Layout variants (REUSE_ALV_VARIANT_F4 value help).
+   The real variant list lives in SAP — these are dummy variants.
+   ========================================================= */
+var columnCatalog = {
+  rfha:{label:'Transaction No',type:'link'},
+  bukrs:{label:'Company Code'}, butxt:{label:'Company Name'}, zcom_id:{label:'TSF Entity'},
+  ztsf_deal_id:{label:'TSF Deal ID'}, ztsf_mc_ref_no:{label:'MC Reference No'},
+  ltx:{label:'Product Type'}, txn_status:{label:'Status',type:'status'},
+  kontrh:{label:'Business Partner'}, bp_name:{label:'Partner Name'}, gsppart:{label:'Contact Person'},
+  bs_1:{label:'Buy/Sell'}, cpair:{label:'Currency Pair'},
+  curr1:{label:'Currency 1'}, amt1:{label:'Amount 1',type:'amount'},
+  curr2:{label:'Currency 2'}, amt2:{label:'Amount 2',type:'amount'},
+  dblfz:{label:'Trade Date',type:'date'}, delfz:{label:'Value Date',type:'date'},
+  ndf_date:{label:'Fixing Date',type:'date'}, ndf_ref:{label:'Fixing Reference ID'},
+  ospot:{label:'Spot Rate',type:'rate'}, oswap:{label:'Swap Rate',type:'rate'},
+  otot_rate:{label:'All in Rate',type:'rate'}, ndf_rate:{label:'NDF Rate',type:'rate'},
+  cash_curr:{label:'Cash Currency'}, zcash_amt:{label:'Cash Amount',type:'amount'},
+  fi_doc:{label:'FI Document',type:'fidoc'},
+  nordext:{label:'External Reference'}, refer:{label:'Internal Reference'},
+  rdealer:{label:'Trader'}, rportb:{label:'Portfolio'}, xportb:{label:'Accounting Category'},
+  fo_remark:{label:'FO Remark'}, mo_remark:{label:'MO Remark'},
+  ndf_fo_rem:{label:'NDF FO Remark'}, ndf_mo_rem:{label:'NDF MO Remark'},
+  cruser:{label:'Entered By'}, dcrdat:{label:'Entered On',type:'date'},
+  upuser:{label:'Last Changed By'}, dupdat:{label:'Changed On',type:'date'}
+};
+var layoutVariants = [
+  {id:'/DEFAULT',    text:'Default layout',      cols:['rfha','bukrs','zcom_id','ztsf_deal_id','txn_status','bp_name','cpair','bs_1','delfz','ndf_date','ndf_rate','cash_curr','zcash_amt','fi_doc']},
+  {id:'/BANKSETTLE', text:'Bank settlement',     cols:['rfha','bukrs','butxt','kontrh','bp_name','gsppart','delfz','cash_curr','zcash_amt','ndf_ref','nordext','fi_doc']},
+  {id:'/RATES',      text:'Rates and amounts',   cols:['rfha','bukrs','cpair','bs_1','curr1','amt1','curr2','amt2','ospot','oswap','otot_rate','ndf_rate','zcash_amt','cash_curr']},
+  {id:'/AUDIT',      text:'Remarks and audit',   cols:['rfha','bukrs','rdealer','cruser','dcrdat','upuser','dupdat','fo_remark','mo_remark','ndf_fo_rem','ndf_mo_rem']}
+];
+function findLayout(id){ return layoutVariants.filter(function(l){return l.id===id;})[0] || layoutVariants[0]; }
+
+/* =========================================================
+   State
+   ========================================================= */
+var DEFAULTS = {
+  bukrs:['IN11','TH10','VN10'], dateFrom:'2026-10-01', dateTo:'2026-10-31', rfha:'',
+  postingType:'view', layout:'/DEFAULT', pageSize:20
+};
+var state = {
+  criteria:{bukrs:DEFAULTS.bukrs.slice(), dateFrom:DEFAULTS.dateFrom, dateTo:DEFAULTS.dateTo, rfha:DEFAULTS.rfha},
+  dateErr:{from:'', to:''},     /* text typed in a date field that could not be parsed */
+  postingType:DEFAULTS.postingType,
+  layout:DEFAULTS.layout,
+  search:'',
+  sort:{field:null, dir:'asc'},
+  page:1, pageSize:DEFAULTS.pageSize,
+  selectedId:null,
+  dbView:null,                   /* frozen copy of the DB taken at the last (re)load - like gt_data */
+  rows:[],                       /* result of GET_DATA for the current criteria */
+  errors:[],
+  draggedId:null,
+  confirmAction:null
+};
+
+/* =========================================================
+   Data / service functions (mock backend – replace with REST later)
+   ========================================================= */
+function reloadDbView(){ state.dbView = clone(mockDb); }
+
+/* Valid FI document of a deal: BKPF type TR, ref key 2 'TSF', not reversed / not a reversal */
+function matchesFiDoc(b, rfha, cashCurr, dateFrom, dateTo){
+  return b.waers===cashCurr && b.xblnr===rfha && b.blart==='TR' && b.xref2_hd==='TSF' &&
+         b.xreversal!=='2' && b.xreversing!=='X' && b.budat>=dateFrom && b.budat<=dateTo;
+}
+
+/* FORM GET_DATA: selection + the report's own deletions + FI document lookup */
+function getData(c, db){
+  var from = c.dateFrom, to = c.dateTo || c.dateFrom;     /* S_DATE without HIGH behaves as EQ */
+  var rows = [];
+  db.vtbfha.forEach(function(r){
+    if(c.bukrs.indexOf(r.bukrs)<0) return;                 /* bukrs IN s_bukrs */
+    if(r.sgsart!=='12D') return;                           /* sgsart = '12D'   */
+    if(c.rfha && String(r.rfha).indexOf(c.rfha)<0) return; /* rfha IN s_rfha   */
+    if(r.delfz<from || r.delfz>to) return;                 /* delfz IN s_date  */
+    if(r.saktiv==='3') return;                             /* saktiv <> 3      */
+    rows.push(clone(r));
+  });
+  rows = rows.filter(function(r){ return !(r.txn_status < '07'); });
+  rows = rows.filter(function(r){ return r.txn_status !== '08'; });
+  /* sgsart+2(1) = 'D' AND txn_status <> '13'  -> only status 13 survives */
+  rows = rows.filter(function(r){ return !(r.sgsart.charAt(2)==='D' && r.txn_status!=='13'); });
+  rows.forEach(function(r){
+    var hit = db.bkpf.filter(function(b){ return matchesFiDoc(b, r.rfha, r.cash_curr, from, to); })[0];
+    r.fi_doc = hit ? hit.belnr : '';
+    r.fi_gjahr = hit ? hit.gjahr : '';
+  });
+  return rows;
+}
+function rowId(r){ return r.bukrs+'|'+r.rfha; }
+function loadRows(){
+  if(state.errors.length){ state.rows = []; return; }
+  state.rows = getData(state.criteria, state.dbView);
+  if(state.selectedId && !state.rows.some(function(r){ return rowId(r)===state.selectedId; })) state.selectedId = null;
+}
+
+/* Standard posting run RFTBBB00 (simulated). Creates FI documents + flow rows unless test mode. */
+function submitPostingRun(deals, keyDate, test){
+  var results = [];
+  deals.forEach(function(d){
+    var existing = mockDb.bkpf.filter(function(b){ return matchesFiDoc(b, d.rfha, d.cash_curr, '0000-01-01', '9999-12-31'); })[0];
+    if(existing){
+      if(!test && !mockDb.vtbfhapo.some(function(p){return p.bukrs===d.bukrs && p.rfha===d.rfha;}))
+        mockDb.vtbfhapo.push({bukrs:d.bukrs,rfha:d.rfha,rfhazu:d.rfhazul,sbewebe:'2'});   /* posted flow exists with the FI document */
+      results.push({bukrs:d.bukrs, rfha:d.rfha, keyDate:keyDate, result:'Already posted', cls:'res-info', fiDoc:existing.belnr});
+    } else if(test){
+      results.push({bukrs:d.bukrs, rfha:d.rfha, keyDate:keyDate, result:'Would be posted', cls:'res-warn', fiDoc:''});
+    } else {
+      var belnr = String(mockDb.nextDocNo++);
+      mockDb.bkpf.push({bukrs:d.bukrs,belnr:belnr,gjahr:d.delfz.substr(0,4),xblnr:d.rfha,waers:d.cash_curr,blart:'TR',budat:d.delfz,xref2_hd:'TSF',xreversal:'',xreversing:''});
+      mockDb.vtbfhapo.push({bukrs:d.bukrs,rfha:d.rfha,rfhazu:d.rfhazul,sbewebe:'2'});
+      results.push({bukrs:d.bukrs, rfha:d.rfha, keyDate:keyDate, result:'Posted', cls:'res-ok', fiDoc:belnr});
+    }
+  });
+  return results;
+}
+/* After TBB1: where a posted flow exists (VTBFHAPO, sbewebe = '2') set VTBFHA-TXN_STATUS = '50' */
+function updateStatusAfterPosting(deal){
+  var hits = mockDb.vtbfhapo.filter(function(p){ return p.bukrs===deal.bukrs && p.rfha===deal.rfha && p.rfhazu===deal.rfhazul && p.sbewebe==='2'; });
+  var updated = 0;
+  hits.forEach(function(h){
+    mockDb.vtbfha.forEach(function(r){ if(r.bukrs===h.bukrs && r.rfha===h.rfha){ r.txn_status='50'; updated++; } });
+  });
+  return updated;
+}
+/* go_obj_data->get_addr: bank address block for the letter (dummy) */
+function getBankAddress(valueDate, kontrh10){
+  var p = findPartner(kontrh10) || partners[0];
+  return {zdate:isoToDmy(AS_OF), zbank:p.formal, zaddr1:p.addr[0], zaddr2:p.addr[1], zaddr3:p.addr[2], zattn:p.attn, zvdate:'Value Date: '+isoToDmy(valueDate)};
+}
+/* go_obj_data->get_data: settlement account lines for the letter (dummy) */
+function getBankTransferLines(bukrs, kontrh10, items){
+  var co = findCompany(bukrs), p = findPartner(kontrh10) || partners[0], out = [];
+  items.forEach(function(it){
+    out.push('Settlement amount: '+it.zcurr+' '+formatAmount(Math.abs(it.zamt)));
+    out.push('Beneficiary: '+co.name);
+    out.push('Account no. ('+it.zcurr+'): '+co.acct);
+    out.push('Account with: '+p.formal+' ('+p.swift+')');
+  });
+  return out;
+}
+function buildLetterModel(row){
+  var kontrh10 = padLeft(row.kontrh,10,'0');                 /* ALPHA = IN */
+  var company = row.butxt.substr(7,31);                       /* gs_data-butxt+7(31) */
+  var addr = getBankAddress(row.delfz, kontrh10);
+  var lines = getBankTransferLines(row.bukrs, kontrh10, [{zcurr:row.cash_curr, zamt:row.zcash_amt}]);
+  return {row:row, company:company, addr:addr, reg:'NDF Bank Settlement', lines:lines};
+}
+
+/* =========================================================
+   Validation (obligatory select-options)
+   ========================================================= */
+function validateCriteria(){
+  var errs = [];
+  if(!state.criteria.bukrs.length) errs.push({key:'bukrs', msg:'Company Code is required.'});
+  if(state.dateErr.from) errs.push({key:'dateFrom', msg:'Value Date From: enter a valid date (dd-mm-yyyy).'});
+  else if(!state.criteria.dateFrom) errs.push({key:'dateFrom', msg:'Value Date From is required.'});
+  if(state.dateErr.to) errs.push({key:'dateTo', msg:'Value Date To: enter a valid date (dd-mm-yyyy).'});
+  if(state.criteria.dateFrom && state.criteria.dateTo && state.criteria.dateFrom > state.criteria.dateTo)
+    errs.push({key:'dateTo', msg:'Value Date: "From" must not be later than "To".'});
+  state.errors = errs;
+}
+
+/* =========================================================
+   Table: column values, search, sort
+   ========================================================= */
+function cellValue(key, row){
+  var col = columnCatalog[key], v = row[key];
+  if(key==='txn_status'){ var m = txnStatusMeta[v]; return v+' - '+(m?m.text:v); }
+  if(key==='fi_doc') return v||'';
+  if(col.type==='date') return isoToDmy(v);
+  if(col.type==='amount') return formatAmount(v);
+  if(col.type==='rate') return formatRate(v);
+  return v===undefined||v===null?'':String(v);
+}
+function cellHtml(key, row){
+  var col = columnCatalog[key], v = row[key], txt = cellValue(key,row);
+  if(key==='rfha') return '<button type="button" class="hotspot mono" data-hot="rfha" title="Display transaction">'+esc(txt)+'</button>';
+  if(key==='fi_doc'){
+    return v ? '<button type="button" class="hotspot mono" data-hot="fidoc" title="Display FI document">'+esc(txt)+'</button>' : '<span class="cell-muted">—</span>';
+  }
+  if(key==='txn_status'){ var m = txnStatusMeta[v] || {cls:'status-text-draft'}; return '<span class="status-text '+m.cls+'">'+esc(txt)+'</span>'; }
+  if(col.type==='amount') return '<span class="'+(Number(v)<0?'neg':'')+'">'+esc(txt)+'</span>';
+  return esc(txt);
+}
+function sortValue(key,row){
+  var col = columnCatalog[key], v = row[key];
+  if(col.type==='amount' || col.type==='rate') return Number(v);
+  if(col.type==='date') return v||'';
+  return String(key==='fi_doc'||key==='txn_status' ? v : cellValue(key,row)).toLowerCase();
+}
+function getVisibleRows(){
+  var cols = findLayout(state.layout).cols;
+  var list = state.rows.slice();
+  var q = state.search.replace(/^\s+|\s+$/g,'').toLowerCase();
+  if(q){
+    var terms = q.split(/\s+/);
+    list = list.filter(function(r){
+      var hay = cols.map(function(k){ return cellValue(k,r); }).join(' | ').toLowerCase();
+      return terms.every(function(t){ return hay.indexOf(t)>=0; });
+    });
+  }
+  if(state.sort.field){
+    var f = state.sort.field, dir = state.sort.dir==='asc'?1:-1;
+    list.sort(function(a,b){
+      var x = sortValue(f,a), y = sortValue(f,b);
+      if(x<y) return -1*dir; if(x>y) return 1*dir; return 0;
+    });
+  }
+  return list;
+}
+function getSelectedRow(){
+  if(!state.selectedId) return null;
+  return state.rows.filter(function(r){ return rowId(r)===state.selectedId; })[0] || null;
+}
+
+/* =========================================================
+   Rendering
+   ========================================================= */
+function renderToolbarState(){
+  /* company code summary */
+  var txt = document.getElementById('msText');
+  var sel = state.criteria.bukrs;
+  if(!sel.length){ txt.textContent='Select ...'; txt.classList.add('placeholder'); }
+  else {
+    txt.classList.remove('placeholder');
+    txt.textContent = sel.length===companies.length ? 'All ('+sel.length+')' : companies.filter(function(c){return sel.indexOf(c.code)>=0;}).map(function(c){return c.code;}).join(', ');
+  }
+  document.querySelectorAll('#msPanel input[type=checkbox]').forEach(function(cb){ cb.checked = sel.indexOf(cb.value)>=0; });
+
+  /* posting type */
+  document.querySelectorAll('#segPosting button').forEach(function(b){
+    var on = b.getAttribute('data-mode')===state.postingType;
+    b.classList.toggle('active', on); b.setAttribute('aria-checked', on?'true':'false');
+  });
+  document.getElementById('field-execute').style.display = state.postingType==='post' ? '' : 'none';
+  document.getElementById('btnExecute').disabled = state.errors.length>0 || state.rows.length===0;
+
+  /* layout / transaction no inputs */
+  document.getElementById('input-layout').value = state.layout;
+
+  /* validation */
+  ['bukrs','dateFrom','dateTo'].forEach(function(k){
+    document.getElementById('field-'+k).classList.toggle('has-error', state.errors.some(function(e){return e.key===k;}));
+  });
+  var box = document.getElementById('criteriaError');
+  if(state.errors.length){
+    box.innerHTML = '<ul>'+state.errors.map(function(e){return '<li>'+esc(e.msg)+'</li>';}).join('')+'</ul>';
+    box.classList.add('show');
+  } else { box.classList.remove('show'); box.innerHTML=''; }
+
+  updateActionStates();
+}
+function updateActionStates(){
+  var has = !!getSelectedRow();
+  document.querySelectorAll('#actionBar .btn').forEach(function(b){ b.disabled = !has; });
+}
+
+function renderTable(){
+  var layout = findLayout(state.layout);
+  var cols = layout.cols;
+  var list = getVisibleRows();
+  var total = list.length;
+  var pageCount = Math.max(1, Math.ceil(total/state.pageSize));
+  if(state.page>pageCount) state.page = pageCount;
+  var start = (state.page-1)*state.pageSize;
+  var pageRows = list.slice(start, start+state.pageSize);
+
+  /* header */
+  var h = '<tr><th class="no-sort action-col sticky-a"></th>';
+  cols.forEach(function(k){
+    var c = columnCatalog[k];
+    var cls = [];
+    if(c.type==='amount'||c.type==='rate') cls.push('num');
+    if(k==='rfha') cls.push('sticky-b');
+    if(state.sort.field===k) cls.push('sorted');
+    h += '<th class="'+cls.join(' ')+'" data-sort="'+k+'" title="Click to sort">'+esc(c.label)+'<span class="sort-ind">'+(state.sort.field===k?(state.sort.dir==='asc'?'▲':'▼'):'')+'</span></th>';
+  });
+  h += '</tr>';
+  document.getElementById('tableHead').innerHTML = h;
+
+  /* body */
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  var empty = document.getElementById('emptyState');
+  var tableEl = document.getElementById('dealTable');
+  if(total===0){
+    empty.style.display='block'; tableEl.style.display='none';
+    document.getElementById('emptyText').textContent = state.errors.length
+      ? 'Complete the required selection criteria to list NDF deals.'
+      : (state.search ? 'No NDF deals match your search.' : 'No NDF deals match the current selection.');
+  } else { empty.style.display='none'; tableEl.style.display='table'; }
+
+  pageRows.forEach(function(r){
+    var id = rowId(r);
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-id', id);
+    tr.tabIndex = 0;
+    tr.draggable = true;
+    tr.title = 'Click to select · drag onto an action button to run it';
+    if(state.selectedId===id) tr.classList.add('selected');
+    var html = '<td class="action-col sticky-a"><input type="checkbox" class="row-select-checkbox" aria-label="Select transaction '+esc(r.rfha)+'"'+(state.selectedId===id?' checked':'')+'></td>';
+    cols.forEach(function(k){
+      var c = columnCatalog[k], cls=[];
+      if(c.type==='amount'||c.type==='rate') cls.push('num','mono');
+      else if(c.type==='date'||k==='rfha'||k==='fi_doc'||k==='kontrh') cls.push('mono');
+      if(k==='rfha') cls.push('sticky-b');
+      html += '<td class="'+cls.join(' ')+'">'+cellHtml(k,r)+'</td>';
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+
+  /* footer */
+  document.getElementById('showingText').textContent = total ? ('Showing '+(start+1)+'–'+(start+pageRows.length)+' of '+total) : 'Showing 0 of 0';
+  renderPagination(pageCount);
+  renderToolbarState();
+}
+function renderPagination(pageCount){
+  var el = document.getElementById('pagination');
+  el.innerHTML = '';
+  function mk(label, disabled, active, fn){
+    var b = document.createElement('button');
+    b.type='button'; b.textContent = label; b.disabled = disabled;
+    if(active) b.classList.add('active');
+    b.addEventListener('click', fn);
+    el.appendChild(b);
+  }
+  mk('‹', state.page<=1, false, function(){ state.page--; renderTable(); });
+  for(var p=1;p<=pageCount;p++){ (function(p){ mk(String(p), false, p===state.page, function(){ state.page=p; renderTable(); }); })(p); }
+  mk('›', state.page>=pageCount, false, function(){ state.page++; renderTable(); });
+}
+
+/* Reload data for the current criteria and redraw */
+function refreshView(){
+  validateCriteria();
+  loadRows();
+  renderTable();
+}
+
+/* =========================================================
+   Selection
+   ========================================================= */
+function selectRow(id){
+  state.selectedId = id;
+  document.querySelectorAll('#tableBody tr').forEach(function(tr){
+    var on = tr.getAttribute('data-id')===id;
+    tr.classList.toggle('selected', on);
+    var cb = tr.querySelector('.row-select-checkbox'); if(cb) cb.checked = on;
+  });
+  updateActionStates();
+}
+function deselectRow(){ selectRow(null); }
+
+/* =========================================================
+   Modals / toast
+   ========================================================= */
+function openModal(id){ var o=document.getElementById(id); o.classList.remove('closing'); o.classList.add('open'); }
+function closeModal(id){
+  var o=document.getElementById(id);
+  if(!o.classList.contains('open')) return;
+  o.classList.add('closing');
+  setTimeout(function(){ o.classList.remove('open'); o.classList.remove('closing'); }, 160);
+}
+function closeAllModals(){
+  document.querySelectorAll('.modal-overlay').forEach(function(o){ o.classList.remove('open'); o.classList.remove('closing'); });
+}
+var toastTimer;
+function showToast(msg, isError){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.toggle('error', !!isError); t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+function showConfirm(title, bodyHtml, okText, onOk){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').innerHTML = bodyHtml;
+  document.getElementById('btnConfirmOk').textContent = okText;
+  state.confirmAction = onOk;
+  openModal('confirmModal');
+}
+
+/* =========================================================
+   Hotspot: transaction display (TB_TRANSACTION_TO_DISPLAY) and FI document (FB03)
+   ========================================================= */
+function detailItem(label, value, full){
+  return '<div class="detail-item'+(full?' full':'')+'"><span class="detail-label">'+esc(label)+'</span><span class="detail-value">'+(value===''||value===null||value===undefined?'<span class="cell-muted">—</span>':esc(value))+'</span></div>';
+}
+function detailSection(title, items){
+  return '<div class="detail-section"><div class="detail-section-title">'+esc(title)+'</div><div class="detail-grid">'+items.join('')+'</div></div>';
+}
+function openTransactionDetail(row){
+  var st = txnStatusMeta[row.txn_status];
+  document.getElementById('dealModalSub').textContent = row.rfha+' · '+row.bukrs+' · Display';
+  var html = '';
+  html += detailSection('Transaction',[
+    detailItem('Transaction No',row.rfha), detailItem('Status',row.txn_status+' - '+(st?st.text:row.txn_status)),
+    detailItem('Company Code',row.bukrs), detailItem('Company Name',row.butxt.substr(7)),
+    detailItem('TSF Entity',row.zcom_id), detailItem('TSF Deal ID',row.ztsf_deal_id),
+    detailItem('MC Reference No',row.ztsf_mc_ref_no), detailItem('Product Type',row.ltx),
+    detailItem('Transaction Type',row.sfhaart+' - '+row.xtext), detailItem('Trader',row.rdealer),
+    detailItem('Business Area',row.rbusa+' - '+row.ba_name), detailItem('Profit Center',row.prctr+' - '+row.pc_name),
+    detailItem('Portfolio',row.rportb), detailItem('Accounting Category',row.xportb)
+  ]);
+  html += detailSection('Business Partner',[
+    detailItem('Business Partner',row.kontrh), detailItem('Partner Name',row.bp_name),
+    detailItem('Contact Person',row.gsppart), detailItem('External Reference',row.nordext),
+    detailItem('Internal Reference',row.refer)
+  ]);
+  html += detailSection('Currencies and Amounts',[
+    detailItem('Buy/Sell 1',row.bs_1), detailItem('Buy/Sell 2',row.bs_2),
+    detailItem('Currency 1',row.curr1), detailItem('Amount 1',formatAmount(row.amt1)),
+    detailItem('Currency 2',row.curr2), detailItem('Amount 2',formatAmount(row.amt2)),
+    detailItem('Spot Rate',formatRate(row.ospot)), detailItem('Swap Rate',formatRate(row.oswap)),
+    detailItem('All in Rate',formatRate(row.otot_rate)), detailItem('Currency Pair',row.cpair)
+  ]);
+  html += detailSection('NDF Fixing and Settlement',[
+    detailItem('Trade Date',isoToDmy(row.dblfz)), detailItem('Value Date',isoToDmy(row.delfz)),
+    detailItem('Fixing Date',isoToDmy(row.ndf_date)), detailItem('Fixing Reference ID',row.ndf_ref),
+    detailItem('NDF Rate',formatRate(row.ndf_rate)), detailItem('Cash Currency',row.cash_curr),
+    detailItem('Cash Amount',formatAmount(row.zcash_amt)), detailItem('FI Document',row.fi_doc)
+  ]);
+  html += detailSection('Remarks and Audit',[
+    detailItem('FO Remark',row.fo_remark), detailItem('MO Remark',row.mo_remark),
+    detailItem('NDF FO Remark',row.ndf_fo_rem), detailItem('NDF MO Remark',row.ndf_mo_rem),
+    detailItem('Entered By',row.cruser), detailItem('Entered On',isoToDmy(row.dcrdat)),
+    detailItem('Last Changed By',row.upuser), detailItem('Changed On',isoToDmy(row.dupdat))
+  ]);
+  document.getElementById('dealModalBody').innerHTML = html;
+  openModal('dealModal');
+}
+function openFiDocument(row){
+  if(!row.fi_doc) return;
+  var html = '<div class="detail-grid" style="grid-template-columns:1fr 1fr;">'+
+    detailItem('Company Code',row.bukrs)+detailItem('Document Number',row.fi_doc)+
+    detailItem('Fiscal Year',row.delfz.substr(0,4))+detailItem('Document Type','TR')+
+    detailItem('Reference',row.rfha)+detailItem('Currency',row.cash_curr)+
+    detailItem('Reference Key 2','TSF')+'</div>';
+  document.getElementById('fiModalBody').innerHTML = html;
+  openModal('fiModal');
+}
+
+/* =========================================================
+   PRINT: Preview Document (screen 9001)  /  PDF1: PDF
+   ========================================================= */
+function letterDealTable(m){
+  var r = m.row;
+  var heads = ['Transaction No','Company Code','Company Name','Business Partner','Partner Name','Trade Date','Value Date','Fixing Date','NDF Rate','Cash Currency','Cash Amount'];
+  var vals = [r.rfha, r.bukrs, m.company, r.kontrh, r.bp_name, isoToDmy(r.dblfz), isoToDmy(r.delfz), isoToDmy(r.ndf_date), formatRate(r.ndf_rate), r.cash_curr, formatAmount(r.zcash_amt)];
+  var numIdx = {8:1, 10:1};
+  var t = '<table class="popup-table"><thead><tr>';
+  heads.forEach(function(x,i){ t += '<th'+(numIdx[i]?' class="num"':'')+'>'+esc(x)+'</th>'; });
+  t += '</tr></thead><tbody><tr>';
+  vals.forEach(function(x,i){ t += '<td'+(numIdx[i]?' class="num mono"':'')+'>'+esc(x)+'</td>'; });
+  return t+'</tr></tbody></table>';
+}
+function openLetterPreview(row){
+  var m = buildLetterModel(row), a = m.addr;
+  var html = '<div class="letter">'+
+    '<div class="l-date">'+esc(a.zdate)+'</div>'+
+    '<div class="l-bank">'+esc(a.zbank)+'</div>'+
+    '<div>'+esc(a.zaddr1)+'</div><div>'+esc(a.zaddr2)+'</div><div>'+esc(a.zaddr3)+'</div>'+
+    '<div class="l-attn">'+esc(a.zattn)+'</div>'+
+    '<div class="l-re"><b>RE:</b>'+esc(m.reg)+'</div>'+
+    '<div class="l-vdate">'+esc(a.zvdate)+'</div>'+
+    '<div class="l-grid">'+letterDealTable(m)+'</div>'+
+    '<div class="l-grid"><table class="popup-table"><thead><tr><th>Account Details</th></tr></thead><tbody>'+
+      m.lines.map(function(l){ return '<tr><td>'+esc(l)+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+    '<div class="l-sign"><div class="l-auth">Authorized Signatories</div><div class="l-faith">Yours Faithfully</div><div class="l-co">'+esc(m.company)+'</div></div>'+
+    '</div>';
+  document.getElementById('letterBody').innerHTML = html;
+  openModal('letterModal');
+}
+
+/* Minimal single-page PDF writer (Helvetica, ASCII only) */
+function pdfEscape(s){ return String(s).replace(/[^\x20-\x7E]/g,'-').replace(/([\\()])/g,'\\$1'); }
+function buildPdf(items){
+  var ops = '';
+  items.forEach(function(it){
+    if(it.rule){ ops += '0.8 G 50 '+it.y+' m 545 '+it.y+' l S\n'; return; }
+    ops += 'BT /'+(it.bold?'F2':'F1')+' '+(it.size||10)+' Tf '+(it.x||50)+' '+it.y+' Td ('+pdfEscape(it.t)+') Tj ET\n';
+  });
+  var objs = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>',
+    '<< /Length '+ops.length+' >>\nstream\n'+ops+'endstream',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'
+  ];
+  var out = '%PDF-1.4\n', offsets = [];
+  objs.forEach(function(o,i){ offsets.push(out.length); out += (i+1)+' 0 obj\n'+o+'\nendobj\n'; });
+  var xref = out.length;
+  out += 'xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  offsets.forEach(function(o){ out += padLeft(o,10,'0')+' 00000 n \n'; });
+  out += 'trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  var bytes = new Uint8Array(out.length);
+  for(var i=0;i<out.length;i++) bytes[i] = out.charCodeAt(i) & 255;
+  return new Blob([bytes], {type:'application/pdf'});
+}
+function downloadBlob(filename, blob){
+  if(window.navigator && window.navigator.msSaveBlob){ window.navigator.msSaveBlob(blob, filename); return; }
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display='none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+}
+function generatePdf(row){
+  var m = buildLetterModel(row), a = m.addr, r = row, y = 790, items = [];
+  function line(t, o){ o = o||{}; items.push({t:t, y:y, bold:o.bold, size:o.size, x:o.x}); y -= (o.gap||15); }
+  line(a.zdate, {x:480});
+  y -= 6;
+  line(a.zbank, {bold:true, size:11});
+  line(a.zaddr1); line(a.zaddr2); line(a.zaddr3);
+  y -= 4; line(a.zattn, {bold:true});
+  y -= 8; line('RE: '+m.reg, {bold:true, size:11});
+  line(a.zvdate, {bold:true});
+  y -= 4; items.push({rule:true, y:y}); y -= 18;
+  [['Transaction No', r.rfha],['Company Code', r.bukrs],['Company Name', m.company],['Business Partner', r.kontrh+'  '+r.bp_name],
+   ['Trade Date', isoToDmy(r.dblfz)],['Value Date', isoToDmy(r.delfz)],['Fixing Date', isoToDmy(r.ndf_date)],
+   ['NDF Rate', formatRate(r.ndf_rate)],['Cash Amount', r.cash_curr+' '+formatAmount(r.zcash_amt)]].forEach(function(p){
+    items.push({t:p[0]+':', y:y, bold:true, x:50}); items.push({t:p[1], y:y, x:170}); y -= 16;
+  });
+  y -= 2; items.push({rule:true, y:y}); y -= 18;
+  m.lines.forEach(function(l){ line(l); });
+  y -= 30; line('Authorized Signatories', {bold:true});
+  y -= 34; line('Yours Faithfully');
+  line(m.company, {bold:true});
+  var name = 'NDF_Bank_Settlement_'+r.rfha+'.pdf';
+  downloadBlob(name, buildPdf(items));
+  showToast('PDF generated: '+name);
+}
+
+/* =========================================================
+   TEST / TBB1: posting run (RFTBBB00)
+   ========================================================= */
+function showRunResult(title, params, results, notes){
+  document.getElementById('runModalTitle').textContent = title;
+  var posted = results.filter(function(r){return r.result==='Posted';}).length;
+  var already = results.filter(function(r){return r.result==='Already posted';}).length;
+  var would = results.filter(function(r){return r.result==='Would be posted';}).length;
+  var html = '<table class="param-table">'+params.map(function(p){ return '<tr><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>'; }).join('')+'</table>';
+  html += '<div class="run-summary">'+
+    (would?'<span><b>'+would+'</b> would be posted</span>':'')+
+    (posted?'<span><b>'+posted+'</b> posted</span>':'')+
+    (already?'<span><b>'+already+'</b> already posted</span>':'')+'</div>';
+  html += '<div class="popup-table-wrap"><table class="popup-table"><thead><tr><th>Company Code</th><th>Transaction No</th><th>Key Date</th><th>Result</th><th>FI Document</th></tr></thead><tbody>'+
+    results.map(function(r){
+      return '<tr><td>'+esc(r.bukrs)+'</td><td class="mono">'+esc(r.rfha)+'</td><td class="mono">'+esc(isoToDmy(r.keyDate))+'</td><td><span class="'+r.cls+'">'+esc(r.result)+'</span></td><td class="mono">'+(r.fiDoc?esc(r.fiDoc):'<span class="cell-muted">—</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  html += '<div class="run-note">'+notes+'</div>';
+  document.getElementById('runModalBody').innerHTML = html;
+  openModal('runModal');
+}
+function runSingleTest(row){
+  var res = submitPostingRun([row], row.delfz, true);
+  showRunResult('TBB1 Test Run', [
+    ['Company Code',row.bukrs],['Transaction No',row.rfha],['Key Date (Value Date)',isoToDmy(row.delfz)],['Run mode','Test run – no update']
+  ], res, 'Demo simulation of the standard posting run (RFTBBB00) in test mode. No documents are created and no status is changed.');
+}
+function confirmSinglePost(row){
+  showConfirm('TBB1 Post',
+    '<p class="confirm-body">Post transaction <b>'+esc(row.rfha)+'</b> ('+esc(row.bukrs)+') with key date <b>'+esc(isoToDmy(row.delfz))+'</b>?</p>'+
+    '<p class="confirm-body" style="color:var(--text-muted);font-size:12px;">This runs the posting update and cannot be undone.</p>',
+    'Post', function(){ runSinglePost(row); });
+}
+function runSinglePost(row){
+  var res = submitPostingRun([row], row.delfz, false);
+  var updated = updateStatusAfterPosting(row);
+  reloadDbView(); refreshView();            /* posted deals drop out of the list straight away */
+  showRunResult('TBB1 Post', [
+    ['Company Code',row.bukrs],['Transaction No',row.rfha],['Key Date (Value Date)',isoToDmy(row.delfz)],['Run mode','Update run']
+  ], res, 'Demo simulation of the standard posting run (RFTBBB00).'+
+     (updated ? ' Transaction status set to 50 and removed from the list.' : ' No posted flow found, so the transaction remains in the list.'));
+}
+/* View With Posting + Execute: START-OF-SELECTION -> ALL_POSTING for every deal in the selection */
+function confirmPostAll(){
+  if(state.errors.length || !state.rows.length) return;
+  var keyDate = state.criteria.dateTo || state.criteria.dateFrom;
+  showConfirm('Execute with Posting',
+    '<p class="confirm-body">Post all <b>'+state.rows.length+'</b> deal(s) in the current selection with key date <b>'+esc(isoToDmy(keyDate))+'</b>, then reload the list?</p>'+
+    '<p class="confirm-body" style="color:var(--text-muted);font-size:12px;">This runs the posting update and cannot be undone.</p>',
+    'Post All', function(){ runPostAll(keyDate); });
+}
+function runPostAll(keyDate){
+  var deals = state.rows.slice();
+  var res = submitPostingRun(deals, keyDate, false);
+  deals.forEach(function(d){ updateStatusAfterPosting(d); });   /* posted deals leave the list */
+  reloadDbView();               /* ALL_POSTING ends with GET_DATA */
+  refreshView();
+  showRunResult('Execute with Posting', [
+    ['Company Code', state.criteria.bukrs.join(', ')],
+    ['Value Date', isoToDmy(state.criteria.dateFrom)+(state.criteria.dateTo?' to '+isoToDmy(state.criteria.dateTo):'')],
+    ['Key Date', isoToDmy(keyDate)], ['Run mode','Update run – all deals in selection']
+  ], res, 'Demo simulation of the standard posting run (RFTBBB00). Posted transactions now carry status 50 and have been removed from the list.');
+}
+
+/* =========================================================
+   Actions (toolbar buttons AND drag-and-drop share the same handler)
+   ========================================================= */
+var actionHandlers = {
+  preview:function(row){ openLetterPreview(row); },
+  pdf:function(row){ generatePdf(row); },
+  test:function(row){ runSingleTest(row); },
+  post:function(row){ confirmSinglePost(row); }
+};
+function invokeAction(name){
+  var row = getSelectedRow();
+  if(!row){ showToast('Select a transaction first.', true); return; }
+  actionHandlers[name](row);
+}
+
+/* =========================================================
+   Controls: date pickers (custom inline calendar)
+   ========================================================= */
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function closeAllPickers(except){
+  document.querySelectorAll('.date-popup.open').forEach(function(p){ if(p!==except) p.classList.remove('open'); });
+  document.querySelectorAll('.ms.open,.dd.open').forEach(function(p){ p.classList.remove('open'); });
+}
+function positionPopup(wrap, popup){
+  popup.style.position='fixed';
+  var r = wrap.getBoundingClientRect(), pw = popup.offsetWidth, ph = popup.offsetHeight, m = 8;
+  var left = Math.min(Math.max(m, r.left), window.innerWidth - pw - m);
+  var top = r.bottom + 6;
+  if(top + ph > window.innerHeight - m) top = Math.max(m, r.top - 6 - ph);
+  popup.style.left = left+'px'; popup.style.top = top+'px';
+}
+
+function initDatePicker(key){
+  var input = document.getElementById('input-'+key);
+  var btn = document.querySelector('.date-icon[data-target="'+key+'"]');
+  var popup = document.getElementById('popup-'+key);
+  var wrap = input.closest('.date-field');
+  var which = key==='dateFrom' ? 'from' : 'to';
+  var view = {y:2026, m:9};    /* only (re)initialised when the calendar opens */
+
+  function currentIso(){ return state.criteria[key]; }
+
+  function render(){
+    var sel = currentIso();
+    var first = new Date(view.y, view.m, 1), startOffset = first.getDay();
+    var dim = new Date(view.y, view.m+1, 0).getDate(), dpm = new Date(view.y, view.m, 0).getDate();
+    var html = '<div class="cal-head"><button type="button" data-nav="-1" aria-label="Previous month">‹</button><div class="cal-sel">'+
+      '<select class="cal-month" aria-label="Month">'+MONTHS.map(function(n,i){ return '<option value="'+i+'"'+(i===view.m?' selected':'')+'>'+n+'</option>'; }).join('')+'</select>'+
+      '<select class="cal-year" aria-label="Year">';
+    for(var y=2020;y<=2035;y++) html += '<option value="'+y+'"'+(y===view.y?' selected':'')+'>'+y+'</option>';
+    html += '</select></div><button type="button" data-nav="1" aria-label="Next month">›</button></div><div class="cal-grid">';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d){ html += '<div class="dow">'+d+'</div>'; });
+    var i, iso;
+    for(i=0;i<startOffset;i++){
+      var pd = dpm - startOffset + 1 + i;
+      iso = dateToIso(new Date(view.y, view.m-1, pd));
+      html += '<div class="day muted" data-iso="'+iso+'">'+pd+'</div>';
+    }
+    for(var d=1; d<=dim; d++){
+      iso = view.y+'-'+pad2(view.m+1)+'-'+pad2(d);
+      var cls = 'day'+(iso===sel?' selected':'')+(iso===AS_OF?' today':'');
+      html += '<div class="'+cls+'" data-iso="'+iso+'">'+d+'</div>';
+    }
+    var trailing = (7 - ((startOffset+dim) % 7)) % 7;
+    for(i=1;i<=trailing;i++){
+      iso = dateToIso(new Date(view.y, view.m+1, i));
+      html += '<div class="day muted" data-iso="'+iso+'">'+i+'</div>';
+    }
+    html += '</div>';
+    popup.innerHTML = html;
+
+    popup.querySelectorAll('[data-nav]').forEach(function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        var d2 = new Date(view.y, view.m + parseInt(b.getAttribute('data-nav'),10), 1);
+        view.y = d2.getFullYear(); view.m = d2.getMonth();
+        render(); positionPopup(wrap, popup);
+      });
+    });
+    popup.querySelector('.cal-month').addEventListener('change', function(e){ view.m = parseInt(e.target.value,10); render(); positionPopup(wrap, popup); });
+    popup.querySelector('.cal-year').addEventListener('change', function(e){ view.y = parseInt(e.target.value,10); render(); positionPopup(wrap, popup); });
+    popup.querySelector('.cal-head').addEventListener('click', function(e){ e.stopPropagation(); });
+    popup.querySelectorAll('.day').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
+        setDate(el.getAttribute('data-iso'));
+        popup.classList.remove('open');
+      });
+    });
+  }
+  function setDate(iso){
+    state.dateErr[which] = '';
+    state.criteria[key] = iso;
+    input.value = isoToDmy(iso);
+    state.page = 1;
+    refreshView();
+  }
+  function openPopup(){
+    closeAllPickers(popup);
+    var base = currentIso() || AS_OF;
+    var p = base.split('-'); view.y = +p[0]; view.m = +p[1]-1;     /* initialise month ONLY on open */
+    render();
+    popup.classList.add('open');
+    positionPopup(wrap, popup);
+  }
+  function togglePopup(e){ if(e) e.stopPropagation(); if(popup.classList.contains('open')) popup.classList.remove('open'); else openPopup(); }
+
+  /* manual typing */
+  function commitTyped(final){
+    var raw = input.value;
+    if(!raw.replace(/\s/g,'')){
+      state.dateErr[which]=''; state.criteria[key]=''; state.page=1; refreshView(); return;
+    }
+    var iso = parseDateInput(raw);
+    if(iso){
+      state.dateErr[which]=''; state.criteria[key]=iso;
+      if(final) input.value = isoToDmy(iso);
+      state.page=1; refreshView();
+    } else if(final){
+      state.dateErr[which]='x'; state.criteria[key]=''; state.page=1; refreshView();
+    }
+  }
+  input.addEventListener('input', function(){ if(/^\d{2}-\d{2}-\d{4}$/.test(input.value)) commitTyped(false); });
+  input.addEventListener('blur', function(){ commitTyped(true); });
+  input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ commitTyped(true); popup.classList.remove('open'); } if(e.key==='Escape'){ popup.classList.remove('open'); } });
+  btn.addEventListener('click', togglePopup);
+  popup.addEventListener('click', function(e){ e.stopPropagation(); });
+  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) popup.classList.remove('open'); });
+  document.addEventListener('scroll', function(e){ if(popup.classList.contains('open') && !popup.contains(e.target)) popup.classList.remove('open'); }, true);
+  window.addEventListener('resize', function(){ if(popup.classList.contains('open')) positionPopup(wrap, popup); });
+}
+
+/* =========================================================
+   Controls: Company Code multi-select (S_BUKRS)
+   ========================================================= */
+function initCompanySelect(){
+  var wrap = document.getElementById('ms-bukrs'), trig = document.getElementById('msTrigger'), panel = document.getElementById('msPanel');
+  panel.innerHTML = companies.map(function(c){
+    return '<label class="ms-item"><input type="checkbox" value="'+c.code+'"><span class="ms-code">'+c.code+'</span><span class="ms-name">'+esc(c.name)+'</span></label>';
+  }).join('') + '<div class="ms-foot"><button type="button" class="btn btn-ghost" data-ms="all">Select all</button><button type="button" class="btn btn-ghost" data-ms="none">Clear</button></div>';
+  function apply(list){ state.criteria.bukrs = list; state.page = 1; refreshView(); }
+  trig.addEventListener('click', function(e){
+    e.stopPropagation();
+    var was = wrap.classList.contains('open');
+    closeAllPickers();
+    if(!was){
+      wrap.classList.add('open');
+      var r = trig.getBoundingClientRect();
+      panel.classList.toggle('align-right', r.left + 270 > window.innerWidth);
+    }
+  });
+  panel.addEventListener('click', function(e){ e.stopPropagation(); });
+  panel.addEventListener('change', function(e){
+    if(e.target.type!=='checkbox') return;
+    var list = [];
+    panel.querySelectorAll('input[type=checkbox]').forEach(function(cb){ if(cb.checked) list.push(cb.value); });
+    apply(list);
+  });
+  panel.querySelectorAll('[data-ms]').forEach(function(b){
+    b.addEventListener('click', function(){ apply(b.getAttribute('data-ms')==='all' ? companies.map(function(c){return c.code;}) : []); });
+  });
+}
+
+/* =========================================================
+   Controls: searchable dropdowns (Transaction No, Layout variant)
+   ========================================================= */
+function initDropdown(cfg){
+  var wrap = document.getElementById('dd-'+cfg.key), input = document.getElementById('input-'+cfg.key), panel = document.getElementById('panel-'+cfg.key);
+  function renderPanel(filter){
+    var items = cfg.items(filter||'');
+    if(!items.length){ panel.innerHTML = '<div class="dd-empty">No matches</div>'; return; }
+    panel.innerHTML = items.map(function(it, i){
+      return '<div class="dd-item'+(it.selected?' selected-item active':'')+'" data-i="'+i+'"><span class="primary-line">'+esc(it.primary)+'</span>'+(it.secondary?'<span class="secondary-line">'+esc(it.secondary)+'</span>':'')+'</div>';
+    }).join('');
+    panel.querySelectorAll('.dd-item').forEach(function(el){
+      el.addEventListener('mousedown', function(e){ e.preventDefault(); });
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
+        var it = items[parseInt(el.getAttribute('data-i'),10)];
+        input.value = it.value; wrap.classList.remove('open'); cfg.onSelect(it.value);
+      });
+    });
+  }
+  function open(filter){
+    closeAllPickers();
+    renderPanel(filter);
+    var r = input.getBoundingClientRect();
+    panel.classList.toggle('align-right', r.left + 260 > window.innerWidth);
+    wrap.classList.add('open');
+  }
+  input.addEventListener('click', function(e){ e.stopPropagation(); if(wrap.classList.contains('open')) wrap.classList.remove('open'); else open(cfg.typing ? '' : ''); });
+  input.addEventListener('focus', function(){ if(cfg.typing && !wrap.classList.contains('open')) open(''); });
+  if(cfg.typing){
+    input.addEventListener('input', function(){
+      renderPanel(input.value); wrap.classList.add('open');
+      cfg.onType(input.value);
+    });
+    input.addEventListener('keydown', function(e){ if(e.key==='Escape') wrap.classList.remove('open'); });
+  }
+  panel.addEventListener('click', function(e){ e.stopPropagation(); });
+}
+
+/* =========================================================
+   Event wiring
+   ========================================================= */
+function initEvents(){
+  /* search across every rendered column */
+  document.getElementById('tableSearch').addEventListener('input', function(e){ state.search = e.target.value; state.page = 1; renderTable(); });
+
+  /* posting type (radio group) */
+  document.querySelectorAll('#segPosting button').forEach(function(b){
+    b.addEventListener('click', function(){ state.postingType = b.getAttribute('data-mode'); renderToolbarState(); });
+  });
+  document.getElementById('btnExecute').addEventListener('click', confirmPostAll);
+
+  /* Reset: back to the initial screen state */
+  document.getElementById('btnReset').addEventListener('click', resetScreen);
+  /* Refresh (REF): re-read the database */
+  document.getElementById('btnRefresh').addEventListener('click', function(){
+    closeAllModals();
+    state.search=''; document.getElementById('tableSearch').value='';
+    state.sort={field:null,dir:'asc'}; state.page=1; state.selectedId=null;
+    reloadDbView(); refreshView();
+    showToast('Deals reloaded from the database.');
+  });
+
+  /* table: sort, select, hotspots */
+  document.getElementById('tableHead').addEventListener('click', function(e){
+    var th = e.target.closest('th[data-sort]'); if(!th) return;
+    var k = th.getAttribute('data-sort');
+    if(state.sort.field===k) state.sort.dir = state.sort.dir==='asc'?'desc':'asc'; else { state.sort.field=k; state.sort.dir='asc'; }
+    renderTable();
+  });
+  var tbody = document.getElementById('tableBody');
+  tbody.addEventListener('click', function(e){
+    var tr = e.target.closest('tr'); if(!tr) return;
+    var id = tr.getAttribute('data-id');
+    var hot = e.target.closest('[data-hot]');
+    var row = state.rows.filter(function(r){ return rowId(r)===id; })[0];
+    if(e.target.classList.contains('row-select-checkbox')){
+      e.stopPropagation();
+      if(e.target.checked) selectRow(id); else deselectRow();
+      return;
+    }
+    selectRow(id);
+    if(hot && row){
+      if(hot.getAttribute('data-hot')==='rfha') openTransactionDetail(row); else openFiDocument(row);
+    }
+  });
+  tbody.addEventListener('keydown', function(e){
+    if((e.key==='Enter'||e.key===' ') && e.target.tagName==='TR'){ e.preventDefault(); selectRow(e.target.getAttribute('data-id')); }
+  });
+  document.getElementById('pageSizeSelect').addEventListener('change', function(e){ state.pageSize = parseInt(e.target.value,10); state.page = 1; renderTable(); });
+
+  /* action buttons */
+  document.querySelectorAll('#actionBar .btn').forEach(function(b){
+    b.addEventListener('click', function(){ invokeAction(b.getAttribute('data-action')); });
+  });
+
+  /* drag a selected row onto an action button = same handler as the button */
+  tbody.addEventListener('dragstart', function(e){
+    var tr = e.target.closest ? e.target.closest('tr') : null; if(!tr){ return; }
+    var id = tr.getAttribute('data-id');
+    selectRow(id);
+    state.draggedId = id;
+    tr.classList.add('dragging');
+    var row = getSelectedRow();
+    var ghost = document.createElement('div'); ghost.className='drag-ghost'; ghost.textContent = row ? (row.rfha+' — '+row.bp_name) : id;
+    document.body.appendChild(ghost);
+    if(e.dataTransfer){
+      e.dataTransfer.effectAllowed='copy';
+      try{ e.dataTransfer.setData('text/plain', id); }catch(err){}
+      if(e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(ghost, 12, 14);
+    }
+    setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+    document.querySelectorAll('#actionBar .btn').forEach(function(b){ b.classList.add('drop-ready'); });
+  });
+  tbody.addEventListener('dragend', function(){ endDrag(); });
+  document.querySelectorAll('#actionBar .btn').forEach(function(b){
+    b.addEventListener('dragover', function(e){ if(!state.draggedId) return; e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect='copy'; b.classList.add('drag-over'); });
+    b.addEventListener('dragleave', function(){ b.classList.remove('drag-over'); });
+    b.addEventListener('drop', function(e){
+      e.preventDefault(); b.classList.remove('drag-over');
+      var had = state.draggedId; endDrag();
+      if(!had){ showToast('This action requires a transaction row.', true); return; }
+      invokeAction(b.getAttribute('data-action'));
+    });
+  });
+
+  /* modals */
+  document.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click', function(){ closeModal(b.getAttribute('data-close')); }); });
+  document.querySelectorAll('.modal-overlay').forEach(function(o){
+    o.addEventListener('mousedown', function(e){ if(e.target===o && o.id!=='confirmModal') closeModal(o.id); });
+  });
+  document.getElementById('btnConfirmOk').addEventListener('click', function(){
+    var fn = state.confirmAction; state.confirmAction = null;
+    closeModal('confirmModal');
+    if(fn) setTimeout(fn, 170);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key!=='Escape') return;
+    var open = document.querySelectorAll('.modal-overlay.open');
+    if(open.length) closeModal(open[open.length-1].id);
+  });
+
+  /* click outside closes dropdown panels */
+  document.addEventListener('click', function(){ document.querySelectorAll('.ms.open,.dd.open').forEach(function(p){ p.classList.remove('open'); }); });
+}
+function endDrag(){
+  state.draggedId = null;
+  document.querySelectorAll('#tableBody tr.dragging').forEach(function(t){ t.classList.remove('dragging'); });
+  document.querySelectorAll('#actionBar .btn').forEach(function(b){ b.classList.remove('drag-over'); b.classList.remove('drop-ready'); });
+}
+
+/* Reset: restores selection criteria, search, sort, page, layout, posting type and row selection */
+function resetScreen(){
+  closeAllPickers(); closeAllModals();
+  state.criteria = {bukrs:DEFAULTS.bukrs.slice(), dateFrom:DEFAULTS.dateFrom, dateTo:DEFAULTS.dateTo, rfha:DEFAULTS.rfha};
+  state.dateErr = {from:'', to:''};
+  state.postingType = DEFAULTS.postingType; state.layout = DEFAULTS.layout;
+  state.search=''; state.sort={field:null,dir:'asc'}; state.page=1; state.selectedId=null;
+  state.pageSize = DEFAULTS.pageSize;
+  syncInputs();
+  refreshView();
+}
+function syncInputs(){
+  document.getElementById('tableSearch').value = state.search;
+  document.getElementById('input-dateFrom').value = isoToDmy(state.criteria.dateFrom);
+  document.getElementById('input-dateTo').value = isoToDmy(state.criteria.dateTo);
+  document.getElementById('input-rfha').value = state.criteria.rfha;
+  document.getElementById('input-layout').value = state.layout;
+  document.getElementById('pageSizeSelect').value = String(state.pageSize);
+}
+
+/* =========================================================
+   Initialisation
+   ========================================================= */
+function init(){
+  reloadDbView();
+  initCompanySelect();
+  initDatePicker('dateFrom'); initDatePicker('dateTo');
+  initDropdown({
+    key:'rfha', typing:true,
+    items:function(filter){
+      /* deals that pass the report's own selection (company / dates), listed by transaction number */
+      var probe = {bukrs:state.criteria.bukrs, dateFrom:state.criteria.dateFrom||'0000-01-01', dateTo:state.criteria.dateTo||state.criteria.dateFrom||'9999-12-31', rfha:''};
+      var list = state.errors.some(function(e){return e.key==='bukrs';}) ? [] : getData(probe, state.dbView);
+      var f = String(filter||'').toLowerCase();
+      return list.filter(function(r){ return !f || r.rfha.indexOf(f)>=0 || r.bp_name.toLowerCase().indexOf(f)>=0; })
+                 .map(function(r){ return {value:r.rfha, primary:r.rfha, secondary:r.bukrs+' · '+r.bp_name, selected:r.rfha===state.criteria.rfha}; });
+    },
+    onType:function(txt){ state.criteria.rfha = txt.replace(/^\s+|\s+$/g,''); state.page=1; refreshView(); },
+    onSelect:function(v){ state.criteria.rfha = v; state.page=1; refreshView(); }
+  });
+  initDropdown({
+    key:'layout', typing:false,
+    items:function(){ return layoutVariants.map(function(l){ return {value:l.id, primary:l.id, secondary:l.text, selected:l.id===state.layout}; }); },
+    onSelect:function(v){ state.layout = v; state.sort={field:null,dir:'asc'}; renderTable(); }
+  });
+  initEvents();
+  syncInputs();
+  refreshView();
+}
+init();
+
+</script>
+</body>
+</html>

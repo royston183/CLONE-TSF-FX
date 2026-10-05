@@ -318,7 +318,7 @@ describe('release to MO', () => {
 describe('auto deal creation', () => {
   it('offers the origins of contracts with balance and derives both legs from the model', () => {
     const b = fresh()
-    deepStrictEqual(autoOrigins(b.contracts), ['OGA', 'OAL', 'SEDA', 'OGAT'])
+    deepStrictEqual(autoOrigins(), ['OGA', 'OGAT', 'OAL', 'SEDA'])
     const mc = autoEligible(b.contracts, 'OGA')[0]!
     strictEqual(mc.mcNumber, 'MC-7001')
     const legs = initAutoLegs(mc, NOW)

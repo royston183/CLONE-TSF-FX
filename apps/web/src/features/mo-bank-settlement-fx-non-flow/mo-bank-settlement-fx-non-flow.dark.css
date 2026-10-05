@@ -1,0 +1,430 @@
+/* Night mode for mo-bank-settlement-fx-non-flow, derived from mo-bank-settlement-fx-non-flow.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow select,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --border: #2a3d52;
+  --border-soft: #1b2b3d;
+  --muted: #7f9bb8;
+  --blue-dark: #7cc0f8;
+  --blue-pale: #17304a;
+  --green-pale: #14321f;
+  --amber-pale: #3a2a12;
+  --red-pale: #3a1b1e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .explain {
+  color: #ffc05c;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .explain b {
+  color: #ffbf5c;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .seg:hover:not(.active) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .common-btn.approve {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .common-btn.reject {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table tbody tr.row-checked td {
+  background: #3a2a12 !important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow tbody tr:hover .sticky-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow tbody tr.row-checked .sticky-col {
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .st-errcorr {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .badge-blue {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .note {
+  background: #1b2b3d;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-header {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-icon {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-close {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-footer {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .entity-flow .ent-chip {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .zfac-toast.error {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .zfac-toast.success {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow kbd {
+  background: #1b2b3d;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --border: #2a3d52;
+  --border-soft: #1b2b3d;
+  --muted: #7f9bb8;
+  --blue-dark: #7cc0f8;
+  --blue-pale: #17304a;
+  --green-pale: #14321f;
+  --amber-pale: #3a2a12;
+  --red-pale: #3a1b1e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-head {
+  background: #17304a;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-icon {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .kpi-toggle {
+  border-color: #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar .search-box input,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .search-box input {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-field input,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-field select {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .seg-group {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .seg {
+  border-right-color: #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .dp input {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-reset {
+  border-color: #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-reset:hover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .common-btn.reject {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .dp-head button {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .sticky-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table thead th.sticky-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow tbody tr:hover .sticky-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table .sticky-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table thead th.sticky-col {
+  background: #1b2b3d!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table tbody tr:hover .sticky-col {
+  background: #1b2b3d!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .st-errcorr {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .pager-size select {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .pager-btn {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-header {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-icon {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-body {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-footer {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-cancel {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-confirm.is-reject {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-confirm.is-reject:hover {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .child-quick-actions .common-btn.reject {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-head {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-icon {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .kpi-toggle {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-card:hover {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar .search-box input,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .search-box input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-field input,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-field select,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field select {
+  background-color: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .seg-group {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .seg,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .status-filter .seg {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-reset,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-reset {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .filter-reset:hover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .common-btn.reject,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .common-btn.reject {
+  background: #14212f;
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .dp-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .table-wrap {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table thead th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table .sticky-col {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table thead th.sticky-col {
+  background: #1b2b3d!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table tbody tr:hover .sticky-col {
+  background: #1b2b3d!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .rowaction-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .pager {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .pager-size select {
+  background-color: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .pager-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .note {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-header {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-body {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .modal-footer {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-cancel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-cancel:hover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-confirm.is-reject {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-confirm.is-reject:hover {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .detail-grid {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .entity-flow .ent-chip {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .zfac-toast {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .zfac-toast.error {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .zfac-toast.success {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-head {
+  background: #1b2b3d;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .head-icon {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .page-subtitle {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .btn-icon {
+  border-color: #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-card {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-card:hover {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-val {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-lbl {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .metric-help {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .panel {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .panel-title {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .panel-title h2 {
+  color: #62aef9;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar .filter-field select,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field select,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field.entity-filter select {
+  color: #e6eef8!important;
+  background-color: #14212f!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .selected-count {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #result-count-badge {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked td {
+  background: #17304a!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow #mc-table tbody tr.dragging-row td {
+  background: #17304a!important;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .chip-toggle {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .assign-box {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .assign-field input,
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .assign-field select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .assign-field input[readonly],
+:root[data-theme='dark'] .mo-bank-settlement-fx-non-flow .assign-field select:disabled {
+  background: #1b2b3d;
+}

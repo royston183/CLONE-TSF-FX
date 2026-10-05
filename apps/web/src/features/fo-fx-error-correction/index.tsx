@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { isAbort } from '../../shared/fx/mw.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
-import { COMPANY_CODES, TRADERS, buildTransactions } from './data.ts'
+import { correctTxn, loadQueue, patchLabels, reverseTxns, sapMessage, toCorrectionPatch } from './api.ts'
 import { DatePicker } from './DatePicker.tsx'
 import { fmtNum, parseAmountShorthand } from './format.ts'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import {
   CSV_FILENAME,
   DEFAULT_FILTERS,
-  applyCorrection,
   buildCsv,
   checkedTxns,
   correctionTarget,
@@ -26,7 +26,6 @@ import {
   pagerWindow,
   resolveReverseScope,
   reverseToast,
-  reverseTxns,
   setPageChecked,
   toggleChecked,
 } from './logic.ts'
@@ -85,7 +84,11 @@ const plural = (n: number) => (n === 1 ? '' : 's')
  * live in component state for the session and Refresh restores the seed data.
  */
 export default function FoFxErrorCorrection() {
-  const [txns, setTxns] = useState<Txn[]>(buildTransactions)
+  const [txns, setTxns] = useState<Txn[]>([])
+  /** The queue is read from SAP; nothing stands in for it while it loads or when it cannot be read. */
+  const [load, setLoad] = useState<{ state: 'loading' } | { state: 'ok' } | { state: 'error'; message: string }>({ state: 'loading' })
+  /** True while a change or reversal is running in SAP, so a second click cannot send it twice. */
+  const busy = useRef(false)
 
   // Selection criteria and table
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
@@ -122,7 +125,7 @@ export default function FoFxErrorCorrection() {
 
   // Toast — the page opened with a "Ready" message.
   const [toast, setToast] = useState<Toast>(() => ({
-    message: `Ready. ${filterTxns(txns, DEFAULT_FILTERS, 'ALL', DEFAULT_SORT).length} FX transaction(s) loaded.`,
+    message: 'Reading the FX transactions from SAP...',
     kind: '',
     show: true,
   }))
@@ -140,6 +143,26 @@ export default function FoFxErrorCorrection() {
     toastTimer.current = setTimeout(hideToast, TOAST_MS)
     return () => clearTimeout(toastTimer.current)
   }, [hideToast])
+
+  /** Reads the queue from SAP; returns whether it succeeded. */
+  const loadRows = useCallback(async (signal?: AbortSignal): Promise<boolean> => {
+    try {
+      const rows = await loadQueue(signal)
+      setTxns(rows)
+      setLoad({ state: 'ok' })
+      return true
+    } catch (e) {
+      if (isAbort(e)) return false
+      setLoad({ state: 'error', message: sapMessage(e) })
+      return false
+    }
+  }, [])
+
+  useEffect(() => {
+    const ac = new AbortController()
+    void loadRows(ac.signal)
+    return () => ac.abort()
+  }, [loadRows])
 
   /**
    * What the page's applyFilters did besides filtering (which is derived here): back to page
@@ -170,15 +193,28 @@ export default function FoFxErrorCorrection() {
     setSort((s) => nextSort(s, key))
   }
 
-  /** Hard refresh: the seed rows back, selection, sort, paging and filters reset. */
-  const hardRefresh = () => {
-    setTxns(buildTransactions())
-    setChecked([])
-    setSort(DEFAULT_SORT)
-    setPageSize(DEFAULT_PAGE_SIZE)
-    resetFilters()
-    showToast('Refreshed. Data and filters reset.', '')
+  /** Hard refresh: the queue read again from SAP, selection, sort, paging and filters reset. */
+  const hardRefresh = async () => {
+    if (busy.current) return
+    busy.current = true
+    try {
+      setChecked([])
+      setSort(DEFAULT_SORT)
+      setPageSize(DEFAULT_PAGE_SIZE)
+      resetFilters()
+      const ok = await loadRows()
+      showToast(ok ? 'Refreshed from SAP. Filters reset.' : 'Could not read the queue from SAP.', ok ? '' : 'error')
+    } finally {
+      busy.current = false
+    }
   }
+
+  /** The company codes in the queue, named from the company master. */
+  const companyOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const t of txns) if (!seen.has(t.coCode)) seen.set(t.coCode, t.companyName)
+    return [...seen].sort(([a], [b]) => a.localeCompare(b))
+  }, [txns])
 
   const exportCsv = () => {
     const blob = new Blob([buildCsv(rows)], { type: 'text/csv;charset=utf-8;' })
@@ -245,30 +281,52 @@ export default function FoFxErrorCorrection() {
   const onAmountBlur = () =>
     setForm((f) => {
       const amount1 = fmtNum(parseAmountShorthand(f.amount1))
-      return { ...f, amount1, amount2: deriveAmount2(amount1, f.spotRate) }
+      return { ...f, amount1, amount2: deriveAmount2(amount1, f.allInRate) }
     })
 
   const onRateBlur = (key: 'allInRate' | 'swapRate' | 'spotRate') =>
     setForm((f) => {
       const next = { ...f, [key]: normaliseRate(f[key]) }
-      if (key === 'spotRate') next.amount2 = deriveAmount2(next.amount1, next.spotRate)
+      if (key === 'allInRate') next.amount2 = deriveAmount2(next.amount1, next.allInRate)
       return next
     })
 
   const onBusinessAreaChange = (busArea: string) => changeForm({ busArea, profitCenter: deriveProfitCenter(busArea) })
 
-  const submitCorrection = () => {
+  const submitCorrection = async () => {
     const t = correcting ? txns.find((m) => m.rfha === correcting.rfha) : undefined
     if (!t || !isActionable(t)) {
       correctionModal.close()
       return
     }
-    const updated = applyCorrection(t, form, new Date())
-    setTxns((all) => all.map((m) => (m.rfha === updated.rfha ? updated : m)))
-    setChecked((c) => c.filter((r) => r !== updated.rfha))
-    correctionModal.close()
-    showToast(`Transaction ${updated.rfha} updated and released to MO.`, 'success')
-    refilter()
+    const patch = toCorrectionPatch(t, form)
+    if (!Object.keys(patch).length) {
+      showToast('Nothing was changed.', 'error')
+      return
+    }
+    if (busy.current) return
+    busy.current = true
+    try {
+      await correctTxn(t, patch)
+    } catch (e) {
+      // SAP refused: the popup stays open with what was typed.
+      showToast(`SAP did not change transaction ${t.rfha}: ${sapMessage(e)}`, 'error')
+      busy.current = false
+      return
+    }
+    try {
+      setChecked((c) => c.filter((r) => r !== t.rfha))
+      correctionModal.close()
+      const changed = Object.keys(patch).map((k) => patchLabels[k] ?? k).join(', ')
+      const refreshed = await loadRows()
+      showToast(
+        `Transaction ${t.rfha} changed in SAP (${changed}).${refreshed ? '' : ' The list could not be re-read; use Refresh.'}`,
+        refreshed ? 'success' : 'error',
+      )
+      refilter()
+    } finally {
+      busy.current = false
+    }
   }
 
   // ------------------------------------------------------------------ reverse
@@ -295,15 +353,32 @@ export default function FoFxErrorCorrection() {
     if (correcting) askReverse(correcting.rfha)
   }
 
-  const confirmReverse = () => {
-    const ts = resolveReverseScope(txns, reverseScope, checked)
-    const rfhas = ts.map((t) => t.rfha)
-    setTxns((all) => reverseTxns(all, rfhas, reason, new Date()))
-    setChecked((c) => c.filter((r) => !rfhas.includes(r)))
-    reverseModal.close()
-    correctionModal.close()
-    showToast(reverseToast(ts), 'error')
-    refilter()
+  const confirmReverse = async () => {
+    if (busy.current) return
+    busy.current = true
+    try {
+      const ts = resolveReverseScope(txns, reverseScope, checked)
+      const outcome = await reverseTxns(ts)
+      const done = ts.filter((t) => outcome.reversed.includes(t.rfha))
+      setChecked((c) => c.filter((r) => !outcome.reversed.includes(r)))
+      if (outcome.failed) {
+        const rest = ts.length - done.length
+        showToast(
+          `${done.length ? `${reverseToast(done)} ` : ''}SAP refused to reverse ${outcome.failed.rfha}: ${outcome.failed.reason}${rest > 1 ? ` (${rest - 1} more not attempted)` : ''}`,
+          'error',
+        )
+      } else {
+        showToast(reverseToast(done), 'error')
+      }
+      if (done.length) {
+        reverseModal.close()
+        correctionModal.close()
+        await loadRows()
+        refilter()
+      }
+    } finally {
+      busy.current = false
+    }
   }
 
   // ------------------------------------------------------------------ drag a row onto an action
@@ -345,6 +420,42 @@ export default function FoFxErrorCorrection() {
 
   // ------------------------------------------------------------------ render
 
+  // Until SAP has answered there is nothing to show, and on a failure nothing is made up in its place.
+  if (load.state !== 'ok') {
+    return (
+      <div className="fo-fx-error-correction">
+        <div className="topbar">
+          <BackButton className="btn-outline" />
+          <span className="topbar-title">EC2: TSF FO Error Correction</span>
+          <span className="topbar-code">FX</span>
+          <div className="topbar-right">
+            <SignOutButton className="btn-outline" />
+          </div>
+        </div>
+        <main style={{ padding: 24 }}>
+          {load.state === 'loading' ? (
+            <div role="status">Reading the FX transactions from SAP…</div>
+          ) : (
+            <div role="alert">
+              <p>{load.message}</p>
+              <p>The queue is read from SAP and nothing has been substituted for it.</p>
+              <button
+                className="btn-outline"
+                type="button"
+                onClick={() => {
+                  setLoad({ state: 'loading' })
+                  void loadRows()
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className={`fo-fx-error-correction${draggingRow !== null ? ' row-dragging' : ''}`}>
       <div className="topbar">
@@ -353,8 +464,8 @@ export default function FoFxErrorCorrection() {
         <span className="topbar-title">EC2: TSF FO Error Correction</span>
         <span className="topbar-code">FX</span>
         <div className="topbar-right">
-          <span className="status-dot" title="Demo data - live" />
-          <button className="btn-outline" onClick={hardRefresh}>
+          <span className="status-dot" title="Read from SAP" />
+          <button className="btn-outline" onClick={() => void hardRefresh()}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
               <path d="M20 5v6h-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -421,8 +532,7 @@ export default function FoFxErrorCorrection() {
                     <label htmlFor="f-status">Status</label>
                     <select id="f-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>
                       <option value="ALL">All statuses</option>
-                      <option value="ERRCORR">Correction Required</option>
-                      <option value="RESUB">Released to MO</option>
+                      <option value="OPEN">Open (status not in SAP)</option>
                       <option value="REVERSED">Reversed</option>
                     </select>
                   </div>
@@ -430,22 +540,17 @@ export default function FoFxErrorCorrection() {
                     <label htmlFor="f-cocode">Company Code</label>
                     <select id="f-cocode" value={filters.coCode} onChange={(e) => setFilter({ coCode: e.target.value })}>
                       <option value="ALL">All company codes</option>
-                      {COMPANY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.code} - {c.name}
+                      {companyOptions.map(([code, name]) => (
+                        <option key={code} value={code}>
+                          {name ? `${code} - ${name}` : code}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="filter-field">
                     <label htmlFor="f-trader">Trader</label>
-                    <select id="f-trader" value={filters.trader} onChange={(e) => setFilter({ trader: e.target.value })}>
-                      <option value="ALL">All traders</option>
-                      {TRADERS.map((t) => (
-                        <option key={t.code} value={t.code}>
-                          {t.code} - {t.name}
-                        </option>
-                      ))}
+                    <select id="f-trader" value="ALL" disabled title="SAP does not record the trader on a transaction">
+                      <option value="ALL">Not held in SAP</option>
                     </select>
                   </div>
                   <div className="filter-field">
@@ -495,7 +600,7 @@ export default function FoFxErrorCorrection() {
                       className={`drag-target correction${dragOver === 'correction' ? ' drag-over' : ''}`}
                       id="drop-correction"
                       onClick={clickCorrectionAction}
-                      title="Drag a Correction Required row here"
+                      title="Drag an open row here"
                       {...dropTarget('correction')}
                     >
                       FX Error Correction
@@ -505,7 +610,7 @@ export default function FoFxErrorCorrection() {
                       className={`drag-target reverse${dragOver === 'reverse' ? ' drag-over' : ''}`}
                       id="drop-reverse"
                       onClick={clickReverseAction}
-                      title="Drag one or more Correction Required rows here"
+                      title="Drag one or more open rows here"
                       {...dropTarget('reverse')}
                     >
                       Reverse
@@ -590,14 +695,17 @@ export default function FoFxErrorCorrection() {
             </div>
           </div>
           <div className="note">
-            <strong>Note:</strong> Each row here is one <strong>FX financial transaction</strong> (Transaction No), not a Master
+            <strong>Note:</strong> This list is read from <strong>SAP</strong> (the FX transaction service). SAP does not record whether
+            Mid-Office sent a transaction back, so there is no <em>Correction Required</em> status to show: every live transaction is
+            <strong> Open</strong>, and only a transaction SAP reversed is <strong>Reversed</strong>. The MO remark, trader, mode of
+            trade, account category, business area, profit center and blotter date are not held in SAP either, so they are blank
+            and cannot be edited here. <strong>FX Error Correction</strong> changes the rates, Amount 1, Value Date and Trade Date
+            in SAP; <strong>Reverse</strong> reverses the transaction in SAP.
+            <br />
+            <br />
+            Each row here is one <strong>FX financial transaction</strong> (Transaction No), not a Master
             Contract or a Deal in the abstract &mdash; a Deal ID commonly has <strong>two</strong> transaction rows (e.g. one booked
-            at the OGA/Singapore leg and one at the DMCC/Dubai leg) that together form the offsetting pair. A transaction lands
-            here as <strong>Correction Required</strong> when Mid-Office sends it back &mdash; read <em>MO Remark</em> for their
-            reason. Use <strong>FX Error Correction</strong> to update the flagged fields (Business Partner, rates, amounts, dates,
-            Business Area, etc. &mdash; mirroring the SAP &quot;Old Details / New Details&quot; popup) and resubmit, or{' '}
-            <strong>Reverse</strong> if the transaction should be cancelled outright. Only <strong>Correction Required</strong> rows
-            can be selected; this queue is scoped to <strong>Display Type: FX</strong> &mdash; Options-type transactions are
+            at the OGA/Singapore leg and one at the DMCC/Dubai leg) that together form the offsetting pair. Only open rows can be selected; this queue is scoped to <strong>Display Type: FX</strong> &mdash; Options-type transactions are
             handled on the separate Options queue and are not shown here.
             <div className="term-glossary">
               <span>
@@ -628,11 +736,11 @@ export default function FoFxErrorCorrection() {
         onAmountBlur={onAmountBlur}
         onRateBlur={onRateBlur}
         onBusinessAreaChange={onBusinessAreaChange}
-        onUpdate={submitCorrection}
+        onUpdate={() => void submitCorrection()}
         onReverseInstead={switchToReverseFromCorrection}
       />
 
-      <ReverseModal modal={reverseModal} txns={reversing} reason={reason} onReasonChange={setReason} onConfirm={confirmReverse} />
+      <ReverseModal modal={reverseModal} txns={reversing} reason={reason} onReasonChange={setReason} onConfirm={() => void confirmReverse()} />
     </div>
   )
 }

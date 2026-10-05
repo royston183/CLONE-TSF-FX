@@ -1,0 +1,31 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * bo-reverse-fx-mtm-other-origins.legacy.css is produced by tools/scope-css.mjs and cannot be
+ * hand-edited. The original was a full-viewport app shell: "html,body{height:100%}" with
+ * "overflow:hidden" on the body, and ".app{height:100%}" inside it. Scoped, the body rules land on
+ * the app root, but the host shell only gives its own root a min-height, so "height:100%" resolves
+ * to auto and the table would grow the page instead of scrolling inside .table-shell. The root
+ * therefore takes the viewport height itself, which restores the original layout (fixed top bar,
+ * card filling the rest, only the table scrolling).
+ */
+.bo-reverse-fx-mtm-other-origins {
+  height: 100vh;
+  overflow: hidden;
+}
+.bo-reverse-fx-mtm-other-origins .app {
+  height: 100%;
+}
+
+/*
+ * Fit the card to its rows. The original stretched the card (and its white table area) to the
+ * bottom of the window even with two or three rows; now the card is only as tall as its content
+ * and the page background shows beneath it. With many rows it still stops at the window edge
+ * (min-height:0 lets it shrink) and the table scrolls inside .table-shell as before.
+ */
+.bo-reverse-fx-mtm-other-origins .card {
+  flex: 0 1 auto;
+}
+.bo-reverse-fx-mtm-other-origins .table-shell {
+  flex: 0 1 auto;
+}

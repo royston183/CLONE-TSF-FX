@@ -331,9 +331,9 @@
       "route": "/apps/fo-fx-error-correction",
       "title": "EC2: TSF FO Error Correction - FX & Options",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "trmmaster", "businesspartner", "middleware"],
       "legacy": "legacy/fx-fo-error-correction.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "FX half reads the FxTransaction service (names from comp, trmmaster and the business partner service; Deal ID and Master Contract from tsfDealId). Reverse = DELETE (BAPI_FTR_FXT_REVERSE); Correct = PATCH of rates, Amount 1, value date and trade date. SAP holds no Correction Required status, MO remark, trader, mode of trade, account category, business area, profit center or blotter date, so those are blank/read-only and every live row is Open. Options half is not wired (the options BAPIs are not in the service)."
     },
     {
       "code": "ZSGTSFP013",
@@ -341,9 +341,9 @@
       "route": "/apps/fo-change-deal-id",
       "title": "FO: Change Deal ID",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "trmmaster", "businesspartner", "middleware"],
       "legacy": "legacy/FO_Change_Deal_ID.html",
-      "note": "Deal IDs (tsfDealId), their Master Contracts and the MC picker (masterContract, status 03/04, offered only under the deal's own FX model), the linked transactions (tsfvFx, joined on company code + ZRFHA1-8), the invoice plan (invRef), traders (trmTrader) and status texts (tsfDealStatus) are live. Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both stop at MySQL - the program's stamp on the Treasury transactions (BAPI_FTR_FXT_CHANGE) is not done. Change MC is refused while a leg's TXN_STATUS cannot be read (ZSGTSFV_FX has no TXN_STATUS yet). Edit Deal Pair is not saved. Premium (ZSGTSFCDS_OPTION), strike and the planned P&L have no source and stay empty. No seed fallback."
+      "note": "Deal IDs (tsfDealId), their Master Contracts and the MC picker (masterContract, status 03/04, offered only under the deal's own FX model), the linked transactions (read live from the FxTransaction service, joined on company code + ZRFHA1-8; ZSGTSFV_FX is only the fallback for a leg the service does not return, and a live leg is Confirmed once SAP settled it, the MO screen's meaning of matched), the invoice plan (invRef), traders (trmTrader) and status texts (tsfDealStatus) are live. Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both stop at MySQL - the program's stamp on the Treasury transactions (BAPI_FTR_FXT_CHANGE) is not done. Change MC is refused while a leg's status cannot be read. Edit Deal Pair is not saved. Premium (ZSGTSFCDS_OPTION), strike and the planned P&L have no source and stay empty. No seed fallback."
     },
     {
       "code": "ZSGTSFP015",
@@ -509,6 +509,146 @@
       "services": [],
       "legacy": "legacy/confirm-fx-deal-id for ss.html",
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+    },
+    {
+      "code": "ZSGTSFR106",
+      "id": "mo-view-deal-id-settlement-list",
+      "route": "/apps/mo-view-deal-id-settlement-list",
+      "title": "MO: View List of Deal IDs for Settlement",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/mo-view-deal-id-settlement-list.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR060",
+      "id": "mo-execute-settlement-deal-id",
+      "route": "/apps/mo-execute-settlement-deal-id",
+      "title": "MO: Execute Settlement for Deal ID (Single Deal ID)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/mo-execute-settlement-deal-id.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR104",
+      "id": "mo-bank-settlement-fx-non-flow",
+      "route": "/apps/mo-bank-settlement-fx-non-flow",
+      "title": "MO: Bank Settlement: FX Non-Flow Deals",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/mo-bank-settlement-fx-non-flow.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR081",
+      "id": "bo-post-accounting-settlement",
+      "route": "/apps/bo-post-accounting-settlement",
+      "title": "BO: Post Accounting Entries for Settlement (Single Deal ID)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-post-accounting-settlement.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR062",
+      "id": "view-spot-forward-settlement",
+      "route": "/apps/view-spot-forward-settlement",
+      "title": "View Spot-Forward Deals Settlement",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/view-spot-forward-settlement.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR019",
+      "id": "bo-reverse-fx-mtm-oil-dmcc",
+      "route": "/apps/bo-reverse-fx-mtm-oil-dmcc",
+      "title": "Reverse FX MTM - OIL & DMCC (USD)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-reverse-fx-mtm-oil-dmcc.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR020",
+      "id": "bo-reverse-fx-mtm-other-origins",
+      "route": "/apps/bo-reverse-fx-mtm-other-origins",
+      "title": "Reverse FX MTM - Other Origins",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-reverse-fx-mtm-other-origins.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR021",
+      "id": "bo-reverse-fx-mtm-india",
+      "route": "/apps/bo-reverse-fx-mtm-india",
+      "title": "Reverse FX MTM - India",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-reverse-fx-mtm-india.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR084",
+      "id": "fx-mtm-external-tsf-deals",
+      "route": "/apps/fx-mtm-external-tsf-deals",
+      "title": "FX MTM - External and TSF Deals - SG00",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-mtm-external-tsf-deals.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR023",
+      "id": "post-fx-mtm-other-origins",
+      "route": "/apps/post-fx-mtm-other-origins",
+      "title": "Post FX MTM to Accounting - Other Origins",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/post-fx-mtm-other-origins.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR022",
+      "id": "post-fx-mtm-oil-dmcc",
+      "route": "/apps/post-fx-mtm-oil-dmcc",
+      "title": "Post FX MTM to Accounting - OIL & DMCC (USD)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/post-fx-mtm-oil-dmcc.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR028",
+      "id": "fx-ndf-settlement",
+      "route": "/apps/fx-ndf-settlement",
+      "title": "FX NDF Settlement",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-ndf-settlement.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR092",
+      "id": "bo-deal-rejection",
+      "route": "/apps/bo-deal-rejection",
+      "title": "BO deal Rejection and return to FO",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-deal-rejection.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR061",
+      "id": "inr-heads-up-reminder",
+      "route": "/apps/inr-heads-up-reminder",
+      "title": "MO: INR Head-Ups Reminder",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/inr-heads-up-reminder.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
     }
   ]
 }

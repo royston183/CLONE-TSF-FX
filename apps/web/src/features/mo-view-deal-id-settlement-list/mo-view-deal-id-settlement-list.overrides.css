@@ -1,0 +1,12 @@
+/*
+ * The only deviations from the generated legacy stylesheet (which cannot be hand-edited).
+ *
+ * The legacy page had no Back or Sign out control. They borrow the page's own .btn-outline,
+ * which was written for a text-only button, so lay out its icon + label here.
+ */
+.mo-view-deal-id-settlement-list .page-head .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}

@@ -1,0 +1,20 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * bo-deal-rejection.legacy.css is produced by tools/scope-css.mjs and cannot be hand-edited. It
+ * contains ".page-header .btn { margin-left: auto }": the original header held a single button
+ * (Refresh) that the auto margin pushed to the right edge. The React header also carries Back and
+ * Sign out, and with that rule on every button the free space would be split between them. Refresh
+ * and Sign out now sit together in ".header-actions", which takes the auto margin once, and the
+ * buttons themselves go back to no margin, so the result looks the same as the original.
+ */
+.bo-deal-rejection .page-header .header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bo-deal-rejection .page-header .header-actions .btn,
+.bo-deal-rejection .page-header > .btn {
+  margin-left: 0;
+}

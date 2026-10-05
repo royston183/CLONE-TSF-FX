@@ -4,7 +4,7 @@ import { fmtDate, fmtNum, fmtRate } from './format.ts'
 import { isActionable, selectAllState } from './logic.ts'
 import type { Sort, SortKey, StatusValue, Txn } from './types.ts'
 
-const STATUS_CLASS = { ERRCORR: 'st-errcorr', RESUB: 'st-resub', REVERSED: 'st-reversed' } as const
+const STATUS_CLASS = { ERRCORR: 'st-errcorr', RESUB: 'st-resub', REVERSED: 'st-reversed', OPEN: 'st-open' } as const
 
 export function StatusCell({ status }: { status: StatusValue }) {
   return <span className={`status-cell ${STATUS_CLASS[STATUS_KEY[status]]}`}>{STATUS_SHORT[status]}</span>
@@ -138,7 +138,7 @@ export function TxnTable({
                     disabled={!eligible}
                     checked={isChecked}
                     onChange={(e) => onCheck(t, e.target.checked)}
-                    title={eligible ? 'Select for Reverse / Error Correction' : 'Only Correction Required rows can be selected'}
+                    title={eligible ? 'Select for Reverse / Error Correction' : 'Only open rows can be selected'}
                   />
                 </td>
                 <td className="left sticky-col sticky-2">
@@ -171,7 +171,7 @@ export function TxnTable({
                 <td className="num">{fmtRate(t.allInRate)}</td>
                 <td>{fmtDate(t.tradeDate)}</td>
                 <td>{fmtDate(t.valueDate)}</td>
-                <td>{fmtDate(t.blotterDate)}</td>
+                <td>{t.blotterDate ? fmtDate(t.blotterDate) : <Dash />}</td>
                 <td className="left">
                   {t.busArea} - {t.busAreaDesc}
                 </td>

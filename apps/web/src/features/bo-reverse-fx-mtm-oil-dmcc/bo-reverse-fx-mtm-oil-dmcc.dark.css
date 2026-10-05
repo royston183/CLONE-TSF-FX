@@ -1,0 +1,266 @@
+/* Night mode for bo-reverse-fx-mtm-oil-dmcc, derived from bo-reverse-fx-mtm-oil-dmcc.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc select,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc button,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc input,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc select {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .btn:hover:not(:disabled) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .btn.drop-hover {
+  background: #17304a;
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .subtitle {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .status-dot {
+  box-shadow: 0 0 0 3px #14321f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .card-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .head-meta {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .key-date-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .legend-swatch {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .legend-ext {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .legend-mtm {
+  background: #17304a;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .required {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .calendar-btn {
+  border-left: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .calendar-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .inline-error {
+  color: #7f9bb8;
+  background: #1b2b3d;
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .table-shell {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc th.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc th.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc th.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tr.selected td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tr.selected td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tr.selected td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr:hover td.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr.selected:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr.selected:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc tbody tr.selected:hover td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cell-ext {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cell-mtm {
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cell-link {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cell-link:hover {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .posted {
+  color: #66f5e1;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .sort-mark {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .footer {
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .page-btn.active {
+  color: #e6eef8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .page-btn:disabled {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .calendar-pop {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-day {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-day.out {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .cal-day.weekend {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .close-btn {
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .close-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .modal-foot {
+  border-top: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .detail .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .detail .v {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .section-label {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .mini-table th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .mini-table td {
+  border: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .mini-table th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .ok-icon {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .err-icon {
+  background: #3a1b1e;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .toast.success .toast-mark {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .toast.info .toast-mark {
+  background: #17304a;
+  color: #62b3f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .toast-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-oil-dmcc .filter-summary {
+  color: #7f9bb8;
+}

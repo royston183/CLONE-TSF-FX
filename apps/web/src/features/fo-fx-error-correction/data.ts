@@ -77,16 +77,19 @@ export const STATUS: Record<StatusKey, StatusValue> = {
   ERRCORR: '04-MO->FO: Correction Required',
   RESUB: '02-Released to MO',
   REVERSED: '15-Reversed',
+  OPEN: 'Open (status not in SAP)',
 }
 export const STATUS_KEY: Record<StatusValue, StatusKey> = {
   '04-MO->FO: Correction Required': 'ERRCORR',
   '02-Released to MO': 'RESUB',
   '15-Reversed': 'REVERSED',
+  'Open (status not in SAP)': 'OPEN',
 }
 export const STATUS_SHORT: Record<StatusValue, string> = {
   '04-MO->FO: Correction Required': 'Correction Required',
   '02-Released to MO': 'Released to MO',
   '15-Reversed': 'Reversed',
+  'Open (status not in SAP)': 'Open - status not in SAP',
 }
 
 /** Who the page stamps as Changed By when Front Office corrects or reverses a transaction. */
@@ -230,6 +233,8 @@ export function buildTransactions(): Txn[] {
       moRemark: s.moRemark,
       changedBy: s.status === 'ERRCORR' ? '' : FO_REVIEWER,
       changedOn: s.status === 'ERRCORR' ? null : addDays(tradeDate, s.changedOffset ?? 3),
+      live: false,
+      buysLead: true,
     }
   })
 }

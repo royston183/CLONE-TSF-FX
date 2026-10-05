@@ -1,0 +1,142 @@
+/* Original stylesheet of bo-reverse-fx-mtm-india.html, scoped under .bo-reverse-fx-mtm-india.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.bo-reverse-fx-mtm-india *, .bo-reverse-fx-mtm-india {box-sizing:border-box}
+.bo-reverse-fx-mtm-india {height:100%}
+.bo-reverse-fx-mtm-india {margin:0;background:#F4F6F8;color:#1D2D3E;font-family:Inter,Arial,Helvetica,sans-serif;font-size:12px;overflow:hidden}
+.bo-reverse-fx-mtm-india button, .bo-reverse-fx-mtm-india input, .bo-reverse-fx-mtm-india select {font-family:inherit;font-size:12px;color:#1D2D3E}
+.bo-reverse-fx-mtm-india button {cursor:pointer}
+.bo-reverse-fx-mtm-india button:disabled {cursor:not-allowed;opacity:.48}
+.bo-reverse-fx-mtm-india .app {height:100%;display:flex;flex-direction:column;min-width:1060px}
+.bo-reverse-fx-mtm-india .topbar {height:57px;background:#fff;border-bottom:1px solid #CDD6DF;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px;flex:0 0 auto}
+.bo-reverse-fx-mtm-india .top-left, .bo-reverse-fx-mtm-india .top-right {display:flex;align-items:center}
+.bo-reverse-fx-mtm-india .top-left {gap:16px}
+.bo-reverse-fx-mtm-india .top-right {gap:8px}
+.bo-reverse-fx-mtm-india .btn {height:38px;border:1px solid #AAB9C8;background:#fff;border-radius:5px;padding:0 13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;color:#405870}
+.bo-reverse-fx-mtm-india .btn:hover:not(:disabled) {background:#F8FAFC;border-color:#7E96AC}
+.bo-reverse-fx-mtm-india .btn.primary {background:#0874D1;border-color:#0874D1;color:#fff;box-shadow:0 2px 5px rgba(8,116,209,.18)}
+.bo-reverse-fx-mtm-india .btn.primary:hover:not(:disabled) {background:#0568BC}
+.bo-reverse-fx-mtm-india .btn.compact {height:32px;padding:0 10px}
+.bo-reverse-fx-mtm-india .btn.icon-only {width:34px;padding:0}
+.bo-reverse-fx-mtm-india .btn.drop-ready {border-color:#0874D1;box-shadow:0 0 0 2px rgba(8,116,209,.14)}
+.bo-reverse-fx-mtm-india .btn.drop-hover {background:#EAF4FD;color:#075DAB;border-color:#0874D1}
+.bo-reverse-fx-mtm-india .icon {width:16px;height:16px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bo-reverse-fx-mtm-india .brand {display:flex;align-items:center;gap:13px}
+.bo-reverse-fx-mtm-india .logo {width:28px;height:36px;display:block}
+.bo-reverse-fx-mtm-india .title-wrap {display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+.bo-reverse-fx-mtm-india .page-title {font-size:20px;font-weight:700;letter-spacing:.1px}
+.bo-reverse-fx-mtm-india .subtitle {font-size:12px;color:#6B7E90}
+.bo-reverse-fx-mtm-india .status-dot {width:10px;height:10px;border-radius:50%;background:#2FB56F;box-shadow:0 0 0 3px #E3F5EB}
+.bo-reverse-fx-mtm-india .main {flex:1 1 auto;min-height:0;padding:14px 16px 16px;display:flex;flex-direction:column}
+.bo-reverse-fx-mtm-india .card {background:#fff;border:1px solid #D5DDE5;border-radius:8px;box-shadow:0 1px 2px rgba(25,44,62,.04);display:flex;flex-direction:column;min-height:0;flex:1 1 auto;overflow:hidden}
+.bo-reverse-fx-mtm-india .card-head {height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #D9E0E7;flex:0 0 auto}
+.bo-reverse-fx-mtm-india .card-title {font-size:14px;font-weight:700}
+.bo-reverse-fx-mtm-india .record-count {font-weight:400;color:#72879A;margin-left:5px}
+.bo-reverse-fx-mtm-india .head-meta {display:flex;align-items:center;gap:12px;color:#5D7287}
+.bo-reverse-fx-mtm-india .key-date-text {font-weight:600;color:#405870}
+.bo-reverse-fx-mtm-india .legend {display:flex;align-items:center;gap:10px}
+.bo-reverse-fx-mtm-india .legend-item {display:flex;align-items:center;gap:5px;white-space:nowrap}
+.bo-reverse-fx-mtm-india .legend-swatch {width:10px;height:10px;border-radius:2px;border:1px solid #CAD3DC}
+.bo-reverse-fx-mtm-india .legend-ext {background:#EEF1F4}
+.bo-reverse-fx-mtm-india .legend-mtm {background:#EAF4FD;border-color:#BFDDF7}
+.bo-reverse-fx-mtm-india .toolbar {padding:8px 10px;border-bottom:1px solid #E0E6EC;display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;flex:0 0 auto;background:#fff}
+.bo-reverse-fx-mtm-india .field {display:flex;flex-direction:column;gap:4px;min-width:90px;position:relative}
+.bo-reverse-fx-mtm-india .field.search-field {min-width:210px;flex:1 1 220px;max-width:300px}
+.bo-reverse-fx-mtm-india .field label {font-size:11px;color:#5D7287;font-weight:600;line-height:1}
+.bo-reverse-fx-mtm-india .required {color:#D64545;margin-left:2px}
+.bo-reverse-fx-mtm-india .control {height:32px;border:1px solid #B8C6D3;border-radius:4px;background:#fff;padding:0 9px;outline:none;min-width:0}
+.bo-reverse-fx-mtm-india .control:focus {border-color:#0874D1;box-shadow:0 0 0 2px rgba(8,116,209,.10)}
+.bo-reverse-fx-mtm-india select.control {padding-right:28px;min-width:110px}
+.bo-reverse-fx-mtm-india .date-wrap {display:flex;position:relative}
+.bo-reverse-fx-mtm-india .date-wrap .control {width:120px;padding-right:31px}
+.bo-reverse-fx-mtm-india .calendar-btn {position:absolute;right:1px;top:1px;width:30px;height:30px;border:0;border-left:1px solid #D6DEE6;background:#FAFBFC;color:#536C84;border-radius:0 3px 3px 0;display:flex;align-items:center;justify-content:center}
+.bo-reverse-fx-mtm-india .calendar-btn:hover {background:#F0F4F8}
+.bo-reverse-fx-mtm-india .inline-error {position:absolute;left:0;top:52px;z-index:10;color:#B93434;background:#FFF5F5;border:1px solid #F0BABA;border-radius:4px;padding:4px 6px;font-size:11px;white-space:nowrap;display:none;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.bo-reverse-fx-mtm-india .toolbar-spacer {flex:1 1 auto;min-width:4px}
+.bo-reverse-fx-mtm-india .action-block {display:flex;align-items:flex-end;gap:7px}
+.bo-reverse-fx-mtm-india .table-shell {flex:1 1 auto;min-height:0;overflow:auto;position:relative;background:#fff}
+.bo-reverse-fx-mtm-india table {border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;table-layout:auto}
+.bo-reverse-fx-mtm-india th, .bo-reverse-fx-mtm-india td {height:36px;border-bottom:1px solid #E2E7EC;border-right:1px solid #E8EDF2;padding:0 10px;white-space:nowrap;vertical-align:middle;background:#fff}
+.bo-reverse-fx-mtm-india th {position:sticky;top:0;z-index:4;background:#F5F7F9;color:#425C74;font-weight:700;text-align:left;height:35px;cursor:pointer;user-select:none}
+.bo-reverse-fx-mtm-india th.no-sort {cursor:default}
+.bo-reverse-fx-mtm-india td.num, .bo-reverse-fx-mtm-india th.num {text-align:right}
+.bo-reverse-fx-mtm-india .center {text-align:center}
+.bo-reverse-fx-mtm-india tbody tr:hover td {background:#FAFCFD}
+.bo-reverse-fx-mtm-india tbody tr.selected td {background:#EAF4FD}
+.bo-reverse-fx-mtm-india tbody tr.dragging {opacity:.58}
+.bo-reverse-fx-mtm-india .sticky-1 {position:sticky;left:0;z-index:3}
+.bo-reverse-fx-mtm-india .sticky-2 {position:sticky;left:42px;z-index:3}
+.bo-reverse-fx-mtm-india .sticky-3 {position:sticky;left:145px;z-index:3}
+.bo-reverse-fx-mtm-india th.sticky-1, .bo-reverse-fx-mtm-india th.sticky-2, .bo-reverse-fx-mtm-india th.sticky-3 {z-index:6;background:#F5F7F9}
+.bo-reverse-fx-mtm-india tr.selected td.sticky-1, .bo-reverse-fx-mtm-india tr.selected td.sticky-2, .bo-reverse-fx-mtm-india tr.selected td.sticky-3 {background:#EAF4FD}
+.bo-reverse-fx-mtm-india tbody tr:hover td.sticky-1, .bo-reverse-fx-mtm-india tbody tr:hover td.sticky-2, .bo-reverse-fx-mtm-india tbody tr:hover td.sticky-3 {background:#FAFCFD}
+.bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-1, .bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-2, .bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-3 {background:#EAF4FD}
+.bo-reverse-fx-mtm-india .col-select {width:42px;min-width:42px;text-align:center;padding:0}
+.bo-reverse-fx-mtm-india .col-rfha {min-width:103px}
+.bo-reverse-fx-mtm-india .col-bukrs {min-width:74px}
+.bo-reverse-fx-mtm-india .cell-ext {color:#546879}
+.bo-reverse-fx-mtm-india .cell-mtm {color:#075FAE}
+.bo-reverse-fx-mtm-india .cell-link {color:#0068C9;text-decoration:underline;font-weight:600;cursor:pointer}
+.bo-reverse-fx-mtm-india .cell-link:hover {color:#004F99}
+.bo-reverse-fx-mtm-india .muted {color:#8A9AAA}
+.bo-reverse-fx-mtm-india .posted {font-weight:600;color:#087B6B}
+.bo-reverse-fx-mtm-india .sort-mark {font-size:10px;margin-left:4px;color:#6F8294}
+.bo-reverse-fx-mtm-india .checkbox {width:14px;height:14px;margin:0;vertical-align:middle;accent-color:#0874D1}
+.bo-reverse-fx-mtm-india .footer {height:42px;border-top:1px solid #D9E0E7;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex:0 0 auto;background:#fff;color:#6A7F93}
+.bo-reverse-fx-mtm-india .pager {display:flex;align-items:center;gap:6px}
+.bo-reverse-fx-mtm-india .page-btn {height:28px;min-width:28px;border:1px solid #D7E0E8;border-radius:4px;background:#fff;color:#486179}
+.bo-reverse-fx-mtm-india .page-btn.active {color:#1D2D3E;border-color:#BFCBD6;background:#F7F9FB}
+.bo-reverse-fx-mtm-india .page-btn:disabled {color:#B4C0CA;background:#FAFBFC}
+.bo-reverse-fx-mtm-india .empty {padding:40px;text-align:center;color:#71869A;font-size:13px}
+.bo-reverse-fx-mtm-india .calendar-pop {position:fixed;width:278px;background:#fff;border:1px solid #CBD5DF;border-radius:8px;box-shadow:0 12px 28px rgba(33,53,72,.18);z-index:1200;padding:10px;display:none}
+.bo-reverse-fx-mtm-india .cal-head {display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.bo-reverse-fx-mtm-india .cal-nav {width:30px;height:30px;border:1px solid #D5DEE7;background:#fff;border-radius:4px}
+.bo-reverse-fx-mtm-india .cal-select {height:30px;border:1px solid #C8D3DD;border-radius:4px;background:#fff;padding:0 7px}
+.bo-reverse-fx-mtm-india .cal-month {flex:1}
+.bo-reverse-fx-mtm-india .cal-year {width:78px}
+.bo-reverse-fx-mtm-india .cal-grid {display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.bo-reverse-fx-mtm-india .cal-dow {font-size:10px;color:#71869A;font-weight:700;text-align:center;padding:5px 0}
+.bo-reverse-fx-mtm-india .cal-day {height:30px;border:0;background:#fff;border-radius:4px;font-size:11px}
+.bo-reverse-fx-mtm-india .cal-day:hover {background:#EAF4FD}
+.bo-reverse-fx-mtm-india .cal-day.out {color:#BCC6CF}
+.bo-reverse-fx-mtm-india .cal-day.today {box-shadow:inset 0 0 0 1px #8CBEE9}
+.bo-reverse-fx-mtm-india .cal-day.selected {background:#0874D1;color:#fff}
+.bo-reverse-fx-mtm-india .cal-day.weekend {color:#75899B}
+.bo-reverse-fx-mtm-india .cal-day.selected.weekend {color:#fff}
+.bo-reverse-fx-mtm-india .modal-backdrop {position:fixed;inset:0;background:rgba(25,38,52,.32);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px}
+.bo-reverse-fx-mtm-india .modal {width:min(820px,94vw);max-height:86vh;background:#fff;border-radius:10px;box-shadow:0 22px 58px rgba(16,31,45,.26);display:flex;flex-direction:column;overflow:hidden}
+.bo-reverse-fx-mtm-india .modal.small {width:min(560px,92vw)}
+.bo-reverse-fx-mtm-india .modal.wide {width:min(980px,95vw)}
+.bo-reverse-fx-mtm-india .modal-head {height:48px;border-bottom:1px solid #DCE3EA;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex:0 0 auto}
+.bo-reverse-fx-mtm-india .modal-title {font-size:15px;font-weight:700}
+.bo-reverse-fx-mtm-india .close-btn {width:30px;height:30px;border:0;background:#fff;border-radius:4px;font-size:20px;line-height:1;color:#64798B}
+.bo-reverse-fx-mtm-india .close-btn:hover {background:#F2F5F8}
+.bo-reverse-fx-mtm-india .modal-body {padding:14px 16px;overflow:auto}
+.bo-reverse-fx-mtm-india .modal-foot {height:52px;border-top:1px solid #DCE3EA;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 16px;flex:0 0 auto}
+.bo-reverse-fx-mtm-india .detail-grid {display:flex;flex-wrap:wrap;margin:-5px}
+.bo-reverse-fx-mtm-india .detail {width:25%;padding:5px}
+.bo-reverse-fx-mtm-india .detail.wide {width:50%}
+.bo-reverse-fx-mtm-india .detail .k {font-size:10px;text-transform:uppercase;letter-spacing:.35px;color:#73889A;font-weight:700;margin-bottom:4px}
+.bo-reverse-fx-mtm-india .detail .v {height:34px;border:1px solid #D9E1E8;background:#F8FAFB;border-radius:4px;padding:8px 9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bo-reverse-fx-mtm-india .section-label {font-size:12px;font-weight:700;margin:14px 0 8px;color:#30495F}
+.bo-reverse-fx-mtm-india .mini-table {width:100%;border-collapse:collapse}
+.bo-reverse-fx-mtm-india .mini-table th, .bo-reverse-fx-mtm-india .mini-table td {position:static;height:34px;padding:0 8px;border:1px solid #E0E6EC;background:#fff}
+.bo-reverse-fx-mtm-india .mini-table th {background:#F5F7F9;color:#425C74;cursor:default}
+.bo-reverse-fx-mtm-india .ok-icon {display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:#E3F5EB;color:#118A76;font-weight:800}
+.bo-reverse-fx-mtm-india .err-icon {display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:#FDE9E9;color:#D64545;font-weight:800}
+.bo-reverse-fx-mtm-india .toast {position:fixed;right:18px;bottom:18px;z-index:3000;background:#fff;border:1px solid #D4DEE6;border-radius:7px;box-shadow:0 8px 22px rgba(22,42,60,.18);padding:10px 12px;display:none;align-items:center;gap:8px;min-width:240px;max-width:420px}
+.bo-reverse-fx-mtm-india .toast.success .toast-mark {background:#E3F5EB;color:#118A76}
+.bo-reverse-fx-mtm-india .toast.info .toast-mark {background:#EAF4FD;color:#0874D1}
+.bo-reverse-fx-mtm-india .toast-mark {width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto}
+.bo-reverse-fx-mtm-india .toast-text {font-weight:600;color:#405870}
+.bo-reverse-fx-mtm-india .filter-summary {font-size:11px;color:#6B8094;margin-left:3px;align-self:center;white-space:nowrap}
+@media(max-width:1366px) {
+.bo-reverse-fx-mtm-india .page-title {font-size:18px}
+.bo-reverse-fx-mtm-india .top-left {gap:12px}
+.bo-reverse-fx-mtm-india .btn {padding:0 10px}
+.bo-reverse-fx-mtm-india .toolbar {gap:6px}
+.bo-reverse-fx-mtm-india .field.search-field {max-width:230px}
+.bo-reverse-fx-mtm-india .legend {display:none}
+}

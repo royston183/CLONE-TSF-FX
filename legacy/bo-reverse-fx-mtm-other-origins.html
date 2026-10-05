@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reverse FX MTM - Other Origins</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#F4F6F8;color:#1D2D3E;font-family:Inter,Arial,Helvetica,sans-serif;font-size:12px;overflow:hidden}
+  button,input,select{font-family:inherit;font-size:12px;color:#1D2D3E}
+  button{cursor:pointer}
+  button:disabled{cursor:not-allowed;opacity:.48}
+  .app{height:100%;display:flex;flex-direction:column;min-width:1060px}
+  .topbar{height:57px;background:#fff;border-bottom:1px solid #CDD6DF;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px;flex:0 0 auto}
+  .top-left,.top-right{display:flex;align-items:center}
+  .top-left{gap:16px}.top-right{gap:8px}
+  .btn{height:38px;border:1px solid #AAB9C8;background:#fff;border-radius:5px;padding:0 13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;color:#405870}
+  .btn:hover:not(:disabled){background:#F8FAFC;border-color:#7E96AC}
+  .btn.primary{background:#0874D1;border-color:#0874D1;color:#fff;box-shadow:0 2px 5px rgba(8,116,209,.18)}
+  .btn.primary:hover:not(:disabled){background:#0568BC}
+  .btn.compact{height:32px;padding:0 10px}
+  .btn.icon-only{width:34px;padding:0}
+  .btn.drop-ready{border-color:#0874D1;box-shadow:0 0 0 2px rgba(8,116,209,.14)}
+  .btn.drop-hover{background:#EAF4FD;color:#075DAB;border-color:#0874D1}
+  .icon{width:16px;height:16px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{width:28px;height:36px;display:block}
+  .title-wrap{display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+  .page-title{font-size:20px;font-weight:700;letter-spacing:.1px}
+  .subtitle{font-size:12px;color:#6B7E90}
+  .status-dot{width:10px;height:10px;border-radius:50%;background:#2FB56F;box-shadow:0 0 0 3px #E3F5EB}
+  .main{flex:1 1 auto;min-height:0;padding:14px 16px 16px;display:flex;flex-direction:column}
+  .card{background:#fff;border:1px solid #D5DDE5;border-radius:8px;box-shadow:0 1px 2px rgba(25,44,62,.04);display:flex;flex-direction:column;min-height:0;flex:1 1 auto;overflow:hidden}
+  .card-head{height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #D9E0E7;flex:0 0 auto}
+  .card-title{font-size:14px;font-weight:700}.record-count{font-weight:400;color:#72879A;margin-left:5px}
+  .head-meta{display:flex;align-items:center;gap:12px;color:#5D7287}
+  .key-date-text{font-weight:600;color:#405870}
+  .legend{display:flex;align-items:center;gap:10px}
+  .legend-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .legend-swatch{width:10px;height:10px;border-radius:2px;border:1px solid #CAD3DC}
+  .legend-ext{background:#EEF1F4}.legend-mtm{background:#EAF4FD;border-color:#BFDDF7}
+  .toolbar{padding:8px 10px;border-bottom:1px solid #E0E6EC;display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;flex:0 0 auto;background:#fff}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:90px;position:relative}
+  .field.search-field{min-width:210px;flex:1 1 220px;max-width:300px}
+  .field label{font-size:11px;color:#5D7287;font-weight:600;line-height:1}
+  .required{color:#D64545;margin-left:2px}
+  .control{height:32px;border:1px solid #B8C6D3;border-radius:4px;background:#fff;padding:0 9px;outline:none;min-width:0}
+  .control:focus{border-color:#0874D1;box-shadow:0 0 0 2px rgba(8,116,209,.10)}
+  select.control{padding-right:28px;min-width:110px}
+  .date-wrap{display:flex;position:relative}
+  .date-wrap .control{width:120px;padding-right:31px}
+  .calendar-btn{position:absolute;right:1px;top:1px;width:30px;height:30px;border:0;border-left:1px solid #D6DEE6;background:#FAFBFC;color:#536C84;border-radius:0 3px 3px 0;display:flex;align-items:center;justify-content:center}
+  .calendar-btn:hover{background:#F0F4F8}
+  .inline-error{position:absolute;left:0;top:52px;z-index:10;color:#B93434;background:#FFF5F5;border:1px solid #F0BABA;border-radius:4px;padding:4px 6px;font-size:11px;white-space:nowrap;display:none;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+  .toolbar-spacer{flex:1 1 auto;min-width:4px}
+  .action-block{display:flex;align-items:flex-end;gap:7px}
+  .table-shell{flex:1 1 auto;min-height:0;overflow:auto;position:relative;background:#fff}
+  table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;table-layout:auto}
+  th,td{height:36px;border-bottom:1px solid #E2E7EC;border-right:1px solid #E8EDF2;padding:0 10px;white-space:nowrap;vertical-align:middle;background:#fff}
+  th{position:sticky;top:0;z-index:4;background:#F5F7F9;color:#425C74;font-weight:700;text-align:left;height:35px;cursor:pointer;user-select:none}
+  th.no-sort{cursor:default}
+  td.num,th.num{text-align:right}.center{text-align:center}
+  tbody tr:hover td{background:#FAFCFD}
+  tbody tr.selected td{background:#EAF4FD}
+  tbody tr.dragging{opacity:.58}
+  .sticky-1{position:sticky;left:0;z-index:3}.sticky-2{position:sticky;left:42px;z-index:3}.sticky-3{position:sticky;left:145px;z-index:3}
+  th.sticky-1,th.sticky-2,th.sticky-3{z-index:6;background:#F5F7F9}
+  tr.selected td.sticky-1,tr.selected td.sticky-2,tr.selected td.sticky-3{background:#EAF4FD}
+  tbody tr:hover td.sticky-1,tbody tr:hover td.sticky-2,tbody tr:hover td.sticky-3{background:#FAFCFD}
+  tbody tr.selected:hover td.sticky-1,tbody tr.selected:hover td.sticky-2,tbody tr.selected:hover td.sticky-3{background:#EAF4FD}
+  .col-select{width:42px;min-width:42px;text-align:center;padding:0}.col-rfha{min-width:103px}.col-bukrs{min-width:74px}
+  .cell-ext{color:#546879}.cell-mtm{color:#075FAE}.cell-link{color:#0068C9;text-decoration:underline;font-weight:600;cursor:pointer}
+  .cell-link:hover{color:#004F99}.muted{color:#8A9AAA}.posted{font-weight:600;color:#087B6B}
+  .sort-mark{font-size:10px;margin-left:4px;color:#6F8294}.checkbox{width:14px;height:14px;margin:0;vertical-align:middle;accent-color:#0874D1}
+  .footer{height:42px;border-top:1px solid #D9E0E7;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex:0 0 auto;background:#fff;color:#6A7F93}
+  .pager{display:flex;align-items:center;gap:6px}.page-btn{height:28px;min-width:28px;border:1px solid #D7E0E8;border-radius:4px;background:#fff;color:#486179}.page-btn.active{color:#1D2D3E;border-color:#BFCBD6;background:#F7F9FB}.page-btn:disabled{color:#B4C0CA;background:#FAFBFC}
+  .empty{padding:40px;text-align:center;color:#71869A;font-size:13px}
+  .calendar-pop{position:fixed;width:278px;background:#fff;border:1px solid #CBD5DF;border-radius:8px;box-shadow:0 12px 28px rgba(33,53,72,.18);z-index:1200;padding:10px;display:none}
+  .cal-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}.cal-nav{width:30px;height:30px;border:1px solid #D5DEE7;background:#fff;border-radius:4px}.cal-select{height:30px;border:1px solid #C8D3DD;border-radius:4px;background:#fff;padding:0 7px}.cal-month{flex:1}.cal-year{width:78px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.cal-dow{font-size:10px;color:#71869A;font-weight:700;text-align:center;padding:5px 0}.cal-day{height:30px;border:0;background:#fff;border-radius:4px;font-size:11px}.cal-day:hover{background:#EAF4FD}.cal-day.out{color:#BCC6CF}.cal-day.today{box-shadow:inset 0 0 0 1px #8CBEE9}.cal-day.selected{background:#0874D1;color:#fff}.cal-day.weekend{color:#75899B}.cal-day.selected.weekend{color:#fff}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(25,38,52,.32);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px}
+  .modal{width:min(820px,94vw);max-height:86vh;background:#fff;border-radius:10px;box-shadow:0 22px 58px rgba(16,31,45,.26);display:flex;flex-direction:column;overflow:hidden}
+  .modal.small{width:min(560px,92vw)}.modal.wide{width:min(980px,95vw)}
+  .modal-head{height:48px;border-bottom:1px solid #DCE3EA;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex:0 0 auto}.modal-title{font-size:15px;font-weight:700}.close-btn{width:30px;height:30px;border:0;background:#fff;border-radius:4px;font-size:20px;line-height:1;color:#64798B}.close-btn:hover{background:#F2F5F8}
+  .modal-body{padding:14px 16px;overflow:auto}.modal-foot{height:52px;border-top:1px solid #DCE3EA;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 16px;flex:0 0 auto}
+  .detail-grid{display:flex;flex-wrap:wrap;margin:-5px}.detail{width:25%;padding:5px}.detail.wide{width:50%}.detail .k{font-size:10px;text-transform:uppercase;letter-spacing:.35px;color:#73889A;font-weight:700;margin-bottom:4px}.detail .v{height:34px;border:1px solid #D9E1E8;background:#F8FAFB;border-radius:4px;padding:8px 9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .section-label{font-size:12px;font-weight:700;margin:14px 0 8px;color:#30495F}.mini-table{width:100%;border-collapse:collapse}.mini-table th,.mini-table td{position:static;height:34px;padding:0 8px;border:1px solid #E0E6EC;background:#fff}.mini-table th{background:#F5F7F9;color:#425C74;cursor:default}.ok-icon{display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:#E3F5EB;color:#118A76;font-weight:800}.err-icon{display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:#FDE9E9;color:#D64545;font-weight:800}
+  .toast{position:fixed;right:18px;bottom:18px;z-index:3000;background:#fff;border:1px solid #D4DEE6;border-radius:7px;box-shadow:0 8px 22px rgba(22,42,60,.18);padding:10px 12px;display:none;align-items:center;gap:8px;min-width:240px;max-width:420px}.toast.success .toast-mark{background:#E3F5EB;color:#118A76}.toast.info .toast-mark{background:#EAF4FD;color:#0874D1}.toast-mark{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto}.toast-text{font-weight:600;color:#405870}
+  .filter-summary{font-size:11px;color:#6B8094;margin-left:3px;align-self:center;white-space:nowrap}
+  @media(max-width:1366px){.page-title{font-size:18px}.top-left{gap:12px}.btn{padding:0 10px}.toolbar{gap:6px}.field.search-field{max-width:230px}.legend{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="top-left">
+      <button class="btn" type="button" onclick="goBack()" title="Back">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+        Back
+      </button>
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 28 36" aria-hidden="true">
+          <rect x="5" y="2" width="19" height="7" rx="3.5" fill="#D93636"></rect>
+          <rect x="5" y="11" width="13" height="7" rx="3.5" fill="#F3B51B"></rect>
+          <rect x="5" y="20" width="10" height="7" rx="3.5" fill="#2E9B59"></rect>
+          <circle cx="8.5" cy="31" r="3.5" fill="#7C8A90"></circle>
+        </svg>
+        <div class="title-wrap"><span class="page-title">Reverse FX MTM</span><span class="subtitle">Other Origins</span></div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="status-dot" title="Demo ready"></span>
+      <button class="btn" type="button" onclick="refreshAll()" title="Restore initial data and filters">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5"></path><path d="M20 4v7h-7"></path></svg>
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="card">
+      <div class="card-head">
+        <div><span class="card-title">Reverse FX MTM - Other Origins</span><span class="record-count" id="recordCount"></span></div>
+        <div class="head-meta">
+          <div class="legend" title="Source note: Grey = Transaction Data - External; Blue = MTM Data">
+            <span class="legend-item"><span class="legend-swatch legend-ext"></span>Transaction Data - External</span>
+            <span class="legend-item"><span class="legend-swatch legend-mtm"></span>MTM Data</span>
+          </div>
+          <span class="key-date-text" id="keyDateHeader"></span>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="field search-field">
+          <label for="searchInput">Search</label>
+          <input id="searchInput" class="control" type="text" placeholder="Search transactions..." oninput="onFilterChange()">
+        </div>
+        <div class="field">
+          <label for="companyFilter">Company Code<span class="required">*</span></label>
+          <select id="companyFilter" class="control" onchange="onFilterChange()"></select>
+        </div>
+        <div class="field" id="dateField">
+          <label for="keyDateInput">Key Date<span class="required">*</span> <span title="Key Date is the Month End Date" style="cursor:help;color:#0874D1">ⓘ</span></label>
+          <div class="date-wrap">
+            <input id="keyDateInput" class="control" type="text" maxlength="10" value="30-09-2026" onblur="validateAndApplyDate()" onkeydown="dateKeyDown(event)">
+            <button class="calendar-btn" type="button" onclick="toggleCalendar(event)" title="Open calendar">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>
+            </button>
+          </div>
+          <div class="inline-error" id="dateError">Key Date should be Month End Date only.</div>
+        </div>
+        <div class="field">
+          <label for="transactionFilter">Transaction</label>
+          <select id="transactionFilter" class="control" onchange="onFilterChange()"></select>
+        </div>
+        <div class="field">
+          <label for="partnerFilter">Business Partner</label>
+          <select id="partnerFilter" class="control" onchange="onFilterChange()"></select>
+        </div>
+        <div class="field">
+          <label for="currencyFilter">Currency Pair</label>
+          <select id="currencyFilter" class="control" onchange="onFilterChange()"></select>
+        </div>
+        <div class="field">
+          <label for="dealFilter">Deal Type</label>
+          <select id="dealFilter" class="control" onchange="onFilterChange()">
+            <option value="ALL">All</option>
+            <option value="WITH">With Deal ID</option>
+            <option value="WITHOUT">Without Deal ID</option>
+          </select>
+        </div>
+        <div class="action-block">
+          <button class="btn compact" type="button" onclick="resetFilters()">Reset</button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="action-block">
+          <button class="btn compact primary" id="postSelectedBtn" type="button" onclick="postSelected()" disabled title="Select an eligible transaction">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><rect x="4" y="18" width="16" height="3" rx="1"></rect></svg>
+            Posting Document
+          </button>
+          <button class="btn compact icon-only" type="button" onclick="exportCsv()" title="Download current results">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-shell" id="tableShell">
+        <table id="dataTable" aria-label="Reverse FX MTM Other Origins transactions">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty" id="emptyState" style="display:none">No transactions match the current selection.</div>
+      </div>
+      <div class="footer">
+        <span id="showingText"></span>
+        <div class="pager" id="pager"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="calendar-pop" id="calendarPop" aria-hidden="true">
+  <div class="cal-head">
+    <button class="cal-nav" type="button" onclick="shiftCalendar(-1)" title="Previous month">‹</button>
+    <select id="calMonth" class="cal-select cal-month" onchange="calendarSelectChanged()"></select>
+    <select id="calYear" class="cal-select cal-year" onchange="calendarSelectChanged()"></select>
+    <button class="cal-nav" type="button" onclick="shiftCalendar(1)" title="Next month">›</button>
+  </div>
+  <div class="cal-grid" id="calendarGrid"></div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal" id="modalBox">
+    <div class="modal-head"><div class="modal-title" id="modalTitle"></div><button class="close-btn" type="button" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"><button class="btn compact" type="button" onclick="closeModal()">Close</button></div>
+  </div>
+</div>
+
+<div class="toast info" id="toast"><span class="toast-mark" id="toastMark">i</span><span class="toast-text" id="toastText"></span></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var INITIAL_KEY_DATE = '2026-09-30';
+  var pageSize = 8;
+  var currentPage = 1;
+  var selectedId = null;
+  var sortField = 'rfha';
+  var sortDir = -1;
+  var calendarYear = 2026;
+  var calendarMonth = 8;
+  var toastTimer = null;
+  var documentCounter = 1900048200;
+  var reversalCounter = 2900026300;
+
+  var companyNames = {
+    'SG03':'Olam Global Agri Pte Ltd',
+    'AE13':'Olam International DMCC',
+    'IN11':'Olam Agri India Pvt Ltd'
+  };
+
+  var companyCurrencies = {
+    'SG03':'SGD',
+    'AE13':'AED',
+    'IN11':'INR'
+  };
+
+  var initialRows = [
+    raw('0000041000873','SG03','60F','FX Forward','0400000810','STANDARD CHARTERED BANK SINGAPORE','2026-07-29','2027-01-29','Sell','USD','SGD',1200000,1557600,1.2980,1.2760,0.0042,'USD/SGD','D-410873','OGA-873','EXT-873','P',510000,'',''),
+    raw('0000041000872','AE13','60F','FX Forward','0400000003','BARCLAYS BANK PLC','2026-08-02','2026-12-30','Buy','USD','AED',850000,3121205,3.6720,3.6715,0.0004,'USD/AED','D-410872','DMCC-872','EXT-872','',0,'1900051172','2900029172'),
+    raw('0000041000871','IN11','60D','FX NDF','0400000807','HSBC SINGAPORE','2026-08-06','2026-11-30','Sell','USD','INR',650000,54567500,83.9500,84.4800,0.2100,'USD/INR','', 'OGA-871','EXT-871','',0,'',''),
+    raw('0000041000870','IN11','60F','FX Forward','0400000645','DBS BANK LTD','2026-08-11','2027-03-31','Buy','USD','INR',1000000,84350000,84.3500,84.9100,0.2900,'USD/INR','D-410870','OGA-870','EXT-870','P',350000,'',''),
+    raw('0000041000869','SG03','60F','FX Forward','0400000680','STANDARD CHARTERED BANK SINGAPORE','2026-08-13','2026-10-30','Sell','USD','SGD',900000,1169100,1.2990,1.2810,0.0030,'USD/SGD','D-410869','OGA-869','EXT-869','C',900000,'',''),
+    raw('0000041000868','AE13','60D','FX NDF','0400000810','STANDARD CHARTERED BANK SINGAPORE','2026-08-15','2027-06-30','Buy','USD','AED',420000,1542660,3.6730,3.6718,0.0006,'USD/AED','D-410868','DMCC-868','EXT-868','P',120000,'',''),
+    raw('0000041000867','IN11','60F','FX Forward','0400000003','BARCLAYS BANK PLC','2026-08-18','2026-12-31','Sell','USD','INR',1500000,126450000,84.3000,84.8600,0.3800,'USD/INR','', 'OGA-867','EXT-867','',0,'',''),
+    raw('0000041000866','SG03','60F','FX Forward','0400000645','DBS BANK LTD','2026-08-20','2027-09-30','Buy','USD','SGD',2000000,2598000,1.2990,1.2820,0.0062,'USD/SGD','D-410866','OGA-866','EXT-866','P',800000,'1900051166','2900029166'),
+    raw('0000041000865','AE13','60F','FX Forward','0400000807','HSBC SINGAPORE','2026-08-21','2027-02-26','Sell','USD','AED',700000,2570400,3.6720,3.6716,0.0004,'USD/AED','D-410865','DMCC-865','EXT-865','',0,'',''),
+    raw('0000041000864','SG03','60F','FX Forward','0400000680','STANDARD CHARTERED BANK SINGAPORE','2026-08-22','2026-10-30','Buy','USD','SGD',1100000,1426700,1.2970,1.2800,0.0020,'USD/SGD','D-410864','OGA-864','EXT-864','P',400000,'',''),
+    raw('0000041000863','IN11','60D','FX NDF','0400000810','STANDARD CHARTERED BANK SINGAPORE','2026-08-24','2027-04-30','Sell','USD','INR',1250000,105375000,84.3000,84.8600,0.4600,'USD/INR','D-410863','OGA-863','EXT-863','P',500000,'',''),
+    raw('0000041000862','AE13','60F','FX Forward','0400000003','BARCLAYS BANK PLC','2026-08-25','2026-12-30','Buy','USD','AED',600000,2203800,3.6730,3.6717,0.0005,'USD/AED','', 'DMCC-862','EXT-862','',0,'',''),
+    raw('0000041000861','IN11','60D','FX NDF','0400000645','DBS BANK LTD','2026-08-27','2027-05-31','Sell','USD','INR',300000,25260000,84.2000,84.7600,0.3100,'USD/INR','D-410861','OGA-861','EXT-861','P',90000,'',''),
+    raw('0000041000860','SG03','60F','FX Forward','0400000807','HSBC SINGAPORE','2026-08-28','2026-11-30','Buy','USD','SGD',1300000,1688700,1.2990,1.2820,0.0036,'USD/SGD','D-410860','OGA-860','EXT-860','',0,'',''),
+    raw('0000041000859','AE13','60F','FX Forward','0400000680','STANDARD CHARTERED BANK SINGAPORE','2026-08-29','2027-03-31','Sell','USD','AED',750000,2754750,3.6730,3.6714,0.0007,'USD/AED','D-410859','DMCC-859','EXT-859','P',300000,'',''),
+    raw('0000041000858','IN11','60F','FX Forward','0400000003','BARCLAYS BANK PLC','2026-08-30','2027-01-29','Buy','USD','INR',950000,80085000,84.3000,84.7300,0.3900,'USD/INR','D-410858','OGA-858','EXT-858','P',190000,'',''),
+    raw('0000041000857','SG03','60D','FX NDF','0400000645','DBS BANK LTD','2026-08-31','2027-08-31','Sell','USD','SGD',1750000,2271500,1.2980,1.2790,0.0071,'USD/SGD','D-410857','OGA-857','EXT-857','',0,'',''),
+    raw('0000041000856','AE13','60F','FX Forward','0400000810','STANDARD CHARTERED BANK SINGAPORE','2026-09-01','2027-02-26','Buy','USD','AED',500000,1836500,3.6730,3.6715,0.0005,'USD/AED','', 'DMCC-856','EXT-856','',0,'','')
+  ];
+
+  var rows = cloneRows(initialRows);
+
+  var columns = [
+    {field:'select',label:'',type:'select',sticky:'sticky-1',cls:'col-select',sort:false},
+    {field:'rfha',label:'Transaction',type:'link',sticky:'sticky-2',cls:'col-rfha'},
+    {field:'bukrs',label:'Company Code',type:'text',sticky:'sticky-3',cls:'col-bukrs'},
+    {field:'butxt',label:'Company Name',type:'text'},
+    {field:'sgsart',label:'Product Type',type:'text'},
+    {field:'xtext',label:'Transaction Type',type:'text'},
+    {field:'kontrh',label:'Business Partner',type:'text'},
+    {field:'bpName',label:'Partner Name',type:'text'},
+    {field:'tradeDate',label:'Trade Date',type:'date'},
+    {field:'valueDate',label:'Value Date',type:'date'},
+    {field:'buySell',label:'Buy/Sell',type:'text'},
+    {field:'cpair',label:'Currency Pair',type:'text'},
+    {field:'fAmt',label:'Foreign Amount',type:'amount',group:'ext'},
+    {field:'fCurr',label:'Foreign Curr',type:'text',group:'ext'},
+    {field:'cRate',label:'Contract Rate',type:'rate',group:'ext'},
+    {field:'ccAmt',label:'Company Code Amount',type:'amount',group:'ext'},
+    {field:'zWaers',label:'Local Curr',type:'text',group:'ext'},
+    {field:'vSpot',label:'Valuation Spot',type:'rate',group:'mtm'},
+    {field:'vSwap',label:'Valuation Swap',type:'rate',group:'mtm'},
+    {field:'vRate',label:'Valuation Rate',type:'rate',group:'mtm'},
+    {field:'vAmt',label:'Valuation Amount',type:'amount',group:'mtm'},
+    {field:'vCgl',label:'Local Valuation G/L',type:'amount',group:'mtm'},
+    {field:'valMer',label:'Valuation MER',type:'rate',group:'mtm'},
+    {field:'vGl',label:'Valuation G/L (USD)',type:'amount',group:'mtm'},
+    {field:'month',label:'Exp Mth-yr',type:'text',group:'mtm'},
+    {field:'monat',label:'Exp Mth',type:'number',group:'mtm'},
+    {field:'ztsfDealId',label:'Deal ID',type:'text'},
+    {field:'invStat',label:'Invoice',type:'text'},
+    {field:'t1Amt',label:'T1 Amount',type:'amount'},
+    {field:'uinvAmt',label:'Uninvoiced Amount',type:'amount'},
+    {field:'uinvPer',label:'Uninvoiced %',type:'percent'},
+    {field:'locUninv',label:'Loc Curr Uninv',type:'amount'},
+    {field:'totGl',label:'Total G/L',type:'amount'},
+    {field:'mtmDoc',label:'MTM Document',type:'doc',group:'mtm'},
+    {field:'revDoc',label:'Rev Document',type:'doc',group:'mtm'},
+    {field:'msg',label:'Message',type:'text',group:'mtm'},
+    {field:'externalRef',label:'External Reference',type:'text'}
+  ];
+
+  function raw(rfha,bukrs,sgsart,xtext,kontrh,bpName,tradeDate,valueDate,buySell,curr1,curr2,amt1,amt2,cRate,vSpot,vSwap,cpair,dealId,olamDeal,externalRef,pc,t1Amt,mtmDoc,revDoc){
+    return {rfha:rfha,bukrs:bukrs,butxt:companyNames[bukrs],zWaers:companyCurrencies[bukrs],sgsart:sgsart,xtext:xtext,kontrh:kontrh,bpName:bpName,tradeDate:tradeDate,valueDate:valueDate,buySell:buySell,curr1:curr1,curr2:curr2,amt1:amt1,amt2:amt2,cRate:cRate,vSpot:vSpot,vSwap:vSwap,cpair:cpair,ztsfDealId:dealId,zolamDealNo:olamDeal,externalRef:externalRef,pc:pc,t1Amt:t1Amt,mtmDoc:mtmDoc,revDoc:revDoc,msg:mtmDoc?'Document Posted Sucessfully':''};
+  }
+
+  function cloneRows(source){
+    var out=[],i;
+    for(i=0;i<source.length;i++){out.push(deriveRow(copyObject(source[i])));}
+    return out;
+  }
+
+  function copyObject(o){var n={},k;for(k in o){if(o.hasOwnProperty(k)){n[k]=o[k];}}return n;}
+
+  function deriveRow(r){
+    var firstIsLocal = r.curr1 === r.zWaers;
+    r.fAmt = Math.abs(firstIsLocal ? r.amt2 : r.amt1);
+    r.fCurr = firstIsLocal ? r.curr2 : r.curr1;
+    r.ccAmt = convertForeignToLocal(r.fAmt,r.cRate,r.fCurr,r.zWaers);
+    r.vRate = r.vSpot + r.vSwap;
+    r.vAmt = convertForeignToLocal(r.fAmt,r.vRate,r.fCurr,r.zWaers);
+    var rawLocalGl = Math.abs(r.vAmt-r.ccAmt);
+    if(r.buySell === 'Buy'){
+      r.vCgl = r.cRate >= r.vRate ? rawLocalGl*-1 : rawLocalGl;
+    }else{
+      r.vCgl = r.cRate >= r.vRate ? rawLocalGl : rawLocalGl*-1;
+    }
+    r.valMer = r.vSpot;
+    r.vGl = r.valMer ? r.vCgl/r.valMer : 0;
+    r.invStat = r.ztsfDealId ? (r.t1Amt>0?'Yes':'No') : '';
+    r.uinvAmt = 0;r.uinvPer = 0;r.locUninv = 0;
+    r.totGl = r.vGl;
+    if(r.pc === 'C'){
+      r.vGl = null;
+    }else if(r.pc === 'P'){
+      var usdLegAmt = r.curr1 === 'USD' ? Math.abs(r.amt1) : Math.abs(r.amt2);
+      r.uinvAmt = usdLegAmt-Math.abs(r.t1Amt);
+      r.uinvPer = usdLegAmt ? (Math.abs(r.uinvAmt)/usdLegAmt)*100 : 0;
+      r.vGl = r.vGl*(r.uinvPer/100);
+      r.locUninv = r.vCgl*(r.uinvPer/100);
+    }
+    r.month = monthYear(r.valueDate);
+    r.monat = expiryMonthBucket(r.valueDate,INITIAL_KEY_DATE);
+    return r;
+  }
+
+  function convertForeignToLocal(amount,rate,foreignCurr,localCurr){
+    if(!rate){return 0;}
+    /* Demo mirrors the common USD/local quote convention used by the source rows. */
+    return amount*rate;
+  }
+
+  function safeDiv(a,b){return b? a/b:0;}
+  function monthYear(iso){var p=iso.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return m[parseInt(p[1],10)-1]+' '+p[0];}
+  function expiryMonthBucket(valueDate,keyDate){var v=parseIso(valueDate),k=parseIso(keyDate);if(!v||!k){return 0;}return Math.max(1,(v.getFullYear()-k.getFullYear())*12+(v.getMonth()-k.getMonth()));}
+
+  function formatNumber(v,dec){
+    if(v===null||v===undefined||v===''){return '';}
+    var n=Number(v);if(isNaN(n)){return String(v);}
+    var neg=n<0;n=Math.abs(n);var s=n.toFixed(dec);var parts=s.split('.');var x=parts[0];var out='';var i,c=0;
+    for(i=x.length-1;i>=0;i--){out=x.charAt(i)+out;c++;if(c===3&&i!==0){out=','+out;c=0;}}
+    return (neg?'-':'')+out+(dec?'.'+parts[1]:'');
+  }
+
+  function formatDate(iso){if(!iso){return '';}var p=iso.split('-');return p[2]+'-'+p[1]+'-'+p[0];}
+  function parseDisplayDate(s){if(!/^\d{2}-\d{2}-\d{4}$/.test(s)){return null;}var p=s.split('-');var d=new Date(parseInt(p[2],10),parseInt(p[1],10)-1,parseInt(p[0],10));if(d.getFullYear()!=parseInt(p[2],10)||d.getMonth()!=parseInt(p[1],10)-1||d.getDate()!=parseInt(p[0],10)){return null;}return d;}
+  function parseIso(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s)){return null;}var p=s.split('-');return new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));}
+  function toIso(d){return d.getFullYear()+'-'+two(d.getMonth()+1)+'-'+two(d.getDate());}
+  function toDisplay(d){return two(d.getDate())+'-'+two(d.getMonth()+1)+'-'+d.getFullYear();}
+  function two(n){return n<10?'0'+n:String(n);}
+  function isMonthEnd(d){var next=new Date(d.getFullYear(),d.getMonth()+1,1);var last=new Date(next.getTime()-86400000);return d.getDate()===last.getDate();}
+
+  function unique(field){var seen={},arr=[],i,v;for(i=0;i<rows.length;i++){v=rows[i][field];if(v!==''&&v!==null&&!seen[v]){seen[v]=1;arr.push(v);}}arr.sort();return arr;}
+  function fillSelect(id,values,labelFn){var s=document.getElementById(id),i,opt;s.innerHTML='';opt=document.createElement('option');opt.value='ALL';opt.text='All';s.appendChild(opt);for(i=0;i<values.length;i++){opt=document.createElement('option');opt.value=values[i];opt.text=labelFn?labelFn(values[i]):values[i];s.appendChild(opt);}}
+
+  function init(){
+    fillSelect('companyFilter',unique('bukrs'),function(v){return v+' — '+companyNames[v];});
+    fillSelect('transactionFilter',unique('rfha'));
+    fillSelect('partnerFilter',unique('kontrh'),function(v){var name='';for(var i=0;i<rows.length;i++){if(rows[i].kontrh===v){name=rows[i].bpName;break;}}return v+' — '+name;});
+    fillSelect('currencyFilter',unique('cpair'));
+    buildHeader();
+    buildCalendarSelectors();
+    render();
+    bindGlobalEvents();
+  }
+
+  function buildHeader(){
+    var tr=document.createElement('tr'),i,th,mark;
+    for(i=0;i<columns.length;i++){
+      th=document.createElement('th');
+      th.className=(columns[i].sticky?columns[i].sticky+' ':'')+(columns[i].cls||'')+(columns[i].type==='amount'||columns[i].type==='rate'||columns[i].type==='percent'||columns[i].type==='number'?' num':'')+(columns[i].sort===false?' no-sort':'');
+      th.setAttribute('data-field',columns[i].field);
+      if(columns[i].sort!==false){th.onclick=headerSort;}
+      th.appendChild(document.createTextNode(columns[i].label));
+      if(columns[i].sort!==false){mark=document.createElement('span');mark.className='sort-mark';mark.id='sort_'+columns[i].field;mark.innerHTML='';th.appendChild(mark);}
+      tr.appendChild(th);
+    }
+    document.getElementById('tableHead').appendChild(tr);
+  }
+
+  function headerSort(){var f=this.getAttribute('data-field');if(sortField===f){sortDir=sortDir*-1;}else{sortField=f;sortDir=1;}currentPage=1;render();}
+
+  function getFiltered(){
+    var q=trimLower(document.getElementById('searchInput').value),co=document.getElementById('companyFilter').value,tx=document.getElementById('transactionFilter').value,bp=document.getElementById('partnerFilter').value,cp=document.getElementById('currencyFilter').value,deal=document.getElementById('dealFilter').value;
+    var kd=parseDisplayDate(document.getElementById('keyDateInput').value);if(!kd||!isMonthEnd(kd)){return [];}
+    var out=[],i,r,hay;
+    for(i=0;i<rows.length;i++){
+      r=rows[i];
+      if(co!=='ALL'&&r.bukrs!==co){continue;}
+      if(tx!=='ALL'&&r.rfha!==tx){continue;}
+      if(bp!=='ALL'&&r.kontrh!==bp){continue;}
+      if(cp!=='ALL'&&r.cpair!==cp){continue;}
+      if(deal==='WITH'&&!r.ztsfDealId){continue;}
+      if(deal==='WITHOUT'&&r.ztsfDealId){continue;}
+      if(!(r.tradeDate<=toIso(kd)&&r.valueDate>toIso(kd))){continue;}
+      if(q){hay=rowSearchText(r);if(hay.indexOf(q)===-1){continue;}}
+      out.push(r);
+    }
+    out.sort(compareRows);
+    return out;
+  }
+
+  function rowSearchText(r){var s='',i,f,v;for(i=1;i<columns.length;i++){f=columns[i].field;v=r[f];if(columns[i].type==='date'){v=formatDate(v);}s+=' '+String(v===null?'':v).toLowerCase();}return s;}
+  function trimLower(s){return s.replace(/^\s+|\s+$/g,'').toLowerCase();}
+  function compareRows(a,b){var av=a[sortField],bv=b[sortField];if(av===null||av===undefined){av='';}if(bv===null||bv===undefined){bv='';}if(typeof av==='number'&&typeof bv==='number'){return (av-bv)*sortDir;}av=String(av).toLowerCase();bv=String(bv).toLowerCase();if(av<bv){return -1*sortDir;}if(av>bv){return 1*sortDir;}return 0;}
+
+  function render(){
+    var filtered=getFiltered(),pages=Math.max(1,Math.ceil(filtered.length/pageSize));if(currentPage>pages){currentPage=pages;}
+    var start=(currentPage-1)*pageSize,end=Math.min(start+pageSize,filtered.length),tbody=document.getElementById('tableBody');tbody.innerHTML='';
+    var i;for(i=start;i<end;i++){tbody.appendChild(renderRow(filtered[i]));}
+    document.getElementById('emptyState').style.display=filtered.length?'none':'block';
+    document.getElementById('dataTable').style.display=filtered.length?'table':'none';
+    document.getElementById('recordCount').innerHTML=filtered.length+' records';
+    document.getElementById('showingText').innerHTML=filtered.length?('Showing '+(start+1)+'–'+end+' of '+filtered.length):'Showing 0 of 0';
+    var kd=parseDisplayDate(document.getElementById('keyDateInput').value);document.getElementById('keyDateHeader').innerHTML=kd?'Key Date: '+toDisplay(kd):'';
+    updateSortMarks();renderPager(pages);syncPostButton();
+  }
+
+  function renderRow(r){
+    var tr=document.createElement('tr');tr.setAttribute('data-id',r.rfha);tr.draggable=true;if(selectedId===r.rfha){tr.className='selected';}
+    tr.onclick=function(e){var t=e.target;if(t.tagName==='A'||hasClass(t,'cell-link')||t.tagName==='INPUT'){return;}selectRow(r.rfha);};
+    tr.ondragstart=function(e){dragStart(e,r.rfha);};tr.ondragend=dragEnd;
+    var i,td,c,val;
+    for(i=0;i<columns.length;i++){
+      c=columns[i];td=document.createElement('td');td.className=(c.sticky?c.sticky+' ':'')+(c.cls||'')+(c.type==='amount'||c.type==='rate'||c.type==='percent'||c.type==='number'?' num':'')+(c.group==='ext'?' cell-ext':'')+(c.group==='mtm'?' cell-mtm':'');
+      if(c.type==='select'){
+        var cb=document.createElement('input');cb.type='checkbox';cb.className='checkbox';cb.checked=selectedId===r.rfha;cb.onclick=(function(id){return function(e){if(e.stopPropagation){e.stopPropagation();}selectRow(id);};})(r.rfha);td.appendChild(cb);
+      }else if(c.type==='link'){
+        var a=document.createElement('span');a.className='cell-link';a.innerHTML=escapeHtml(r[c.field]);a.onclick=(function(row){return function(e){stop(e);openTransaction(row);};})(r);td.appendChild(a);
+      }else if(c.type==='doc'){
+        val=r[c.field];if(val){var d=document.createElement('span');d.className='cell-link posted';d.innerHTML=escapeHtml(val);d.onclick=(function(row,field){return function(e){stop(e);openDocument(row,field);};})(r,c.field);td.appendChild(d);}else{td.innerHTML='<span class="muted">—</span>';}
+      }else{td.innerHTML=formatCell(r[c.field],c.type);}
+      tr.appendChild(td);
+    }
+    return tr;
+  }
+
+  function formatCell(v,type){if(v===null||v===undefined||v===''){return '<span class="muted">—</span>';}if(type==='date'){return escapeHtml(formatDate(v));}if(type==='amount'){return escapeHtml(formatNumber(v,2));}if(type==='rate'){return escapeHtml(formatNumber(v,4));}if(type==='percent'){return escapeHtml(formatNumber(v,2)+'%');}if(type==='number'){return escapeHtml(String(v));}return escapeHtml(String(v));}
+  function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+  function hasClass(el,c){return (' '+el.className+' ').indexOf(' '+c+' ')>=0;}
+  function stop(e){if(e.stopPropagation){e.stopPropagation();}e.cancelBubble=true;}
+
+  function selectRow(id){selectedId=selectedId===id?null:id;render();}
+  function selectedRow(){for(var i=0;i<rows.length;i++){if(rows[i].rfha===selectedId){return rows[i];}}return null;}
+  function isEligible(r){return !!(r&&!r.mtmDoc&&r.vGl!==null&&r.vGl!==0);}
+  function syncPostButton(){var b=document.getElementById('postSelectedBtn'),r=selectedRow();b.disabled=!isEligible(r);b.title=isEligible(r)?'Post selected transaction':'Select an eligible transaction with no MTM document and non-zero valuation G/L';}
+
+  function onFilterChange(){selectedId=null;currentPage=1;render();}
+  function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('companyFilter').value='ALL';document.getElementById('transactionFilter').value='ALL';document.getElementById('partnerFilter').value='ALL';document.getElementById('currencyFilter').value='ALL';document.getElementById('dealFilter').value='ALL';document.getElementById('keyDateInput').value='30-09-2026';document.getElementById('dateError').style.display='none';document.getElementById('keyDateInput').style.borderColor='#B8C6D3';selectedId=null;currentPage=1;sortField='rfha';sortDir=-1;render();}
+  function refreshAll(){rows=cloneRows(initialRows);documentCounter=1900048200;reversalCounter=2900026300;resetFilters();showToast('Initial workbench data restored.','success');}
+  function goBack(){if(window.history&&window.history.length>1){window.history.back();}}
+
+  function updateSortMarks(){var i,id,el;for(i=0;i<columns.length;i++){if(columns[i].sort===false){continue;}id='sort_'+columns[i].field;el=document.getElementById(id);if(el){el.innerHTML=columns[i].field===sortField?(sortDir===1?'▲':'▼'):'';}}}
+  function renderPager(pages){var p=document.getElementById('pager');p.innerHTML='';var prev=pageButton('‹',currentPage===1,function(){currentPage--;render();});p.appendChild(prev);var i,from=Math.max(1,currentPage-2),to=Math.min(pages,from+4);from=Math.max(1,to-4);for(i=from;i<=to;i++){(function(n){var b=pageButton(String(n),false,function(){currentPage=n;render();});if(n===currentPage){b.className+=' active';}p.appendChild(b);})(i);}p.appendChild(pageButton('›',currentPage===pages,function(){currentPage++;render();}));}
+  function pageButton(text,disabled,fn){var b=document.createElement('button');b.type='button';b.className='page-btn';b.innerHTML=text;b.disabled=disabled;b.onclick=fn;return b;}
+
+  function postSelected(){var r=selectedRow();if(!isEligible(r)){return;}var logs=[];simulatePosting(r,logs);render();openMessageLog(logs);}
+  function simulatePosting(r,logs){documentCounter++;reversalCounter++;r.mtmDoc=String(documentCounter);r.revDoc=String(reversalCounter);r.msg='Document Posted Sucessfully';logs.push({ok:true,rfha:r.rfha,doc:r.mtmDoc,diff:r.vGl,message:'Document Posted Sucessfully',rate:r.cRate,kind:'MTM'});logs.push({ok:true,rfha:r.rfha,doc:r.revDoc,diff:r.vGl,message:'Document Posted Sucessfully',rate:r.cRate,kind:'Reversal'});}
+
+  function dragStart(e,id){selectedId=id;var r=selectedRow(),btn=document.getElementById('postSelectedBtn');if(isEligible(r)){btn.className+=' drop-ready';}var tr=findRowElement(id);if(tr){tr.className+=(tr.className?' ':'')+'dragging';}if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',id);}catch(ex){}}syncPostButton();}
+  function dragEnd(){var btn=document.getElementById('postSelectedBtn');btn.className=btn.className.replace(/\s*drop-ready/g,'').replace(/\s*drop-hover/g,'');var trs=document.getElementById('tableBody').getElementsByTagName('tr');for(var i=0;i<trs.length;i++){trs[i].className=trs[i].className.replace(/\s*dragging/g,'');}render();}
+  function findRowElement(id){var trs=document.getElementById('tableBody').getElementsByTagName('tr');for(var i=0;i<trs.length;i++){if(trs[i].getAttribute('data-id')===id){return trs[i];}}return null;}
+  function bindDrop(){var btn=document.getElementById('postSelectedBtn');btn.ondragover=function(e){if(isEligible(selectedRow())){if(e.preventDefault){e.preventDefault();}e.dataTransfer.dropEffect='move';if(this.className.indexOf('drop-hover')<0){this.className+=' drop-hover';}}};btn.ondragleave=function(){this.className=this.className.replace(/\s*drop-hover/g,'');};btn.ondrop=function(e){if(e.preventDefault){e.preventDefault();}this.className=this.className.replace(/\s*drop-hover/g,'');if(isEligible(selectedRow())){postSelected();}};}
+
+  function openTransaction(r){
+    var html='<div class="detail-grid">'+detail('Transaction',r.rfha)+detail('Company Code',r.bukrs)+detail('Company Name',r.butxt)+detail('Local Currency',r.zWaers)+detail('Product Type',r.sgsart)+detail('Transaction Type',r.xtext)+detail('Business Partner',r.kontrh)+detail('Partner Name',r.bpName)+detail('Currency Pair',r.cpair)+detail('Trade Date',formatDate(r.tradeDate))+detail('Value Date',formatDate(r.valueDate))+detail('Buy/Sell',r.buySell)+detail('External Reference',r.externalRef)+'</div>'+
+      '<div class="section-label">Valuation</div><div class="detail-grid">'+detail('Foreign Amount',formatNumber(r.fAmt,2)+' '+r.fCurr)+detail('Contract Rate',formatNumber(r.cRate,4))+detail('Company Code Amount',formatNumber(r.ccAmt,2)+' '+r.zWaers)+detail('Valuation Spot',formatNumber(r.vSpot,4))+detail('Valuation Swap',formatNumber(r.vSwap,4))+detail('Valuation Rate',formatNumber(r.vRate,4))+detail('Valuation Amount',formatNumber(r.vAmt,2)+' '+r.zWaers)+detail('Local Valuation G/L',formatNumber(r.vCgl,2)+' '+r.zWaers)+detail('Valuation MER',formatNumber(r.valMer,4))+detail('Valuation G/L (USD)',r.vGl===null?'—':formatNumber(r.vGl,2))+detail('Local Curr Uninv',formatNumber(r.locUninv,2))+detail('MTM Document',r.mtmDoc||'—')+'</div>';
+    openModal('Transaction Details',html,'normal');
+  }
+  function openDocument(r,field){var doc=r[field],year=field==='revDoc'?String(parseInt(INITIAL_KEY_DATE.substr(0,4),10)+0):INITIAL_KEY_DATE.substr(0,4);var html='<div class="detail-grid">'+detail('Document Number',doc)+detail('Company Code',r.bukrs)+detail('Fiscal Year',year)+detail('Transaction',r.rfha)+detail('Document Type','TR')+detail('Posting Date',field==='revDoc'?formatDate(addDays(INITIAL_KEY_DATE,1)):formatDate(INITIAL_KEY_DATE))+detail('Reference',r.rfha)+detail('Currency','USD')+'</div><div class="section-label">Navigation</div><div style="color:#5D7287;line-height:1.6">In SAP, this hotspot opens the accounting document in FB03.</div>';openModal(field==='revDoc'?'Reversal FI Document':'MTM FI Document',html,'small');}
+  function addDays(iso,n){var d=parseIso(iso);d.setDate(d.getDate()+n);return toIso(d);}
+  function detail(k,v){return '<div class="detail"><div class="k">'+escapeHtml(k)+'</div><div class="v" title="'+escapeHtml(v)+'">'+escapeHtml(v)+'</div></div>';}
+
+  function openMessageLog(logs){
+    var html='<table class="mini-table"><thead><tr><th>Status</th><th>Transaction</th><th>Document</th><th>Type</th><th class="num">Difference</th><th class="num">Contract Rate</th><th>Message</th></tr></thead><tbody>',i,l;
+    for(i=0;i<logs.length;i++){l=logs[i];html+='<tr><td class="center"><span class="'+(l.ok?'ok-icon':'err-icon')+'">'+(l.ok?'✓':'!')+'</span></td><td>'+escapeHtml(l.rfha)+'</td><td>'+escapeHtml(l.doc)+'</td><td>'+escapeHtml(l.kind)+'</td><td class="num">'+escapeHtml(formatNumber(l.diff,2))+'</td><td class="num">'+escapeHtml(formatNumber(l.rate,4))+'</td><td>'+escapeHtml(l.message)+'</td></tr>';}
+    html+='</tbody></table>';openModal('Message Log',html,'wide');
+  }
+  function openModal(title,body,size){document.getElementById('modalTitle').innerHTML=escapeHtml(title);document.getElementById('modalBody').innerHTML=body;var box=document.getElementById('modalBox');box.className='modal'+(size==='small'?' small':size==='wide'?' wide':'');document.getElementById('modalBackdrop').style.display='flex';}
+  function closeModal(){document.getElementById('modalBackdrop').style.display='none';}
+
+  function showToast(text,type){var t=document.getElementById('toast');document.getElementById('toastText').innerHTML=escapeHtml(text);document.getElementById('toastMark').innerHTML=type==='success'?'✓':'i';t.className='toast '+(type||'info');t.style.display='flex';if(toastTimer){clearTimeout(toastTimer);}toastTimer=setTimeout(function(){t.style.display='none';},2600);}
+
+  function exportCsv(){
+    var data=getFiltered(),out=[],headers=[],i,j,c,v;
+    for(i=1;i<columns.length;i++){headers.push(csv(columns[i].label));}out.push(headers.join(','));
+    for(i=0;i<data.length;i++){var row=[];for(j=1;j<columns.length;j++){c=columns[j];v=data[i][c.field];if(c.type==='date'){v=formatDate(v);}else if(c.type==='amount'){v=v===null?'':formatNumber(v,2);}else if(c.type==='rate'){v=formatNumber(v,4);}else if(c.type==='percent'){v=formatNumber(v,2)+'%';}row.push(csv(v===null?'':v));}out.push(row.join(','));}
+    var blob=new Blob([out.join('\r\n')],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='Reverse_FX_MTM_Other_Origins.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},0);
+  }
+  function csv(v){v=String(v);return '"'+v.replace(/"/g,'""')+'"';}
+
+  function validateAndApplyDate(){var input=document.getElementById('keyDateInput'),d=parseDisplayDate(input.value),err=document.getElementById('dateError');if(!d||!isMonthEnd(d)){input.style.borderColor='#D64545';err.style.display='block';render();return false;}input.style.borderColor='#B8C6D3';err.style.display='none';for(var i=0;i<rows.length;i++){rows[i].monat=expiryMonthBucket(rows[i].valueDate,toIso(d));}currentPage=1;render();return true;}
+  function dateKeyDown(e){e=e||window.event;if(e.keyCode===13){validateAndApplyDate();closeCalendar();}}
+
+  function buildCalendarSelectors(){var m=document.getElementById('calMonth'),y=document.getElementById('calYear'),names=['January','February','March','April','May','June','July','August','September','October','November','December'],i,o;for(i=0;i<12;i++){o=document.createElement('option');o.value=i;o.text=names[i];m.appendChild(o);}for(i=2020;i<=2035;i++){o=document.createElement('option');o.value=i;o.text=i;y.appendChild(o);}}
+  function toggleCalendar(e){if(e&&e.stopPropagation){e.stopPropagation();}var pop=document.getElementById('calendarPop');if(pop.style.display==='block'){closeCalendar();return;}var d=parseDisplayDate(document.getElementById('keyDateInput').value)||new Date();calendarYear=d.getFullYear();calendarMonth=d.getMonth();renderCalendar();var rect=document.getElementById('dateField').getBoundingClientRect();pop.style.left=Math.max(8,Math.min(window.innerWidth-286,rect.left))+'px';pop.style.top=(rect.bottom+4)+'px';pop.style.display='block';pop.setAttribute('aria-hidden','false');}
+  function closeCalendar(){var p=document.getElementById('calendarPop');p.style.display='none';p.setAttribute('aria-hidden','true');}
+  function shiftCalendar(delta){calendarMonth+=delta;if(calendarMonth<0){calendarMonth=11;calendarYear--;}if(calendarMonth>11){calendarMonth=0;calendarYear++;}renderCalendar();}
+  function calendarSelectChanged(){calendarMonth=parseInt(document.getElementById('calMonth').value,10);calendarYear=parseInt(document.getElementById('calYear').value,10);renderCalendar();}
+  function renderCalendar(){document.getElementById('calMonth').value=calendarMonth;document.getElementById('calYear').value=calendarYear;var grid=document.getElementById('calendarGrid');grid.innerHTML='';var dows=['Su','Mo','Tu','We','Th','Fr','Sa'],i,el;for(i=0;i<7;i++){el=document.createElement('div');el.className='cal-dow';el.innerHTML=dows[i];grid.appendChild(el);}var first=new Date(calendarYear,calendarMonth,1),start=first.getDay(),days=new Date(calendarYear,calendarMonth+1,0).getDate(),prevDays=new Date(calendarYear,calendarMonth,0).getDate(),selected=parseDisplayDate(document.getElementById('keyDateInput').value),today=new Date(),cell,dateNum,cellDate,cls;for(cell=0;cell<42;cell++){if(cell<start){dateNum=prevDays-start+cell+1;cellDate=new Date(calendarYear,calendarMonth-1,dateNum);cls=' out';}else if(cell>=start+days){dateNum=cell-start-days+1;cellDate=new Date(calendarYear,calendarMonth+1,dateNum);cls=' out';}else{dateNum=cell-start+1;cellDate=new Date(calendarYear,calendarMonth,dateNum);cls='';}if(cellDate.getDay()===0||cellDate.getDay()===6){cls+=' weekend';}if(today.getFullYear()===cellDate.getFullYear()&&today.getMonth()===cellDate.getMonth()&&today.getDate()===cellDate.getDate()){cls+=' today';}if(selected&&selected.getFullYear()===cellDate.getFullYear()&&selected.getMonth()===cellDate.getMonth()&&selected.getDate()===cellDate.getDate()){cls+=' selected';}el=document.createElement('button');el.type='button';el.className='cal-day'+cls;el.innerHTML=dateNum;el.onclick=(function(dt){return function(e){if(e.stopPropagation){e.stopPropagation();}document.getElementById('keyDateInput').value=toDisplay(dt);closeCalendar();validateAndApplyDate();};})(cellDate);grid.appendChild(el);}}
+
+  function bindGlobalEvents(){document.addEventListener('click',function(e){var pop=document.getElementById('calendarPop');if(pop.style.display==='block'){var node=e.target,inside=false;while(node){if(node===pop||node===document.getElementById('dateField')){inside=true;break;}node=node.parentNode;}if(!inside){closeCalendar();}}});document.getElementById('modalBackdrop').onclick=function(e){if(e.target===this){closeModal();}};bindDrop();}
+
+  window.onFilterChange=onFilterChange;window.resetFilters=resetFilters;window.refreshAll=refreshAll;window.goBack=goBack;window.postSelected=postSelected;window.exportCsv=exportCsv;window.closeModal=closeModal;window.validateAndApplyDate=validateAndApplyDate;window.dateKeyDown=dateKeyDown;window.toggleCalendar=toggleCalendar;window.shiftCalendar=shiftCalendar;window.calendarSelectChanged=calendarSelectChanged;
+
+  init();
+})();
+</script>
+</body>
+</html>

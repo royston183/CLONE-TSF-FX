@@ -151,6 +151,8 @@ export function buildMasterContracts(today: Date, seed: McSeed[]): MasterContrac
     const shipStart = addDays(today, s.shipStartOff)
     return {
       mcNumber: s.n,
+      // The old seed list had no origin of its own: its first entity stood for it.
+      origin: m?.entities[0] ?? '',
       fxModel: s.model,
       modelDesc: m?.desc ?? '',
       entities: m?.entities ?? [],
@@ -754,6 +756,7 @@ export function mergeLiveRows(
     `${r.companyCode ?? ''}/${r.transactionNumber}`
   const shown = new Map(b.rows.filter((r) => r.live).map((r) => [key(r), r]))
   const reversed = new Set(incoming.filter((r) => r.status === 'REVERSED').map(key))
+  const incomingByKey = new Map(incoming.map((r) => [key(r), r]))
   const c = { ...b.counters }
   const added = incoming
     .filter((r) => !shown.has(key(r)))
@@ -761,9 +764,15 @@ export function mergeLiveRows(
       const seq = c.seq++
       return { ...r, id: `R${seq}`, seq } as BlotterRow
     })
-  const existing = b.rows.map((r) =>
-    r.live && reversed.has(key(r)) && r.status !== 'REVERSED' ? { ...r, status: 'REVERSED' as const } : r,
-  )
+  const existing = b.rows.map((r) => {
+    if (!r.live) return r
+    let next = r
+    if (reversed.has(key(r)) && r.status !== 'REVERSED') next = { ...next, status: 'REVERSED' as const }
+    // A Deal ID created since the row was loaded (by another screen, or just now): SAP's word on it wins.
+    const inc = incomingByKey.get(key(r))
+    if (inc?.dealId && !r.dealId) next = { ...next, dealId: inc.dealId, mcRef: inc.mcRef, fxModel: inc.fxModel, dealType: inc.dealType }
+    return next
+  })
   return settle({ ...b, partners, rows: [...added, ...existing], counters: c })
 }
 
@@ -857,13 +866,15 @@ export function assignMc(
   aId: string,
   bId: string,
   mcNumber: string,
+  givenDealId?: string,
 ): { blotter: Blotter; dealId: string } | null {
   const a = b.rows.find((r) => r.id === aId)
   const bb = b.rows.find((r) => r.id === bId)
   const mc = findMc(b.contracts, mcNumber)
   if (!a || !bb || !mc) return null
   const c = { ...b.counters }
-  const dealId = `TSF-${c.dealId++}`
+  // The screen passes the Deal ID SAP issued; only the demo path (tests) still counts up its own.
+  const dealId = givenDealId ?? `TSF-${c.dealId++}`
   const legs = new Map([a, bb].map((r, i) => [r.id, i]))
   return {
     dealId,
@@ -903,17 +914,12 @@ export function assignMc(
 // ---------------------------------------------------------------- auto deal creation (screen 9006)
 
 /** Origin entities (first of the Entity String) of every Master Contract with balance left. */
-export function autoOrigins(contracts: MasterContract[]): string[] {
-  const out: string[] = []
-  for (const mc of contracts) {
-    const first = modelOf(mc.fxModel)?.entities[0]
-    if (mcBalance(mc) > 0 && first && !out.includes(first)) out.push(first)
-  }
-  return out
+export function autoOrigins(): string[] {
+  return ENTITIES.filter((e) => e.origin).map((e) => e.code)
 }
 
 export const autoEligible = (contracts: MasterContract[], origin: string): MasterContract[] =>
-  contracts.filter((mc) => mcBalance(mc) > 0 && modelOf(mc.fxModel)?.entities[0] === origin)
+  contracts.filter((mc) => mcBalance(mc) > 0 && mc.origin === origin)
 
 /** Amount 2 and spot from the rate, amount and swap; NDF legs get a fixing date two days before value. */
 export function recalcAutoLeg(input: AutoLeg): AutoLeg {
@@ -945,7 +951,6 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
   const d2Rate = p.baseRate * (1 + m.spreadBp / 2 / 10000)
   const valueDate = nextWorkingDay(addDays(ctxDate, 32))
   const base = {
-    txnType: 'FWD',
     // The legs are booked in SAP, where only a real partner number is accepted.
     partner: SPOT_PARTNER_CODE,
     curr1: p.lead,
@@ -964,6 +969,7 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
       tradeDate: new Date(ctxDate),
       valueDate: new Date(valueDate),
       entity: m.d1.from,
+      txnType: m.d1.txnType ?? 'FWD',
       bs: m.d1.bs1,
       bs2: m.d1.bs2,
       rate: d1Rate,
@@ -975,6 +981,7 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
       tradeDate: new Date(ctxDate),
       valueDate: addDays(valueDate, 1),
       entity: m.d2.from,
+      txnType: m.d2.txnType ?? 'FWD',
       bs: m.d2.bs1,
       bs2: m.d2.bs2,
       rate: d2Rate,
@@ -1032,11 +1039,13 @@ export function confirmAutoDeal(
   b: Blotter,
   mcNumber: string,
   legs: AutoLeg[],
+  givenDealId?: string,
 ): { blotter: Blotter; dealId: string } | null {
   const mc = findMc(b.contracts, mcNumber)
   if (!mc || legs.length !== 2) return null
   const c = { ...b.counters }
-  const dealId = `TSF-${c.dealId++}`
+  // The screen passes the Deal ID SAP issued; only the demo path (tests) still counts up its own.
+  const dealId = givenDealId ?? `TSF-${c.dealId++}`
   const created = legs.map((l): BlotterRow => {
     const row = makeRow(c, b.ctx, {
       status: 'CREATED',

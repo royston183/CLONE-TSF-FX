@@ -1,0 +1,329 @@
+/* Original stylesheet of mo-execute-settlement-deal-id.html, scoped under .mo-execute-settlement-deal-id.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.mo-execute-settlement-deal-id {
+  --bg:#F4F8FC;
+  --surface:#FFFFFF;
+  --border:#E1E9F2;
+  --border-soft:#EEF2F6;
+  --ink:#1D2D3E;
+  --ink-soft:#1D2D3E;
+  --muted:#5C7085;
+  --muted-2:#8CA0B3;
+  --blue:#1F6FEB;
+  --blue-dark:#1657C4;
+  --blue-pale:#EAF2FF;
+  --green:#27AE60;
+  --green-pale:#E8F8EF;
+  --amber:#FF8A00;
+  --amber-pale:#FFF3E4;
+  --purple:#7C3AED;
+  --purple-pale:#F1EAFE;
+  --red:#E74C3C;
+  --red-pale:#FDEAE8;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-md:0 8px 28px rgba(22,39,64,.16);
+}
+.mo-execute-settlement-deal-id *, .mo-execute-settlement-deal-id, .mo-execute-settlement-deal-id *::before, .mo-execute-settlement-deal-id *::after {box-sizing:border-box;margin:0;padding:0;font-family:"Inter",Arial,Helvetica,sans-serif;}
+.mo-execute-settlement-deal-id {background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
+.mo-execute-settlement-deal-id ::-webkit-scrollbar {width:8px;height:8px;}
+.mo-execute-settlement-deal-id ::-webkit-scrollbar-track {background:transparent;}
+.mo-execute-settlement-deal-id ::-webkit-scrollbar-thumb {background:#C7D4E2;border-radius:8px;}
+.mo-execute-settlement-deal-id ::-webkit-scrollbar-thumb:hover {background:#a7b2c3;}
+/* ---------- page head (matches OTTK workbench chrome) ---------- */
+.mo-execute-settlement-deal-id .page-head {
+  display:flex;align-items:center;gap:14px;padding:11px 20px;
+  background:#fff;border-bottom:1px solid var(--border);
+}
+.mo-execute-settlement-deal-id .head-badge {
+  width:32px;height:32px;border-radius:7px;flex-shrink:0;
+  background:conic-gradient(from 210deg,var(--blue),var(--purple),var(--amber),var(--green),var(--blue));
+}
+.mo-execute-settlement-deal-id .title-wrap {min-width:0;display:flex;align-items:baseline;gap:9px;flex:1;}
+.mo-execute-settlement-deal-id .page-title {font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--ink);white-space:nowrap;}
+.mo-execute-settlement-deal-id .page-code {font-size:12.5px;color:var(--muted-2);font-weight:600;white-space:nowrap;}
+.mo-execute-settlement-deal-id .page-subtitle {display:none;}
+.mo-execute-settlement-deal-id .head-actions {display:flex;align-items:center;gap:9px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.mo-execute-settlement-deal-id .btn-outline {
+  height:36px;padding:0 14px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);transition:all .15s;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.mo-execute-settlement-deal-id .btn-outline:hover:not(:disabled) {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.mo-execute-settlement-deal-id .btn-outline:disabled {opacity:.45;cursor:not-allowed;}
+.mo-execute-settlement-deal-id .btn-outline.subtle {color:var(--muted);}
+.mo-execute-settlement-deal-id .btn-primary {
+  height:36px;padding:0 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--blue);border:1px solid var(--blue);color:#fff;transition:all .15s;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.mo-execute-settlement-deal-id .btn-primary:hover:not(:disabled) {background:var(--blue-dark);border-color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .btn-primary:disabled {opacity:.45;cursor:not-allowed;}
+.mo-execute-settlement-deal-id .btn-primary.ok {background:var(--green);border-color:var(--green);}
+.mo-execute-settlement-deal-id .btn-primary.ok:hover:not(:disabled) {background:#1f9254;border-color:#1f9254;}
+.mo-execute-settlement-deal-id .live-dot {width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 0 3px var(--green-pale);}
+.mo-execute-settlement-deal-id .btn-icon {
+  width:34px;height:34px;padding:0;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.mo-execute-settlement-deal-id .btn-icon:hover {border-color:var(--blue);color:var(--blue);}
+.mo-execute-settlement-deal-id main {max-width:1320px;margin:0 auto;padding:16px 14px 50px;}
+/* ---------- selection panel ---------- */
+.mo-execute-settlement-deal-id .select-panel {margin-bottom:14px;overflow:hidden;}
+.mo-execute-settlement-deal-id .select-panel .panel-title h2 {color:var(--blue);}
+.mo-execute-settlement-deal-id .select-panel .panel-body {padding:16px;}
+.mo-execute-settlement-deal-id .select-row {display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.mo-execute-settlement-deal-id .select-field {
+  position:relative;display:flex;align-items:center;min-width:260px;max-width:360px;flex:0 1 360px;
+}
+.mo-execute-settlement-deal-id .select-field .select-icon {
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted-2);pointer-events:none;
+}
+.mo-execute-settlement-deal-id .select-field input {
+  width:100%;height:38px;padding:0 14px 0 38px;border:1px solid #CBD6E2;border-radius:13px;font-size:12.5px;
+  color:var(--ink);outline:none;background:#fff;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;
+}
+.mo-execute-settlement-deal-id .select-field input:focus {border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.mo-execute-settlement-deal-id .btn-primary-inline {
+  min-width:60px;height:40px;padding:0 18px;border-radius:10px;background:var(--blue);color:#fff;border:1px solid var(--blue);
+  font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;
+}
+.mo-execute-settlement-deal-id .btn-primary-inline:hover {background:var(--blue-dark);border-color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .sample-chip {
+  display:inline-flex;align-items:center;gap:4px;height:40px;padding:0 14px;background:#fff;color:var(--muted);border:1px dashed #C8D5E5;
+  border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.mo-execute-settlement-deal-id .sample-chip strong {color:var(--blue-dark);font-weight:700;}
+.mo-execute-settlement-deal-id .sample-chip:hover {border-color:var(--blue);background:var(--blue-pale);color:var(--ink);}
+.mo-execute-settlement-deal-id .select-err {color:var(--red);font-size:12px;margin-top:10px;display:none;}
+.mo-execute-settlement-deal-id .select-err.show {display:block;}
+@media (max-width:700px) {
+.mo-execute-settlement-deal-id .select-field {max-width:none;flex:1 1 100%;}
+.mo-execute-settlement-deal-id .select-row {align-items:stretch;}
+}
+/* ---------- panel ---------- */
+.mo-execute-settlement-deal-id .panel {background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+.mo-execute-settlement-deal-id .panel-title {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 16px;min-height:42px;border-bottom:1px solid var(--border);}
+.mo-execute-settlement-deal-id .panel-title-left {display:flex;align-items:center;gap:8px;}
+.mo-execute-settlement-deal-id .dot-bullet {width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.mo-execute-settlement-deal-id .panel-title h2 {font-size:12px;font-weight:700;color:var(--blue-dark);letter-spacing:.3px;text-transform:uppercase;}
+.mo-execute-settlement-deal-id .panel-sub {font-size:11.5px;color:var(--muted);font-weight:500;}
+.mo-execute-settlement-deal-id .panel-body {padding:16px;}
+.mo-execute-settlement-deal-id .panel-tools {display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mo-execute-settlement-deal-id .mini-search {position:relative;}
+.mo-execute-settlement-deal-id .mini-search input {
+  height:32px;width:190px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12px;color:var(--ink);outline:none;background:var(--surface);
+}
+.mo-execute-settlement-deal-id .mini-search input:focus {border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.mo-execute-settlement-deal-id .pager-row {display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border-soft);}
+.mo-execute-settlement-deal-id .pager-row span {font-size:11.5px;color:var(--muted);}
+.mo-execute-settlement-deal-id .pager-ctrl {display:flex;align-items:center;gap:5px;}
+.mo-execute-settlement-deal-id .pager-ctrl button {
+  min-width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);
+  color:var(--ink-soft);font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.mo-execute-settlement-deal-id .pager-ctrl button.active {background:var(--blue-dark);border-color:var(--blue-dark);color:#fff;}
+.mo-execute-settlement-deal-id .pager-ctrl button:disabled {opacity:.4;cursor:not-allowed;}
+/* ---------- header detail grid ---------- */
+.mo-execute-settlement-deal-id .hdr-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+.mo-execute-settlement-deal-id .hdr-cell {padding:10px 13px;border-bottom:1px solid var(--border-soft);border-right:1px solid var(--border-soft);min-width:0;}
+.mo-execute-settlement-deal-id .hdr-cell:nth-child(4n) {border-right:none;}
+.mo-execute-settlement-deal-id .hdr-lbl {font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em;}
+.mo-execute-settlement-deal-id .hdr-val {font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;word-break:break-word;}
+.mo-execute-settlement-deal-id .hdr-val.accent {color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .hdr-val.editable {cursor:pointer;border-bottom:1px dashed var(--blue);display:inline-block;}
+.mo-execute-settlement-deal-id .hdr-val input, .mo-execute-settlement-deal-id .hdr-val select {
+  width:100%;height:30px;border:1px solid #CBD9E8;border-radius:6px;padding:0 8px;font-size:12.5px;font-weight:600;color:var(--ink);
+}
+@media (max-width:1000px) {
+.mo-execute-settlement-deal-id .hdr-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+.mo-execute-settlement-deal-id .hdr-cell:nth-child(4n) {border-right:1px solid var(--border-soft);}
+.mo-execute-settlement-deal-id .hdr-cell:nth-child(2n) {border-right:none;}
+}
+/* ---------- status pill ---------- */
+.mo-execute-settlement-deal-id .status-cell {display:inline-flex;align-items:center;gap:7px;font-weight:700;white-space:nowrap;font-size:13px;}
+.mo-execute-settlement-deal-id .status-cell .dot {width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.mo-execute-settlement-deal-id .st-early {color:var(--muted);}
+.mo-execute-settlement-deal-id .st-early .dot {background:var(--muted-2);}
+.mo-execute-settlement-deal-id .st-progress {color:#6d28d9;}
+.mo-execute-settlement-deal-id .st-progress .dot {background:var(--purple);}
+.mo-execute-settlement-deal-id .st-due {color:var(--amber);}
+.mo-execute-settlement-deal-id .st-due .dot {background:var(--amber);}
+.mo-execute-settlement-deal-id .st-init {color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .st-init .dot {background:var(--blue);}
+.mo-execute-settlement-deal-id .st-done {color:var(--green);}
+.mo-execute-settlement-deal-id .st-done .dot {background:var(--green);}
+/* ---------- action toolbar ---------- */
+.mo-execute-settlement-deal-id .action-toolbar {display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#FBFCFE;}
+.mo-execute-settlement-deal-id .action-btn {
+  height:34px;padding:0 13px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;
+  background:var(--surface);border:1px solid #CBD9E8;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px;transition:all .15s;
+}
+.mo-execute-settlement-deal-id .action-btn:hover:not(:disabled) {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.mo-execute-settlement-deal-id .action-btn:disabled {opacity:.4;cursor:not-allowed;}
+.mo-execute-settlement-deal-id .action-btn.primary {background:var(--blue);border-color:var(--blue);color:#fff;}
+.mo-execute-settlement-deal-id .action-btn.primary:hover:not(:disabled) {background:var(--blue-dark);border-color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .action-btn.success {background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+.mo-execute-settlement-deal-id .action-btn.success:hover:not(:disabled) {background:var(--green);color:#fff;}
+.mo-execute-settlement-deal-id .action-btn.ghost {background:transparent;border-color:transparent;color:var(--muted);}
+.mo-execute-settlement-deal-id .action-btn.ghost:hover {color:var(--red);}
+.mo-execute-settlement-deal-id .action-spacer {flex:1;}
+/* ---------- tables ---------- */
+.mo-execute-settlement-deal-id .table-wrap {overflow-x:auto;}
+.mo-execute-settlement-deal-id table {width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {white-space:nowrap;padding:9px 11px;text-align:right;}
+.mo-execute-settlement-deal-id .data-table thead th {
+  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
+  border-bottom:1px solid var(--border);background:#FBFCFE;position:sticky;top:0;
+}
+.mo-execute-settlement-deal-id .data-table thead th.left {text-align:left;}
+.mo-execute-settlement-deal-id .data-table tbody td {text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
+.mo-execute-settlement-deal-id .data-table tbody td.left {text-align:left;}
+.mo-execute-settlement-deal-id .data-table tbody tr {cursor:pointer;}
+.mo-execute-settlement-deal-id .data-table tbody tr:hover td {background:#f7faff;}
+.mo-execute-settlement-deal-id .data-table tbody tr.row-sel td {background:#fff8ea !important;}
+.mo-execute-settlement-deal-id .data-table tbody tr:last-child td {border-bottom:none;}
+.mo-execute-settlement-deal-id .num {font-variant-numeric:tabular-nums;}
+.mo-execute-settlement-deal-id .empty-row td {text-align:center !important;color:var(--muted);padding:26px 12px;font-style:italic;}
+.mo-execute-settlement-deal-id .hotspot {color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none;}
+.mo-execute-settlement-deal-id .hotspot:hover {text-decoration:underline;color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .chip {display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+.mo-execute-settlement-deal-id .pill {display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;}
+.mo-execute-settlement-deal-id .pill .dot {width:6px;height:6px;border-radius:50%;background:currentColor;}
+.mo-execute-settlement-deal-id .pill-early {background:#F1F5FA;color:var(--muted);}
+.mo-execute-settlement-deal-id .pill-progress {background:var(--purple-pale);color:#6d28d9;}
+.mo-execute-settlement-deal-id .pill-due {background:var(--amber-pale);color:#b45309;}
+.mo-execute-settlement-deal-id .pill-init {background:var(--blue-pale);color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .pill-done {background:var(--green-pale);color:var(--green);}
+.mo-execute-settlement-deal-id .chip-d1 {background:var(--blue-pale);color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .chip-d2 {background:var(--purple-pale);color:#6d28d9;}
+.mo-execute-settlement-deal-id .chip-t {background:var(--amber-pale);color:#b45309;}
+.mo-execute-settlement-deal-id .chip-done {background:var(--green-pale);color:var(--green);}
+.mo-execute-settlement-deal-id .chip-open {background:#F1F5FA;color:var(--muted);}
+.mo-execute-settlement-deal-id .mut {color:var(--muted-2);}
+.mo-execute-settlement-deal-id .drag-hint {font-size:11px;color:var(--muted);padding:8px 16px;border-top:1px dashed var(--border);background:#FBFCFE;}
+/* ---------- modal ---------- */
+.mo-execute-settlement-deal-id .modal-overlay {
+  position:fixed;inset:0;background:rgba(16,26,41,.5);z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;
+}
+.mo-execute-settlement-deal-id .modal-overlay.open {opacity:1;pointer-events:all;}
+.mo-execute-settlement-deal-id .modal-card {
+  background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 20px 50px rgba(16,24,40,.25);border:1px solid var(--border);
+  max-width:760px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.mo-execute-settlement-deal-id .modal-card.wide {max-width:980px;}
+.mo-execute-settlement-deal-id .modal-card.narrow {max-width:460px;}
+.mo-execute-settlement-deal-id .modal-overlay.open .modal-card {transform:translateY(0) scale(1);}
+.mo-execute-settlement-deal-id .modal-header {background:var(--blue-pale);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid #dbe6fb;}
+.mo-execute-settlement-deal-id .modal-icon {width:34px;height:34px;border-radius:var(--radius-sm);background:#fff;border:1px solid #c7dbfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .modal-header-text {flex:1;min-width:0;}
+.mo-execute-settlement-deal-id .modal-title {font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.3;}
+.mo-execute-settlement-deal-id .modal-subtitle {font-size:11.5px;color:var(--muted);margin-top:2px;}
+.mo-execute-settlement-deal-id .modal-close {background:#fff;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.mo-execute-settlement-deal-id .modal-close:hover {border-color:var(--red);color:var(--red);}
+.mo-execute-settlement-deal-id .modal-body {padding:18px;overflow-y:auto;background:var(--surface);}
+.mo-execute-settlement-deal-id .modal-footer {padding:13px 18px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;flex-wrap:wrap;align-items:center;gap:8px;background:#fbfcfe;}
+.mo-execute-settlement-deal-id .btn-cancel {background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;min-height:34px;padding:0 15px;border-radius:var(--radius-sm);transition:all .15s;}
+.mo-execute-settlement-deal-id .btn-cancel:hover {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.mo-execute-settlement-deal-id .btn-confirm {background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:var(--radius-sm);min-height:34px;padding:0 16px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;}
+.mo-execute-settlement-deal-id .btn-confirm:hover {background:var(--blue-dark);border-color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .btn-confirm.green {background:var(--green);border-color:var(--green);}
+.mo-execute-settlement-deal-id .btn-confirm.green:hover {background:#1f9254;border-color:#1f9254;}
+.mo-execute-settlement-deal-id .btn-confirm:disabled {opacity:.45;cursor:not-allowed;}
+.mo-execute-settlement-deal-id .form-grid {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mo-execute-settlement-deal-id .form-grid.single {grid-template-columns:1fr;}
+.mo-execute-settlement-deal-id .ffield {display:flex;flex-direction:column;gap:5px;}
+.mo-execute-settlement-deal-id .ffield label {font-size:11.5px;font-weight:700;color:var(--muted);}
+.mo-execute-settlement-deal-id .ffield input, .mo-execute-settlement-deal-id .ffield select, .mo-execute-settlement-deal-id .ffield textarea {
+  height:34px;padding:0 10px;border:1px solid #CBD9E8;border-radius:var(--radius-sm);font-size:12.5px;color:var(--ink);outline:none;
+}
+.mo-execute-settlement-deal-id .ffield textarea {height:auto;padding:8px 10px;resize:vertical;min-height:60px;font-family:inherit;}
+.mo-execute-settlement-deal-id .ffield input:focus, .mo-execute-settlement-deal-id .ffield select:focus, .mo-execute-settlement-deal-id .ffield textarea:focus {border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.mo-execute-settlement-deal-id .ffield input:disabled {background:#F4F8FC;color:var(--muted);}
+.mo-execute-settlement-deal-id .fbox {border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;margin-bottom:14px;}
+.mo-execute-settlement-deal-id .fbox-title {font-size:11px;font-weight:800;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+.mo-execute-settlement-deal-id .check-row {display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.mo-execute-settlement-deal-id .note-box {margin-top:12px;padding:10px 13px;background:#f6f9ff;border:1px solid #dbe6fb;border-radius:var(--radius-sm);font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+.mo-execute-settlement-deal-id .note-box strong {color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .letter-preview {
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:18px 20px;font-size:12px;line-height:1.75;
+  background:#fff;color:var(--ink-soft);white-space:pre-wrap;max-height:380px;overflow-y:auto;
+}
+/* ---------- toast ---------- */
+.mo-execute-settlement-deal-id .zfac-toast {
+  position:fixed;bottom:24px;right:24px;transform:translateY(12px);max-width:360px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:13px 16px;border-radius:var(--radius-md);
+  box-shadow:0 12px 30px rgba(16,24,40,.18);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;text-align:left;
+}
+.mo-execute-settlement-deal-id .zfac-toast.show {opacity:1;transform:translateY(0);pointer-events:auto;}
+.mo-execute-settlement-deal-id .zfac-toast.error {background:var(--red-pale);border-color:#f4c2c2;color:var(--red);}
+.mo-execute-settlement-deal-id .zfac-toast.success {background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+.mo-execute-settlement-deal-id .zfac-toast.info {background:var(--blue-pale);border-color:#c7dbfb;color:var(--blue-dark);}
+.mo-execute-settlement-deal-id .hidden {display:none !important;}
+@media (max-width:900px) {
+.mo-execute-settlement-deal-id .form-grid {grid-template-columns:1fr;}
+}
+/* ===== OTTK MASTER UI PROFILE OVERRIDES ===== */
+.mo-execute-settlement-deal-id {--bg:#F4F6F8;--surface:#FFFFFF;--border:#CDD6DF;--border-soft:#E6EBF0;--ink:#1D2D3E;--muted:#5D7287;--blue:#0A72CE;--blue-dark:#075FAE;--blue-pale:#EAF4FC;--green:#118A76;--green-pale:#E1F5F1;--radius-lg:7px;--radius-md:6px;--radius-sm:5px;--shadow:0 1px 3px rgba(29,45,62,.08);}
+.mo-execute-settlement-deal-id {background:#F4F6F8;font-size:12px;}
+.mo-execute-settlement-deal-id .page-head {padding:7px 16px;gap:12px;min-height:56px;border-bottom:1px solid #CDD6DF;}
+.mo-execute-settlement-deal-id .head-badge {width:28px;height:34px;border-radius:0;background:none;position:relative;}
+.mo-execute-settlement-deal-id .head-badge:before {content:'';position:absolute;left:4px;top:2px;width:19px;height:6px;border-radius:4px;background:#C9342F;box-shadow:0 8px 0 #E39A20,0 16px 0 #43884B;}
+.mo-execute-settlement-deal-id .head-badge:after {content:'';position:absolute;left:4px;top:26px;width:6px;height:6px;border-radius:50%;background:#7C8C8C;}
+.mo-execute-settlement-deal-id .page-title {font-size:18px;font-weight:700;}
+.mo-execute-settlement-deal-id .page-code {font-size:12px;color:#74869A;}
+.mo-execute-settlement-deal-id .btn-outline, .mo-execute-settlement-deal-id .btn-primary {height:38px;border-radius:5px;font-size:12px;padding:0 13px;}
+.mo-execute-settlement-deal-id .btn-primary {background:#0A72CE;border-color:#0A72CE;box-shadow:0 2px 5px rgba(10,114,206,.18);}
+.mo-execute-settlement-deal-id .live-dot {width:9px;height:9px;background:#29AE68;box-shadow:0 0 0 3px #DDF4E8;}
+.mo-execute-settlement-deal-id main {max-width:none;margin:0;padding:14px 16px 40px;}
+.mo-execute-settlement-deal-id .select-card {border-radius:7px;box-shadow:var(--shadow);}
+.mo-execute-settlement-deal-id .panel {border-radius:7px;box-shadow:var(--shadow);margin-bottom:12px;}
+.mo-execute-settlement-deal-id .panel-title {padding:9px 12px;min-height:45px;border-bottom:1px solid #CDD6DF;}
+.mo-execute-settlement-deal-id .panel-title-left {gap:6px}
+.mo-execute-settlement-deal-id .dot-bullet {display:none}
+.mo-execute-settlement-deal-id .panel-title h2 {font-size:13px;color:#1D2D3E;text-transform:none;letter-spacing:0}
+.mo-execute-settlement-deal-id .panel-sub {font-size:11px;color:#6D8093;}
+.mo-execute-settlement-deal-id .panel-body {padding:12px;}
+.mo-execute-settlement-deal-id .mini-search input {height:33px;width:220px;border-color:#AEBECC;border-radius:4px;font-size:12px;}
+.mo-execute-settlement-deal-id .btn-icon {height:33px;width:34px;border-radius:4px;border-color:#B7C4D0;}
+.mo-execute-settlement-deal-id .action-toolbar {padding:8px 12px;background:#fff;border-bottom:1px solid #CDD6DF;}
+.mo-execute-settlement-deal-id .action-btn {height:33px;border-radius:5px;font-size:12px;padding:0 11px;}
+.mo-execute-settlement-deal-id .action-btn.primary {background:#0A72CE;border-color:#0A72CE}
+.mo-execute-settlement-deal-id .action-btn.success {background:#E1F5F1;border-color:#BDE6DE;color:#087766;}
+.mo-execute-settlement-deal-id .drag-hint {font-size:10.5px;padding:6px 12px;background:#FAFBFC;}
+.mo-execute-settlement-deal-id .table-wrap {background:#fff;}
+.mo-execute-settlement-deal-id table {font-size:12px}
+.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {padding:8px 10px;}
+.mo-execute-settlement-deal-id .data-table thead th {font-size:11px;text-transform:none;letter-spacing:0;color:#405C76;background:#F5F7F9;border-bottom:1px solid #CDD6DF;font-weight:700;}
+.mo-execute-settlement-deal-id .data-table tbody td {border-bottom:1px solid #E1E7EC;color:#1D2D3E;}
+.mo-execute-settlement-deal-id .data-table tbody tr:hover td {background:#F7FAFC}
+.mo-execute-settlement-deal-id .data-table tbody tr.row-sel td {background:#EAF4FC !important;}
+.mo-execute-settlement-deal-id .hotspot {color:#0067B8;text-decoration:underline}
+.mo-execute-settlement-deal-id .chip, .mo-execute-settlement-deal-id .pill {border-radius:999px;padding:3px 9px;font-size:10.5px;}
+.mo-execute-settlement-deal-id .pill-done, .mo-execute-settlement-deal-id .chip-done {background:#DDF3EF;color:#087766}
+.mo-execute-settlement-deal-id .pager-row {padding:7px 11px}
+.mo-execute-settlement-deal-id .pager-ctrl button {height:28px;min-width:28px;border-radius:4px}
+.mo-execute-settlement-deal-id .pager-ctrl button.active {background:#fff;color:#405C76;border-color:#CDD6DF;}
+.mo-execute-settlement-deal-id .hdr-grid {border-radius:6px}
+.mo-execute-settlement-deal-id .hdr-cell {padding:8px 10px}
+.mo-execute-settlement-deal-id .hdr-lbl {font-size:10.5px;text-transform:none;color:#5D7287}
+.mo-execute-settlement-deal-id .hdr-val {font-size:12px;}
+.mo-execute-settlement-deal-id .modal-card {border-radius:8px}
+.mo-execute-settlement-deal-id .modal-header {background:#F5F7F9;padding:12px 15px}
+.mo-execute-settlement-deal-id .modal-icon {border-radius:5px}
+.mo-execute-settlement-deal-id .modal-title {font-size:14px}
+.mo-execute-settlement-deal-id .modal-footer {padding:10px 14px}
+.mo-execute-settlement-deal-id .btn-cancel, .mo-execute-settlement-deal-id .btn-confirm {border-radius:5px;}
+.mo-execute-settlement-deal-id .ffield input, .mo-execute-settlement-deal-id .ffield select, .mo-execute-settlement-deal-id .ffield textarea {border-radius:4px;height:33px}
+.mo-execute-settlement-deal-id .fbox {border-radius:6px;padding:11px}
+.mo-execute-settlement-deal-id .note-box {border-radius:5px;}
+.mo-execute-settlement-deal-id .zfac-toast {border-radius:6px;}

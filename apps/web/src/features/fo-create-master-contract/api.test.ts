@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { fromChildRow, toChildRow, toChildStore, toContract, toMasCon } from './api.ts'
+import { EXTRA_ORIGIN_COMPANY_CODES, fromChildRow, toChildRow, toChildStore, toContract, toMasCon, toOriginEntities } from './api.ts'
 import { FIRST_CHILD_REFS } from './data.ts'
 import { ensureChildContracts } from './logic.ts'
 
@@ -98,5 +98,23 @@ describe('child rows', () => {
     ])
     deepStrictEqual(store.nextRef, { T1: 110005, T2: 220003, T3: FIRST_CHILD_REFS.T3 })
     strictEqual(store.byMc['2000000001']?.length, 2)
+  })
+})
+
+describe('origin entities', () => {
+  const comp = (code: string, bukrs: string, origin: string, currency: string) => ({ ZCOM_ID: code, ZBUKRS: bukrs, ZBUTXT: code + ' Ltd', ZWAERS: currency, ZORIGIN: origin })
+  const rows = [comp('DMCC', 'AE13', '', 'AED'), comp('OSIPL', 'IN11', 'X', 'INR'), comp('OGA', 'SG03', '', 'USD'), comp('OTL', 'TH10', 'X', 'THB'), comp('OVL', 'VN10', 'X', 'VND'), comp('OGAT', 'SG39', '', 'USD')]
+
+  it('offers the flagged origin entities and SG03, and no other unflagged company', () => {
+    deepStrictEqual(toOriginEntities(rows).map((e) => e.code), ['OSIPL', 'OGA', 'OTL', 'OVL'])
+    deepStrictEqual(EXTRA_ORIGIN_COMPANY_CODES, ['SG03'])
+  })
+
+  it('maps the code, company code, name and currency of each', () => {
+    deepStrictEqual(toOriginEntities(rows)[1], { code: 'OGA', companyCode: 'SG03', name: 'OGA Ltd', currency: 'USD' })
+  })
+
+  it('lists SG03 once even when the master data flags it too', () => {
+    deepStrictEqual(toOriginEntities([comp('OGA', 'SG03', 'X', 'USD')]).map((e) => e.code), ['OGA'])
   })
 })

@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>View Spot-Forward Deals Settlement</title>
+<style>
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --purple:#8E44AD;
+  --purple-tint:#F3EAFA;
+  --gray-tint:#EEF2F6;
+  --radius-lg:10px;
+  --radius-md:8px;
+  --radius-sm:6px;
+  --shadow-card:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font);font-size:12px;line-height:1.5;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:var(--font);}
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- header ---------- */
+.page-head{
+  margin:.6rem .6rem 12px;padding:11px 16px;min-height:64px;display:flex;align-items:center;gap:12px;
+  background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+}
+.head-badge{height:42px;width:auto;max-width:34px;object-fit:contain;flex:none;display:block;}
+.title-wrap{display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.page-title{font-size:19px;font-weight:700;letter-spacing:-.2px;line-height:1.2;color:var(--text);}
+.page-subtitle{margin-top:2px;font-size:12px;color:var(--text-muted);line-height:1.4;}
+.head-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.btn-icon{
+  width:34px;height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;
+  color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.btn-icon:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-tint);}
+.tcode-pill{font-size:11px;color:var(--text-faint);font-weight:600;border:1px solid var(--border-strong);border-radius:999px;padding:3px 10px;white-space:nowrap;}
+
+main{max-width:none;margin:0;padding:0 .6rem .9rem;}
+
+/* ---------- notes banner ---------- */
+.notes{
+  background:var(--warning-tint);border:1px solid #F7D9AE;border-radius:var(--radius-md);padding:10px 14px;
+  font-size:11.5px;color:#7A4B00;margin-bottom:12px;line-height:1.6;
+}
+.notes strong{color:#5C3800;}
+
+/* ---------- KPI ---------- */
+.kpi-head{display:flex;align-items:center;gap:7px;margin:0 2px 8px;}
+.kpi-toggle{
+  width:24px;height:24px;border:1px solid var(--border-strong);background:#fff;border-radius:var(--radius-sm);
+  cursor:pointer;color:var(--text-muted);font-size:10px;display:flex;align-items:center;justify-content:center;
+}
+.kpi-toggle:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-tint);}
+.kpi-toggle.collapsed span{display:inline-block;transform:rotate(-90deg);}
+.kpi-head-title{font-size:11.5px;font-weight:700;letter-spacing:.25px;color:var(--text-muted);}
+.metrics-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.metrics-grid.kpi-hidden{display:none;}
+.metric-card{
+  position:relative;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .12s;
+}
+.metric-card::before{content:"";display:block;position:absolute;left:0;right:0;top:0;height:3px;background:var(--primary);}
+.metric-card.k-overdue::before{background:var(--error);}
+.metric-card.k-pending::before{background:var(--warning);}
+.metric-card.k-settled::before{background:var(--success);}
+.metric-card.k-errcorr::before{background:var(--purple);}
+.metric-card:hover{border-color:#D3DFEC;box-shadow:0 4px 14px rgba(22,39,64,.09);transform:translateY(-1px);}
+.metric-card.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-tint);}
+.metric-inner{padding:13px 15px 12px;}
+.metric-val{font-size:23px;font-weight:700;line-height:1.1;letter-spacing:-.2px;color:var(--primary-dark);margin-bottom:4px;}
+.metric-card.k-overdue .metric-val{color:var(--error);}
+.metric-card.k-pending .metric-val{color:var(--warning);}
+.metric-card.k-settled .metric-val{color:var(--success);}
+.metric-card.k-errcorr .metric-val{color:var(--purple);}
+.metric-lbl{font-size:11.5px;font-weight:600;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ---------- panel ---------- */
+.panel{margin:0 0 12px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:visible;padding:0;}
+.panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:0;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.panel-title-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.dot-bullet{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;}
+.panel-title h2{margin:0;font-size:14px;font-weight:700;color:var(--primary-dark);letter-spacing:.15px;}
+.badge-count{font-size:11.5px;font-weight:500;color:var(--text-muted);}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;flex-direction:column;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.toolbar-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.search-box{position:relative;display:flex;align-items:center;flex:0 0 230px;min-width:200px;}
+.search-box .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;color:var(--text-faint);pointer-events:none;}
+.search-box input{width:100%;height:34px;padding:0 11px 0 32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:12px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.filter-field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.filter-field label{font-size:11px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+.filter-field input,.filter-field select{height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:11.5px;outline:none;padding:0 9px;transition:border-color .15s,box-shadow .15s;}
+.filter-field select{width:142px;padding-right:26px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238CA0B3'/%3E%3C/svg%3E") no-repeat right 9px center;-webkit-appearance:none;appearance:none;}
+.filter-field input:focus,.filter-field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.date-range{display:flex;align-items:center;gap:6px;}
+.date-range span{font-size:11px;color:var(--text-faint);}
+.dp{position:relative;}
+.dp input{width:104px;height:34px;padding:0 26px 0 9px;font-size:11.5px;cursor:pointer;}
+.dp-btn{position:absolute;right:3px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--text-muted);padding:4px;display:flex;cursor:pointer;}
+.dp-btn:hover{color:var(--primary);}
+.dp-popup{position:absolute;top:calc(100% + 6px);left:0;width:238px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-pop);padding:10px;z-index:250;display:none;}
+.dp-popup.open{display:block;}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-head button{width:24px;height:24px;padding:0;border:0;background:var(--gray-tint);border-radius:6px;color:var(--text);cursor:pointer;}
+.dp-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.dp-month-label{font-size:12px;font-weight:700;color:var(--text);}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;}
+.dp-dow{font-size:9.5px;color:var(--text-faint);font-weight:700;padding:3px 0;}
+.dp-day{font-size:11px;padding:5px 0;border-radius:6px;color:var(--text);cursor:pointer;background:none;border:0;}
+.dp-day:hover{background:var(--primary-tint);}
+.dp-day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.dp-day.today:not(.selected){border:1px solid var(--primary-light);}
+.dp-day.blank{visibility:hidden;cursor:default;}
+.filter-reset{height:34px;padding:0 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:11.5px;font-weight:600;cursor:pointer;}
+.filter-reset:hover{border-color:var(--primary);color:var(--primary);}
+.toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.common-btn{height:34px;padding:0 13px;border-radius:var(--radius-sm);font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--border-strong);background:#fff;color:var(--text);transition:background .15s,border-color .15s,color .15s,opacity .15s;}
+.common-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary-dark);background:var(--primary-tint);}
+.common-btn:disabled{opacity:.42;cursor:not-allowed;}
+.common-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.common-btn.primary:hover:not(:disabled){background:var(--primary-dark);border-color:var(--primary-dark);color:#fff;}
+.common-btn.warn{background:#fff;border-color:#FBD4A3;color:#7A4B00;}
+.common-btn.warn:hover:not(:disabled){background:var(--warning-tint);}
+.selected-count{font-size:11.5px;font-weight:500;color:var(--text-muted);margin-left:2px;white-space:nowrap;}
+.menu-wrap{position:relative;display:inline-block;}
+.menu-list{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-pop);min-width:190px;z-index:60;display:none;overflow:hidden;}
+.menu-list.open{display:block;}
+.menu-item{display:block;width:100%;text-align:left;padding:9px 13px;font-size:12px;color:var(--text);background:none;border:none;cursor:pointer;}
+.menu-item:hover:not(:disabled){background:var(--primary-tint);color:var(--primary-dark);}
+.menu-item:disabled{opacity:.42;cursor:not-allowed;}
+
+/* ---------- table ---------- */
+.table-wrap{width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
+table{border-collapse:collapse;border-spacing:0;font-size:12px;}
+#deal-table{width:max-content;min-width:100%;}
+.list-table th,.list-table td{padding:9px 12px;white-space:nowrap;}
+.list-table thead th{position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size:10.8px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;z-index:5;}
+.list-table thead th.sortable{cursor:pointer;}
+.list-table thead th.sortable:hover{color:var(--primary-dark);}
+.list-table thead th.sortable .arrow{font-size:9px;color:var(--text-faint);}
+.list-table tbody td{border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.list-table tbody tr{transition:background .15s;cursor:pointer;}
+.list-table tbody tr:hover td{background:#F7FAFD;}
+.list-table tbody tr.row-checked td{background:var(--primary-tint)!important;}
+#deal-table .sticky-col{position:sticky!important;z-index:8;background:#fff!important;}
+#deal-table thead th.sticky-col{z-index:30!important;background:#F1F3F6!important;}
+#deal-table .sticky-1{left:0!important;width:36px;min-width:36px;max-width:36px;text-align:center;}
+#deal-table .sticky-2{left:36px!important;width:112px;min-width:112px;max-width:112px;}
+#deal-table .sticky-3{left:148px!important;width:118px;min-width:118px;max-width:118px;box-shadow:4px 0 6px -4px rgba(22,39,64,.18);}
+#deal-table tbody tr:hover .sticky-col{background:#F7FAFD!important;}
+#deal-table tbody tr.row-checked .sticky-col{background:var(--primary-tint)!important;}
+.tbl-link{color:var(--primary-dark);font-size:12px;font-weight:700;background:none;border:0;padding:0;cursor:pointer;}
+.tbl-link:hover{color:var(--primary);text-decoration:underline;}
+.deal-id{color:var(--success);font-weight:700;}
+.muted-dash{color:var(--text-faint);}
+.status-cell{font-size:12px;font-weight:700;white-space:nowrap;}
+.st-pending{color:var(--warning);}
+.st-overdue{color:var(--error);}
+.st-settled{color:var(--success);}
+.st-errcorr{color:var(--purple);}
+.leg-sell{color:var(--error);font-weight:600;}
+.leg-buy{color:var(--success);font-weight:600;}
+
+/* ---------- pager ---------- */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px 12px;margin:0;border-top:1px solid var(--border);background:#fff;flex-wrap:wrap;}
+.pager-size{font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:7px;}
+.pager-size select{height:30px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text);font-size:11.5px;padding:0 8px;}
+.pager-controls{display:flex;align-items:center;gap:4px;}
+.pager-btn{min-width:30px;height:30px;padding:0 8px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text);font-size:11.5px;cursor:pointer;}
+.pager-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed;}
+.pager-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.pager-info{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.pager-info strong{color:var(--text);font-weight:700;}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,26,41,.5);padding:24px 20px;z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+#action-overlay{z-index:1200;}
+.modal-card{width:100%;max-width:640px;max-height:92vh;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);overflow:hidden;display:flex;flex-direction:column;transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-card.wide{max-width:760px;}
+.modal-card.narrow{max-width:460px;}
+.modal-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border);}
+.modal-header-text{min-width:0;flex:1;}
+.modal-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.25;}
+.modal-subtitle{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+.modal-close{width:30px;height:30px;border:0;background:transparent;border-radius:6px;color:var(--text-muted);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.modal-close:hover{background:var(--gray-tint);color:var(--text);}
+.modal-body{padding:16px 18px;background:#fff;overflow-y:auto;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);background:#fff;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+.btn-cancel,.btn-confirm{height:35px;min-height:35px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;cursor:pointer;}
+.btn-cancel{background:#fff;border:1px solid var(--border-strong);color:var(--text);}
+.btn-cancel:hover{border-color:var(--primary);color:var(--primary);}
+.btn-confirm{background:var(--primary);border:1px solid var(--primary);color:#fff;}
+.btn-confirm:hover{background:var(--primary-dark);border-color:var(--primary-dark);}
+.btn-confirm.is-warn{background:var(--warning);border-color:var(--warning);}
+.btn-confirm.is-warn:hover{background:#DB7700;border-color:#DB7700;}
+.section-label{margin:14px 0 8px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--primary-dark);}
+.section-label:first-child{margin-top:0;}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border);}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:#fff;margin-bottom:6px;}
+.detail-cell{padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+.detail-cell:nth-child(even){border-right:none;}
+.detail-lbl{font-size:10.5px;font-weight:600;color:var(--text-muted);margin-bottom:2px;}
+.detail-val{font-size:12.5px;font-weight:600;color:var(--text);word-break:break-word;}
+.detail-val.accent{color:var(--primary-dark);}
+.letter-box{border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px;font-size:12.5px;color:var(--text);line-height:1.7;background:#FCFDFF;}
+.letter-box table{width:100%;margin-top:10px;font-size:12.5px;}
+.letter-box td{padding:5px 0;border-bottom:1px dashed var(--border);}
+.hint{font-size:11.5px;color:var(--text-muted);line-height:1.55;}
+.mini-list{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;margin-top:4px;}
+.mini-list .mi-row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+.mini-list .mi-row:last-child{border-bottom:none;}
+.mini-list .mi-row b{color:var(--primary-dark);}
+
+.zfac-toast{position:fixed;bottom:22px;right:22px;max-width:360px;background:#fff;color:var(--text);border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:12px 15px;border-radius:var(--radius-md);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;}
+.zfac-toast.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.zfac-toast.error{background:var(--error-tint);border-color:#F3C6C0;color:var(--error);}
+.zfac-toast.success{background:var(--success-tint);border-color:#BFE6CE;color:var(--success);}
+
+@media (max-width:1300px){ .metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+@media (max-width:860px){ .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr));} .detail-grid{grid-template-columns:1fr;} .detail-cell:nth-child(even){border-right:1px solid var(--border);} }
+</style>
+</head>
+<body>
+
+  <div class="page-head">
+    <img class="head-badge" src="data:image/png;base64,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" alt="Company logo"/>
+    <div class="title-wrap">
+      <div class="page-title">View Spot-Forward Deals Settlement</div>
+      <div class="page-subtitle">FX deals due for settlement on a value date (or date range) &middot; actual settlement happens when the FX Deal and its Trade Invoices settle together</div>
+    </div>
+    <div class="head-actions">
+      <span class="tcode-pill">ZSGTSFR062</span>
+      <button class="btn-icon" title="Refresh (REF)" onclick="refreshData()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <main>
+    <div class="notes">
+      <strong>Notes:</strong> 1. This report only provides the list of FX deals due for settlement on a date (or date range). &nbsp;
+      2. Actual settlement happens for the Deal ID &mdash; where the FX Deal and its Trade Invoices settle together on the same day.
+    </div>
+
+    <div class="kpi-head">
+      <button class="kpi-toggle" id="kpi-toggle" onclick="toggleKpis()"><span id="kpi-caret">&#9662;</span></button>
+      <div class="kpi-head-title">Overview</div>
+    </div>
+    <div class="metrics-grid" id="kpi-grid"></div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Spot &amp; Forward Deals Due for Settlement</h2></div>
+        <span class="badge-count" id="result-count-badge">0 deals</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="search-box">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <input id="f-search" type="text" placeholder="Search deal ID, MC, transaction, partner..." oninput="applyFilters()"/>
+          </div>
+          <div class="filter-field">
+            <label for="f-bukrs">Company Code</label>
+            <select id="f-bukrs" onchange="applyFilters()"><option value="ALL">All companies</option></select>
+          </div>
+          <div class="filter-field">
+            <label>Value Date</label>
+            <div class="date-range">
+              <div class="dp">
+                <input id="f-date-from" type="text" readonly="readonly" onclick="toggleDp('from')"/>
+                <button type="button" class="dp-btn" onclick="toggleDp('from')" aria-label="Open calendar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                <div class="dp-popup" id="dp-popup-from"></div>
+              </div>
+              <span>to</span>
+              <div class="dp">
+                <input id="f-date-to" type="text" readonly="readonly" onclick="toggleDp('to')"/>
+                <button type="button" class="dp-btn" onclick="toggleDp('to')" aria-label="Open calendar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+                <div class="dp-popup" id="dp-popup-to"></div>
+              </div>
+            </div>
+          </div>
+          <div class="filter-field">
+            <label for="f-status">Status</label>
+            <select id="f-status" onchange="applyFilters()">
+              <option value="ALL">All statuses</option>
+              <option value="PENDING">Pending Settlement</option>
+              <option value="OVERDUE">Overdue</option>
+              <option value="SETTLED">Settled</option>
+              <option value="ERRCORR">Error Correction</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="f-product">Product</label>
+            <select id="f-product" onchange="applyFilters()">
+              <option value="ALL">Spot &amp; Forward</option>
+              <option value="Spot">Spot</option>
+              <option value="Forward">Forward</option>
+            </select>
+          </div>
+          <button class="filter-reset" onclick="resetFilters()">Reset</button>
+          <div class="toolbar-actions">
+            <button class="common-btn" id="btn-preview" disabled title="Preview the bank settlement letter for the selected deal (PRINT)" onclick="openLetterModal()">Preview Document</button>
+            <div class="menu-wrap">
+              <button class="common-btn" id="btn-isd" disabled title="India Settlement Documents (&amp;IND_ST_DC)" onclick="toggleIsdMenu()">India Settlement Documents &#9662;</button>
+              <div class="menu-list" id="isd-menu">
+                <button class="menu-item" onclick="runIsd('print')">Print (&amp;PRT_ISD)</button>
+                <button class="menu-item" onclick="runIsd('pdf')">PDF (PDF1)</button>
+              </div>
+            </div>
+            <button class="common-btn" id="btn-test" disabled title="Simulate posting without creating documents (TEST)" onclick="openActionDialog('test')">Test Run</button>
+            <button class="common-btn warn" id="btn-post" disabled title="Submit real settlement postings via RFTBBB00 (TBB1)" onclick="openActionDialog('post')">Post (TBB1)</button>
+            <span class="selected-count" id="selected-count">0 selected</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="table-wrap">
+        <table class="list-table" id="deal-table">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-1"><input type="checkbox" id="chk-all" onclick="toggleSelectAll(this.checked)" title="Select all visible rows"/></th>
+              <th class="sticky-col sticky-2">Status</th>
+              <th class="sticky-col sticky-3 sortable" onclick="sortBy('rfha')">Transaction <span class="arrow" id="sort-rfha"></span></th>
+              <th class="sortable" onclick="sortBy('dealId')">Deal ID <span class="arrow" id="sort-dealId"></span></th>
+              <th>MC Ref No</th>
+              <th>Company Code</th>
+              <th>TSF Entity</th>
+              <th>Product</th>
+              <th>Trade Date</th>
+              <th class="sortable" onclick="sortBy('valueDateSort')">Value Date <span class="arrow" id="sort-valueDateSort"></span></th>
+              <th>Leg 1 (Buy/Sell)</th>
+              <th>Leg 2 (Buy/Sell)</th>
+              <th>Spot Rate</th>
+              <th>Swap Rate</th>
+              <th>All-in Rate</th>
+              <th>Business Partner</th>
+              <th>Trader</th>
+              <th>FI Doc 1</th>
+              <th>FI Doc 2</th>
+              <th>Buy Trf</th>
+              <th>Sell Trf</th>
+              <th>Entered By</th>
+            </tr>
+          </thead>
+          <tbody id="deal-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="pager" id="pager">
+        <div class="pager-size">
+          <span>Rows per page</span>
+          <select id="pager-size" onchange="changePageSize()">
+            <option value="8" selected="selected">8</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="pager-controls" id="pager-controls"></div>
+        <div class="pager-info" id="pager-info"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Transaction Display modal (hotspot on Transaction / ZSGTBFM_DISPLAY) -->
+  <div class="modal-overlay" id="deal-overlay" onclick="overlayClick(event,'deal-overlay')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <div class="modal-title" id="deal-modal-title">Transaction Display</div>
+          <div class="modal-subtitle" id="deal-modal-subtitle">ZSGTBFM_DISPLAY</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('deal-overlay')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="deal-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('deal-overlay')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FI Document modal (hotspot on DOC1 / DOC2 -> FB03) -->
+  <div class="modal-overlay" id="fidoc-overlay" onclick="overlayClick(event,'fidoc-overlay')">
+    <div class="modal-card narrow">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <div class="modal-title">Accounting Document Display</div>
+          <div class="modal-subtitle">Transaction FB03</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('fidoc-overlay')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="fidoc-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('fidoc-overlay')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Settlement Letter preview (PRINT -> screen 9001 / BS01) -->
+  <div class="modal-overlay" id="letter-overlay" onclick="overlayClick(event,'letter-overlay')">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <div class="modal-title">Preview Bank Settlement Letter</div>
+          <div class="modal-subtitle" id="letter-modal-subtitle">FWD/SPOT Bank Settlement</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('letter-overlay')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="letter-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('letter-overlay')">Close</button>
+        <button class="btn-cancel" onclick="window.print()">Print</button>
+        <button class="btn-confirm" onclick="downloadLetterPdf()">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Run / Post confirmation -->
+  <div class="modal-overlay" id="action-overlay" onclick="overlayClick(event,'action-overlay')">
+    <div class="modal-card narrow">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <div class="modal-title" id="action-modal-title">TBB1 Test Run</div>
+          <div class="modal-subtitle" id="action-modal-subtitle">RFTBBB00</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('action-overlay')" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="action-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('action-overlay')">Cancel</button>
+        <button class="btn-confirm" id="action-confirm-btn" onclick="confirmAction()">Run Test</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="zfac-toast" id="toast"></div>
+
+<script>
+(function(){
+
+/* =========================================================================
+   DUMMY DATA — representative of ZSGTSFV_FX (demo data; replace freely)
+   ========================================================================= */
+var DEMO_TODAY = new Date(2026,9,5); /* 05-10-2026, matches this demo's "today" */
+
+var TRF_DESC = {"01":"TT Form","02":"ECM","03":"Letter","04":"Indirect","05":"SSI Letter + ECM","06":"SSI Letter"};
+var PARTNER_NAME = {"100234":"HDFC Bank Ltd","100567":"ICICI Bank Ltd","100987":"Axis Bank Ltd","200110":"Emirates NBD","300045":"DBS Bank Ltd"};
+var COMPANY_NAME = {"IN01":"Olam Agro India Pvt Ltd","DM01":"Olam Global Trading DMCC","SG01":"Olam International Pte Ltd"};
+
+function mk(o){ o.valueDateObj = parseDMY(o.valueDate); o.tradeDateObj = parseDMY(o.tradeDate); return o; }
+
+var DEALS = [
+  mk({rfha:"0001345671",dealId:"TSF-9081",mcRef:"MC-7001",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"05-09-2026",valueDate:"05-11-2026",bs1:"SELL",curr1:"USD",amt1:5000000,bs2:"BUY",curr2:"INR",amt2:417500000,cpair:"USD/INR",spot:83.10,swap:0.42,allIn:83.52,kontrh:"100234",trader:"Ravi Kumar",doc1:"",doc2:"",trf1:"03",trf2:"02",cruser:"VAISHNAVI",status:"PENDING"}),
+  mk({rfha:"0001345672",dealId:"TSF-9082",mcRef:"MC-7001",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"20-09-2026",valueDate:"20-12-2026",bs1:"SELL",curr1:"USD",amt1:3250000,bs2:"BUY",curr2:"INR",amt2:270000000,cpair:"USD/INR",spot:83.25,swap:0.58,allIn:83.83,kontrh:"100567",trader:"Ananya Shah",doc1:"",doc2:"",trf1:"03",trf2:"02",cruser:"ASHOK",status:"PENDING"}),
+  mk({rfha:"0001345501",dealId:"TSF-8890",mcRef:"MC-6998",bukrs:"IN01",entity:"OIL",product:"Spot",tradeDate:"01-10-2026",valueDate:"03-10-2026",bs1:"SELL",curr1:"USD",amt1:1200000,bs2:"BUY",curr2:"INR",amt2:99700000,cpair:"USD/INR",spot:83.05,swap:0,allIn:83.05,kontrh:"100234",trader:"Ravi Kumar",doc1:"1900000123",doc2:"1900000124",trf1:"01",trf2:"01",cruser:"VAISHNAVI",status:"SETTLED"}),
+  mk({rfha:"0001345502",dealId:"TSF-8891",mcRef:"MC-6998",bukrs:"IN01",entity:"OIL",product:"Spot",tradeDate:"02-10-2026",valueDate:"04-10-2026",bs1:"SELL",curr1:"USD",amt1:900000,bs2:"BUY",curr2:"INR",amt2:74800000,cpair:"USD/INR",spot:83.12,swap:0,allIn:83.12,kontrh:"100987",trader:"Ananya Shah",doc1:"",doc2:"",trf1:"03",trf2:"03",cruser:"ASHOK",status:"OVERDUE"}),
+  mk({rfha:"0001345321",dealId:"TSF-8750",mcRef:"MC-6890",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"15-08-2026",valueDate:"05-10-2026",bs1:"SELL",curr1:"USD",amt1:2000000,bs2:"BUY",curr2:"INR",amt2:166600000,cpair:"USD/INR",spot:82.95,swap:0.35,allIn:83.30,kontrh:"100234",trader:"Ravi Kumar",doc1:"",doc2:"",trf1:"02",trf2:"02",cruser:"VAISHNAVI",status:"PENDING"}),
+  mk({rfha:"0001345322",dealId:"TSF-8751",mcRef:"MC-6890",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"16-08-2026",valueDate:"05-10-2026",bs1:"SELL",curr1:"USD",amt1:1750000,bs2:"BUY",curr2:"INR",amt2:145950000,cpair:"USD/INR",spot:83.00,swap:0.40,allIn:83.40,kontrh:"100567",trader:"Ananya Shah",doc1:"",doc2:"",trf1:"02",trf2:"02",cruser:"ASHOK",status:"PENDING"}),
+  mk({rfha:"0001344980",dealId:"TSF-8600",mcRef:"MC-6750",bukrs:"IN01",entity:"OIL",product:"Spot",tradeDate:"28-09-2026",valueDate:"02-10-2026",bs1:"SELL",curr1:"USD",amt1:1500000,bs2:"BUY",curr2:"INR",amt2:124500000,cpair:"USD/INR",spot:83.00,swap:0,allIn:83.00,kontrh:"100234",trader:"Priya Nair",doc1:"",doc2:"",trf1:"04",trf2:"04",cruser:"KARTHIK",status:"OVERDUE"}),
+  mk({rfha:"0002200456",dealId:"TSF-7701",mcRef:"MC-6500",bukrs:"DM01",entity:"DMCC",product:"Spot",tradeDate:"01-10-2026",valueDate:"06-10-2026",bs1:"SELL",curr1:"USD",amt1:2000000,bs2:"BUY",curr2:"AED",amt2:7346000,cpair:"USD/AED",spot:3.6730,swap:0,allIn:3.6730,kontrh:"200110",trader:"Karthik Ramasamy",doc1:"",doc2:"",trf1:"01",trf2:"01",cruser:"KARTHIK",status:"PENDING"}),
+  mk({rfha:"0002200457",dealId:"TSF-7702",mcRef:"MC-6500",bukrs:"DM01",entity:"DMCC",product:"Forward",tradeDate:"02-10-2026",valueDate:"02-01-2027",bs1:"SELL",curr1:"USD",amt1:1500000,bs2:"BUY",curr2:"AED",amt2:5515000,cpair:"USD/AED",spot:3.6730,swap:0.012,allIn:3.6850,kontrh:"200110",trader:"Karthik Ramasamy",doc1:"",doc2:"",trf1:"02",trf2:"02",cruser:"KARTHIK",status:"PENDING"}),
+  mk({rfha:"0002100788",dealId:"TSF-7500",mcRef:"MC-6300",bukrs:"SG01",entity:"OAIPL",product:"Spot",tradeDate:"28-09-2026",valueDate:"02-10-2026",bs1:"SELL",curr1:"USD",amt1:800000,bs2:"BUY",curr2:"SGD",amt2:1073600,cpair:"USD/SGD",spot:1.3420,swap:0,allIn:1.3420,kontrh:"300045",trader:"Priya Nair",doc1:"",doc2:"",trf1:"03",trf2:"03",cruser:"KARTHIK",status:"OVERDUE"}),
+  mk({rfha:"0001344870",dealId:"TSF-8400",mcRef:"MC-6700",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"10-08-2026",valueDate:"30-09-2026",bs1:"SELL",curr1:"USD",amt1:2600000,bs2:"BUY",curr2:"INR",amt2:215930000,cpair:"USD/INR",spot:82.40,swap:0.65,allIn:83.05,kontrh:"100234",trader:"Ravi Kumar",doc1:"1900000050",doc2:"1900000051",trf1:"01",trf2:"01",cruser:"VAISHNAVI",status:"SETTLED"}),
+  mk({rfha:"0001344871",dealId:"TSF-8401",mcRef:"MC-6700",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"11-08-2026",valueDate:"30-09-2026",bs1:"SELL",curr1:"USD",amt1:1400000,bs2:"BUY",curr2:"INR",amt2:117040000,cpair:"USD/INR",spot:83.10,swap:0.50,allIn:83.60,kontrh:"100567",trader:"Ananya Shah",doc1:"",doc2:"",trf1:"05",trf2:"05",cruser:"ASHOK",status:"ERRCORR"}),
+  mk({rfha:"0001345890",dealId:"TSF-9150",mcRef:"MC-7050",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"25-09-2026",valueDate:"15-10-2026",bs1:"SELL",curr1:"USD",amt1:4000000,bs2:"BUY",curr2:"INR",amt2:334400000,cpair:"USD/INR",spot:83.20,swap:0.38,allIn:83.58,kontrh:"100987",trader:"Ravi Kumar",doc1:"",doc2:"",trf1:"02",trf2:"02",cruser:"VAISHNAVI",status:"PENDING"}),
+  mk({rfha:"0001345891",dealId:"TSF-9151",mcRef:"MC-7050",bukrs:"IN01",entity:"OIL",product:"Forward",tradeDate:"26-09-2026",valueDate:"15-10-2026",bs1:"SELL",curr1:"USD",amt1:1800000,bs2:"BUY",curr2:"INR",amt2:150480000,cpair:"USD/INR",spot:83.22,swap:0.40,allIn:83.62,kontrh:"100987",trader:"Ravi Kumar",doc1:"",doc2:"",trf1:"02",trf2:"02",cruser:"VAISHNAVI",status:"PENDING"})
+];
+var INITIAL_JSON = JSON.stringify(DEALS.map(function(d){ return {rfha:d.rfha,status:d.status,doc1:d.doc1,doc2:d.doc2}; }));
+
+var STATUS_LABEL = {PENDING:"Pending Settlement",OVERDUE:"Overdue",SETTLED:"Settled",ERRCORR:"Error Correction"};
+var STATUS_CLASS = {PENDING:"st-pending",OVERDUE:"st-overdue",SETTLED:"st-settled",ERRCORR:"st-errcorr"};
+
+var sortKey = "valueDateSort", sortDir = 1;
+var pageIndex = 1, pageSize = 8;
+var filtered = [];
+var checked = {}; /* rfha -> true */
+var kpiActiveFilter = null;
+var docCounter = 1900000200;
+
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
+var $ = function(id){ return document.getElementById(id); };
+
+function parseDMY(s){
+  var p = s.split("-");
+  return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+}
+function fmtDMY(d){
+  function z(n){ return n<10?"0"+n:""+n; }
+  return z(d.getDate())+"-"+z(d.getMonth()+1)+"-"+d.getFullYear();
+}
+function fmtAmt(n){ return Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtRate(n){ return Number(n).toFixed(4); }
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+
+function statusTag(st){
+  return "<span class=\"status-cell "+STATUS_CLASS[st]+"\">"+STATUS_LABEL[st]+"</span>";
+}
+
+function toast(msg,kind){
+  var t=$("toast");
+  t.textContent=msg;
+  t.className="zfac-toast show"+(kind?" "+kind:"");
+  clearTimeout(toast._tm);
+  toast._tm=setTimeout(function(){ t.className="zfac-toast"; },3600);
+}
+
+window.closeModal=function(id){ $(id).classList.remove("open"); };
+window.overlayClick=function(ev,id){ if(ev.target && ev.target.id===id) closeModal(id); };
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    ["deal-overlay","fidoc-overlay","letter-overlay","action-overlay"].forEach(closeModal);
+    closeAllDp(); closeIsdMenu();
+  }
+});
+
+/* =========================================================================
+   FILTER DROPDOWNS
+   ========================================================================= */
+function initDropdowns(){
+  var bukrsSel=$("f-bukrs"), seen={};
+  DEALS.forEach(function(d){
+    if(!seen[d.bukrs]){
+      seen[d.bukrs]=true;
+      var opt=document.createElement("option");
+      opt.value=d.bukrs; opt.textContent=d.bukrs+" \u00b7 "+(COMPANY_NAME[d.bukrs]||d.bukrs);
+      bukrsSel.appendChild(opt);
+    }
+  });
+  $("f-date-from").value="01-09-2026";
+  $("f-date-to").value="31-10-2026";
+}
+
+/* =========================================================================
+   DATE PICKER (lightweight, dd-mm-yyyy)
+   ========================================================================= */
+var dpState={from:{y:2026,m:8},to:{y:2026,m:9}}; /* 0-based month */
+function toggleDp(which){
+  var id="dp-popup-"+which, pop=$(id);
+  var otherId = which==="from" ? "dp-popup-to" : "dp-popup-from";
+  $(otherId).classList.remove("open");
+  var willOpen = !pop.classList.contains("open");
+  pop.classList.remove("open");
+  if(willOpen){
+    var cur = $("f-date-"+which).value;
+    if(cur){ var d=parseDMY(cur); dpState[which]={y:d.getFullYear(),m:d.getMonth()}; }
+    renderCalendar(which);
+    pop.classList.add("open");
+  }
+}
+window.toggleDp=toggleDp;
+function closeAllDp(){ $("dp-popup-from").classList.remove("open"); $("dp-popup-to").classList.remove("open"); }
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".dp")) closeAllDp();
+  if(!e.target.closest(".menu-wrap")) closeIsdMenu();
+});
+function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
+var MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function renderCalendar(which){
+  var st=dpState[which];
+  var first=new Date(st.y,st.m,1).getDay();
+  var total=daysInMonth(st.y,st.m);
+  var selVal=$("f-date-"+which).value;
+  var html="<div class=\"dp-head\"><button type=\"button\" onclick=\"dpNav('"+which+"',-1)\">&lsaquo;</button><span class=\"dp-month-label\">"+MONTH_NAMES[st.m]+" "+st.y+"</span><button type=\"button\" onclick=\"dpNav('"+which+"',1)\">&rsaquo;</button></div>";
+  html+="<div class=\"dp-grid\">";
+  ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(function(d){ html+="<div class=\"dp-dow\">"+d+"</div>"; });
+  for(var i=0;i<first;i++) html+="<div class=\"dp-day blank\"></div>";
+  for(var d=1; d<=total; d++){
+    var cur=new Date(st.y,st.m,d);
+    var isToday = (cur.getFullYear()===DEMO_TODAY.getFullYear() && cur.getMonth()===DEMO_TODAY.getMonth() && cur.getDate()===DEMO_TODAY.getDate());
+    var isSel = (fmtDMY(cur)===selVal);
+    html+="<button type=\"button\" class=\"dp-day"+(isToday?" today":"")+(isSel?" selected":"")+"\" onclick=\"dpPick('"+which+"',"+d+")\">"+d+"</button>";
+  }
+  html+="</div>";
+  $("dp-popup-"+which).innerHTML=html;
+}
+window.dpNav=function(which,delta){
+  var st=dpState[which]; st.m+=delta;
+  if(st.m<0){ st.m=11; st.y--; } if(st.m>11){ st.m=0; st.y++; }
+  renderCalendar(which);
+};
+window.dpPick=function(which,day){
+  var st=dpState[which];
+  $("f-date-"+which).value=fmtDMY(new Date(st.y,st.m,day));
+  closeAllDp();
+  applyFilters();
+};
+
+/* =========================================================================
+   INDIA SETTLEMENT DOCUMENTS MENU
+   ========================================================================= */
+function toggleIsdMenu(){
+  var btn=$("btn-isd");
+  if(btn.disabled) return;
+  $("isd-menu").classList.toggle("open");
+}
+function closeIsdMenu(){ $("isd-menu").classList.remove("open"); }
+window.toggleIsdMenu=toggleIsdMenu;
+window.runIsd=function(kind){
+  closeIsdMenu();
+  var d=firstChecked();
+  if(!d) return;
+  if(kind==="print") toast("India Settlement Document for "+d.dealId+" sent to printer (demo).","success");
+  else toast("India Settlement Document PDF generated for "+d.dealId+" (demo).","success");
+};
+
+/* =========================================================================
+   FILTERING / SORTING
+   ========================================================================= */
+function statusOf(d){ return d.status; }
+
+function matches(d,p){
+  if(p.bukrs!=="ALL" && d.bukrs!==p.bukrs) return false;
+  if(p.status!=="ALL" && d.status!==p.status) return false;
+  if(p.product!=="ALL" && d.product!==p.product) return false;
+  if(p.dateFrom && d.valueDateObj < p.dateFrom) return false;
+  if(p.dateTo && d.valueDateObj > p.dateTo) return false;
+  if(p.q){
+    var hay=[d.rfha,d.dealId,d.mcRef,d.bukrs,d.entity,d.kontrh,PARTNER_NAME[d.kontrh]||"",d.trader,d.cpair].join(" ").toLowerCase();
+    if(hay.indexOf(p.q)===-1) return false;
+  }
+  return true;
+}
+
+function applyFilters(){
+  var p={
+    q:$("f-search").value.trim().toLowerCase(),
+    bukrs:$("f-bukrs").value,
+    status: kpiActiveFilter || $("f-status").value,
+    product:$("f-product").value,
+    dateFrom: $("f-date-from").value ? parseDMY($("f-date-from").value) : null,
+    dateTo: $("f-date-to").value ? parseDMY($("f-date-to").value) : null
+  };
+  filtered = DEALS.filter(function(d){ return matches(d,p); });
+  sortRows();
+  pageIndex=1;
+  renderKpis();
+  renderTable();
+}
+window.applyFilters=applyFilters;
+
+function sortRows(){
+  filtered.sort(function(a,b){
+    var av,bv;
+    if(sortKey==="valueDateSort"){ av=a.valueDateObj; bv=b.valueDateObj; }
+    else { av=a[sortKey]; bv=b[sortKey]; }
+    if(av<bv) return -1*sortDir;
+    if(av>bv) return 1*sortDir;
+    return 0;
+  });
+}
+window.sortBy=function(key){
+  if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  ["rfha","dealId","valueDateSort"].forEach(function(k){ var el=$("sort-"+k); if(el) el.textContent=""; });
+  var arrowEl=$("sort-"+key); if(arrowEl) arrowEl.textContent = sortDir===1 ? "\u25B2" : "\u25BC";
+  sortRows(); renderTable();
+};
+
+function resetFilters(){
+  $("f-search").value="";
+  $("f-bukrs").value="ALL";
+  $("f-status").value="ALL";
+  $("f-product").value="ALL";
+  $("f-date-from").value="01-09-2026";
+  $("f-date-to").value="31-10-2026";
+  kpiActiveFilter=null;
+  document.querySelectorAll(".metric-card").forEach(function(c){ c.classList.remove("active"); });
+  applyFilters();
+}
+window.resetFilters=resetFilters;
+
+/* =========================================================================
+   KPIs
+   ========================================================================= */
+function toggleKpis(){
+  var g=$("kpi-grid"), t=$("kpi-toggle"), c=$("kpi-caret");
+  g.classList.toggle("kpi-hidden");
+  t.classList.toggle("collapsed");
+}
+window.toggleKpis=toggleKpis;
+
+function computeKpis(){
+  var k={total:DEALS.length,PENDING:0,OVERDUE:0,SETTLED:0,ERRCORR:0};
+  DEALS.forEach(function(d){ k[d.status]++; });
+  return k;
+}
+function renderKpis(){
+  var k=computeKpis();
+  var cards=[
+    {key:null,cls:"",label:"Total Deals Due",val:k.total},
+    {key:"PENDING",cls:"k-pending",label:"Pending Settlement",val:k.PENDING},
+    {key:"OVERDUE",cls:"k-overdue",label:"Overdue",val:k.OVERDUE},
+    {key:"SETTLED",cls:"k-settled",label:"Settled",val:k.SETTLED},
+    {key:"ERRCORR",cls:"k-errcorr",label:"Error Correction",val:k.ERRCORR}
+  ];
+  var html="";
+  cards.forEach(function(c){
+    var active = kpiActiveFilter===c.key ? " active" : "";
+    html+="<div class=\"metric-card "+c.cls+active+"\" onclick=\"filterByKpi("+(c.key?"'"+c.key+"'":"null")+")\"><div class=\"metric-inner\"><div class=\"metric-val\">"+c.val+"</div><div class=\"metric-lbl\">"+c.label+"</div></div></div>";
+  });
+  $("kpi-grid").innerHTML=html;
+}
+window.filterByKpi=function(key){
+  kpiActiveFilter = (kpiActiveFilter===key) ? null : key;
+  $("f-status").value = kpiActiveFilter || "ALL";
+  applyFilters();
+};
+
+/* =========================================================================
+   SELECTION
+   ========================================================================= */
+function getCheckedDeals(){ return DEALS.filter(function(d){ return checked[d.rfha]; }); }
+function firstChecked(){ var l=getCheckedDeals(); return l.length?l[0]:null; }
+
+function updateActionButtons(){
+  var list=getCheckedDeals();
+  var n=list.length;
+  $("selected-count").textContent = n ? (n+" selected") : "0 selected";
+  $("btn-preview").disabled = n!==1;
+  $("btn-isd").disabled = n!==1;
+  $("btn-test").disabled = n===0;
+  $("btn-post").disabled = n===0;
+}
+window.toggleSelectAll=function(on){
+  pageRows().forEach(function(d){ checked[d.rfha]=on; });
+  renderTable();
+};
+function toggleRow(rfha){
+  checked[rfha]=!checked[rfha];
+  renderTable();
+}
+window.toggleRow=toggleRow;
+
+/* =========================================================================
+   TABLE RENDER
+   ========================================================================= */
+function pageRows(){
+  var start=(pageIndex-1)*pageSize;
+  return filtered.slice(start,start+pageSize);
+}
+function renderTable(){
+  var rows=pageRows();
+  var html="";
+  rows.forEach(function(d){
+    var isChecked = !!checked[d.rfha];
+    var doc1Cell = d.doc1 ? "<button class=\"tbl-link\" onclick=\"event.stopPropagation();openFiDoc('"+d.rfha+"','doc1')\">"+d.doc1+"</button>" : "<span class=\"muted-dash\">&ndash;</span>";
+    var doc2Cell = d.doc2 ? "<button class=\"tbl-link\" onclick=\"event.stopPropagation();openFiDoc('"+d.rfha+"','doc2')\">"+d.doc2+"</button>" : "<span class=\"muted-dash\">&ndash;</span>";
+    html+="<tr class=\""+(isChecked?"row-checked":"")+"\" onclick=\"toggleRow('"+d.rfha+"')\">";
+    html+="<td class=\"sticky-col sticky-1\"><input type=\"checkbox\" "+(isChecked?"checked":"")+" onclick=\"event.stopPropagation();toggleRow('"+d.rfha+"')\"/></td>";
+    html+="<td class=\"sticky-col sticky-2\">"+statusTag(d.status)+"</td>";
+    html+="<td class=\"sticky-col sticky-3\"><button class=\"tbl-link\" onclick=\"event.stopPropagation();openDealModal('"+d.rfha+"')\">"+d.rfha+"</button></td>";
+    html+="<td class=\"deal-id\">"+d.dealId+"</td>";
+    html+="<td>"+d.mcRef+"</td>";
+    html+="<td>"+d.bukrs+" &middot; "+(COMPANY_NAME[d.bukrs]||"")+"</td>";
+    html+="<td>"+d.entity+"</td>";
+    html+="<td>"+d.product+"</td>";
+    html+="<td>"+d.tradeDate+"</td>";
+    html+="<td>"+d.valueDate+"</td>";
+    html+="<td><span class=\"leg-"+(d.bs1==="SELL"?"sell":"buy")+"\">"+d.bs1+"</span> "+d.curr1+" "+fmtAmt(d.amt1)+"</td>";
+    html+="<td><span class=\"leg-"+(d.bs2==="SELL"?"sell":"buy")+"\">"+d.bs2+"</span> "+d.curr2+" "+fmtAmt(d.amt2)+"</td>";
+    html+="<td>"+fmtRate(d.spot)+"</td>";
+    html+="<td>"+(d.swap?fmtRate(d.swap):"<span class=\"muted-dash\">&ndash;</span>")+"</td>";
+    html+="<td>"+fmtRate(d.allIn)+"</td>";
+    html+="<td>"+d.kontrh+" &middot; "+(PARTNER_NAME[d.kontrh]||"")+"</td>";
+    html+="<td>"+d.trader+"</td>";
+    html+="<td>"+doc1Cell+"</td>";
+    html+="<td>"+doc2Cell+"</td>";
+    html+="<td>"+(TRF_DESC[d.trf1]||d.trf1)+"</td>";
+    html+="<td>"+(TRF_DESC[d.trf2]||d.trf2)+"</td>";
+    html+="<td>"+d.cruser+"</td>";
+    html+="</tr>";
+  });
+  if(!rows.length) html="<tr><td colspan=\"21\" style=\"text-align:center;color:var(--text-muted);padding:26px;\">No deals match the current filters.</td></tr>";
+  $("deal-tbody").innerHTML=html;
+  $("result-count-badge").textContent = filtered.length + (filtered.length===1?" deal":" deals");
+  renderPager();
+  updateActionButtons();
+}
+
+function renderPager(){
+  var totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  if(pageIndex>totalPages) pageIndex=totalPages;
+  var html="";
+  html+="<button class=\"pager-btn\" "+(pageIndex<=1?"disabled":"")+" onclick=\"goToPage(1)\">&laquo;</button>";
+  html+="<button class=\"pager-btn\" "+(pageIndex<=1?"disabled":"")+" onclick=\"goToPage("+(pageIndex-1)+")\">&lsaquo;</button>";
+  var startP=Math.max(1,pageIndex-2), endP=Math.min(totalPages,startP+4);
+  startP=Math.max(1,endP-4);
+  for(var p=startP;p<=endP;p++){
+    html+="<button class=\"pager-btn "+(p===pageIndex?"active":"")+"\" onclick=\"goToPage("+p+")\">"+p+"</button>";
+  }
+  html+="<button class=\"pager-btn\" "+(pageIndex>=totalPages?"disabled":"")+" onclick=\"goToPage("+(pageIndex+1)+")\">&rsaquo;</button>";
+  html+="<button class=\"pager-btn\" "+(pageIndex>=totalPages?"disabled":"")+" onclick=\"goToPage("+totalPages+")\">&raquo;</button>";
+  $("pager-controls").innerHTML=html;
+  var shownFrom = filtered.length ? (pageIndex-1)*pageSize+1 : 0;
+  var shownTo = Math.min(filtered.length,pageIndex*pageSize);
+  $("pager-info").innerHTML="Showing <strong>"+shownFrom+"&ndash;"+shownTo+"</strong> of <strong>"+filtered.length+"</strong>";
+}
+window.goToPage=function(p){ pageIndex=p; renderTable(); };
+window.changePageSize=function(){ pageSize=parseInt($("pager-size").value,10); pageIndex=1; renderTable(); };
+
+/* =========================================================================
+   TRANSACTION DISPLAY MODAL (RFHA hotspot)
+   ========================================================================= */
+window.openDealModal=function(rfha){
+  var d=DEALS.filter(function(x){ return x.rfha===rfha; })[0];
+  if(!d) return;
+  $("deal-modal-subtitle").textContent="ZSGTBFM_DISPLAY \u00b7 Transaction "+d.rfha;
+  var html="<div class=\"detail-grid\">";
+  function cell(l,v,accent){ return "<div class=\"detail-cell\"><div class=\"detail-lbl\">"+l+"</div><div class=\"detail-val"+(accent?" accent":"")+"\">"+v+"</div></div>"; }
+  html+=cell("Transaction",d.rfha);
+  html+=cell("Status",STATUS_LABEL[d.status]);
+  html+=cell("Deal ID",d.dealId,true);
+  html+=cell("MC Ref No",d.mcRef,true);
+  html+=cell("Company Code",d.bukrs+" \u00b7 "+(COMPANY_NAME[d.bukrs]||""));
+  html+=cell("TSF Entity",d.entity);
+  html+=cell("Product",d.product);
+  html+=cell("Currency Pair",d.cpair);
+  html+=cell("Trade Date",d.tradeDate);
+  html+=cell("Value Date",d.valueDate);
+  html+=cell("Leg 1",d.bs1+" "+d.curr1+" "+fmtAmt(d.amt1));
+  html+=cell("Leg 2",d.bs2+" "+d.curr2+" "+fmtAmt(d.amt2));
+  html+=cell("Spot Rate",fmtRate(d.spot));
+  html+=cell("Swap Rate",d.swap?fmtRate(d.swap):"&ndash;");
+  html+=cell("All-in Rate",fmtRate(d.allIn));
+  html+=cell("Business Partner",d.kontrh+" \u00b7 "+(PARTNER_NAME[d.kontrh]||""));
+  html+=cell("Trader",d.trader);
+  html+=cell("FI Doc 1",d.doc1||"&ndash;");
+  html+=cell("FI Doc 2",d.doc2||"&ndash;");
+  html+="</div><div class=\"hint\">Opens the FX Deal in transaction <strong>ZSGTBFM_DISPLAY</strong> in the live system.</div>";
+  $("deal-modal-body").innerHTML=html;
+  $("deal-overlay").classList.add("open");
+};
+
+/* =========================================================================
+   FI DOCUMENT MODAL (DOC1 / DOC2 hotspot -> FB03)
+   ========================================================================= */
+window.openFiDoc=function(rfha,which){
+  var d=DEALS.filter(function(x){ return x.rfha===rfha; })[0];
+  if(!d) return;
+  var docNo = which==="doc1" ? d.doc1 : d.doc2;
+  var curr = which==="doc1" ? d.curr1 : d.curr2;
+  var amt = which==="doc1" ? d.amt1 : d.amt2;
+  if(!docNo) return;
+  var fy = d.valueDateObj.getFullYear();
+  var html="<div class=\"detail-grid\">";
+  function cell(l,v){ return "<div class=\"detail-cell\"><div class=\"detail-lbl\">"+l+"</div><div class=\"detail-val\">"+v+"</div></div>"; }
+  html+=cell("Document No.",docNo);
+  html+=cell("Company Code",d.bukrs);
+  html+=cell("Fiscal Year",fy);
+  html+=cell("Document Type","TR");
+  html+=cell("Currency",curr);
+  html+=cell("Amount",fmtAmt(amt));
+  html+=cell("Posting Date",d.valueDate);
+  html+=cell("Reference",d.rfha);
+  html+="</div><div class=\"hint\">This is a simulated document viewer for the demo. The live system opens this document in transaction <strong>FB03</strong>.</div>";
+  $("fidoc-modal-body").innerHTML=html;
+  $("fidoc-overlay").classList.add("open");
+};
+
+/* =========================================================================
+   BANK SETTLEMENT LETTER (PRINT -> screen 9001 / BS01)
+   ========================================================================= */
+window.openLetterModal=function(){
+  var d=firstChecked();
+  if(!d) return;
+  $("letter-modal-subtitle").textContent="FWD/SPOT Bank Settlement \u00b7 Deal "+d.dealId;
+  var partner=PARTNER_NAME[d.kontrh]||d.kontrh;
+  var html="<div class=\"letter-box\">";
+  html+="Date: <strong>"+d.valueDate+"</strong><br/><br/>";
+  html+="To,<br/><strong>"+partner+"</strong><br/>Treasury &amp; Trade Finance Department<br/>Mumbai, India<br/><br/>";
+  html+="Attn: Settlements Desk<br/><br/>";
+  html+="RE: <strong>FWD/SPOT Bank Settlement</strong> &mdash; Value Date "+d.valueDate+"<br/><br/>";
+  html+="Dear Sir/Madam,<br/>Please find below our confirmed settlement instruction for the deal referenced below:";
+  html+="<table><tr><td>Company</td><td>"+(COMPANY_NAME[d.bukrs]||d.bukrs)+"</td></tr>";
+  html+="<tr><td>Deal / Transaction</td><td>"+d.dealId+" / "+d.rfha+"</td></tr>";
+  html+="<tr><td>"+d.bs1+"</td><td>"+d.curr1+" "+fmtAmt(d.amt1)+"</td></tr>";
+  html+="<tr><td>"+d.bs2+"</td><td>"+d.curr2+" "+fmtAmt(d.amt2)+"</td></tr>";
+  html+="<tr><td>All-in Rate</td><td>"+fmtRate(d.allIn)+"</td></tr></table>";
+  html+="<br/>Authorized Signatories<br/><br/>Yours Faithfully,<br/><strong>"+(COMPANY_NAME[d.bukrs]||d.bukrs)+"</strong></div>";
+  $("letter-modal-body").innerHTML=html;
+  $("letter-overlay").classList.add("open");
+};
+window.downloadLetterPdf=function(){
+  toast("PDF generation uses Adobe Document Services (form ZSGTSFAF_IND_SETT_DOC) \u2014 not available in this offline demo.","");
+};
+
+/* =========================================================================
+   TEST RUN / POST (TBB1) — RFTBBB00 simulation
+   ========================================================================= */
+var pendingAction=null;
+window.openActionDialog=function(kind){
+  var list=getCheckedDeals();
+  if(!list.length) return;
+  pendingAction=kind;
+  var title = kind==="test" ? "TBB1 Test Run" : "TBB1 Post";
+  var sub = kind==="test" ? "RFTBBB00 \u00b7 Test Run (no documents created)" : "RFTBBB00 \u00b7 Real posting";
+  $("action-modal-title").textContent=title;
+  $("action-modal-subtitle").textContent=sub;
+  var html = kind==="test"
+    ? "<div class=\"hint\">This will simulate the settlement posting run for the selected deal(s). No accounting documents will be created.</div>"
+    : "<div class=\"hint\"><strong>This will create real accounting documents</strong> for the selected deal(s) and mark them as settled.</div>";
+  html+="<div class=\"mini-list\">";
+  list.forEach(function(d){
+    html+="<div class=\"mi-row\"><span><b>"+d.dealId+"</b> &middot; "+d.rfha+"</span><span>"+d.valueDate+" &middot; "+d.curr1+" "+fmtAmt(d.amt1)+"</span></div>";
+  });
+  html+="</div>";
+  $("action-modal-body").innerHTML=html;
+  var btn=$("action-confirm-btn");
+  btn.textContent = kind==="test" ? "Run Test" : "Post";
+  btn.className = "btn-confirm"+(kind==="post"?" is-warn":"");
+  $("action-overlay").classList.add("open");
+};
+window.confirmAction=function(){
+  var list=getCheckedDeals();
+  closeModal("action-overlay");
+  if(pendingAction==="test"){
+    toast("Test run completed \u2014 0 document(s) posted (simulation) for "+list.length+" deal(s).","success");
+  } else {
+    list.forEach(function(d){
+      d.status="SETTLED";
+      d.doc1=String(docCounter++);
+      d.doc2=String(docCounter++);
+      checked[d.rfha]=false;
+    });
+    toast("Posting submitted \u2014 "+(list.length*2)+" accounting document(s) created for "+list.length+" deal(s) (demo).","success");
+    renderKpis();
+  }
+  renderTable();
+};
+
+/* =========================================================================
+   REFRESH (REF) — reload dataset + reset view state, keep data unchanged
+   ========================================================================= */
+function refreshData(){
+  var initial=JSON.parse(INITIAL_JSON);
+  initial.forEach(function(snap){
+    var d=DEALS.filter(function(x){ return x.rfha===snap.rfha; })[0];
+    if(d){ d.status=snap.status; d.doc1=snap.doc1; d.doc2=snap.doc2; }
+  });
+  checked={};
+  resetFilters();
+  toast("Data refreshed.","");
+}
+window.refreshData=refreshData;
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function init(){
+  initDropdowns();
+  sortBy("valueDateSort");
+  applyFilters();
+  toast("Ready. "+filtered.length+" deal(s) loaded for the selected company codes and value date range.","");
+}
+init();
+
+})();
+</script>
+</body>
+</html>

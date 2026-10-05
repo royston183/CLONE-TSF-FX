@@ -6,9 +6,9 @@ export type TransactionType = { code: string; desc: string; prodType: string }
 export type AccountCat = { code: string; desc: string }
 export type Trader = { code: string; name: string }
 
-export type StatusKey = 'ERRCORR' | 'RESUB' | 'REVERSED'
+export type StatusKey = 'ERRCORR' | 'RESUB' | 'REVERSED' | 'OPEN'
 /** The ABAP status text, code first ("04-MO->FO: Correction Required"), as SAP holds it. */
-export type StatusValue = '04-MO->FO: Correction Required' | '02-Released to MO' | '15-Reversed'
+export type StatusValue = '04-MO->FO: Correction Required' | '02-Released to MO' | '15-Reversed' | 'Open (status not in SAP)'
 
 /** One row of the legacy page's TXN_SEED block, before the derived columns are filled in. */
 export type TxnSeed = {
@@ -65,7 +65,8 @@ export type Txn = {
   allInRate: number
   tradeDate: Date
   valueDate: Date
-  blotterDate: Date
+  /** null for a live row: SAP keeps no blotter date on the transaction. */
+  blotterDate: Date | null
   busArea: string
   busAreaDesc: string
   profitCenter: string
@@ -78,6 +79,10 @@ export type Txn = {
   moRemark: string
   changedBy: string
   changedOn: Date | null
+  /** True for a row read from SAP; its fields SAP has no home for are blank and read-only. */
+  live: boolean
+  /** Whether Amount 1 is the amount bought (the one SAP takes on a change). */
+  buysLead: boolean
 }
 
 /** The status filter: every status, or just one. */

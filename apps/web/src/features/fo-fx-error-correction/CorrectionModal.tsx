@@ -43,6 +43,11 @@ export function CorrectionModal({
   onReverseInstead: () => void
 }) {
   const editable = txn ? isActionable(txn) : false
+  /** A live row: the fields SAP has no home for are shown, never editable. */
+  const live = !!txn?.live
+  /** SAP only takes Amount 1 when it is the amount bought. */
+  const amountEditable = editable && (!live || !!txn?.buysLead)
+  const notInSap = (v: string) => (live && !v ? 'Not held in SAP' : v)
 
   const picker = (id: PickerId, key: 'valueDate' | 'tradeDate' | 'blotterDate') => (
     <DatePicker
@@ -53,7 +58,7 @@ export function CorrectionModal({
       onPick={(v) => onChange({ [key]: v })}
       icon={DP_ICON}
       inputStyle={DP_INPUT_STYLE}
-      disabled={!editable}
+      disabled={!editable || (live && key === 'blotterDate')}
     />
   )
 
@@ -109,33 +114,37 @@ export function CorrectionModal({
           <div className="oldnew-grid">
             <div className="oldnew-col">
               <div className="oldnew-head">Old Details</div>
-              <Old id="old-partner" label="Business Partner" value={txn ? `${txn.partnerCode} - ${txn.partnerName}` : ''} />
+              <Old id="old-partner" label="Business Partner" value={txn ? (txn.partnerName ? `${txn.partnerCode} - ${txn.partnerName}` : txn.partnerCode) : ''} />
               <Old id="old-allinrate" label="All in Rate" value={txn ? fmtRate(txn.allInRate) : ''} />
               <Old id="old-swaprate" label="Swap Rate" value={txn ? fmtRate(txn.swapRate) : ''} />
               <Old id="old-spotrate" label="Spot Rate" value={txn ? fmtRate(txn.spotRate) : ''} />
               <Old id="old-amount1" label="Amount 1" value={txn ? `${txn.ccy1} ${fmtNum(txn.amt1)}` : ''} />
               <Old id="old-amount2" label="Amount 2" value={txn ? `${txn.ccy2} ${fmtNum(txn.amt2)}` : ''} />
               <Old id="old-valuedate" label="Value Date" value={txn ? fmtDate(txn.valueDate) : ''} />
-              <Old id="old-busarea" label="Business Area" value={txn ? `${txn.busArea} - ${txn.busAreaDesc}` : ''} />
-              <Old id="old-profitcenter" label="Profit Center" value={txn?.profitCenterDesc ?? ''} />
-              <Old id="old-acctcat" label="Account Cat" value={txn ? `${txn.acctCat} - ${acctCatDesc(txn.acctCat) ?? ''}` : ''} />
-              <Old id="old-modeoftrade" label="Mode Of Trade" value={txn?.modeOfTrade ?? ''} />
-              <Old id="old-mc" label="Master Contract" value={txn?.mc ?? ''} />
-              <Old id="old-dealid" label="Deal ID" value={txn?.dealId ?? ''} />
+              <Old id="old-busarea" label="Business Area" value={txn ? notInSap(txn.busArea ? `${txn.busArea} - ${txn.busAreaDesc}` : '') : ''} />
+              <Old id="old-profitcenter" label="Profit Center" value={notInSap(txn?.profitCenterDesc ?? '')} />
+              <Old id="old-acctcat" label="Account Cat" value={txn ? notInSap(txn.acctCat ? `${txn.acctCat} - ${acctCatDesc(txn.acctCat) ?? ''}` : '') : ''} />
+              <Old id="old-modeoftrade" label="Mode Of Trade" value={notInSap(txn?.modeOfTrade ?? '')} />
+              <Old id="old-mc" label="Master Contract" value={notInSap(txn?.mc ?? '')} />
+              <Old id="old-dealid" label="Deal ID" value={notInSap(txn?.dealId ?? '')} />
               <Old id="old-tradedate" label="Trade Date" value={txn ? fmtDate(txn.tradeDate) : ''} />
-              <Old id="old-blotterdate" label="Blotter Date" value={txn ? fmtDate(txn.blotterDate) : ''} />
+              <Old id="old-blotterdate" label="Blotter Date" value={txn?.blotterDate ? fmtDate(txn.blotterDate) : notInSap('')} />
             </div>
             <div className="oldnew-col">
               <div className="oldnew-head new">New Details</div>
               <div className="oldnew-row">
                 <label>Business Partner</label>
-                <select id="new-partner" value={form.partner} disabled={!editable} onChange={(e) => onChange({ partner: e.target.value })}>
-                  {PARTNERS.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.code} - {p.name}
-                    </option>
-                  ))}
-                </select>
+                {live ? (
+                  <input id="new-partner" className="readonly-input" disabled readOnly value={txn?.partnerName ? `${txn.partnerCode} - ${txn.partnerName}` : (txn?.partnerCode ?? '')} />
+                ) : (
+                  <select id="new-partner" value={form.partner} disabled={!editable} onChange={(e) => onChange({ partner: e.target.value })}>
+                    {PARTNERS.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.code} - {p.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="oldnew-row">
                 <label>All in Rate</label>
@@ -155,7 +164,7 @@ export function CorrectionModal({
                   id="new-amount1"
                   type="text"
                   value={form.amount1}
-                  disabled={!editable}
+                  disabled={!amountEditable}
                   onChange={(e) => onChange({ amount1: e.target.value })}
                   onBlur={onAmountBlur}
                 />
@@ -175,13 +184,17 @@ export function CorrectionModal({
               </div>
               <div className="oldnew-row">
                 <label>Business Area</label>
-                <select id="new-busarea" value={form.busArea} disabled={!editable} onChange={(e) => onBusinessAreaChange(e.target.value)}>
-                  {BUSINESS_AREAS.map((b) => (
-                    <option key={b.code} value={b.code}>
-                      {b.code} - {b.name}
-                    </option>
-                  ))}
-                </select>
+                {live ? (
+                  <input id="new-busarea" className="readonly-input" disabled readOnly value={notInSap('')} />
+                ) : (
+                  <select id="new-busarea" value={form.busArea} disabled={!editable} onChange={(e) => onBusinessAreaChange(e.target.value)}>
+                    {BUSINESS_AREAS.map((b) => (
+                      <option key={b.code} value={b.code}>
+                        {b.code} - {b.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="oldnew-row">
                 <label>
@@ -190,44 +203,60 @@ export function CorrectionModal({
                     (derived)
                   </span>
                 </label>
-                <input id="new-profitcenter" className="readonly-input" disabled readOnly value={form.profitCenter} />
+                <input id="new-profitcenter" className="readonly-input" disabled readOnly value={live ? notInSap('') : form.profitCenter} />
               </div>
               <div className="oldnew-row">
                 <label>Account Cat</label>
-                <select id="new-acctcat" value={form.acctCat} disabled={!editable} onChange={(e) => onChange({ acctCat: e.target.value })}>
-                  {ACCOUNT_CATS.map((a) => (
-                    <option key={a.code} value={a.code}>
-                      {a.code} - {a.desc}
-                    </option>
-                  ))}
-                </select>
+                {live ? (
+                  <input id="new-acctcat" className="readonly-input" disabled readOnly value={notInSap('')} />
+                ) : (
+                  <select id="new-acctcat" value={form.acctCat} disabled={!editable} onChange={(e) => onChange({ acctCat: e.target.value })}>
+                    {ACCOUNT_CATS.map((a) => (
+                      <option key={a.code} value={a.code}>
+                        {a.code} - {a.desc}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="oldnew-row">
                 <label>Mode Of Trade</label>
-                <select
-                  id="new-modeoftrade"
-                  value={form.modeOfTrade}
-                  disabled={!editable}
-                  onChange={(e) => onChange({ modeOfTrade: e.target.value })}
-                >
-                  {MODE_OF_TRADE.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                {live ? (
+                  <input id="new-modeoftrade" className="readonly-input" disabled readOnly value={notInSap('')} />
+                ) : (
+                  <select
+                    id="new-modeoftrade"
+                    value={form.modeOfTrade}
+                    disabled={!editable}
+                    onChange={(e) => onChange({ modeOfTrade: e.target.value })}
+                  >
+                    {MODE_OF_TRADE.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="oldnew-row">
                 <label>Master Contract</label>
-                <input id="new-mc" type="text" value={form.mc} disabled={!editable} onChange={(e) => onChange({ mc: e.target.value })} />
+                <input
+                  id="new-mc"
+                  type="text"
+                  className={live ? 'readonly-input' : undefined}
+                  value={live ? notInSap(form.mc) : form.mc}
+                  disabled={!editable || live}
+                  onChange={(e) => onChange({ mc: e.target.value })}
+                />
               </div>
               <div className="oldnew-row">
                 <label>Deal ID</label>
                 <input
                   id="new-dealid"
                   type="text"
-                  value={form.dealId}
-                  disabled={!editable}
+                  className={live ? 'readonly-input' : undefined}
+                  value={live ? notInSap(form.dealId) : form.dealId}
+                  disabled={!editable || live}
                   onChange={(e) => onChange({ dealId: e.target.value })}
                 />
               </div>
@@ -241,6 +270,14 @@ export function CorrectionModal({
               </div>
             </div>
           </div>
+          {live ? (
+            <div className="hint" style={{ marginTop: 10 }}>
+              <strong>Read from SAP.</strong> What can be changed here goes to SAP as a change of the transaction: the three rates,
+              Amount 1{txn && !txn.buysLead ? ' (not on this transaction: it sells the lead currency, which SAP does not take)' : ''}, Value
+              Date and Trade Date. Amount 2 is worked out by SAP (Amount 1 × All in Rate) and shown once saved. Everything marked{' '}
+              <em>Not held in SAP</em> has no field in the SAP service, so it is shown blank and cannot be changed here.
+            </div>
+          ) : null}
           <div className="hint" style={{ marginTop: 10 }}>
             Tip: type a shorthand amount like <kbd>5M</kbd> (5 million) or <kbd>250T</kbd> (250 thousand) for Amount 1 and it
             converts automatically, just like the SAP amount field. Amount 2 and Profit Center recompute from Amount 1/Rate and

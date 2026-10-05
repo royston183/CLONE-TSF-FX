@@ -1,0 +1,180 @@
+/* Night mode for bo-deal-rejection, derived from bo-deal-rejection.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .bo-deal-rejection {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bo-deal-rejection input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .bo-deal-rejection select,
+:root[data-theme='dark'] .bo-deal-rejection textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .bo-deal-rejection .page-header {
+  background: #17304a;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-deal-rejection .page-header .logo-placeholder {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .dd-input {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+}
+:root[data-theme='dark'] .bo-deal-rejection .dd-panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .date-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .btn-danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .bo-deal-rejection .success-banner {
+  border: 1px solid #26543a;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-in-use {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-pending {
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-rejected {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-settled {
+  color: #6bf0ed;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-matured {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-deal-rejection .pagination button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .child-parent-summary {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.popup-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection .icon-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection .control:hover,
+:root[data-theme='dark'] .bo-deal-rejection .dd-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-text-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .bo-deal-rejection .status-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .bo-deal-rejection .success-banner {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .bo-deal-rejection .child-parent-summary {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table thead th {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody td {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr.selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr.selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-deal-rejection .seg {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .seg button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .date-popup .cal-head select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table td.mark-col,
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table th.mark-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr:hover td.mark-col {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-deal-rejection table.mc-table tbody tr.selected td.mark-col {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-deal-rejection .remark-input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-deal-rejection .remark-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .bo-deal-rejection .deal-summary {
+  border: 1px solid #2d4a6b;
+}

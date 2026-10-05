@@ -1,0 +1,138 @@
+/* Night mode for bo-post-accounting-settlement, derived from bo-post-accounting-settlement.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .bo-post-accounting-settlement {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .bo-post-accounting-settlement select,
+:root[data-theme='dark'] .bo-post-accounting-settlement textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement {
+  --bg: #0d1724;
+  --surface: #14212f;
+  --border: #2a3d52;
+  --border-soft: #1b2b3d;
+  --muted: #7f9bb8;
+  --blue-dark: #7cc0f8;
+  --blue-pale: #17304a;
+  --green-pale: #14321f;
+  --amber-pale: #3a2a12;
+  --purple-pale: #3a1b1e;
+  --red-pale: #3a1b1e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .page-head {
+  background: #17304a;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .btn-icon {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .explain {
+  color: #ffc05c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .explain b {
+  color: #ffbf5c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .explain-close {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .explain-close:hover {
+  color: #ffbf5c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .badge-blue {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .badge-amber {
+  color: #ffb85c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .badge-green {
+  color: #e6eef8;
+  border: 1px solid #26543a;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .badge-grey {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .sample-chip {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .st-initiated {
+  color: #ffb85c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .st-complete {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .common-btn.approve {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .list-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .list-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .list-table tbody tr.dragging-row td {
+  background: #17304a!important;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .list-table tbody tr.posted td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .deal-type-chip {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .emph-amt {
+  color: #6c9def;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .emph-pay {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .modal-header {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .modal-icon {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .modal-close {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .modal-footer {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .field input:disabled {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .field .static {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .entity-flow .ent-chip {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .mini-table th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .buysell-box.buy {
+  background: #1b2b3d;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .buysell-box.sell {
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .buysell-box.sell .buysell-head {
+  color: #ffb85c;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .zfac-toast.error {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .bo-post-accounting-settlement .zfac-toast.success {
+  border-color: #26543a;
+}

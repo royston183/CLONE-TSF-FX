@@ -1,0 +1,1243 @@
+/* Original stylesheet of post-fx-mtm-oil-dmcc.html, scoped under .post-fx-mtm-oil-dmcc.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+/* =========================================================
+   Design system
+   ========================================================= */
+.post-fx-mtm-oil-dmcc {
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --teal:#17BEBB;
+  --teal-tint:#E7FAF9;
+  --purple:#8E44AD;
+  --purple-tint:#F5EAFA;
+  --gray-tint:#EEF2F6;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(22,39,64,0.04), 0 4px 14px rgba(22,39,64,0.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,0.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+.post-fx-mtm-oil-dmcc *, .post-fx-mtm-oil-dmcc {box-sizing:border-box;}
+.post-fx-mtm-oil-dmcc {margin:0;padding:0;}
+.post-fx-mtm-oil-dmcc {
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:12.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.post-fx-mtm-oil-dmcc button {font-family:var(--font);}
+.post-fx-mtm-oil-dmcc input, .post-fx-mtm-oil-dmcc select, .post-fx-mtm-oil-dmcc textarea {font-family:var(--font);}
+.post-fx-mtm-oil-dmcc ::-webkit-scrollbar {height:8px;width:8px;}
+.post-fx-mtm-oil-dmcc ::-webkit-scrollbar-thumb {background:#C7D4E2;border-radius:8px;}
+.post-fx-mtm-oil-dmcc ::-webkit-scrollbar-track {background:transparent;}
+/* =========================================================
+   Layout
+   ========================================================= */
+.post-fx-mtm-oil-dmcc .app {
+  max-width:100%;
+  margin:0;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+.post-fx-mtm-oil-dmcc .table-col {
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 210px);
+}
+.post-fx-mtm-oil-dmcc .table-col > .card {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  margin-bottom:0;
+}
+.post-fx-mtm-oil-dmcc .table-col .table-scroll {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+}
+@media (max-width:1080px) {
+.post-fx-mtm-oil-dmcc .table-col {
+    max-height:none;
+  }
+.post-fx-mtm-oil-dmcc .table-col .table-scroll {max-height:520px;}
+}
+.post-fx-mtm-oil-dmcc .page-actions-row {
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+/* KPI cards */
+.post-fx-mtm-oil-dmcc .kpi-row {
+  display:flex;
+  gap:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.post-fx-mtm-oil-dmcc .kpi-card {
+  flex:1 1 180px;
+  min-width:170px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-left:4px solid var(--primary);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);
+  padding:22px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  min-height:64px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-left-color .18s ease;
+}
+.post-fx-mtm-oil-dmcc .kpi-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(22,39,64,0.08), 0 10px 22px rgba(22,39,64,0.09);
+  border-left-color:var(--primary-dark);
+}
+.post-fx-mtm-oil-dmcc .kpi-card .kpi-value {
+  font-size:30px;
+  font-weight:700;
+  color:var(--primary-dark);
+  line-height:1.15;
+}
+.post-fx-mtm-oil-dmcc .kpi-card .kpi-label {
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc .create-card {border-left-color:var(--primary);}
+.post-fx-mtm-oil-dmcc .create-card .create-icon-circle {
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;
+  font-weight:700;
+  line-height:1;
+  transition:background .18s ease, transform .18s ease;
+}
+.post-fx-mtm-oil-dmcc .create-card .kpi-label {color:var(--text);font-weight:700;font-size:13px;}
+.post-fx-mtm-oil-dmcc .create-card:hover .create-icon-circle {
+  background:var(--primary-dark);
+  transform:scale(1.08);
+}
+.post-fx-mtm-oil-dmcc .create-card:hover {border-left-color:var(--primary-dark);}
+/* Header */
+.post-fx-mtm-oil-dmcc .page-header {
+  margin-bottom:12px;
+  background:#EAF3FF;
+  border:1px solid #D7E9FF;
+  border-radius:var(--radius-md);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.post-fx-mtm-oil-dmcc .page-header .logo-img {
+  height:40px;
+  width:auto;
+  max-width:120px;
+  object-fit:contain;
+  flex:none;
+}
+.post-fx-mtm-oil-dmcc .page-header .logo-placeholder {
+  height:36px;
+  width:36px;
+  flex:none;
+  border-radius:8px;
+  border:1px dashed var(--border-strong);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-faint);
+}
+.post-fx-mtm-oil-dmcc .page-header .header-text {display:flex;flex-direction:column;}
+/* Compact form rows with variable-width fields */
+.post-fx-mtm-oil-dmcc .form-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin-bottom:12px;
+}
+.post-fx-mtm-oil-dmcc .form-row:last-child {margin-bottom:0;}
+.post-fx-mtm-oil-dmcc .form-row > .field {flex:1 1 160px;min-width:0;}
+.post-fx-mtm-oil-dmcc .field.w-sm {flex:0 1 100px;}
+.post-fx-mtm-oil-dmcc .field.w-sm-md {flex:0 1 124px;}
+.post-fx-mtm-oil-dmcc .field.w-md {flex:0 1 154px;}
+.post-fx-mtm-oil-dmcc .field.w-md-wide {flex:0 1 184px;}
+.post-fx-mtm-oil-dmcc .field.w-wide {flex:1 1 190px;min-width:165px;}
+.post-fx-mtm-oil-dmcc .field.w-date {flex:0 0 156px;min-width:156px;}
+.post-fx-mtm-oil-dmcc .form-row.no-wrap {flex-wrap:nowrap;}
+.post-fx-mtm-oil-dmcc .form-row.no-wrap > .field {min-width:0;}
+.post-fx-mtm-oil-dmcc .field.fx-field {flex:1 1 0;min-width:130px;}
+/* 12-column responsive grid for the Create Master Contract modal.
+   Each field gets a span sized to what its value actually needs,
+   rather than forcing every field to equal width. */
+.post-fx-mtm-oil-dmcc .form-grid-12 {
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:10px 12px;
+  margin-bottom:14px;
+}
+.post-fx-mtm-oil-dmcc .form-grid-12:last-child {margin-bottom:0;}
+.post-fx-mtm-oil-dmcc .form-grid-12 > .field {min-width:0;}
+.post-fx-mtm-oil-dmcc .gc-3 {grid-column:span 3;}
+.post-fx-mtm-oil-dmcc .gc-4 {grid-column:span 4;}
+.post-fx-mtm-oil-dmcc .gc-5 {grid-column:span 5;}
+.post-fx-mtm-oil-dmcc .gc-6 {grid-column:span 6;}
+.post-fx-mtm-oil-dmcc .gc-7 {grid-column:span 7;}
+@media (max-width:700px) {
+.post-fx-mtm-oil-dmcc .form-grid-12 {grid-template-columns:repeat(6, 1fr);}
+.post-fx-mtm-oil-dmcc .gc-3 {grid-column:span 3;}
+.post-fx-mtm-oil-dmcc .gc-4 {grid-column:span 3;}
+.post-fx-mtm-oil-dmcc .gc-5 {grid-column:span 6;}
+.post-fx-mtm-oil-dmcc .gc-6 {grid-column:span 6;}
+.post-fx-mtm-oil-dmcc .gc-7 {grid-column:span 6;}
+}
+@media (max-width:460px) {
+.post-fx-mtm-oil-dmcc .form-grid-12 {grid-template-columns:1fr;}
+.post-fx-mtm-oil-dmcc .gc-3, .post-fx-mtm-oil-dmcc .gc-4, .post-fx-mtm-oil-dmcc .gc-5, .post-fx-mtm-oil-dmcc .gc-6, .post-fx-mtm-oil-dmcc .gc-7 {grid-column:span 1;}
+}
+.post-fx-mtm-oil-dmcc .page-header h1 {
+  font-size:19px;
+  font-weight:700;
+  margin:0 0 3px;
+  letter-spacing:-0.2px;
+}
+.post-fx-mtm-oil-dmcc .page-header p {
+  margin:0;
+  color:var(--text-muted);
+  font-size:12.5px;
+}
+.post-fx-mtm-oil-dmcc .card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  margin-bottom:12px;
+  overflow:visible;
+}
+.post-fx-mtm-oil-dmcc .section-title {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  font-weight:700;
+  color:var(--primary-dark);
+  letter-spacing:0.3px;
+}
+.post-fx-mtm-oil-dmcc .section-title .dot {
+  width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;
+}
+.post-fx-mtm-oil-dmcc .section-body {
+  padding:12px 16px 14px;
+}
+.post-fx-mtm-oil-dmcc .form-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px 14px;
+}
+.post-fx-mtm-oil-dmcc .form-grid.cols-1 {grid-template-columns:1fr;}
+.post-fx-mtm-oil-dmcc .form-grid.cols-2 {grid-template-columns:repeat(2,1fr);}
+.post-fx-mtm-oil-dmcc .field {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+}
+.post-fx-mtm-oil-dmcc .field label {
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+  line-height:1.2;
+}
+.post-fx-mtm-oil-dmcc .field label .req {color:var(--error);margin-left:2px;}
+.post-fx-mtm-oil-dmcc .field .hint {font-size:11px;color:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .field .error-msg {
+  font-size:11px;
+  color:var(--error);
+  display:none;
+  margin-top:-2px;
+}
+.post-fx-mtm-oil-dmcc .field.has-error .error-msg {display:block;}
+.post-fx-mtm-oil-dmcc .field.has-error input, .post-fx-mtm-oil-dmcc .field.has-error .select-display, .post-fx-mtm-oil-dmcc .field.has-error .dd-input {
+  border-color:var(--error) !important;
+  background:var(--error-tint);
+}
+.post-fx-mtm-oil-dmcc .control {
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 11px;
+  font-size:12.5px;
+  color:var(--text);
+  background:#fff;
+  width:100%;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.post-fx-mtm-oil-dmcc .control::placeholder {color:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .control:hover {border-color:#AFC2D8;}
+.post-fx-mtm-oil-dmcc .control:focus {
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-tint);
+}
+.post-fx-mtm-oil-dmcc .control[readonly] {
+  background:var(--gray-tint);
+  color:var(--text-muted);
+  cursor:default;
+}
+.post-fx-mtm-oil-dmcc .control:disabled {
+  background:var(--gray-tint);
+  color:var(--text-faint);
+  cursor:not-allowed;
+}
+.post-fx-mtm-oil-dmcc .input-with-suffix {
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.post-fx-mtm-oil-dmcc .input-with-suffix .control {padding-right:58px;}
+.post-fx-mtm-oil-dmcc .input-with-suffix .suffix {
+  position:absolute;
+  right:8px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--primary-dark);
+  background:var(--primary-tint);
+  padding:3px 7px;
+  border-radius:6px;
+  pointer-events:none;
+  white-space:nowrap;
+}
+/* Searchable dropdown */
+.post-fx-mtm-oil-dmcc .dd {position:relative;}
+.post-fx-mtm-oil-dmcc .dd-input {
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 32px 0 11px;
+  font-size:12.5px;
+  width:100%;
+  outline:none;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+  cursor:pointer;
+  transition:border-color .15s, box-shadow .15s;
+}
+.post-fx-mtm-oil-dmcc .dd-input::placeholder {color:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .dd-input:hover {border-color:#AFC2D8;}
+.post-fx-mtm-oil-dmcc .dd-input:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .dd.disabled .dd-input {background-color:var(--gray-tint);color:var(--text-faint);cursor:not-allowed;}
+.post-fx-mtm-oil-dmcc .dd-panel {
+  position:absolute;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  min-width:200px;
+  max-height:240px;
+  overflow-y:auto;
+  z-index:210;
+  display:none;
+  padding:6px;
+}
+.post-fx-mtm-oil-dmcc .dd.open .dd-panel {display:block;}
+.post-fx-mtm-oil-dmcc .dd-item {
+  padding:8px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.post-fx-mtm-oil-dmcc .dd-item:hover, .post-fx-mtm-oil-dmcc .dd-item.active {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .dd-item .primary-line {font-weight:600;font-size:12.5px;color:var(--text);}
+.post-fx-mtm-oil-dmcc .dd-item .secondary-line {font-size:11px;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .dd-empty {padding:14px 10px;text-align:center;color:var(--text-faint);font-size:11.5px;}
+/* Date field */
+.post-fx-mtm-oil-dmcc .date-field {position:relative;}
+.post-fx-mtm-oil-dmcc .date-field .control {padding-right:34px;}
+.post-fx-mtm-oil-dmcc .date-icon {
+  position:absolute;
+  right:6px;top:50%;
+  transform:translateY(-50%);
+  width:24px;height:24px;
+  border:none;background:transparent;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  color:var(--text-muted);
+  font-size:13px;
+}
+.post-fx-mtm-oil-dmcc .date-icon:hover {background:var(--primary-tint);color:var(--primary);}
+.post-fx-mtm-oil-dmcc .date-popup {
+  position:absolute;
+  width:250px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  z-index:210;
+  padding:10px;
+  display:none;
+}
+.post-fx-mtm-oil-dmcc .date-popup.open {display:block;}
+.post-fx-mtm-oil-dmcc .cal-head {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
+.post-fx-mtm-oil-dmcc .cal-head button {
+  width:24px;height:24px;border:none;background:var(--gray-tint);
+  border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);
+}
+.post-fx-mtm-oil-dmcc .cal-head button:hover {background:var(--primary-tint);color:var(--primary);}
+.post-fx-mtm-oil-dmcc .cal-head .cal-title {font-weight:700;font-size:12px;}
+.post-fx-mtm-oil-dmcc .cal-grid {
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.post-fx-mtm-oil-dmcc .cal-grid .dow {
+  text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;
+}
+.post-fx-mtm-oil-dmcc .cal-grid .day {
+  text-align:center;
+  font-size:11.5px;
+  padding:6px 0;
+  border-radius:6px;
+  cursor:pointer;
+  color:var(--text);
+}
+.post-fx-mtm-oil-dmcc .cal-grid .day:hover {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .cal-grid .day.muted {color:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .cal-grid .day.selected {background:var(--primary);color:#fff;font-weight:700;}
+.post-fx-mtm-oil-dmcc .cal-grid .day.today:not(.selected) {box-shadow:inset 0 0 0 1px var(--primary-light);}
+/* Buttons */
+.post-fx-mtm-oil-dmcc .btn {
+  height:32px;
+  padding:0 16px;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid transparent;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc .btn-primary {background:var(--primary);color:#fff;}
+.post-fx-mtm-oil-dmcc .btn-primary:hover {background:var(--primary-dark);box-shadow:0 2px 6px rgba(31,111,235,0.25);}
+.post-fx-mtm-oil-dmcc .btn-secondary {background:#fff;color:var(--text);border-color:var(--border-strong);}
+.post-fx-mtm-oil-dmcc .btn-secondary:hover {border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(22,39,64,0.08);}
+.post-fx-mtm-oil-dmcc .btn-danger {background:#fff;color:var(--error);border-color:#F3C6C0;}
+.post-fx-mtm-oil-dmcc .btn-danger:hover {background:var(--error-tint);}
+.post-fx-mtm-oil-dmcc .btn-ghost {background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.post-fx-mtm-oil-dmcc .btn-ghost:hover {text-decoration:underline;}
+.post-fx-mtm-oil-dmcc .btn:active:not(:disabled) {transform:translateY(1px);}
+.post-fx-mtm-oil-dmcc .btn:disabled {opacity:0.45;cursor:not-allowed;}
+.post-fx-mtm-oil-dmcc .btn-sm {height:28px;padding:0 10px;font-size:11.5px;}
+.post-fx-mtm-oil-dmcc .actions-row {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:12px 16px;
+}
+/* Success banner */
+.post-fx-mtm-oil-dmcc .success-banner {
+  display:none;
+  align-items:center;
+  gap:10px;
+  margin:0 0 12px;
+  padding:9px 14px;
+  background:var(--success-tint);
+  border:1px solid #BFE8D0;
+  border-radius:var(--radius-md);
+  color:#1E7A46;
+  font-size:12px;
+}
+.post-fx-mtm-oil-dmcc .success-banner.show {display:flex;}
+.post-fx-mtm-oil-dmcc .success-banner b {font-weight:700;}
+.post-fx-mtm-oil-dmcc .success-banner .spacer {flex:1;}
+/* =========================================================
+   Master Contracts table section
+   ========================================================= */
+.post-fx-mtm-oil-dmcc .table-toolbar {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px 10px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+}
+.post-fx-mtm-oil-dmcc .search-box {
+  position:relative;
+  flex:1 1 260px;
+  min-width:200px;
+}
+.post-fx-mtm-oil-dmcc .search-box input {
+  height:32px;
+  width:100%;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;
+  font-size:12.5px;
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.post-fx-mtm-oil-dmcc .search-box input:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .search-box .icon {
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-faint);font-size:13px;
+}
+.post-fx-mtm-oil-dmcc .toolbar-spacer {flex:1 0 8px;}
+.post-fx-mtm-oil-dmcc .result-count {font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.post-fx-mtm-oil-dmcc .filter-select {
+  flex:0 1 122px;
+  min-width:88px;
+  height:32px;
+  cursor:pointer;
+}
+.post-fx-mtm-oil-dmcc .table-scroll {
+  overflow-x:auto;
+}
+.post-fx-mtm-oil-dmcc table.mc-table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:1060px;
+}
+.post-fx-mtm-oil-dmcc table.mc-table thead th {
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:10px 14px;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+  z-index:5;
+}
+.post-fx-mtm-oil-dmcc table.mc-table thead th:hover {color:var(--primary-dark);}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.no-sort {cursor:default;}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.no-sort:hover {color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.action-col, .post-fx-mtm-oil-dmcc table.mc-table td.action-col {
+  width:40px;
+  text-align:center;
+  padding-left:10px;
+  padding-right:10px;
+}
+.post-fx-mtm-oil-dmcc .row-select-checkbox {
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  vertical-align:middle;
+}
+.post-fx-mtm-oil-dmcc table.mc-table thead th .sort-ind {
+  display:inline-block;
+  margin-left:4px;
+  font-size:9px;
+  color:var(--text-faint);
+}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.sorted .sort-ind {color:var(--primary);}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.num, .post-fx-mtm-oil-dmcc table.mc-table td.num {text-align:right;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody td {
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr {cursor:pointer;transition:background .18s ease;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover {background:#F7FAFD;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover .mc-link {color:var(--primary);}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.row-new {animation:post-fx-mtm-oil-dmcc-flashNew 1.8s ease-out;}
+@keyframes post-fx-mtm-oil-dmcc-flashNew {
+  0%{background:#DFF3E6;}
+  100%{background:transparent;}
+}
+.post-fx-mtm-oil-dmcc .mc-link {color:var(--primary-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+.post-fx-mtm-oil-dmcc .mc-link:hover {text-decoration:underline;color:var(--primary);}
+.post-fx-mtm-oil-dmcc .status-pill {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc .status-pill .status-dot {width:6px;height:6px;border-radius:50%;}
+.post-fx-mtm-oil-dmcc .status-in-use {background:var(--success-tint);color:#1E7A46;}
+.post-fx-mtm-oil-dmcc .status-in-use .status-dot {background:var(--success);}
+.post-fx-mtm-oil-dmcc .status-confirmed {background:var(--primary-tint);color:var(--primary-dark);}
+.post-fx-mtm-oil-dmcc .status-confirmed .status-dot {background:var(--primary);}
+.post-fx-mtm-oil-dmcc .status-draft {background:var(--gray-tint);color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .status-draft .status-dot {background:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .status-pending {background:var(--warning-tint);color:#9A5300;}
+.post-fx-mtm-oil-dmcc .status-pending .status-dot {background:var(--warning);}
+.post-fx-mtm-oil-dmcc .status-rejected {background:var(--error-tint);color:#B4362A;}
+.post-fx-mtm-oil-dmcc .status-rejected .status-dot {background:var(--error);}
+.post-fx-mtm-oil-dmcc .status-settled {background:var(--teal-tint);color:#0E8785;}
+.post-fx-mtm-oil-dmcc .status-settled .status-dot {background:var(--teal);}
+.post-fx-mtm-oil-dmcc .status-matured {background:var(--purple-tint);color:#6C3488;}
+.post-fx-mtm-oil-dmcc .status-matured .status-dot {background:var(--purple);}
+/* Plain-text status presentation (Master Contracts table) */
+.post-fx-mtm-oil-dmcc .status-text {font-weight:600;font-size:12px;white-space:nowrap;}
+.post-fx-mtm-oil-dmcc .status-text-in-use {color:var(--success);}
+.post-fx-mtm-oil-dmcc .status-text-confirmed {color:var(--primary);}
+.post-fx-mtm-oil-dmcc .status-text-draft {color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .status-text-pending {color:var(--warning);}
+.post-fx-mtm-oil-dmcc .status-text-rejected {color:var(--error);}
+.post-fx-mtm-oil-dmcc .status-text-settled {color:var(--teal);}
+.post-fx-mtm-oil-dmcc .status-text-matured {color:var(--purple);}
+.post-fx-mtm-oil-dmcc .empty-state {
+  padding:40px 20px;
+  text-align:center;
+  color:var(--text-muted);
+}
+.post-fx-mtm-oil-dmcc .empty-state .big {font-size:28px;margin-bottom:6px;}
+.post-fx-mtm-oil-dmcc .table-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px 12px;
+  flex-wrap:wrap;
+  gap:10px;
+  flex:0 0 auto;
+  border-top:1px solid var(--border);
+}
+.post-fx-mtm-oil-dmcc .page-size-select {display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .page-size-select select {height:28px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;padding:0 6px;}
+.post-fx-mtm-oil-dmcc .pagination {display:flex;align-items:center;gap:4px;}
+.post-fx-mtm-oil-dmcc .pagination button {
+  min-width:28px;height:28px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:6px;
+  font-size:11.5px;
+  cursor:pointer;
+  color:var(--text);
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;
+}
+.post-fx-mtm-oil-dmcc .pagination button:hover:not(:disabled) {border-color:var(--primary);color:var(--primary);}
+.post-fx-mtm-oil-dmcc .pagination button:active:not(:disabled) {transform:translateY(1px);}
+.post-fx-mtm-oil-dmcc .pagination button.active {background:var(--primary);color:#fff;border-color:var(--primary);}
+.post-fx-mtm-oil-dmcc .pagination button:disabled {opacity:0.4;cursor:not-allowed;}
+/* =========================================================
+   Modal
+   ========================================================= */
+.post-fx-mtm-oil-dmcc .modal-overlay {
+  position:fixed;inset:0;
+  background:rgba(16,26,41,0.5);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.post-fx-mtm-oil-dmcc .modal-overlay.open {display:flex;}
+.post-fx-mtm-oil-dmcc .modal-overlay.closing {display:flex;}
+.post-fx-mtm-oil-dmcc .modal {
+  background:#fff;
+  border-radius:var(--radius-lg);
+  width:380px;
+  max-width:100%;
+  box-shadow:var(--shadow-pop);
+  padding:26px 24px 22px;
+  text-align:center;
+  animation:post-fx-mtm-oil-dmcc-popIn .18s ease-out;
+}
+@keyframes post-fx-mtm-oil-dmcc-popIn {from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes post-fx-mtm-oil-dmcc-popOut {from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.post-fx-mtm-oil-dmcc .modal-overlay.closing .modal {animation:post-fx-mtm-oil-dmcc-popOut .16s ease-in forwards;}
+.post-fx-mtm-oil-dmcc .modal .check-circle {
+  width:52px;height:52px;border-radius:50%;
+  background:var(--success-tint);
+  color:var(--success);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin:0 auto 14px;
+}
+.post-fx-mtm-oil-dmcc .modal h2 {font-size:15.5px;margin:0 0 6px;}
+.post-fx-mtm-oil-dmcc .modal p {margin:0 0 16px;color:var(--text-muted);font-size:12.5px;}
+.post-fx-mtm-oil-dmcc .modal .deal-id-box {
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px;
+  margin-bottom:18px;
+}
+.post-fx-mtm-oil-dmcc .modal .deal-id-box .label {font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:700;margin-bottom:4px;}
+.post-fx-mtm-oil-dmcc .modal .deal-id-box .value {font-size:19px;font-weight:700;color:var(--primary-dark);letter-spacing:0.4px;}
+.post-fx-mtm-oil-dmcc .modal .modal-actions {display:flex;gap:10px;}
+.post-fx-mtm-oil-dmcc .modal .modal-actions .btn {flex:1;}
+.post-fx-mtm-oil-dmcc .modal.modal-left {text-align:left;}
+.post-fx-mtm-oil-dmcc .modal-head-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.post-fx-mtm-oil-dmcc .modal-head-row h2 {margin:0;}
+.post-fx-mtm-oil-dmcc .modal-close-btn {
+  border:none;
+  background:transparent;
+  font-size:18px;
+  line-height:1;
+  color:var(--text-muted);
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:6px;
+  transition:background .15s ease, color .15s ease;
+}
+.post-fx-mtm-oil-dmcc .modal-close-btn:hover {background:var(--gray-tint);color:var(--text);}
+.post-fx-mtm-oil-dmcc .commodity-check-list {
+  max-height:260px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:6px;
+}
+.post-fx-mtm-oil-dmcc .commodity-check-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--text);
+}
+.post-fx-mtm-oil-dmcc .commodity-check-item:hover {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .commodity-check-item input[type="checkbox"] {
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  flex:none;
+}
+/* Scrollable detail popups (KPI detail, Master Contract detail) */
+.post-fx-mtm-oil-dmcc .modal.modal-scrollable {
+  display:flex;
+  flex-direction:column;
+  max-height:92vh;
+}
+.post-fx-mtm-oil-dmcc .modal.modal-scrollable .modal-head-row {flex:0 0 auto;}
+.post-fx-mtm-oil-dmcc .modal.modal-scrollable .modal-body-scroll {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding-right:2px;
+}
+.post-fx-mtm-oil-dmcc .modal.modal-scrollable .modal-actions {flex:0 0 auto;margin-top:14px;}
+.post-fx-mtm-oil-dmcc .kpi-detail-modal {width:520px;}
+.post-fx-mtm-oil-dmcc .contract-detail-modal {width:720px;}
+.post-fx-mtm-oil-dmcc .child-contract-modal {width:min(860px, calc(100vw - 40px));max-width:96vw;}
+.post-fx-mtm-oil-dmcc .contract-detail-actions, .post-fx-mtm-oil-dmcc .child-modal-actions {flex-wrap:wrap;justify-content:flex-end;}
+.post-fx-mtm-oil-dmcc .contract-detail-actions .btn, .post-fx-mtm-oil-dmcc .child-modal-actions .btn {flex:0 0 auto;min-width:110px;}
+.post-fx-mtm-oil-dmcc .child-parent-summary {margin-bottom:12px;padding:9px 11px;background:var(--primary-tint);border:1px solid #D7E9FF;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .child-parent-summary b {color:var(--primary-dark);}
+.post-fx-mtm-oil-dmcc .modal.modal-scrollable.create-contract-modal {
+  width:min(720px, calc(100vw - 40px));
+  max-width:96vw;
+  max-height:97vh;
+  padding:20px 22px 16px;
+}
+.post-fx-mtm-oil-dmcc .create-modal-actions {
+  justify-content:flex-end;
+}
+.post-fx-mtm-oil-dmcc .create-modal-actions .btn {
+  flex:0 0 auto;
+  min-width:120px;
+}
+.post-fx-mtm-oil-dmcc .form-section {margin-bottom:14px;}
+.post-fx-mtm-oil-dmcc .form-section:last-child {margin-bottom:0;}
+.post-fx-mtm-oil-dmcc .form-section .section-title {
+  padding:0 0 6px;
+  border:none;
+  font-size:12.5px;
+}
+.post-fx-mtm-oil-dmcc .form-section .section-body {padding:0;}
+/* KPI summary key/value list */
+.post-fx-mtm-oil-dmcc .kv-list {display:flex;flex-direction:column;gap:1px;}
+.post-fx-mtm-oil-dmcc .kv-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+}
+.post-fx-mtm-oil-dmcc .kv-row:last-child {border-bottom:none;}
+.post-fx-mtm-oil-dmcc .kv-row .kv-label {color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .kv-row .kv-value {font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.post-fx-mtm-oil-dmcc .kv-row.kv-total {background:var(--primary-tint);border-radius:6px;padding:8px 10px;margin:2px 0;}
+.post-fx-mtm-oil-dmcc .kv-row.kv-total .kv-label {color:var(--primary-dark);font-weight:700;}
+.post-fx-mtm-oil-dmcc .kv-row.kv-total .kv-value {color:var(--primary-dark);font-size:13.5px;}
+/* Compact table used inside KPI list popups */
+.post-fx-mtm-oil-dmcc .popup-table-wrap {
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:auto;
+  max-height:360px;
+}
+.post-fx-mtm-oil-dmcc table.popup-table {width:100%;border-collapse:collapse;min-width:560px;}
+.post-fx-mtm-oil-dmcc table.popup-table thead th {
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.3px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:8px 10px;
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc table.popup-table thead th.num {text-align:right;}
+.post-fx-mtm-oil-dmcc table.popup-table td {
+  padding:7px 10px;
+  border-bottom:1px solid var(--border);
+  font-size:11.5px;
+  white-space:nowrap;
+}
+.post-fx-mtm-oil-dmcc table.popup-table td.num {text-align:right;}
+.post-fx-mtm-oil-dmcc table.popup-table tbody tr:hover {background:#F7FAFD;}
+.post-fx-mtm-oil-dmcc .popup-empty {text-align:center !important;color:var(--text-faint);padding:18px !important;}
+/* Contract detail sections */
+.post-fx-mtm-oil-dmcc .detail-section {margin-bottom:16px;}
+.post-fx-mtm-oil-dmcc .detail-section:last-child {margin-bottom:0;}
+.post-fx-mtm-oil-dmcc .detail-section-title {
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  font-weight:700;
+  color:var(--primary-dark);
+  margin-bottom:8px;
+  padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.post-fx-mtm-oil-dmcc .detail-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.post-fx-mtm-oil-dmcc .detail-item {display:flex;flex-direction:column;gap:2px;min-width:0;}
+.post-fx-mtm-oil-dmcc .detail-item.full {grid-column:1 / -1;}
+.post-fx-mtm-oil-dmcc .detail-item .detail-label {font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.post-fx-mtm-oil-dmcc .detail-item .detail-value {font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+/* Validation summary toast */
+.post-fx-mtm-oil-dmcc .toast {
+  position:fixed;
+  bottom:22px;left:50%;
+  transform:translateX(-50%);
+  background:#2A3B4D;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:var(--radius-md);
+  font-size:12.5px;
+  box-shadow:var(--shadow-pop);
+  z-index:300;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.post-fx-mtm-oil-dmcc .toast.show {display:flex;}
+.post-fx-mtm-oil-dmcc .toast.error {background:#5A2420;}
+/* Utility */
+.post-fx-mtm-oil-dmcc .mono {font-variant-numeric:tabular-nums;}
+.post-fx-mtm-oil-dmcc .text-right {text-align:right;}
+.post-fx-mtm-oil-dmcc .icon-btn {
+  width:34px;height:34px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);
+  font-size:14px;
+}
+.post-fx-mtm-oil-dmcc .icon-btn:hover {border-color:var(--primary);color:var(--primary);}
+.post-fx-mtm-oil-dmcc .icon-btn.active {background:var(--primary-tint);border-color:var(--primary);color:var(--primary);}
+@media (max-width:900px) {
+.post-fx-mtm-oil-dmcc .form-grid {grid-template-columns:repeat(2,1fr);}
+.post-fx-mtm-oil-dmcc .filter-select {flex:1 1 130px;}
+}
+@media (max-width:600px) {
+.post-fx-mtm-oil-dmcc .app {padding:16px;}
+.post-fx-mtm-oil-dmcc .form-grid {grid-template-columns:1fr;}
+.post-fx-mtm-oil-dmcc .actions-row {flex-direction:column-reverse;}
+.post-fx-mtm-oil-dmcc .actions-row .btn {width:100%;}
+}
+/* =========================================================
+   OTTK visual theme — CSS-ONLY override block.
+   This block is appended last so its rules win the cascade
+   over the original stylesheet above (same selectors, later
+   source order, no specificity tricks needed). Nothing in the
+   HTML or JavaScript is touched; every rule below only changes
+   how existing elements look.
+   ========================================================= */
+/* ---- 1. Design tokens: remap the app's CSS variables to the
+   OTTK palette. Because the entire original stylesheet is
+   built on these custom properties, this alone re-themes the
+   vast majority of components (buttons, inputs, dropdowns,
+   cards, borders, focus rings, shadows, radii, etc). ---- */
+.post-fx-mtm-oil-dmcc {
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+/* ---- 2. Type scale: match OTTK's actual component sizes, not
+   just the 13px body base — OTTK sets its own explicit sizes
+   for titles, labels, meta text and table headers rather than
+   inheriting one size everywhere. ---- */
+.post-fx-mtm-oil-dmcc { font-size:13px; }
+.post-fx-mtm-oil-dmcc .control, .post-fx-mtm-oil-dmcc .dd-input, .post-fx-mtm-oil-dmcc .dd-item .primary-line, .post-fx-mtm-oil-dmcc .btn, .post-fx-mtm-oil-dmcc .search-box input { font-size:13px; }
+.post-fx-mtm-oil-dmcc .field label, .post-fx-mtm-oil-dmcc .section-title { font-size:13px; }
+.post-fx-mtm-oil-dmcc .filter-select { font-size:13px; }
+.post-fx-mtm-oil-dmcc .page-header h1 { font-size:16px; }
+.post-fx-mtm-oil-dmcc .page-header p { font-size:15px; }
+.post-fx-mtm-oil-dmcc .modal h2 { font-size:14px; }
+.post-fx-mtm-oil-dmcc .kpi-card .kpi-label { font-size:12px; }
+/* ---- 3. Header: remove the light-blue strip — sits flush on
+   the page background like the rest of OTTK's chrome ---- */
+.post-fx-mtm-oil-dmcc .page-header {
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+}
+/* ---- 4. Buttons: tighter, SAP-compact padding and hover feedback ---- */
+.post-fx-mtm-oil-dmcc .btn { padding:0 12px; border-radius:var(--radius-sm); }
+.post-fx-mtm-oil-dmcc .btn-secondary:hover { box-shadow:0 1px 4px rgba(34,53,72,.1); }
+.post-fx-mtm-oil-dmcc .btn-primary:hover { box-shadow:0 2px 6px rgba(10,110,209,.22); }
+/* ---- 5. KPI / action cards: same OTTK panel look (white surface,
+   thin border, compact shadow, 8px radius) ---- */
+.post-fx-mtm-oil-dmcc .kpi-card { box-shadow:var(--shadow-card); }
+.post-fx-mtm-oil-dmcc .kpi-card:hover {
+  box-shadow:0 4px 10px rgba(34,53,72,.1), 0 10px 22px rgba(34,53,72,.1);
+}
+/* ---- 6. Inputs & dropdowns: OTTK hover/focus border tone ---- */
+.post-fx-mtm-oil-dmcc .control:hover, .post-fx-mtm-oil-dmcc .dd-input:hover { border-color:#A6B0B9; }
+/* ---- 7. Search box + filter selects: compact SAP sizing ---- */
+.post-fx-mtm-oil-dmcc .search-box input, .post-fx-mtm-oil-dmcc .filter-select { border-radius:var(--radius-sm); }
+/* ---- 8. Table: SAP-grid look — muted uppercase header on a
+   secondary surface, tighter row padding, subtle row hover ---- */
+.post-fx-mtm-oil-dmcc table.mc-table thead th {
+  background:var(--gray-tint);
+  padding:8px 10px;
+  font-size:13px;
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody td {
+  padding:8px 10px;
+  font-size:14px;
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover { background:#F7FBFF; }
+.post-fx-mtm-oil-dmcc .popup-table-wrap table thead th, .post-fx-mtm-oil-dmcc table.popup-table thead th { background:var(--gray-tint); font-size:13px; }
+.post-fx-mtm-oil-dmcc table.popup-table td { font-size:14px; }
+.post-fx-mtm-oil-dmcc table.popup-table tbody tr:hover { background:#F7FBFF; }
+/* ---- 9. Status presentation: align the semantic shades used
+   for both the plain-text table status and the pill variant
+   (details popup) to the OTTK palette ---- */
+.post-fx-mtm-oil-dmcc .status-text-in-use { color:var(--success); }
+.post-fx-mtm-oil-dmcc .status-text-confirmed { color:var(--primary); }
+.post-fx-mtm-oil-dmcc .status-text-pending { color:#9B6B00; }
+.post-fx-mtm-oil-dmcc .status-text-rejected { color:var(--error); }
+.post-fx-mtm-oil-dmcc .status-in-use { color:var(--success); }
+.post-fx-mtm-oil-dmcc .status-pending { color:#9B6B00; }
+.post-fx-mtm-oil-dmcc .status-rejected { color:var(--error); }
+/* ---- 10. Pagination: compact square SAP-style buttons ---- */
+.post-fx-mtm-oil-dmcc .pagination button { border-radius:var(--radius-sm); }
+/* ---- 11. Modals / popups: OTTK modal shadow + radius (via
+   --radius-lg / --shadow-pop above) plus a matching close-icon
+   hover and success-state accent ---- */
+.post-fx-mtm-oil-dmcc .modal { border:1px solid #B9C2C9; }
+.post-fx-mtm-oil-dmcc .modal .check-circle { background:var(--success-tint); color:var(--success); }
+.post-fx-mtm-oil-dmcc .modal-close-btn:hover { background:var(--gray-tint); }
+/* ---- 12. Success banner + toast: OTTK green accent / dark toast ---- */
+.post-fx-mtm-oil-dmcc .success-banner { border-color:#C5E0CD; color:var(--success); }
+.post-fx-mtm-oil-dmcc .toast { background:#243B53; }
+.post-fx-mtm-oil-dmcc .toast.error { background:#4A211D; }
+/* ---- 13. Scrollbar + misc chrome ---- */
+.post-fx-mtm-oil-dmcc ::-webkit-scrollbar-thumb { background:#B7C2CB; }
+.post-fx-mtm-oil-dmcc .child-parent-summary { border-color:#BEE0F7; }
+/* ---- 14. Table: lighter cell borders + subtle hover "lift" ---- */
+.post-fx-mtm-oil-dmcc table.mc-table thead th { border-bottom-color:#E6E9EB; }
+.post-fx-mtm-oil-dmcc table.mc-table tbody td { border-bottom-color:#E6E9EB; }
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr {
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover {
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF;
+  position:relative;
+  z-index:2;
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected { background:#EAF3FC; }
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected:hover {
+  background:#EAF3FC;
+  box-shadow:0 3px 9px rgba(10,110,209,.14);
+}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.dragging { opacity:.5; }
+/* ---- 15. KPI value: neutral dark text instead of blue ---- */
+.post-fx-mtm-oil-dmcc .kpi-card .kpi-value { color:var(--text); }
+/* ---- 16. KPI description: small, secondary, bottom-right of the card ---- */
+.post-fx-mtm-oil-dmcc .kpi-card { position:relative; }
+.post-fx-mtm-oil-dmcc .kpi-description {
+  position:absolute;
+  right:16px;
+  bottom:12px;
+  max-width:62%;
+  font-size:13px;
+  line-height:1.3;
+  color:var(--text-faint);
+  text-align:right;
+  font-weight:500;
+}
+/* ---- 17. Drag and drop: compact ghost label + drop-target feedback ---- */
+.post-fx-mtm-oil-dmcc .drag-ghost {
+  position:fixed;
+  top:-1000px;
+  left:-1000px;
+  padding:6px 10px;
+  background:#1D2D3E;
+  color:#fff;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family:var(--font);
+  pointer-events:none;
+}
+.post-fx-mtm-oil-dmcc .btn.drag-over {
+  border-color:var(--primary) !important;
+  background:var(--primary-tint) !important;
+  color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+/* =========================================================
+   Post FX MTM to Accounting — page-specific components.
+   Layered on the reference design tokens (same variables).
+   ========================================================= */
+.post-fx-mtm-oil-dmcc .app {padding:.5rem .6rem 1rem;}
+.post-fx-mtm-oil-dmcc .page-header {margin-bottom:10px;}
+.post-fx-mtm-oil-dmcc .page-header .btn {margin-left:auto;}
+/* ---- Selection card ---- */
+.post-fx-mtm-oil-dmcc .sel-row {
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px 16px;
+}
+.post-fx-mtm-oil-dmcc .sel-row .field {flex:0 0 auto;}
+.post-fx-mtm-oil-dmcc .sel-row .field.f-company {width:230px;}
+.post-fx-mtm-oil-dmcc .sel-row .field.f-date {width:176px;}
+.post-fx-mtm-oil-dmcc .sel-row .field.f-layout {width:190px;}
+.post-fx-mtm-oil-dmcc .sel-row .field.f-posting {min-width:300px;}
+.post-fx-mtm-oil-dmcc .sel-row .sel-actions {display:flex;align-items:flex-start;margin-top:21px;}
+.post-fx-mtm-oil-dmcc .sel-row .sel-actions .btn {height:36px;min-width:112px;}
+.post-fx-mtm-oil-dmcc .field .hint {line-height:1.3;}
+.post-fx-mtm-oil-dmcc .field .hint.warn {color:var(--text-muted);}
+/* radio segmented control (Posting Type) */
+.post-fx-mtm-oil-dmcc .seg {display:inline-flex;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;height:36px;background:#fff;}
+.post-fx-mtm-oil-dmcc .seg label {
+  display:flex;align-items:center;gap:7px;padding:0 14px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;
+  border-right:1px solid var(--border);transition:background .15s,color .15s;
+}
+.post-fx-mtm-oil-dmcc .seg label:last-child {border-right:none;}
+.post-fx-mtm-oil-dmcc .seg label:hover {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .seg input {accent-color:var(--primary);margin:0;cursor:pointer;}
+.post-fx-mtm-oil-dmcc .seg label.on {background:var(--primary-tint);color:var(--primary-dark);}
+.post-fx-mtm-oil-dmcc .seg:focus-within {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+/* multi-select (Company Code) — reuses .dd-input / .dd-panel look */
+.post-fx-mtm-oil-dmcc .ms-item {display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;}
+.post-fx-mtm-oil-dmcc .ms-item:hover {background:var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .ms-item input {accent-color:var(--primary);margin:0;flex:none;cursor:pointer;}
+.post-fx-mtm-oil-dmcc .ms-item .ms-code {font-weight:700;font-size:13px;}
+.post-fx-mtm-oil-dmcc .ms-item .ms-name {font-size:11.5px;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .ms-item.ms-all {border-bottom:1px solid var(--border);border-radius:var(--radius-sm) var(--radius-sm) 0 0;margin-bottom:4px;}
+.post-fx-mtm-oil-dmcc .ms-foot {padding:6px 10px 2px;font-size:11px;color:var(--text-faint);}
+/* ---- List card ---- */
+.post-fx-mtm-oil-dmcc .list-card .section-title {justify-content:space-between;}
+.post-fx-mtm-oil-dmcc .section-title .st-left {display:flex;align-items:center;gap:8px;}
+.post-fx-mtm-oil-dmcc .section-title .st-right {font-size:12px;font-weight:600;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .section-title .st-right b {color:var(--text);font-weight:700;}
+.post-fx-mtm-oil-dmcc .table-toolbar {padding:10px 16px 10px;gap:8px;}
+.post-fx-mtm-oil-dmcc .search-box {flex:1 1 220px;max-width:340px;min-width:180px;}
+.post-fx-mtm-oil-dmcc .tb-input {flex:0 1 128px;min-width:100px;height:32px;}
+.post-fx-mtm-oil-dmcc .filter-select {flex:0 1 150px;}
+.post-fx-mtm-oil-dmcc .filter-select.sel-bp {flex:0 1 190px;}
+.post-fx-mtm-oil-dmcc .filter-select.sel-pair {flex:0 1 128px;}
+.post-fx-mtm-oil-dmcc .filter-select.sel-deal {flex:0 1 150px;}
+.post-fx-mtm-oil-dmcc .tb-sep {width:1px;height:20px;background:var(--border);flex:none;margin:0 2px;}
+.post-fx-mtm-oil-dmcc .drop-wrap {display:inline-flex;border-radius:var(--radius-sm);}
+.post-fx-mtm-oil-dmcc .drop-wrap .btn:disabled {pointer-events:none;}
+.post-fx-mtm-oil-dmcc .drop-wrap.drop-ready .btn {box-shadow:0 0 0 2px rgba(10,110,209,.28);}
+.post-fx-mtm-oil-dmcc .drop-wrap.drag-over .btn {
+  background:var(--primary-dark) !important;color:#fff !important;
+  box-shadow:0 0 0 3px rgba(10,110,209,.3) !important;
+}
+.post-fx-mtm-oil-dmcc .legend {display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.post-fx-mtm-oil-dmcc .legend .chip {display:inline-flex;align-items:center;gap:6px;}
+.post-fx-mtm-oil-dmcc .legend .sw {width:12px;height:12px;border-radius:3px;border:1px solid var(--border-strong);}
+.post-fx-mtm-oil-dmcc .legend .sw.ext {background:#E3E7EA;}
+.post-fx-mtm-oil-dmcc .legend .sw.mtm {background:#D6E8FA;border-color:#9CC4EE;}
+.post-fx-mtm-oil-dmcc .table-scroll {overflow:auto;max-height:calc(100vh - 345px);min-height:260px;}
+.post-fx-mtm-oil-dmcc table.mc-table {min-width:0;width:max-content;min-width:100%;}
+.post-fx-mtm-oil-dmcc table.mc-table thead th {font-size:11.5px;padding:8px 10px;vertical-align:bottom;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody td {font-size:13px;padding:7px 10px;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover {transform:none !important;box-shadow:none !important;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.dragging {opacity:.5;}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.grp-ext {box-shadow:inset 0 -3px 0 #B7C0C7;}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.grp-mtm {box-shadow:inset 0 -3px 0 #4FA3E8;}
+.post-fx-mtm-oil-dmcc table.mc-table td.grp-ext {background:rgba(137,150,161,.11);}
+.post-fx-mtm-oil-dmcc table.mc-table td.grp-mtm {background:rgba(10,110,209,.06);}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover td.grp-ext, .post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover td.grp-mtm {background:rgba(10,110,209,.10);}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected td.grp-ext, .post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected td.grp-mtm {background:#DCEBFA;}
+.post-fx-mtm-oil-dmcc table.mc-table td.act-col, .post-fx-mtm-oil-dmcc table.mc-table th.act-col {width:40px;min-width:40px;text-align:center;padding-left:8px;padding-right:8px;}
+/* pinned columns */
+.post-fx-mtm-oil-dmcc table.mc-table th.pin, .post-fx-mtm-oil-dmcc table.mc-table td.pin {position:sticky;z-index:3;}
+.post-fx-mtm-oil-dmcc table.mc-table th.pin {z-index:8;}
+.post-fx-mtm-oil-dmcc table.mc-table td.pin {background:#fff;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:hover td.pin {background:#F7FBFF;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr.selected td.pin {background:#EAF3FC;}
+.post-fx-mtm-oil-dmcc table.mc-table .pin-0 {left:0;}
+.post-fx-mtm-oil-dmcc table.mc-table .pin-1 {left:40px;box-shadow:2px 0 0 var(--border);}
+.post-fx-mtm-oil-dmcc table.mc-table thead th.pin-1 {box-shadow:2px 0 0 var(--border), inset 0 -0px 0 transparent;}
+.post-fx-mtm-oil-dmcc .mc-link {font-weight:700;}
+.post-fx-mtm-oil-dmcc .doc-link {font-weight:600;color:var(--primary-dark);cursor:pointer;}
+.post-fx-mtm-oil-dmcc .doc-link:hover {text-decoration:underline;color:var(--primary);}
+.post-fx-mtm-oil-dmcc .dash {color:var(--text-faint);}
+.post-fx-mtm-oil-dmcc .msg-cell {max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+.post-fx-mtm-oil-dmcc .pos {color:var(--text);}
+.post-fx-mtm-oil-dmcc .empty-state {padding:44px 20px;}
+.post-fx-mtm-oil-dmcc .empty-state .big {font-size:30px;opacity:.75;}
+.post-fx-mtm-oil-dmcc .empty-state .es-title {font-weight:700;color:var(--text);margin-bottom:3px;font-size:13.5px;}
+.post-fx-mtm-oil-dmcc .table-footer .tf-left {display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.post-fx-mtm-oil-dmcc .showing {font-size:11.5px;color:var(--text-muted);}
+/* ---- Modals ---- */
+.post-fx-mtm-oil-dmcc .modal-wide {width:min(900px,calc(100vw - 40px));}
+.post-fx-mtm-oil-dmcc .modal-doc {width:min(840px,calc(100vw - 40px));}
+.post-fx-mtm-oil-dmcc .modal-txn {width:min(760px,calc(100vw - 40px));}
+.post-fx-mtm-oil-dmcc .modal h2 {font-size:15px;}
+.post-fx-mtm-oil-dmcc .modal.modal-left p {margin:0 0 12px;}
+.post-fx-mtm-oil-dmcc .confirm-body {font-size:13px;color:var(--text-muted);margin:0 0 6px;line-height:1.5;}
+.post-fx-mtm-oil-dmcc .confirm-count {display:flex;gap:10px;margin:12px 0 16px;}
+.post-fx-mtm-oil-dmcc .confirm-count .cc {flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 12px;}
+.post-fx-mtm-oil-dmcc .confirm-count .cc .l {font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--text-muted);}
+.post-fx-mtm-oil-dmcc .confirm-count .cc .v {font-size:17px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+.post-fx-mtm-oil-dmcc .log-icon {display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px;}
+.post-fx-mtm-oil-dmcc .log-icon .ic {width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1;}
+.post-fx-mtm-oil-dmcc .log-ok {color:var(--success);}
+.post-fx-mtm-oil-dmcc .log-ok .ic {background:var(--success);}
+.post-fx-mtm-oil-dmcc .log-err {color:var(--error);}
+.post-fx-mtm-oil-dmcc .log-err .ic {background:var(--error);}
+.post-fx-mtm-oil-dmcc .log-summary {display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin:0 0 10px;}
+.post-fx-mtm-oil-dmcc .log-summary b {color:var(--text);}
+.post-fx-mtm-oil-dmcc table.popup-table td.wrap {white-space:normal;min-width:240px;}
+.post-fx-mtm-oil-dmcc .doc-banner {
+  display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 11px;border-radius:var(--radius-sm);
+  background:var(--primary-tint);border:1px solid #BEE0F7;color:var(--primary-dark);font-size:12px;font-weight:600;
+}
+.post-fx-mtm-oil-dmcc .doc-banner.rev {background:var(--warning-tint);border-color:#F3DFA1;color:#8A5A00;}
+.post-fx-mtm-oil-dmcc .detail-grid.cols-3 {grid-template-columns:repeat(3,1fr);}
+.post-fx-mtm-oil-dmcc .detail-grid.cols-4 {grid-template-columns:repeat(4,1fr);}
+.post-fx-mtm-oil-dmcc .dr {color:var(--text);}
+.post-fx-mtm-oil-dmcc .dc-tag {display:inline-block;min-width:24px;text-align:center;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin-right:6px;}
+.post-fx-mtm-oil-dmcc .dc-tag.dr {background:var(--primary-tint);color:var(--primary-dark);}
+.post-fx-mtm-oil-dmcc .dc-tag.cr {background:var(--warning-tint);color:#8A5A00;}
+.post-fx-mtm-oil-dmcc .txn-legs {display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.post-fx-mtm-oil-dmcc .leg-card {border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;background:#FBFCFD;}
+.post-fx-mtm-oil-dmcc .leg-card .lc-h {font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--text-muted);margin-bottom:4px;}
+.post-fx-mtm-oil-dmcc .leg-card .lc-v {font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;}
+.post-fx-mtm-oil-dmcc .leg-card .lc-s {font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+.post-fx-mtm-oil-dmcc .toast {z-index:400;}
+@media (max-width:1000px) {
+.post-fx-mtm-oil-dmcc .detail-grid.cols-4 {grid-template-columns:repeat(2,1fr);}
+.post-fx-mtm-oil-dmcc .detail-grid.cols-3 {grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:640px) {
+.post-fx-mtm-oil-dmcc .sel-row .field.f-company, .post-fx-mtm-oil-dmcc .sel-row .field.f-date, .post-fx-mtm-oil-dmcc .sel-row .field.f-layout, .post-fx-mtm-oil-dmcc .sel-row .field.f-posting {width:100%;min-width:0;}
+.post-fx-mtm-oil-dmcc .seg {width:100%;}
+.post-fx-mtm-oil-dmcc .seg label {flex:1;justify-content:center;padding:0 8px;}
+.post-fx-mtm-oil-dmcc .txn-legs {grid-template-columns:1fr;}
+}
+/* calendar month / year selectors */
+.post-fx-mtm-oil-dmcc .cal-selects {display:flex;gap:4px;align-items:center;}
+.post-fx-mtm-oil-dmcc .cal-sel {height:24px;border:1px solid var(--border-strong);border-radius:4px;background:#fff;font-size:12px;font-weight:600;color:var(--text);padding:0 2px;cursor:pointer;font-family:var(--font);}
+.post-fx-mtm-oil-dmcc .cal-sel:focus {outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-tint);}
+.post-fx-mtm-oil-dmcc .date-popup {width:268px;}
+.post-fx-mtm-oil-dmcc .sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.post-fx-mtm-oil-dmcc button:focus-visible, .post-fx-mtm-oil-dmcc a:focus-visible, .post-fx-mtm-oil-dmcc tr:focus-visible, .post-fx-mtm-oil-dmcc .seg input:focus-visible {outline:2px solid var(--primary);outline-offset:1px;}
+.post-fx-mtm-oil-dmcc table.mc-table tbody tr:focus-visible {outline-offset:-2px;}
+.post-fx-mtm-oil-dmcc .seg {align-self:flex-start;}
+.post-fx-mtm-oil-dmcc .sel-row .field.f-posting {min-width:0;}
+.post-fx-mtm-oil-dmcc .f-posting .hint {max-width:330px;}
+.post-fx-mtm-oil-dmcc #logBody table.popup-table, .post-fx-mtm-oil-dmcc #docBody table.popup-table {min-width:0;width:100%;}
+.post-fx-mtm-oil-dmcc #logBody table.popup-table td.wrap {min-width:180px;}
+.post-fx-mtm-oil-dmcc #docBody table.popup-table td.wrap {min-width:200px;}
+.post-fx-mtm-oil-dmcc #logBody .popup-table-wrap, .post-fx-mtm-oil-dmcc #docBody .popup-table-wrap {max-height:none;}
