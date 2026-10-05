@@ -1,0 +1,266 @@
+/* Night mode for bo-reverse-fx-mtm-india, derived from bo-reverse-fx-mtm-india.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india select,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india button,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india input,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india select {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .btn:hover:not(:disabled) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .btn.drop-hover {
+  background: #17304a;
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .subtitle {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .status-dot {
+  box-shadow: 0 0 0 3px #14321f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .card-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .head-meta {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .key-date-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .legend-swatch {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .legend-ext {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .legend-mtm {
+  background: #17304a;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .required {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .calendar-btn {
+  border-left: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .calendar-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .inline-error {
+  color: #7f9bb8;
+  background: #1b2b3d;
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .table-shell {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india th.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india th.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india th.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tr.selected td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tr.selected td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tr.selected td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr:hover td.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india tbody tr.selected:hover td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cell-ext {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cell-mtm {
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cell-link {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cell-link:hover {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .posted {
+  color: #66f5e1;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .sort-mark {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .footer {
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .page-btn.active {
+  color: #e6eef8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .page-btn:disabled {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .calendar-pop {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-day {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-day.out {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .cal-day.weekend {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .close-btn {
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .close-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .modal-foot {
+  border-top: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .detail .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .detail .v {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .section-label {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .mini-table th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .mini-table td {
+  border: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .mini-table th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .ok-icon {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .err-icon {
+  background: #3a1b1e;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .toast.success .toast-mark {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .toast.info .toast-mark {
+  background: #17304a;
+  color: #62b3f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .toast-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-india .filter-summary {
+  color: #7f9bb8;
+}

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BO: Post Accounting Entries for Settlement</title>
+<style>
+:root{
+  --bg:#F4F8FC;
+  --surface:#FFFFFF;
+  --border:#E1E9F2;
+  --border-soft:#EEF2F6;
+  --ink:#1D2D3E;
+  --ink-soft:#1D2D3E;
+  --muted:#5C7085;
+  --muted-2:#8CA0B3;
+  --blue:#1F6FEB;
+  --blue-dark:#1657C4;
+  --blue-pale:#EAF2FF;
+  --green:#27AE60;
+  --green-pale:#E8F8EF;
+  --amber:#FF8A00;
+  --amber-pale:#FFF3E4;
+  --purple:#7c3aed;
+  --purple-pale:#efe9fe;
+  --red:#E74C3C;
+  --red-pale:#FDEAE8;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-md:0 8px 28px rgba(22,39,64,.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:"Inter",Arial,Helvetica,sans-serif;}
+body{background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:#a7b2c3;}
+
+/* ---------- page head ---------- */
+.page-head{
+  display:flex;align-items:center;gap:12px;margin:.3rem .2rem 12px;padding:10px 16px;
+  background:#EAF3FF;border:1px solid #D7E9FF;border-radius:var(--radius-md);
+}
+.head-icon{height:40px;max-width:120px;width:auto;flex-shrink:0;object-fit:contain;}
+.title-wrap{min-width:0;flex:1;}
+.page-title{font-size:19px;font-weight:700;letter-spacing:-.2px;color:var(--ink);line-height:1.25;}
+.page-subtitle{font-size:12.5px;color:var(--muted);margin-top:1px;}
+.head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.btn-outline{
+  min-height:36px;padding:0 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--blue);color:var(--blue);transition:all .15s;
+}
+.btn-outline:hover{background:var(--blue);color:#fff;}
+.btn-outline:disabled{opacity:.4;cursor:not-allowed;background:var(--surface);color:var(--blue);}
+.btn-icon{
+  width:34px;height:34px;padding:0;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;
+  background:var(--surface);border:1px solid #CBD9E8;color:var(--muted);transition:all .15s;
+}
+.btn-icon:hover{border-color:var(--blue);color:var(--blue);}
+
+main{max-width:none;margin:0;padding:0 .2rem 60px;}
+
+/* ---------- explain banner ---------- */
+.explain{
+  background:var(--amber-pale);border:1px solid #f5d9a8;border-radius:var(--radius-md);padding:11px 14px;
+  font-size:12px;color:#7a4b00;margin-bottom:14px;line-height:1.65;position:relative;padding-right:36px;
+}
+.explain b{color:#5c3800;}
+.term-def{border-bottom:1px dotted #b98a3c;cursor:help;}
+.explain-close{position:absolute;top:8px;right:10px;background:none;border:none;color:#9c7224;font-size:14px;cursor:pointer;line-height:1;padding:2px;}
+.explain-close:hover{color:#5c3800;}
+.explain.hidden{display:none;}
+
+/* ---------- panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:visible;}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:0;padding:10px 16px;min-height:42px;border-bottom:1px solid var(--border);
+}
+.panel-title-left{display:flex;align-items:center;gap:8px;}
+.dot-bullet{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.panel-title h2{font-size:12px;font-weight:700;color:var(--blue-dark);letter-spacing:.3px;text-transform:uppercase;}
+.panel-body{padding:16px;}
+.panel-sub{font-size:11px;color:var(--muted);font-weight:500;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+.badge-blue{background:var(--blue-pale);color:var(--blue-dark);border:1px solid #c7dbfb;}
+.badge-amber{background:var(--amber-pale);color:#9a5700;border:1px solid #f5d9a8;}
+.badge-green{background:var(--green-pale);color:#176b3a;border:1px solid #bfead1;}
+.badge-grey{background:#eef1f6;color:var(--muted);border:1px solid var(--border);}
+
+/* ---------- selection / search box ---------- */
+.search-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.search-box{position:relative;display:flex;align-items:center;flex:0 0 260px;}
+.search-box .icon{position:absolute;left:13px;font-size:14px;color:var(--muted-2);pointer-events:none;}
+.search-box input{
+  width:100%;height:40px;padding:0 14px 0 38px;border:1px solid var(--border);border-radius:var(--radius-md);
+  background:var(--surface);font-size:13px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;
+  text-transform:uppercase;
+}
+.search-box input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.btn-go{
+  height:40px;padding:0 20px;border-radius:var(--radius-sm);border:1px solid var(--blue);background:var(--blue);
+  color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s;
+}
+.btn-go:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+.sample-chip{
+  height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:var(--radius-sm);
+  border:1px dashed #b9c6dc;background:#fbfcfe;color:var(--muted);font-size:11.5px;cursor:pointer;transition:all .15s;
+}
+.sample-chip:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:12.5px;}
+.empty-state .big{font-size:28px;margin-bottom:8px;opacity:.5;}
+
+/* ---------- basic selection detail grid ---------- */
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:var(--surface);}
+.detail-cell{padding:10px 13px;border-bottom:1px solid var(--border-soft);border-right:1px solid var(--border-soft);}
+.detail-cell:nth-child(4n){border-right:none;}
+.detail-lbl{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em;}
+.detail-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;word-break:break-word;}
+.detail-val.accent{color:var(--blue-dark);}
+.detail-val.mono{font-family:"SF Mono",Consolas,monospace;font-size:12.5px;}
+.detail-cell.span2{grid-column:span 2;}
+.detail-cell.hidden-field{display:none;}
+@media (max-width:1100px){ .detail-grid{grid-template-columns:repeat(2,1fr);} .detail-cell:nth-child(4n){border-right:1px solid var(--border-soft);} .detail-cell:nth-child(2n){border-right:none;} }
+
+.status-cell{display:inline-flex;align-items:center;gap:7px;font-weight:700;white-space:nowrap;}
+.status-cell .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.st-draft{color:var(--muted);} .st-draft .dot{background:var(--muted-2);}
+.st-confirmed{color:var(--ink);} .st-confirmed .dot{background:#5b8def;}
+.st-initiated{color:#9a5700;} .st-initiated .dot{background:var(--amber);}
+.st-complete{color:#176b3a;} .st-complete .dot{background:var(--green);}
+
+/* ---------- common actions / toolbar ---------- */
+.common-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-top:1px solid var(--border-soft);}
+.common-btn{
+  border-radius:var(--radius-sm);height:36px;padding:0 15px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);transition:all .15s;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.common-btn .ic{font-size:13px;}
+.common-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.common-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.common-btn.primary:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.common-btn.approve{background:var(--green-pale);color:var(--green);border-color:#bfead1;}
+.common-btn.approve:hover:not(:disabled){background:var(--green);color:#fff;}
+.common-btn:disabled{opacity:.4;cursor:not-allowed;}
+.selected-count{font-size:11.5px;font-weight:600;color:var(--muted);margin-left:2px;}
+
+/* drag-and-drop: rows -> action buttons */
+.drag-target{position:relative;}
+body.row-dragging .drag-target:not(:disabled){box-shadow:0 0 0 2px rgba(31,111,235,.35);}
+body.row-dragging .drag-target:not(:disabled)::after{
+  content:"drop here";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(234,242,255,.92);color:var(--blue-dark);font-size:10.5px;font-weight:800;border-radius:var(--radius-sm);
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.drag-target.drag-over:not(:disabled){box-shadow:0 0 0 3px rgba(31,111,235,.55),0 7px 18px rgba(18,38,63,.16)!important;}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+.list-table th,.list-table td{white-space:nowrap;padding:10px 11px;text-align:right;}
+.list-table thead th{
+  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
+  border-bottom:1px solid var(--border);background:#fbfcfe;position:sticky;top:0;
+}
+.list-table thead th.left{text-align:left;}
+.list-table thead th:first-child{text-align:center;}
+.list-table tbody td{text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
+.list-table tbody td.left{text-align:left;}
+.list-table tbody td:first-child{text-align:center;}
+.list-table tbody tr:last-child td{border-bottom:none;}
+.list-table tbody tr{cursor:pointer;transition:background .1s;}
+.list-table tbody tr:hover td{background:#f7faff;}
+.list-table tbody tr.dragging-row{opacity:.45;}
+.list-table tbody tr.dragging-row td{background:#DDEBFF!important;}
+.list-table tbody tr.posted td{background:#F7FBF8;}
+.num{font-variant-numeric:tabular-nums;}
+.empty-row td{text-align:center !important;color:var(--muted);padding:24px 12px;font-style:italic;}
+.tbl-link{color:var(--blue);font-weight:700;text-decoration:none;cursor:pointer;background:none;border:none;font-size:12px;padding:0;}
+.tbl-link:hover{color:var(--blue-dark);text-decoration:underline;}
+.muted-dash{color:var(--muted-2);}
+.deal-type-chip{background:var(--blue-pale);border:1px solid #c7dbfb;color:var(--blue-dark);padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;}
+.emph-amt{color:#1657C4;font-weight:700;}
+.emph-pay{color:#176b3a;font-weight:700;}
+.chk{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;}
+.chk[disabled]{cursor:not-allowed;opacity:.5;}
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+#doc-preview-overlay{z-index:1200;}
+.modal-card{
+  background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 20px 50px rgba(16,24,40,.25);border:1px solid var(--border);
+  max-width:760px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.modal-card.narrow{max-width:460px;}
+.modal-card.wide{max-width:920px;}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-header{background:var(--blue-pale);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid #dbe6fb;}
+.modal-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:#fff;border:1px solid #c7dbfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:var(--blue-dark);}
+.modal-header-text{flex:1;min-width:0;}
+.modal-title{font-size:15px;font-weight:800;color:var(--ink);line-height:1.3;}
+.modal-subtitle{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.modal-close{background:#fff;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-body{padding:18px;overflow-y:auto;background:var(--surface);}
+.modal-footer{padding:14px 18px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;align-items:center;gap:10px;background:#fbfcfe;flex-wrap:wrap;}
+.btn-cancel{background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;min-height:36px;padding:0 16px;border-radius:var(--radius-sm);transition:all .15s;}
+.btn-cancel:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.btn-confirm{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:var(--radius-sm);min-height:36px;padding:0 18px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;}
+.btn-confirm:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.btn-confirm:disabled{opacity:.45;cursor:not-allowed;}
+.btn-confirm.is-green{background:var(--green);border-color:var(--green);}
+.btn-confirm.is-green:hover:not(:disabled){background:#1f8a4c;border-color:#1f8a4c;}
+
+.section-label{
+  font-size:10.5px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;font-weight:700;
+  margin:16px 0 9px;display:flex;align-items:center;gap:10px;
+}
+.section-label:first-child{margin-top:0;}
+.section-label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.section-label::after{content:"";flex:1;height:1px;background:var(--border-soft);}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.field-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;}
+.field input,.field select{
+  height:34px;padding:0 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--ink);font-size:12.5px;outline:none;
+}
+.field input:disabled{background:#f3f6fa;color:var(--muted);}
+.field .static{height:34px;display:flex;align-items:center;font-size:12.5px;font-weight:600;color:var(--ink);background:#f7faff;border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:0 10px;}
+.check-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink-soft);margin:8px 0;}
+
+.entity-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:4px;}
+.entity-flow .ent-chip{background:var(--blue-pale);border:1px solid #c7dbfb;color:var(--blue-dark);padding:5px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;}
+.entity-flow .arrow{color:var(--muted-2);font-size:13px;}
+
+/* mini accounting grid inside modals */
+.mini-table{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;font-size:11.5px;}
+.mini-table th{background:#fbfcfe;font-size:9.5px;text-transform:uppercase;color:var(--muted-2);font-weight:700;padding:7px 9px;text-align:right;border-bottom:1px solid var(--border);}
+.mini-table th.left{text-align:left;}
+.mini-table td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--border-soft);}
+.mini-table td.left{text-align:left;}
+.mini-table tr:last-child td{border-bottom:none;}
+.mini-table .dc-dr{color:var(--red);font-weight:700;}
+.mini-table .dc-cr{color:var(--green);font-weight:700;}
+
+.buysell-box{border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:12px;}
+.buysell-box.buy{background:#f7faff;border-color:#c7dbfb;}
+.buysell-box.sell{background:#fef9f0;border-color:#f5d9a8;}
+.buysell-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-bottom:9px;}
+.buysell-box.buy .buysell-head{color:var(--blue-dark);}
+.buysell-box.sell .buysell-head{color:#9a5700;}
+
+/* ---------- toast ---------- */
+.zfac-toast{
+  position:fixed;bottom:24px;right:24px;transform:translateY(12px);max-width:380px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:13px 16px;border-radius:var(--radius-md);
+  box-shadow:0 12px 30px rgba(16,24,40,.18);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;text-align:left;
+}
+.zfac-toast.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.zfac-toast.error{background:var(--red-pale);border-color:#f4c2c2;color:var(--red);}
+.zfac-toast.success{background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+
+.hint{font-size:11px;color:var(--muted);line-height:1.5;}
+.doc-link-pending{color:var(--muted-2);font-style:italic;font-size:11.5px;}
+
+@media (max-width:900px){
+  .field-grid,.field-grid.cols3{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+  <div class="page-head">
+    <img class="head-icon" src="data:image/png;base64,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" alt="Company logo"/>
+    <div class="title-wrap">
+      <div class="page-title">BO: Post Accounting Entries for Settlement</div>
+      <div class="page-subtitle">Transaction ZSGTSFR081 &middot; Settle the FX deal and trade invoice legs for a single Deal ID</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn-icon" title="Refresh" id="btn-head-refresh" onclick="refreshScreen()" disabled><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+
+  <main>
+    <div class="explain" id="explain-banner">
+      <button class="explain-close" onclick="document.getElementById('explain-banner').classList.add('hidden')" title="Dismiss">&#10005;</button>
+      <b>What this screen does:</b> once a <span class="term-def" title="The key that links the Master Contract, FX Deal, Bill of Lading and Trade Invoices together once a shipment is matched to an FX deal.">Deal ID</span>
+      has been confirmed, this is where Back Office settles it &mdash; posting the <span class="term-def" title="The pair of offsetting currency deals (D1/D2) booked between group entities to pass FX exposure down the Entity String.">FX Deal</span> accounting entries,
+      posting each <span class="term-def" title="One accounting document per leg of the Entity String (e.g. T1, T2, T3) raised once a Bill of Lading is attached to the Deal ID.">Trade Invoice</span> leg, and marking the
+      <span class="term-def" title="The day the FX Deal and its linked invoices are paid &amp; received &mdash; by design, on the same date.">Settlement</span> complete. Load a Deal ID below to begin.
+    </div>
+
+    <!-- ============== PANEL: Deal ID lookup ============== -->
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Basic Selection</h2></div>
+        <span class="panel-sub" id="status-badge-slot"></span>
+      </div>
+      <div class="panel-body">
+        <div class="search-row">
+          <div class="search-box">
+            <span class="icon">&#128269;</span>
+            <input id="f-deal" type="text" placeholder="Enter Deal ID..." onkeydown="if(event.key==='Enter')loadDeal()"/>
+          </div>
+          <button class="btn-go" onclick="loadDeal()">Go</button>
+          <button class="sample-chip" onclick="document.getElementById('f-deal').value='TSF-9081';loadDeal();">Try sample &middot; TSF-9081</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== PANEL: Header details (hidden until a deal is loaded) ============== -->
+    <div class="panel" id="panel-header" style="display:none;">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2 id="header-title">Deal ID Details</h2></div>
+        <span id="status-badge"></span>
+      </div>
+      <div class="panel-body">
+        <div class="detail-grid" id="detail-grid"></div>
+      </div>
+      <div class="common-actions" id="toolbar"></div>
+    </div>
+
+    <!-- ============== PANEL: FX Deal Settlement ============== -->
+    <div class="panel" id="panel-top" style="display:none;">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>FX Deal Settlement</h2></div>
+        <span class="hint">Double-click a row to post its accounting entries &middot; drag a row onto Post FX Deal</span>
+      </div>
+      <div class="table-wrap">
+        <table class="list-table" id="top-table">
+          <thead>
+            <tr>
+              <th class="left">Entity</th>
+              <th class="left">Deal Type</th>
+              <th class="left">Transaction No</th>
+              <th class="left">Buy</th>
+              <th class="left">Sell</th>
+              <th>All-in Rate</th>
+              <th class="left">Status</th>
+              <th class="left">FI Doc 1</th>
+              <th class="left">FI Doc 2</th>
+              <th class="left">DSS Deal</th>
+            </tr>
+          </thead>
+          <tbody id="top-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============== PANEL: Trade Invoice Settlement ============== -->
+    <div class="panel" id="panel-inv" style="display:none;">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Trade Invoice Settlement</h2></div>
+        <span class="hint">Double-click a row to post &middot; drag a row onto Post Trade Invoice</span>
+      </div>
+      <div class="table-wrap">
+        <table class="list-table" id="inv-table">
+          <thead>
+            <tr>
+              <th>Post</th>
+              <th>Settle</th>
+              <th class="left">Trade Type</th>
+              <th class="left">Settlement Desc</th>
+              <th class="left">Linked FX Deal</th>
+              <th class="left">Transfer Type</th>
+              <th class="left">Invoice Amount</th>
+              <th class="left">Payment Amount</th>
+              <th class="left">Premium</th>
+              <th class="left">FI Document</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============== MODAL 9003 : Transactions Posting (FX leg) ============== -->
+  <div class="modal-overlay" id="txn-overlay" onclick="overlayClick(event,'txn-overlay')">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div class="modal-icon">&#8644;</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Transaction Settlement</div>
+          <div class="modal-subtitle" id="txn-subtitle">FX deal accounting entries</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('txn-overlay')">&#10005;</button>
+      </div>
+      <div class="modal-body" id="txn-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('txn-overlay')">Cancel</button>
+        <button class="btn-confirm" style="background:var(--surface);color:var(--ink-soft);border-color:var(--border);" onclick="txnAction('TEST')">Test Run</button>
+        <button class="btn-confirm" style="background:var(--surface);color:var(--ink-soft);border-color:var(--border);" onclick="txnAction('UPD')">Update</button>
+        <button class="btn-confirm" id="txn-post-btn" onclick="txnAction('TBB1')">Post Accounting Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL 9002 : Posting Pop-up (invoice leg) ============== -->
+  <div class="modal-overlay" id="posting-overlay" onclick="overlayClick(event,'posting-overlay')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon">&#128196;</div>
+        <div class="modal-header-text">
+          <div class="modal-title" id="posting-title">Invoice Posting</div>
+          <div class="modal-subtitle" id="posting-subtitle">Trade invoice accounting entry</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('posting-overlay')">&#10005;</button>
+      </div>
+      <div class="modal-body" id="posting-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('posting-overlay')">Cancel</button>
+        <button class="btn-confirm" style="background:var(--surface);color:var(--ink-soft);border-color:var(--border);" onclick="postingAction('UPD_DATA')">Update</button>
+        <button class="btn-confirm is-green" onclick="postingAction('SET_EXE')">Settlement Complete</button>
+        <button class="btn-confirm" id="posting-post-btn" onclick="postingAction('SET_POST')">Post Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL 9004 : Posting All ============== -->
+  <div class="modal-overlay" id="pall-overlay" onclick="overlayClick(event,'pall-overlay')">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div class="modal-icon">&#128229;</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Trade Invoice: Posting All</div>
+          <div class="modal-subtitle">Bulk-post every ready, unposted invoice leg for this Deal ID</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('pall-overlay')">&#10005;</button>
+      </div>
+      <div class="modal-body" id="pall-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('pall-overlay')">Cancel</button>
+        <button class="btn-confirm" id="pall-post-btn" onclick="postAllConfirm()">Posting All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL : Document preview (FB03 / TR hotspot) ============== -->
+  <div class="modal-overlay" id="doc-preview-overlay" onclick="overlayClick(event,'doc-preview-overlay')">
+    <div class="modal-card narrow">
+      <div class="modal-header">
+        <div class="modal-icon">&#128269;</div>
+        <div class="modal-header-text">
+          <div class="modal-title" id="doc-preview-title">Document Display</div>
+          <div class="modal-subtitle" id="doc-preview-subtitle">External transaction preview</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('doc-preview-overlay')">&#10005;</button>
+      </div>
+      <div class="modal-body" id="doc-preview-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('doc-preview-overlay')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="zfac-toast" id="toast"></div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+
+/* =========================================================================
+   DEMO DATA  (worked example: Model M021, 5,000 MT soybean oil,
+   Master Contract MC-7001 -> Deal ID TSF-9081 -> invoices T1/T2/T3)
+   ========================================================================= */
+var DEAL_LIBRARY = {
+  "TSF-9081": {
+    dealId:"TSF-9081", dealRef:"OSIPL Soyoil M021 5000MT - Sep Shipment",
+    dealStartDate:"01.09.2026", dealEndDate:"31.03.2027",
+    mcRefNo:"MC-7001", mcDesc:"OSIPL_SOYOIL_M021_5000MT", mcDate:"15.08.2026", shipEndDate:"31.10.2026",
+    fxModelId:"M021", modelDesc:"INR Long Forward", entityString:"OIL - DMCC - OAIPL", currencyString:"USD - USD - INR",
+    fxInvModel:"M021", traderCode:"T01", traderDesc:"J. Fernandes",
+    status:10, /* 10=Confirmed by MO, 20=Settlement Initiated, 22=Accounting Complete */
+    top:[
+      { entity:"OIL", dealType:"D1", rfha:"5000011041", buyCurr:"INR", buyAmt:415500000.00, sellCurr:"USD", sellAmt:5000000.00,
+        rate:83.1000, status:"Confirmed", doc1:"", doc2:"", dssDeal:"", sgsart:"12A" },
+      { entity:"DMCC", dealType:"D2", rfha:"5000011042", buyCurr:"INR", buyAmt:416331000.00, sellCurr:"USD", sellAmt:5010000.00,
+        rate:83.0998, status:"Confirmed", doc1:"", doc2:"", dssDeal:"", sgsart:"12A" }
+    ],
+    inv:[
+      { tType:"T1S", tradeType:"T1 &middot; OIL &rarr; DMCC", setDesc:"Soybean Oil Sale &middot; Leg 1 (Origination)", dMap:"D1", dssDeal:"",
+        trfType:"SWIFT MT103", invAmt:5000000.00, invCurr:"USD", payAmt:415500000.00, payCurr:"INR", preAmt:0,
+        postCheck:true, setCheck:false, fiDoc:"", docMsg:"", buy:"OIL", sell:"DMCC" },
+      { tType:"T2S", tradeType:"T2 &middot; DMCC &rarr; OAIPL", setDesc:"Soybean Oil Sale &middot; Leg 2 (Markup)", dMap:"D2", dssDeal:"",
+        trfType:"SWIFT MT103", invAmt:5010000.00, invCurr:"USD", payAmt:416331000.00, payCurr:"INR", preAmt:0,
+        postCheck:true, setCheck:false, fiDoc:"", docMsg:"", buy:"DMCC", sell:"OAIPL" },
+      { tType:"T3S", tradeType:"T3 &middot; OAIPL &rarr; Customer", setDesc:"Final Sale &middot; Domestic Customer", dMap:"", dssDeal:"",
+        trfType:"Letter of Credit", invAmt:420500000.00, invCurr:"INR", payAmt:420500000.00, payCurr:"INR", preAmt:0,
+        postCheck:true, setCheck:false, fiDoc:"", docMsg:"", buy:"OAIPL", sell:"CUST-DOM-04" }
+    ]
+  }
+};
+
+var STATE = null; /* the currently loaded deal, deep-cloned from DEAL_LIBRARY */
+var docCounter = 1900010001;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function fmtAmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+/* =========================================================================
+   LOAD / REFRESH
+   ========================================================================= */
+function loadDeal(){
+  var key = ($("f-deal").value || "").trim().toUpperCase();
+  if (!key){ setStatus("Enter a Deal ID to continue.", "error"); return; }
+  var src = DEAL_LIBRARY[key];
+  if (!src){
+    setStatus("No Deal ID found for '" + key + "'. Try TSF-9081.", "error");
+    $("panel-header").style.display = "none";
+    $("panel-top").style.display = "none";
+    $("panel-inv").style.display = "none";
+    return;
+  }
+  STATE = clone(src);
+  $("f-deal").value = STATE.dealId;
+  $("panel-header").style.display = "";
+  $("panel-top").style.display = "";
+  $("panel-inv").style.display = "";
+  $("btn-head-refresh").disabled = false;
+  renderAll();
+  setStatus("Deal ID " + STATE.dealId + " loaded.", "success");
+}
+
+function refreshScreen(){
+  if (!STATE){ setStatus("Load a Deal ID first.", "error"); return; }
+  renderAll();
+  setStatus("Screen refreshed.", "");
+}
+
+/* =========================================================================
+   RENDER
+   ========================================================================= */
+function statusInfo(code){
+  if (code >= 22) return { cls:"st-complete", label:"22 &middot; Accounting Complete" };
+  if (code >= 20) return { cls:"st-initiated", label:"20 &middot; Settlement Initiated" };
+  return { cls:"st-confirmed", label:"10 &middot; Confirmed by MO" };
+}
+
+function renderAll(){
+  renderHeader();
+  renderToolbar();
+  renderTop();
+  renderInv();
+}
+
+function renderHeader(){
+  $("header-title").textContent = "Deal ID " + STATE.dealId;
+  var si = statusInfo(STATE.status);
+  var badgeHtml = '<span class="status-cell ' + si.cls + '"><span class="dot"></span>' + si.label + '</span>';
+  $("status-badge").innerHTML = badgeHtml;
+
+  var cells = [
+    ["Deal ID", STATE.dealId, "accent mono"],
+    ["Deal Reference", STATE.dealRef, ""],
+    ["Deal Start Date", STATE.dealStartDate, ""],
+    ["Deal End Date", STATE.dealEndDate, ""],
+    ["MC Ref No", STATE.mcRefNo, "accent mono"],
+    ["MC Description", STATE.mcDesc, ""],
+    ["MC Date", STATE.mcDate, ""],
+    ["Ship End Date", STATE.shipEndDate, ""],
+    ["FX Model ID", STATE.fxModelId, "accent"],
+    ["Model Description", STATE.modelDesc, ""],
+    ["Entity String", STATE.entityString, "mono"],
+    ["Currency String", STATE.currencyString, "mono"],
+    ["FX Inv Model", STATE.fxInvModel, ""],
+    ["Trader", STATE.traderCode + " &middot; " + STATE.traderDesc, ""]
+  ];
+  var html = "";
+  cells.forEach(function(c){
+    html += '<div class="detail-cell"><div class="detail-lbl">' + c[0] + '</div><div class="detail-val ' + c[2] + '">' + c[1] + '</div></div>';
+  });
+  $("detail-grid").innerHTML = html;
+}
+
+function allFxPosted(){ return STATE.top.every(function(r){ return r.doc1 && r.doc2; }); }
+function allInvPosted(){ return STATE.inv.every(function(r){ return r.fiDoc; }); }
+function anyFxUnposted(){ return STATE.top.some(function(r){ return !(r.doc1 && r.doc2); }); }
+function anyInvUnposted(){ return STATE.inv.some(function(r){ return !r.fiDoc; }); }
+
+function renderToolbar(){
+  var notInitiated = STATE.status < 20;
+  var canPost = STATE.status >= 20;
+  var complete = STATE.status >= 22;
+
+  var html = "";
+  html += btnHtml("btn-ref","","Refresh","refreshScreen()", false, "&#8635;");
+  html += btnHtml("btn-inv","","View Trade Invoice","viewTradeInvoice()", complete===true && false, "&#128065;");
+  html += btnHtml("btn-postfx drag-target","", "Post FX Deal","postFxDeal()", !canPost || !anyFxUnposted() || complete, "&#128190;",
+      {ondragover:"allowActionDrop(event)", ondragenter:"enterActionDrop(event)", ondragleave:"leaveActionDrop(event)", ondrop:"dropRowOnAction(event,'fx')"});
+  html += btnHtml("btn-postti drag-target","", "Post Trade Invoice","postTradeInvoice()", !canPost || !anyInvUnposted() || complete, "&#128190;",
+      {ondragover:"allowActionDrop(event)", ondragenter:"enterActionDrop(event)", ondragleave:"leaveActionDrop(event)", ondrop:"dropRowOnAction(event,'inv')"});
+  html += btnHtml("btn-acc approve","", "Accounting Completed","accountingCompleted()", !canPost || complete, "&#9989;");
+  if (notInitiated){
+    html += btnHtml("btn-init primary","", "Initiate Settlement","initiateSettlement()", false, "&#9654;");
+  }
+  $("toolbar").innerHTML = html;
+}
+function btnHtml(cls,extra,label,onclick,disabled,icon,attrs){
+  var a = "";
+  if (attrs) for (var k in attrs) a += ' ' + k + '="' + attrs[k] + '"';
+  return '<button class="common-btn ' + cls + '" onclick="' + onclick + '" ' + (disabled?"disabled":"") + a + '>' +
+         '<span class="ic">' + icon + '</span>' + label + '</button>';
+}
+
+function renderTop(){
+  var rows = "";
+  STATE.top.forEach(function(r, idx){
+    var posted = r.doc1 && r.doc2;
+    var draggable = !posted && STATE.status >= 20 && STATE.status < 22;
+    rows += '<tr class="' + (posted?"posted":"") + '" draggable="' + (draggable?"true":"false") + '" ' +
+      (draggable ? 'ondragstart="beginRowDrag(event,\'fx\',' + idx + ')" ondragend="endRowDrag(event)"' : '') +
+      ' ondblclick="openTxnModal(' + idx + ')" title="Double-click to open posting details">' +
+      '<td class="left">' + r.entity + '</td>' +
+      '<td class="left"><span class="deal-type-chip">' + r.dealType + '</span></td>' +
+      '<td class="left"><button class="tbl-link" onclick="event.stopPropagation();showDocPreview(\'TXN\',\'' + r.rfha + '\',\'' + r.entity + '\')">' + r.rfha + '</button></td>' +
+      '<td class="left num">' + r.buyCurr + ' ' + fmtAmt(r.buyAmt) + '</td>' +
+      '<td class="left num">' + r.sellCurr + ' ' + fmtAmt(r.sellAmt) + '</td>' +
+      '<td class="num">' + r.rate.toFixed(4) + '</td>' +
+      '<td class="left">' + r.status + '</td>' +
+      '<td class="left">' + (r.doc1 ? '<button class="tbl-link" onclick="event.stopPropagation();showDocPreview(\'FI\',\'' + r.doc1 + '\',\'' + r.entity + '\')">' + r.doc1 + '</button>' : '<span class="doc-link-pending">not posted</span>') + '</td>' +
+      '<td class="left">' + (r.doc2 ? '<button class="tbl-link" onclick="event.stopPropagation();showDocPreview(\'FI\',\'' + r.doc2 + '\',\'' + r.entity + '\')">' + r.doc2 + '</button>' : '<span class="doc-link-pending">not posted</span>') + '</td>' +
+      '<td class="left">' + (r.dssDeal || '<span class="muted-dash">&ndash;</span>') + '</td>' +
+      '</tr>';
+  });
+  $("top-tbody").innerHTML = rows || '<tr class="empty-row"><td colspan="10">No FX deal legs found for this Deal ID.</td></tr>';
+}
+
+function renderInv(){
+  var rows = "";
+  STATE.inv.forEach(function(r, idx){
+    var posted = !!r.fiDoc;
+    var draggable = !posted && STATE.status >= 20 && STATE.status < 22;
+    rows += '<tr class="' + (posted?"posted":"") + '" draggable="' + (draggable?"true":"false") + '" ' +
+      (draggable ? 'ondragstart="beginRowDrag(event,\'inv\',' + idx + ')" ondragend="endRowDrag(event)"' : '') +
+      ' ondblclick="openPostingModal(' + idx + ')" title="Double-click to open posting details">' +
+      '<td><input class="chk" type="checkbox" ' + (r.postCheck?"checked":"") + ' disabled/></td>' +
+      '<td><input class="chk" type="checkbox" ' + (r.setCheck?"checked":"") + ' disabled/></td>' +
+      '<td class="left">' + r.tradeType + '</td>' +
+      '<td class="left">' + r.setDesc + '</td>' +
+      '<td class="left">' + (r.dMap ? '<span class="deal-type-chip">' + r.dMap + '</span>' : '<span class="muted-dash">&ndash;</span>') + '</td>' +
+      '<td class="left">' + r.trfType + '</td>' +
+      '<td class="left num emph-amt">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td>' +
+      '<td class="left num emph-pay">' + r.payCurr + ' ' + fmtAmt(r.payAmt) + '</td>' +
+      '<td class="left num">' + (r.preAmt ? fmtAmt(r.preAmt) : '<span class="muted-dash">&ndash;</span>') + '</td>' +
+      '<td class="left">' + (r.fiDoc ? '<button class="tbl-link" onclick="event.stopPropagation();showDocPreview(\'FI\',\'' + r.fiDoc + '\',\'' + r.buy + '\')">' + r.fiDoc + '</button>' : '<span class="doc-link-pending">not posted</span>') + '</td>' +
+      '</tr>';
+  });
+  $("inv-tbody").innerHTML = rows || '<tr class="empty-row"><td colspan="10">No trade invoice legs found for this Deal ID.</td></tr>';
+}
+
+/* =========================================================================
+   TOOLBAR ACTIONS
+   ========================================================================= */
+function initiateSettlement(){
+  if (STATE.status >= 20){ setStatus("Settlement has already been initiated for this Deal ID.", "error"); return; }
+  STATE.status = 20;
+  renderAll();
+  setStatus("Settlement initiated for Deal ID " + STATE.dealId + ". FX deal and trade invoice legs are now ready for posting.", "success");
+}
+
+function postFxDeal(){
+  if (STATE.status < 20){ setStatus("Please initiate settlement before posting the FX deal.", "error"); return; }
+  var posted = 0;
+  STATE.top.forEach(function(r){
+    if (!(r.doc1 && r.doc2)){
+      r.doc1 = String(docCounter++);
+      r.doc2 = String(docCounter++);
+      r.status = "Posted";
+      posted++;
+    }
+  });
+  renderAll();
+  if (posted) setStatus(posted + " FX deal leg(s) posted to accounting.", "success");
+  else setStatus("All FX deal legs are already posted.", "");
+}
+
+function postTradeInvoice(){
+  if (STATE.status < 20){ setStatus("Please initiate settlement before posting trade invoices.", "error"); return; }
+  if (!allFxPosted()){ setStatus("Post the FX deal accounting entries first &mdash; trade invoices settle against them.", "error"); return; }
+  openPostAllModal();
+}
+
+function accountingCompleted(){
+  if (STATE.status < 20){ setStatus("Settlement has not been initiated yet.", "error"); return; }
+  if (!allFxPosted() || !allInvPosted()){
+    setStatus("All FX deal and trade invoice documents must be posted before accounting can be marked complete.", "error");
+    return;
+  }
+  STATE.status = 22;
+  renderAll();
+  setStatus("Deal ID " + STATE.dealId + " marked Accounting Complete.", "success");
+}
+
+function viewTradeInvoice(){
+  var rows = STATE.inv.map(function(r){
+    return '<tr><td class="left">' + r.tradeType + '</td><td class="left">' + r.setDesc + '</td>' +
+      '<td class="left num">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td>' +
+      '<td class="left">' + (r.fiDoc || '<span class="doc-link-pending">not posted</span>') + '</td></tr>';
+  }).join("");
+  $("doc-preview-title").textContent = "Trade Invoice Report";
+  $("doc-preview-subtitle").textContent = "Deal ID " + STATE.dealId + " &middot; opens in a separate report in the full SAP system";
+  $("doc-preview-body").innerHTML =
+    '<p class="hint" style="margin-bottom:12px;">In the real transaction, <b>View Trade Invoice</b> submits report <b>ZSGTSF_RDEAL_ID_INV</b> and returns here. A read-only preview of the invoice legs is shown below.</p>' +
+    '<table class="mini-table"><thead><tr><th class="left">Trade Type</th><th class="left">Settlement Desc</th><th>Invoice Amount</th><th class="left">FI Document</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  openModal("doc-preview-overlay");
+}
+
+function showDocPreview(kind, docNo, entity){
+  if (kind === "TXN"){
+    $("doc-preview-title").textContent = "FX Transaction Display";
+    $("doc-preview-subtitle").textContent = "Would open the Treasury transaction display (TBxx) for this deal";
+    $("doc-preview-body").innerHTML =
+      '<div class="field-grid">' +
+      '<div class="field"><label>Company Code</label><div class="static">' + entity + '</div></div>' +
+      '<div class="field"><label>Transaction No</label><div class="static">' + docNo + '</div></div>' +
+      '</div>' +
+      '<p class="hint">This hotspot calls function module <b>TB_TRANSACTION_TO_DISPLAY</b> in the real system, opening the Treasury &amp; Risk transaction screen. Not reproduced in this demo.</p>';
+  } else {
+    $("doc-preview-title").textContent = "Accounting Document Display";
+    $("doc-preview-subtitle").textContent = "Would open transaction FB03 for this document";
+    $("doc-preview-body").innerHTML =
+      '<div class="field-grid">' +
+      '<div class="field"><label>Company Code</label><div class="static">' + entity + '</div></div>' +
+      '<div class="field"><label>Document No</label><div class="static">' + docNo + '</div></div>' +
+      '<div class="field"><label>Fiscal Year</label><div class="static">' + STATE.mcDate.slice(-4) + '</div></div>' +
+      '<div class="field"><label>Posted By</label><div class="static">Back Office</div></div>' +
+      '</div>' +
+      '<p class="hint">This hotspot calls <b>CALL TRANSACTION &#39;FB03&#39;</b> in the real system, opening the standard FI document display. Not reproduced in this demo.</p>';
+  }
+  openModal("doc-preview-overlay");
+}
+
+/* =========================================================================
+   MODAL 9003 : FX leg posting
+   ========================================================================= */
+var txnCtx = null;
+function openTxnModal(idx){
+  var r = STATE.top[idx];
+  txnCtx = idx;
+  var posted = r.doc1 && r.doc2;
+  $("txn-subtitle").textContent = "Deal Type " + r.dealType + " &middot; Transaction " + r.rfha + " &middot; " + r.entity;
+  var acc1Rows = '<tr><td class="left dc-dr">Debit</td><td class="left">FX Clearing &middot; ' + r.sellCurr + '</td><td class="num">' + fmtAmt(r.sellAmt) + '</td></tr>' +
+                 '<tr><td class="left dc-cr">Credit</td><td class="left">Bank &middot; ' + r.sellCurr + '</td><td class="num">' + fmtAmt(r.sellAmt) + '</td></tr>';
+  var acc2Rows = '<tr><td class="left dc-dr">Debit</td><td class="left">Bank &middot; ' + r.buyCurr + '</td><td class="num">' + fmtAmt(r.buyAmt) + '</td></tr>' +
+                 '<tr><td class="left dc-cr">Credit</td><td class="left">FX Clearing &middot; ' + r.buyCurr + '</td><td class="num">' + fmtAmt(r.buyAmt) + '</td></tr>';
+  $("txn-body").innerHTML =
+    '<div class="section-label">Basic Details</div>' +
+    '<div class="field-grid cols3">' +
+      '<div class="field"><label>Company Code</label><div class="static">' + r.entity + '</div></div>' +
+      '<div class="field"><label>Transaction No</label><div class="static">' + r.rfha + '</div></div>' +
+      '<div class="field"><label>Deal Type</label><div class="static">' + r.dealType + (r.dssDeal?(' / ' + r.dssDeal):'') + '</div></div>' +
+    '</div>' +
+    '<div class="buysell-box sell">' +
+      '<div class="buysell-head">Sell Currency</div>' +
+      '<div class="field-grid cols3">' +
+        '<div class="field"><label>Sell Amount</label><div class="static">' + r.sellCurr + ' ' + fmtAmt(r.sellAmt) + '</div></div>' +
+        '<div class="field"><label>Bank Type</label><div class="static">House Bank &middot; Correspondent</div></div>' +
+        '<div class="field"><label>FI Document</label><div class="static">' + (r.doc1 || '&ndash; not posted &ndash;') + '</div></div>' +
+      '</div>' +
+      '<table class="mini-table"><thead><tr><th class="left">D/C</th><th class="left">Account</th><th>Amount</th></tr></thead><tbody>' + acc1Rows + '</tbody></table>' +
+    '</div>' +
+    '<div class="buysell-box buy">' +
+      '<div class="buysell-head">Buy Currency</div>' +
+      '<div class="field-grid cols3">' +
+        '<div class="field"><label>Buy Amount</label><div class="static">' + r.buyCurr + ' ' + fmtAmt(r.buyAmt) + '</div></div>' +
+        '<div class="field"><label>All-in Rate</label><div class="static">' + r.rate.toFixed(4) + '</div></div>' +
+        '<div class="field"><label>FI Document</label><div class="static">' + (r.doc2 || '&ndash; not posted &ndash;') + '</div></div>' +
+      '</div>' +
+      '<table class="mini-table"><thead><tr><th class="left">D/C</th><th class="left">Account</th><th>Amount</th></tr></thead><tbody>' + acc2Rows + '</tbody></table>' +
+    '</div>';
+  $("txn-post-btn").disabled = !!posted;
+  $("txn-post-btn").textContent = posted ? "Already Posted" : "Post Accounting Entry";
+  openModal("txn-overlay");
+}
+function txnAction(code){
+  var r = STATE.top[txnCtx];
+  if (code === 'TEST'){ setStatus("Test run completed for transaction " + r.rfha + ". No documents were posted.", ""); return; }
+  if (code === 'UPD'){ setStatus("Bank and transfer details updated for transaction " + r.rfha + ".", "success"); return; }
+  if (code === 'TBB1'){
+    if (r.doc1 && r.doc2){ setStatus("This transaction is already posted.", "error"); return; }
+    r.doc1 = String(docCounter++);
+    r.doc2 = String(docCounter++);
+    r.status = "Posted";
+    renderAll();
+    closeModal('txn-overlay');
+    setStatus("Accounting entry posted for transaction " + r.rfha + ".", "success");
+  }
+}
+
+/* =========================================================================
+   MODAL 9002 : Invoice leg posting
+   ========================================================================= */
+var postingCtx = null;
+function openPostingModal(idx){
+  var r = STATE.inv[idx];
+  postingCtx = idx;
+  var posted = !!r.fiDoc;
+  $("posting-title").textContent = r.tradeType;
+  $("posting-subtitle").textContent = r.setDesc;
+  var accRows = '<tr><td class="left dc-dr">Debit</td><td class="left">' + r.buy + ' &middot; Trade Receivable</td><td class="num">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td></tr>' +
+                '<tr><td class="left dc-cr">Credit</td><td class="left">' + r.sell + ' &middot; Trade Revenue</td><td class="num">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td></tr>';
+  $("posting-body").innerHTML =
+    '<div class="section-label">Basic Details</div>' +
+    '<div class="field-grid cols3">' +
+      '<div class="field"><label>Sequence</label><div class="static">' + (idx+1) + '</div></div>' +
+      '<div class="field"><label>Trade Type</label><div class="static">' + r.tType + '</div></div>' +
+      '<div class="field"><label>Linked FX Deal</label><div class="static">' + (r.dMap || '&ndash; external leg &ndash;') + '</div></div>' +
+    '</div>' +
+    '<div class="section-label">Amounts</div>' +
+    '<div class="field-grid cols3">' +
+      '<div class="field"><label>Invoice Amount</label><div class="static">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</div></div>' +
+      '<div class="field"><label>Payment Amount</label><div class="static">' + r.payCurr + ' ' + fmtAmt(r.payAmt) + '</div></div>' +
+      '<div class="field"><label>Premium Amount</label><div class="static">' + (r.preAmt ? fmtAmt(r.preAmt) : '&ndash;') + '</div></div>' +
+    '</div>' +
+    '<div class="section-label">Sender / Receiver</div>' +
+    '<div class="field-grid">' +
+      '<div class="field"><label>Sender / Payer</label><div class="static">' + r.buy + '</div></div>' +
+      '<div class="field"><label>Receiver / Payee</label><div class="static">' + r.sell + '</div></div>' +
+    '</div>' +
+    '<div class="check-row"><input class="chk" type="checkbox" ' + (r.setCheck?"checked":"") + ' disabled/> Settlement complete</div>' +
+    '<div class="section-label">Accounting Entry</div>' +
+    '<table class="mini-table"><thead><tr><th class="left">D/C</th><th class="left">Account</th><th>Amount</th></tr></thead><tbody>' + accRows + '</tbody></table>' +
+    '<div class="field-grid" style="margin-top:10px;">' +
+      '<div class="field"><label>FI Document No</label><div class="static">' + (r.fiDoc || '&ndash; not posted &ndash;') + '</div></div>' +
+      '<div class="field"><label>Transfer Type</label><div class="static">' + r.trfType + '</div></div>' +
+    '</div>';
+  $("posting-post-btn").disabled = !!posted;
+  $("posting-post-btn").textContent = posted ? "Already Posted" : "Post Document";
+  openModal("posting-overlay");
+}
+function postingAction(code){
+  var r = STATE.inv[postingCtx];
+  if (code === 'UPD_DATA'){ setStatus("Bank settlement data updated for " + r.tradeType + ".", "success"); return; }
+  if (code === 'SET_EXE'){
+    r.setCheck = true;
+    renderAll();
+    openPostingModal(postingCtx);
+    setStatus("Settlement marked complete for " + r.tradeType + ".", "success");
+    return;
+  }
+  if (code === 'SET_POST'){
+    if (r.fiDoc){ setStatus("This invoice leg is already posted.", "error"); return; }
+    r.fiDoc = String(docCounter++);
+    renderAll();
+    closeModal('posting-overlay');
+    setStatus("Trade invoice posted successfully for " + r.tradeType + ".", "success");
+  }
+}
+
+/* =========================================================================
+   MODAL 9004 : Posting All
+   ========================================================================= */
+function openPostAllModal(){
+  var pending = STATE.inv.filter(function(r){ return r.postCheck && !r.fiDoc; });
+  if (!pending.length){
+    setStatus("All trade invoice legs are already posted.", "");
+    return;
+  }
+  var rows = pending.map(function(r){
+    return '<tr><td class="left dc-dr">Debit</td><td class="left">' + r.buy + ' &middot; Trade Receivable</td><td class="left">' + r.tradeType + '</td><td class="num">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td></tr>' +
+           '<tr><td class="left dc-cr">Credit</td><td class="left">' + r.sell + ' &middot; Trade Revenue</td><td class="left">' + r.tradeType + '</td><td class="num">' + r.invCurr + ' ' + fmtAmt(r.invAmt) + '</td></tr>';
+  }).join("");
+  $("pall-body").innerHTML =
+    '<p class="hint" style="margin-bottom:10px;">' + pending.length + ' invoice leg(s) are checked for FI Posting and have no document yet. Posting All will raise one accounting document per leg.</p>' +
+    '<table class="mini-table"><thead><tr><th class="left">D/C</th><th class="left">Account</th><th class="left">Trade Type</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  openModal("pall-overlay");
+}
+function postAllConfirm(){
+  var posted = 0;
+  STATE.inv.forEach(function(r){
+    if (r.postCheck && !r.fiDoc){ r.fiDoc = String(docCounter++); posted++; }
+  });
+  renderAll();
+  closeModal('pall-overlay');
+  setStatus(posted + " trade invoice document(s) posted successfully.", "success");
+}
+
+/* =========================================================================
+   DRAG AND DROP : row -> action button
+   ========================================================================= */
+var dragCtx = null; /* {kind:'fx'|'inv', idx:n} */
+window.beginRowDrag = function(ev, kind, idx){
+  dragCtx = { kind:kind, idx:idx };
+  if (ev.dataTransfer){ ev.dataTransfer.effectAllowed = "move"; try{ ev.dataTransfer.setData("text/plain", kind+":"+idx); }catch(e){} }
+  document.body.classList.add("row-dragging");
+  if (ev.currentTarget) ev.currentTarget.classList.add("dragging-row");
+};
+window.endRowDrag = function(ev){
+  document.body.classList.remove("row-dragging");
+  document.querySelectorAll(".drag-target.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+  if (ev && ev.currentTarget) ev.currentTarget.classList.remove("dragging-row");
+  dragCtx = null;
+};
+window.allowActionDrop = function(ev){ if (dragCtx) ev.preventDefault(); };
+window.enterActionDrop = function(ev){ if (!dragCtx) return; ev.preventDefault(); if (ev.currentTarget) ev.currentTarget.classList.add("drag-over"); };
+window.leaveActionDrop = function(ev){ if (ev.currentTarget) ev.currentTarget.classList.remove("drag-over"); };
+window.dropRowOnAction = function(ev, target){
+  ev.preventDefault();
+  if (ev.currentTarget) ev.currentTarget.classList.remove("drag-over");
+  document.body.classList.remove("row-dragging");
+  if (!dragCtx){ return; }
+  if (target === 'fx' && dragCtx.kind !== 'fx'){ setStatus("This action requires an FX deal row.", "error"); dragCtx=null; return; }
+  if (target === 'inv' && dragCtx.kind !== 'inv'){ setStatus("This action requires a trade invoice row.", "error"); dragCtx=null; return; }
+  if (target === 'fx') postFxDeal();
+  if (target === 'inv') postTradeInvoice();
+  dragCtx = null;
+};
+
+/* =========================================================================
+   MODAL PLUMBING
+   ========================================================================= */
+function openModal(id){ $(id).classList.add("open"); }
+window.closeModal = function(id){ $(id).classList.remove("open"); };
+window.overlayClick = function(ev, id){ if (ev.target && ev.target.id === id) closeModal(id); };
+
+/* =========================================================================
+   TOAST STATUS
+   ========================================================================= */
+var toastTimer = null;
+function setStatus(msg, kind){
+  var t = $("toast");
+  t.textContent = msg;
+  t.className = "zfac-toast show" + (kind ? " " + kind : "");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = "zfac-toast"; }, 3600);
+}
+
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape"){
+    closeModal("txn-overlay"); closeModal("posting-overlay"); closeModal("pall-overlay"); closeModal("doc-preview-overlay");
+  }
+});
+
+function init(){
+  setStatus("Ready. Enter a Deal ID or try the sample TSF-9081.", "");
+}
+init();
+</script>
+</body>
+</html>

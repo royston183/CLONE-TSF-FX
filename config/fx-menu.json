@@ -241,15 +241,179 @@
     "subgroups": [
       {
         "label": "Deal ID Settlement",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSFR061",
+            "title": "MO: INR Head-Ups Reminder",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR061",
+            "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+          },
+          {
+            "code": "ZSGTSFR106",
+            "title": "MO: View List of Deal IDs for Settlement",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR106",
+            "icon": "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"
+          },
+          {
+            "code": "ZSGTSFR060",
+            "title": "MO: Execute Settlement for Deal ID (Single Deal ID)",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR060",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR104",
+            "title": "MO: Bank Settlement: FX Non-Flow Deals",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR104",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+          },
+          {
+            "code": "ZSGTSFR081",
+            "title": "BO: Post Accounting Entries for Settlement (Single Deal ID)",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR081",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR103",
+            "title": "BO: Bank Settlement: FX Non-Flow Deals",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR103",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+          },
+          {
+            "code": "ZSGTSFR062",
+            "title": "View Spot-Forward Deals Settlement",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR062",
+            "icon": "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"
+          },
+          {
+            "code": "TBB1",
+            "title": "TBB1 Posting - SAP Standard",
+            "tag": "Transaction",
+            "desc": "TBB1",
+            "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+          },
+          {
+            "code": "ZSGTSFR092",
+            "title": "BO deal Rejection and return to FO",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR092",
+            "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+          },
+          {
+            "code": "ZSGTSFR098",
+            "title": "BO: Settlement of TSF FX deals",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR098",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          }
+        ]
       },
       {
         "label": "NDF & Option Settlement",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSFR028",
+            "title": "FX NDF Settlement",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR028",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR029",
+            "title": "Option Settlement: Option Premium",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR029",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          },
+          {
+            "code": "ZSGTSFR027",
+            "title": "Option Settlement: NDO Cash Settlement",
+            "tag": "Transaction",
+            "desc": "ZSGTSFR027",
+            "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+          }
+        ]
       },
       {
         "label": "Month-end MTM Accounting",
-        "items": []
+        "subgroups": [
+          {
+            "label": "FX MTM",
+            "items": [
+              {
+                "code": "ZSGTSFR022",
+                "title": "Post FX MTM to Accounting - OIL & DMCC (USD)",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR022",
+                "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+              },
+              {
+                "code": "ZSGTSFR023",
+                "title": "Post FX MTM to Accounting - Other Origins",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR023",
+                "icon": "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+              },
+              {
+                "code": "ZSGTRMP038",
+                "title": "View Corporate MTM Rates",
+                "tag": "Transaction",
+                "desc": "ZSGTRMP038",
+                "icon": "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"
+              },
+              {
+                "code": "ZSGTSFR084",
+                "title": "FX MTM - External and TSF Deals - SG00",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR084",
+                "icon": "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"
+              }
+            ]
+          },
+          {
+            "label": "Options MTM",
+            "items": []
+          },
+          {
+            "label": "Month-end Reversals",
+            "items": [
+              {
+                "code": "ZSGTSFR019",
+                "title": "Reverse FX MTM - OIL & DMCC (USD)",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR019",
+                "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+              },
+              {
+                "code": "ZSGTSFR020",
+                "title": "Reverse FX MTM - Other Origins",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR020",
+                "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+              },
+              {
+                "code": "ZSGTSFR021",
+                "title": "Reverse FX MTM - India",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR021",
+                "icon": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+              },
+              {
+                "code": "ZSGTSFR018",
+                "title": "Option Premium Deferral",
+                "tag": "Transaction",
+                "desc": "ZSGTSFR018",
+                "icon": "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+              }
+            ]
+          }
+        ]
       }
     ]
   }

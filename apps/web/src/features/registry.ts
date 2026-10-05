@@ -55,4 +55,12 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'fo-ndf-fixing-error-correction': lazy(() => import('./fo-ndf-fixing-error-correction/index.tsx')),
   'fo-create-deal-id-manually': lazy(() => import('./fo-create-deal-id-manually/index.tsx')),
   'mo-generate-invoices-deal-id': lazy(() => import('./mo-generate-invoices-deal-id/index.tsx')),
+  'mo-view-deal-id-settlement-list': lazy(() => import('./mo-view-deal-id-settlement-list/index.tsx')),
+  'mo-execute-settlement-deal-id': lazy(() => import('./mo-execute-settlement-deal-id/index.tsx')),
+  'mo-bank-settlement-fx-non-flow': lazy(() => import('./mo-bank-settlement-fx-non-flow/index.tsx')),
+  'bo-post-accounting-settlement': lazy(() => import('./bo-post-accounting-settlement/index.tsx')),
+  'view-spot-forward-settlement': lazy(() => import('./view-spot-forward-settlement/index.tsx')),
+  'bo-reverse-fx-mtm-oil-dmcc': lazy(() => import('./bo-reverse-fx-mtm-oil-dmcc/index.tsx')),
+  'bo-reverse-fx-mtm-other-origins': lazy(() => import('./bo-reverse-fx-mtm-other-origins/index.tsx')),
+  'bo-reverse-fx-mtm-india': lazy(() => import('./bo-reverse-fx-mtm-india/index.tsx')),
 }

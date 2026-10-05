@@ -1,0 +1,14 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * bo-reverse-fx-mtm-oil-dmcc.legacy.css is produced by tools/scope-css.mjs and cannot be
+ * hand-edited. The original is a full-viewport app shell: "html,body{height:100%}" with an
+ * overflow:hidden body and an ".app" flex column that fills it, so only the table scrolls.
+ * Scoped, the body rule becomes this wrapper, whose "height:100%" resolves against the host's
+ * #root (which has only a min-height) and collapses. The wrapper is therefore given the viewport
+ * height explicitly so ".app" fills it and the table-shell keeps its own scrollbars.
+ */
+.bo-reverse-fx-mtm-oil-dmcc {
+  height: 100vh;
+  height: 100dvh;
+}
