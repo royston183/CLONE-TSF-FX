@@ -44,6 +44,8 @@ const ids = (list: readonly Deal[]) => list.map((d) => d.id)
 function deal(patch: Partial<Deal>): Deal {
   return {
     id: '1',
+    // Like the sample rows, whose id is their Deal ID, unless a case sets one.
+    dealId: patch.dealId ?? patch.id ?? '1',
     dealType: 'FX',
     coCode: 'SG03',
     transaction: '6205000000001',
@@ -228,10 +230,10 @@ describe('filterDeals', () => {
   })
 
   it('flips the direction on the same header and starts a new one ascending', () => {
-    deepStrictEqual(nextSort(NO_SORT, 'id'), { key: 'id', dir: 'asc' })
-    deepStrictEqual(nextSort({ key: 'id', dir: 'asc' }, 'id'), { key: 'id', dir: 'desc' })
-    deepStrictEqual(nextSort({ key: 'id', dir: 'desc' }, 'id'), { key: 'id', dir: 'asc' })
-    deepStrictEqual(nextSort({ key: 'id', dir: 'desc' }, 'coCode'), { key: 'coCode', dir: 'asc' })
+    deepStrictEqual(nextSort(NO_SORT, 'dealId'), { key: 'dealId', dir: 'asc' })
+    deepStrictEqual(nextSort({ key: 'dealId', dir: 'asc' }, 'dealId'), { key: 'dealId', dir: 'desc' })
+    deepStrictEqual(nextSort({ key: 'dealId', dir: 'desc' }, 'dealId'), { key: 'dealId', dir: 'asc' })
+    deepStrictEqual(nextSort({ key: 'dealId', dir: 'desc' }, 'coCode'), { key: 'coCode', dir: 'asc' })
   })
 
   it('offers currencies from all deals and every status but Matched & Released', () => {

@@ -10,6 +10,11 @@
  *   Trader        trmTrader       ZSGTRMTR_TRADER   trader name of ZTRD_CODE
  *   Status text   tsfDealStatus   ZSGTSFTR_DEAL_ST
  *
+ * Legs are read live from the FxTransaction service (ZFS_SB_TRMFX_O4_API) first: ZSGTSFV_FX is a stale copy that
+ * lacks the newer transactions. A leg the service does not return falls back to the view row. The service has no
+ * TXN_STATUS, so a live leg is shown Confirmed (03) once SAP has settled it (ActivityCategory 30 - what Match & Release
+ * on the MO screen does) and Open (01) otherwise; this is that screen's meaning of "matched", not the program's field.
+ *
  * Writes, both to ZSGTSFTR_DEALID only:
  *   Change MC Ref No   ZMC_REF
  *   Cancel Deal ID     ZDEAL_STAT = 30
@@ -20,7 +25,10 @@
  * at all. The leg grid has no TXN_STATUS yet, no premium (ZSGTSFCDS_OPTION) and no strike.
  * There is no seed fallback: when the Deal IDs cannot be read the screen is empty.
  */
+import { list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
+import { companiesOf, loadNames, txnTypeKey, type Names } from '../fo-fx-error-correction/api.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import { listMasterContracts, messageOf, type DealRow, type McRow } from '../../shared/fx/master-contract.ts'
 import { FORWARD_SUB_TYPE, dealKey, listDealIds, setDealStatus } from '../../shared/fx/deal-id.ts'
 import { fxList, fxUpdate, isAbort, type FxRow } from '../../shared/fx/mw.ts'
@@ -54,6 +62,44 @@ async function inChunks(resource: string, column: string, values: readonly strin
   return out
 }
 
+const FX = service('fx')('FxTransaction')
+
+/** The live FxTransaction of every linked leg, with the names to show for them. A failure leaves the view rows to stand in. */
+async function liveLegs(
+  dealRows: readonly DealRow[],
+  signal?: AbortSignal,
+): Promise<{ live: Map<string, FxTransaction>; names: Names; entities: Map<string, string> } | null> {
+  const wanted = new Set<string>()
+  const companies = new Set<string>()
+  for (const d of dealRows)
+    SLOT_NAMES.forEach((_, i) => {
+      const bukrs = txt(d, `ZBUKRS${i + 1}`)
+      const rfha = txt(d, `ZRFHA${i + 1}`)
+      if (bukrs && rfha) {
+        wanted.add(fxKey(bukrs, rfha))
+        companies.add(bukrs)
+      }
+    })
+  if (!wanted.size) return null
+  try {
+    const opts = signal ? { signal } : undefined
+    const filter = [...companies].map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
+    const [rows, comp] = await Promise.all([list<FxTransaction>(FX, { filter, top: 1000 }, opts), fxList('comp', {}, { signal })])
+    const mine = rows.filter((r) => wanted.has(fxKey(r.CompanyCode, r.FinancialTransaction)))
+    const companyMap = companiesOf(comp)
+    const names = await loadNames(mine, companyMap, signal)
+    return {
+      live: new Map(mine.map((r) => [fxKey(r.CompanyCode, r.FinancialTransaction), r])),
+      names,
+      entities: new Map([...companyMap].map(([code, c]) => [code, c.entity])),
+    }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[fx] Change Deal ID: FxTransaction unavailable, using ZSGTSFV_FX', error)
+    return null
+  }
+}
+
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
     const [dealRows, mcs, traders, statuses] = await Promise.all([
@@ -65,15 +111,17 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
     applyStatuses(statuses)
     const ids = dealRows.map((d) => txt(d, 'ZDEAL_ID'))
     const txns = [...new Set(dealRows.flatMap((d) => SLOT_NAMES.map((_, i) => txt(d, `ZRFHA${i + 1}`))).filter(Boolean))]
-    const [fx, plans] = await Promise.all([
+    const [fx, plans, liveSet] = await Promise.all([
       inChunks('tsfvFx', 'RFHA', txns, signal).catch(() => [] as FxRow[]),
       inChunks('invRef', 'ZDEAL_ID', ids, signal).catch(() => [] as FxRow[]),
+      liveLegs(dealRows, signal),
     ])
     const rel: Related = {
       mcByRef: new Map(mcs.map((m) => [txt(m, 'ZMC_REF_NO'), m])),
       fxByKey: new Map(fx.map((r) => [fxKey(txt(r, 'BUKRS'), txt(r, 'RFHA')), r])),
       traderName: new Map(traders.map((t) => [txt(t, 'ZTCODE'), txt(t, 'ZTRADER') || txt(t, 'ZNAME')])),
       plans,
+      ...(liveSet ? { live: liveSet.live, names: liveSet.names, entities: liveSet.entities } : {}),
     }
     const store: DealStore = {}
     const rows = new Map<string, DealRow>()
@@ -122,6 +170,10 @@ export type Related = {
   fxByKey: ReadonlyMap<string, FxRow>
   traderName: ReadonlyMap<string, string>
   plans: readonly FxRow[]
+  /** The live FxTransaction of each leg (keyed like fxByKey), with the names and entity short codes to show. */
+  live?: ReadonlyMap<string, FxTransaction>
+  names?: Names
+  entities?: ReadonlyMap<string, string>
 }
 
 export function toDeal(d: DealRow, rel: Related): Deal {
@@ -151,12 +203,17 @@ export function toDeal(d: DealRow, rel: Related): Deal {
 }
 
 /** The linked transactions, one leg per filled slot. A leg missing from the view shows only what the Deal ID knows. */
-export function legs(d: DealRow, rel: Pick<Related, 'fxByKey'>): TopRow[] {
+export function legs(d: DealRow, rel: Pick<Related, 'fxByKey' | 'live' | 'names' | 'entities'>): TopRow[] {
   const out: TopRow[] = []
   SLOT_NAMES.forEach((slot, i) => {
     const rfha = txt(d, `ZRFHA${i + 1}`)
     if (!rfha) return
     const bukrs = txt(d, `ZBUKRS${i + 1}`)
+    const liveLeg = rel.live?.get(fxKey(bukrs, rfha))
+    if (liveLeg) {
+      out.push(liveLeg_(slot, liveLeg, txt(d, 'ZMC_REF'), rel))
+      return
+    }
     const v = rel.fxByKey.get(fxKey(bukrs, rfha))
     out.push({
       color: '',
@@ -188,6 +245,49 @@ export function legs(d: DealRow, rel: Pick<Related, 'fxByKey'>): TopRow[] {
     })
   })
   return out
+}
+
+const day = (v: string | null | undefined): string => (v ? dmyFromIso(v) : '')
+
+/** TXN_STATUS stand-in: Confirmed once SAP settled the leg (the MO screen's Match & Release), Open before. */
+export const liveTxnStatus = (t: FxTransaction): string => (t.ActivityCategory === '30' ? '03' : '01')
+
+/** A leg from the live FxTransaction; amounts are signed (a sold currency is negative) like the view's. */
+function liveLeg_(slot: string, t: FxTransaction, mcRef: string, rel: Pick<Related, 'names' | 'entities'>): TopRow {
+  const lead = t.LeadCurrency || t.BuyCurrency || ''
+  const follow = t.FollowCurrency || t.SellCurrency || ''
+  const buysLead = t.BuyCurrency === lead
+  const leadAmt = Number(buysLead ? t.BuyAmount : t.SellAmount) || 0
+  const followAmt = Number(buysLead ? t.SellAmount : t.BuyAmount) || 0
+  const partner = rel.names?.partners.get(t.Partner)
+  const type = rel.names?.transactionTypes.get(txnTypeKey(t.ProductType ?? '', t.TransactionType))
+  const xtext = type ? `${t.TransactionType} - ${type}` : t.TransactionType
+  return {
+    color: '',
+    premCurr: '',
+    bukrs: t.CompanyCode,
+    dealType: slot,
+    bpName: partner ? `${t.Partner} - ${partner}` : t.Partner,
+    kontrh: t.Partner,
+    rfha: t.FinancialTransaction,
+    sfhaart: xtext,
+    dblfz: day(t.ContractDate),
+    delfz: day(t.ValueDate),
+    xtext,
+    entity: rel.entities?.get(t.CompanyCode) ?? '',
+    bs1: buysLead ? 'Buy' : 'Sell',
+    curr1: lead,
+    amt1: buysLead ? leadAmt : -leadAmt,
+    bs2: buysLead ? 'Sell' : 'Buy',
+    curr2: follow,
+    amt2: buysLead ? -followAmt : followAmt,
+    ospot: Number(t.SpotRate) || 0,
+    oswap: Number(t.SwapRate) || 0,
+    otot_rate: t.ForwardRate !== undefined && t.ForwardRate !== null && t.ForwardRate !== '' ? Number(t.ForwardRate) : '',
+    strike: '',
+    mcRefNo: mcRef,
+    txnStatus: liveTxnStatus(t),
+  }
 }
 
 function invoiceLines(dealId: string, plans: readonly FxRow[]): InvoiceLine[] {

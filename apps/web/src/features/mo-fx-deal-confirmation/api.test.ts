@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import { ApiError } from '@slc/api-client'
-import { dealKey, loadFxDeals, sapMessage, settleFxDeal, settleFxDeals, toDeal, type FxTransaction } from './api.ts'
+import { dealIdsByTransaction, dealKey, loadFxDeals, sapMessage, settleFxDeal, settleFxDeals, toDeal, type FxTransaction } from './api.ts'
 import { STATUS, generateDeals } from './data.ts'
 import { EMPTY_FILTERS, filterDeals, mergeLiveDeals, withoutFxDeals } from './logic.ts'
 import type { AppliedSelection, Deal } from './types.ts'
@@ -146,8 +146,12 @@ describe('talking to SAP', () => {
   it('reads the FX deals of the screen\'s company codes and drops reversed ones', async () => {
     let url = ''
     globalThis.fetch = (async (input: RequestInfo | URL) => {
-      url = decodeURIComponent(String(input).replaceAll('+', ' '))
-      return json(200, { value: [sap(), sap({ FinancialTransaction: '2', ActiveStatus: '3' }), sap({ FinancialTransaction: '3', ActivityCategory: '30' })] })
+      const u = decodeURIComponent(String(input).replaceAll('+', ' '))
+      if (u.includes('/api/fx/')) {
+        url = u
+        return json(200, { value: [sap(), sap({ FinancialTransaction: '2', ActiveStatus: '3' }), sap({ FinancialTransaction: '3', ActivityCategory: '30' })] })
+      }
+      return json(200, { ok: true, rows: [] })
     }) as typeof fetch
     const deals = await loadFxDeals()
     deepStrictEqual(deals.map((d) => d.transaction), ['7000000000001', '3'])
@@ -160,6 +164,56 @@ describe('talking to SAP', () => {
     })
     strictEqual(sapMessage(e), 'Number range 70 in company code SG03 does not exist')
     strictEqual(sapMessage(new Error('boom')), 'boom')
+  })
+})
+
+describe('the Deal ID each transaction is on', () => {
+  const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+  const rows = [
+    { ZDEAL_ID: '7000000014', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '3000000000022', ZBUKRS2: 'SG03', ZRFHA2: '2000000000006' },
+    { ZDEAL_ID: '7000000009', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '3000000000015', ZBUKRS2: 'SG03', ZRFHA2: '2000000000001' },
+    { ZDEAL_ID: '7000000003', ZDEAL_STAT: '30', ZBUKRS1: 'SG03', ZRFHA1: '3000000000099' },
+  ]
+
+  it('maps each transaction on a Deal ID to that Deal ID, in any slot', () => {
+    const m = dealIdsByTransaction(rows)
+    strictEqual(m.get('SG03-3000000000022'), '7000000014')
+    strictEqual(m.get('SG03-2000000000006'), '7000000014')
+    strictEqual(m.get('SG03-2000000000001'), '7000000009')
+    strictEqual(dealIdsByTransaction([{ ZDEAL_ID: '7', ZDEAL_STAT: '01', ZBUKRS5: 'AE13', ZRFHA5: '55' }]).get('AE13-55'), '7')
+  })
+
+  it('does not count a cancelled Deal ID, and leaves a transaction on no Deal ID blank', () => {
+    const m = dealIdsByTransaction(rows)
+    ok(!m.has('SG03-3000000000099'))
+    strictEqual(toDeal(sap({ FinancialTransaction: '3000000000099' }), m)?.dealId, '')
+  })
+
+  it('shows the real Deal ID in the deal, and keeps the row key separate', () => {
+    const d = toDeal(sap({ FinancialTransaction: '3000000000022' }), dealIdsByTransaction(rows))
+    strictEqual(d?.dealId, '7000000014')
+    strictEqual(d?.id, 'SG03-3000000000022')
+  })
+
+  it('shows the first Deal ID a transaction was given when it is on two, whatever order the rows come in', () => {
+    const twice = [{ ZDEAL_ID: '7000000020', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '5' }, { ZDEAL_ID: '7000000010', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '5' }]
+    strictEqual(dealIdsByTransaction(twice).get('SG03-5'), '7000000010')
+    strictEqual(dealIdsByTransaction([...twice].reverse()).get('SG03-5'), '7000000010')
+  })
+
+  it('reads the Deal IDs when it loads the queue', async () => {
+    const realFetch = globalThis.fetch
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input))
+      if (u.includes('/api/fx/')) return json(200, { value: [sap({ FinancialTransaction: '3000000000022' })] })
+      return json(200, { ok: true, rows })
+    }) as typeof fetch
+    try {
+      const [d] = await loadFxDeals()
+      strictEqual(d?.dealId, '7000000014')
+    } finally {
+      globalThis.fetch = realFetch
+    }
   })
 })
 

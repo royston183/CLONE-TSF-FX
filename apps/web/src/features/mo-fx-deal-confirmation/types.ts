@@ -10,7 +10,10 @@ export type Trader = { code: string; name: string; shortName: string }
 
 /** One row of the MO deal-confirmation queue, as the page's buildDeal produced it. */
 export type Deal = {
+  /** The row's own key (company code and transaction for a SAP deal); not what the Deal ID column shows. */
   id: string
+  /** The TSF Deal ID (ZSGTSFTR_DEALID) the transaction is on, or '' when it is on none. */
+  dealId: string
   dealType: DealType
   coCode: string
   transaction: string
@@ -84,7 +87,7 @@ export type Filters = {
 export type ColumnType = 'date' | 'amount' | 'rate'
 
 export type SortKey =
-  | 'id'
+  | 'dealId'
   | 'coCode'
   | 'transaction'
   | 'partnerName'

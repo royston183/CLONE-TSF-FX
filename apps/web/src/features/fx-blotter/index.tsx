@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { installMasters, loadBlotterMasters } from './masters.ts'
+import { applyDealIds, assignmentsFromDealIds, attachLegToDealId, createPairDealId, loadDealRows, toDealRecord } from './dealIds.ts'
+import { applyReleases, loadReleases, saveReleases, updateReleases } from './releases.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { AutoDealModal } from './AutoDealModal.tsx'
@@ -18,7 +20,7 @@ import { AutoSpotModal } from './AutoSpotModal.tsx'
 import { BlotterTable, type TableHandlers } from './BlotterTable.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
 import { ContextDatePicker } from './ContextDatePicker.tsx'
-import { BUSINESS_PARTNERS, GROUPS, modelOf } from './data.ts'
+import { BUSINESS_PARTNERS, GROUPS, TRADERS, modelOf } from './data.ts'
 import { fmtCompactUsd, fmtDate } from './format.ts'
 import {
   STATUS_LABEL,
@@ -217,6 +219,14 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     async (signal?: AbortSignal) => {
       try {
         const cur = latest.current
+        // The Deal IDs in SAP replace the demo list the assign dialog used to offer.
+        let dealRows: Awaited<ReturnType<typeof loadDealRows>> | null = null
+        try {
+          dealRows = await loadDealRows(signal)
+        } catch (e) {
+          if (signal?.aborted) return
+          showToast(`Could not load Deal IDs from SAP: ${sapMessage(e)}`, 'warn')
+        }
         const deals = await loadDeals(cur.ctx.date, signal)
         let partners = cur.partners
         const rows: Parameters<typeof mergeLiveRows>[1] = []
@@ -226,8 +236,14 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
           partners = out.partners
           rows.push(out.row)
         }
-        if (signal?.aborted || !rows.length) return
-        commit(mergeLiveRows(latest.current, rows, partners))
+        if (signal?.aborted) return
+        let next = latest.current
+        // A deal released to MO from this browser comes back as Released, not as a fresh Created one; the Deal ID
+        // each deal is on, with its Master Contract and leg, is read back from SAP's Deal ID table.
+        const assignments = dealRows ? assignmentsFromDealIds(dealRows) : new Map()
+        if (rows.length) next = mergeLiveRows(next, applyDealIds(applyReleases(rows, loadReleases()), assignments), partners)
+        if (dealRows) next = { ...next, deals: dealRows.map(toDealRecord).filter((d): d is NonNullable<typeof d> => d !== null) }
+        if (next !== latest.current) commit(next)
       } catch (e) {
         if (signal?.aborted) return
         showToast(`Could not load FX deals from SAP: ${sapMessage(e)}`, 'warn')
@@ -243,6 +259,11 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     void loadLive(ctl.signal)
     return () => ctl.abort()
   }, [loadLive])
+
+  // Release to MO has no home in SAP, so the releases are remembered here and put back on the next load.
+  useEffect(() => {
+    saveReleases(updateReleases(loadReleases(), b.rows))
+  }, [b.rows])
 
   // Escape closes the top-most popup.
   useEffect(() => {
@@ -320,6 +341,8 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     setPageSize(ALL_ROWS)
     setCtxNote(loadedNote(2))
     showToast('Blotter fully reset.')
+    // The reset leaves the demo rows only; the day's deals come back from SAP, released ones as Released.
+    void loadLive()
   }
 
   const changeStatusFilter = (key: StatusFilter) => {
@@ -498,12 +521,25 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   const assignDeal = b.deals.find((d) => d.dealId === assign?.selected)
   const assignResult = assignRow && assignDeal ? assignCheck(assignRow, assignDeal, b.contracts) : null
 
-  const confirmAssign = () => {
-    if (!assignRow || !assignDeal) return
-    modals.close('assign')
-    commit(assignToDeal(b, assignRow.id, assignDeal.dealId))
-    showToast(`Transaction ${assignRow.transactionNumber} released and assigned to ${assignDeal.dealId}.`, 'success')
+  /** The signed-in trader's name as the blotter shows it ("Nidhi S"): the Deal ID description starts with it. */
+  const traderName = () => {
+    const code = latest.current.ctx.trader
+    return TRADERS.find((t) => t.code === code)?.name ?? code
   }
+
+  // A single leg joins an existing Deal ID: SAP's Deal ID row gets the transaction in its next free slot.
+  const confirmAssign = guarded(async () => {
+    if (!assignRow || !assignDeal) return
+    try {
+      await attachLegToDealId(assignDeal.dealId, assignRow)
+    } catch (e) {
+      showToast(sapMessage(e), 'error')
+      return
+    }
+    modals.close('assign')
+    commit(assignToDeal(latest.current, assignRow.id, assignDeal.dealId))
+    showToast(`Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`, 'success')
+  })
 
   const mcLegs = (mcPick?.ids ?? []).map((id) => findRow(id)).filter((r): r is BlotterRow => !!r)
   const [legA, legB] = mcLegs
@@ -511,17 +547,29 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   const mcSelected = mcPick?.selected ? findMc(b.contracts, mcPick.selected) : undefined
   const mcTolerance = legA && mcSelected ? toleranceCheck(legA, mcSelected, !!mcPair?.ok) : null
 
-  const confirmMc = () => {
+  // The pair gets a real Deal ID: the number comes from SAP's range, the row from the original's rules.
+  const confirmMc = guarded(async () => {
     if (!legA || !legB || !mcSelected) return
-    const out = assignMc(b, legA.id, legB.id, mcSelected.mcNumber)
+    let dealId: string
+    try {
+      dealId = (
+        await createPairDealId({
+          mc: mcSelected,
+          legs: [legA, legB],
+          traderName: traderName(),
+          year: latest.current.ctx.date.getFullYear(),
+        })
+      ).dealId
+    } catch (e) {
+      showToast(sapMessage(e), 'error')
+      return
+    }
+    const out = assignMc(latest.current, legA.id, legB.id, mcSelected.mcNumber, dealId)
     if (!out) return
     modals.close('mc')
     commit(out.blotter)
-    showToast(
-      `Deal ID ${out.dealId} generated and linked to ${mcSelected.mcNumber}. Both legs released to MO.`,
-      'success',
-    )
-  }
+    showToast(`Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`, 'success')
+  })
 
   const openShortStraddle = (rows: BlotterRow[]) => {
     const created = rows.filter((r) => r.status === 'CREATED')
@@ -543,7 +591,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
 
   const openAutoDeal = () => {
     if (b.locked) return
-    setAuto({ origin: autoOrigins(b.contracts)[0] ?? '', mcNumber: '', legs: null })
+    setAuto({ origin: autoOrigins()[0] ?? '', mcNumber: '', legs: null })
     modals.open('auto')
   }
 
@@ -553,7 +601,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       setAuto((a) => ({ ...a, mcNumber: '', legs: null }))
       return
     }
-    setAuto({ origin: modelOf(mc.fxModel)?.entities[0] ?? '', mcNumber, legs: initAutoLegs(mc, b.ctx.date) })
+    setAuto({ origin: mc.origin, mcNumber, legs: initAutoLegs(mc, b.ctx.date) })
   }
 
   const autoMc = auto.mcNumber ? findMc(b.contracts, auto.mcNumber) : undefined
@@ -598,14 +646,29 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         return
       }
     }
+    // Both legs are in SAP; the Deal ID joins them, as the original's auto deal does straight after creating them.
+    const inSap = legs.map((r, i) => ({ ...r, live: true, companyCode: created[i]!.companyCode, transactionNumber: created[i]!.transaction })) as [BlotterRow, BlotterRow]
+    let dealId: string
+    try {
+      dealId = (await createPairDealId({ mc: autoMc, legs: inSap, traderName: traderName(), year: latest.current.ctx.date.getFullYear() })).dealId
+    } catch (e) {
+      // The legs exist: close the popup so they cannot be booked twice, and show them.
+      modals.close('auto')
+      showToast(
+        `Both legs were created in SAP (${created.map((c) => c.transaction).join(', ')}) but the Deal ID was not: ${sapMessage(e)} Select the two and Release to MO to create it.`,
+        'error',
+      )
+      void loadLive()
+      return
+    }
     // Rebuilt on the blotter as it is now, in case it changed while SAP was answering.
-    const out = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs)
+    const out = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs, dealId)
     if (!out) return
     const ids = autoLegRows(out.blotter).map((r) => r.id)
     modals.close('auto')
     commit(applyCreated(out.blotter, new Map(ids.map((id, i) => [id, created[i]!]))))
     showToast(
-      `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
+      `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under Deal ID ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
       'success',
     )
   })
@@ -1146,7 +1209,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       />
       <AutoDealModal
         modals={modals}
-        origins={autoOrigins(b.contracts)}
+        origins={autoOrigins()}
         origin={auto.origin}
         eligible={autoEligible(b.contracts, auto.origin)}
         mc={autoMc}

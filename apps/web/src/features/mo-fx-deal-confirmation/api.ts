@@ -1,4 +1,6 @@
 import { ApiError, apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
+import { txt } from '../../shared/fx/masters.ts'
+import { fxList, type FxRow } from '../../shared/fx/mw.ts'
 import { COMPANY_CODES, COMPANY_INFO, SAP_TXN_DESC, STATUS } from './data.ts'
 import type { Deal } from './types.ts'
 
@@ -33,6 +35,8 @@ export type FxTransaction = {
   SellAmount?: number | string
   ValueDate?: string | null
   ForwardRate?: number | string
+  SpotRate?: number | string
+  SwapRate?: number | string
   /** '0' for a live deal; a reversed one comes back as '3' and stays in the list. */
   ActiveStatus?: string
   /** 20 once created and not yet settled; 30 after Settle (seen on a test deal). */
@@ -62,7 +66,26 @@ export const dealKey = (companyCode: string, transaction: string): string => `${
  * trader, accounting, assignment, fixing reference and the two remarks. The fixing date is the
  * value date (the service has no fixing date).
  */
-export function toDeal(d: FxTransaction): Deal | null {
+/**
+ * The Deal ID each SAP transaction is on, from ZSGTSFTR_DEALID: a row lists up to eight transactions
+ * (ZBUKRS1/ZRFHA1 .. ZBUKRS8/ZRFHA8). Keyed like Deal.id. A cancelled Deal ID (status 30) holds nothing. A transaction
+ * on more than one Deal ID shows the first one it was given (the lowest number), whatever order the rows come in.
+ */
+export function dealIdsByTransaction(dealRows: readonly FxRow[]): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const r of [...dealRows].sort((a, b) => txt(a, 'ZDEAL_ID').localeCompare(txt(b, 'ZDEAL_ID')))) {
+    if (txt(r, 'ZDEAL_STAT') === '30') continue
+    for (let i = 1; i <= 8; i++) {
+      const bukrs = txt(r, `ZBUKRS${i}`)
+      const rfha = txt(r, `ZRFHA${i}`)
+      const key = dealKey(bukrs, rfha)
+      if (bukrs && rfha && !out.has(key)) out.set(key, txt(r, 'ZDEAL_ID'))
+    }
+  }
+  return out
+}
+
+export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = new Map()): Deal | null {
   if (d.ActiveStatus === ACTIVE_REVERSED) return null
   const tradeDate = parseDay(d.ContractDate)
   const valueDate = parseDay(d.ValueDate)
@@ -77,6 +100,7 @@ export function toDeal(d: FxTransaction): Deal | null {
   const desc = SAP_TXN_DESC[d.TransactionType]
   return {
     id: dealKey(d.CompanyCode, d.FinancialTransaction),
+    dealId: dealIds.get(dealKey(d.CompanyCode, d.FinancialTransaction)) ?? '',
     dealType: 'FX',
     coCode: d.CompanyCode,
     transaction: d.FinancialTransaction,
@@ -114,8 +138,12 @@ export function toDeal(d: FxTransaction): Deal | null {
 /** The FX deals of the screen's company codes. The service cannot filter on dates, so the screen does. */
 export async function loadFxDeals(signal?: AbortSignal): Promise<Deal[]> {
   const filter = COMPANY_CODES.map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
-  const rows = await list<FxTransaction>(FX, { filter, top: 1000 }, signal ? { signal } : undefined)
-  return rows.map(toDeal).filter((d): d is Deal => d !== null)
+  const [rows, dealRows] = await Promise.all([
+    list<FxTransaction>(FX, { filter, top: 1000 }, signal ? { signal } : undefined),
+    fxList('tsfDealId', {}, { sort: '-ZDEAL_ID', signal }),
+  ])
+  const dealIds = dealIdsByTransaction(dealRows)
+  return rows.map((d) => toDeal(d, dealIds)).filter((d): d is Deal => d !== null)
 }
 
 /** Settles one deal in SAP (BAPI_FTR_FXT_SETTLE through the bound Settle action). */

@@ -52,16 +52,17 @@ export function ReverseModal({
             ) : null}
           </div>
           <div className="note" style={{ marginBottom: 12 }}>
-            <strong>Note:</strong> This calls the equivalent of <code>BAPI_FTR_FXT_REVERSE</code> &mdash; reversing is final in
-            this demo and the transaction leaves the Front Office queue entirely.
+            <strong>Note:</strong> This runs <code>BAPI_FTR_FXT_REVERSE</code> in SAP (reason 04) &mdash; reversing is final.
+            The transaction stays in the list marked <strong>Reversed</strong>. The SAP service has no field for a remark, so the
+            remark below is not sent anywhere.
           </div>
           <div className="filter-field" style={{ width: '100%' }}>
-            <label htmlFor="reverse-reason">Remark (optional)</label>
+            <label htmlFor="reverse-reason">Remark (optional, not sent to SAP)</label>
             <textarea
               id="reverse-reason"
               className="textarea-field"
               rows={2}
-              placeholder="Optional note for the audit trail."
+              placeholder="Not stored: SAP has no field for it."
               value={reason}
               onChange={(e) => onReasonChange(e.target.value)}
             />

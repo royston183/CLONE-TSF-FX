@@ -1,0 +1,266 @@
+/* Night mode for bo-reverse-fx-mtm-other-origins, derived from bo-reverse-fx-mtm-other-origins.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins select,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins button,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins input,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins select {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .topbar {
+  background: #14212f;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .btn {
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .btn:hover:not(:disabled) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .btn.drop-hover {
+  background: #17304a;
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .subtitle {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .status-dot {
+  box-shadow: 0 0 0 3px #14321f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .card-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .record-count {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .head-meta {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .key-date-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .legend-swatch {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .legend-ext {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .legend-mtm {
+  background: #17304a;
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .required {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .calendar-btn {
+  border-left: 1px solid #2d4a6b;
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .calendar-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .inline-error {
+  color: #7f9bb8;
+  background: #1b2b3d;
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .table-shell {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins td {
+  border-bottom: 1px solid #2a3d52;
+  border-right: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins th.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins th.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins th.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tr.selected td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tr.selected td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tr.selected td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr:hover td.sticky-3 {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr.selected:hover td.sticky-1,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr.selected:hover td.sticky-2,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins tbody tr.selected:hover td.sticky-3 {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cell-ext {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cell-mtm {
+  color: #62b1f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cell-link {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cell-link:hover {
+  color: #5cb0ff;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .posted {
+  color: #66f5e1;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .sort-mark {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .footer {
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .page-btn.active {
+  color: #e6eef8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .page-btn:disabled {
+  color: #7f9bb8;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .calendar-pop {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-dow {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-day {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-day.out {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .cal-day.weekend {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .close-btn {
+  background: #14212f;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .close-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .modal-foot {
+  border-top: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .detail .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .detail .v {
+  border: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .section-label {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .mini-table th,
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .mini-table td {
+  border: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .mini-table th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .ok-icon {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .err-icon {
+  background: #3a1b1e;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .toast {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .toast.success .toast-mark {
+  background: #14321f;
+  color: #6eedd8;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .toast.info .toast-mark {
+  background: #17304a;
+  color: #62b3f9;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .toast-text {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .bo-reverse-fx-mtm-other-origins .filter-summary {
+  color: #7f9bb8;
+}

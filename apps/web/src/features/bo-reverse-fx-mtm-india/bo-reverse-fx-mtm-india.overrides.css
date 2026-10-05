@@ -1,0 +1,27 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * bo-reverse-fx-mtm-india.legacy.css is produced by tools/scope-css.mjs and cannot be
+ * hand-edited. The original is a full-viewport app shell: "html,body{height:100%}" and
+ * "body{overflow:hidden}", with the toolbar/table card filling the remaining height. Scoped,
+ * those become rules on the wrapper, but inside the SPA the wrapper's parents (#root) only have
+ * a min-height, so "height:100%" resolves to auto and the table would grow the page instead of
+ * scrolling inside its own shell. The wrapper takes the viewport height instead, and the
+ * margin/overflow of the old <body> stay on it.
+ */
+.bo-reverse-fx-mtm-india {
+  height: 100vh;
+}
+
+/*
+ * Fit the card to its rows. The original stretched the card (and its white table area) to the
+ * bottom of the window even with two or three rows; now the card is only as tall as its content
+ * and the page background shows beneath it. With many rows it still stops at the window edge
+ * (min-height:0 lets it shrink) and the table scrolls inside .table-shell as before.
+ */
+.bo-reverse-fx-mtm-india .card {
+  flex: 0 1 auto;
+}
+.bo-reverse-fx-mtm-india .table-shell {
+  flex: 0 1 auto;
+}

@@ -1,0 +1,28 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * mo-bank-settlement-fx-non-flow.legacy.css is produced by tools/scope-css.mjs and cannot be
+ * hand-edited. The original put a "row-dragging" class on <body> while a selected row is dragged;
+ * scoped, those rules became ".mo-bank-settlement-fx-non-flow body.row-dragging ..." and can never
+ * match, since the app root is not the body. The class now goes on the app root, so the same
+ * declarations are restated against it (the "Drop here" hint over the three action buttons).
+ */
+.mo-bank-settlement-fx-non-flow.row-dragging .drag-target:not(:disabled) {
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.13);
+  transform: translateY(-1px);
+}
+.mo-bank-settlement-fx-non-flow.row-dragging .drag-target:not(:disabled)::after {
+  content: "Drop here";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #102A43;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 80;
+}

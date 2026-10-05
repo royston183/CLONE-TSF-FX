@@ -100,7 +100,7 @@ const OPTION_TXN: TxnType = { code: '604', desc: 'Spot- Exercise Option TSF' }
 /** The deal table's columns, in the page's order. Only those marked sortable take a header click. */
 export const COLUMNS: Column[] = [
   { key: 'select', label: '' },
-  { key: 'id', label: 'Deal ID', sortable: true },
+  { key: 'dealId', label: 'Deal ID', sortable: true },
   { key: 'coCode', label: 'CoCode', sortable: true },
   { key: 'transaction', label: 'Transaction', sortable: true },
   { key: 'partnerName', label: 'Partner Name', sortable: true },
@@ -187,8 +187,11 @@ function buildDeal(rng: Rng, dealType: DealType, seq: number, idOverride?: strin
   const status: DealStatus = rng() < 0.8 ? STATUS.UNMATCHED : STATUS.CORRECTION
   const moRemark = status === STATUS.CORRECTION ? randomFrom(rng, SAMPLE_REMARKS) : ''
 
+  const id = idOverride || String(1100000000 + randInt(rng, 100, 999999))
   return {
-    id: idOverride || String(1100000000 + randInt(rng, 100, 999999)),
+    id,
+    // The sample rows' id is their Deal ID.
+    dealId: id,
     dealType,
     coCode,
     // nextTransactionRef: "6205000" + a six-digit running number from 000001.

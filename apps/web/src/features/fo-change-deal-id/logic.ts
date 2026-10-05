@@ -90,7 +90,7 @@ export function hasUnverifiedLegs(d: Deal): boolean {
 }
 
 export const MC_STATUS_UNKNOWN_MSG =
-  'Unable to update the MC Ref No – the status of the FX deal legs cannot be read yet (TXN_STATUS is not in ZSGTSFV_FX), so they cannot be shown to be matched.'
+  'Unable to update the MC Ref No – the status of the FX deal legs cannot be read (a leg is in neither the SAP FX transaction service nor ZSGTSFV_FX), so they cannot be shown to be matched.'
 
 /**
  * The new MC has to carry the deal's own FX model, entity string and currency string: the

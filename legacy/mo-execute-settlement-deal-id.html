@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MO: Execute Settlement for Deal ID</title>
+<style>
+:root{
+  --bg:#F4F8FC;
+  --surface:#FFFFFF;
+  --border:#E1E9F2;
+  --border-soft:#EEF2F6;
+  --ink:#1D2D3E;
+  --ink-soft:#1D2D3E;
+  --muted:#5C7085;
+  --muted-2:#8CA0B3;
+  --blue:#1F6FEB;
+  --blue-dark:#1657C4;
+  --blue-pale:#EAF2FF;
+  --green:#27AE60;
+  --green-pale:#E8F8EF;
+  --amber:#FF8A00;
+  --amber-pale:#FFF3E4;
+  --purple:#7C3AED;
+  --purple-pale:#F1EAFE;
+  --red:#E74C3C;
+  --red-pale:#FDEAE8;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-md:0 8px 28px rgba(22,39,64,.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:"Inter",Arial,Helvetica,sans-serif;}
+body{background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:#a7b2c3;}
+
+/* ---------- page head (matches OTTK workbench chrome) ---------- */
+.page-head{
+  display:flex;align-items:center;gap:14px;padding:11px 20px;
+  background:#fff;border-bottom:1px solid var(--border);
+}
+.head-badge{
+  width:32px;height:32px;border-radius:7px;flex-shrink:0;
+  background:conic-gradient(from 210deg,var(--blue),var(--purple),var(--amber),var(--green),var(--blue));
+}
+.title-wrap{min-width:0;display:flex;align-items:baseline;gap:9px;flex:1;}
+.page-title{font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--ink);white-space:nowrap;}
+.page-code{font-size:12.5px;color:var(--muted-2);font-weight:600;white-space:nowrap;}
+.page-subtitle{display:none;}
+.head-actions{display:flex;align-items:center;gap:9px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+
+.btn-outline{
+  height:36px;padding:0 14px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);transition:all .15s;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.btn-outline:hover:not(:disabled){border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.btn-outline:disabled{opacity:.45;cursor:not-allowed;}
+.btn-outline.subtle{color:var(--muted);}
+.btn-primary{
+  height:36px;padding:0 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--blue);border:1px solid var(--blue);color:#fff;transition:all .15s;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.btn-primary:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+.btn-primary.ok{background:var(--green);border-color:var(--green);}
+.btn-primary.ok:hover:not(:disabled){background:#1f9254;border-color:#1f9254;}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 0 3px var(--green-pale);}
+.btn-icon{
+  width:34px;height:34px;padding:0;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn-icon:hover{border-color:var(--blue);color:var(--blue);}
+
+main{max-width:1320px;margin:0 auto;padding:16px 14px 50px;}
+
+/* ---------- selection panel ---------- */
+.select-panel{margin-bottom:14px;overflow:hidden;}
+.select-panel .panel-title h2{color:var(--blue);}
+.select-panel .panel-body{padding:16px;}
+.select-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.select-field{
+  position:relative;display:flex;align-items:center;min-width:260px;max-width:360px;flex:0 1 360px;
+}
+.select-field .select-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted-2);pointer-events:none;
+}
+.select-field input{
+  width:100%;height:38px;padding:0 14px 0 38px;border:1px solid #CBD6E2;border-radius:13px;font-size:12.5px;
+  color:var(--ink);outline:none;background:#fff;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;
+}
+.select-field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.btn-primary-inline{
+  min-width:60px;height:40px;padding:0 18px;border-radius:10px;background:var(--blue);color:#fff;border:1px solid var(--blue);
+  font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;
+}
+.btn-primary-inline:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+.sample-chip{
+  display:inline-flex;align-items:center;gap:4px;height:40px;padding:0 14px;background:#fff;color:var(--muted);border:1px dashed #C8D5E5;
+  border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.sample-chip strong{color:var(--blue-dark);font-weight:700;}
+.sample-chip:hover{border-color:var(--blue);background:var(--blue-pale);color:var(--ink);}
+.select-err{color:var(--red);font-size:12px;margin-top:10px;display:none;}
+.select-err.show{display:block;}
+@media (max-width:700px){
+  .select-field{max-width:none;flex:1 1 100%;}
+  .select-row{align-items:stretch;}
+}
+
+/* ---------- panel ---------- */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+.panel-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 16px;min-height:42px;border-bottom:1px solid var(--border);}
+.panel-title-left{display:flex;align-items:center;gap:8px;}
+.dot-bullet{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.panel-title h2{font-size:12px;font-weight:700;color:var(--blue-dark);letter-spacing:.3px;text-transform:uppercase;}
+.panel-sub{font-size:11.5px;color:var(--muted);font-weight:500;}
+.panel-body{padding:16px;}
+.panel-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mini-search{position:relative;}
+.mini-search input{
+  height:32px;width:190px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12px;color:var(--ink);outline:none;background:var(--surface);
+}
+.mini-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.pager-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border-soft);}
+.pager-row span{font-size:11.5px;color:var(--muted);}
+.pager-ctrl{display:flex;align-items:center;gap:5px;}
+.pager-ctrl button{
+  min-width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);
+  color:var(--ink-soft);font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.pager-ctrl button.active{background:var(--blue-dark);border-color:var(--blue-dark);color:#fff;}
+.pager-ctrl button:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ---------- header detail grid ---------- */
+.hdr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+.hdr-cell{padding:10px 13px;border-bottom:1px solid var(--border-soft);border-right:1px solid var(--border-soft);min-width:0;}
+.hdr-cell:nth-child(4n){border-right:none;}
+.hdr-lbl{font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em;}
+.hdr-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;word-break:break-word;}
+.hdr-val.accent{color:var(--blue-dark);}
+.hdr-val.editable{cursor:pointer;border-bottom:1px dashed var(--blue);display:inline-block;}
+.hdr-val input,.hdr-val select{
+  width:100%;height:30px;border:1px solid #CBD9E8;border-radius:6px;padding:0 8px;font-size:12.5px;font-weight:600;color:var(--ink);
+}
+@media (max-width:1000px){.hdr-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.hdr-cell:nth-child(4n){border-right:1px solid var(--border-soft);}.hdr-cell:nth-child(2n){border-right:none;}}
+
+/* ---------- status pill ---------- */
+.status-cell{display:inline-flex;align-items:center;gap:7px;font-weight:700;white-space:nowrap;font-size:13px;}
+.status-cell .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.st-early{color:var(--muted);} .st-early .dot{background:var(--muted-2);}
+.st-progress{color:#6d28d9;} .st-progress .dot{background:var(--purple);}
+.st-due{color:var(--amber);} .st-due .dot{background:var(--amber);}
+.st-init{color:var(--blue-dark);} .st-init .dot{background:var(--blue);}
+.st-done{color:var(--green);} .st-done .dot{background:var(--green);}
+
+/* ---------- action toolbar ---------- */
+.action-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);background:#FBFCFE;}
+.action-btn{
+  height:34px;padding:0 13px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;
+  background:var(--surface);border:1px solid #CBD9E8;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px;transition:all .15s;
+}
+.action-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.action-btn:disabled{opacity:.4;cursor:not-allowed;}
+.action-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.action-btn.primary:hover:not(:disabled){background:var(--blue-dark);border-color:var(--blue-dark);}
+.action-btn.success{background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+.action-btn.success:hover:not(:disabled){background:var(--green);color:#fff;}
+.action-btn.ghost{background:transparent;border-color:transparent;color:var(--muted);}
+.action-btn.ghost:hover{color:var(--red);}
+.action-spacer{flex:1;}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+.data-table th,.data-table td{white-space:nowrap;padding:9px 11px;text-align:right;}
+.data-table thead th{
+  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
+  border-bottom:1px solid var(--border);background:#FBFCFE;position:sticky;top:0;
+}
+.data-table thead th.left{text-align:left;}
+.data-table tbody td{text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
+.data-table tbody td.left{text-align:left;}
+.data-table tbody tr{cursor:pointer;}
+.data-table tbody tr:hover td{background:#f7faff;}
+.data-table tbody tr.row-sel td{background:#fff8ea !important;}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.num{font-variant-numeric:tabular-nums;}
+.empty-row td{text-align:center !important;color:var(--muted);padding:26px 12px;font-style:italic;}
+.hotspot{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none;}
+.hotspot:hover{text-decoration:underline;color:var(--blue-dark);}
+.chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.pill-early{background:#F1F5FA;color:var(--muted);}
+.pill-progress{background:var(--purple-pale);color:#6d28d9;}
+.pill-due{background:var(--amber-pale);color:#b45309;}
+.pill-init{background:var(--blue-pale);color:var(--blue-dark);}
+.pill-done{background:var(--green-pale);color:var(--green);}
+.chip-d1{background:var(--blue-pale);color:var(--blue-dark);}
+.chip-d2{background:var(--purple-pale);color:#6d28d9;}
+.chip-t{background:var(--amber-pale);color:#b45309;}
+.chip-done{background:var(--green-pale);color:var(--green);}
+.chip-open{background:#F1F5FA;color:var(--muted);}
+.mut{color:var(--muted-2);}
+.drag-hint{font-size:11px;color:var(--muted);padding:8px 16px;border-top:1px dashed var(--border);background:#FBFCFE;}
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(16,26,41,.5);z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-card{
+  background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 20px 50px rgba(16,24,40,.25);border:1px solid var(--border);
+  max-width:760px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.modal-card.wide{max-width:980px;}
+.modal-card.narrow{max-width:460px;}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-header{background:var(--blue-pale);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid #dbe6fb;}
+.modal-icon{width:34px;height:34px;border-radius:var(--radius-sm);background:#fff;border:1px solid #c7dbfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;color:var(--blue-dark);}
+.modal-header-text{flex:1;min-width:0;}
+.modal-title{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.3;}
+.modal-subtitle{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.modal-close{background:#fff;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-body{padding:18px;overflow-y:auto;background:var(--surface);}
+.modal-footer{padding:13px 18px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;flex-wrap:wrap;align-items:center;gap:8px;background:#fbfcfe;}
+.btn-cancel{background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;min-height:34px;padding:0 15px;border-radius:var(--radius-sm);transition:all .15s;}
+.btn-cancel:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.btn-confirm{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:var(--radius-sm);min-height:34px;padding:0 16px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;}
+.btn-confirm:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+.btn-confirm.green{background:var(--green);border-color:var(--green);}
+.btn-confirm.green:hover{background:#1f9254;border-color:#1f9254;}
+.btn-confirm:disabled{opacity:.45;cursor:not-allowed;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-grid.single{grid-template-columns:1fr;}
+.ffield{display:flex;flex-direction:column;gap:5px;}
+.ffield label{font-size:11.5px;font-weight:700;color:var(--muted);}
+.ffield input,.ffield select,.ffield textarea{
+  height:34px;padding:0 10px;border:1px solid #CBD9E8;border-radius:var(--radius-sm);font-size:12.5px;color:var(--ink);outline:none;
+}
+.ffield textarea{height:auto;padding:8px 10px;resize:vertical;min-height:60px;font-family:inherit;}
+.ffield input:focus,.ffield select:focus,.ffield textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.ffield input:disabled{background:#F4F8FC;color:var(--muted);}
+.fbox{border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;margin-bottom:14px;}
+.fbox-title{font-size:11px;font-weight:800;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+.check-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.note-box{margin-top:12px;padding:10px 13px;background:#f6f9ff;border:1px solid #dbe6fb;border-radius:var(--radius-sm);font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+.note-box strong{color:var(--blue-dark);}
+.letter-preview{
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:18px 20px;font-size:12px;line-height:1.75;
+  background:#fff;color:var(--ink-soft);white-space:pre-wrap;max-height:380px;overflow-y:auto;
+}
+
+/* ---------- toast ---------- */
+.zfac-toast{
+  position:fixed;bottom:24px;right:24px;transform:translateY(12px);max-width:360px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:13px 16px;border-radius:var(--radius-md);
+  box-shadow:0 12px 30px rgba(16,24,40,.18);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;text-align:left;
+}
+.zfac-toast.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.zfac-toast.error{background:var(--red-pale);border-color:#f4c2c2;color:var(--red);}
+.zfac-toast.success{background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+.zfac-toast.info{background:var(--blue-pale);border-color:#c7dbfb;color:var(--blue-dark);}
+
+.hidden{display:none !important;}
+@media (max-width:900px){.form-grid{grid-template-columns:1fr;}}
+
+/* ===== OTTK MASTER UI PROFILE OVERRIDES ===== */
+:root{--bg:#F4F6F8;--surface:#FFFFFF;--border:#CDD6DF;--border-soft:#E6EBF0;--ink:#1D2D3E;--muted:#5D7287;--blue:#0A72CE;--blue-dark:#075FAE;--blue-pale:#EAF4FC;--green:#118A76;--green-pale:#E1F5F1;--radius-lg:7px;--radius-md:6px;--radius-sm:5px;--shadow:0 1px 3px rgba(29,45,62,.08);}
+body{background:#F4F6F8;font-size:12px;}
+.page-head{padding:7px 16px;gap:12px;min-height:56px;border-bottom:1px solid #CDD6DF;}
+.head-badge{width:28px;height:34px;border-radius:0;background:none;position:relative;}
+.head-badge:before{content:'';position:absolute;left:4px;top:2px;width:19px;height:6px;border-radius:4px;background:#C9342F;box-shadow:0 8px 0 #E39A20,0 16px 0 #43884B;}
+.head-badge:after{content:'';position:absolute;left:4px;top:26px;width:6px;height:6px;border-radius:50%;background:#7C8C8C;}
+.page-title{font-size:18px;font-weight:700;} .page-code{font-size:12px;color:#74869A;}
+.btn-outline,.btn-primary{height:38px;border-radius:5px;font-size:12px;padding:0 13px;}
+.btn-primary{background:#0A72CE;border-color:#0A72CE;box-shadow:0 2px 5px rgba(10,114,206,.18);}
+.live-dot{width:9px;height:9px;background:#29AE68;box-shadow:0 0 0 3px #DDF4E8;}
+main{max-width:none;margin:0;padding:14px 16px 40px;}
+.select-card{border-radius:7px;box-shadow:var(--shadow);}
+.panel{border-radius:7px;box-shadow:var(--shadow);margin-bottom:12px;}
+.panel-title{padding:9px 12px;min-height:45px;border-bottom:1px solid #CDD6DF;}
+.panel-title-left{gap:6px}.dot-bullet{display:none}.panel-title h2{font-size:13px;color:#1D2D3E;text-transform:none;letter-spacing:0}.panel-sub{font-size:11px;color:#6D8093;}
+.panel-body{padding:12px;}
+.mini-search input{height:33px;width:220px;border-color:#AEBECC;border-radius:4px;font-size:12px;}
+.btn-icon{height:33px;width:34px;border-radius:4px;border-color:#B7C4D0;}
+.action-toolbar{padding:8px 12px;background:#fff;border-bottom:1px solid #CDD6DF;}
+.action-btn{height:33px;border-radius:5px;font-size:12px;padding:0 11px;}
+.action-btn.primary{background:#0A72CE;border-color:#0A72CE}.action-btn.success{background:#E1F5F1;border-color:#BDE6DE;color:#087766;}
+.drag-hint{font-size:10.5px;padding:6px 12px;background:#FAFBFC;}
+.table-wrap{background:#fff;}
+table{font-size:12px}.data-table th,.data-table td{padding:8px 10px;}
+.data-table thead th{font-size:11px;text-transform:none;letter-spacing:0;color:#405C76;background:#F5F7F9;border-bottom:1px solid #CDD6DF;font-weight:700;}
+.data-table tbody td{border-bottom:1px solid #E1E7EC;color:#1D2D3E;}
+.data-table tbody tr:hover td{background:#F7FAFC}.data-table tbody tr.row-sel td{background:#EAF4FC !important;}
+.hotspot{color:#0067B8;text-decoration:underline}.chip,.pill{border-radius:999px;padding:3px 9px;font-size:10.5px;}
+.pill-done,.chip-done{background:#DDF3EF;color:#087766}.pager-row{padding:7px 11px}.pager-ctrl button{height:28px;min-width:28px;border-radius:4px}.pager-ctrl button.active{background:#fff;color:#405C76;border-color:#CDD6DF;}
+.hdr-grid{border-radius:6px}.hdr-cell{padding:8px 10px}.hdr-lbl{font-size:10.5px;text-transform:none;color:#5D7287}.hdr-val{font-size:12px;}
+.modal-card{border-radius:8px}.modal-header{background:#F5F7F9;padding:12px 15px}.modal-icon{border-radius:5px}.modal-title{font-size:14px}.modal-footer{padding:10px 14px}.btn-cancel,.btn-confirm{border-radius:5px;}
+.ffield input,.ffield select,.ffield textarea{border-radius:4px;height:33px}.fbox{border-radius:6px;padding:11px}.note-box{border-radius:5px;}
+.zfac-toast{border-radius:6px;}
+
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <button class="btn-outline subtle" id="headBackBtn" style="visibility:hidden" onclick="backToSelection()">&larr; Back</button>
+  <div class="head-badge"></div>
+  <div class="title-wrap">
+    <div class="page-title">Execute Settlement for Deal ID</div>
+    <span class="page-code">ZSGTSF_RDEAL_TRD_INV &middot; R060</span>
+  </div>
+  <div class="head-actions">
+    <span class="live-dot" title="Connected"></span>
+    <button class="btn-outline" onclick="initiatePrinting()"><span>&#128424;</span>Initiate Printing</button>
+    <button class="btn-outline" onclick="openDms()"><span>&#128193;</span>DMS</button>
+    <button class="btn-outline" onclick="refreshScreen()"><span>&#8635;</span>Refresh</button>
+    <button class="btn-outline subtle" onclick="backToSelection()"><span>&#10060;</span>Exit</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ SELECTION SCREEN (1000) ============ -->
+  <div id="selectScreen" class="panel select-panel">
+    <div class="panel-title">
+      <div class="panel-title-left"><span class="dot-bullet"></span><h2>Basic Selection</h2></div>
+    </div>
+    <div class="panel-body">
+      <div class="select-row">
+        <div class="select-field">
+          <span class="select-icon">&#128269;</span>
+          <input id="selDealId" type="text" maxlength="10" placeholder="ENTER DEAL ID..." onkeydown="if(event.key==='Enter')executeSelection();"/>
+        </div>
+        <button class="btn-primary-inline" onclick="executeSelection()">Go</button>
+        <button type="button" class="sample-chip" onclick="document.getElementById('selDealId').value='TSF-9081'; executeSelection();">Try sample &middot; <strong>TSF-9081</strong></button>
+      </div>
+      <div class="select-err" id="selErr">Please enter a Deal ID. (Deal ID is a mandatory field.)</div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN SCREEN (9000) ============ -->
+  <div id="mainScreen" class="hidden">
+
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Deal ID Overview</h2></div>
+        <span class="panel-sub" id="dealStatusPillWrap"></span>
+      </div>
+      <div class="panel-body">
+        <div class="hdr-grid" id="hdrGrid"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="action-toolbar" id="actionToolbar"></div>
+      <div class="drag-hint">Tip: double-click a row in the FX Deal grid or the Trade Invoice grid below to open its settlement / posting screen &mdash; just like a hotspot click in the SAP ALV.</div>
+    </div>
+
+    <!-- FX Deal Settlement -->
+    <div class="panel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>FX Deal Settlement</h2><span class="panel-sub" id="fxCountLbl"></span></div>
+        <div class="panel-tools">
+          <div class="mini-search"><input id="fxSearch" type="text" placeholder="Search FX deals..." oninput="renderFx()"/></div>
+          <button class="btn-icon" title="Filter" onclick="showToast('Filter panel - not needed for a single Deal ID view.','info')">&#9776;</button>
+          <button class="btn-icon" title="Download" onclick="showToast('Exporting FX Deal Settlement grid...','success')">&#8681;</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="fxTable">
+          <thead><tr>
+            <th class="left">Seq</th>
+            <th class="left">Deal Type</th>
+            <th class="left">Transaction</th>
+            <th class="left">Counterparty</th>
+            <th class="left">Txn Date</th>
+            <th class="left">Value Date</th>
+            <th class="left">Entity</th>
+            <th class="left">B/S 1</th>
+            <th class="left">Curr 1</th>
+            <th>Amount 1</th>
+            <th class="left">B/S 2</th>
+            <th class="left">Curr 2</th>
+            <th>Amount 2</th>
+            <th>Spot</th>
+            <th>All-in Rate</th>
+            <th class="left">MC Ref No</th>
+            <th class="left">Status</th>
+            <th class="left">Doc No 1</th>
+            <th class="left">Doc No 2</th>
+          </tr></thead>
+          <tbody id="fxBody"></tbody>
+        </table>
+      </div>
+      <div class="pager-row"><span id="fxPagerLbl"></span><div class="pager-ctrl"><button disabled>&lsaquo;</button><button class="active">1</button><button disabled>&rsaquo;</button></div></div>
+    </div>
+
+    <!-- Trade Invoice Settlement -->
+    <div class="panel" id="invPanel">
+      <div class="panel-title">
+        <div class="panel-title-left"><span class="dot-bullet"></span><h2>Trade Invoice Settlement</h2><span class="panel-sub" id="invCountLbl"></span></div>
+        <div class="panel-tools">
+          <div class="mini-search"><input id="invSearch" type="text" placeholder="Search invoice legs..." oninput="renderInv()"/></div>
+          <button class="btn-icon" title="Filter" onclick="showToast('Filter panel - not needed for a single Deal ID view.','info')">&#9776;</button>
+          <button class="btn-icon" title="Download" onclick="showToast('Exporting Trade Invoice Settlement grid...','success')">&#8681;</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="invTable">
+          <thead><tr>
+            <th class="left">Leg</th>
+            <th class="left">Transfer Desc</th>
+            <th class="left">Doc Type</th>
+            <th class="left">Reference</th>
+            <th class="left">Debit Posting</th>
+            <th class="left">Credit Posting</th>
+            <th class="left">Due Date</th>
+            <th class="left">Posting Date</th>
+            <th>Invoice Amt</th>
+            <th class="left">Curr</th>
+            <th>Payment Amt</th>
+            <th class="left">Rec/Pay</th>
+            <th class="left">Transfer Type</th>
+            <th class="left">FI Doc</th>
+            <th class="left">Settled</th>
+          </tr></thead>
+          <tbody id="invBody"></tbody>
+        </table>
+      </div>
+      <div class="pager-row"><span id="invPagerLbl"></span><div class="pager-ctrl"><button disabled>&lsaquo;</button><button class="active">1</button><button disabled>&rsaquo;</button></div></div>
+    </div>
+
+  </div>
+</main>
+
+<div class="zfac-toast" id="toast"></div>
+
+<!-- ============ MODAL: Amend Deal End Date (9005) ============ -->
+<div class="modal-overlay" id="amendOverlay" onclick="overlayClick(event,'amendOverlay')">
+  <div class="modal-card narrow">
+    <div class="modal-header">
+      <div class="modal-icon">&#128197;</div>
+      <div class="modal-header-text"><div class="modal-title">Amend Deal End Date</div><div class="modal-subtitle">Deal ID <span id="amendDealLbl"></span></div></div>
+      <button class="modal-close" onclick="closeModal('amendOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ffield">
+        <label for="amendDate">Deal End Date</label>
+        <input id="amendDate" type="text" placeholder="dd-mm-yyyy" maxlength="10"/>
+      </div>
+      <div class="note-box">Revising the end date here updates the revised end date on the Deal ID header and the posting date used for the trade invoice legs.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('amendOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="updateEndDate()">Update Deal End Date</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Headsup (9004) ============ -->
+<div class="modal-overlay" id="headsupOverlay" onclick="overlayClick(event,'headsupOverlay')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-icon">&#128276;</div>
+      <div class="modal-header-text"><div class="modal-title">Heads Up</div><div class="modal-subtitle">Reminders for Deal ID <span id="headsupDealLbl"></span></div></div>
+      <button class="modal-close" onclick="closeModal('headsupOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table" id="headsupTable">
+          <thead><tr><th class="left">Date</th><th class="left">Category</th><th class="left">Message</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('headsupOverlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: FX-Invoice Difference (9006, status 555) ============ -->
+<div class="modal-overlay" id="diffOverlay" onclick="overlayClick(event,'diffOverlay')">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <div class="modal-icon">&Delta;</div>
+      <div class="modal-header-text"><div class="modal-title">FX &ndash; Invoice Difference</div><div class="modal-subtitle">Compares the FX deal rate against the invoice rate for each leg, and lets the trader fix the spot rate</div></div>
+      <button class="modal-close" onclick="closeModal('diffOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table" id="diffTable">
+          <thead><tr>
+            <th class="left">Deal Type</th><th class="left">Action</th><th>All-in Rate</th><th>Strike</th>
+            <th>Diff 1 Amt</th><th>Diff 2 Amt</th><th>Diff 3 Amt</th><th class="left">Spot Rate</th>
+          </tr></thead>
+          <tbody id="diffBody"></tbody>
+        </table>
+      </div>
+      <div class="note-box">Enter the fixed spot conversion rate for each leg, then <strong>Save Spot Data</strong>. This rate feeds the +/- difference used when the trade invoice is finalised.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('diffOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="saveSpotData()">Save Spot Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DMS (document viewer, function module popup) ============ -->
+<div class="modal-overlay" id="dmsOverlay" onclick="overlayClick(event,'dmsOverlay')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-icon">&#128193;</div>
+      <div class="modal-header-text"><div class="modal-title">DMS &ndash; Deal Documents</div><div class="modal-subtitle">Documents filed against Deal ID <span id="dmsDealLbl"></span></div></div>
+      <button class="modal-close" onclick="closeModal('dmsOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table" id="dmsTable">
+          <thead><tr><th class="left">Document Type</th><th class="left">File</th><th class="left">Uploaded On</th><th class="left">Uploaded By</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('dmsOverlay')">Close</button>
+      <button class="btn-confirm" onclick="openEditDms()">Edit DMS</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Edit DMS (9007, status 777) ============ -->
+<div class="modal-overlay" id="editDmsOverlay" onclick="overlayClick(event,'editDmsOverlay')">
+  <div class="modal-card narrow">
+    <div class="modal-header">
+      <div class="modal-icon">&#9999;</div>
+      <div class="modal-header-text"><div class="modal-title">Edit DMS</div><div class="modal-subtitle">Upload a document against this Deal ID</div></div>
+      <button class="modal-close" onclick="closeModal('editDmsOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ffield" style="margin-bottom:12px;">
+        <label>Deal ID</label>
+        <input id="editDmsDeal" type="text" disabled/>
+      </div>
+      <div class="ffield" style="margin-bottom:12px;">
+        <label for="editDmsType">Doc Type</label>
+        <select id="editDmsType">
+          <option>Bill of Lading</option>
+          <option>Commercial Invoice</option>
+          <option>SSI / Bank Letter</option>
+          <option>FX Confirmation</option>
+          <option>Other Supporting Document</option>
+        </select>
+      </div>
+      <div class="ffield">
+        <label for="editDmsDate">Date</label>
+        <input id="editDmsDate" type="text" placeholder="dd-mm-yyyy" maxlength="10"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('editDmsOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmEditDms()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: View P&L Amount (9008, status 888) ============ -->
+<div class="modal-overlay" id="plOverlay" onclick="overlayClick(event,'plOverlay')">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <div class="modal-icon">&#128202;</div>
+      <div class="modal-header-text"><div class="modal-title">View P&amp;L Amount</div><div class="modal-subtitle">Realised profit per FX leg &mdash; the risk-free spread locked in by trading the pair against itself</div></div>
+      <button class="modal-close" onclick="closeModal('plOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table" id="plTable">
+          <thead><tr>
+            <th class="left">Currency Pair</th><th class="left">Deal Type</th><th class="left">Txn Date</th><th class="left">Value Date</th>
+            <th class="left">B/S 1</th><th>Amount 1</th><th class="left">B/S 2</th><th>Amount 2</th>
+            <th>Spot</th><th>All-in Rate</th><th class="left">Counterparty</th><th>P&amp;L Amount</th><th class="left">Curr</th>
+          </tr></thead>
+          <tbody id="plBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('plOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Transactions Posting (9003, status 444) - FX Deal row ============ -->
+<div class="modal-overlay" id="fxPostOverlay" onclick="overlayClick(event,'fxPostOverlay')">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <div class="modal-icon">&#128179;</div>
+      <div class="modal-header-text"><div class="modal-title">Transaction Settlement</div><div class="modal-subtitle">Transaction <span id="fxPostTxnLbl"></span> &ndash; post the buy &amp; sell legs of the FX deal to bank / accounting</div></div>
+      <button class="modal-close" onclick="closeModal('fxPostOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fbox">
+        <div class="fbox-title">Basic Details</div>
+        <div class="form-grid">
+          <div class="ffield"><label>Company Code</label><input id="fxpBukrs" type="text" disabled/></div>
+          <div class="ffield"><label>Transaction</label><input id="fxpRfha" type="text" disabled/></div>
+          <div class="ffield"><label>Deal Type</label><input id="fxpDealType" type="text" disabled/></div>
+          <div class="ffield"><label>Partner</label><input id="fxpPartner" type="text" disabled/></div>
+        </div>
+      </div>
+      <div class="fbox">
+        <div class="fbox-title">Buy Currency</div>
+        <div class="form-grid">
+          <div class="ffield"><label>Buy Amount</label><input id="fxpBAmt" type="text" disabled/></div>
+          <div class="ffield"><label>FI Document</label><input id="fxpBDoc" type="text" placeholder="generated on posting"/></div>
+          <div class="ffield"><label>Bank Type</label><select id="fxpBBankType"><option>Standard Chartered Bank</option><option>HSBC</option><option>DBS Bank</option><option>Barclays PLC</option></select></div>
+          <div class="ffield"><label>Transfer Type</label><select id="fxpBTrfType"><option>TT Form</option><option>ECM</option><option>Letter</option><option>Indirect</option></select></div>
+          <div class="ffield"><label>Receiving Bank ID</label><input id="fxpBBankId" type="text" placeholder="e.g. BNK-1021"/></div>
+          <div class="ffield"><label>House Bank / Account ID</label><input id="fxpBAcc" type="text" placeholder="e.g. HB01 / 100234"/></div>
+        </div>
+        <label class="check-row"><input type="checkbox" id="fxpSubNo"/> Print SSI Letter with Sub Account Number</label>
+      </div>
+      <div class="fbox">
+        <div class="fbox-title">Sell Currency</div>
+        <div class="form-grid">
+          <div class="ffield"><label>Sell Amount</label><input id="fxpSAmt" type="text" disabled/></div>
+          <div class="ffield"><label>FI Document</label><input id="fxpSDoc" type="text" placeholder="generated on posting"/></div>
+          <div class="ffield"><label>Bank Type</label><select id="fxpSBankType"><option>Standard Chartered Bank</option><option>HSBC</option><option>DBS Bank</option><option>Barclays PLC</option></select></div>
+          <div class="ffield"><label>Transfer Type</label><select id="fxpSTrfType"><option>TT Form</option><option>ECM</option><option>Letter</option><option>Indirect</option></select></div>
+          <div class="ffield"><label>Paying Bank ID</label><input id="fxpSBankId" type="text" placeholder="e.g. BNK-2044"/></div>
+          <div class="ffield"><label>House Bank / Account ID</label><input id="fxpSAcc" type="text" placeholder="e.g. HB02 / 200551"/></div>
+        </div>
+        <label class="check-row"><input type="checkbox" id="fxpRemit"/> I will Remit to You</label>
+      </div>
+      <div class="note-box" id="fxPostStatusNote"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('fxPostOverlay')">Cancel</button>
+      <button class="action-btn" onclick="postFxAction('test')">Post Test Run</button>
+      <button class="action-btn" onclick="postFxAction('print')">Print Letters</button>
+      <button class="action-btn" onclick="postFxAction('update')">Update</button>
+      <button class="action-btn" onclick="postFxAction('post')">Post Accounting Entry</button>
+      <button class="btn-confirm green" onclick="postFxAction('complete')">Settlement Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Posting Pop-up (9002, status 333) - Trade Invoice row ============ -->
+<div class="modal-overlay" id="invPostOverlay" onclick="overlayClick(event,'invPostOverlay')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-icon">&#129534;</div>
+      <div class="modal-header-text"><div class="modal-title">Bank Settlement &ndash; Posting</div><div class="modal-subtitle">Invoice leg <span id="invPostLegLbl"></span> &ndash; generate the bank letter and post the accounting entry</div></div>
+      <button class="modal-close" onclick="closeModal('invPostOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="ffield"><label>Value Date</label><input id="ipDate" type="text" disabled/></div>
+        <div class="ffield"><label>Bank</label><input id="ipBank" type="text" disabled/></div>
+        <div class="ffield"><label>Sender / Payer</label><input id="ipSender" type="text" disabled/></div>
+        <div class="ffield"><label>Receiver / Payee</label><input id="ipReceiver" type="text" disabled/></div>
+        <div class="ffield"><label>Invoice Amount</label><input id="ipAmt" type="text" disabled/></div>
+        <div class="ffield"><label>FI Document No</label><input id="ipFiDoc" type="text" placeholder="generated on posting"/></div>
+      </div>
+      <div class="ffield" style="margin-top:12px;">
+        <label>Doc Msg</label>
+        <textarea id="ipDocMsg" rows="2" placeholder="posting narration"></textarea>
+      </div>
+      <div class="note-box" id="invPostStatusNote"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('invPostOverlay')">Cancel</button>
+      <button class="action-btn" onclick="postInvAction('print')">Print Letters</button>
+      <button class="action-btn" onclick="postInvAction('update')">Update</button>
+      <button class="action-btn" onclick="postInvAction('post')">Post Document</button>
+      <button class="btn-confirm green" onclick="postInvAction('complete')">Settlement Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Letter preview (9001, status 222) ============ -->
+<div class="modal-overlay" id="letterOverlay" onclick="overlayClick(event,'letterOverlay')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-icon">&#128196;</div>
+      <div class="modal-header-text"><div class="modal-title">Bank Settlement Letter</div><div class="modal-subtitle">Print preview</div></div>
+      <button class="modal-close" onclick="closeModal('letterOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="letter-preview" id="letterText"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('letterOverlay')">Back</button>
+      <button class="btn-confirm" onclick="printLetterPdf()">Print PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: View Trade Invoice (separate report, shown here as read-only grid) ============ -->
+<div class="modal-overlay" id="viewInvOverlay" onclick="overlayClick(event,'viewInvOverlay')">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <div class="modal-icon">&#128203;</div>
+      <div class="modal-header-text"><div class="modal-title">View Trade Invoice</div><div class="modal-subtitle">ZSGTSF_RDEAL_ID_INV &ndash; read-only invoice list for Deal ID <span id="viewInvDealLbl"></span></div></div>
+      <button class="modal-close" onclick="closeModal('viewInvOverlay')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table" id="viewInvTable">
+          <thead><tr><th class="left">Leg</th><th class="left">Entity Leg</th><th class="left">Reference</th><th>Invoice Amt</th><th class="left">Curr</th><th class="left">Due Date</th><th class="left">Status</th></tr></thead>
+          <tbody id="viewInvBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('viewInvOverlay')">Close</button></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DUMMY DATA
+   Mirrors the worked example used across the TSF suite:
+   Model M021 (INR Long Forward), MC-7001, 5,000 MT soybean
+   oil, Deal ID TSF-9081, entity chain OIL -> DMCC -> OAIPL.
+   ========================================================= */
+
+var STATUS_LIST = [
+  {code:'01', text:'Deal Created', cls:'pill-early'},
+  {code:'04', text:'Deal Released', cls:'pill-early'},
+  {code:'05', text:'Pending Shipment Match', cls:'pill-progress'},
+  {code:'10', text:'BL Attached - Invoicing in Progress', cls:'pill-progress'},
+  {code:'19', text:'Settlement Due', cls:'pill-due'},
+  {code:'20', text:'Settlement Initiated', cls:'pill-init'},
+  {code:'21', text:'Settlement Complete', cls:'pill-done'},
+  {code:'25', text:'Closed', cls:'pill-done'}
+];
+
+var deal = {
+  dealId:'TSF-9081',
+  dealStartDate:'15-01-2026',
+  dealEndDate:'15-03-2026',
+  revisedEndDate:'',
+  mcRefNo:'MC-7001',
+  mcDesc:'Soybean Oil 5,000 MT - Olam Agri India Pvt Ltd',
+  mcDate:'10-01-2026',
+  shipEndDate:'28-02-2026',
+  fxModelId:'M021',
+  fxModelDesc:'INR Long Forward',
+  entityString:'OIL - DMCC - OAIPL',
+  fxInvModel:'M021',
+  trader:'OTL',
+  traderDesc:'Olam Trading Ltd',
+  currencyString:'USD - USD - INR',
+  dealStatus:'10',
+  noInvoiceFlag:false
+};
+
+var fxDeals = [
+  {seq:'01', dealType:'D1', dealTypeChip:'chip-d1', rfha:'5000001', bp:'DMCC (Olam International DMCC)', txnDate:'15-01-2026', valDate:'15-03-2026',
+   entity:'OIL', bs1:'Sell', curr1:'USD', amt1:5000000.00, bs2:'Buy', curr2:'INR', amt2:415000000.00, spot:'83.0000', rate:'83.0000',
+   mcRefNo:'MC-7001', status:'Confirmed', statusChip:'chip-open', doc1:'', doc2:''},
+  {seq:'02', dealType:'D2', dealTypeChip:'chip-d2', rfha:'5000002', bp:'OAIPL (Olam Agri India Pvt Ltd)', txnDate:'15-01-2026', valDate:'15-03-2026',
+   entity:'OAIPL', bs1:'Buy', curr1:'USD', amt1:5000000.00, bs2:'Sell', curr2:'INR', amt2:415425000.00, spot:'83.0850', rate:'83.0850',
+   mcRefNo:'MC-7001', status:'Confirmed', statusChip:'chip-open', doc1:'', doc2:''}
+];
+
+var tradeInvoices = [
+  {leg:'T1', trfDesc:'OIL sells to DMCC', docType:'RV', xblnr:'INV-T1-9081', drPost:'Dr DMCC Trade A/R', crPost:'Cr OIL Trade Revenue',
+   dueDate:'20-03-2026', postDate:'', invAmt:5000000.00, curr:'USD', payAmt:5000000.00, recPay:'Receipt', trfType:'TT Form', fiDoc:'', setCo:false},
+  {leg:'T2', trfDesc:'DMCC sells to OAIPL', docType:'RV', xblnr:'INV-T2-9081', drPost:'Dr OAIPL Trade A/P', crPost:'Cr DMCC Trade Revenue',
+   dueDate:'20-03-2026', postDate:'', invAmt:5010000.00, curr:'USD', payAmt:5010000.00, recPay:'Payment', trfType:'TT Form', fiDoc:'', setCo:false},
+  {leg:'T3', trfDesc:'OAIPL final sale (end customer)', docType:'RV', xblnr:'INV-T3-9081', drPost:'Dr Customer A/R', crPost:'Cr OAIPL Trade Revenue',
+   dueDate:'20-03-2026', postDate:'', invAmt:415425000.00, curr:'INR', payAmt:415425000.00, recPay:'Receipt', trfType:'Letter', fiDoc:'', setCo:false}
+];
+
+var headsupData = [
+  {date:'01-03-2026', cat:'Shipment', msg:'Shipment window for MC-7001 closes on 28-02-2026 - confirm Bill of Lading has been attached to this Deal ID.'},
+  {date:'10-03-2026', cat:'Settlement', msg:'FX deal value date (15-03-2026) is approaching - initiate settlement once trade invoices are posted.'},
+  {date:'12-03-2026', cat:'Documentation', msg:'SSI / bank letter for the DMCC leg has not yet been generated.'}
+];
+
+var dmsData = [
+  {type:'Bill of Lading', file:'BL-44821.pdf', date:'02-03-2026', by:'trade.flow.team'},
+  {type:'FX Confirmation', file:'FXCONF-5000001.pdf', date:'15-01-2026', by:'fo.trader'},
+  {type:'FX Confirmation', file:'FXCONF-5000002.pdf', date:'15-01-2026', by:'fo.trader'}
+];
+
+var FMT = function(n){ return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+
+var selectedFxIdx = null, selectedInvIdx = null, activeFxIdx = null, activeInvIdx = null;
+
+/* --------------------------- selection screen --------------------------- */
+function executeSelection(){
+  var v = document.getElementById('selDealId').value.trim();
+  if(!v){ document.getElementById('selErr').classList.add('show'); return; }
+  document.getElementById('selErr').classList.remove('show');
+  // Any value loads the one sample deal in this demo - the real program would SELECT on P_DEAL.
+  deal.dealId = v.toUpperCase();
+  document.getElementById('mainScreen').classList.remove('hidden');
+  selectedFxIdx = null; selectedInvIdx = null;
+  renderAll();
+}
+function backToSelection(){
+  document.getElementById('mainScreen').classList.add('hidden');
+  selectedFxIdx = null; selectedInvIdx = null;
+  document.getElementById('selDealId').focus();
+  document.getElementById('headBackBtn').style.visibility = 'hidden';
+}
+function refreshScreen(){
+  if(document.getElementById('mainScreen').classList.contains('hidden')) return;
+  selectedFxIdx = null; selectedInvIdx = null;
+  renderAll();
+  showToast('Screen refreshed.', 'info');
+}
+
+/* --------------------------- header + toolbar --------------------------- */
+function statusMeta(code){
+  for(var i=0;i<STATUS_LIST.length;i++){ if(STATUS_LIST[i].code===code) return STATUS_LIST[i]; }
+  return STATUS_LIST[0];
+}
+function renderHeader(){
+  var sm = statusMeta(deal.dealStatus);
+  var statusOpts = STATUS_LIST.map(function(s){
+    return '<option value="'+s.code+'"'+(s.code===deal.dealStatus?' selected':'')+'>'+s.code+' - '+s.text+'</option>';
+  }).join('');
+  var cells = [
+    ['Deal ID', '<span class="accent">'+deal.dealId+'</span>'],
+    ['Deal Start Date', deal.dealStartDate],
+    ['Deal End Date', deal.dealEndDate],
+    ['Revised End Date', deal.revisedEndDate ? deal.revisedEndDate : '<span class="mut">-</span>'],
+    ['MC Ref No', '<span class="accent">'+deal.mcRefNo+'</span>'],
+    ['MC Description', deal.mcDesc],
+    ['MC Date', deal.mcDate],
+    ['Ship End Date', deal.shipEndDate],
+    ['FX Model ID', deal.fxModelId],
+    ['FX Model Desc', deal.fxModelDesc],
+    ['Entity String', deal.entityString],
+    ['FX Inv Model', deal.fxInvModel],
+    ['Trader', deal.trader + ' - ' + deal.traderDesc],
+    ['Currency String', deal.currencyString],
+    ['Deal ID Status', '<select id="hdrStatusSel" onchange="changeStatus(this.value)" style="width:100%">'+statusOpts+'</select>'],
+    ['', '']
+  ];
+  var html = '';
+  cells.forEach(function(c){
+    if(c[0]==='' ){ html += '<div class="hdr-cell"></div>'; return; }
+    html += '<div class="hdr-cell"><div class="hdr-lbl">'+c[0]+'</div><div class="hdr-val">'+c[1]+'</div></div>';
+  });
+  document.getElementById('hdrGrid').innerHTML = html;
+  document.getElementById('dealStatusPillWrap').innerHTML =
+    '<span class="pill '+sm.cls+'"><span class="dot"></span>'+sm.code+' &middot; '+sm.text+'</span>';
+  document.getElementById('headBackBtn').style.visibility = 'hidden';
+}
+function changeStatus(code){
+  deal.dealStatus = code;
+  renderToolbar();
+  showToast('Deal ID Status changed to '+code+' - '+statusMeta(code).text+' (demo only; in SAP this is driven by settlement processing).', 'info');
+}
+
+function renderToolbar(){
+  var stat = parseInt(deal.dealStatus,10);
+  var showInit = false, showExeC = false;
+  if(stat<=4){ showInit=false; showExeC=false; }
+  else if(stat>=5 && stat<=19){ showInit=true; showExeC=false; }
+  else if(stat===20){ showInit=false; showExeC=true; }
+  else { showInit=false; showExeC=false; }
+
+  var btns = [];
+  btns.push(btn('REV_EDATE','&#128197; Amend End Date','openAmendEndDate()',false));
+  btns.push(btn('HEADSUP','&#128276; Headsup','openHeadsup()',false));
+  btns.push(btn('INV','&#128203; View Trade Invoice','openViewInvoice()', deal.noInvoiceFlag));
+  btns.push(btn('INV_DIFF','&Delta; FX-Invoice Difference','openDiff()',false));
+  btns.push(btn('P&L','&#128202; View P&L','openPl()',false));
+  btns.push(btn('EDIT','&#9999; Edit DMS','openDms(true)',false));
+  btns.push('<span class="action-spacer"></span>');
+  btns.push(btn('POST_FX','Post FX Deal &#8594;', 'postFxFromToolbar()', selectedFxIdx===null));
+  btns.push(btn('POST_TI','Post Trade Invoice &#8594;', 'postInvFromToolbar()', selectedInvIdx===null || deal.noInvoiceFlag));
+  if(showInit) btns.push(btn('INIT','Initiate Settlement','initiateSettlement()',false,'primary'));
+  if(showExeC) btns.push(btn('EXE_C','Execution Complete','executionComplete()',false,'success'));
+  document.getElementById('actionToolbar').innerHTML = btns.join('');
+}
+function btn(fcode, label, onclick, disabled, variant){
+  var cls = 'action-btn' + (variant?(' '+variant):'');
+  return '<button class="'+cls+'" title="'+fcode+'" '+(disabled?'disabled':'')+' onclick="'+onclick+'">'+label+'</button>';
+}
+
+/* --------------------------- FX deal grid --------------------------- */
+function renderFx(){
+  var q = (document.getElementById('fxSearch').value || '').toLowerCase();
+  var visible = fxDeals.filter(function(r){
+    if(!q) return true;
+    return (r.rfha+' '+r.bp+' '+r.dealType+' '+r.entity+' '+r.curr1+' '+r.curr2+' '+r.mcRefNo+' '+r.status).toLowerCase().indexOf(q)>-1;
+  });
+  document.getElementById('fxCountLbl').textContent = visible.length + ' record(s)';
+  document.getElementById('fxPagerLbl').textContent = 'Showing ' + visible.length + ' of ' + fxDeals.length;
+  var rows = visible.map(function(r){
+    var idx = fxDeals.indexOf(r);
+    var sel = selectedFxIdx===idx ? ' row-sel' : '';
+    return '<tr class="'+sel.trim()+'" onclick="selectFxRow('+idx+')" ondblclick="openFxPost('+idx+')">' +
+      '<td class="left">'+r.seq+'</td>' +
+      '<td class="left"><span class="chip '+r.dealTypeChip+'">'+r.dealType+'</span></td>' +
+      '<td class="left"><span class="hotspot" onclick="event.stopPropagation();viewTxn('+idx+')">'+r.rfha+'</span></td>' +
+      '<td class="left">'+r.bp+'</td>' +
+      '<td class="left">'+r.txnDate+'</td>' +
+      '<td class="left">'+r.valDate+'</td>' +
+      '<td class="left">'+r.entity+'</td>' +
+      '<td class="left">'+r.bs1+'</td>' +
+      '<td class="left">'+r.curr1+'</td>' +
+      '<td class="num">'+FMT(r.amt1)+'</td>' +
+      '<td class="left">'+r.bs2+'</td>' +
+      '<td class="left">'+r.curr2+'</td>' +
+      '<td class="num">'+FMT(r.amt2)+'</td>' +
+      '<td class="num">'+r.spot+'</td>' +
+      '<td class="num">'+r.rate+'</td>' +
+      '<td class="left">'+r.mcRefNo+'</td>' +
+      '<td class="left"><span class="chip '+r.statusChip+'">'+r.status+'</span></td>' +
+      '<td class="left">'+(r.doc1?('<span class="hotspot" onclick="event.stopPropagation();viewFbDoc(\''+r.doc1+'\')">'+r.doc1+'</span>'):'<span class="mut">-</span>')+'</td>' +
+      '<td class="left">'+(r.doc2?('<span class="hotspot" onclick="event.stopPropagation();viewFbDoc(\''+r.doc2+'\')">'+r.doc2+'</span>'):'<span class="mut">-</span>')+'</td>' +
+      '</tr>';
+  }).join('');
+  document.getElementById('fxBody').innerHTML = rows || '<tr class="empty-row"><td colspan="19">No FX deal transactions for this Deal ID.</td></tr>';
+}
+function selectFxRow(idx){ selectedFxIdx = (selectedFxIdx===idx)?null:idx; renderFx(); renderToolbar(); }
+function viewTxn(idx){ showToast('In SAP, this hotspot opens the Treasury transaction display (TM transaction '+fxDeals[idx].rfha+').', 'info'); }
+function viewFbDoc(doc){ showToast('In SAP, this hotspot opens document '+doc+' in transaction FB03.', 'info'); }
+
+/* --------------------------- Trade invoice grid --------------------------- */
+function renderInv(){
+  var panel = document.getElementById('invPanel');
+  if(deal.noInvoiceFlag){ panel.classList.add('hidden'); return; } else { panel.classList.remove('hidden'); }
+  var q = (document.getElementById('invSearch').value || '').toLowerCase();
+  var visible = tradeInvoices.filter(function(r){
+    if(!q) return true;
+    return (r.leg+' '+r.trfDesc+' '+r.xblnr+' '+r.curr+' '+r.recPay+' '+r.trfType).toLowerCase().indexOf(q)>-1;
+  });
+  document.getElementById('invCountLbl').textContent = visible.length + ' record(s)';
+  document.getElementById('invPagerLbl').textContent = 'Showing ' + visible.length + ' of ' + tradeInvoices.length;
+  var rows = visible.map(function(r){
+    var idx = tradeInvoices.indexOf(r);
+    var sel = selectedInvIdx===idx ? ' row-sel' : '';
+    return '<tr class="'+sel.trim()+'" onclick="selectInvRow('+idx+')" ondblclick="openInvPost('+idx+')">' +
+      '<td class="left"><span class="chip chip-t">'+r.leg+'</span></td>' +
+      '<td class="left">'+r.trfDesc+'</td>' +
+      '<td class="left">'+r.docType+'</td>' +
+      '<td class="left">'+r.xblnr+'</td>' +
+      '<td class="left">'+r.drPost+'</td>' +
+      '<td class="left">'+r.crPost+'</td>' +
+      '<td class="left">'+r.dueDate+'</td>' +
+      '<td class="left">'+(r.postDate||'<span class="mut">-</span>')+'</td>' +
+      '<td class="num">'+FMT(r.invAmt)+'</td>' +
+      '<td class="left">'+r.curr+'</td>' +
+      '<td class="num">'+FMT(r.payAmt)+'</td>' +
+      '<td class="left">'+r.recPay+'</td>' +
+      '<td class="left">'+r.trfType+'</td>' +
+      '<td class="left">'+(r.fiDoc?('<span class="hotspot" onclick="event.stopPropagation();viewFbDoc(\''+r.fiDoc+'\')">'+r.fiDoc+'</span>'):'<span class="mut">-</span>')+'</td>' +
+      '<td class="left">'+(r.setCo?'<span class="chip chip-done">Yes</span>':'<span class="chip chip-open">No</span>')+'</td>' +
+      '</tr>';
+  }).join('');
+  document.getElementById('invBody').innerHTML = rows || '<tr class="empty-row"><td colspan="15">No trade invoice legs for this Deal ID.</td></tr>';
+}
+function selectInvRow(idx){ selectedInvIdx = (selectedInvIdx===idx)?null:idx; renderInv(); renderToolbar(); }
+
+/* --------------------------- toolbar-driven actions --------------------------- */
+function postFxFromToolbar(){ if(selectedFxIdx===null){ showToast('Select a FX deal row first.', 'error'); return; } openFxPost(selectedFxIdx); }
+function postInvFromToolbar(){ if(selectedInvIdx===null){ showToast('Select a trade invoice row first.', 'error'); return; } openInvPost(selectedInvIdx); }
+
+function initiateSettlement(){
+  deal.dealStatus = '20';
+  renderHeader(); renderToolbar();
+  showToast('Settlement initiated for Deal ID '+deal.dealId+'.', 'success');
+}
+function executionComplete(){
+  // mirrors fcode EXE_C: requires every FX leg / invoice leg to be marked settled first (SET_CO = 'X')
+  var allFxDone = fxDeals.every(function(r){ return r.statusChip==='chip-done'; });
+  var allInvDone = deal.noInvoiceFlag || tradeInvoices.every(function(r){ return r.setCo; });
+  if(!allFxDone || !allInvDone){
+    showToast('Please also do the settlement of all remaining legs. Do you want to continue?', 'error');
+    return;
+  }
+  deal.dealStatus = '21';
+  renderHeader(); renderToolbar();
+  showToast('Deal ID marked as Settlement Complete.', 'success');
+}
+function initiatePrinting(){ showToast('Settlement letters queued for printing for Deal ID '+deal.dealId+'.', 'info'); }
+
+/* --------------------------- Amend Deal End Date (9005) --------------------------- */
+function openAmendEndDate(){
+  document.getElementById('amendDealLbl').textContent = deal.dealId;
+  document.getElementById('amendDate').value = deal.revisedEndDate || deal.dealEndDate;
+  openModal('amendOverlay');
+}
+function updateEndDate(){
+  var v = document.getElementById('amendDate').value.trim();
+  if(!v){ showToast('Enter a date first.', 'error'); return; }
+  deal.revisedEndDate = v;
+  renderHeader();
+  closeModal('amendOverlay');
+  showToast('Deal End Date Updated Successfully.', 'success');
+}
+
+/* --------------------------- Headsup (9004) --------------------------- */
+function openHeadsup(){
+  document.getElementById('headsupDealLbl').textContent = deal.dealId;
+  var tbody = document.querySelector('#headsupTable tbody');
+  tbody.innerHTML = headsupData.map(function(h){
+    return '<tr><td class="left">'+h.date+'</td><td class="left">'+h.cat+'</td><td class="left">'+h.msg+'</td></tr>';
+  }).join('') || '<tr class="empty-row"><td colspan="3">No reminders.</td></tr>';
+  openModal('headsupOverlay');
+}
+
+/* --------------------------- FX-Invoice Difference (9006 / status 555) --------------------------- */
+function openDiff(){
+  var tbody = document.getElementById('diffBody');
+  tbody.innerHTML = fxDeals.map(function(r, idx){
+    var diff1 = ((parseFloat(r.rate)-parseFloat(r.spot))*r.amt1/100).toFixed(2);
+    return '<tr>' +
+      '<td class="left"><span class="chip '+r.dealTypeChip+'">'+r.dealType+'</span></td>' +
+      '<td class="left">Action FX</td>' +
+      '<td class="num">'+r.rate+'</td>' +
+      '<td class="num">'+r.spot+'</td>' +
+      '<td class="num">'+diff1+'</td>' +
+      '<td class="num">0.00</td>' +
+      '<td class="num">0.00</td>' +
+      '<td class="left"><input type="text" value="'+r.spot+'" style="width:90px;height:28px;border:1px solid #CBD9E8;border-radius:6px;padding:0 8px;" data-idx="'+idx+'" class="diffSpotInput"/></td>' +
+      '</tr>';
+  }).join('');
+  openModal('diffOverlay');
+}
+function saveSpotData(){
+  document.querySelectorAll('.diffSpotInput').forEach(function(inp){
+    var idx = parseInt(inp.getAttribute('data-idx'),10);
+    fxDeals[idx].spot = inp.value;
+  });
+  renderFx();
+  closeModal('diffOverlay');
+  showToast('Details Saved Successfully..', 'success');
+}
+
+/* --------------------------- DMS viewer + Edit DMS (9007 / status 777) --------------------------- */
+function openDms(goStraightToEdit){
+  document.getElementById('dmsDealLbl').textContent = deal.dealId;
+  var tbody = document.querySelector('#dmsTable tbody');
+  tbody.innerHTML = dmsData.map(function(d){
+    return '<tr><td class="left">'+d.type+'</td><td class="left">'+d.file+'</td><td class="left">'+d.date+'</td><td class="left">'+d.by+'</td></tr>';
+  }).join('') || '<tr class="empty-row"><td colspan="4">No documents uploaded yet.</td></tr>';
+  if(goStraightToEdit){ openEditDms(); } else { openModal('dmsOverlay'); }
+}
+function openEditDms(){
+  closeModal('dmsOverlay');
+  document.getElementById('editDmsDeal').value = deal.dealId;
+  document.getElementById('editDmsDate').value = '';
+  openModal('editDmsOverlay');
+}
+function confirmEditDms(){
+  var type = document.getElementById('editDmsType').value;
+  var date = document.getElementById('editDmsDate').value.trim();
+  if(!date){ showToast('Enter a date first.', 'error'); return; }
+  dmsData.push({type:type, file:type.replace(/\s+/g,'')+'-'+deal.dealId+'.pdf', date:date, by:'current.user'});
+  closeModal('editDmsOverlay');
+  showToast('Document uploaded against Deal ID '+deal.dealId+'.', 'success');
+}
+
+/* --------------------------- View P&L (9008 / status 888) --------------------------- */
+function openPl(){
+  var tbody = document.getElementById('plBody');
+  tbody.innerHTML = fxDeals.map(function(r){
+    var pl = r.dealType==='D1' ? (r.amt1*0) : ((parseFloat(fxDeals[1].rate)-parseFloat(fxDeals[0].rate))*fxDeals[0].amt1);
+    return '<tr>' +
+      '<td class="left">'+deal.currencyString+'</td>' +
+      '<td class="left"><span class="chip '+r.dealTypeChip+'">'+r.dealType+'</span></td>' +
+      '<td class="left">'+r.txnDate+'</td>' +
+      '<td class="left">'+r.valDate+'</td>' +
+      '<td class="left">'+r.bs1+' '+r.curr1+'</td>' +
+      '<td class="num">'+FMT(r.amt1)+'</td>' +
+      '<td class="left">'+r.bs2+' '+r.curr2+'</td>' +
+      '<td class="num">'+FMT(r.amt2)+'</td>' +
+      '<td class="num">'+r.spot+'</td>' +
+      '<td class="num">'+r.rate+'</td>' +
+      '<td class="left">'+r.bp+'</td>' +
+      '<td class="num">'+(r.dealType==='D2' ? FMT(pl) : '<span class="mut">-</span>')+'</td>' +
+      '<td class="left">'+(r.dealType==='D2' ? r.curr1 : '')+'</td>' +
+      '</tr>';
+  }).join('');
+  openModal('plOverlay');
+}
+
+/* --------------------------- View Trade Invoice (read-only report) --------------------------- */
+function openViewInvoice(){
+  if(deal.noInvoiceFlag){ showToast('This FX model has no trade invoice leg.', 'info'); return; }
+  document.getElementById('viewInvDealLbl').textContent = deal.dealId;
+  var tbody = document.getElementById('viewInvBody');
+  tbody.innerHTML = tradeInvoices.map(function(r){
+    return '<tr>' +
+      '<td class="left"><span class="chip chip-t">'+r.leg+'</span></td>' +
+      '<td class="left">'+r.trfDesc+'</td>' +
+      '<td class="left">'+r.xblnr+'</td>' +
+      '<td class="num">'+FMT(r.invAmt)+'</td>' +
+      '<td class="left">'+r.curr+'</td>' +
+      '<td class="left">'+r.dueDate+'</td>' +
+      '<td class="left">'+(r.setCo?'<span class="chip chip-done">Settled</span>':'<span class="chip chip-open">Open</span>')+'</td>' +
+      '</tr>';
+  }).join('');
+  openModal('viewInvOverlay');
+}
+
+/* --------------------------- Transactions Posting (9003 / status 444) --------------------------- */
+function openFxPost(idx){
+  activeFxIdx = idx;
+  var r = fxDeals[idx];
+  document.getElementById('fxPostTxnLbl').textContent = r.rfha;
+  document.getElementById('fxpBukrs').value = 'AE13';
+  document.getElementById('fxpRfha').value = r.rfha;
+  document.getElementById('fxpDealType').value = r.dealType + ' - ' + (r.dealType==='D1'?'Buy/Sell leg 1':'Buy/Sell leg 2');
+  document.getElementById('fxpPartner').value = r.bp;
+  document.getElementById('fxpBAmt').value = FMT(r.amt2) + ' ' + r.curr2;
+  document.getElementById('fxpSAmt').value = FMT(r.amt1) + ' ' + r.curr1;
+  document.getElementById('fxpBDoc').value = r.doc2 || '';
+  document.getElementById('fxpSDoc').value = r.doc1 || '';
+  setFxPostNote(r);
+  openModal('fxPostOverlay');
+}
+function setFxPostNote(r){
+  document.getElementById('fxPostStatusNote').innerHTML = '<strong>Current status:</strong> '+r.status+'. Use <em>Post Test Run</em> to simulate, then <em>Post Accounting Entry</em> to post both legs to FI, and <em>Settlement Complete</em> once both FI documents exist.';
+}
+function postFxAction(kind){
+  var r = fxDeals[activeFxIdx];
+  if(kind==='test'){ showToast('Test run posted - no FI documents created.', 'info'); return; }
+  if(kind==='print'){
+    buildLetter(r);
+    openModal('letterOverlay');
+    return;
+  }
+  if(kind==='update'){
+    r.bp = document.getElementById('fxpPartner').value || r.bp;
+    showToast('Transaction details updated.', 'success');
+    renderFx();
+    return;
+  }
+  if(kind==='post'){
+    if(!r.doc1) r.doc1 = '19000'+(100+activeFxIdx);
+    if(!r.doc2) r.doc2 = '19000'+(200+activeFxIdx);
+    document.getElementById('fxpBDoc').value = r.doc2;
+    document.getElementById('fxpSDoc').value = r.doc1;
+    r.status = 'Posted'; r.statusChip = 'chip-t';
+    setFxPostNote(r);
+    renderFx();
+    showToast('Accounting entries posted. FI documents '+r.doc1+' / '+r.doc2+' created.', 'success');
+    return;
+  }
+  if(kind==='complete'){
+    if(!r.doc1 || !r.doc2){ showToast('Post the accounting entry before marking settlement complete.', 'error'); return; }
+    r.status = 'Settled'; r.statusChip = 'chip-done';
+    setFxPostNote(r);
+    renderFx();
+    closeModal('fxPostOverlay');
+    showToast('FX leg '+r.rfha+' marked Settlement Complete.', 'success');
+  }
+}
+
+/* --------------------------- Posting Pop-up (9002 / status 333) --------------------------- */
+function openInvPost(idx){
+  activeInvIdx = idx;
+  var r = tradeInvoices[idx];
+  document.getElementById('invPostLegLbl').textContent = r.leg + ' - ' + r.trfDesc;
+  document.getElementById('ipDate').value = r.dueDate;
+  document.getElementById('ipBank').value = 'Standard Chartered Bank Singapore';
+  document.getElementById('ipSender').value = r.recPay==='Payment' ? r.drPost : r.crPost;
+  document.getElementById('ipReceiver').value = r.recPay==='Payment' ? r.crPost : r.drPost;
+  document.getElementById('ipAmt').value = FMT(r.invAmt) + ' ' + r.curr;
+  document.getElementById('ipFiDoc').value = r.fiDoc || '';
+  document.getElementById('ipDocMsg').value = r.trfDesc + ' - ' + r.leg + ' settlement for Deal ID ' + deal.dealId;
+  setInvPostNote(r);
+  openModal('invPostOverlay');
+}
+function setInvPostNote(r){
+  document.getElementById('invPostStatusNote').innerHTML = '<strong>Current status:</strong> '+(r.setCo?'Settled':'Open')+'. The invoice and its linked FX deal are designed to settle on the same value date.';
+}
+function postInvAction(kind){
+  var r = tradeInvoices[activeInvIdx];
+  if(kind==='print'){ buildLetter(null, r); openModal('letterOverlay'); return; }
+  if(kind==='update'){
+    r.postDate = document.getElementById('ipDate').value;
+    renderInv();
+    showToast('Invoice posting details updated.', 'success');
+    return;
+  }
+  if(kind==='post'){
+    if(!r.fiDoc) r.fiDoc = '19500'+(300+activeInvIdx);
+    document.getElementById('ipFiDoc').value = r.fiDoc;
+    renderInv();
+    setInvPostNote(r);
+    showToast('Document posted. FI document '+r.fiDoc+' created for leg '+r.leg+'.', 'success');
+    return;
+  }
+  if(kind==='complete'){
+    if(!r.fiDoc){ showToast('Post the document before marking settlement complete.', 'error'); return; }
+    r.setCo = true;
+    r.postDate = r.postDate || r.dueDate;
+    renderInv();
+    setInvPostNote(r);
+    closeModal('invPostOverlay');
+    showToast('Invoice leg '+r.leg+' marked Settlement Complete.', 'success');
+  }
+}
+
+/* --------------------------- Letter preview (9001 / status 222) --------------------------- */
+function buildLetter(fxRow, invRow){
+  var lines = [];
+  if(fxRow){
+    lines.push('RE: FX Settlement - Transaction ' + fxRow.rfha + ', Deal ID ' + deal.dealId);
+    lines.push('');
+    lines.push('We hereby would like to request you to please remit the amount value date ' + fxRow.valDate);
+    lines.push('to the beneficiary, details of which are as under, by debiting our current account.');
+    lines.push('');
+    lines.push('BENEFICIARY NAME        : ' + fxRow.bp);
+    lines.push('AMOUNT                  : ' + FMT(fxRow.amt1) + ' ' + fxRow.curr1);
+    lines.push('ALL-IN RATE             : ' + fxRow.rate);
+    lines.push('');
+    lines.push('Our treasury will fix the spot conversion price. Please Quote Deal ID ' + deal.dealId + ' on all correspondence.');
+  } else if(invRow){
+    lines.push('RE: Trade Invoice Settlement - ' + invRow.leg + ', Deal ID ' + deal.dealId);
+    lines.push('');
+    lines.push('Please arrange to remit ' + invRow.curr + ' ' + FMT(invRow.invAmt) + ' on value date ' + invRow.dueDate);
+    lines.push('debiting our current account, with equivalent funds credited as per invoice ' + invRow.xblnr + '.');
+    lines.push('');
+    lines.push('Invoice wise details are as under:');
+    lines.push('  ' + invRow.trfDesc + ' - ' + invRow.drPost + ' / ' + invRow.crPost);
+    lines.push('');
+    lines.push('Yours Faithfully,');
+    lines.push('Olam Agri India Private Limited');
+  }
+  document.getElementById('letterText').textContent = lines.join('\n');
+}
+function printLetterPdf(){
+  showToast('Letter sent to print (PDF generated via FP_JOB_OPEN / FP_JOB_CLOSE in SAP).', 'success');
+  closeModal('letterOverlay');
+}
+
+/* --------------------------- modal plumbing --------------------------- */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function overlayClick(e, id){ if(e.target.id===id) closeModal(id); }
+
+var toastTimer;
+function showToast(msg, kind){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'zfac-toast show' + (kind ? ' '+kind : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = 'zfac-toast'; }, 3800);
+}
+
+function renderAll(){
+  renderHeader();
+  renderToolbar();
+  renderFx();
+  renderInv();
+}
+</script>
+</body>
+</html>

@@ -95,7 +95,7 @@ export function filterOptions(deals: readonly Deal[]): Record<keyof Filters, Sel
 
 /** The text the search box matches against, case-insensitively and untrimmed. */
 export const searchHaystack = (d: Deal) =>
-  `${d.id} ${d.transaction} ${d.partnerName} ${d.traderName} ${d.status} ${d.coCode} ${d.txnTypeDesc}`.toLowerCase()
+  `${d.dealId} ${d.id} ${d.transaction} ${d.partnerName} ${d.traderName} ${d.status} ${d.coCode} ${d.txnTypeDesc}`.toLowerCase()
 
 function sortValue(d: Deal, key: SortKey): number | string {
   const v = d[key]
@@ -241,6 +241,9 @@ export function applyDragRange(
  * The selected deals, in list order. The selection is kept across filter, search and page
  * changes, so this can include deals the table is not currently showing.
  */
+/** How a deal is named in messages: its Deal ID, or its transaction number when it is on none. */
+export const dealLabel = (d: Deal): string => d.dealId || d.transaction
+
 export const selectedDeals = (deals: readonly Deal[], selected: ReadonlySet<string>) => deals.filter((d) => selected.has(d.id))
 
 // ---------------------------------------------------------------- deals from SAP
@@ -267,10 +270,10 @@ export const withoutFxDeals = (deals: readonly Deal[]): Deal[] => deals.filter((
 /** The modals' info strip and Cover No for one deal, or a summary for several. */
 export function dealSummary(deals: readonly Deal[]): DealSummary {
   const [first] = deals
-  if (deals.length === 1 && first) return { dealId: first.id, partner: first.partnerName, coverNo: first.transaction }
+  if (deals.length === 1 && first) return { dealId: first.dealId || '–', partner: first.partnerName, coverNo: first.transaction }
   return {
     dealId: `${deals.length} deals selected`,
-    partner: deals.map((d) => d.id).join(', '),
+    partner: deals.map(dealLabel).join(', '),
     coverNo: `${deals.length} deals selected`,
   }
 }
@@ -300,14 +303,14 @@ export function markCorrectionRequired(deals: readonly Deal[], ids: ReadonlySet<
 export function matchReleaseMessage(deals: readonly Deal[]): string {
   const [first] = deals
   return deals.length === 1 && first
-    ? `Deal ${first.id} matched and released successfully.`
+    ? `Deal ${dealLabel(first)} matched and released successfully.`
     : `${deals.length} deals matched and released successfully.`
 }
 
 export function correctionMessage(deals: readonly Deal[]): string {
   const [first] = deals
   return deals.length === 1 && first
-    ? `Deal ${first.id} was sent back to FO for correction.`
+    ? `Deal ${dealLabel(first)} was sent back to FO for correction.`
     : `${deals.length} deals were sent back to FO for correction.`
 }
 

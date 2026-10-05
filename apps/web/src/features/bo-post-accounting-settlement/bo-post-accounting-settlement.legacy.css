@@ -1,0 +1,267 @@
+/* Original stylesheet of bo-post-accounting-settlement.html, scoped under .bo-post-accounting-settlement.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.bo-post-accounting-settlement {
+  --bg:#F4F8FC;
+  --surface:#FFFFFF;
+  --border:#E1E9F2;
+  --border-soft:#EEF2F6;
+  --ink:#1D2D3E;
+  --ink-soft:#1D2D3E;
+  --muted:#5C7085;
+  --muted-2:#8CA0B3;
+  --blue:#1F6FEB;
+  --blue-dark:#1657C4;
+  --blue-pale:#EAF2FF;
+  --green:#27AE60;
+  --green-pale:#E8F8EF;
+  --amber:#FF8A00;
+  --amber-pale:#FFF3E4;
+  --purple:#7c3aed;
+  --purple-pale:#efe9fe;
+  --red:#E74C3C;
+  --red-pale:#FDEAE8;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(22,39,64,.04),0 4px 14px rgba(22,39,64,.06);
+  --shadow-md:0 8px 28px rgba(22,39,64,.16);
+}
+.bo-post-accounting-settlement *, .bo-post-accounting-settlement, .bo-post-accounting-settlement *::before, .bo-post-accounting-settlement *::after {box-sizing:border-box;margin:0;padding:0;font-family:"Inter",Arial,Helvetica,sans-serif;}
+.bo-post-accounting-settlement {background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+.bo-post-accounting-settlement ::-webkit-scrollbar {width:8px;height:8px;}
+.bo-post-accounting-settlement ::-webkit-scrollbar-track {background:transparent;}
+.bo-post-accounting-settlement ::-webkit-scrollbar-thumb {background:#C7D4E2;border-radius:8px;}
+.bo-post-accounting-settlement ::-webkit-scrollbar-thumb:hover {background:#a7b2c3;}
+/* ---------- page head ---------- */
+.bo-post-accounting-settlement .page-head {
+  display:flex;align-items:center;gap:12px;margin:.3rem .2rem 12px;padding:10px 16px;
+  background:#EAF3FF;border:1px solid #D7E9FF;border-radius:var(--radius-md);
+}
+.bo-post-accounting-settlement .head-icon {height:40px;max-width:120px;width:auto;flex-shrink:0;object-fit:contain;}
+.bo-post-accounting-settlement .title-wrap {min-width:0;flex:1;}
+.bo-post-accounting-settlement .page-title {font-size:19px;font-weight:700;letter-spacing:-.2px;color:var(--ink);line-height:1.25;}
+.bo-post-accounting-settlement .page-subtitle {font-size:12.5px;color:var(--muted);margin-top:1px;}
+.bo-post-accounting-settlement .head-actions {display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.bo-post-accounting-settlement .btn-outline {
+  min-height:36px;padding:0 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--blue);color:var(--blue);transition:all .15s;
+}
+.bo-post-accounting-settlement .btn-outline:hover {background:var(--blue);color:#fff;}
+.bo-post-accounting-settlement .btn-outline:disabled {opacity:.4;cursor:not-allowed;background:var(--surface);color:var(--blue);}
+.bo-post-accounting-settlement .btn-icon {
+  width:34px;height:34px;padding:0;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;
+  background:var(--surface);border:1px solid #CBD9E8;color:var(--muted);transition:all .15s;
+}
+.bo-post-accounting-settlement .btn-icon:hover {border-color:var(--blue);color:var(--blue);}
+.bo-post-accounting-settlement main {max-width:none;margin:0;padding:0 .2rem 60px;}
+/* ---------- explain banner ---------- */
+.bo-post-accounting-settlement .explain {
+  background:var(--amber-pale);border:1px solid #f5d9a8;border-radius:var(--radius-md);padding:11px 14px;
+  font-size:12px;color:#7a4b00;margin-bottom:14px;line-height:1.65;position:relative;padding-right:36px;
+}
+.bo-post-accounting-settlement .explain b {color:#5c3800;}
+.bo-post-accounting-settlement .term-def {border-bottom:1px dotted #b98a3c;cursor:help;}
+.bo-post-accounting-settlement .explain-close {position:absolute;top:8px;right:10px;background:none;border:none;color:#9c7224;font-size:14px;cursor:pointer;line-height:1;padding:2px;}
+.bo-post-accounting-settlement .explain-close:hover {color:#5c3800;}
+.bo-post-accounting-settlement .explain.hidden {display:none;}
+/* ---------- panels ---------- */
+.bo-post-accounting-settlement .panel {background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:visible;}
+.bo-post-accounting-settlement .panel-title {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:0;padding:10px 16px;min-height:42px;border-bottom:1px solid var(--border);
+}
+.bo-post-accounting-settlement .panel-title-left {display:flex;align-items:center;gap:8px;}
+.bo-post-accounting-settlement .dot-bullet {width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.bo-post-accounting-settlement .panel-title h2 {font-size:12px;font-weight:700;color:var(--blue-dark);letter-spacing:.3px;text-transform:uppercase;}
+.bo-post-accounting-settlement .panel-body {padding:16px;}
+.bo-post-accounting-settlement .panel-sub {font-size:11px;color:var(--muted);font-weight:500;}
+.bo-post-accounting-settlement .badge {display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
+.bo-post-accounting-settlement .badge-blue {background:var(--blue-pale);color:var(--blue-dark);border:1px solid #c7dbfb;}
+.bo-post-accounting-settlement .badge-amber {background:var(--amber-pale);color:#9a5700;border:1px solid #f5d9a8;}
+.bo-post-accounting-settlement .badge-green {background:var(--green-pale);color:#176b3a;border:1px solid #bfead1;}
+.bo-post-accounting-settlement .badge-grey {background:#eef1f6;color:var(--muted);border:1px solid var(--border);}
+/* ---------- selection / search box ---------- */
+.bo-post-accounting-settlement .search-row {display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.bo-post-accounting-settlement .search-box {position:relative;display:flex;align-items:center;flex:0 0 260px;}
+.bo-post-accounting-settlement .search-box .icon {position:absolute;left:13px;font-size:14px;color:var(--muted-2);pointer-events:none;}
+.bo-post-accounting-settlement .search-box input {
+  width:100%;height:40px;padding:0 14px 0 38px;border:1px solid var(--border);border-radius:var(--radius-md);
+  background:var(--surface);font-size:13px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;
+  text-transform:uppercase;
+}
+.bo-post-accounting-settlement .search-box input:focus {border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+.bo-post-accounting-settlement .btn-go {
+  height:40px;padding:0 20px;border-radius:var(--radius-sm);border:1px solid var(--blue);background:var(--blue);
+  color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s;
+}
+.bo-post-accounting-settlement .btn-go:hover {background:var(--blue-dark);border-color:var(--blue-dark);}
+.bo-post-accounting-settlement .sample-chip {
+  height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:var(--radius-sm);
+  border:1px dashed #b9c6dc;background:#fbfcfe;color:var(--muted);font-size:11.5px;cursor:pointer;transition:all .15s;
+}
+.bo-post-accounting-settlement .sample-chip:hover {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.bo-post-accounting-settlement .empty-state {padding:40px 20px;text-align:center;color:var(--muted);font-size:12.5px;}
+.bo-post-accounting-settlement .empty-state .big {font-size:28px;margin-bottom:8px;opacity:.5;}
+/* ---------- basic selection detail grid ---------- */
+.bo-post-accounting-settlement .detail-grid {display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:var(--surface);}
+.bo-post-accounting-settlement .detail-cell {padding:10px 13px;border-bottom:1px solid var(--border-soft);border-right:1px solid var(--border-soft);}
+.bo-post-accounting-settlement .detail-cell:nth-child(4n) {border-right:none;}
+.bo-post-accounting-settlement .detail-lbl {font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em;}
+.bo-post-accounting-settlement .detail-val {font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;word-break:break-word;}
+.bo-post-accounting-settlement .detail-val.accent {color:var(--blue-dark);}
+.bo-post-accounting-settlement .detail-val.mono {font-family:"SF Mono",Consolas,monospace;font-size:12.5px;}
+.bo-post-accounting-settlement .detail-cell.span2 {grid-column:span 2;}
+.bo-post-accounting-settlement .detail-cell.hidden-field {display:none;}
+@media (max-width:1100px) {
+.bo-post-accounting-settlement .detail-grid {grid-template-columns:repeat(2,1fr);}
+.bo-post-accounting-settlement .detail-cell:nth-child(4n) {border-right:1px solid var(--border-soft);}
+.bo-post-accounting-settlement .detail-cell:nth-child(2n) {border-right:none;}
+}
+.bo-post-accounting-settlement .status-cell {display:inline-flex;align-items:center;gap:7px;font-weight:700;white-space:nowrap;}
+.bo-post-accounting-settlement .status-cell .dot {width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.bo-post-accounting-settlement .st-draft {color:var(--muted);}
+.bo-post-accounting-settlement .st-draft .dot {background:var(--muted-2);}
+.bo-post-accounting-settlement .st-confirmed {color:var(--ink);}
+.bo-post-accounting-settlement .st-confirmed .dot {background:#5b8def;}
+.bo-post-accounting-settlement .st-initiated {color:#9a5700;}
+.bo-post-accounting-settlement .st-initiated .dot {background:var(--amber);}
+.bo-post-accounting-settlement .st-complete {color:#176b3a;}
+.bo-post-accounting-settlement .st-complete .dot {background:var(--green);}
+/* ---------- common actions / toolbar ---------- */
+.bo-post-accounting-settlement .common-actions {display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-top:1px solid var(--border-soft);}
+.bo-post-accounting-settlement .common-btn {
+  border-radius:var(--radius-sm);height:36px;padding:0 15px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);transition:all .15s;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.bo-post-accounting-settlement .common-btn .ic {font-size:13px;}
+.bo-post-accounting-settlement .common-btn:hover:not(:disabled) {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.bo-post-accounting-settlement .common-btn.primary {background:var(--blue);color:#fff;border-color:var(--blue);}
+.bo-post-accounting-settlement .common-btn.primary:hover:not(:disabled) {background:var(--blue-dark);border-color:var(--blue-dark);}
+.bo-post-accounting-settlement .common-btn.approve {background:var(--green-pale);color:var(--green);border-color:#bfead1;}
+.bo-post-accounting-settlement .common-btn.approve:hover:not(:disabled) {background:var(--green);color:#fff;}
+.bo-post-accounting-settlement .common-btn:disabled {opacity:.4;cursor:not-allowed;}
+.bo-post-accounting-settlement .selected-count {font-size:11.5px;font-weight:600;color:var(--muted);margin-left:2px;}
+/* drag-and-drop: rows -> action buttons */
+.bo-post-accounting-settlement .drag-target {position:relative;}
+.bo-post-accounting-settlement body.row-dragging .drag-target:not(:disabled) {box-shadow:0 0 0 2px rgba(31,111,235,.35);}
+.bo-post-accounting-settlement body.row-dragging .drag-target:not(:disabled)::after {
+  content:"drop here";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(234,242,255,.92);color:var(--blue-dark);font-size:10.5px;font-weight:800;border-radius:var(--radius-sm);
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.bo-post-accounting-settlement .drag-target.drag-over:not(:disabled) {box-shadow:0 0 0 3px rgba(31,111,235,.55),0 7px 18px rgba(18,38,63,.16)!important;}
+/* ---------- tables ---------- */
+.bo-post-accounting-settlement .table-wrap {overflow-x:auto;}
+.bo-post-accounting-settlement table {width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+.bo-post-accounting-settlement .list-table th, .bo-post-accounting-settlement .list-table td {white-space:nowrap;padding:10px 11px;text-align:right;}
+.bo-post-accounting-settlement .list-table thead th {
+  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
+  border-bottom:1px solid var(--border);background:#fbfcfe;position:sticky;top:0;
+}
+.bo-post-accounting-settlement .list-table thead th.left {text-align:left;}
+.bo-post-accounting-settlement .list-table thead th:first-child {text-align:center;}
+.bo-post-accounting-settlement .list-table tbody td {text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
+.bo-post-accounting-settlement .list-table tbody td.left {text-align:left;}
+.bo-post-accounting-settlement .list-table tbody td:first-child {text-align:center;}
+.bo-post-accounting-settlement .list-table tbody tr:last-child td {border-bottom:none;}
+.bo-post-accounting-settlement .list-table tbody tr {cursor:pointer;transition:background .1s;}
+.bo-post-accounting-settlement .list-table tbody tr:hover td {background:#f7faff;}
+.bo-post-accounting-settlement .list-table tbody tr.dragging-row {opacity:.45;}
+.bo-post-accounting-settlement .list-table tbody tr.dragging-row td {background:#DDEBFF!important;}
+.bo-post-accounting-settlement .list-table tbody tr.posted td {background:#F7FBF8;}
+.bo-post-accounting-settlement .num {font-variant-numeric:tabular-nums;}
+.bo-post-accounting-settlement .empty-row td {text-align:center !important;color:var(--muted);padding:24px 12px;font-style:italic;}
+.bo-post-accounting-settlement .tbl-link {color:var(--blue);font-weight:700;text-decoration:none;cursor:pointer;background:none;border:none;font-size:12px;padding:0;}
+.bo-post-accounting-settlement .tbl-link:hover {color:var(--blue-dark);text-decoration:underline;}
+.bo-post-accounting-settlement .muted-dash {color:var(--muted-2);}
+.bo-post-accounting-settlement .deal-type-chip {background:var(--blue-pale);border:1px solid #c7dbfb;color:var(--blue-dark);padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;}
+.bo-post-accounting-settlement .emph-amt {color:#1657C4;font-weight:700;}
+.bo-post-accounting-settlement .emph-pay {color:#176b3a;font-weight:700;}
+.bo-post-accounting-settlement .chk {width:15px;height:15px;accent-color:var(--blue);cursor:pointer;}
+.bo-post-accounting-settlement .chk[disabled] {cursor:not-allowed;opacity:.5;}
+/* ---------- modal ---------- */
+.bo-post-accounting-settlement .modal-overlay {
+  position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;padding:20px;
+}
+.bo-post-accounting-settlement .modal-overlay.open {opacity:1;pointer-events:all;}
+.bo-post-accounting-settlement #doc-preview-overlay {z-index:1200;}
+.bo-post-accounting-settlement .modal-card {
+  background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 20px 50px rgba(16,24,40,.25);border:1px solid var(--border);
+  max-width:760px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(8px) scale(.98);transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.bo-post-accounting-settlement .modal-card.narrow {max-width:460px;}
+.bo-post-accounting-settlement .modal-card.wide {max-width:920px;}
+.bo-post-accounting-settlement .modal-overlay.open .modal-card {transform:translateY(0) scale(1);}
+.bo-post-accounting-settlement .modal-header {background:var(--blue-pale);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid #dbe6fb;}
+.bo-post-accounting-settlement .modal-icon {width:36px;height:36px;border-radius:var(--radius-sm);background:#fff;border:1px solid #c7dbfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:var(--blue-dark);}
+.bo-post-accounting-settlement .modal-header-text {flex:1;min-width:0;}
+.bo-post-accounting-settlement .modal-title {font-size:15px;font-weight:800;color:var(--ink);line-height:1.3;}
+.bo-post-accounting-settlement .modal-subtitle {font-size:11.5px;color:var(--muted);margin-top:2px;}
+.bo-post-accounting-settlement .modal-close {background:#fff;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.bo-post-accounting-settlement .modal-close:hover {border-color:var(--red);color:var(--red);}
+.bo-post-accounting-settlement .modal-body {padding:18px;overflow-y:auto;background:var(--surface);}
+.bo-post-accounting-settlement .modal-footer {padding:14px 18px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;align-items:center;gap:10px;background:#fbfcfe;flex-wrap:wrap;}
+.bo-post-accounting-settlement .btn-cancel {background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;min-height:36px;padding:0 16px;border-radius:var(--radius-sm);transition:all .15s;}
+.bo-post-accounting-settlement .btn-cancel:hover {border-color:var(--blue);color:var(--blue-dark);background:var(--blue-pale);}
+.bo-post-accounting-settlement .btn-confirm {background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:var(--radius-sm);min-height:36px;padding:0 18px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s;}
+.bo-post-accounting-settlement .btn-confirm:hover:not(:disabled) {background:var(--blue-dark);border-color:var(--blue-dark);}
+.bo-post-accounting-settlement .btn-confirm:disabled {opacity:.45;cursor:not-allowed;}
+.bo-post-accounting-settlement .btn-confirm.is-green {background:var(--green);border-color:var(--green);}
+.bo-post-accounting-settlement .btn-confirm.is-green:hover:not(:disabled) {background:#1f8a4c;border-color:#1f8a4c;}
+.bo-post-accounting-settlement .section-label {
+  font-size:10.5px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;font-weight:700;
+  margin:16px 0 9px;display:flex;align-items:center;gap:10px;
+}
+.bo-post-accounting-settlement .section-label:first-child {margin-top:0;}
+.bo-post-accounting-settlement .section-label::before {content:"";width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.bo-post-accounting-settlement .section-label::after {content:"";flex:1;height:1px;background:var(--border-soft);}
+.bo-post-accounting-settlement .field-grid {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.bo-post-accounting-settlement .field-grid.cols3 {grid-template-columns:1fr 1fr 1fr;}
+.bo-post-accounting-settlement .field {display:flex;flex-direction:column;gap:4px;}
+.bo-post-accounting-settlement .field label {font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;}
+.bo-post-accounting-settlement .field input, .bo-post-accounting-settlement .field select {
+  height:34px;padding:0 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--ink);font-size:12.5px;outline:none;
+}
+.bo-post-accounting-settlement .field input:disabled {background:#f3f6fa;color:var(--muted);}
+.bo-post-accounting-settlement .field .static {height:34px;display:flex;align-items:center;font-size:12.5px;font-weight:600;color:var(--ink);background:#f7faff;border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:0 10px;}
+.bo-post-accounting-settlement .check-row {display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink-soft);margin:8px 0;}
+.bo-post-accounting-settlement .entity-flow {display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:4px;}
+.bo-post-accounting-settlement .entity-flow .ent-chip {background:var(--blue-pale);border:1px solid #c7dbfb;color:var(--blue-dark);padding:5px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;}
+.bo-post-accounting-settlement .entity-flow .arrow {color:var(--muted-2);font-size:13px;}
+/* mini accounting grid inside modals */
+.bo-post-accounting-settlement .mini-table {width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;font-size:11.5px;}
+.bo-post-accounting-settlement .mini-table th {background:#fbfcfe;font-size:9.5px;text-transform:uppercase;color:var(--muted-2);font-weight:700;padding:7px 9px;text-align:right;border-bottom:1px solid var(--border);}
+.bo-post-accounting-settlement .mini-table th.left {text-align:left;}
+.bo-post-accounting-settlement .mini-table td {padding:7px 9px;text-align:right;border-bottom:1px solid var(--border-soft);}
+.bo-post-accounting-settlement .mini-table td.left {text-align:left;}
+.bo-post-accounting-settlement .mini-table tr:last-child td {border-bottom:none;}
+.bo-post-accounting-settlement .mini-table .dc-dr {color:var(--red);font-weight:700;}
+.bo-post-accounting-settlement .mini-table .dc-cr {color:var(--green);font-weight:700;}
+.bo-post-accounting-settlement .buysell-box {border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:12px;}
+.bo-post-accounting-settlement .buysell-box.buy {background:#f7faff;border-color:#c7dbfb;}
+.bo-post-accounting-settlement .buysell-box.sell {background:#fef9f0;border-color:#f5d9a8;}
+.bo-post-accounting-settlement .buysell-head {font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-bottom:9px;}
+.bo-post-accounting-settlement .buysell-box.buy .buysell-head {color:var(--blue-dark);}
+.bo-post-accounting-settlement .buysell-box.sell .buysell-head {color:#9a5700;}
+/* ---------- toast ---------- */
+.bo-post-accounting-settlement .zfac-toast {
+  position:fixed;bottom:24px;right:24px;transform:translateY(12px);max-width:380px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--border);font-size:12.5px;font-weight:600;padding:13px 16px;border-radius:var(--radius-md);
+  box-shadow:0 12px 30px rgba(16,24,40,.18);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;text-align:left;
+}
+.bo-post-accounting-settlement .zfac-toast.show {opacity:1;transform:translateY(0);pointer-events:auto;}
+.bo-post-accounting-settlement .zfac-toast.error {background:var(--red-pale);border-color:#f4c2c2;color:var(--red);}
+.bo-post-accounting-settlement .zfac-toast.success {background:var(--green-pale);border-color:#bfead1;color:var(--green);}
+.bo-post-accounting-settlement .hint {font-size:11px;color:var(--muted);line-height:1.5;}
+.bo-post-accounting-settlement .doc-link-pending {color:var(--muted-2);font-style:italic;font-size:11.5px;}
+@media (max-width:900px) {
+.bo-post-accounting-settlement .field-grid, .bo-post-accounting-settlement .field-grid.cols3 {grid-template-columns:1fr;}
+.bo-post-accounting-settlement .detail-grid {grid-template-columns:1fr 1fr;}
+}
