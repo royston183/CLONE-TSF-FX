@@ -1,0 +1,2794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post FX MTM to Accounting — OIL, OGA &amp; DMCC (USD)</title>
+<style>
+/* =========================================================
+   Design system
+   ========================================================= */
+:root{
+  --bg:#F4F8FC;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#5C7085;
+  --text-faint:#8CA0B3;
+  --border:#E1E9F2;
+  --border-strong:#CBD9E8;
+  --primary:#1F6FEB;
+  --primary-dark:#1657C4;
+  --primary-light:#6FA8FF;
+  --primary-tint:#EAF2FF;
+  --success:#27AE60;
+  --success-tint:#E8F8EF;
+  --warning:#FF8A00;
+  --warning-tint:#FFF3E4;
+  --error:#E74C3C;
+  --error-tint:#FDEAE8;
+  --teal:#17BEBB;
+  --teal-tint:#E7FAF9;
+  --purple:#8E44AD;
+  --purple-tint:#F5EAFA;
+  --gray-tint:#EEF2F6;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(22,39,64,0.04), 0 4px 14px rgba(22,39,64,0.06);
+  --shadow-pop:0 8px 28px rgba(22,39,64,0.16);
+  --font:'Inter',Arial,Helvetica,sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:12.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:var(--font);}
+input,select,textarea{font-family:var(--font);}
+
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-thumb{background:#C7D4E2;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* =========================================================
+   Layout
+   ========================================================= */
+.app{
+  max-width:100%;
+  margin:0;
+  padding:0.3rem 0.2rem 0.5rem;
+}
+
+.table-col{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 210px);
+}
+.table-col > .card{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  margin-bottom:0;
+}
+.table-col .table-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+}
+@media (max-width:1080px){
+  .table-col{
+    max-height:none;
+  }
+  .table-col .table-scroll{max-height:520px;}
+}
+
+.page-actions-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+
+/* KPI cards */
+.kpi-row{
+  display:flex;
+  gap:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.kpi-card{
+  flex:1 1 180px;
+  min-width:170px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-left:4px solid var(--primary);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);
+  padding:22px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  min-height:64px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-left-color .18s ease;
+}
+.kpi-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(22,39,64,0.08), 0 10px 22px rgba(22,39,64,0.09);
+  border-left-color:var(--primary-dark);
+}
+.kpi-card .kpi-value{
+  font-size:30px;
+  font-weight:700;
+  color:var(--primary-dark);
+  line-height:1.15;
+}
+.kpi-card .kpi-label{
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+
+.create-card{border-left-color:var(--primary);}
+.create-card .create-icon-circle{
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;
+  font-weight:700;
+  line-height:1;
+  transition:background .18s ease, transform .18s ease;
+}
+.create-card .kpi-label{color:var(--text);font-weight:700;font-size:13px;}
+.create-card:hover .create-icon-circle{
+  background:var(--primary-dark);
+  transform:scale(1.08);
+}
+.create-card:hover{border-left-color:var(--primary-dark);}
+
+/* Header */
+.page-header{
+  margin-bottom:12px;
+  background:#EAF3FF;
+  border:1px solid #D7E9FF;
+  border-radius:var(--radius-md);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.page-header .logo-img{
+  height:40px;
+  width:auto;
+  max-width:120px;
+  object-fit:contain;
+  flex:none;
+}
+.page-header .logo-placeholder{
+  height:36px;
+  width:36px;
+  flex:none;
+  border-radius:8px;
+  border:1px dashed var(--border-strong);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-faint);
+}
+.page-header .header-text{display:flex;flex-direction:column;}
+
+/* Compact form rows with variable-width fields */
+.form-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin-bottom:12px;
+}
+.form-row:last-child{margin-bottom:0;}
+.form-row > .field{flex:1 1 160px;min-width:0;}
+.field.w-sm{flex:0 1 100px;}
+.field.w-sm-md{flex:0 1 124px;}
+.field.w-md{flex:0 1 154px;}
+.field.w-md-wide{flex:0 1 184px;}
+.field.w-wide{flex:1 1 190px;min-width:165px;}
+.field.w-date{flex:0 0 156px;min-width:156px;}
+.form-row.no-wrap{flex-wrap:nowrap;}
+.form-row.no-wrap > .field{min-width:0;}
+.field.fx-field{flex:1 1 0;min-width:130px;}
+
+/* 12-column responsive grid for the Create Master Contract modal.
+   Each field gets a span sized to what its value actually needs,
+   rather than forcing every field to equal width. */
+.form-grid-12{
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:10px 12px;
+  margin-bottom:14px;
+}
+.form-grid-12:last-child{margin-bottom:0;}
+.form-grid-12 > .field{min-width:0;}
+.gc-3{grid-column:span 3;}
+.gc-4{grid-column:span 4;}
+.gc-5{grid-column:span 5;}
+.gc-6{grid-column:span 6;}
+.gc-7{grid-column:span 7;}
+@media (max-width:700px){
+  .form-grid-12{grid-template-columns:repeat(6, 1fr);}
+  .gc-3{grid-column:span 3;}
+  .gc-4{grid-column:span 3;}
+  .gc-5{grid-column:span 6;}
+  .gc-6{grid-column:span 6;}
+  .gc-7{grid-column:span 6;}
+}
+@media (max-width:460px){
+  .form-grid-12{grid-template-columns:1fr;}
+  .gc-3, .gc-4, .gc-5, .gc-6, .gc-7{grid-column:span 1;}
+}
+.page-header h1{
+  font-size:19px;
+  font-weight:700;
+  margin:0 0 3px;
+  letter-spacing:-0.2px;
+}
+.page-header p{
+  margin:0;
+  color:var(--text-muted);
+  font-size:12.5px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  margin-bottom:12px;
+  overflow:visible;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  font-weight:700;
+  color:var(--primary-dark);
+  letter-spacing:0.3px;
+}
+.section-title .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none;
+}
+.section-body{
+  padding:12px 16px 14px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px 14px;
+}
+.form-grid.cols-1{grid-template-columns:1fr;}
+.form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+}
+.field label{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--text-muted);
+  white-space:nowrap;
+  line-height:1.2;
+}
+.field label .req{color:var(--error);margin-left:2px;}
+.field .hint{font-size:11px;color:var(--text-faint);}
+.field .error-msg{
+  font-size:11px;
+  color:var(--error);
+  display:none;
+  margin-top:-2px;
+}
+.field.has-error .error-msg{display:block;}
+.field.has-error input,
+.field.has-error .select-display,
+.field.has-error .dd-input{
+  border-color:var(--error) !important;
+  background:var(--error-tint);
+}
+
+.control{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 11px;
+  font-size:12.5px;
+  color:var(--text);
+  background:#fff;
+  width:100%;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.control::placeholder{color:var(--text-faint);}
+.control:hover{border-color:#AFC2D8;}
+.control:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-tint);
+}
+.control[readonly]{
+  background:var(--gray-tint);
+  color:var(--text-muted);
+  cursor:default;
+}
+.control:disabled{
+  background:var(--gray-tint);
+  color:var(--text-faint);
+  cursor:not-allowed;
+}
+
+.input-with-suffix{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.input-with-suffix .control{padding-right:58px;}
+.input-with-suffix .suffix{
+  position:absolute;
+  right:8px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--primary-dark);
+  background:var(--primary-tint);
+  padding:3px 7px;
+  border-radius:6px;
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+/* Searchable dropdown */
+.dd{position:relative;}
+.dd-input{
+  height:36px;
+  min-width:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 32px 0 11px;
+  font-size:12.5px;
+  width:100%;
+  outline:none;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+  cursor:pointer;
+  transition:border-color .15s, box-shadow .15s;
+}
+.dd-input::placeholder{color:var(--text-faint);}
+.dd-input:hover{border-color:#AFC2D8;}
+.dd-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.dd.disabled .dd-input{background-color:var(--gray-tint);color:var(--text-faint);cursor:not-allowed;}
+
+.dd-panel{
+  position:absolute;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  min-width:200px;
+  max-height:240px;
+  overflow-y:auto;
+  z-index:210;
+  display:none;
+  padding:6px;
+}
+.dd.open .dd-panel{display:block;}
+.dd-item{
+  padding:8px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.dd-item:hover, .dd-item.active{background:var(--primary-tint);}
+.dd-item .primary-line{font-weight:600;font-size:12.5px;color:var(--text);}
+.dd-item .secondary-line{font-size:11px;color:var(--text-muted);}
+.dd-empty{padding:14px 10px;text-align:center;color:var(--text-faint);font-size:11.5px;}
+
+/* Date field */
+.date-field{position:relative;}
+.date-field .control{padding-right:34px;}
+.date-icon{
+  position:absolute;
+  right:6px;top:50%;
+  transform:translateY(-50%);
+  width:24px;height:24px;
+  border:none;background:transparent;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  color:var(--text-muted);
+  font-size:13px;
+}
+.date-icon:hover{background:var(--primary-tint);color:var(--primary);}
+.date-popup{
+  position:absolute;
+  width:250px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop);
+  z-index:210;
+  padding:10px;
+  display:none;
+}
+.date-popup.open{display:block;}
+.cal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
+.cal-head button{
+  width:24px;height:24px;border:none;background:var(--gray-tint);
+  border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);
+}
+.cal-head button:hover{background:var(--primary-tint);color:var(--primary);}
+.cal-head .cal-title{font-weight:700;font-size:12px;}
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.cal-grid .dow{
+  text-align:center;font-size:10px;color:var(--text-faint);font-weight:700;padding:4px 0;
+}
+.cal-grid .day{
+  text-align:center;
+  font-size:11.5px;
+  padding:6px 0;
+  border-radius:6px;
+  cursor:pointer;
+  color:var(--text);
+}
+.cal-grid .day:hover{background:var(--primary-tint);}
+.cal-grid .day.muted{color:var(--text-faint);}
+.cal-grid .day.selected{background:var(--primary);color:#fff;font-weight:700;}
+.cal-grid .day.today:not(.selected){box-shadow:inset 0 0 0 1px var(--primary-light);}
+
+/* Buttons */
+.btn{
+  height:32px;
+  padding:0 16px;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid transparent;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease, box-shadow .15s ease, transform .1s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:0 2px 6px rgba(31,111,235,0.25);}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-strong);}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(22,39,64,0.08);}
+.btn-danger{background:#fff;color:var(--error);border-color:#F3C6C0;}
+.btn-danger:hover{background:var(--error-tint);}
+.btn-ghost{background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
+.btn-ghost:hover{text-decoration:underline;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
+
+.actions-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:12px 16px;
+}
+
+/* Success banner */
+.success-banner{
+  display:none;
+  align-items:center;
+  gap:10px;
+  margin:0 0 12px;
+  padding:9px 14px;
+  background:var(--success-tint);
+  border:1px solid #BFE8D0;
+  border-radius:var(--radius-md);
+  color:#1E7A46;
+  font-size:12px;
+}
+.success-banner.show{display:flex;}
+.success-banner b{font-weight:700;}
+.success-banner .spacer{flex:1;}
+
+/* =========================================================
+   Master Contracts table section
+   ========================================================= */
+.table-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px 10px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+}
+.search-box{
+  position:relative;
+  flex:1 1 260px;
+  min-width:200px;
+}
+.search-box input{
+  height:32px;
+  width:100%;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:0 12px 0 30px;
+  font-size:12.5px;
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.search-box .icon{
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-faint);font-size:13px;
+}
+.toolbar-spacer{flex:1 0 8px;}
+.result-count{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+
+.filter-select{
+  flex:0 1 122px;
+  min-width:88px;
+  height:32px;
+  cursor:pointer;
+}
+
+.table-scroll{
+  overflow-x:auto;
+}
+table.mc-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1060px;
+}
+table.mc-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:10px 14px;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+  z-index:5;
+}
+table.mc-table thead th:hover{color:var(--primary-dark);}
+table.mc-table thead th.no-sort{cursor:default;}
+table.mc-table thead th.no-sort:hover{color:var(--text-muted);}
+table.mc-table thead th.action-col, table.mc-table td.action-col{
+  width:40px;
+  text-align:center;
+  padding-left:10px;
+  padding-right:10px;
+}
+.row-select-checkbox{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  vertical-align:middle;
+}
+table.mc-table thead th .sort-ind{
+  display:inline-block;
+  margin-left:4px;
+  font-size:9px;
+  color:var(--text-faint);
+}
+table.mc-table thead th.sorted .sort-ind{color:var(--primary);}
+table.mc-table thead th.num,
+table.mc-table td.num{text-align:right;}
+table.mc-table tbody td{
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  white-space:nowrap;
+}
+table.mc-table tbody tr{cursor:pointer;transition:background .18s ease;}
+table.mc-table tbody tr:hover{background:#F7FAFD;}
+table.mc-table tbody tr:hover .mc-link{color:var(--primary);}
+table.mc-table tbody tr.selected{background:var(--primary-tint);}
+table.mc-table tbody tr.row-new{animation:flashNew 1.8s ease-out;}
+@keyframes flashNew{
+  0%{background:#DFF3E6;}
+  100%{background:transparent;}
+}
+.mc-link{color:var(--primary-dark);font-weight:700;cursor:pointer;transition:color .15s ease;}
+.mc-link:hover{text-decoration:underline;color:var(--primary);}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.status-pill .status-dot{width:6px;height:6px;border-radius:50%;}
+.status-in-use{background:var(--success-tint);color:#1E7A46;}
+.status-in-use .status-dot{background:var(--success);}
+.status-confirmed{background:var(--primary-tint);color:var(--primary-dark);}
+.status-confirmed .status-dot{background:var(--primary);}
+.status-draft{background:var(--gray-tint);color:var(--text-muted);}
+.status-draft .status-dot{background:var(--text-faint);}
+.status-pending{background:var(--warning-tint);color:#9A5300;}
+.status-pending .status-dot{background:var(--warning);}
+.status-rejected{background:var(--error-tint);color:#B4362A;}
+.status-rejected .status-dot{background:var(--error);}
+.status-settled{background:var(--teal-tint);color:#0E8785;}
+.status-settled .status-dot{background:var(--teal);}
+.status-matured{background:var(--purple-tint);color:#6C3488;}
+.status-matured .status-dot{background:var(--purple);}
+
+/* Plain-text status presentation (Master Contracts table) */
+.status-text{font-weight:600;font-size:12px;white-space:nowrap;}
+.status-text-in-use{color:var(--success);}
+.status-text-confirmed{color:var(--primary);}
+.status-text-draft{color:var(--text-muted);}
+.status-text-pending{color:var(--warning);}
+.status-text-rejected{color:var(--error);}
+.status-text-settled{color:var(--teal);}
+.status-text-matured{color:var(--purple);}
+
+.empty-state{
+  padding:40px 20px;
+  text-align:center;
+  color:var(--text-muted);
+}
+.empty-state .big{font-size:28px;margin-bottom:6px;}
+
+.table-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px 12px;
+  flex-wrap:wrap;
+  gap:10px;
+  flex:0 0 auto;
+  border-top:1px solid var(--border);
+}
+.page-size-select{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);}
+.page-size-select select{height:28px;border:1px solid var(--border-strong);border-radius:6px;font-size:11.5px;padding:0 6px;}
+
+.pagination{display:flex;align-items:center;gap:4px;}
+.pagination button{
+  min-width:28px;height:28px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:6px;
+  font-size:11.5px;
+  cursor:pointer;
+  color:var(--text);
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .1s ease;
+}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.pagination button:active:not(:disabled){transform:translateY(1px);}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(16,26,41,0.5);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-overlay.closing{display:flex;}
+.modal{
+  background:#fff;
+  border-radius:var(--radius-lg);
+  width:380px;
+  max-width:100%;
+  box-shadow:var(--shadow-pop);
+  padding:26px 24px 22px;
+  text-align:center;
+  animation:popIn .18s ease-out;
+}
+@keyframes popIn{from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes popOut{from{transform:scale(1);opacity:1;}to{transform:scale(.98);opacity:0;}}
+.modal-overlay.closing .modal{animation:popOut .16s ease-in forwards;}
+.modal .check-circle{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--success-tint);
+  color:var(--success);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin:0 auto 14px;
+}
+.modal h2{font-size:15.5px;margin:0 0 6px;}
+.modal p{margin:0 0 16px;color:var(--text-muted);font-size:12.5px;}
+.modal .deal-id-box{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px;
+  margin-bottom:18px;
+}
+.modal .deal-id-box .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:700;margin-bottom:4px;}
+.modal .deal-id-box .value{font-size:19px;font-weight:700;color:var(--primary-dark);letter-spacing:0.4px;}
+.modal .modal-actions{display:flex;gap:10px;}
+.modal .modal-actions .btn{flex:1;}
+
+.modal.modal-left{text-align:left;}
+.modal-head-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.modal-head-row h2{margin:0;}
+.modal-close-btn{
+  border:none;
+  background:transparent;
+  font-size:18px;
+  line-height:1;
+  color:var(--text-muted);
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:6px;
+  transition:background .15s ease, color .15s ease;
+}
+.modal-close-btn:hover{background:var(--gray-tint);color:var(--text);}
+.commodity-check-list{
+  max-height:260px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:6px;
+}
+.commodity-check-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--text);
+}
+.commodity-check-item:hover{background:var(--primary-tint);}
+.commodity-check-item input[type="checkbox"]{
+  width:14px;height:14px;
+  accent-color:var(--primary);
+  cursor:pointer;
+  flex:none;
+}
+
+/* Scrollable detail popups (KPI detail, Master Contract detail) */
+.modal.modal-scrollable{
+  display:flex;
+  flex-direction:column;
+  max-height:92vh;
+}
+.modal.modal-scrollable .modal-head-row{flex:0 0 auto;}
+.modal.modal-scrollable .modal-body-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding-right:2px;
+}
+.modal.modal-scrollable .modal-actions{flex:0 0 auto;margin-top:14px;}
+.kpi-detail-modal{width:520px;}
+.contract-detail-modal{width:720px;}
+.child-contract-modal{width:min(860px, calc(100vw - 40px));max-width:96vw;}
+.contract-detail-actions,.child-modal-actions{flex-wrap:wrap;justify-content:flex-end;}
+.contract-detail-actions .btn,.child-modal-actions .btn{flex:0 0 auto;min-width:110px;}
+.child-parent-summary{margin-bottom:12px;padding:9px 11px;background:var(--primary-tint);border:1px solid #D7E9FF;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted);}
+.child-parent-summary b{color:var(--primary-dark);}
+.modal.modal-scrollable.create-contract-modal{
+  width:min(720px, calc(100vw - 40px));
+  max-width:96vw;
+  max-height:97vh;
+  padding:20px 22px 16px;
+}
+.create-modal-actions{
+  justify-content:flex-end;
+}
+.create-modal-actions .btn{
+  flex:0 0 auto;
+  min-width:120px;
+}
+
+.form-section{margin-bottom:14px;}
+.form-section:last-child{margin-bottom:0;}
+.form-section .section-title{
+  padding:0 0 6px;
+  border:none;
+  font-size:12.5px;
+}
+.form-section .section-body{padding:0;}
+
+/* KPI summary key/value list */
+.kv-list{display:flex;flex-direction:column;gap:1px;}
+.kv-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+}
+.kv-row:last-child{border-bottom:none;}
+.kv-row .kv-label{color:var(--text-muted);}
+.kv-row .kv-value{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.kv-row.kv-total{background:var(--primary-tint);border-radius:6px;padding:8px 10px;margin:2px 0;}
+.kv-row.kv-total .kv-label{color:var(--primary-dark);font-weight:700;}
+.kv-row.kv-total .kv-value{color:var(--primary-dark);font-size:13.5px;}
+
+/* Compact table used inside KPI list popups */
+.popup-table-wrap{
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:auto;
+  max-height:360px;
+}
+table.popup-table{width:100%;border-collapse:collapse;min-width:560px;}
+table.popup-table thead th{
+  position:sticky;top:0;
+  background:#F7FAFD;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.3px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:8px 10px;
+  white-space:nowrap;
+}
+table.popup-table thead th.num{text-align:right;}
+table.popup-table td{
+  padding:7px 10px;
+  border-bottom:1px solid var(--border);
+  font-size:11.5px;
+  white-space:nowrap;
+}
+table.popup-table td.num{text-align:right;}
+table.popup-table tbody tr:hover{background:#F7FAFD;}
+.popup-empty{text-align:center !important;color:var(--text-faint);padding:18px !important;}
+
+/* Contract detail sections */
+.detail-section{margin-bottom:16px;}
+.detail-section:last-child{margin-bottom:0;}
+.detail-section-title{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  font-weight:700;
+  color:var(--primary-dark);
+  margin-bottom:8px;
+  padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.detail-item{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.detail-item.full{grid-column:1 / -1;}
+.detail-item .detail-label{font-size:10.5px;color:var(--text-muted);font-weight:600;}
+.detail-item .detail-value{font-size:12.5px;color:var(--text);font-weight:600;overflow-wrap:anywhere;}
+
+/* Validation summary toast */
+.toast{
+  position:fixed;
+  bottom:22px;left:50%;
+  transform:translateX(-50%);
+  background:#2A3B4D;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:var(--radius-md);
+  font-size:12.5px;
+  box-shadow:var(--shadow-pop);
+  z-index:300;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.toast.show{display:flex;}
+.toast.error{background:#5A2420;}
+
+/* Utility */
+.mono{font-variant-numeric:tabular-nums;}
+.text-right{text-align:right;}
+.icon-btn{
+  width:34px;height:34px;
+  border:1px solid var(--border-strong);
+  background:#fff;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);
+  font-size:14px;
+}
+.icon-btn:hover{border-color:var(--primary);color:var(--primary);}
+.icon-btn.active{background:var(--primary-tint);border-color:var(--primary);color:var(--primary);}
+
+@media (max-width:900px){
+  .form-grid{grid-template-columns:repeat(2,1fr);}
+  .filter-select{flex:1 1 130px;}
+}
+@media (max-width:600px){
+  .app{padding:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .actions-row{flex-direction:column-reverse;}
+  .actions-row .btn{width:100%;}
+}
+</style>
+<style>
+/* =========================================================
+   OTTK visual theme — CSS-ONLY override block.
+   This block is appended last so its rules win the cascade
+   over the original stylesheet above (same selectors, later
+   source order, no specificity tricks needed). Nothing in the
+   HTML or JavaScript is touched; every rule below only changes
+   how existing elements look.
+   ========================================================= */
+
+/* ---- 1. Design tokens: remap the app's CSS variables to the
+   OTTK palette. Because the entire original stylesheet is
+   built on these custom properties, this alone re-themes the
+   vast majority of components (buttons, inputs, dropdowns,
+   cards, borders, focus rings, shadows, radii, etc). ---- */
+:root{
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+
+/* ---- 2. Type scale: match OTTK's actual component sizes, not
+   just the 13px body base — OTTK sets its own explicit sizes
+   for titles, labels, meta text and table headers rather than
+   inheriting one size everywhere. ---- */
+body{ font-size:13px; }
+.control,
+.dd-input,
+.dd-item .primary-line,
+.btn,
+.search-box input{ font-size:13px; }
+.field label,
+.section-title{ font-size:13px; }
+.filter-select{ font-size:13px; }
+.page-header h1{ font-size:16px; }
+.page-header p{ font-size:15px; }
+.modal h2{ font-size:14px; }
+.kpi-card .kpi-label{ font-size:12px; }
+
+/* ---- 3. Header: remove the light-blue strip — sits flush on
+   the page background like the rest of OTTK's chrome ---- */
+.page-header{
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+}
+
+/* ---- 4. Buttons: tighter, SAP-compact padding and hover feedback ---- */
+.btn{ padding:0 12px; border-radius:var(--radius-sm); }
+.btn-secondary:hover{ box-shadow:0 1px 4px rgba(34,53,72,.1); }
+.btn-primary:hover{ box-shadow:0 2px 6px rgba(10,110,209,.22); }
+
+/* ---- 5. KPI / action cards: same OTTK panel look (white surface,
+   thin border, compact shadow, 8px radius) ---- */
+.kpi-card{ box-shadow:var(--shadow-card); }
+.kpi-card:hover{
+  box-shadow:0 4px 10px rgba(34,53,72,.1), 0 10px 22px rgba(34,53,72,.1);
+}
+
+/* ---- 6. Inputs & dropdowns: OTTK hover/focus border tone ---- */
+.control:hover,
+.dd-input:hover{ border-color:#A6B0B9; }
+
+/* ---- 7. Search box + filter selects: compact SAP sizing ---- */
+.search-box input,
+.filter-select{ border-radius:var(--radius-sm); }
+
+/* ---- 8. Table: SAP-grid look — muted uppercase header on a
+   secondary surface, tighter row padding, subtle row hover ---- */
+table.mc-table thead th{
+  background:var(--gray-tint);
+  padding:8px 10px;
+  font-size:13px;
+}
+table.mc-table tbody td{
+  padding:8px 10px;
+  font-size:14px;
+}
+table.mc-table tbody tr:hover{ background:#F7FBFF; }
+.popup-table-wrap table thead th,
+table.popup-table thead th{ background:var(--gray-tint); font-size:13px; }
+table.popup-table td{ font-size:14px; }
+table.popup-table tbody tr:hover{ background:#F7FBFF; }
+
+/* ---- 9. Status presentation: align the semantic shades used
+   for both the plain-text table status and the pill variant
+   (details popup) to the OTTK palette ---- */
+.status-text-in-use{ color:var(--success); }
+.status-text-confirmed{ color:var(--primary); }
+.status-text-pending{ color:#9B6B00; }
+.status-text-rejected{ color:var(--error); }
+.status-in-use{ color:var(--success); }
+.status-pending{ color:#9B6B00; }
+.status-rejected{ color:var(--error); }
+
+/* ---- 10. Pagination: compact square SAP-style buttons ---- */
+.pagination button{ border-radius:var(--radius-sm); }
+
+/* ---- 11. Modals / popups: OTTK modal shadow + radius (via
+   --radius-lg / --shadow-pop above) plus a matching close-icon
+   hover and success-state accent ---- */
+.modal{ border:1px solid #B9C2C9; }
+.modal .check-circle{ background:var(--success-tint); color:var(--success); }
+.modal-close-btn:hover{ background:var(--gray-tint); }
+
+/* ---- 12. Success banner + toast: OTTK green accent / dark toast ---- */
+.success-banner{ border-color:#C5E0CD; color:var(--success); }
+.toast{ background:#243B53; }
+.toast.error{ background:#4A211D; }
+
+/* ---- 13. Scrollbar + misc chrome ---- */
+::-webkit-scrollbar-thumb{ background:#B7C2CB; }
+.child-parent-summary{ border-color:#BEE0F7; }
+
+/* ---- 14. Table: lighter cell borders + subtle hover "lift" ---- */
+table.mc-table thead th{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody td{ border-bottom-color:#E6E9EB; }
+table.mc-table tbody tr{
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+table.mc-table tbody tr:hover{
+  transform:translateY(-1px) scale(1.002);
+  box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF;
+  position:relative;
+  z-index:2;
+}
+table.mc-table tbody tr.selected{ background:#EAF3FC; }
+table.mc-table tbody tr.selected:hover{
+  background:#EAF3FC;
+  box-shadow:0 3px 9px rgba(10,110,209,.14);
+}
+table.mc-table tbody tr.dragging{ opacity:.5; }
+
+/* ---- 15. KPI value: neutral dark text instead of blue ---- */
+.kpi-card .kpi-value{ color:var(--text); }
+
+/* ---- 16. KPI description: small, secondary, bottom-right of the card ---- */
+.kpi-card{ position:relative; }
+.kpi-description{
+  position:absolute;
+  right:16px;
+  bottom:12px;
+  max-width:62%;
+  font-size:13px;
+  line-height:1.3;
+  color:var(--text-faint);
+  text-align:right;
+  font-weight:500;
+}
+
+/* ---- 17. Drag and drop: compact ghost label + drop-target feedback ---- */
+.drag-ghost{
+  position:fixed;
+  top:-1000px;
+  left:-1000px;
+  padding:6px 10px;
+  background:#1D2D3E;
+  color:#fff;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family:var(--font);
+  pointer-events:none;
+}
+.btn.drag-over{
+  border-color:var(--primary) !important;
+  background:var(--primary-tint) !important;
+  color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+</style>
+<style>
+/* =========================================================
+   Post FX MTM to Accounting — page-specific components.
+   Layered on the reference design tokens (same variables).
+   ========================================================= */
+.app{padding:.5rem .6rem 1rem;}
+.page-header{margin-bottom:10px;}
+.page-header .btn{margin-left:auto;}
+
+/* ---- Selection card ---- */
+.sel-row{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px 16px;
+}
+.sel-row .field{flex:0 0 auto;}
+.sel-row .field.f-company{width:230px;}
+.sel-row .field.f-date{width:176px;}
+.sel-row .field.f-layout{width:190px;}
+.sel-row .field.f-posting{min-width:300px;}
+.sel-row .sel-actions{display:flex;align-items:flex-start;margin-top:21px;}
+.sel-row .sel-actions .btn{height:36px;min-width:112px;}
+.field .hint{line-height:1.3;}
+.field .hint.warn{color:var(--text-muted);}
+
+/* radio segmented control (Posting Type) */
+.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;height:36px;background:#fff;}
+.seg label{
+  display:flex;align-items:center;gap:7px;padding:0 14px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;
+  border-right:1px solid var(--border);transition:background .15s,color .15s;
+}
+.seg label:last-child{border-right:none;}
+.seg label:hover{background:var(--primary-tint);}
+.seg input{accent-color:var(--primary);margin:0;cursor:pointer;}
+.seg label.on{background:var(--primary-tint);color:var(--primary-dark);}
+.seg:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+
+/* multi-select (Company Code) — reuses .dd-input / .dd-panel look */
+.ms-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;}
+.ms-item:hover{background:var(--primary-tint);}
+.ms-item input{accent-color:var(--primary);margin:0;flex:none;cursor:pointer;}
+.ms-item .ms-code{font-weight:700;font-size:13px;}
+.ms-item .ms-name{font-size:11.5px;color:var(--text-muted);}
+.ms-item.ms-all{border-bottom:1px solid var(--border);border-radius:var(--radius-sm) var(--radius-sm) 0 0;margin-bottom:4px;}
+.ms-foot{padding:6px 10px 2px;font-size:11px;color:var(--text-faint);}
+
+/* ---- List card ---- */
+.list-card .section-title{justify-content:space-between;}
+.section-title .st-left{display:flex;align-items:center;gap:8px;}
+.section-title .st-right{font-size:12px;font-weight:600;color:var(--text-muted);}
+.section-title .st-right b{color:var(--text);font-weight:700;}
+
+.table-toolbar{padding:10px 16px 10px;gap:8px;}
+.search-box{flex:1 1 220px;max-width:340px;min-width:180px;}
+.tb-input{flex:0 1 128px;min-width:100px;height:32px;}
+.filter-select{flex:0 1 150px;}
+.filter-select.sel-bp{flex:0 1 190px;}
+.filter-select.sel-pair{flex:0 1 128px;}
+.filter-select.sel-deal{flex:0 1 150px;}
+.tb-sep{width:1px;height:20px;background:var(--border);flex:none;margin:0 2px;}
+
+.drop-wrap{display:inline-flex;border-radius:var(--radius-sm);}
+.drop-wrap .btn:disabled{pointer-events:none;}
+.drop-wrap.drop-ready .btn{box-shadow:0 0 0 2px rgba(10,110,209,.28);}
+.drop-wrap.drag-over .btn{
+  background:var(--primary-dark) !important;color:#fff !important;
+  box-shadow:0 0 0 3px rgba(10,110,209,.3) !important;
+}
+
+.legend{display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+.legend .chip{display:inline-flex;align-items:center;gap:6px;}
+.legend .sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--border-strong);}
+.legend .sw.ext{background:#E3E7EA;}
+.legend .sw.mtm{background:#D6E8FA;border-color:#9CC4EE;}
+
+.table-scroll{overflow:auto;max-height:calc(100vh - 345px);min-height:260px;}
+table.mc-table{min-width:0;width:max-content;min-width:100%;}
+table.mc-table thead th{font-size:11.5px;padding:8px 10px;vertical-align:bottom;}
+table.mc-table tbody td{font-size:13px;padding:7px 10px;}
+table.mc-table tbody tr:hover{transform:none !important;box-shadow:none !important;}
+table.mc-table tbody tr.dragging{opacity:.5;}
+table.mc-table thead th.grp-ext{box-shadow:inset 0 -3px 0 #B7C0C7;}
+table.mc-table thead th.grp-mtm{box-shadow:inset 0 -3px 0 #4FA3E8;}
+table.mc-table td.grp-ext{background:rgba(137,150,161,.11);}
+table.mc-table td.grp-mtm{background:rgba(10,110,209,.06);}
+table.mc-table tbody tr:hover td.grp-ext,
+table.mc-table tbody tr:hover td.grp-mtm{background:rgba(10,110,209,.10);}
+table.mc-table tbody tr.selected td.grp-ext,
+table.mc-table tbody tr.selected td.grp-mtm{background:#DCEBFA;}
+table.mc-table td.act-col,table.mc-table th.act-col{width:40px;min-width:40px;text-align:center;padding-left:8px;padding-right:8px;}
+
+/* pinned columns */
+table.mc-table th.pin,table.mc-table td.pin{position:sticky;z-index:3;}
+table.mc-table th.pin{z-index:8;}
+table.mc-table td.pin{background:#fff;}
+table.mc-table tbody tr:hover td.pin{background:#F7FBFF;}
+table.mc-table tbody tr.selected td.pin{background:#EAF3FC;}
+table.mc-table .pin-0{left:0;}
+table.mc-table .pin-1{left:40px;box-shadow:2px 0 0 var(--border);}
+table.mc-table thead th.pin-1{box-shadow:2px 0 0 var(--border), inset 0 -0px 0 transparent;}
+
+.mc-link{font-weight:700;}
+.doc-link{font-weight:600;color:var(--primary-dark);cursor:pointer;}
+.doc-link:hover{text-decoration:underline;color:var(--primary);}
+.dash{color:var(--text-faint);}
+.msg-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+.pos{color:var(--text);}
+
+.empty-state{padding:44px 20px;}
+.empty-state .big{font-size:30px;opacity:.75;}
+.empty-state .es-title{font-weight:700;color:var(--text);margin-bottom:3px;font-size:13.5px;}
+
+.table-footer .tf-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.showing{font-size:11.5px;color:var(--text-muted);}
+
+/* ---- Modals ---- */
+.modal-wide{width:min(900px,calc(100vw - 40px));}
+.modal-doc{width:min(840px,calc(100vw - 40px));}
+.modal-txn{width:min(760px,calc(100vw - 40px));}
+.modal h2{font-size:15px;}
+.modal.modal-left p{margin:0 0 12px;}
+.confirm-body{font-size:13px;color:var(--text-muted);margin:0 0 6px;line-height:1.5;}
+.confirm-count{display:flex;gap:10px;margin:12px 0 16px;}
+.confirm-count .cc{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 12px;}
+.confirm-count .cc .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--text-muted);}
+.confirm-count .cc .v{font-size:17px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+
+.log-icon{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px;}
+.log-icon .ic{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1;}
+.log-ok{color:var(--success);}
+.log-ok .ic{background:var(--success);}
+.log-err{color:var(--error);}
+.log-err .ic{background:var(--error);}
+.log-summary{display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin:0 0 10px;}
+.log-summary b{color:var(--text);}
+table.popup-table td.wrap{white-space:normal;min-width:240px;}
+
+.doc-banner{
+  display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 11px;border-radius:var(--radius-sm);
+  background:var(--primary-tint);border:1px solid #BEE0F7;color:var(--primary-dark);font-size:12px;font-weight:600;
+}
+.doc-banner.rev{background:var(--warning-tint);border-color:#F3DFA1;color:#8A5A00;}
+.detail-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.detail-grid.cols-4{grid-template-columns:repeat(4,1fr);}
+.dr{color:var(--text);}
+.dc-tag{display:inline-block;min-width:24px;text-align:center;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin-right:6px;}
+.dc-tag.dr{background:var(--primary-tint);color:var(--primary-dark);}
+.dc-tag.cr{background:var(--warning-tint);color:#8A5A00;}
+.txn-legs{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.leg-card{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;background:#FBFCFD;}
+.leg-card .lc-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--text-muted);margin-bottom:4px;}
+.leg-card .lc-v{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;}
+.leg-card .lc-s{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+
+.toast{z-index:400;}
+
+@media (max-width:1000px){
+  .detail-grid.cols-4{grid-template-columns:repeat(2,1fr);}
+  .detail-grid.cols-3{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:640px){
+  .sel-row .field.f-company,.sel-row .field.f-date,.sel-row .field.f-layout,.sel-row .field.f-posting{width:100%;min-width:0;}
+  .seg{width:100%;}.seg label{flex:1;justify-content:center;padding:0 8px;}
+  .txn-legs{grid-template-columns:1fr;}
+}
+
+/* calendar month / year selectors */
+.cal-selects{display:flex;gap:4px;align-items:center;}
+.cal-sel{height:24px;border:1px solid var(--border-strong);border-radius:4px;background:#fff;font-size:12px;font-weight:600;color:var(--text);padding:0 2px;cursor:pointer;font-family:var(--font);}
+.cal-sel:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-tint);}
+.date-popup{width:268px;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+button:focus-visible,a:focus-visible,tr:focus-visible,.seg input:focus-visible{outline:2px solid var(--primary);outline-offset:1px;}
+table.mc-table tbody tr:focus-visible{outline-offset:-2px;}
+
+.seg{align-self:flex-start;}
+.sel-row .field.f-posting{min-width:0;}
+.f-posting .hint{max-width:330px;}
+#logBody table.popup-table,#docBody table.popup-table{min-width:0;width:100%;}
+#logBody table.popup-table td.wrap{min-width:180px;}
+#docBody table.popup-table td.wrap{min-width:200px;}
+#logBody .popup-table-wrap,#docBody .popup-table-wrap{max-height:none;}
+</style>
+
+</head>
+<body>
+
+<div class="app">
+
+  <div class="page-header">
+    <img class="logo-img" src="data:image/png;base64,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" alt="FS logo">
+    <div class="header-text">
+      <h1>Post FX MTM to Accounting</h1>
+      <p>OIL, OGA &amp; DMCC (USD) — month-end FX valuation and accounting postings</p>
+    </div>
+    <button type="button" class="btn btn-secondary" id="btnRefresh" title="Reload the screen to its initial state">↻ Refresh</button>
+  </div>
+
+  <!-- ============ Selection ============ -->
+  <div class="card" id="selectionCard">
+    <div class="section-title"><span class="dot"></span>Selection Screen</div>
+    <div class="section-body">
+      <div class="sel-row">
+
+        <div class="field f-company" id="field-company">
+          <label for="input-company">Company Code<span class="req">*</span></label>
+          <div class="dd" id="dd-company">
+            <input class="dd-input" id="input-company" placeholder="Select company code" autocomplete="off" readonly>
+            <div class="dd-panel" id="panel-company"></div>
+          </div>
+          <div class="error-msg" id="err-company">Company Code is required.</div>
+        </div>
+
+        <div class="field f-date" id="field-keyDate">
+          <label for="input-keyDate">Key Date<span class="req">*</span></label>
+          <div class="date-field">
+            <input class="control" id="input-keyDate" placeholder="DD-MM-YYYY" autocomplete="off">
+            <button type="button" class="date-icon" data-target="keyDate" aria-label="Open calendar">📅</button>
+            <div class="date-popup" id="popup-keyDate"></div>
+          </div>
+          <div class="hint" id="hint-keyDate">Key Date is the Month End Date</div>
+          <div class="error-msg" id="err-keyDate">Key Date is required.</div>
+        </div>
+
+        <div class="field f-posting" id="field-posting">
+          <label id="lbl-posting">Posting Type</label>
+          <div class="seg" role="radiogroup" aria-labelledby="lbl-posting" id="segPosting">
+            <label class="on" for="rb-view"><input type="radio" name="postingType" id="rb-view" value="view" checked>View Only</label>
+            <label for="rb-post"><input type="radio" name="postingType" id="rb-post" value="post">View With FI Posting</label>
+          </div>
+          <div class="hint" id="hint-posting" style="visibility:hidden;">Posts an MTM document and its reversal for every listed transaction on Execute.</div>
+        </div>
+
+        <div class="field f-layout">
+          <label for="select-layout">Layout</label>
+          <select class="control" id="select-layout">
+            <option value="">Default layout</option>
+          </select>
+        </div>
+
+        <div class="sel-actions">
+          <button type="button" class="btn btn-primary" id="btnExecute">▶ Execute</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MTM list ============ -->
+  <div class="card list-card" id="listCard">
+    <div class="section-title">
+      <span class="st-left"><span class="dot"></span>MTM-TSF OIL &amp; OGA</span>
+      <span class="st-right" id="keyDateTitle"></span>
+    </div>
+
+    <div class="table-toolbar">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input id="tableSearch" placeholder="Search transactions..." autocomplete="off" aria-label="Search transactions">
+      </div>
+      <input class="control tb-input" id="filterRfha" placeholder="Transaction" autocomplete="off" aria-label="Transaction" title="Transaction">
+      <select class="control filter-select sel-bp" id="filterBp" aria-label="Business Partner" title="Business Partner"><option value="">All partners</option></select>
+      <select class="control filter-select sel-pair" id="filterPair" aria-label="Currency Pair" title="Currency Pair"><option value="">All pairs</option></select>
+      <select class="control filter-select sel-deal" id="filterDeal" aria-label="Deal Type" title="Deal Type">
+        <option value="all">All deals</option>
+        <option value="ndf">NDF</option>
+        <option value="del">Deliverable Deals</option>
+      </select>
+      <button type="button" class="btn btn-secondary btn-sm" id="btnResetFilters">Reset</button>
+      <span class="tb-sep"></span>
+      <span class="drop-wrap" id="postDrop" title="Select a transaction first">
+        <button type="button" class="btn btn-primary btn-sm" id="btnPost" disabled>Post Document</button>
+      </span>
+      <div class="toolbar-spacer"></div>
+      <div class="legend" id="legend" style="display:none;">
+        <span class="chip"><span class="sw ext"></span>Transaction Data – External</span>
+        <span class="chip"><span class="sw mtm"></span>MTM Data</span>
+      </div>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div class="table-scroll" id="tableScroll">
+      <table class="mc-table" id="mtmTable">
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;"></div>
+
+    <div class="table-footer">
+      <div class="tf-left">
+        <div class="page-size-select">
+          Rows per page
+          <select id="pageSizeSelect">
+            <option value="8">8</option>
+            <option value="12">12</option>
+            <option value="20" selected>20</option>
+          </select>
+        </div>
+        <span class="showing" id="showingText"></span>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirm mass posting -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal modal-left" style="width:420px;" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-head-row">
+      <h2 id="confirmTitle">Post MTM Documents</h2>
+      <button type="button" class="modal-close-btn" id="btnConfirmClose" aria-label="Close">×</button>
+    </div>
+    <p class="confirm-body" id="confirmBody"></p>
+    <div class="confirm-count" id="confirmCounts"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="btnConfirmCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmPost">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Message Log (Screen 9000) -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal modal-left modal-scrollable modal-wide" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+    <div class="modal-head-row">
+      <h2 id="logTitle">Message Log</h2>
+      <button type="button" class="modal-close-btn" id="btnLogClose" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body-scroll" id="logBody"></div>
+    <div class="modal-actions" style="justify-content:flex-end;">
+      <button type="button" class="btn btn-secondary" id="btnLogCancel" style="flex:0 0 auto;min-width:110px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Accounting document (hotspot: MTM Doc / Rev Doc) -->
+<div class="modal-overlay" id="docModal">
+  <div class="modal modal-left modal-scrollable modal-doc" role="dialog" aria-modal="true" aria-labelledby="docTitle">
+    <div class="modal-head-row">
+      <h2 id="docTitle">Accounting Document</h2>
+      <button type="button" class="modal-close-btn" id="btnDocClose" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body-scroll" id="docBody"></div>
+    <div class="modal-actions" style="justify-content:flex-end;">
+      <button type="button" class="btn btn-secondary" id="btnDocCancel" style="flex:0 0 auto;min-width:110px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction details (hotspot: Transaction) -->
+<div class="modal-overlay" id="txnModal">
+  <div class="modal modal-left modal-scrollable modal-txn" role="dialog" aria-modal="true" aria-labelledby="txnTitle">
+    <div class="modal-head-row">
+      <h2 id="txnTitle">Transaction Details</h2>
+      <button type="button" class="modal-close-btn" id="btnTxnClose" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body-scroll" id="txnBody"></div>
+    <div class="modal-actions" style="justify-content:flex-end;">
+      <button type="button" class="btn btn-secondary" id="btnTxnCancel" style="flex:0 0 auto;min-width:110px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   Post FX MTM to Accounting — OIL & OGA & DMCC (USD)
+   Source program : ZSGTSF_RMTM_OIL (tcode ZSGTSFR022)
+   Sections: Dummy data · State · Date helpers · Calculations ·
+             Data / service layer · Rendering · Modals ·
+             Event handling · Validation · Initialization
+   ========================================================= */
+
+/* =========================================================
+   Dummy data  (every dataset is replaceable by an API call)
+   ========================================================= */
+
+/* Authorised company codes (T001 filtered by F_BKPF_BUK activity 03) */
+var companyCodes = [
+  { code:'SG11', name:'Olam International Limited',  prctr:'PC-SG11-TRS', pcName:'Treasury Singapore', rbusa:'T110', baName:'Group Treasury' },
+  { code:'SG12', name:'Olam Global Agri Pte. Ltd.',  prctr:'PC-SG12-TRS', pcName:'Treasury OGA',       rbusa:'T120', baName:'Agri Treasury' },
+  { code:'AE10', name:'Olam Agri DMCC',              prctr:'PC-AE10-TRS', pcName:'Treasury Dubai',     rbusa:'T130', baName:'Middle East Treasury' }
+];
+
+var businessPartners = [
+  { id:'0000100231', name:'HSBC Bank (Singapore) Ltd' },
+  { id:'0000100245', name:'Citibank N.A., Singapore Branch' },
+  { id:'0000100267', name:'Standard Chartered Bank' },
+  { id:'0000100288', name:'JPMorgan Chase Bank N.A.' },
+  { id:'0000100312', name:'Deutsche Bank AG' },
+  { id:'0000100334', name:'DBS Bank Ltd' },
+  { id:'0000100359', name:'Emirates NBD Bank PJSC' }
+];
+
+/* Product types — 3rd character 'D' marks an NDF (SGSART+2(1) = 'D') */
+var productTypes = {
+  '600': 'FX Forward - Deliverable',
+  '60D': 'FX Forward - NDF'
+};
+
+/* ZSGTRMTR_CURPAIR rows with USD on one side (drives the Currency Pair listbox) */
+var currencyPairs = [
+  { pair:'USD/INR', f:'USD', t:'INR' },
+  { pair:'EUR/USD', f:'EUR', t:'USD' },
+  { pair:'GBP/USD', f:'GBP', t:'USD' },
+  { pair:'USD/SGD', f:'USD', t:'SGD' },
+  { pair:'USD/CNH', f:'USD', t:'CNH' },
+  { pair:'AUD/USD', f:'AUD', t:'USD' },
+  { pair:'USD/JPY', f:'USD', t:'JPY' },
+  { pair:'USD/THB', f:'USD', t:'THB' }
+];
+
+/* TVARVC ZTSFMTM_STAT — transaction statuses excluded from the report */
+var excludedTxnStatuses = ['40'];
+
+/* Spot rates (CDS ZSGTRMCDS_SPOT_MAIN, rate type MTM) per key date */
+var spotRatesByDate = {
+  '2026-06-30': { 'USD/INR':87.1000, 'EUR/USD':1.1520, 'GBP/USD':1.3190, 'USD/SGD':1.2905, 'USD/CNH':7.2050, 'AUD/USD':0.6540 },
+  '2026-07-31': { 'USD/INR':87.6200, 'EUR/USD':1.1590, 'GBP/USD':1.3280, 'USD/SGD':1.2860, 'USD/CNH':7.1840, 'AUD/USD':0.6590 },
+  '2026-08-31': { 'USD/INR':88.3500, 'EUR/USD':1.1655, 'GBP/USD':1.3395, 'USD/SGD':1.2790, 'USD/CNH':7.1520, 'AUD/USD':0.6645 },
+  '2026-09-30': { 'USD/INR':88.9000, 'EUR/USD':1.1710, 'GBP/USD':1.3440, 'USD/SGD':1.2745, 'USD/CNH':7.1290, 'AUD/USD':0.6680 }
+};
+
+/* Swap-point curves (CDS ZSGTRMCDS_SWAP_MAIN): tenor in months -> swap points */
+var swapCurves = {
+  'USD/INR': [[1,0.30],[3,0.95],[6,1.90],[12,3.80],[24,7.50],[36,11.00],[60,17.20]],
+  'EUR/USD': [[1,0.0006],[3,0.0018],[6,0.0036],[12,0.0072],[24,0.0140],[36,0.0200],[60,0.0310]],
+  'GBP/USD': [[1,0.0003],[3,0.0009],[6,0.0018],[12,0.0035],[24,0.0068],[36,0.0095],[60,0.0140]],
+  'USD/SGD': [[1,-0.0012],[3,-0.0036],[6,-0.0071],[12,-0.0135],[24,-0.0250],[36,-0.0340],[60,-0.0480]],
+  'USD/CNH': [[1,-0.0060],[3,-0.0180],[6,-0.0360],[12,-0.0700],[24,-0.1300],[36,-0.1800],[60,-0.2600]],
+  'AUD/USD': [[1,-0.0001],[3,-0.0003],[6,-0.0006],[12,-0.0011],[24,-0.0021],[36,-0.0030],[60,-0.0045]]
+};
+
+/* ZSGTRMTR_ACC_TBL (INT_EXT = 'T'): posting accounts per company code,
+   gain/loss type (MG / ML) and NDF flag. Blank PC / BA fall back to the
+   transaction's own profit centre / business area. */
+var accConfig = [];
+(function buildAccConfig(){
+  var gl = {
+    'ML': { fwd:{ d:'7810010', c:'2410010', h:'FX MTM Loss',     dd:'MTM Loss',     dc:'MTM Liability' },
+            ndf:{ d:'7810020', c:'2410020', h:'FX NDF MTM Loss', dd:'NDF MTM Loss', dc:'NDF MTM Liability' } },
+    'MG': { fwd:{ d:'1410010', c:'8810010', h:'FX MTM Gain',     dd:'MTM Asset',     dc:'MTM Gain' },
+            ndf:{ d:'1410020', c:'8810020', h:'FX NDF MTM Gain', dd:'NDF MTM Asset', dc:'NDF MTM Gain' } }
+  };
+  companyCodes.forEach(function(cc){
+    ['ML','MG'].forEach(function(t){
+      [['',  'fwd'], ['X', 'ndf']].forEach(function(k){
+        var g = gl[t][k[1]];
+        accConfig.push({ zbukrs:cc.code, int_ext:'T', type:t, zndf:k[0],
+          gl_debit:g.d, gl_credit:g.c, pc_debit:'', pc_credit:'', ba_debit:'', ba_credit:'',
+          doc_header:g.h, doc_debit:g.dd, doc_credit:g.dc });
+      });
+    });
+  });
+})();
+
+/* Posting periods that are closed per company code (simulates a BAPI error) */
+var closedPeriods = { 'AE10': ['2026-09'] };
+
+/* FX transactions behind view ZSGTSFV_FX. Dependent fields (company name,
+   partner name, legs, buy/sell, profit centre …) are derived from the lookups above. */
+var dealSpecs = [
+  /* SG11 — Olam International Limited */
+  { bukrs:'SG11', rfha:'FX2026000101', bp:'0000100245', sgsart:'600', pair:'USD/INR', side:'Buy',  amt:5000000,  rate:89.2500, trade:'2026-06-12', value:'2026-12-15', st:'20', ext:'CITI-260612-0418' },
+  { bukrs:'SG11', rfha:'FX2026000102', bp:'0000100334', sgsart:'600', pair:'USD/INR', side:'Sell', amt:3000000,  rate:90.1500, trade:'2026-07-08', value:'2027-03-15', st:'20', ext:'DBS-260708-0231' },
+  { bukrs:'SG11', rfha:'FX2026000103', bp:'0000100231', sgsart:'60D', pair:'USD/INR', side:'Buy',  amt:8500000,  rate:89.8000, trade:'2026-08-04', value:'2026-11-27', st:'20', ext:'HSBC-260804-0097' },
+  { bukrs:'SG11', rfha:'FX2026000104', bp:'0000100288', sgsart:'600', pair:'EUR/USD', side:'Buy',  amt:2400000,  rate:1.1735,  trade:'2026-05-20', value:'2026-12-10', st:'20', ext:'JPM-260520-1182' },
+  { bukrs:'SG11', rfha:'FX2026000105', bp:'0000100312', sgsart:'600', pair:'EUR/USD', side:'Sell', amt:1750000,  rate:1.1680,  trade:'2026-08-18', value:'2027-02-26', st:'30', ext:'DB-260818-0364' },
+  { bukrs:'SG11', rfha:'FX2026000106', bp:'0000100267', sgsart:'600', pair:'USD/SGD', side:'Buy',  amt:4200000,  rate:1.2690,  trade:'2026-07-22', value:'2026-11-30', st:'20', ext:'SCB-260722-0509' },
+  { bukrs:'SG11', rfha:'FX2026000107', bp:'0000100245', sgsart:'600', pair:'GBP/USD', side:'Buy',  amt:1200000,  rate:1.3485,  trade:'2026-09-02', value:'2027-01-29', st:'20', ext:'CITI-260902-0652' },
+  { bukrs:'SG11', rfha:'FX2026000108', bp:'0000100231', sgsart:'600', pair:'USD/CNH', side:'Sell', amt:6000000,  rate:7.1040,  trade:'2026-06-30', value:'2027-03-31', st:'20', ext:'HSBC-260630-0211' },
+  { bukrs:'SG11', rfha:'FX2026000109', bp:'0000100334', sgsart:'600', pair:'AUD/USD', side:'Buy',  amt:2000000,  rate:0.6705,  trade:'2026-09-14', value:'2026-12-18', st:'20', ext:'DBS-260914-0318' },
+  { bukrs:'SG11', rfha:'FX2026000110', bp:'0000100288', sgsart:'60D', pair:'USD/INR', side:'Sell', amt:12000000, rate:91.4500, trade:'2026-04-15', value:'2027-04-14', st:'20', ext:'JPM-260415-0775' },
+  { bukrs:'SG11', rfha:'FX2026000111', bp:'0000100267', sgsart:'600', pair:'USD/INR', side:'Buy',  amt:2750000,  rate:89.0500, trade:'2026-07-30', value:'2026-10-30', st:'20', ext:'SCB-260730-0644' },
+  { bukrs:'SG11', rfha:'FX2026000112', bp:'0000100312', sgsart:'600', pair:'EUR/USD', side:'Buy',  amt:900000,   rate:1.1700,  trade:'2026-03-02', value:'2026-08-26', st:'20', ext:'DB-260302-0119' },
+  /* SG12 — Olam Global Agri Pte. Ltd. */
+  { bukrs:'SG12', rfha:'FX2026000201', bp:'0000100231', sgsart:'60D', pair:'USD/INR', side:'Buy',  amt:15000000, rate:89.6000, trade:'2026-08-11', value:'2026-12-22', st:'20', ext:'HSBC-260811-0302' },
+  { bukrs:'SG12', rfha:'FX2026000202', bp:'0000100245', sgsart:'60D', pair:'USD/INR', side:'Buy',  amt:9500000,  rate:90.3000, trade:'2026-09-09', value:'2027-03-25', st:'20', ext:'CITI-260909-0713' },
+  { bukrs:'SG12', rfha:'FX2026000203', bp:'0000100288', sgsart:'600', pair:'USD/SGD', side:'Sell', amt:5500000,  rate:1.2810,  trade:'2026-07-16', value:'2026-11-16', st:'20', ext:'JPM-260716-0884' },
+  { bukrs:'SG12', rfha:'FX2026000204', bp:'0000100312', sgsart:'600', pair:'EUR/USD', side:'Sell', amt:3200000,  rate:1.1760,  trade:'2026-06-02', value:'2027-01-18', st:'20', ext:'DB-260602-0156' },
+  { bukrs:'SG12', rfha:'FX2026000205', bp:'0000100267', sgsart:'600', pair:'GBP/USD', side:'Sell', amt:1850000,  rate:1.3410,  trade:'2026-08-25', value:'2026-12-28', st:'20', ext:'SCB-260825-0467' },
+  { bukrs:'SG12', rfha:'FX2026000206', bp:'0000100334', sgsart:'600', pair:'AUD/USD', side:'Sell', amt:4100000,  rate:0.6630,  trade:'2026-05-12', value:'2027-02-12', st:'30', ext:'DBS-260512-0092' },
+  { bukrs:'SG12', rfha:'FX2026000207', bp:'0000100231', sgsart:'600', pair:'USD/CNH', side:'Buy',  amt:3600000,  rate:7.1180,  trade:'2026-09-21', value:'2026-11-23', st:'20', ext:'HSBC-260921-0540' },
+  { bukrs:'SG12', rfha:'FX2026000208', bp:'0000100245', sgsart:'600', pair:'USD/INR', side:'Sell', amt:4800000,  rate:90.0200, trade:'2026-08-26', value:'2026-10-28', st:'20', ext:'CITI-260826-0825' },
+  { bukrs:'SG12', rfha:'FX2026000209', bp:'0000100288', sgsart:'600', pair:'EUR/USD', side:'Buy',  amt:2100000,  rate:1.1715,  trade:'2026-09-23', value:'2027-03-23', st:'20', ext:'JPM-260923-0961' },
+  /* AE10 — Olam Agri DMCC */
+  { bukrs:'AE10', rfha:'FX2026000301', bp:'0000100359', sgsart:'60D', pair:'USD/INR', side:'Buy',  amt:7200000,  rate:89.9000, trade:'2026-08-20', value:'2026-12-18', st:'20', ext:'ENBD-260820-0173' },
+  { bukrs:'AE10', rfha:'FX2026000302', bp:'0000100231', sgsart:'60D', pair:'USD/INR', side:'Sell', amt:6400000,  rate:91.1000, trade:'2026-06-18', value:'2027-02-26', st:'20', ext:'HSBC-260618-0388' },
+  { bukrs:'AE10', rfha:'FX2026000303', bp:'0000100245', sgsart:'600', pair:'EUR/USD', side:'Buy',  amt:1350000,  rate:1.1690,  trade:'2026-09-01', value:'2026-12-01', st:'20', ext:'CITI-260901-0227' },
+  { bukrs:'AE10', rfha:'FX2026000304', bp:'0000100267', sgsart:'600', pair:'GBP/USD', side:'Buy',  amt:950000,   rate:1.3470,  trade:'2026-07-09', value:'2026-11-09', st:'20', ext:'SCB-260709-0316' },
+  { bukrs:'AE10', rfha:'FX2026000305', bp:'0000100288', sgsart:'600', pair:'USD/SGD', side:'Buy',  amt:2900000,  rate:1.2720,  trade:'2026-09-16', value:'2027-01-15', st:'20', ext:'JPM-260916-0603' },
+  { bukrs:'AE10', rfha:'FX2026000306', bp:'0000100312', sgsart:'600', pair:'USD/INR', side:'Buy',  amt:3400000,  rate:89.4500, trade:'2026-05-27', value:'2026-10-26', st:'20', ext:'DB-260527-0148' },
+  /* Never listed: excluded by TVARVC status / inactive (SAKTIV = 3) */
+  { bukrs:'SG11', rfha:'FX2026000401', bp:'0000100231', sgsart:'600', pair:'EUR/USD', side:'Buy',  amt:500000,   rate:1.1650,  trade:'2026-06-01', value:'2027-01-05', st:'40', ext:'HSBC-260601-0044' },
+  { bukrs:'SG12', rfha:'FX2026000402', bp:'0000100334', sgsart:'600', pair:'USD/SGD', side:'Sell', amt:800000,   rate:1.2900,  trade:'2026-06-01', value:'2027-01-05', st:'20', saktiv:'3', ext:'DBS-260601-0045' }
+];
+
+/* =========================================================
+   Layouts and column catalogue (ALV field catalogue)
+   ========================================================= */
+var COLUMNS = {
+  bukrs:        { label:'Company Code',        type:'text' },
+  butxt:        { label:'Company Name',        type:'text' },
+  rfha:         { label:'Transaction',         type:'text', link:'txn', pin:true },
+  nordext:      { label:'Ext. Reference',      type:'text' },
+  ztsf_deal_id: { label:'TSF Deal ID',         type:'text' },
+  zolam_deal_no:{ label:'Olam Deal No',        type:'text' },
+  kontrh:       { label:'Business Partner',    type:'text' },
+  bp_name:      { label:'Partner Name',        type:'text' },
+  sgsart:       { label:'Product Type',        type:'text' },
+  xtext:        { label:'Transaction Type',    type:'text' },
+  cpair:        { label:'Currency Pair',       type:'text' },
+  bs_bu:        { label:'Buy/Sell',            type:'text' },
+  dblfz:        { label:'Trade Date',          type:'date' },
+  delfz:        { label:'Value Date',          type:'date' },
+  month:        { label:'Exp Mth-yr',          type:'text', grp:'mtm', sortKey:'delfz' },
+  monat:        { label:'Exp Mth',             type:'num',  grp:'mtm' },
+  f_amt:        { label:'Foreign Amount',      type:'amt',  grp:'ext' },
+  f_curr:       { label:'Foreign Curr.',       type:'text', grp:'ext' },
+  c_rate:       { label:'All-in Rate',         type:'rate', grp:'ext' },
+  usd_amt:      { label:'USD Amount',          type:'amt',  grp:'ext' },
+  v_spot:       { label:'Valuation Spot',      type:'rate', grp:'mtm' },
+  v_swap:       { label:'Valuation Swap',      type:'rate', grp:'mtm' },
+  v_rate:       { label:'Valuation Rate',      type:'rate', grp:'mtm' },
+  v_amt:        { label:'Valuation Amount (USD)', type:'amt', grp:'mtm' },
+  v_gl:         { label:'Valuation Gain/Loss (USD)', type:'amt', grp:'mtm' },
+  mtm_doc:      { label:'MTM Doc. No.',        type:'text', grp:'mtm', link:'doc' },
+  rev_doc:      { label:'MTM Rev. Doc. No.',   type:'text', grp:'mtm', link:'doc' },
+  msg:          { label:'Remarks',             type:'text', grp:'mtm' }
+};
+
+/* ASSUMPTION: real ALV layout variants are read from the SAP layout table
+   (REUSE_ALV_VARIANT_F4). These two are dummy variants. */
+var LAYOUTS = [
+  { id:'',           label:'Default layout',
+    cols:['rfha','bukrs','bp_name','xtext','cpair','bs_bu','dblfz','delfz','month','monat',
+          'f_amt','f_curr','c_rate','usd_amt','v_spot','v_swap','v_rate','v_amt','v_gl','mtm_doc','rev_doc','msg'] },
+  { id:'VALUATION',  label:'Valuation summary',
+    cols:['rfha','bukrs','bp_name','cpair','bs_bu','delfz','f_amt','f_curr','c_rate','usd_amt','v_rate','v_amt','v_gl','mtm_doc','rev_doc'] },
+  { id:'ALL',        label:'All fields',
+    cols:['rfha','bukrs','butxt','nordext','ztsf_deal_id','zolam_deal_no','kontrh','bp_name','sgsart','xtext','cpair','bs_bu','dblfz','delfz','month','monat',
+          'f_amt','f_curr','c_rate','usd_amt','v_spot','v_swap','v_rate','v_amt','v_gl','mtm_doc','rev_doc','msg'] }
+];
+
+var MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONTH_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* =========================================================
+   State
+   ========================================================= */
+var state = {
+  executed: false,
+  params: { company:[], keyDate:'', posting:'view' },   /* the run that produced state.rows */
+  rows: [],
+  search: '',
+  filters: { rfha:'', bp:'', pair:'', deal:'all' },
+  sort: { field:null, dir:'asc' },
+  page: 1,
+  pageSize: 20,
+  selectedId: null,
+  layout: '',
+  pendingRun: null,
+  log: []
+};
+
+var form = {
+  company: [],
+  keyDate: '',
+  posting: 'view'
+};
+
+var mockDb = null;      /* mutable "tables": ZSGTSFTR_MTMDATA + document number range */
+var draggedRow = null;
+var toastTimer = null;
+
+/* =========================================================
+   Date helpers  (ISO yyyy-mm-dd internally, dd-mm-yyyy on screen)
+   ========================================================= */
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function parseDMY(str){
+  if(!str) return null;
+  var m = /^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})$/.exec(String(str).trim());
+  if(!m) return null;
+  var d = parseInt(m[1],10), mo = parseInt(m[2],10) - 1, y = parseInt(m[3],10);
+  var dt = new Date(y, mo, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== mo || dt.getDate() !== d) return null;
+  return dt;
+}
+function formatDMY(date){ return pad2(date.getDate()) + '-' + pad2(date.getMonth()+1) + '-' + date.getFullYear(); }
+function toISO(date){ return date.getFullYear() + '-' + pad2(date.getMonth()+1) + '-' + pad2(date.getDate()); }
+function isoToDMY(iso){ return iso ? iso.substr(8,2) + '-' + iso.substr(5,2) + '-' + iso.substr(0,4) : ''; }
+function isoToDate(iso){ return new Date(parseInt(iso.substr(0,4),10), parseInt(iso.substr(5,2),10)-1, parseInt(iso.substr(8,2),10)); }
+function addDaysISO(iso, n){ var d = isoToDate(iso); d.setDate(d.getDate() + n); return toISO(d); }
+function isMonthEnd(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getDate() === 1; }
+function monthsBetween(keyISO, valISO){
+  return (parseInt(valISO.substr(0,4),10) * 12 + parseInt(valISO.substr(5,2),10)) -
+         (parseInt(keyISO.substr(0,4),10) * 12 + parseInt(keyISO.substr(5,2),10));
+}
+
+/* =========================================================
+   Number / text formatting
+   ========================================================= */
+function formatAmount(n){
+  var v = Number(n) || 0;
+  if(Math.abs(v) < 0.005) v = 0;
+  return v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function formatRate(n){
+  var v = Number(n) || 0;
+  return v.toLocaleString('en-US', { minimumFractionDigits:6, maximumFractionDigits:6 });
+}
+function round2(n){ return Math.round(n * 100) / 100; }
+function round6(n){ return Math.round(n * 1000000) / 1000000; }
+function esc(s){
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function findCompany(code){ for(var i=0;i<companyCodes.length;i++){ if(companyCodes[i].code===code) return companyCodes[i]; } return null; }
+function companyIndex(code){ for(var i=0;i<companyCodes.length;i++){ if(companyCodes[i].code===code) return i; } return 99; }
+function findPartner(id){ for(var i=0;i<businessPartners.length;i++){ if(businessPartners[i].id===id) return businessPartners[i]; } return null; }
+function findPair(pair){ for(var i=0;i<currencyPairs.length;i++){ if(currencyPairs[i].pair===pair) return currencyPairs[i]; } return null; }
+function isNdf(row){ return row.sgsart.charAt(2) === 'D'; }
+
+/* =========================================================
+   Calculations  (ported from FORM GET_DATA / SWAP_CALC)
+   ========================================================= */
+
+/* Build the raw view record (ZSGTSFV_FX) from a deal spec + lookups */
+function buildViewRecord(spec){
+  var cc = findCompany(spec.bukrs);
+  var bp = findPartner(spec.bp);
+  var cp = findPair(spec.pair);
+  var curr1 = cp.pair.split('/')[0], curr2 = cp.pair.split('/')[1];
+  var oppo = spec.side === 'Buy' ? 'Sell' : 'Buy';
+  var sign1 = spec.side === 'Buy' ? 1 : -1;
+  var amt1 = sign1 * spec.amt;
+  var amt2 = -sign1 * round2(spec.amt * spec.rate);
+  return {
+    bukrs: cc.code, butxt: cc.name, rfha: spec.rfha,
+    kontrh: bp.id, bp_name: bp.name,
+    sgsart: spec.sgsart, xtext: productTypes[spec.sgsart],
+    cpair: cp.pair, curr1: curr1, curr2: curr2, amt1: amt1, amt2: amt2,
+    bs_1: spec.side, bs_2: oppo,
+    f_curr1: cp.f, t_curr1: cp.t,                 /* rate quotation orientation */
+    c_rate: spec.rate,
+    dblfz: spec.trade, delfz: spec.value,
+    txn_status: spec.st, saktiv: spec.saktiv || '1',
+    nordext: spec.ext,
+    ztsf_deal_id: 'TSF-' + spec.rfha.substr(2),
+    zolam_deal_no: 'OLM-' + spec.rfha.substr(6),
+    prctr: cc.prctr, pc_name: cc.pcName, rbusa: cc.rbusa, ba_name: cc.baName
+  };
+}
+
+function spotFor(keyISO, pair){
+  var dates = Object.keys(spotRatesByDate).sort();
+  var use = dates[0];
+  dates.forEach(function(d){ if(d <= keyISO) use = d; });
+  var v = spotRatesByDate[use][pair];
+  return v === undefined ? 0 : v;
+}
+
+/* SWAP_CALC interpolation: exact bucket -> its swap; between buckets -> linear. */
+function swapFor(pair, months){
+  var curve = swapCurves[pair];
+  if(!curve || months < 1 || months > 60) return 0;
+  var low = null, high = null;
+  curve.forEach(function(p){
+    if(p[0] <= months) low = p;
+    else if(high === null) high = p;
+  });
+  if(low === null) return 0;
+  if(low[0] === months || high === null) return low[1];
+  var perMonth = (high[1] - low[1]) / (high[0] - low[0]);
+  return round6(low[1] + perMonth * (months - low[0]));
+}
+
+function calculateValuation(rec, keyISO){
+  var r = {};
+  var k;
+  for(k in rec){ if(rec.hasOwnProperty(k)) r[k] = rec[k]; }
+
+  /* Foreign currency / amount: the non-USD leg */
+  if(rec.curr1 !== 'USD'){ r.f_amt = Math.abs(rec.amt1); r.f_curr = rec.curr1; }
+  else                   { r.f_amt = Math.abs(rec.amt2); r.f_curr = rec.curr2; }
+
+  /* Buy / Sell shown to the user (from BS_O = '1' -> Sell) */
+  var lvBs = (rec.curr1 === r.f_curr) ? rec.bs_1 : rec.bs_2;
+  r.bs_o = lvBs === 'Sell' ? '1' : '2';
+  r.bs_bu = r.bs_o === '1' ? 'Sell' : 'Buy';
+
+  /* USD amount at the contract (all-in) rate */
+  if(rec.f_curr1 !== 'USD') r.usd_amt = round2(Math.abs(r.f_amt) * rec.c_rate);
+  else r.usd_amt = rec.c_rate ? round2(Math.abs(r.f_amt) / rec.c_rate) : 0;
+
+  /* Valuation rate = spot + swap */
+  r.v_spot = spotFor(keyISO, rec.cpair);
+  r.monat = monthsBetween(keyISO, rec.delfz);
+  if(r.monat < 1 || r.monat > 60){ r.monat = 0; r.v_swap = 0; }
+  else r.v_swap = swapFor(rec.cpair, r.monat);
+  r.v_rate = round6(r.v_spot + r.v_swap);
+
+  /* Valuation amount */
+  r.v_amt = 0;
+  if(rec.f_curr1 !== 'USD') r.v_amt = round2(Math.abs(r.f_amt) * r.v_rate);
+  else if(r.v_rate) r.v_amt = round2(Math.abs(r.f_amt) / r.v_rate);
+
+  /* Valuation gain / loss with the buy/sell sign rule */
+  r.v_gl = r.v_amt ? round2(r.v_amt - r.usd_amt) : 0;
+  r.v_gl = Math.abs(r.v_gl);
+  if(lvBs === 'Buy'){
+    if(rec.c_rate <= r.v_rate) r.v_gl = -r.v_gl;
+  } else {
+    if(!(rec.c_rate <= r.v_rate)) r.v_gl = -r.v_gl;
+  }
+
+  /* Expiry month text ("Oct 2026") */
+  r.month = MONTH_SHORT[parseInt(rec.delfz.substr(5,2),10) - 1] + ' ' + rec.delfz.substr(0,4);
+
+  r.mtm_doc = ''; r.rev_doc = ''; r.msg = '';
+  r.id = rec.bukrs + '|' + rec.rfha;
+  return r;
+}
+
+function isEligibleForPosting(row){ return !row.mtm_doc && row.v_gl !== 0; }
+
+function postBlockReason(row){
+  if(!row) return 'Select a transaction first.';
+  if(row.mtm_doc) return 'This transaction already has an MTM document.';
+  if(row.v_gl === 0) return 'This transaction has no valuation gain/loss to post.';
+  return '';
+}
+
+/* =========================================================
+   Data / service layer — mock now, replace with API calls later
+   e.g. fetch('/api/mtm?bukrs=...&keyDate=...')
+   ========================================================= */
+function resetMockDb(){
+  mockDb = { mtmData: [], nextDoc: 1900004800 };
+  /* Previously posted month-ends. Every second valued deal is already posted. */
+  [['2026-07-31', 1900003100], ['2026-08-31', 1900004100]].forEach(function(cfg){
+    var rows = fetchMtmRows({ company:['SG11','SG12','AE10'], keyDate:cfg[0] }, true);
+    var n = 0;
+    rows.forEach(function(r, i){
+      if(i % 2 === 0 && r.v_gl !== 0){
+        mockDb.mtmData.push({ zbukrs:r.bukrs, zrfha:r.rfha, zdate:cfg[0], ztype:'01',
+          zdoc:String(cfg[1] + n), zrev_doc:String(cfg[1] + n + 1), zmsg:'Document Posted Successfully' });
+        n += 2;
+      }
+    });
+  });
+  /* A couple of postings already done for the latest month-end */
+  [['SG11','FX2026000106',1900004600], ['SG12','FX2026000204',1900004602]].forEach(function(p){
+    mockDb.mtmData.push({ zbukrs:p[0], zrfha:p[1], zdate:'2026-09-30', ztype:'01',
+      zdoc:String(p[2]), zrev_doc:String(p[2] + 1), zmsg:'Document Posted Successfully' });
+  });
+}
+
+function loadCompanyCodes(){ return companyCodes; }
+function loadBusinessPartners(){ return businessPartners; }
+function loadCurrencyPairs(){ return currencyPairs; }
+
+/* FORM GET_DATA: select, valuate and join the posted documents */
+function fetchMtmRows(params, skipJoin){
+  var kd = params.keyDate;
+  var out = [];
+  dealSpecs.forEach(function(spec){
+    var rec = buildViewRecord(spec);
+    if(params.company.indexOf(rec.bukrs) === -1) return;       /* BUKRS IN s_bukrs */
+    if(!(rec.dblfz <= kd && rec.delfz > kd)) return;           /* DBLFZ <= p_date < DELFZ */
+    if(rec.saktiv === '3') return;                             /* SAKTIV <> '3' */
+    if(excludedTxnStatuses.indexOf(rec.txn_status) !== -1) return;
+    var row = calculateValuation(rec, kd);
+    if(!skipJoin && mockDb){
+      for(var i=0;i<mockDb.mtmData.length;i++){
+        var m = mockDb.mtmData[i];
+        if(m.zbukrs === row.bukrs && m.zrfha === row.rfha && m.zdate === kd && m.ztype === '01'){
+          row.mtm_doc = m.zdoc; row.rev_doc = m.zrev_doc; row.msg = m.zmsg;
+          break;
+        }
+      }
+    }
+    out.push(row);
+  });
+  out.sort(function(a, b){
+    if(a.bukrs !== b.bukrs) return companyIndex(a.bukrs) - companyIndex(b.bukrs);
+    return a.rfha < b.rfha ? -1 : (a.rfha > b.rfha ? 1 : 0);
+  });
+  return out;
+}
+
+function findAccConfig(bukrs, glType, ndf){
+  for(var i=0;i<accConfig.length;i++){
+    var a = accConfig[i];
+    if(a.zbukrs === bukrs && a.type.substr(0,2) === glType && a.zndf === (ndf ? 'X' : '')) return a;
+  }
+  return null;
+}
+
+function glPad(gl){ return ('0000000000' + gl).slice(-10); }
+
+/* Line items exactly as FORM DEBIT / CREDIT build them for the BAPI */
+function buildPostingItems(row, cfg, reversed){
+  var amt = Math.abs(row.v_gl);
+  var s = reversed ? -1 : 1;
+  return [
+    { item:1, gl:glPad(cfg.gl_debit),  amount: s * amt,  pc: cfg.pc_debit  || row.prctr, ba: cfg.ba_debit  || row.rbusa, text: cfg.doc_debit  + ':' + row.xtext },
+    { item:2, gl:glPad(cfg.gl_credit), amount: -s * amt, pc: cfg.pc_credit || row.prctr, ba: cfg.ba_credit || row.rbusa, text: cfg.doc_credit + ':' + row.xtext }
+  ];
+}
+
+function nextDocNumber(){ mockDb.nextDoc += 1; return String(mockDb.nextDoc); }
+
+/* FORM POST_DOCUMNET + BAPI_POST + REVERSAL_POSTING. Returns the gt_msg rows. */
+function postMtmDocument(row, keyISO){
+  var msgs = [];
+  var glType = row.v_gl < 0 ? 'ML' : 'MG';
+  var cfg = findAccConfig(row.bukrs, glType, isNdf(row));
+  /* No account entry maintained: ABAP swallows CX_SY_ITAB_LINE_NOT_FOUND and posts nothing. */
+  if(!cfg) return msgs;
+
+  var period = keyISO.substr(0,7);
+  if(closedPeriods[row.bukrs] && closedPeriods[row.bukrs].indexOf(period) !== -1){
+    /* BAPI_ACC_DOCUMENT_POST returned an error: rollback, error row in the log. */
+    msgs.push({ type:'E', rfha:row.rfha, doc:'', diff:row.v_gl, rate:row.c_rate,
+      message:'Posting period ' + pad2(parseInt(period.substr(5,2),10)) + '/' + period.substr(0,4) + ' is not open for company code ' + row.bukrs });
+    return msgs;
+  }
+
+  var doc = nextDocNumber();
+  msgs.push({ type:'S', rfha:row.rfha, doc:doc, diff:row.v_gl, rate:row.c_rate, message:'Document Posted Successfully' });
+  /* Automatic reversal on key date + 1 with reason 02 */
+  var rev = nextDocNumber();
+  msgs.push({ type:'S', rfha:row.rfha, doc:rev, diff:row.v_gl, rate:row.c_rate, message:'Document Posted Successfully' });
+
+  /* MODIFY ZSGTSFTR_MTMDATA */
+  var found = false;
+  for(var i=0;i<mockDb.mtmData.length;i++){
+    var m = mockDb.mtmData[i];
+    if(m.zbukrs === row.bukrs && m.zrfha === row.rfha && m.zdate === keyISO && m.ztype === '01'){
+      m.zdoc = doc; m.zrev_doc = rev; m.zmsg = 'Document Posted Successfully'; found = true;
+    }
+  }
+  if(!found) mockDb.mtmData.push({ zbukrs:row.bukrs, zrfha:row.rfha, zdate:keyISO, ztype:'01', zdoc:doc, zrev_doc:rev, zmsg:'Document Posted Successfully' });
+  return msgs;
+}
+
+/* =========================================================
+   Selection logic (live criteria + search + sort)
+   ========================================================= */
+function applyCriteria(rows){
+  var f = state.filters;
+  var t = f.rfha.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(t && r.rfha.toLowerCase().indexOf(t) === -1) return false;
+    if(f.bp && r.kontrh !== f.bp) return false;
+    if(f.pair && r.cpair !== f.pair) return false;
+    if(f.deal === 'ndf' && !isNdf(r)) return false;
+    if(f.deal === 'del' && isNdf(r)) return false;
+    return true;
+  });
+}
+
+function currentColumns(){
+  for(var i=0;i<LAYOUTS.length;i++){ if(LAYOUTS[i].id === state.layout) return LAYOUTS[i].cols; }
+  return LAYOUTS[0].cols;
+}
+
+function cellText(key, r){
+  var c = COLUMNS[key];
+  var v = r[key];
+  if(c.type === 'date') return isoToDMY(v);
+  if(c.type === 'amt') return formatAmount(v);
+  if(c.type === 'rate') return v ? formatRate(v) : '0.000000';
+  if(c.type === 'num') return String(v);
+  return v === undefined || v === null ? '' : String(v);
+}
+
+function getVisibleRows(){
+  var list = applyCriteria(state.rows);
+  var s = state.search.trim().toLowerCase();
+  if(s){
+    var cols = currentColumns();
+    list = list.filter(function(r){
+      for(var i=0;i<cols.length;i++){
+        if(cellText(cols[i], r).toLowerCase().indexOf(s) !== -1) return true;
+      }
+      return false;
+    });
+  }
+  if(state.sort.field){
+    var key = state.sort.field, col = COLUMNS[key], dir = state.sort.dir === 'asc' ? 1 : -1;
+    var sk = col.sortKey || key;
+    list = list.slice().sort(function(a, b){
+      var x = a[sk], y = b[sk];
+      if(col.type === 'amt' || col.type === 'rate' || col.type === 'num') return (x - y) * dir;
+      x = String(x); y = String(y);
+      return (x < y ? -1 : (x > y ? 1 : 0)) * dir;
+    });
+  }
+  return list;
+}
+
+function getRowById(id){
+  for(var i=0;i<state.rows.length;i++){ if(state.rows[i].id === id) return state.rows[i]; }
+  return null;
+}
+
+/* =========================================================
+   Rendering — list
+   ========================================================= */
+function renderHead(){
+  var cols = currentColumns();
+  var tr = document.getElementById('theadRow');
+  var html = '<th class="no-sort act-col pin pin-0" scope="col" aria-label="Select"></th>';
+  cols.forEach(function(k){
+    var c = COLUMNS[k];
+    var cls = [];
+    if(c.type === 'amt' || c.type === 'rate' || c.type === 'num') cls.push('num');
+    if(c.grp) cls.push('grp-' + c.grp);
+    if(c.pin) cls.push('pin pin-1');
+    if(state.sort.field === k) cls.push('sorted');
+    var ind = state.sort.field === k ? (state.sort.dir === 'asc' ? '▲' : '▼') : '↕';
+    html += '<th scope="col" data-col="' + k + '" class="' + cls.join(' ') + '"' +
+            ' aria-sort="' + (state.sort.field === k ? (state.sort.dir === 'asc' ? 'ascending' : 'descending') : 'none') + '">' +
+            esc(c.label) + '<span class="sort-ind">' + ind + '</span></th>';
+  });
+  tr.innerHTML = html;
+  /* grp colour on the first column group tint only for data columns */
+  Array.prototype.forEach.call(tr.querySelectorAll('th[data-col]'), function(th){
+    th.addEventListener('click', function(){
+      var key = th.getAttribute('data-col');
+      if(state.sort.field === key){ state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc'; }
+      else { state.sort.field = key; state.sort.dir = 'asc'; }
+      renderTable();
+    });
+  });
+}
+
+function renderCell(key, r){
+  var c = COLUMNS[key];
+  var cls = [];
+  if(c.type === 'amt' || c.type === 'rate' || c.type === 'num') cls.push('num mono');
+  if(c.type === 'date') cls.push('mono');
+  if(c.grp) cls.push('grp-' + c.grp);
+  if(c.pin) cls.push('pin pin-1');
+  var txt = cellText(key, r);
+  var inner;
+  if(key === 'rfha'){
+    inner = '<a href="#" class="mc-link mono" data-link="txn" title="View transaction details">' + esc(txt) + '</a>';
+  } else if(c.link === 'doc'){
+    inner = txt ? '<a href="#" class="doc-link mono" data-link="' + key + '" title="Display accounting document">' + esc(txt) + '</a>' : '<span class="dash">—</span>';
+  } else if(key === 'msg'){
+    inner = txt ? '<span class="msg-cell" title="' + esc(txt) + '">' + esc(txt) + '</span>' : '<span class="dash">—</span>';
+  } else {
+    inner = esc(txt);
+  }
+  return '<td class="' + cls.join(' ') + '">' + inner + '</td>';
+}
+
+function renderTable(){
+  renderHead();
+  var list = getVisibleRows();
+  var total = list.length;
+  var pageCount = Math.max(1, Math.ceil(total / state.pageSize));
+  if(state.page > pageCount) state.page = pageCount;
+  var start = (state.page - 1) * state.pageSize;
+  var pageRows = list.slice(start, start + state.pageSize);
+  var cols = currentColumns();
+
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  var table = document.getElementById('mtmTable');
+  var scroll = document.getElementById('tableScroll');
+  var empty = document.getElementById('emptyState');
+
+  if(!state.executed){
+    showEmpty('📊', 'Run the selection to view transactions', 'Choose Company Code and Key Date, then press Execute.');
+  } else if(state.rows.length === 0){
+    showEmpty('📄', 'No transactions found', 'No active FX transactions are valued for the selected company codes and Key Date.');
+  } else if(total === 0){
+    showEmpty('🔎', 'No transactions match your search or filters', 'Adjust the filters or press Reset.');
+  } else {
+    empty.style.display = 'none';
+    scroll.style.display = '';
+  }
+
+  pageRows.forEach(function(r){
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-id', r.id);
+    tr.tabIndex = 0;
+    tr.draggable = true;
+    if(state.selectedId === r.id) tr.classList.add('selected');
+    var html = '<td class="act-col pin pin-0"><input type="checkbox" class="row-select-checkbox" aria-label="Select transaction ' + esc(r.rfha) + '"' +
+               (state.selectedId === r.id ? ' checked' : '') + '></td>';
+    cols.forEach(function(k){ html += renderCell(k, r); });
+    tr.innerHTML = html;
+
+    tr.addEventListener('click', function(){ toggleRowSelection(r.id); });
+    tr.addEventListener('keydown', function(e){
+      if((e.key === ' ' || e.key === 'Enter') && e.target === tr){ e.preventDefault(); toggleRowSelection(r.id); }
+    });
+    var cb = tr.querySelector('.row-select-checkbox');
+    cb.addEventListener('click', function(e){ e.stopPropagation(); });
+    cb.addEventListener('change', function(){ setRowSelection(cb.checked ? r.id : null); });
+
+    Array.prototype.forEach.call(tr.querySelectorAll('[data-link]'), function(a){
+      a.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var kind = a.getAttribute('data-link');
+        if(kind === 'txn') openTxnModal(r);
+        else if(kind === 'mtm_doc') openDocModal(r, 'MTM');
+        else if(kind === 'rev_doc') openDocModal(r, 'REV');
+      });
+    });
+
+    tr.addEventListener('dragstart', function(e){
+      setRowSelection(r.id);
+      draggedRow = r;
+      tr.classList.add('dragging');
+      document.getElementById('postDrop').classList.add('drop-ready');
+      var ghost = document.createElement('div');
+      ghost.className = 'drag-ghost';
+      ghost.textContent = r.rfha + ' — ' + r.cpair;
+      document.body.appendChild(ghost);
+      if(e.dataTransfer){
+        e.dataTransfer.effectAllowed = 'copy';
+        try { e.dataTransfer.setData('text/plain', r.rfha); } catch(err){}
+        if(e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(ghost, 12, 14);
+      }
+      setTimeout(function(){ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 0);
+    });
+    tr.addEventListener('dragend', function(){
+      draggedRow = null;
+      tr.classList.remove('dragging');
+      var dz = document.getElementById('postDrop');
+      dz.classList.remove('drop-ready'); dz.classList.remove('drag-over');
+    });
+    tbody.appendChild(tr);
+  });
+
+  /* title, count, legend */
+  document.getElementById('keyDateTitle').innerHTML = state.executed ? 'Key Date : <b>' + isoToDMY(state.params.keyDate) + '</b>' : '';
+  document.getElementById('resultCount').textContent = state.executed ? (total + (total === 1 ? ' transaction' : ' transactions')) : '';
+  document.getElementById('legend').style.display = (state.executed && total > 0) ? 'flex' : 'none';
+  document.querySelector('.table-footer').style.display = (state.executed && total > 0) ? 'flex' : 'none';
+  document.getElementById('showingText').textContent = total > 0 ? ('Showing ' + (start + 1) + '–' + (start + pageRows.length) + ' of ' + total) : '';
+
+  renderPagination(pageCount);
+  updatePostButton();
+}
+
+function showEmpty(icon, title, text){
+  var empty = document.getElementById('emptyState');
+  empty.innerHTML = '<div class="big">' + icon + '</div><div class="es-title">' + esc(title) + '</div>' + esc(text);
+  empty.style.display = 'block';
+  document.getElementById('tableScroll').style.display = 'none';
+}
+
+function renderPagination(pageCount){
+  var el = document.getElementById('pagination');
+  el.innerHTML = '';
+  function mk(label, disabled, active, fn, aria){
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = label; b.disabled = disabled;
+    if(aria) b.setAttribute('aria-label', aria);
+    if(active) b.classList.add('active');
+    b.addEventListener('click', fn);
+    el.appendChild(b);
+  }
+  mk('‹', state.page <= 1, false, function(){ state.page--; renderTable(); }, 'Previous page');
+  for(var p=1;p<=pageCount;p++){
+    (function(p){ mk(String(p), false, p === state.page, function(){ state.page = p; renderTable(); }, 'Page ' + p); })(p);
+  }
+  mk('›', state.page >= pageCount, false, function(){ state.page++; renderTable(); }, 'Next page');
+}
+
+/* Selection helpers: update classes in place so a drag in progress is never interrupted */
+function syncSelectionUI(){
+  Array.prototype.forEach.call(document.querySelectorAll('#tableBody tr'), function(tr){
+    var on = tr.getAttribute('data-id') === state.selectedId;
+    tr.classList.toggle('selected', on);
+    var cb = tr.querySelector('.row-select-checkbox');
+    if(cb) cb.checked = on;
+  });
+  updatePostButton();
+}
+function setRowSelection(id){ state.selectedId = id; syncSelectionUI(); }
+function toggleRowSelection(id){ setRowSelection(state.selectedId === id ? null : id); }
+
+function updatePostButton(){
+  var btn = document.getElementById('btnPost');
+  var wrap = document.getElementById('postDrop');
+  var row = state.selectedId ? getRowById(state.selectedId) : null;
+  var reason = postBlockReason(row);
+  btn.disabled = !!reason;
+  wrap.title = reason ? reason : 'Post the MTM document and its reversal';
+}
+
+/* =========================================================
+   Modals
+   ========================================================= */
+var openModals = [];
+function openOverlay(id){
+  var el = document.getElementById(id);
+  el.classList.add('open');
+  if(openModals.indexOf(id) === -1) openModals.push(id);
+  var btn = el.querySelector('.btn-primary') || el.querySelector('.btn');
+  if(btn) setTimeout(function(){ btn.focus(); }, 30);
+}
+function closeOverlay(id){
+  var el = document.getElementById(id);
+  el.classList.remove('open');
+  var i = openModals.indexOf(id);
+  if(i !== -1) openModals.splice(i, 1);
+}
+
+/* ---- Confirm mass posting (View With FI Posting) ---- */
+function openConfirm(run){
+  state.pendingRun = run;
+  document.getElementById('confirmBody').textContent =
+    'MTM documents will be posted for Key Date ' + isoToDMY(run.params.keyDate) + '. A reversal document dated ' +
+    isoToDMY(addDaysISO(run.params.keyDate, 1)) + ' is posted automatically for each document.';
+  document.getElementById('confirmCounts').innerHTML =
+    '<div class="cc"><div class="l">Transactions listed</div><div class="v">' + run.listed + '</div></div>' +
+    '<div class="cc"><div class="l">To be posted</div><div class="v">' + run.eligible.length + '</div></div>';
+  openOverlay('confirmModal');
+}
+function cancelConfirm(){ state.pendingRun = null; closeOverlay('confirmModal'); }
+
+/* ---- Message Log (screen 9000) ---- */
+function openLog(msgs){
+  var ok = msgs.filter(function(m){ return m.type === 'S'; }).length;
+  var err = msgs.length - ok;
+  var html = '<div class="log-summary"><span>Documents posted: <b>' + ok + '</b></span><span>Errors: <b>' + err + '</b></span></div>' +
+    '<div class="popup-table-wrap"><table class="popup-table"><thead><tr>' +
+    '<th style="width:90px;">Status</th><th>Transaction</th><th>Document</th><th class="num">Gain/Loss (USD)</th><th>Message</th><th class="num">All-in Rate</th>' +
+    '</tr></thead><tbody>';
+  msgs.forEach(function(m){
+    html += '<tr><td>' + (m.type === 'S'
+        ? '<span class="log-icon log-ok"><span class="ic" aria-hidden="true">✓</span>Success</span>'
+        : '<span class="log-icon log-err"><span class="ic" aria-hidden="true">✕</span>Error</span>') + '</td>' +
+      '<td class="mono">' + esc(m.rfha) + '</td>' +
+      '<td class="mono">' + (m.doc ? esc(m.doc) : '<span class="dash">—</span>') + '</td>' +
+      '<td class="num mono">' + formatAmount(m.diff) + '</td>' +
+      '<td class="wrap">' + esc(m.message) + '</td>' +
+      '<td class="num mono">' + formatRate(m.rate) + '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('logBody').innerHTML = html;
+  openOverlay('logModal');
+}
+
+/* ---- Accounting document (hotspot MTM_DOC / REV_DOC -> FB03) ---- */
+function openDocModal(row, kind){
+  var keyISO = state.params.keyDate;
+  var isRev = kind === 'REV';
+  var docNo = isRev ? row.rev_doc : row.mtm_doc;
+  if(!docNo) return;
+  var glType = row.v_gl < 0 ? 'ML' : 'MG';
+  var cfg = findAccConfig(row.bukrs, glType, isNdf(row));
+  var postDate = isRev ? addDaysISO(keyISO, 1) : keyISO;
+  var items = cfg ? buildPostingItems(row, cfg, isRev) : [];
+
+  document.getElementById('docTitle').textContent = (isRev ? 'Reversal Document ' : 'Accounting Document ') + docNo;
+  var html = '<div class="doc-banner' + (isRev ? ' rev' : '') + '">' +
+    (isRev ? 'Reversal of MTM document ' + esc(row.mtm_doc) + ' · reason 02' : 'MTM posting document') + '</div>';
+  html += '<div class="detail-section"><div class="detail-section-title">Document Header</div><div class="detail-grid cols-4">' +
+    detailItem('Document Number', docNo) +
+    detailItem('Company Code', row.bukrs + ' · ' + row.butxt) +
+    detailItem('Document Type', 'TR') +
+    detailItem('Currency', 'USD') +
+    detailItem('Document Date', isoToDMY(postDate)) +
+    detailItem('Posting Date', isoToDMY(postDate)) +
+    detailItem('Fiscal Year', postDate.substr(0,4)) +
+    detailItem('Reference', row.rfha) +
+    (cfg ? detailItem('Header Text', cfg.doc_header, true) : '') +
+    '</div></div>';
+  html += '<div class="detail-section"><div class="detail-section-title">Line Items</div>' +
+    '<div class="popup-table-wrap"><table class="popup-table"><thead><tr>' +
+    '<th>Item</th><th>G/L Account</th><th>D/C</th><th class="num">Amount (USD)</th><th>Profit Center</th><th>Business Area</th><th>Item Text</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(function(it){
+    var dr = it.amount >= 0;
+    html += '<tr><td>' + it.item + '</td><td class="mono">' + esc(it.gl) + '</td>' +
+      '<td><span class="dc-tag ' + (dr ? 'dr' : 'cr') + '">' + (dr ? 'Dr' : 'Cr') + '</span></td>' +
+      '<td class="num mono">' + formatAmount(it.amount) + '</td><td>' + esc(it.pc) + '</td><td>' + esc(it.ba) + '</td><td class="wrap">' + esc(it.text) + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  document.getElementById('docBody').innerHTML = html;
+  openOverlay('docModal');
+}
+
+/* ---- Transaction details (hotspot RFHA -> ZSGSLCFM_DISPLAY) ---- */
+function openTxnModal(row){
+  document.getElementById('txnTitle').textContent = 'Transaction ' + row.rfha;
+  var html = '<div class="detail-section"><div class="detail-section-title">General</div><div class="detail-grid cols-3">' +
+    detailItem('Company Code', row.bukrs + ' · ' + row.butxt) +
+    detailItem('Transaction', row.rfha) +
+    detailItem('Ext. Reference', row.nordext) +
+    detailItem('TSF Deal ID', row.ztsf_deal_id) +
+    detailItem('Olam Deal No', row.zolam_deal_no) +
+    detailItem('Product Type', row.sgsart + ' · ' + row.xtext) +
+    detailItem('Business Partner', row.kontrh) +
+    detailItem('Partner Name', row.bp_name) +
+    detailItem('Currency Pair', row.cpair) +
+    detailItem('Trade Date', isoToDMY(row.dblfz)) +
+    detailItem('Value Date', isoToDMY(row.delfz)) +
+    detailItem('All-in Rate', formatRate(row.c_rate)) +
+    '</div></div>';
+  html += '<div class="detail-section"><div class="detail-section-title">Legs</div><div class="txn-legs">' +
+    legCard('Leg 1 · ' + row.bs_1, row.curr1, row.amt1) +
+    legCard('Leg 2 · ' + row.bs_2, row.curr2, row.amt2) + '</div></div>';
+  html += '<div class="detail-section"><div class="detail-section-title">Accounting Assignment</div><div class="detail-grid cols-3">' +
+    detailItem('Profit Center', row.prctr + ' · ' + row.pc_name) +
+    detailItem('Business Area', row.rbusa + ' · ' + row.ba_name) +
+    detailItem('Transaction Status', row.txn_status) +
+    '</div></div>';
+  document.getElementById('txnBody').innerHTML = html;
+  openOverlay('txnModal');
+}
+function detailItem(label, value, full){
+  return '<div class="detail-item' + (full ? ' full' : '') + '"><span class="detail-label">' + esc(label) +
+         '</span><span class="detail-value">' + esc(value) + '</span></div>';
+}
+function legCard(head, curr, amt){
+  return '<div class="leg-card"><div class="lc-h">' + esc(head) + '</div><div class="lc-v">' + esc(curr) + ' ' + formatAmount(amt) + '</div></div>';
+}
+
+/* =========================================================
+   Toast
+   ========================================================= */
+function showToast(msg, isError){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
+/* =========================================================
+   Validation (AT SELECTION-SCREEN)
+   ========================================================= */
+function setFieldError(key, msg){
+  var f = document.getElementById('field-' + key);
+  f.classList.add('has-error');
+  var e = document.getElementById('err-' + key);
+  if(msg) e.textContent = msg;
+}
+function clearFieldError(key){ document.getElementById('field-' + key).classList.remove('has-error'); }
+
+function validateKeyDate(){
+  var input = document.getElementById('input-keyDate');
+  var v = input.value.trim();
+  if(!v){ setFieldError('keyDate', 'Key Date is required.'); return false; }
+  var d = parseDMY(v);
+  if(!d){ setFieldError('keyDate', 'Enter a valid date (DD-MM-YYYY).'); return false; }
+  input.value = formatDMY(d);
+  if(!isMonthEnd(d)){ setFieldError('keyDate', 'Key Date should be Month End Date only.'); return false; }
+  clearFieldError('keyDate');
+  form.keyDate = toISO(d);
+  return true;
+}
+function validateCompany(){
+  if(form.company.length === 0){ setFieldError('company', 'Company Code is required.'); return false; }
+  clearFieldError('company');
+  return true;
+}
+
+/* =========================================================
+   Actions
+   ========================================================= */
+function commitRun(params, rows){
+  state.executed = true;
+  state.params = { company:params.company.slice(), keyDate:params.keyDate, posting:params.posting };
+  state.rows = rows;
+  state.selectedId = null;
+  state.page = 1;
+  renderTable();
+}
+
+/* START-OF-SELECTION */
+function onExecute(){
+  var okC = validateCompany();
+  var okD = validateKeyDate();
+  if(!okC || !okD){ showToast('Check the highlighted selection fields.', true); return; }
+  var params = { company:form.company.slice(), keyDate:form.keyDate, posting:form.posting };
+  var rows = fetchMtmRows(params);
+  if(params.posting === 'post'){
+    var eligible = applyCriteria(rows).filter(isEligibleForPosting);
+    if(eligible.length){
+      openConfirm({ params:params, rows:rows, eligible:eligible, listed:applyCriteria(rows).length });
+      return;
+    }
+  }
+  commitRun(params, rows);
+}
+
+/* FORM ALL_POSTING + POST_DISPLAY */
+function runMassPosting(){
+  var run = state.pendingRun;
+  if(!run) return;
+  closeOverlay('confirmModal');
+  state.pendingRun = null;
+  var msgs = [];
+  run.eligible.forEach(function(r){ msgs = msgs.concat(postMtmDocument(r, run.params.keyDate)); });
+  var rows = fetchMtmRows(run.params);          /* PERFORM get_data again */
+  commitRun(run.params, rows);
+  if(msgs.length) openLog(msgs);
+}
+
+/* Toolbar POST (or the row dropped on it) */
+function triggerPost(row){
+  var reason = postBlockReason(row);
+  if(reason){ showToast(reason, true); return; }
+  var msgs = postMtmDocument(row, state.params.keyDate);
+  state.rows = fetchMtmRows(state.params);
+  state.selectedId = null;
+  renderTable();
+  if(msgs.length) openLog(msgs);
+}
+
+function resetFilters(){
+  state.search = ''; state.filters = { rfha:'', bp:'', pair:'', deal:'all' };
+  state.sort = { field:null, dir:'asc' }; state.page = 1; state.selectedId = null;
+  document.getElementById('tableSearch').value = '';
+  document.getElementById('filterRfha').value = '';
+  document.getElementById('filterBp').value = '';
+  document.getElementById('filterPair').value = '';
+  document.getElementById('filterDeal').value = 'all';
+  renderTable();
+}
+
+/* Header Refresh: reload the whole screen to its initial state */
+function refreshScreen(){
+  resetMockDb();
+  openModals.slice().forEach(closeOverlay);
+  state.executed = false; state.rows = []; state.params = { company:[], keyDate:'', posting:'view' };
+  state.layout = ''; state.pendingRun = null;
+  document.getElementById('select-layout').value = '';
+  applyFormDefaults();
+  resetFilters();
+  showToast('Screen refreshed.');
+}
+
+function applyFormDefaults(){
+  /* Demo defaults so the screen is ready to run; the SAP selection screen starts empty. */
+  form.company = loadCompanyCodes().map(function(c){ return c.code; });
+  form.keyDate = '2026-09-30';
+  form.posting = 'view';
+  document.getElementById('input-keyDate').value = isoToDMY(form.keyDate);
+  document.getElementById('rb-view').checked = true;
+  syncPostingUI();
+  clearFieldError('company'); clearFieldError('keyDate');
+  updateCompanyDisplay();
+}
+
+function syncPostingUI(){
+  var rbPost = document.getElementById('rb-post');
+  form.posting = rbPost.checked ? 'post' : 'view';
+  document.getElementById('rb-view').parentNode.classList.toggle('on', !rbPost.checked);
+  rbPost.parentNode.classList.toggle('on', rbPost.checked);
+  document.getElementById('hint-posting').style.visibility = rbPost.checked ? 'visible' : 'hidden';
+}
+
+/* =========================================================
+   Floating panel positioning (shared by dropdown + calendar)
+   ========================================================= */
+function positionFloatingPanel(triggerEl, panelEl, opts){
+  opts = opts || {};
+  var margin = 8, gap = opts.gap === undefined ? 6 : opts.gap;
+  var tr = triggerEl.getBoundingClientRect();
+  if(opts.matchWidth) panelEl.style.width = Math.max(tr.width, opts.minWidth || 0) + 'px';
+  var pr = panelEl.getBoundingClientRect();
+  var left = opts.alignRight ? (tr.right - pr.width) : tr.left;
+  var maxLeft = window.innerWidth - margin - pr.width;
+  if(left > maxLeft) left = maxLeft;
+  if(left < margin) left = margin;
+  var top = tr.bottom + gap;
+  if(top + pr.height > window.innerHeight - margin){
+    var above = tr.top - gap - pr.height;
+    top = above >= margin ? above : Math.max(margin, window.innerHeight - margin - pr.height);
+  }
+  panelEl.style.position = 'fixed';
+  panelEl.style.left = left + 'px'; panelEl.style.top = top + 'px';
+  panelEl.style.right = 'auto'; panelEl.style.bottom = 'auto';
+}
+
+/* =========================================================
+   Company Code multi-select (SELECT-OPTIONS s_bukrs, single values)
+   ========================================================= */
+function updateCompanyDisplay(){
+  var input = document.getElementById('input-company');
+  var all = loadCompanyCodes();
+  input.value = form.company.join(', ');
+  input.title = form.company.map(function(c){ var cc = findCompany(c); return c + ' · ' + cc.name; }).join('\n');
+  if(!form.company.length) input.value = '';
+}
+
+function initCompanySelect(){
+  var wrap = document.getElementById('dd-company');
+  var input = document.getElementById('input-company');
+  var panel = document.getElementById('panel-company');
+
+  function render(){
+    var codes = loadCompanyCodes();
+    var allOn = form.company.length === codes.length;
+    var html = '<label class="ms-item ms-all"><input type="checkbox" data-all="1"' + (allOn ? ' checked' : '') + '>' +
+               '<span><span class="ms-code">All authorised</span></span></label>';
+    codes.forEach(function(c){
+      html += '<label class="ms-item"><input type="checkbox" value="' + c.code + '"' + (form.company.indexOf(c.code) !== -1 ? ' checked' : '') + '>' +
+              '<span><span class="ms-code">' + c.code + '</span><br><span class="ms-name">' + esc(c.name) + '</span></span></label>';
+    });
+    panel.innerHTML = html;
+    Array.prototype.forEach.call(panel.querySelectorAll('input'), function(cb){
+      cb.addEventListener('change', function(){
+        if(cb.getAttribute('data-all')){
+          form.company = cb.checked ? codes.map(function(c){ return c.code; }) : [];
+        } else {
+          var v = cb.value, i = form.company.indexOf(v);
+          if(cb.checked && i === -1) form.company.push(v);
+          if(!cb.checked && i !== -1) form.company.splice(i, 1);
+          form.company.sort();
+        }
+        updateCompanyDisplay();
+        if(form.company.length) clearFieldError('company');
+        render();
+      });
+    });
+  }
+  function open(){
+    render();
+    wrap.classList.add('open');
+    positionFloatingPanel(wrap, panel, { matchWidth:true, minWidth:260, gap:4 });
+  }
+  input.addEventListener('click', function(){ if(wrap.classList.contains('open')) wrap.classList.remove('open'); else open(); });
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown'){ e.preventDefault(); open(); }
+    if(e.key === 'Escape') wrap.classList.remove('open');
+  });
+  /* the whole field area opens the list, not just the text */
+  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) wrap.classList.remove('open'); });
+  document.addEventListener('scroll', function(e){
+    if(wrap.classList.contains('open') && !panel.contains(e.target)) wrap.classList.remove('open');
+  }, true);
+  window.addEventListener('resize', function(){ wrap.classList.remove('open'); });
+}
+
+/* =========================================================
+   Date picker — custom inline calendar with month + year selectors.
+   The view month is initialised ONLY when the calendar opens.
+   ========================================================= */
+function initDatePicker(key, onPick){
+  var input = document.getElementById('input-' + key);
+  var btn = document.querySelector('.date-icon[data-target="' + key + '"]');
+  var popup = document.getElementById('popup-' + key);
+  var wrap = input.closest('.date-field');
+  var view = { year:0, month:0 };
+
+  function render(){
+    var selected = parseDMY(input.value);
+    var today = new Date();
+    var first = new Date(view.year, view.month, 1);
+    var startOffset = first.getDay();
+    var dim = new Date(view.year, view.month + 1, 0).getDate();
+    var prevDim = new Date(view.year, view.month, 0).getDate();
+
+    var monthOpts = '', yearOpts = '', y;
+    for(var m=0;m<12;m++) monthOpts += '<option value="' + m + '"' + (m === view.month ? ' selected' : '') + '>' + MONTH_LONG[m] + '</option>';
+    var yMin = Math.min(view.year, today.getFullYear()) - 6, yMax = Math.max(view.year, today.getFullYear()) + 6;
+    for(y=yMin;y<=yMax;y++) yearOpts += '<option value="' + y + '"' + (y === view.year ? ' selected' : '') + '>' + y + '</option>';
+
+    var html = '<div class="cal-head"><button type="button" data-nav="-1" aria-label="Previous month">‹</button>' +
+      '<span class="cal-selects"><select class="cal-sel" data-sel="month" aria-label="Month">' + monthOpts + '</select>' +
+      '<select class="cal-sel" data-sel="year" aria-label="Year">' + yearOpts + '</select></span>' +
+      '<button type="button" data-nav="1" aria-label="Next month">›</button></div><div class="cal-grid">';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d){ html += '<div class="dow">' + d + '</div>'; });
+    var i;
+    for(i=0;i<startOffset;i++) html += '<div class="day muted">' + (prevDim - startOffset + 1 + i) + '</div>';
+    for(var d=1; d<=dim; d++){
+      var cls = 'day';
+      var dt = new Date(view.year, view.month, d);
+      if(selected && dt.getTime() === new Date(selected.getFullYear(), selected.getMonth(), selected.getDate()).getTime()) cls += ' selected';
+      if(dt.toDateString() === today.toDateString()) cls += ' today';
+      html += '<div class="' + cls + '" data-day="' + d + '">' + d + '</div>';
+    }
+    var trailing = (7 - ((startOffset + dim) % 7)) % 7;
+    for(i=1;i<=trailing;i++) html += '<div class="day muted">' + i + '</div>';
+    html += '</div>';
+    popup.innerHTML = html;
+
+    Array.prototype.forEach.call(popup.querySelectorAll('[data-nav]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        var nd = new Date(view.year, view.month + parseInt(b.getAttribute('data-nav'),10), 1);
+        view.year = nd.getFullYear(); view.month = nd.getMonth();
+        render(); position();
+      });
+    });
+    Array.prototype.forEach.call(popup.querySelectorAll('.cal-sel'), function(s){
+      s.addEventListener('change', function(){
+        if(s.getAttribute('data-sel') === 'month') view.month = parseInt(s.value,10);
+        else view.year = parseInt(s.value,10);
+        render(); position();
+      });
+    });
+    Array.prototype.forEach.call(popup.querySelectorAll('.day[data-day]'), function(el){
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
+        input.value = formatDMY(new Date(view.year, view.month, parseInt(el.getAttribute('data-day'),10)));
+        popup.classList.remove('open');
+        if(onPick) onPick();
+      });
+    });
+  }
+  function position(){ positionFloatingPanel(wrap, popup, { alignRight:true, gap:6 }); }
+  function open(){
+    var sel = parseDMY(input.value) || new Date();
+    view.year = sel.getFullYear(); view.month = sel.getMonth();     /* initialised on open only */
+    popup.style.left = popup.style.top = popup.style.right = popup.style.bottom = '';
+    render(); popup.classList.add('open'); position();
+  }
+  function close(){ popup.classList.remove('open'); }
+  function toggle(e){ if(e) e.stopPropagation(); if(popup.classList.contains('open')) close(); else open(); }
+
+  popup.addEventListener('click', function(e){ e.stopPropagation(); });
+  btn.addEventListener('click', toggle);
+  input.addEventListener('click', function(e){ if(!popup.classList.contains('open')) toggle(e); });
+  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) close(); });
+  document.addEventListener('scroll', function(e){ if(popup.classList.contains('open') && !popup.contains(e.target)) close(); }, true);
+  window.addEventListener('resize', function(){ if(popup.classList.contains('open')) position(); });
+  input.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+  input.addEventListener('change', function(){ if(onPick) onPick(); });
+  input.addEventListener('blur', function(){ if(input.value.trim() && onPick) onPick(); });
+}
+
+/* =========================================================
+   Event wiring
+   ========================================================= */
+function wireEvents(){
+  document.getElementById('btnExecute').addEventListener('click', onExecute);
+  document.getElementById('btnRefresh').addEventListener('click', refreshScreen);
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="postingType"]'), function(r){
+    r.addEventListener('change', syncPostingUI);
+  });
+  document.getElementById('input-keyDate').addEventListener('input', function(){ clearFieldError('keyDate'); });
+  document.getElementById('input-keyDate').addEventListener('keydown', function(e){ if(e.key === 'Enter') onExecute(); });
+
+  document.getElementById('select-layout').addEventListener('change', function(e){
+    state.layout = e.target.value; renderTable();
+  });
+
+  document.getElementById('tableSearch').addEventListener('input', function(e){
+    state.search = e.target.value; state.page = 1; renderTable();
+  });
+  document.getElementById('filterRfha').addEventListener('input', function(e){ state.filters.rfha = e.target.value; state.page = 1; renderTable(); });
+  document.getElementById('filterBp').addEventListener('change', function(e){ state.filters.bp = e.target.value; state.page = 1; renderTable(); });
+  document.getElementById('filterPair').addEventListener('change', function(e){ state.filters.pair = e.target.value; state.page = 1; renderTable(); });
+  document.getElementById('filterDeal').addEventListener('change', function(e){ state.filters.deal = e.target.value; state.page = 1; renderTable(); });
+  document.getElementById('btnResetFilters').addEventListener('click', resetFilters);
+  document.getElementById('pageSizeSelect').addEventListener('change', function(e){
+    state.pageSize = parseInt(e.target.value,10); state.page = 1; renderTable();
+  });
+
+  document.getElementById('btnPost').addEventListener('click', function(){
+    triggerPost(state.selectedId ? getRowById(state.selectedId) : null);
+  });
+
+  /* drag a row onto Post Document — same handler as the button */
+  var dz = document.getElementById('postDrop');
+  dz.addEventListener('dragover', function(e){
+    if(!draggedRow) return;
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    dz.classList.add('drag-over');
+  });
+  dz.addEventListener('dragleave', function(){ dz.classList.remove('drag-over'); });
+  dz.addEventListener('drop', function(e){
+    e.preventDefault();
+    dz.classList.remove('drag-over'); dz.classList.remove('drop-ready');
+    if(draggedRow){ var r = draggedRow; draggedRow = null; triggerPost(r); }
+  });
+
+  /* confirm + info modals */
+  document.getElementById('btnConfirmPost').addEventListener('click', runMassPosting);
+  document.getElementById('btnConfirmCancel').addEventListener('click', cancelConfirm);
+  document.getElementById('btnConfirmClose').addEventListener('click', cancelConfirm);
+  [['btnLogClose','logModal'],['btnLogCancel','logModal'],['btnDocClose','docModal'],['btnDocCancel','docModal'],
+   ['btnTxnClose','txnModal'],['btnTxnCancel','txnModal']].forEach(function(p){
+    document.getElementById(p[0]).addEventListener('click', function(){ closeOverlay(p[1]); });
+  });
+  ['logModal','docModal','txnModal'].forEach(function(id){
+    document.getElementById(id).addEventListener('mousedown', function(e){ if(e.target === this) closeOverlay(id); });
+  });
+  document.getElementById('confirmModal').addEventListener('mousedown', function(e){ if(e.target === this) cancelConfirm(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && openModals.length){
+      var top = openModals[openModals.length - 1];
+      if(top === 'confirmModal') cancelConfirm(); else closeOverlay(top);
+    }
+  });
+}
+
+/* =========================================================
+   Initialization
+   ========================================================= */
+function init(){
+  resetMockDb();
+
+  var layoutSel = document.getElementById('select-layout');
+  layoutSel.innerHTML = '';
+  LAYOUTS.forEach(function(l){
+    var o = document.createElement('option'); o.value = l.id; o.textContent = l.label; layoutSel.appendChild(o);
+  });
+  var bpSel = document.getElementById('filterBp');
+  loadBusinessPartners().forEach(function(b){
+    var o = document.createElement('option'); o.value = b.id; o.textContent = b.name; bpSel.appendChild(o);
+  });
+  var pairSel = document.getElementById('filterPair');
+  loadCurrencyPairs().forEach(function(p){
+    var o = document.createElement('option'); o.value = p.pair; o.textContent = p.pair; pairSel.appendChild(o);
+  });
+
+  initCompanySelect();
+  initDatePicker('keyDate', function(){ validateKeyDate(); });
+  wireEvents();
+  applyFormDefaults();
+  renderTable();
+}
+init();
+</script>
+
+</body>
+</html>

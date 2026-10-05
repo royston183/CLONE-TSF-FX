@@ -63,4 +63,10 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'bo-reverse-fx-mtm-oil-dmcc': lazy(() => import('./bo-reverse-fx-mtm-oil-dmcc/index.tsx')),
   'bo-reverse-fx-mtm-other-origins': lazy(() => import('./bo-reverse-fx-mtm-other-origins/index.tsx')),
   'bo-reverse-fx-mtm-india': lazy(() => import('./bo-reverse-fx-mtm-india/index.tsx')),
+  'fx-mtm-external-tsf-deals': lazy(() => import('./fx-mtm-external-tsf-deals/index.tsx')),
+  'post-fx-mtm-other-origins': lazy(() => import('./post-fx-mtm-other-origins/index.tsx')),
+  'post-fx-mtm-oil-dmcc': lazy(() => import('./post-fx-mtm-oil-dmcc/index.tsx')),
+  'fx-ndf-settlement': lazy(() => import('./fx-ndf-settlement/index.tsx')),
+  'bo-deal-rejection': lazy(() => import('./bo-deal-rejection/index.tsx')),
+  'inr-heads-up-reminder': lazy(() => import('./inr-heads-up-reminder/index.tsx')),
 }

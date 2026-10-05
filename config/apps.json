@@ -589,6 +589,66 @@
       "services": [],
       "legacy": "legacy/bo-reverse-fx-mtm-india.html",
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR084",
+      "id": "fx-mtm-external-tsf-deals",
+      "route": "/apps/fx-mtm-external-tsf-deals",
+      "title": "FX MTM - External and TSF Deals - SG00",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-mtm-external-tsf-deals.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR023",
+      "id": "post-fx-mtm-other-origins",
+      "route": "/apps/post-fx-mtm-other-origins",
+      "title": "Post FX MTM to Accounting - Other Origins",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/post-fx-mtm-other-origins.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR022",
+      "id": "post-fx-mtm-oil-dmcc",
+      "route": "/apps/post-fx-mtm-oil-dmcc",
+      "title": "Post FX MTM to Accounting - OIL & DMCC (USD)",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/post-fx-mtm-oil-dmcc.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR028",
+      "id": "fx-ndf-settlement",
+      "route": "/apps/fx-ndf-settlement",
+      "title": "FX NDF Settlement",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/fx-ndf-settlement.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR092",
+      "id": "bo-deal-rejection",
+      "route": "/apps/bo-deal-rejection",
+      "title": "BO deal Rejection and return to FO",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/bo-deal-rejection.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSFR061",
+      "id": "inr-heads-up-reminder",
+      "route": "/apps/inr-heads-up-reminder",
+      "title": "MO: INR Head-Ups Reminder",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/inr-heads-up-reminder.html",
+      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
     }
   ]
 }

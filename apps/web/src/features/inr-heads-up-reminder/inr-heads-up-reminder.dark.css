@@ -1,0 +1,210 @@
+/* Night mode for inr-heads-up-reminder, derived from inr-heads-up-reminder.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .inr-heads-up-reminder {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .inr-heads-up-reminder select,
+:root[data-theme='dark'] .inr-heads-up-reminder textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .page-header {
+  background: #17304a;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .page-header .logo-placeholder {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .dd-input {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .dd-panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .date-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .btn-danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .success-banner {
+  border: 1px solid #26543a;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-in-use {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-pending {
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-rejected {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-settled {
+  color: #6bf0ed;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-matured {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .pagination button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .child-parent-summary {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.popup-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .icon-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .control:hover,
+:root[data-theme='dark'] .inr-heads-up-reminder .dd-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-text-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .status-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .success-banner {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .child-parent-summary {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table thead th {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr.selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr.selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .tb-error {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .alert-banner {
+  border: 1px solid #5c2b30;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td.cell-blue {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td.cell-green {
+  background: #14321f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table td.sticky-col,
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table th.sticky-col {
+  box-shadow: 1px 0 0 #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td.sticky-col {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td.sticky-col.cell-green {
+  background: #14321f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr:hover td.sticky-col:not(.cell-green) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr.selected td.sticky-col:not(.cell-green) {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody td.pin-check {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr:hover td.pin-check {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder table.mc-table tbody tr.selected td.pin-check {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .chk-ro {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .mc-link.deal-link:hover {
+  color: #6deea3;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .sw-blue {
+  background: #17304a;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .sw-green {
+  background: #14321f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .sw-orange {
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .cal-sel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .inr-heads-up-reminder .proto-note {
+  color: #ffbf5c;
+}

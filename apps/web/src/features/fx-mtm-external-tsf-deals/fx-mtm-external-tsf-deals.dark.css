@@ -1,0 +1,109 @@
+/* Night mode for fx-mtm-external-tsf-deals, derived from fx-mtm-external-tsf-deals.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals select,
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .legend .sw-ext {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .legend .sw-mtm {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .dd-input {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 11px center;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .dd-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .dd-panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .date-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .cal-head select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .seg {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .seg button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .btn-danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .btn.btn-secondary[aria-disabled="true"]:hover {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .run-bar {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table thead th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table thead th.t-ext {
+  background: #16243a;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table thead th.t-mtm {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table tbody td {
+  border-bottom: 1px solid #2a3d52;
+  background-color: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table tbody tr:hover td {
+  background-color: #1b2b3d;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table tbody tr.selected td {
+  background-color: #17304a;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.mc-table .pin-2 {
+  box-shadow: 1px 0 0 #1b2b3d;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .status-text-warn {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .pagination button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-mtm-external-tsf-deals table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}

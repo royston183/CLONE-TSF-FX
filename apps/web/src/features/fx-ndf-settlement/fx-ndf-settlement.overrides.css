@@ -1,0 +1,18 @@
+/*
+ * The only deviation from the generated legacy stylesheet, and why.
+ *
+ * fx-ndf-settlement.legacy.css is produced by tools/scope-css.mjs and cannot be hand-edited.
+ * The original header held a single button, and ".page-header .btn {margin-left:auto}" pushed it
+ * to the right edge. The React header also carries Back and Sign out beside Refresh, and that rule
+ * would give each of the three its own auto margin and spread them across the bar. They are
+ * grouped instead: the group takes the auto margin and the buttons inside it sit together.
+ */
+.fx-ndf-settlement .page-header .header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fx-ndf-settlement .page-header .header-actions .btn {
+  margin-left: 0;
+}

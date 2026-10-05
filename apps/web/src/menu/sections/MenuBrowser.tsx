@@ -1,5 +1,7 @@
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { FOLDER_SVG, Tile } from '../Tile.tsx'
+import { loadMemory, saveMemory, withScroll, withoutScroll, levelKey, type NavMemory } from '../navMemory.ts'
 import { childrenOf } from '../types.ts'
 import type { MenuNode, MenuTile } from '../types.ts'
 import type { ReactNode } from 'react'
@@ -36,7 +38,25 @@ export function MenuBrowser({ title, sub, groups, onLaunch, onToast, scrollToTop
   // going up must scroll that element back to the top, not call window.scrollTo.
   scrollToTop: () => void
 }) {
-  const [path, setPath] = useState<number[]>([])
+  // Where the user is, remembered for the tab: opening a screen unmounts this page and Back
+  // remounts it, and without this it came back at the top of the main menu.
+  const { pathname } = useLocation()
+  const memoryKey = `${pathname}|${title}`
+  const [memory, setMemory] = useState<NavMemory>(() => loadMemory(memoryKey))
+  const memoryRef = useRef(memory)
+  const remember = useCallback(
+    (next: NavMemory) => {
+      memoryRef.current = next
+      saveMemory(memoryKey, next)
+      setMemory(next)
+    },
+    [memoryKey],
+  )
+  const path = memory.path
+
+  // <main> is the scroll container (see MenuPage); this component renders into it.
+  const mainEl = () => document.querySelector<HTMLElement>('.mp main')
+  const currentScroll = () => mainEl()?.scrollTop ?? 0
 
   const nodeAt = useCallback(
     (target: number[]): MenuNode | undefined => {
@@ -69,16 +89,40 @@ export function MenuBrowser({ title, sub, groups, onLaunch, onToast, scrollToTop
         onToast(`${node.label} has nothing in it yet.`)
         return
       }
-      setPath(target)
+      // Leave a note of where this level was scrolled to, and open the folder at its top.
+      const left = withScroll(memoryRef.current, memoryRef.current.path, currentScroll())
+      remember({ ...withoutScroll(left, target), path: target })
       scrollToTop()
     },
-    [nodeAt, onToast, scrollToTop],
+    [nodeAt, onToast, scrollToTop, remember],
   )
 
   const goUp = () => {
-    setPath((current) => (current.length > 2 ? current.slice(0, -1) : []))
-    scrollToTop()
+    const from = memoryRef.current.path
+    const parent = from.length > 2 ? from.slice(0, -1) : []
+    // The parent level keeps the scroll it was left at; the level being closed forgets its own.
+    remember({ ...withoutScroll(memoryRef.current, from), path: parent })
   }
+
+  /** Opening a screen leaves this page, so note the scroll first: Back returns to the same spot. */
+  const launch = (tile: MenuTile) => {
+    remember(withScroll(memoryRef.current, memoryRef.current.path, currentScroll()))
+    onLaunch(tile)
+  }
+
+  // Put the page back where it was: after Back from a screen, and when going up a folder. Waits
+  // for the tree, which loads after mount, and ignores a remembered folder that no longer exists.
+  const pathKey = levelKey(path)
+  const loaded = groups.length > 0
+  useLayoutEffect(() => {
+    if (!loaded) return
+    if (path.length && !nodeAt(path)) {
+      remember({ ...memoryRef.current, path: [] })
+      return
+    }
+    const el = mainEl()
+    if (el) el.scrollTop = memoryRef.current.scroll[pathKey] ?? 0
+  }, [loaded, pathKey])
 
   /** Screens first, then the folders beside them — a node may hold both. */
   const contentsOf = (node: MenuNode, at: number[]) => (
@@ -90,7 +134,7 @@ export function MenuBrowser({ title, sub, groups, onLaunch, onToast, scrollToTop
           title={tile.title}
           desc={tile.desc}
           tag={tile.tag}
-          onClick={() => onLaunch(tile)}
+          onClick={() => launch(tile)}
         />
       ))}
       {(node.subgroups ?? []).map((sub_, si) => (
