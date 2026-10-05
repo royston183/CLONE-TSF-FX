@@ -756,6 +756,7 @@ export function mergeLiveRows(
     `${r.companyCode ?? ''}/${r.transactionNumber}`
   const shown = new Map(b.rows.filter((r) => r.live).map((r) => [key(r), r]))
   const reversed = new Set(incoming.filter((r) => r.status === 'REVERSED').map(key))
+  const incomingByKey = new Map(incoming.map((r) => [key(r), r]))
   const c = { ...b.counters }
   const added = incoming
     .filter((r) => !shown.has(key(r)))
@@ -763,9 +764,15 @@ export function mergeLiveRows(
       const seq = c.seq++
       return { ...r, id: `R${seq}`, seq } as BlotterRow
     })
-  const existing = b.rows.map((r) =>
-    r.live && reversed.has(key(r)) && r.status !== 'REVERSED' ? { ...r, status: 'REVERSED' as const } : r,
-  )
+  const existing = b.rows.map((r) => {
+    if (!r.live) return r
+    let next = r
+    if (reversed.has(key(r)) && r.status !== 'REVERSED') next = { ...next, status: 'REVERSED' as const }
+    // A Deal ID created since the row was loaded (by another screen, or just now): SAP's word on it wins.
+    const inc = incomingByKey.get(key(r))
+    if (inc?.dealId && !r.dealId) next = { ...next, dealId: inc.dealId, mcRef: inc.mcRef, fxModel: inc.fxModel, dealType: inc.dealType }
+    return next
+  })
   return settle({ ...b, partners, rows: [...added, ...existing], counters: c })
 }
 

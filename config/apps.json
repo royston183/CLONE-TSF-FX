@@ -331,9 +331,9 @@
       "route": "/apps/fo-fx-error-correction",
       "title": "EC2: TSF FO Error Correction - FX & Options",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "trmmaster", "businesspartner", "middleware"],
       "legacy": "legacy/fx-fo-error-correction.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "FX half reads the FxTransaction service (names from comp, trmmaster and the business partner service; Deal ID and Master Contract from tsfDealId). Reverse = DELETE (BAPI_FTR_FXT_REVERSE); Correct = PATCH of rates, Amount 1, value date and trade date. SAP holds no Correction Required status, MO remark, trader, mode of trade, account category, business area, profit center or blotter date, so those are blank/read-only and every live row is Open. Options half is not wired (the options BAPIs are not in the service)."
     },
     {
       "code": "ZSGTSFP013",
@@ -341,9 +341,9 @@
       "route": "/apps/fo-change-deal-id",
       "title": "FO: Change Deal ID",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "trmmaster", "businesspartner", "middleware"],
       "legacy": "legacy/FO_Change_Deal_ID.html",
-      "note": "Deal IDs (tsfDealId), their Master Contracts and the MC picker (masterContract, status 03/04, offered only under the deal's own FX model), the linked transactions (tsfvFx, joined on company code + ZRFHA1-8), the invoice plan (invRef), traders (trmTrader) and status texts (tsfDealStatus) are live. Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both stop at MySQL - the program's stamp on the Treasury transactions (BAPI_FTR_FXT_CHANGE) is not done. Change MC is refused while a leg's TXN_STATUS cannot be read (ZSGTSFV_FX has no TXN_STATUS yet). Edit Deal Pair is not saved. Premium (ZSGTSFCDS_OPTION), strike and the planned P&L have no source and stay empty. No seed fallback."
+      "note": "Deal IDs (tsfDealId), their Master Contracts and the MC picker (masterContract, status 03/04, offered only under the deal's own FX model), the linked transactions (read live from the FxTransaction service, joined on company code + ZRFHA1-8; ZSGTSFV_FX is only the fallback for a leg the service does not return, and a live leg is Confirmed once SAP settled it, the MO screen's meaning of matched), the invoice plan (invRef), traders (trmTrader) and status texts (tsfDealStatus) are live. Change MC Ref No writes ZSGTSFTR_DEALID-ZMC_REF and Cancel Deal ID writes status 30; both stop at MySQL - the program's stamp on the Treasury transactions (BAPI_FTR_FXT_CHANGE) is not done. Change MC is refused while a leg's status cannot be read. Edit Deal Pair is not saved. Premium (ZSGTSFCDS_OPTION), strike and the planned P&L have no source and stay empty. No seed fallback."
     },
     {
       "code": "ZSGTSFP015",

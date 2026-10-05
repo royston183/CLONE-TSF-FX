@@ -110,7 +110,11 @@ export function pairProblem(mc: MasterContract | undefined, legs: readonly Blott
 export async function createPairDealId(args: Omit<PairArgs, 'traderCode'>): Promise<{ dealId: string }> {
   const problem = pairProblem(args.mc, args.legs)
   if (problem) throw new Error(problem)
-  const traders = await fxList('trmTrader', {})
+  const [traders, existing] = await Promise.all([fxList('trmTrader', {}), fxList('tsfDealId', {})])
+  for (const leg of args.legs) {
+    const holder = dealIdListing(existing, leg.companyCode ?? '', leg.transactionNumber)
+    if (holder) throw new Error(`Transaction ${leg.transactionNumber} is already on Deal ID ${holder}; it cannot be given another.`)
+  }
   const dealId = await bookDealRow(dealIdColumns({ ...args, traderCode: traderCodeOf(traders, args.traderName) }))
   try {
     await setMcStatus([args.mc.mcNumber], '04')
@@ -122,6 +126,56 @@ export async function createPairDealId(args: Omit<PairArgs, 'traderCode'>): Prom
 }
 
 // ---------------------------------------------------------------- existing Deal IDs
+
+/** Deal ID rows oldest first: the number only goes up, and the first Deal ID a transaction was given is the real one. */
+const oldestFirst = (rows: readonly FxRow[]): FxRow[] => [...rows].sort((a, b) => txt(a, 'ZDEAL_ID').localeCompare(txt(b, 'ZDEAL_ID')))
+
+/**
+ * The Deal ID row that lists a transaction (any slot), or undefined. A cancelled Deal ID (30) holds nothing. A
+ * transaction that was (wrongly) given a second Deal ID answers with the first.
+ */
+export function dealIdListing(rows: readonly FxRow[], companyCode: string, transaction: string): string | undefined {
+  for (const r of oldestFirst(rows)) {
+    if (txt(r, 'ZDEAL_STAT') === '30') continue
+    if (listsTransaction(r, companyCode, transaction)) return txt(r, 'ZDEAL_ID')
+  }
+  return undefined
+}
+
+/** What a Deal ID says about a transaction on it. */
+export type DealIdAssignment = { dealId: string; mcRef: string; model: string; slot: number }
+
+/**
+ * Every transaction on a Deal ID with the Deal ID, Master Contract and slot, keyed company code - transaction. A transaction
+ * on more than one Deal ID (the second given before a second was refused) is shown on the first, the one it was really given.
+ */
+export function assignmentsFromDealIds(rows: readonly FxRow[]): Map<string, DealIdAssignment> {
+  const out = new Map<string, DealIdAssignment>()
+  for (const r of oldestFirst(rows)) {
+    if (txt(r, 'ZDEAL_STAT') === '30') continue
+    for (let i = 1; i <= LAST_SLOT; i++) {
+      const bukrs = txt(r, `ZBUKRS${i}`)
+      const rfha = txt(r, `ZRFHA${i}`)
+      const key = `${bukrs}-${rfha}`
+      if (bukrs && rfha && !out.has(key)) out.set(key, { dealId: txt(r, 'ZDEAL_ID'), mcRef: txt(r, 'ZMC_REF'), model: txt(r, 'ZTSF_MODEL'), slot: i })
+    }
+  }
+  return out
+}
+
+/** Slots 1 and 2 are Deal 1 and Deal 2; the rest are the settlement legs added afterwards. */
+export const dealTypeOfSlot = (slot: number): string => (slot === 1 ? 'Deal 1' : slot === 2 ? 'Deal 2' : 'Settlement')
+
+/**
+ * Deals read from SAP with the Deal ID they are on put back: Deal ID, Master Contract, model and which leg.
+ * This is what SAP knows, so it wins over anything remembered on the screen. A deal on no Deal ID is left alone.
+ */
+export function applyDealIds<T extends Omit<BlotterRow, 'id' | 'seq'>>(incoming: readonly T[], assignments: ReadonlyMap<string, DealIdAssignment>): T[] {
+  return incoming.map((r) => {
+    const a = assignments.get(`${r.companyCode ?? ''}-${r.transactionNumber}`)
+    return a ? { ...r, dealId: a.dealId, mcRef: a.mcRef, fxModel: a.model || r.fxModel, dealType: dealTypeOfSlot(a.slot) } : r
+  })
+}
 
 /** A Deal ID row as the assign dialog lists it. */
 export function toDealRecord(r: FxRow): DealRecord | null {
@@ -140,9 +194,12 @@ export function toDealRecord(r: FxRow): DealRecord | null {
 }
 
 /** The Deal IDs in SAP. A failed read is the caller's to report: no stand-in list is ever offered. */
+export async function loadDealRows(signal?: AbortSignal): Promise<FxRow[]> {
+  return fxList('tsfDealId', {}, { sort: '-ZDEAL_ID', signal })
+}
+
 export async function loadDealRecords(signal?: AbortSignal): Promise<DealRecord[]> {
-  const rows = await fxList('tsfDealId', {}, { sort: '-ZDEAL_ID', signal })
-  return rows.map(toDealRecord).filter((d): d is DealRecord => d !== null)
+  return (await loadDealRows(signal)).map(toDealRecord).filter((d): d is DealRecord => d !== null)
 }
 
 /** The first free transaction slot (3 to 8) of a Deal ID row, or null when all are taken. */
@@ -163,10 +220,13 @@ export function listsTransaction(row: FxRow, companyCode: string, transaction: s
  */
 export async function attachLegToDealId(dealId: string, leg: BlotterRow): Promise<{ slot: number }> {
   if (!isInSap(leg)) throw new Error(`${leg.transactionNumber || leg.draftLabel || 'This row'} is not a SAP transaction, so it cannot be added to a real Deal ID.`)
-  const [row] = await fxList('tsfDealId', { ZDEAL_ID: dealId })
+  const all = await fxList('tsfDealId', {})
+  const row = all.find((r) => txt(r, 'ZDEAL_ID') === dealId)
   if (!row) throw new Error(`Deal ID ${dealId} was not found in SAP.`)
   const company = leg.companyCode ?? ''
-  if (listsTransaction(row, company, leg.transactionNumber)) throw new Error(`Deal ID ${dealId} already lists transaction ${leg.transactionNumber}.`)
+  const holder = dealIdListing(all, company, leg.transactionNumber)
+  if (holder === dealId) throw new Error(`Deal ID ${dealId} already lists transaction ${leg.transactionNumber}.`)
+  if (holder) throw new Error(`Transaction ${leg.transactionNumber} is already on Deal ID ${holder}; it cannot be added to ${dealId}.`)
   const slot = freeLegSlot(row)
   if (!slot) throw new Error(`Deal ID ${dealId} has no free transaction slot left.`)
   const key = { ZDEAL_ID: dealId, ZDEAL_TYPE: txt(row, 'ZDEAL_TYPE'), ZSUB_TYPE: txt(row, 'ZSUB_TYPE') }

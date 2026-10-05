@@ -1,7 +1,8 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { FxRow } from '../../shared/fx/mw.ts'
-import { fxKey, legs, toDeal, toMasterContract, type Related } from './api.ts'
+import { fxKey, legs, liveTxnStatus, toDeal, toMasterContract, type Related } from './api.ts'
+import { EMPTY_NAMES, txnTypeKey } from '../fo-fx-error-correction/api.ts'
 import { hasUnverifiedLegs, isMcChangeBlocked, legStatus, mcChangeError } from './logic.ts'
 import type { Deal } from './types.ts'
 
@@ -109,5 +110,39 @@ describe('changing the MC Ref No', () => {
     strictEqual(hasUnverifiedLegs(matched), false)
     strictEqual(isMcChangeBlocked(matched), false)
     strictEqual(hasUnverifiedLegs({ ...deal, top: [] }), false)
+  })
+})
+
+describe('legs read live from the FX transaction service', () => {
+  const sap = {
+    CompanyCode: 'SG03', FinancialTransaction: '3000000000015', ProductType: '12B', TransactionType: '619', Partner: '400000002',
+    ContractDate: '2026-09-30', ValueDate: '2026-11-03', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR',
+    BuyAmount: 1000, SellAmount: 83000, SpotRate: 82.5, SwapRate: 0.5, ForwardRate: 83, ActiveStatus: '0', ActivityCategory: '20',
+  }
+  const withLive = (over = {}): Related => ({
+    ...rel,
+    live: new Map([[fxKey('SG03', '3000000000015'), { ...sap, ...over }]]),
+    names: { ...EMPTY_NAMES, partners: new Map([['400000002', 'Barclays']]), transactionTypes: new Map([[txnTypeKey('12B', '619'), 'Forward']]) },
+    entities: new Map([['SG03', 'OGA']]),
+  })
+
+  it('fills a leg the stale view lacks, with signed amounts, rates, names and entity', () => {
+    const [d1] = legs(dealRow, withLive())
+    deepStrictEqual(
+      [d1!.bpName, d1!.xtext, d1!.entity, d1!.dblfz, d1!.delfz, d1!.bs1, d1!.curr1, d1!.amt1, d1!.bs2, d1!.curr2, d1!.amt2, d1!.ospot, d1!.oswap, d1!.otot_rate],
+      ['400000002 - Barclays', '619 - Forward', 'OGA', '30-09-2026', '03-11-2026', 'Buy', 'USD', 1000, 'Sell', 'INR', -83000, 82.5, 0.5, 83],
+    )
+  })
+
+  it('still fills the other leg from the view', () => {
+    const [, d2] = legs(dealRow, withLive())
+    strictEqual(d2!.bpName, '0400000002 - FMC Corporation')
+  })
+
+  it('calls a leg Confirmed only once SAP has settled it, so the MC change rule can pass', () => {
+    strictEqual(liveTxnStatus(sap), '01')
+    strictEqual(liveTxnStatus({ ...sap, ActivityCategory: '30' }), '03')
+    strictEqual(legs(dealRow, withLive({ ActivityCategory: '30' }))[0]!.txnStatus, '03')
+    strictEqual(legs(dealRow, withLive())[0]!.txnStatus, '01')
   })
 })

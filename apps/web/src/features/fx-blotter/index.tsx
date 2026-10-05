@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { installMasters, loadBlotterMasters } from './masters.ts'
-import { attachLegToDealId, createPairDealId, loadDealRecords } from './dealIds.ts'
+import { applyDealIds, assignmentsFromDealIds, attachLegToDealId, createPairDealId, loadDealRows, toDealRecord } from './dealIds.ts'
 import { applyReleases, loadReleases, saveReleases, updateReleases } from './releases.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -220,9 +220,9 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       try {
         const cur = latest.current
         // The Deal IDs in SAP replace the demo list the assign dialog used to offer.
-        let records: Awaited<ReturnType<typeof loadDealRecords>> | null = null
+        let dealRows: Awaited<ReturnType<typeof loadDealRows>> | null = null
         try {
-          records = await loadDealRecords(signal)
+          dealRows = await loadDealRows(signal)
         } catch (e) {
           if (signal?.aborted) return
           showToast(`Could not load Deal IDs from SAP: ${sapMessage(e)}`, 'warn')
@@ -238,9 +238,11 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         }
         if (signal?.aborted) return
         let next = latest.current
-        // A deal released to MO from this browser comes back as Released, not as a fresh Created one.
-        if (rows.length) next = mergeLiveRows(next, applyReleases(rows, loadReleases()), partners)
-        if (records) next = { ...next, deals: records }
+        // A deal released to MO from this browser comes back as Released, not as a fresh Created one; the Deal ID
+        // each deal is on, with its Master Contract and leg, is read back from SAP's Deal ID table.
+        const assignments = dealRows ? assignmentsFromDealIds(dealRows) : new Map()
+        if (rows.length) next = mergeLiveRows(next, applyDealIds(applyReleases(rows, loadReleases()), assignments), partners)
+        if (dealRows) next = { ...next, deals: dealRows.map(toDealRecord).filter((d): d is NonNullable<typeof d> => d !== null) }
         if (next !== latest.current) commit(next)
       } catch (e) {
         if (signal?.aborted) return

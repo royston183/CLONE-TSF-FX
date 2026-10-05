@@ -7,8 +7,12 @@ import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, FO_REVIEWER, STATUS, STATUS_KEY, ST
 import { fmtDate, fmtNum, fmtRate, parseAmountShorthand, parseRate, safeParseDate } from './format.ts'
 import type { CorrectionForm, DropAction, Filters, ReverseScope, Sort, SortKey, StatusFilter, Txn } from './types.ts'
 
-/** Only Correction Required rows can be selected, dragged, corrected or reversed. */
-export const isActionable = (t: Txn) => t.status === STATUS.ERRCORR
+/**
+ * Only rows that can still be worked can be selected, dragged, corrected or reversed: Correction Required (the sample
+ * rows) and Open (a live SAP transaction, whose Correction Required status SAP does not hold). Reversed and Released
+ * rows are read-only.
+ */
+export const isActionable = (t: Txn) => t.status === STATUS.ERRCORR || t.status === STATUS.OPEN
 
 // ---------------------------------------------------------------- filtering / sorting
 
@@ -51,7 +55,7 @@ export function rowSearchValues(t: Txn): string[] {
     fmtRate(t.allInRate),
     fmtDate(t.tradeDate),
     fmtDate(t.valueDate),
-    fmtDate(t.blotterDate),
+    t.blotterDate ? fmtDate(t.blotterDate) : '',
     t.busArea,
     t.busAreaDesc,
     t.profitCenter,
@@ -70,7 +74,8 @@ export function rowSearchValues(t: Txn): string[] {
 export function matchesFilters(t: Txn, f: Filters, status: StatusFilter): boolean {
   const from = safeParseDate(f.dateFrom) ?? new Date(1900, 0, 1)
   const to = safeParseDate(f.dateTo) ?? new Date(2999, 0, 1)
-  if (t.blotterDate < from || t.blotterDate > to) return false
+  // SAP keeps no blotter date, so a live row has none to range-check and is never hidden by it.
+  if (t.blotterDate && (t.blotterDate < from || t.blotterDate > to)) return false
   if (f.coCode !== 'ALL' && t.coCode !== f.coCode) return false
   if (f.trader !== 'ALL' && t.traderCode !== f.trader) return false
   if (status !== 'ALL' && STATUS_KEY[t.status] !== status) return false
@@ -240,7 +245,7 @@ export function formFromTxn(t: Txn): CorrectionForm {
     mc: t.mc,
     dealId: t.dealId,
     tradeDate: fmtDate(t.tradeDate),
-    blotterDate: fmtDate(t.blotterDate),
+    blotterDate: t.blotterDate ? fmtDate(t.blotterDate) : '',
   }
 }
 
@@ -359,7 +364,7 @@ export function buildCsv(rows: Txn[]): string {
   const lines = [CSV_HEADER.join(',')]
   for (const t of rows) {
     const row = CSV_COLS.map((c) => csvEsc(t[c]))
-    row.push(csvEsc(STATUS_SHORT[t.status]), csvEsc(fmtDate(t.tradeDate)), csvEsc(fmtDate(t.valueDate)), csvEsc(fmtDate(t.blotterDate)))
+    row.push(csvEsc(STATUS_SHORT[t.status]), csvEsc(fmtDate(t.tradeDate)), csvEsc(fmtDate(t.valueDate)), csvEsc(t.blotterDate ? fmtDate(t.blotterDate) : ''))
     lines.push(row.join(','))
   }
   return lines.join('\n')

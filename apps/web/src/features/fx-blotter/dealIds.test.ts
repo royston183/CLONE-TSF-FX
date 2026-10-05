@@ -10,13 +10,17 @@ import {
   freeLegSlot,
   isInSap,
   listsTransaction,
+  applyDealIds,
+  assignmentsFromDealIds,
+  dealIdListing,
+  dealTypeOfSlot,
   loadDealRecords,
   pairProblem,
   toDealRecord,
   traderCodeOf,
 } from './dealIds.ts'
 import { installFixtures } from './fixtures.ts'
-import { buildMasterContracts, confirmAutoDeal, initAutoLegs, initialBlotter, assignMc } from './logic.ts'
+import { buildMasterContracts, confirmAutoDeal, initAutoLegs, initialBlotter, assignMc, mergeLiveRows } from './logic.ts'
 import type { BlotterRow, MasterContract } from './types.ts'
 
 // The running screen loads these lists from the middleware; the rules are tested against the values the lists used to hold.
@@ -130,7 +134,7 @@ describe('talking to the middleware', () => {
 
   it('draws the number, writes the Deal ID row, then moves the contract to 04, in that order', async () => {
     const calls: Call[] = []
-    install(calls)
+    install(calls, { dealRow: null })
     const out = await createPairDealId({ mc: MC, legs: [d1(), d2()], traderName: 'Nidhi S', year: 2026 })
     strictEqual(out.dealId, '7000000007')
     const writes = calls.filter((c) => c.method === 'POST' || c.method === 'PATCH')
@@ -145,6 +149,30 @@ describe('talking to the middleware', () => {
     deepStrictEqual(writes[1]!.body.key, { ZMC_REF_NO: '2000000028' })
   })
 
+  it('refuses a transaction that is already on a Deal ID, and writes nothing', async () => {
+    const calls: Call[] = []
+    install(calls)
+    await rejects(
+      () => createPairDealId({ mc: MC, legs: [d1(), d2()], traderName: 'x', year: 2026 }),
+      /Transaction 3000000000015 is already on Deal ID 7000000007; it cannot be given another/,
+    )
+    ok(!calls.some((c) => c.method === 'POST' || c.method === 'PATCH'))
+  })
+
+  it('refuses to add a leg to one Deal ID when another already has it', async () => {
+    const calls: Call[] = []
+    install(calls)
+    await rejects(() => attachLegToDealId('7000000007', rowOf({ FinancialTransaction: '3000000000015' })), /already lists/)
+    const onOther: FxRow = { ZDEAL_ID: '7000000007', ZDEAL_TYPE: 'FX', ZSUB_TYPE: 'FX1', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '1000000000001' }
+    const other: FxRow = { ZDEAL_ID: '7000000099', ZDEAL_TYPE: 'FX', ZSUB_TYPE: 'FX1', ZDEAL_STAT: '01', ZBUKRS1: 'SG03', ZRFHA1: '3000000000015' }
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input))
+      if (u.includes('/auth/me')) return json(200, { user: { username: 'demo' } })
+      return json(200, { ok: true, rows: [onOther, other] })
+    }) as typeof fetch
+    await rejects(() => attachLegToDealId('7000000007', rowOf({ FinancialTransaction: '3000000000015' })), /already on Deal ID 7000000099; it cannot be added to 7000000007/)
+  })
+
   it('writes nothing when a leg is not a SAP transaction', async () => {
     const calls: Call[] = []
     install(calls)
@@ -154,7 +182,7 @@ describe('talking to the middleware', () => {
 
   it('says which Deal ID exists when the contract cannot be moved: it is not rolled back', async () => {
     const calls: Call[] = []
-    install(calls, { patchFails: true })
+    install(calls, { patchFails: true, dealRow: null })
     await rejects(
       () => createPairDealId({ mc: MC, legs: [d1(), d2()], traderName: 'x', year: 2026 }),
       (e: unknown) => e instanceof Error && e.message.includes('Deal ID 7000000007 was created') && e.message.includes('2000000028'),
@@ -198,6 +226,65 @@ describe('talking to the middleware', () => {
     await rejects(() => attachLegToDealId('7000000099', rowOf()), /not found in SAP/)
     install([])
     await rejects(() => attachLegToDealId('7000000007', { ...rowOf(), live: false }), /not a SAP transaction/)
+  })
+})
+
+describe('putting the Deal ID back on a transaction', () => {
+  const dealRows: FxRow[] = [
+    { ZDEAL_ID: '7000000014', ZDEAL_STAT: '01', ZMC_REF: '2000000030', ZTSF_MODEL: 'M033', ZBUKRS1: 'SG03', ZRFHA1: '3000000000022', ZBUKRS2: 'SG03', ZRFHA2: '2000000000006' },
+    { ZDEAL_ID: '7000000003', ZDEAL_STAT: '30', ZMC_REF: '2000000001', ZTSF_MODEL: 'M032', ZBUKRS1: 'SG03', ZRFHA1: '3000000000099' },
+  ]
+
+  it('says which Deal ID a transaction is on, and ignores a cancelled one', () => {
+    strictEqual(dealIdListing(dealRows, 'SG03', '2000000000006'), '7000000014')
+    strictEqual(dealIdListing(dealRows, 'AE13', '2000000000006'), undefined)
+    strictEqual(dealIdListing(dealRows, 'SG03', '3000000000099'), undefined)
+  })
+
+  it('reads the Deal ID, Master Contract, model and leg of each transaction on one', () => {
+    const a = assignmentsFromDealIds(dealRows)
+    deepStrictEqual(a.get('SG03-3000000000022'), { dealId: '7000000014', mcRef: '2000000030', model: 'M033', slot: 1 })
+    deepStrictEqual(a.get('SG03-2000000000006'), { dealId: '7000000014', mcRef: '2000000030', model: 'M033', slot: 2 })
+    ok(!a.has('SG03-3000000000099'))
+  })
+
+  it('shows a transaction on two Deal IDs on the first one, whatever order the rows come in', () => {
+    const second: FxRow = { ZDEAL_ID: '7000000015', ZDEAL_STAT: '01', ZMC_REF: '2000000030', ZTSF_MODEL: 'M033', ZBUKRS1: 'SG03', ZRFHA1: '3000000000022' }
+    for (const rows of [[...dealRows, second], [second, ...dealRows]]) {
+      strictEqual(assignmentsFromDealIds(rows).get('SG03-3000000000022')?.dealId, '7000000014')
+      strictEqual(dealIdListing(rows, 'SG03', '3000000000022'), '7000000014')
+    }
+  })
+
+  it('names the legs by slot', () => {
+    deepStrictEqual([1, 2, 3, 4].map(dealTypeOfSlot), ['Deal 1', 'Deal 2', 'Settlement', 'Settlement'])
+  })
+
+  it('puts the Deal ID and Master Contract back on a deal read from SAP, so it is not offered another', () => {
+    const a = assignmentsFromDealIds(dealRows)
+    const [r1, r2, r3] = applyDealIds([rowOf({ FinancialTransaction: '3000000000022' }), rowOf({ FinancialTransaction: '2000000000006' }), rowOf({ FinancialTransaction: '3000000000050' })], a)
+    deepStrictEqual([r1?.dealId, r1?.mcRef, r1?.dealType, r1?.fxModel], ['7000000014', '2000000030', 'Deal 1', 'M033'])
+    deepStrictEqual([r2?.dealId, r2?.dealType], ['7000000014', 'Deal 2'])
+    deepStrictEqual([r3?.dealId, r3?.mcRef], ['', ''])
+    ok(r1 && r2 && r3 && [r1, r2].every((r) => !!(r.dealId && r.mcRef)), 'both count as already assigned')
+  })
+
+  it('lets SAP\'s Deal ID win over what was remembered on the screen', () => {
+    const a = assignmentsFromDealIds(dealRows)
+    const remembered = { ...rowOf({ FinancialTransaction: '3000000000022' }), status: 'RELEASED' as const, dealId: 'TSF-9080', mcRef: 'MC-OLD' }
+    const [r] = applyDealIds([remembered], a)
+    deepStrictEqual([r?.status, r?.dealId, r?.mcRef], ['RELEASED', '7000000014', '2000000030'])
+  })
+
+  it('fills in a loaded row that had no Deal ID when SAP now has one', () => {
+    const a = assignmentsFromDealIds(dealRows)
+    const start = initialBlotter(new Date(2026, 9, 1), [MC], [...BUSINESS_PARTNERS])
+    const loaded = mergeLiveRows(start, [rowOf({ FinancialTransaction: '3000000000022' })], BUSINESS_PARTNERS)
+    strictEqual(loaded.rows.find((r) => r.transactionNumber === '3000000000022')?.dealId, '')
+    const again = mergeLiveRows(loaded, applyDealIds([rowOf({ FinancialTransaction: '3000000000022' })], a), BUSINESS_PARTNERS)
+    const row = again.rows.find((r) => r.transactionNumber === '3000000000022')
+    deepStrictEqual([row?.dealId, row?.mcRef], ['7000000014', '2000000030'])
+    strictEqual(again.rows.filter((r) => r.transactionNumber === '3000000000022').length, 1)
   })
 })
 
