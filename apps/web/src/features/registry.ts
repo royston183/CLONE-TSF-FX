@@ -31,6 +31,7 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'sblc-terminate': lazy(() => import('./sblc-terminate/index.tsx')),
   'sblc-allocate-bank': lazy(() => import('./sblc-allocate-bank/index.tsx')),
   'fo-create-master-contract': lazy(() => import('./fo-create-master-contract/index.tsx')),
+  'fo-trader-workbench': lazy(() => import('./fo-trader-workbench/index.tsx')),
   'mo-confirm-master-contract': lazy(() => import('./mo-confirm-master-contract/index.tsx')),
   'mo-update-mc-expiry': lazy(() => import('./mo-update-mc-expiry/index.tsx')),
   'fo-mc-error-correction': lazy(() => import('./fo-mc-error-correction/index.tsx')),

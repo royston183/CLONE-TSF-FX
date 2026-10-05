@@ -1,11 +1,12 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
-import { INITIAL_DATA, INITIAL_DATE } from './data.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadCompanies, loadFixingReferences, loadWorklist, type Avail, type Option } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
-import { money, rate } from './format.ts'
+import { formatDate, money, rate } from './format.ts'
 import { buildCsv, filterRows, nextSort, sortRows } from './logic.ts'
 import './fo-ndf-fixing-error-correction.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -40,14 +41,22 @@ const NUM_COLS = new Set<SortKey>(['amt1', 'amt2', 'oldRate'])
  * FO: NDF Fixing Error Correction (ZSGTSFR025), converted from
  * legacy/ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html.
  *
- * The legacy page never called an API — no fetch, no XMLHttpRequest — so it stays a UI-only
- * React shell with its seed data quarantined in data.ts; SAP wiring is a follow-up.
+ * Reads SAP only (api.ts): the status-11 queue from ZSGTSFV_FX for the NDF Fixing Date, the
+ * company codes from T001 and the fixing-reference texts from FTRT_FIX_DEF_T. The view does not
+ * serve TXN_STATUS and the NDF fields yet, so the grid says WAITING FOR API. The correction
+ * (TXN_STATUS 11 -> 12 + TX02 settle rate) has no API: Update reports it and changes nothing.
  */
+const CORRECTION_WAITING =
+  'WAITING FOR CORRECTION ACTION API \u2014 the NDF rate correction (TXN_STATUS 11 \u2192 12, TX02 TTMS_FX_SETTLEMENT_DATA-SETTLE_RATE, status-12 e-mail) has no API yet. Nothing was posted to SAP.'
 export default function FoNdfFixingErrorCorrection() {
-  const [rows, setRows] = useState<NdfRow[]>(() => INITIAL_DATA.map((r) => ({ ...r })))
+  const [rows, setRows] = useState<NdfRow[]>([])
   const [search, setSearch] = useState('')
   const [company, setCompany] = useState('')
-  const [fixDate, setFixDate] = useState(INITIAL_DATE)
+  const [fixDate, setFixDate] = useState(() => formatDate(new Date()))
+  const [companyHelp, setCompanyHelp] = useState<Avail<Option[]> | null>(null)
+  const [refTexts, setRefTexts] = useState<Record<string, string>>({})
+  const [worklistNote, setWorklistNote] = useState('')
+  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<Sort>({ key: 'rfha', dir: -1 })
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -65,7 +74,43 @@ export default function FoNdfFixingErrorCorrection() {
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3600)
   }
 
-  const companies = useMemo(() => Array.from(new Set(INITIAL_DATA.map((r) => r.bukrs))).sort(), [])
+  /* Screen 1000's company F4 (T001) and 9001's reference texts, once. */
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadCompanies(ctrl.signal).then(setCompanyHelp, (e: unknown) => {
+      if (!isAbort(e)) console.warn(e)
+    })
+    loadFixingReferences(ctrl.signal).then(setRefTexts, (e: unknown) => {
+      if (!isAbort(e)) console.warn(e)
+    })
+    return () => ctrl.abort()
+  }, [])
+  const companies = companyHelp?.state === 'ok' ? companyHelp.value.map((c) => c.value) : []
+
+  /* GET_DATA for the NDF Fixing Date (P_DATE); Refresh — and a real correction — run it again. */
+  const worklistAbort = useRef<AbortController | null>(null)
+  const loadRows = useCallback(
+    async (date: string) => {
+      worklistAbort.current?.abort()
+      const ctrl = new AbortController()
+      worklistAbort.current = ctrl
+      setLoading(true)
+      try {
+        const res = await loadWorklist(date, refTexts, ctrl.signal)
+        setRows(res.state === 'ok' ? res.value : [])
+        setWorklistNote(res.state === 'ok' ? '' : res.reason)
+      } catch (error) {
+        if (!isAbort(error)) console.warn(error)
+      } finally {
+        if (worklistAbort.current === ctrl) setLoading(false)
+      }
+    },
+    [refTexts],
+  )
+  useEffect(() => {
+    void loadRows(fixDate)
+    return () => worklistAbort.current?.abort()
+  }, [fixDate, loadRows])
 
   const findById = (id: string | null): NdfRow | null => (id ? (rows.find((r) => r.rfha === id && r.status === '11') ?? null) : null)
   const selectedRow = findById(selectedId)
@@ -83,15 +128,15 @@ export default function FoNdfFixingErrorCorrection() {
   const resetWorkbench = () => {
     setSearch('')
     setCompany('')
-    setFixDate(INITIAL_DATE)
+    setFixDate(formatDate(new Date()))
     setSelectedId(null)
     setPage(1)
     setSort({ key: 'rfha', dir: -1 })
   }
 
   const refreshWorkbench = () => {
-    setRows(INITIAL_DATA.map((r) => ({ ...r })))
     resetWorkbench()
+    void loadRows(formatDate(new Date()))
     setCorrectionOpen(false)
     setDetailId(null)
     pushToast('Workbench refreshed.', true)
@@ -105,12 +150,14 @@ export default function FoNdfFixingErrorCorrection() {
     setCorrectionOpen(true)
   }
 
-  const updateFixing = (newRate: number) => {
+  /**
+   * FORM save_data sets TXN_STATUS 12 and posts the new settle rate through TX02. No API does that
+   * yet, so nothing changes: the popup stays open and the row keeps status 11. Once the action
+   * exists, success closes the popup and reloads the queue (the row then drops out at 12).
+   */
+  const updateFixing = (_newRate: number) => {
     if (!selectedId) return
-    setRows((all) => all.map((r) => (r.rfha === selectedId ? { ...r, oldRate: newRate, status: '12', statusText: 'Fixing Rate Updated' } : r)))
-    setCorrectionOpen(false)
-    pushToast(`Fixing rate updated successfully for transaction ${selectedId}.`, true)
-    setSelectedId(null)
+    pushToast(CORRECTION_WAITING, false)
   }
 
   const downloadCsv = () => {
@@ -322,7 +369,7 @@ export default function FoNdfFixingErrorCorrection() {
               </tbody>
             </table>
             <div className="empty-state" style={{ display: pageRows.length ? 'none' : 'block' }}>
-              No transactions match the current filters.
+              {loading ? 'Loading NDF transactions from SAP…' : worklistNote || 'No transactions match the current filters.'}
             </div>
           </div>
 

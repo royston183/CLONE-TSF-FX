@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { money, rate } from './format.ts'
-import { FIXING_REFERENCES } from './data.ts'
+import { calcCashSettlement, type Tcurf } from './logic.ts'
 import type { NdfDeal } from './types.ts'
 
 function SummaryStrip({ deal }: { deal: NdfDeal }) {
@@ -44,11 +44,12 @@ export function NdfFixModal({
   deal,
   fixRate,
   fixRef,
+  fixRefText,
+  tcurf,
   foRemarks,
   invalidRate,
   invalidRef,
   onFixRateChange,
-  onFixRefChange,
   onFoRemarksChange,
   onClose,
   onConfirm,
@@ -56,19 +57,24 @@ export function NdfFixModal({
   open: boolean
   deal: NdfDeal | null
   fixRate: string
+  /** GV_NDF_REF: the transaction's NDF_REF — display-only on screen 9001. */
   fixRef: string
+  /** GV_REF_NAME: FTRT_FIX_DEF_T-FIX_ID_TEXT for it ('' when not found). */
+  fixRefText: string
+  /** TCURF kurst MTM, for CHECK_RATE. */
+  tcurf: Tcurf
   foRemarks: string
   invalidRate: boolean
   invalidRef: boolean
   onFixRateChange: (v: string) => void
-  onFixRefChange: (v: string) => void
   onFoRemarksChange: (v: string) => void
   onClose: () => void
   onConfirm: () => void
 }) {
   if (!deal) return null
   const fix = parseFloat(fixRate)
-  const cashSettlement = fixRate && isFinite(fix) ? money((deal.fwd - fix) * deal.amt1) : ''
+  // FORM cash_settelment: only once a fixing rate is entered (IF gv_ndf_rate IS NOT INITIAL).
+  const cashSettlement = fixRate && isFinite(fix) && fix ? money(calcCashSettlement(deal, fix, tcurf)) : ''
   return (
     <Overlay show={open} onBackdrop={onClose}>
       <div className="modal">
@@ -106,11 +112,10 @@ export function NdfFixModal({
               <label>
                 Fixing Reference <span className="req">*</span>
               </label>
-              <select className="control" value={fixRef} onChange={(e) => onFixRefChange(e.target.value)}>
-                <option value="">Select fixing reference</option>
-                {FIXING_REFERENCES.map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
+              {/* Display-only on screen 9001: the transaction's own reference, described from FTRT_FIX_DEF_T. */}
+              <select className="control" value={fixRef} disabled title={fixRefText || fixRef}>
+                <option value="">{fixRef ? fixRef : 'No fixing reference on the transaction'}</option>
+                {fixRef ? <option value={fixRef}>{fixRefText ? `${fixRef} — ${fixRefText}` : fixRef}</option> : null}
               </select>
               <div className="error-msg">Fixing Reference is required.</div>
             </div>
