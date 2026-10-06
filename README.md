@@ -68,6 +68,68 @@ live feed is a change to that file and nothing else.
 | `npm test` | Unit tests (`node --test`) |
 | `npm run typecheck` | `tsc` over every package |
 | `npm run verify` | typecheck + test + build |
+| `npm run db:setup` | Create/upgrade the local SQLite database and seed it (`db:migrate` + `db:seed`) |
+
+## SQLite Local Database
+
+SQLite holds **application-specific data that SAP has no field for** (custom metadata,
+remarks, drafts, local configuration). **SAP stays the source of truth** for SAP transactions,
+and the middleware keeps whatever it already owns. SQLite is a third backend beside them, used
+only through the gateway: the browser never touches the database, and there is no generic SQL
+or table route.
+
+```
+React -> @slc/api-client -> Fastify gateway -+-> SAP OData      service('fx'), service('ottk') ...
+                                              +-> REST/middleware service('middleware')
+                                              +-> SQLite          service('localdb') -> data/tsf-fx.db
+```
+
+| | |
+|---|---|
+| Database file | `./data/tsf-fx.db` (override with `SQLITE_PATH`; relative paths resolve from the repo root) |
+| Schema | `database/migrations/NNN_name.sql`, applied in order, each once, each in a transaction |
+| Seed data | `packages/gateway/src/sqlite/seed.ts` (idempotent upserts of static lookup values) |
+| Code | `packages/gateway/src/sqlite/` (connection, migrations, repositories), `routes/localdb.ts` |
+
+```
+npm run db:setup     # first time: migrate + seed
+npm run db:migrate   # apply new migration files only
+npm run db:seed      # re-run the seed; safe to repeat
+```
+
+Change the schema by **adding a new migration file**, never by editing one already applied.
+To reset a local dev database, stop the gateway, delete `data/tsf-fx.db*` and run
+`npm run db:setup`. **Never commit `.db` files** (they are gitignored); the schema is the
+migrations. Until `db:setup` has run, `/api/localdb/*` answers 503 and everything else works.
+
+**Endpoints** (signed-in session required, like every `/api/*` route):
+
+| | |
+|---|---|
+| `GET /api/localdb/deal-metadata` | `{ value: [...] }`, newest first |
+| `GET /api/localdb/deal-metadata/:companyCode/:transactionId` | one row, or 404 |
+| `POST /api/localdb/deal-metadata` | create, 201; 409 if the key exists; 400 on bad input |
+| `PATCH /api/localdb/deal-metadata/:companyCode/:transactionId` | change the fields sent; `null` clears one |
+| `DELETE /api/localdb/deal-metadata/:companyCode/:transactionId` | 204, or 404 |
+
+Rows are keyed by the SAP business key `(companyCode, transactionId)`, never by SQLite's `id`.
+Join them to the OData record in the screen, using `CompanyCode` + `FinancialTransaction`:
+
+```ts
+import { apiFetch, list, service } from '@slc/api-client'
+
+const fxApi = service('fx')
+const middlewareApi = service('middleware')
+const localApi = service('localdb')
+
+const [deals, entityStrings, metadata] = await Promise.all([
+  list<FxTransaction>(fxApi('FxTransaction'), { filter: "CompanyCode eq '9990'" }), // SAP OData
+  apiFetch(middlewareApi('data/entityString')),                                      // REST/middleware
+  list<DealMetadata>(localApi('deal-metadata')),                                     // SQLite
+])
+const byKey = new Map(metadata.map((m) => [`${m.companyCode}-${m.transactionId}`, m]))
+const rows = deals.map((d) => ({ ...d, meta: byKey.get(`${d.CompanyCode}-${d.FinancialTransaction}`) }))
+```
 
 ## Layout
 
