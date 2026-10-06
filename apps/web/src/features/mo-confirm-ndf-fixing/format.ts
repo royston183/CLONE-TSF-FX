@@ -39,3 +39,8 @@ export function addDays(d: Date, days: number): Date {
 export function formatAmount(n: number): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
+/** An amount, or '' when SAP does not have one (null). */
+export function amountText(n: number | null): string {
+  return n === null ? '' : formatAmount(n)
+}

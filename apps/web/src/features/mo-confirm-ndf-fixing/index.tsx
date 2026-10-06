@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import { CorrectionModal, InfoModal, MatchReleaseModal, type MatchReleaseValues } from './ActionModals.tsx'
-import { COMPANY_CODES, TRADERS, createNdfDataset } from './data.ts'
+import { InfoModal, MatchReleaseModal } from './ActionModals.tsx'
+import { fetchNdfDeal, loadCompanyCodes, loadNdfDeals, loadTraders, sapMessage, settleNdfDeal } from './api.ts'
+import { CORRECTION_GAP, SELECTION_GAP } from './data.ts'
 import { FilterPanel } from './FilterPanel.tsx'
 import { FixingDateField } from './FixingDateField.tsx'
 import { formatAmount } from './format.ts'
 import {
   EMPTY_FILTERS,
+  canMatchRelease,
   computeResults,
   countActiveFilters,
-  ensureDataForCriteria,
-  markCorrectionRequired,
-  matchReleaseDeal,
   nextSort,
   pageOf,
   pagerWindow,
   parseAmountInput,
   resultsMeta,
+  unappliedCriteria,
   validateSelection,
 } from './logic.ts'
 import { NdfTable } from './NdfTable.tsx'
@@ -26,32 +26,27 @@ import './mo-confirm-ndf-fixing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-ndf-fixing.dark.css'
-import type { DropdownItem, Filters, InfoMessage, NdfDeal, Selection, SelectionErrors, Sort, SortField } from './types.ts'
+import type { DropdownItem, Filters, InfoMessage, NdfDeal, Selection, SelectionErrors, Sort, SortField, Trader } from './types.ts'
 
-const COMPANY_CODE_ITEMS: DropdownItem[] = COMPANY_CODES.map((c) => ({ primary: c }))
-const TRADER_ITEMS: DropdownItem[] = TRADERS.map((t) => ({ primary: `${t.code} - ${t.name}`, code: t.code }))
 const EMPTY_SELECTION: Selection = { companyCode: '', companyCodeTo: '', fixingDate: '', ndfValue: '', trader: '' }
 const NO_ERRORS: SelectionErrors = { companyCode: null, fixingDate: null }
-const EMPTY_MR: MatchReleaseValues = { externalRef: '', internalRef: '', remarks: '' }
-/** How long the Refresh icon spins, and how long after it the "refreshed" notice appears. */
-const SPIN_MS = 620
-const REFRESH_NOTICE_MS = 300
-
-type OpenModal = 'matchRelease' | 'correction' | null
+const SAP_ERROR = 'SAP Error'
 
 /**
- * MO: Confirm NDF Fixing (ZSGTSFR026), converted from legacy/confirm-ndf-fixing.html.
+ * MO: Confirm NDF Fixing (ZSGTSFR026 / ZSGTSF_RFX_NDF_FIX_MO), converted from
+ * legacy/confirm-ndf-fixing.html and wired to SAP (see api.ts for the full source map).
  *
- * The original never called an API, so this is the same UI-only screen: the deals are the
- * page's generated dummy data and live in component state for the session. Deals matched &
- * released or sent back for correction drop out of the list until the page is reloaded.
+ * Wired: the NDF list (FxTransaction), the Trader and Company Code value helps, partner and
+ * transaction-type names, and Match & Release (the Settle action). Not wired, because the SAP
+ * service cannot do it: Correction Required (stays disabled), the references and remark of
+ * Match & Release, and the Trader / NDF Value selection. Nothing is mocked.
  */
 export default function MoConfirmNdfFixing() {
-  // One initialiser for both, so the generator's position always matches the deals it made.
-  const [initial] = useState(createNdfDataset)
-  const rng = initial.rng
-  const [deals, setDeals] = useState<NdfDeal[]>(initial.deals)
-  const [processedIds, setProcessedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const [deals, setDeals] = useState<NdfDeal[]>([])
+  const [traders, setTraders] = useState<Trader[]>([])
+  const [companyCodes, setCompanyCodes] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [settling, setSettling] = useState(false)
 
   // Basic Selection: the text in each box, and the page's state.selection behind it.
   const [ccText, setCcText] = useState('')
@@ -62,9 +57,8 @@ export default function MoConfirmNdfFixing() {
   const [errors, setErrors] = useState<SelectionErrors>(NO_ERRORS)
   const [dealsLoaded, setDealsLoaded] = useState(false)
   /**
-   * The selection the list was last worked out from. The page recomputed the list from the
-   * live selection only when something asked it to (View Deals, search, filters, sort,
-   * refresh, an action) — typing in the Basic Selection alone left the table as it was.
+   * The selection the list was last loaded with. Typing in the Basic Selection alone leaves the
+   * table as it was; View Deals (and Refresh, which re-reads with this) change it.
    */
   const [applied, setApplied] = useState<Selection>(EMPTY_SELECTION)
 
@@ -79,23 +73,39 @@ export default function MoConfirmNdfFixing() {
   const [spinning, setSpinning] = useState(false)
 
   // Dialogs
-  const [openModal, setOpenModal] = useState<OpenModal>(null)
+  const [matchOpen, setMatchOpen] = useState(false)
   const [modalDeal, setModalDeal] = useState<NdfDeal | null>(null)
-  const [mrValues, setMrValues] = useState<MatchReleaseValues>(EMPTY_MR)
-  const [crRemarks, setCrRemarks] = useState('')
-  const [crError, setCrError] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [info, setInfo] = useState<InfoMessage>({ variant: 'success', title: 'Success', desc: 'Done.' })
 
-  const timers = useRef<Array<ReturnType<typeof setTimeout>>>([])
-  useEffect(() => () => timers.current.forEach(clearTimeout), [])
-  const later = (fn: () => void, ms: number) => {
-    timers.current.push(setTimeout(fn, ms))
+  const showInfo = (message: InfoMessage) => {
+    setInfo(message)
+    setInfoOpen(true)
   }
+  const showError = (title: string, error: unknown) => showInfo({ variant: 'warn', title, desc: sapMessage(error) })
+
+  // The value helps come from SAP; there is no built-in list to fall back to.
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadTraders(ctl.signal)
+      .then(setTraders)
+      .catch((e: unknown) => {
+        if (!ctl.signal.aborted) showError('Trader list unavailable', e)
+      })
+    loadCompanyCodes(ctl.signal)
+      .then(setCompanyCodes)
+      .catch((e: unknown) => {
+        if (!ctl.signal.aborted) showError('Company Code list unavailable', e)
+      })
+    return () => ctl.abort()
+  }, [])
+
+  const companyCodeItems = useMemo<DropdownItem[]>(() => companyCodes.map((c) => ({ primary: c })), [companyCodes])
+  const traderItems = useMemo<DropdownItem[]>(() => traders.map((t) => ({ primary: `${t.code} - ${t.name}`, code: t.code })), [traders])
 
   const results = useMemo(
-    () => (dealsLoaded ? computeResults(deals, applied, processedIds, filters, search, sort) : []),
-    [dealsLoaded, deals, applied, processedIds, filters, search, sort],
+    () => (dealsLoaded ? computeResults(deals, applied, filters, search, sort) : []),
+    [dealsLoaded, deals, applied, filters, search, sort],
   )
   const paged = dealsLoaded && results.length ? pageOf(results, page, pageSize) : null
   // The page pulled state.page back to the last page whenever the list shrank below it.
@@ -106,30 +116,43 @@ export default function MoConfirmNdfFixing() {
   const filterCount = dealsLoaded ? countActiveFilters(filters) : 0
   const selectedDeal = selectedId ? (deals.find((d) => d.id === selectedId) ?? null) : null
 
-  /** The page's applyFiltersAndRender: rework the list from the selection as it stands now. */
-  const reapply = () => setApplied(selection)
-
   const patchSelection = (patch: Partial<Selection>) => setSelection((s) => ({ ...s, ...patch }))
 
   // ------------------------------------------------------------------ Basic Selection
 
-  const viewDeals = () => {
+  /** Reads the company code (range) from SAP. A failure leaves the list as it was. */
+  const loadDeals = async (sel: Selection): Promise<boolean> => {
+    setLoading(true)
+    try {
+      setDeals(await loadNdfDeals({ from: sel.companyCode, to: sel.companyCodeTo }))
+      return true
+    } catch (e) {
+      showError(SAP_ERROR, e)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const viewDeals = async () => {
     const errs = validateSelection(selection)
     setErrors(errs)
     if (errs.companyCode || errs.fixingDate) return
 
     // Company code casing is normalised so it matches consistently everywhere.
     const cc = selection.companyCode.trim().toUpperCase()
-    const next = { ...selection, companyCode: cc }
+    const next = { ...selection, companyCode: cc, companyCodeTo: selection.companyCodeTo.trim().toUpperCase() }
     setSelection(next)
     setCcText(cc)
-    if (!selection.companyCodeTo.trim()) {
-      setDeals(ensureDataForCriteria(deals, rng, cc, selection.fixingDate.trim()))
-    }
+    if (!(await loadDeals(next))) return
     setDealsLoaded(true)
     setPage(1)
     setSelectedId(null)
     setApplied(next)
+    const unapplied = unappliedCriteria(next)
+    if (unapplied.length) {
+      showInfo({ variant: 'warn', title: 'Selection partly applied', desc: `${unapplied.join(' and ')}: ${SELECTION_GAP}` })
+    }
   }
 
   // ------------------------------------------------------------------ toolbar
@@ -137,86 +160,70 @@ export default function MoConfirmNdfFixing() {
   const onSearch = (value: string) => {
     setSearch(value)
     setPage(1)
-    reapply()
   }
 
   const onFilter = (key: keyof Filters, value: string) => {
     setFilters((f) => ({ ...f, [key]: value }))
     setPage(1)
-    reapply()
   }
 
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS)
     setPage(1)
-    reapply()
   }
 
-  const onSort = (field: SortField) => {
-    setSort((s) => nextSort(s, field))
-    reapply()
-  }
+  const onSort = (field: SortField) => setSort((s) => nextSort(s, field))
 
-  const showInfo = (message: InfoMessage) => {
-    setInfo(message)
-    setInfoOpen(true)
-  }
-
-  const refresh = () => {
+  /** Re-reads the list with the selection it was loaded with. */
+  const refresh = async () => {
+    if (!dealsLoaded || loading) return
     setSpinning(true)
-    later(() => setSpinning(false), SPIN_MS)
-    // The original simulated a re-fetch that kept the session's edits; nothing is reset.
-    if (dealsLoaded) reapply()
-    later(
-      () => showInfo({ variant: 'success', title: 'Deals Refreshed', desc: 'All NDF fixing deals have been refreshed successfully.' }),
-      REFRESH_NOTICE_MS,
-    )
+    const ok = await loadDeals(applied)
+    setSpinning(false)
+    if (ok) {
+      setSelectedId(null)
+      showInfo({ variant: 'success', title: 'Deals Refreshed', desc: 'The NDF deals were re-read from SAP.' })
+    }
   }
 
   // ------------------------------------------------------------------ actions
 
   const openMatchRelease = () => {
-    if (!selectedDeal) return
+    if (!selectedDeal || !canMatchRelease(selectedDeal)) return
     setModalDeal(selectedDeal)
-    setMrValues({ externalRef: selectedDeal.externalRef || '', internalRef: selectedDeal.internalRef || '', remarks: '' })
-    setOpenModal('matchRelease')
+    setMatchOpen(true)
   }
 
-  const openCorrection = () => {
-    if (!selectedDeal) return
-    setModalDeal(selectedDeal)
-    setCrRemarks('')
-    setCrError(false)
-    setOpenModal('correction')
-  }
-
-  const closeModal = () => setOpenModal(null)
-
-  const confirmMatchRelease = () => {
-    const deal = selectedDeal
+  /**
+   * Settles the deal in SAP, then reads it back so the row shows what SAP now holds. A refusal
+   * leaves the row exactly as it was and shows SAP's own reason.
+   */
+  const confirmMatchRelease = async () => {
+    const deal = modalDeal
     if (!deal) return
-    setDeals(matchReleaseDeal(deals, deal.id, mrValues.externalRef.trim(), mrValues.internalRef.trim(), mrValues.remarks.trim()))
-    setProcessedIds((s) => new Set(s).add(deal.id))
-    setSelectedId(null)
-    closeModal()
-    reapply()
-    showInfo({ variant: 'success', title: 'NDF Fixing Confirmed', desc: `Deal ${deal.dealId} was matched and released successfully.` })
-  }
-
-  const confirmCorrection = () => {
-    const deal = selectedDeal
-    if (!deal) return
-    const remarks = crRemarks.trim()
-    if (!remarks) {
-      setCrError(true)
+    setSettling(true)
+    try {
+      await settleNdfDeal(deal.coCode, deal.transaction)
+    } catch (e) {
+      setSettling(false)
+      setMatchOpen(false)
+      showError(`Deal ${deal.transaction} was not settled`, e)
       return
     }
-    setDeals(markCorrectionRequired(deals, deal.id, remarks))
-    setProcessedIds((s) => new Set(s).add(deal.id))
+    setSettling(false)
+    setMatchOpen(false)
+    try {
+      const fresh = await fetchNdfDeal(deal.coCode, deal.transaction)
+      setDeals((all) => (fresh ? all.map((d) => (d.id === deal.id ? fresh : d)) : all.filter((d) => d.id !== deal.id)))
+      showInfo({ variant: 'success', title: 'Settled in SAP', desc: `Transaction ${deal.transaction} was settled (Match & Release).` })
+    } catch (e) {
+      showInfo({
+        variant: 'warn',
+        title: 'Settled in SAP',
+        desc: `Transaction ${deal.transaction} was settled, but its row could not be re-read (${sapMessage(e)}). Use Refresh.`,
+      })
+    }
     setSelectedId(null)
-    closeModal()
-    reapply()
-    showInfo({ variant: 'warn', title: 'Correction Requested', desc: 'The selected NDF deal has been sent back to FO for correction.' })
   }
 
   // ------------------------------------------------------------------ render
@@ -262,7 +269,7 @@ export default function MoConfirmNdfFixing() {
                   placeholder="Select company code"
                   wrapStyle={{ flex: 1 }}
                   value={ccText}
-                  items={COMPANY_CODE_ITEMS}
+                  items={companyCodeItems}
                   invalid={!!errors.companyCode}
                   onType={(raw) => {
                     setCcText(raw)
@@ -286,7 +293,7 @@ export default function MoConfirmNdfFixing() {
                   inputClassName="input to-input"
                   placeholder="Optional"
                   value={ccToText}
-                  items={COMPANY_CODE_ITEMS}
+                  items={companyCodeItems}
                   onType={(raw) => {
                     setCcToText(raw)
                     patchSelection({ companyCodeTo: raw.trim() })
@@ -353,7 +360,7 @@ export default function MoConfirmNdfFixing() {
                 panelId="traderPanel"
                 placeholder="Select..."
                 value={traderText}
-                items={TRADER_ITEMS}
+                items={traderItems}
                 onType={(raw) => {
                   setTraderText(raw)
                   if (raw.trim() === '') patchSelection({ trader: '' })
@@ -372,8 +379,8 @@ export default function MoConfirmNdfFixing() {
 
             <div className="field field-btn">
               <div className="btn-spacer" />
-              <button className="btn btn-primary" id="viewDealsBtn" type="button" onClick={viewDeals}>
-                View Deals
+              <button className="btn btn-primary" id="viewDealsBtn" type="button" disabled={loading} onClick={viewDeals}>
+                {loading ? 'Loading…' : 'View Deals'}
               </button>
             </div>
           </div>
@@ -408,16 +415,26 @@ export default function MoConfirmNdfFixing() {
             </button>
           </div>
 
-          <FilterPanel open={filterOpen} filters={filters} onChange={onFilter} onClear={clearFilters} />
+          <FilterPanel open={filterOpen} deals={deals} filters={filters} onChange={onFilter} onClear={clearFilters} />
 
           <div className="action-row">
-            <button className="btn btn-primary" id="matchReleaseBtn" type="button" disabled={!selectedId} onClick={openMatchRelease}>
+            <button
+              className="btn btn-primary"
+              id="matchReleaseBtn"
+              type="button"
+              disabled={!selectedId || settling || !canMatchRelease(selectedDeal)}
+              title={selectedDeal && !canMatchRelease(selectedDeal) ? 'This deal is already matched & released in SAP.' : undefined}
+              onClick={openMatchRelease}
+            >
               Match &amp; Release
             </button>
-            <button className="btn btn-danger" id="correctionBtn" type="button" disabled={!selectedId} onClick={openCorrection}>
+            <button className="btn btn-danger" id="correctionBtn" type="button" disabled title={CORRECTION_GAP}>
               Correction Required
             </button>
-            <button className="btn btn-secondary btn-icon" id="refreshBtn" type="button" title="Refresh" onClick={refresh}>
+            <span className="remark-text" id="correctionGap" title={CORRECTION_GAP}>
+              Correction Required: SAP gap
+            </span>
+            <button className="btn btn-secondary btn-icon" id="refreshBtn" type="button" title="Refresh" disabled={loading || !dealsLoaded} onClick={refresh}>
               <svg className={`spin${spinning ? ' spinning' : ''}`} id="refreshIcon" width="15" height="15" viewBox="0 0 24 24" fill="none">
                 <path d="M20 11A8 8 0 1 0 18.5 15.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 <path d="M20 5V11H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -483,22 +500,11 @@ export default function MoConfirmNdfFixing() {
       </div>
 
       <MatchReleaseModal
-        open={openModal === 'matchRelease'}
+        open={matchOpen}
         deal={modalDeal}
-        values={mrValues}
-        onChange={(patch) => setMrValues((v) => ({ ...v, ...patch }))}
-        onClose={closeModal}
+        busy={settling}
+        onClose={() => setMatchOpen(false)}
         onConfirm={confirmMatchRelease}
-      />
-
-      <CorrectionModal
-        open={openModal === 'correction'}
-        deal={modalDeal}
-        remarks={crRemarks}
-        remarksError={crError}
-        onRemarksChange={setCrRemarks}
-        onClose={closeModal}
-        onConfirm={confirmCorrection}
       />
 
       <InfoModal open={infoOpen} info={info} onClose={() => setInfoOpen(false)} />

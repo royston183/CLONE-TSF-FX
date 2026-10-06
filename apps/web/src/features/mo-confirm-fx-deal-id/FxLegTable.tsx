@@ -1,4 +1,3 @@
-import type { DragEvent } from 'react'
 import { StatusBadge } from './DetailTables.tsx'
 import { fmtAmt, fmtRate } from './format.ts'
 import { legRowClass } from './logic.ts'
@@ -26,21 +25,15 @@ export function FxLegTable({
   mcRef,
   sort,
   selected,
-  dragging,
   onSort,
   onSelect,
-  onDragStart,
-  onDragEnd,
 }: {
   legs: readonly Leg[]
   mcRef: string
   sort: Sort
   selected: string | null
-  dragging: string | null
   onSort: (key: SortKey) => void
   onSelect: (rfha: string) => void
-  onDragStart: (e: DragEvent<HTMLTableRowElement>, leg: Leg) => void
-  onDragEnd: () => void
 }) {
   return (
     <div className="table-scroll">
@@ -64,22 +57,12 @@ export function FxLegTable({
           {legs.length ? (
             legs.map((l) => {
               const isSelected = selected === l.rfha
-              const cls = [legRowClass(l, isSelected), dragging === l.rfha ? 'dragging' : ''].filter(Boolean).join(' ')
+              const cls = legRowClass(l, isSelected)
               return (
                 <tr
                   key={l.rfha}
                   className={cls || undefined}
-                  // Only the single selected row can be dragged onto Edit Deal Pair.
-                  draggable={isSelected}
                   onClick={() => onSelect(l.rfha)}
-                  onDragStart={(e) => {
-                    if (!isSelected) {
-                      e.preventDefault()
-                      return
-                    }
-                    onDragStart(e, l)
-                  }}
-                  onDragEnd={onDragEnd}
                 >
                   <td>
                     <input type="checkbox" className="chk" checked={isSelected} readOnly />
@@ -110,7 +93,7 @@ export function FxLegTable({
                   </td>
                   <td
                     className="num mono"
-                    style={{ color: l.fxPl < 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 700 }}
+                    style={{ color: l.fxPl !== null && l.fxPl < 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 700 }}
                   >
                     {fmtAmt(l.fxPl)}
                   </td>

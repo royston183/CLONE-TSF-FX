@@ -1,4 +1,4 @@
-/** The Deal ID / transaction status codes the page knows (STATUS_META's keys). */
+/** The Deal ID status codes the page colours (STATUS_META's keys); SAP's own texts replace the descriptions. */
 export type StatusCode = '01' | '02' | '03' | '07' | '30'
 
 export type StatusMeta = { desc: string; cls: string }
@@ -6,22 +6,34 @@ export type StatusMeta = { desc: string; cls: string }
 /** One FX transaction (RFHA) assigned to the Deal ID — a row of the FX Deals table. */
 export type Leg = {
   rfha: string
+  /** The Deal ID slot the transaction sits in: D1 D2 D3 D4 DS1 DS2 DSS1 DSS2. */
   dealType: string
   bpName: string
   bpCode: string
   dealDate: string
   valueDate: string
   desc: string
-  bs1: 'Buy' | 'Sell'
+  bs1: string
   curr1: string
   amt1: number
-  bs2: 'Buy' | 'Sell'
+  bs2: string
   curr2: string
   amt2: number
-  rateVal: number
+  /** null: SAP has no all-in rate for this leg (an option, or one the FX service does not return). */
+  rateVal: number | null
   rateLabel: string
   txnStatus: string
-  fxPl: number
+  /** null: the NDF fixing profit is not in the FX service. */
+  fxPl: number | null
+}
+
+/** The P&L stored on the Deal ID when it was confirmed (ZPL, ZPL_LAMT, ZPL_CURR, ZPL_LCURR, ZPL_RATE). */
+export type StoredPl = {
+  amount: number
+  currency: string
+  localAmount: number
+  localCurrency: string
+  rate: number
 }
 
 export type Deal = {
@@ -42,42 +54,29 @@ export type Deal = {
   shipEnd: string
   bukrs: string
   status: string
-  /** No invoice plan: the invoice and P&L cards are hidden. */
+  /** FX1 forwards, FX2 options (ZSGTSFTR_RULE_BT-ZSUB_TYPE). */
+  subType: string
+  /** Model configured without an invoice plan (ZNO_INV): the invoice and P&L cards are hidden. */
   noInv: boolean
-  /** Short-straddle model: shows "Confirm & Save SS Deal ID". */
+  /** Short-straddle model (ZSS): shows "Confirm & Save SS Deal ID". */
   ssDeal: boolean
+  /** ZCONFIRM = 'X': the deal has been confirmed once. */
+  confirmed: boolean
+  /** Null until the deal has been confirmed. */
+  storedPl: StoredPl | null
   legs: readonly Leg[]
+  invoices: readonly Invoice[]
 }
 
+/** A saved invoice-plan line (ZSGTSFTR_INV_REF). */
 export type Invoice = {
   tradeRef: string
   invType: string
   exRate: number
   amt: number
+  invAmt: number
   curr: string
-  due: string
 }
-
-export type Premium = {
-  dealValue: number
-  dealCurr: string
-  netPremium: number
-  netPremiumCurr: string
-  rbiRate: number
-  rbiDate: string
-  netPremiumFwd: number
-  netPremiumFwdCurr: string
-  netPremiumPerUsd: number
-  strikeRate: number
-  invoiceRate: number
-}
-
-export type Replacement = { rfha: string; label: string }
-
-export type DmsDoc = { name: string; type: string }
-
-/** Documents keyed by Deal ID. */
-export type DmsDb = Readonly<Record<string, readonly DmsDoc[]>>
 
 /** The FX Deals table's data-key columns. `mcRef` and `txnStatusDesc` are not leg fields. */
 export type SortKey =
@@ -108,22 +107,9 @@ export type ActionVisibility = {
   ssDeal: boolean
 }
 
-export type PlRow = {
-  type: string
-  famt: number
-  lamt: number
-  cls: '' | 'pl-total-row' | 'pl-pct-row'
-  /** The "P&L Orign(%)" row prints both columns as percentages. */
-  pct: boolean
-}
-
-/** Outcome of a mock service call; `deals` is the next deal list when it succeeded. */
-export type ServiceResult = { ok: true; msg: string; deals: readonly Deal[] } | { ok: false; msg: string }
+export type PlRow = { type: string; value: string }
 
 export type ToastType = 'success' | 'error' | 'info'
 export type Toast = { id: number; msg: string; type: ToastType }
 
-export type ModalId = 'changeConfirm' | 'editDeal' | 'premium' | 'cancelDeal' | 'reverse' | 'dms' | 'ssDeal'
-
-/** The Edit Deal Pair popup's working state (the page's state.editDealDraft plus its controls). */
-export type EditDraft = { oldRfha: string; editing: boolean; newRfha: string }
+export type ModalId = 'cancelDeal'

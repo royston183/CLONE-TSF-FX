@@ -444,9 +444,9 @@
       "route": "/apps/mo-confirm-fx-deal-id",
       "title": "MO: Confirm FX Deal ID (Single Deal ID)",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "businesspartner", "trmmaster", "middleware"],
       "legacy": "legacy/confirm-fx-deal.html",
-      "note": "Replaces the earlier conversion of legacy/deal-id-mo-confirmation.html on this tile. Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Wired to SAP. Reads the FX Deal ID (middleware tsfDealId = ZSGTSFTR_DEALID; the dealid OData service is the SLC trade-finance Deal ID, a different table), its Master Contract, trader, model rules (ZNO_INV / ZSS / ZSUB_TYPE), status texts, saved invoice plan (invRef) and its transactions (FxTransaction through the ZRFHA1-8 slots). Writes only Cancel Deal ID (ZDEAL_STAT 30). Disabled with the reason in the tooltip (SAP gaps): Change / Confirm, Edit Deal Pair, Reverse MO Confirmation, Premium Adjustment, DMS and the SS confirmation. Blockers: no ZSGTSFTR_CUR_STR / ZSGTSFTR_ORG_PRO, exchange rate (BAPI_EXCHANGERATE_GETDETAIL), lead currency (ZSGTRMFM_LEAD_CURR), SNRO ZSGTRMNR14, INV_REF write and delete, BAPI_FTR_FXT_CHANGE / BAPI_FTR_CHANGE_FXOPTIONS, ZSGTSFCDS_OPTION and DMS. The planned P&L is not computed; the P&L stored at confirmation is shown."
     },
     {
       "code": "ZSGTSFR002",
@@ -476,9 +476,9 @@
       "route": "/apps/mo-confirm-ndf-fixing",
       "title": "TSF MO - Confirm NDF Fixing",
       "status": "scaffold",
-      "services": [],
+      "services": ["fx", "trmmaster", "businesspartner", "companycode", "middleware"],
       "legacy": "legacy/confirm-ndf-fixing.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Wired to SAP: the NDF list reads FxTransaction (company code server-side; NDF product type, active status and value date on the result), traders come from ZSGTRMTR_TRADER via the middleware, company codes from A_CompanyCode, partner and transaction-type names from the business-partner and trmmaster services. Match & Release runs the bound Settle action (BAPI_FTR_FXT_SETTLE). Correction Required stays disabled, and the Match & Release references/remark are not saved: FxTransaction has no TXN_STATUS, MO remark, trader, NDF fixing date/ref/rate, cash amount or TSF deal fields and no change action for them (SAP gap). Those columns are blank, and Trader / NDF Value in the selection are not applied."
     },
     {
       "code": "ZSGTSFR050",

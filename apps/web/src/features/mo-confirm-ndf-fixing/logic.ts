@@ -1,10 +1,10 @@
 /**
- * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The page never called an API — Match & Release and Correction
- * Required only changed its in-memory deal list — so deals live in component state for the
- * session.
+ * The page's business rules as pure functions so the component only holds state: the Basic
+ * Selection applied to the transactions read from SAP (api.ts), the filter panel, search, sort
+ * and paging. Nothing here changes a deal: Match & Release is a SAP call and the list is
+ * re-read from SAP afterwards.
  */
-import { STATUS, STATUSES, buildDeal, type Rng } from './data.ts'
+import { STATUS } from './data.ts'
 import { parseDMY } from './format.ts'
 import type { DropdownItem, Filters, NdfDeal, NdfStatus, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
@@ -62,47 +62,48 @@ export function filterDropdownItems(items: DropdownItem[], query: string): Dropd
   )
 }
 
-// ---------------------------------------------------------------- dummy data top-up
-
-/**
- * Guarantees that whatever Company Code + Fixing Date the user tests with, a handful of deals
- * (3–5, cycling through all three statuses) exist for it. Returns the same list when some do.
- */
-export function ensureDataForCriteria(deals: NdfDeal[], rng: Rng, coCode: string, fixingDateStr: string): NdfDeal[] {
-  const ccUpper = coCode.trim().toUpperCase()
-  const already = deals.some((d) => d.coCode.toUpperCase() === ccUpper && d.fixingDate === fixingDateStr)
-  if (already) return deals
-  const next = deals.slice()
-  const n = rng.rndInt(3, 5)
-  for (let i = 0; i < n; i++) {
-    const status = STATUSES[i % STATUSES.length] ?? STATUS.UNMATCHED
-    next.push(buildDeal(rng, next.length + rng.rndInt(1000, 999999), ccUpper, fixingDateStr, status))
-  }
-  return next
-}
-
 // ---------------------------------------------------------------- selection / filters / search / sort
 
 /**
  * The Basic Selection: a Company Code range when both ends are given (compared as text),
- * otherwise that one code; the Fixing Date; an NDF Value within ±15%; and the trader.
+ * otherwise that one code; and the Fixing Date. The old program compared the Fixing Date with
+ * V_DATE, which is the transaction's value date, so that is what is compared here.
+ *
+ * Trader and NDF Value are not applied: the FxTransaction service has neither the trader of a
+ * transaction nor an NDF value, and filtering on a blank would hide every deal. See
+ * unappliedCriteria, which View Deals reports to the user.
  */
 export function filterByCriteria(deals: NdfDeal[], criteria: Selection): NdfDeal[] {
   const cc = criteria.companyCode.trim().toUpperCase()
   const ccTo = criteria.companyCodeTo.trim().toUpperCase()
   const fd = criteria.fixingDate.trim()
-  const v = criteria.ndfValue ? parseAmountInput(criteria.ndfValue) : null
   return deals.filter((d) => {
     if (cc && ccTo) {
       if (d.coCode < cc || d.coCode > ccTo) return false
     } else if (cc) {
       if (d.coCode.toUpperCase() !== cc) return false
     }
-    if (fd && d.fixingDate !== fd) return false
-    if (v !== null && Math.abs(d.ndfValue - v) > v * 0.15) return false
-    if (criteria.trader && d.traderCode !== criteria.trader) return false
+    if (fd && d.valueDate !== fd) return false
     return true
   })
+}
+
+/** The Basic Selection entries the SAP service cannot apply, by the label the screen shows. */
+export function unappliedCriteria(criteria: Selection): string[] {
+  const out: string[] = []
+  if (criteria.trader) out.push('Trader Name')
+  if (criteria.ndfValue.trim()) out.push('NDF Value')
+  return out
+}
+
+/** Match & Release settles an open deal only: one already matched & released is settled in SAP. */
+export function canMatchRelease(deal: NdfDeal | null): boolean {
+  return !!deal && deal.txnStatus !== STATUS.RELEASED
+}
+
+/** The distinct non-blank values of a field, sorted: what a filter select offers. */
+export function distinctOptions(deals: readonly NdfDeal[], field: keyof NdfDeal): string[] {
+  return [...new Set(deals.map((d) => String(d[field] ?? '')).filter(Boolean))].sort()
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -165,6 +166,9 @@ export function searchDeals(deals: NdfDeal[], search: string): NdfDeal[] {
   )
 }
 
+/** A dd-mm-yyyy date as a sortable number; blank sorts first. */
+const dayOf = (dmy: string): number => (dmy ? parseDMY(dmy).getTime() : 0)
+
 const DATE_FIELDS: SortField[] = ['tradeDate', 'fixingDate', 'valueDate']
 
 /** Numbers numerically, the three dates chronologically, everything else as text. */
@@ -175,8 +179,10 @@ export function sortDeals(deals: NdfDeal[], sort: Sort): NdfDeal[] {
   return deals.slice().sort((a, b) => {
     const av = a[field]
     const bv = b[field]
-    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
-    if (DATE_FIELDS.includes(field)) return (parseDMY(String(av)).getTime() - parseDMY(String(bv)).getTime()) * dir
+    // A value SAP does not provide (null / blank) sorts before any real one.
+    if (typeof av === 'number' || typeof bv === 'number' || av === null || bv === null)
+      return ((typeof av === 'number' ? av : Number.NEGATIVE_INFINITY) - (typeof bv === 'number' ? bv : Number.NEGATIVE_INFINITY) || 0) * dir
+    if (DATE_FIELDS.includes(field)) return (dayOf(String(av)) - dayOf(String(bv))) * dir
     return String(av).localeCompare(String(bv)) * dir
   })
 }
@@ -187,19 +193,17 @@ export function nextSort(sort: Sort, field: SortField): Sort {
 }
 
 /**
- * The page's applyFiltersAndRender: the Basic Selection, minus deals already actioned this
- * session, then the filter panel, the search box and the sort.
+ * The page's applyFiltersAndRender: the Basic Selection, then the filter panel, the search box
+ * and the sort.
  */
 export function computeResults(
   deals: NdfDeal[],
   criteria: Selection,
-  processedIds: ReadonlySet<string>,
   filters: Filters,
   search: string,
   sort: Sort,
 ): NdfDeal[] {
   let results = filterByCriteria(deals, criteria)
-  results = results.filter((d) => !processedIds.has(d.id))
   results = applyFilterPanel(results, filters)
   results = searchDeals(results, search)
   return sortDeals(results, sort)
@@ -240,30 +244,4 @@ export function statusClass(status: NdfStatus): string {
   if (status === STATUS.RELEASED) return 'status-released'
   if (status === STATUS.CORRECTION) return 'status-correction'
   return 'status-unmatched'
-}
-
-/** Match & Release: blank External Ref / MO Remarks keep what the deal already had. */
-export function matchReleaseDeal(
-  deals: NdfDeal[],
-  id: string,
-  externalRef: string,
-  internalRef: string,
-  moRemarks: string,
-): NdfDeal[] {
-  return deals.map((d) =>
-    d.id === id
-      ? {
-          ...d,
-          txnStatus: STATUS.RELEASED,
-          externalRef: externalRef || d.externalRef,
-          internalRef: internalRef || '',
-          moRemark: moRemarks || d.moRemark,
-        }
-      : d,
-  )
-}
-
-/** Correction Required sends the deal back to FO with the (required) MO remark. */
-export function markCorrectionRequired(deals: NdfDeal[], id: string, moRemarks: string): NdfDeal[] {
-  return deals.map((d) => (d.id === id ? { ...d, txnStatus: STATUS.CORRECTION, moRemark: moRemarks } : d))
 }

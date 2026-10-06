@@ -24,14 +24,15 @@ export type NdfDeal = {
   allInRate: number
   txnStatus: NdfStatus
   fixingDate: string
-  ndfValue: number
+  /** null: the FxTransaction service has no NDF value / fixing rate. */
+  ndfValue: number | null
   valueDate: string
   dealId: string
   mcReference: string
   businessArea: string
   trader: string
   traderCode: string
-  accounting: 'Posted' | 'Not Posted'
+  accounting: '' | 'Posted' | 'Not Posted'
   externalRef: string
   /** Set by Match & Release; the original left it undefined until then, read back as "". */
   internalRef: string

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { formatAmount } from './format.ts'
+import { amountText } from './format.ts'
 import type { NdfDeal } from './types.ts'
 
 /**
@@ -31,8 +31,8 @@ export function DealSummary({ id, deal }: { id: string; deal: NdfDeal | null }) 
           <SummaryItem label="Transaction" value={deal.transaction} />
           <SummaryItem label="Partner" value={deal.partnerName} />
           <SummaryItem label="Currency Pair" value={`${deal.currency1} / ${deal.currency2}`} />
-          <SummaryItem label="Fixing Date" value={deal.fixingDate} />
-          <SummaryItem label="NDF Value" value={formatAmount(deal.ndfValue)} />
+          <SummaryItem label="Value Date" value={deal.valueDate} />
+          <SummaryItem label="NDF Value" value={amountText(deal.ndfValue)} />
         </>
       ) : null}
     </div>
@@ -43,7 +43,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="ds-item">
       <div className="ds-label">{label}</div>
-      <div className="ds-value">{value}</div>
+      <div className="ds-value">{value || '—'}</div>
     </div>
   )
 }

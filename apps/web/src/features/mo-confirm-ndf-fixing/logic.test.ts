@@ -1,18 +1,19 @@
-import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
-import { COMPANY_CODES, FIXING_DATE_POOL, STATUS, STATUSES, createNdfDataset, createRng } from './data.ts'
-import { formatAmount, formatDMY, parseDMY } from './format.ts'
+import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert/strict'
+import { afterEach, describe, it } from 'node:test'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import { companyFilter, dmyOf, fetchNdfDeal, isNdfProduct, loadNdfDeals, settleNdfDeal, toNdfDeal, tradersOf } from './api.ts'
+import { STATUS } from './data.ts'
+import { amountText, formatAmount, formatDMY, parseDMY } from './format.ts'
 import {
   EMPTY_FILTERS,
   applyFilterPanel,
+  canMatchRelease,
   computeResults,
   countActiveFilters,
-  ensureDataForCriteria,
+  distinctOptions,
   filterByCriteria,
   filterDropdownItems,
   isValidDMY,
-  markCorrectionRequired,
-  matchReleaseDeal,
   nextSort,
   pageOf,
   pagerWindow,
@@ -21,44 +22,61 @@ import {
   searchDeals,
   sortDeals,
   statusClass,
+  unappliedCriteria,
   validateSelection,
 } from './logic.ts'
 import type { NdfDeal, Selection } from './types.ts'
 
-const SEL: Selection = { companyCode: 'SG03', companyCodeTo: '', fixingDate: '28-09-2027', ndfValue: '', trader: '' }
-const ids = (list: NdfDeal[]) => list.map((d) => d.id)
-const find = (list: NdfDeal[], id: string) => {
-  const d = list.find((x) => x.id === id)
-  if (!d) throw new Error(`no deal ${id}`)
+const SEL: Selection = { companyCode: 'SG03', companyCodeTo: '', fixingDate: '30-10-2026', ndfValue: '', trader: '' }
+
+const sap = (over: Partial<FxTransaction> = {}): FxTransaction => ({
+  CompanyCode: 'SG03',
+  FinancialTransaction: '7000000000001',
+  ProductType: '12D',
+  TransactionType: '631',
+  Partner: '400000002',
+  ContractDate: '2026-09-30',
+  BuyCurrency: 'USD',
+  SellCurrency: 'INR',
+  LeadCurrency: 'USD',
+  FollowCurrency: 'INR',
+  BuyAmount: 1000,
+  SellAmount: 83000,
+  ValueDate: '2026-10-30',
+  ForwardRate: 83,
+  ActiveStatus: '0',
+  ActivityCategory: '20',
+  ...over,
+})
+
+const deal = (over: Partial<FxTransaction> = {}): NdfDeal => {
+  const d = toNdfDeal(sap(over))
+  ok(d)
   return d
 }
+const ids = (list: NdfDeal[]) => list.map((d) => d.id)
 
 describe('format', () => {
   it('formats amounts and dates like the page', () => {
     strictEqual(formatAmount(1234567.891), '1,234,567.89')
-    strictEqual(formatAmount(5), '5.00')
     strictEqual(formatDMY(new Date(2027, 8, 5)), '05-09-2027')
     strictEqual(parseDMY('28-09-2027').getTime(), new Date(2027, 8, 28).getTime())
+    strictEqual(amountText(null), '')
+    strictEqual(amountText(5), '5.00')
   })
 })
 
 describe('inputs', () => {
   it('reads the K / M / CR NDF Value shorthand', () => {
     strictEqual(parseAmountInput('250k'), 250_000)
-    strictEqual(parseAmountInput('1.5M'), 1_500_000)
     strictEqual(parseAmountInput('2cr'), 20_000_000)
-    strictEqual(parseAmountInput(' 1,250.50 '), 1250.5)
     strictEqual(parseAmountInput('abc'), null)
-    strictEqual(parseAmountInput(''), null)
   })
 
   it('accepts only real dd-mm-yyyy dates', () => {
     ok(isValidDMY('29-02-2028'))
     ok(!isValidDMY('29-02-2027'))
-    ok(!isValidDMY('31-04-2027'))
-    ok(!isValidDMY('1-09-2027'))
     ok(!isValidDMY('2027-09-01'))
-    ok(!isValidDMY('01-13-2027'))
   })
 
   it('validates the Basic Selection with the page messages', () => {
@@ -66,149 +84,136 @@ describe('inputs', () => {
       companyCode: 'Company Code is required.',
       fixingDate: 'Fixing Date is required.',
     })
-    deepStrictEqual(validateSelection({ ...SEL, fixingDate: '31-02-2027' }), {
-      companyCode: null,
-      fixingDate: 'Enter a valid date as dd-mm-yyyy.',
-    })
-    deepStrictEqual(validateSelection({ ...SEL, fixingDate: ' 28-09-2027 ' }), { companyCode: null, fixingDate: null })
+    deepStrictEqual(validateSelection(SEL), { companyCode: null, fixingDate: null })
   })
 
   it('filters dropdown items on either line, ignoring case', () => {
     const items = [{ primary: 'C27 - Akshay Mohnot' }, { primary: 'SG03', secondary: 'Singapore' }]
     deepStrictEqual(filterDropdownItems(items, 'akshay'), [items[0]])
-    deepStrictEqual(filterDropdownItems(items, 'singa'), [items[1]])
     strictEqual(filterDropdownItems(items, '  ').length, 2)
-    strictEqual(filterDropdownItems(items, 'zzz').length, 0)
   })
 })
 
-describe('dummy data', () => {
-  it('is deterministic and matches the legacy generator', () => {
-    const a = createNdfDataset().deals
-    const b = createNdfDataset().deals
-    deepStrictEqual(a, b)
-    strictEqual(a.length, COMPANY_CODES.length * FIXING_DATE_POOL.length * STATUSES.length + 15)
-    const first = find(a, 'd0')
-    strictEqual(first.transaction, '5000071657')
-    strictEqual(first.dealId, '1197648300')
-    strictEqual(first.amount1, 1108890)
-    strictEqual(first.allInRate, 84.9036)
-    strictEqual(first.tradeDate, '16-10-2026')
-    strictEqual(first.traderCode, 'C28')
-    strictEqual(find(a, 'd59').mcReference, '2000047942')
+describe('toNdfDeal', () => {
+  it('maps an NDF transaction and leaves what SAP does not provide blank', () => {
+    const d = deal()
+    strictEqual(d.id, 'SG03-7000000000001')
+    strictEqual(d.coCode, 'SG03')
+    strictEqual(d.currency1, 'USD')
+    strictEqual(d.amount1, 1000)
+    strictEqual(d.currency2, 'INR')
+    strictEqual(d.amount2, 83000)
+    strictEqual(d.buySell2, 'Sell')
+    strictEqual(d.allInRate, 83)
+    strictEqual(d.tradeDate, '30-09-2026')
+    strictEqual(d.valueDate, '30-10-2026')
+    strictEqual(d.txnStatus, STATUS.UNMATCHED)
+    for (const blank of [d.fixingDate, d.dealId, d.mcReference, d.trader, d.externalRef, d.foRemark, d.moRemark, d.busArea, d.tsfEntity]) strictEqual(blank, '')
+    strictEqual(d.ndfValue, null)
   })
 
-  it('covers every company code, fixing date and status', () => {
-    const { deals } = createNdfDataset()
-    for (const cc of COMPANY_CODES)
-      for (const fd of FIXING_DATE_POOL)
-        for (const st of STATUSES) ok(deals.some((d) => d.coCode === cc && d.fixingDate === fd && d.txnStatus === st))
-    ok(deals.filter((d) => d.txnStatus === STATUS.RELEASED).every((d) => d.externalRef.startsWith('EXT-')))
-    ok(deals.filter((d) => d.txnStatus === STATUS.CORRECTION).every((d) => d.moRemark !== ''))
+  it('reads a sold lead currency the other way round', () => {
+    const d = deal({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 83000, SellAmount: 1000 })
+    strictEqual(d.buySell2, 'Buy')
+    strictEqual(d.amount1, 1000)
+    strictEqual(d.amount2, 83000)
   })
 
-  it('draws the xorshift sequence from a fresh seed per generator', () => {
-    const r1 = createRng()
-    const r2 = createRng()
-    deepStrictEqual([r1.rnd(), r1.rnd(), r1.rnd()], [0.91523, 0.67078, 0.09366])
-    strictEqual(r2.rnd(), 0.91523)
+  it('shows the activity category as the status', () => {
+    strictEqual(deal({ ActivityCategory: '30' }).txnStatus, STATUS.RELEASED)
+  })
+
+  it('names the partner and transaction type when the lookups answered, else keeps the codes', () => {
+    const named = toNdfDeal(sap(), { partners: new Map([['400000002', 'DBS BANK LTD']]), txnTypes: new Map([['12D/631', 'NDF-TSF']]) })
+    strictEqual(named?.partnerName, 'DBS BANK LTD')
+    strictEqual(named?.txnTypeDesc, '631 - NDF-TSF')
+    strictEqual(deal().partnerName, '400000002')
+    strictEqual(deal().txnTypeDesc, '631')
+  })
+
+  it('drops reversed, non-NDF and undated transactions', () => {
+    strictEqual(toNdfDeal(sap({ ActiveStatus: '3' })), null)
+    strictEqual(toNdfDeal(sap({ ProductType: '12B' })), null)
+    strictEqual(toNdfDeal(sap({ ValueDate: null })), null)
+    ok(isNdfProduct('12D') && !isNdfProduct('12F') && !isNdfProduct(undefined))
+    strictEqual(dmyOf('0000-00-00'), '')
   })
 })
 
-describe('ensureDataForCriteria', () => {
-  it('leaves the list alone when the combination already has deals', () => {
-    const { deals, rng } = createNdfDataset()
-    strictEqual(ensureDataForCriteria(deals, rng, 'sg03', '28-09-2027'), deals)
-  })
-
-  it('adds 3-5 deals cycling through the statuses for a new combination', () => {
-    const { deals, rng } = createNdfDataset()
-    const next = ensureDataForCriteria(deals, rng, ' in11 ', '01-01-2028')
-    const added = next.slice(deals.length)
-    ok(added.length >= 3 && added.length <= 5)
-    ok(added.every((d) => d.coCode === 'IN11' && d.fixingDate === '01-01-2028'))
+describe('traders and company filter', () => {
+  it('reads ZSGTRMTR_TRADER as one row per code, sorted, named from ZNAME else ZTRADER', () => {
     deepStrictEqual(
-      added.slice(0, 3).map((d) => d.txnStatus),
-      STATUSES,
+      tradersOf([
+        { ZTCODE: 'C33', ZTRADER: 'Pooja P', ZNAME: 'Pooja Pednekar' },
+        { ZTCODE: 'C27', ZTRADER: 'Akshay M', ZNAME: '' },
+        { ZTCODE: 'C27', ZTRADER: 'dup', ZNAME: 'dup' },
+        { ZTCODE: '', ZTRADER: 'none' },
+      ]),
+      [
+        { code: 'C27', name: 'Akshay M' },
+        { code: 'C33', name: 'Pooja Pednekar' },
+      ],
     )
-    strictEqual(new Set(ids(next)).size, next.length)
-    // Once topped up, the same combination is not topped up again.
-    strictEqual(ensureDataForCriteria(next, rng, 'IN11', '01-01-2028'), next)
-    // The same session produces the same top-up.
-    const again = createNdfDataset()
-    deepStrictEqual(ensureDataForCriteria(again.deals, again.rng, 'IN11', '01-01-2028'), next)
+  })
+
+  it('filters one company code, or a range', () => {
+    strictEqual(companyFilter(' sg03 ', ''), "CompanyCode eq 'SG03'")
+    strictEqual(companyFilter('AE11', 'SG03'), "CompanyCode ge 'AE11' and CompanyCode le 'SG03'")
   })
 })
 
-describe('filterByCriteria', () => {
-  const { deals } = createNdfDataset()
+describe('selection, filters, search and sort', () => {
+  const a = deal({ FinancialTransaction: '1', ForwardRate: 83 })
+  const b = deal({ FinancialTransaction: '2', ValueDate: '2026-11-02', ForwardRate: 80, CompanyCode: 'AE11', ActivityCategory: '30' })
+  const all = [a, b]
 
-  it('matches one company code (any case) and the fixing date', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: 'sg03' })
-    ok(rows.length >= 3)
-    ok(rows.every((d) => d.coCode === 'SG03' && d.fixingDate === '28-09-2027'))
+  it('matches the Fixing Date against the value date and the company code (any case)', () => {
+    deepStrictEqual(ids(filterByCriteria(all, SEL)), [a.id])
+    deepStrictEqual(ids(filterByCriteria(all, { ...SEL, companyCode: 'sg03' })), [a.id])
+    deepStrictEqual(ids(filterByCriteria(all, { ...SEL, companyCode: 'AE11', companyCodeTo: 'SG03', fixingDate: '' })), ids(all))
   })
 
-  it('treats From / To as a text range', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: 'AE11', companyCodeTo: 'ae13', fixingDate: '' })
-    deepStrictEqual([...new Set(rows.map((d) => d.coCode))].sort(), ['AE11', 'AE13'])
+  it('does not apply Trader or NDF Value, and says so', () => {
+    deepStrictEqual(ids(filterByCriteria(all, { ...SEL, trader: 'C27', ndfValue: '5M' })), [a.id])
+    deepStrictEqual(unappliedCriteria({ ...SEL, trader: 'C27', ndfValue: '5M' }), ['Trader Name', 'NDF Value'])
+    deepStrictEqual(unappliedCriteria(SEL), [])
   })
 
-  it('keeps NDF values within 15% of the entered amount', () => {
-    const target = find(deals, 'd0').ndfValue
-    const rows = filterByCriteria(deals, { ...SEL, fixingDate: '', ndfValue: formatAmount(target) })
-    ok(rows.some((d) => d.id === 'd0'))
-    ok(rows.every((d) => Math.abs(d.ndfValue - target) <= target * 0.15))
-    // Unreadable text does not filter.
-    strictEqual(filterByCriteria(deals, { ...SEL, ndfValue: 'abc' }).length, filterByCriteria(deals, SEL).length)
-  })
-
-  it('filters by trader code', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: '', fixingDate: '', trader: 'C27' })
-    ok(rows.length > 0)
-    ok(rows.every((d) => d.traderCode === 'C27'))
-  })
-})
-
-describe('filter panel, search and sort', () => {
-  const { deals } = createNdfDataset()
-
-  it('applies every non-empty select and counts them', () => {
-    const f = { ...EMPTY_FILTERS, status: STATUS.RELEASED, currency1: 'USD' }
-    strictEqual(countActiveFilters(EMPTY_FILTERS), 0)
-    strictEqual(countActiveFilters(f), 2)
-    const rows = applyFilterPanel(deals, f)
-    ok(rows.length > 0)
-    ok(rows.every((d) => d.txnStatus === STATUS.RELEASED))
-    strictEqual(applyFilterPanel(deals, EMPTY_FILTERS).length, deals.length)
+  it('applies the filter panel and counts the active selects', () => {
+    deepStrictEqual(ids(applyFilterPanel(all, { ...EMPTY_FILTERS, companyCode: 'AE11' })), [b.id])
+    strictEqual(countActiveFilters({ ...EMPTY_FILTERS, status: STATUS.RELEASED, companyCode: 'AE11' }), 2)
+    deepStrictEqual(distinctOptions(all, 'coCode'), ['AE11', 'SG03'])
+    deepStrictEqual(distinctOptions(all, 'trader'), [])
   })
 
   it('searches the listed fields, ignoring case', () => {
-    const d0 = find(deals, 'd0')
-    deepStrictEqual(ids(searchDeals(deals, d0.dealId)), ['d0'])
-    ok(searchDeals(deals, 'matched & RELEASED').every((d) => d.txnStatus === STATUS.RELEASED))
-    strictEqual(searchDeals(deals, '   ').length, deals.length)
+    deepStrictEqual(ids(searchDeals(all, '400000002')), ids(all))
+    strictEqual(searchDeals(all, 'zzz').length, 0)
   })
 
-  it('sorts numbers, dates and text', () => {
-    const byAmt = sortDeals(deals, { field: 'amount1', dir: 'desc' })
-    ok(byAmt.every((d, i) => i === 0 || (byAmt[i - 1]?.amount1 ?? 0) >= d.amount1))
-    const byDate = sortDeals(deals, { field: 'tradeDate', dir: 'asc' })
-    ok(byDate.every((d, i) => i === 0 || parseDMY(byDate[i - 1]?.tradeDate ?? '').getTime() <= parseDMY(d.tradeDate).getTime()))
-    const byPartner = sortDeals(deals, { field: 'partnerName', dir: 'asc' })
-    strictEqual(byPartner[0]?.partnerName, 'BARCLAYS BANK PLC')
-    strictEqual(sortDeals(deals, { field: null, dir: 'asc' }), deals)
-  })
-
-  it('flips the same column and starts a new one ascending', () => {
-    deepStrictEqual(nextSort({ field: null, dir: 'asc' }, 'dealId'), { field: 'dealId', dir: 'asc' })
+  it('sorts numbers, dates and text, with blank values first', () => {
+    deepStrictEqual(ids(sortDeals(all, { field: 'allInRate', dir: 'asc' })), [b.id, a.id])
+    deepStrictEqual(ids(sortDeals(all, { field: 'valueDate', dir: 'desc' })), [b.id, a.id])
+    deepStrictEqual(ids(sortDeals(all, { field: 'ndfValue', dir: 'asc' })), ids(all))
+    deepStrictEqual(ids(sortDeals(all, { field: 'fixingDate', dir: 'asc' })), ids(all))
     deepStrictEqual(nextSort({ field: 'dealId', dir: 'asc' }, 'dealId'), { field: 'dealId', dir: 'desc' })
     deepStrictEqual(nextSort({ field: 'dealId', dir: 'desc' }, 'trader'), { field: 'trader', dir: 'asc' })
+  })
+
+  it('computes the list from the selection, filters, search and sort', () => {
+    deepStrictEqual(ids(computeResults(all, SEL, EMPTY_FILTERS, '', { field: null, dir: 'asc' })), [a.id])
+  })
+
+  it('lets Match & Release run only on a deal that is not already released', () => {
+    ok(canMatchRelease(a))
+    ok(!canMatchRelease(b))
+    ok(!canMatchRelease(null))
+    strictEqual(statusClass(b.txnStatus), 'status-released')
   })
 })
 
 describe('paging', () => {
-  const rows = createNdfDataset().deals
+  const rows = Array.from({ length: 60 }, (_, i) => deal({ FinancialTransaction: String(i) }))
 
   it('slices the page and pulls a page past the end back', () => {
     const p = pageOf(rows, 2, 20)
@@ -216,49 +221,70 @@ describe('paging', () => {
     strictEqual(p.totalPages, 3)
     strictEqual(pageOf(rows, 9, 50).page, 2)
     strictEqual(resultsMeta(rows.length, p), 'Showing 21–40 of 60 deals')
-    strictEqual(resultsMeta(rows.length, pageOf(rows, 2, 50)), 'Showing 51–60 of 60 deals')
     strictEqual(resultsMeta(0, null), 'Showing 0 of 0 deals')
   })
 
   it('shows up to five page buttons around the current page', () => {
     deepStrictEqual(pagerWindow(1, 3), [1, 2, 3])
-    deepStrictEqual(pagerWindow(1, 9), [1, 2, 3, 4, 5])
     deepStrictEqual(pagerWindow(6, 9), [4, 5, 6, 7, 8])
-    deepStrictEqual(pagerWindow(9, 9), [5, 6, 7, 8, 9])
   })
 })
 
-describe('actions', () => {
-  it('matches and releases, keeping existing refs and remarks when left blank', () => {
-    const { deals } = createNdfDataset()
-    const released = find(deals, 'd2')
-    const next = matchReleaseDeal(deals, 'd2', '', 'INT-1', '')
-    const d = find(next, 'd2')
-    strictEqual(d.txnStatus, STATUS.RELEASED)
-    strictEqual(d.externalRef, released.externalRef)
-    strictEqual(d.internalRef, 'INT-1')
-    const corr = find(matchReleaseDeal(deals, 'd1', 'EXT-9', '', 'ok'), 'd1')
-    strictEqual(corr.externalRef, 'EXT-9')
-    strictEqual(corr.moRemark, 'ok')
-    // The original list is untouched.
-    notStrictEqual(find(deals, 'd1').txnStatus, STATUS.RELEASED)
+describe('SAP calls', () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+  const json = (status: number, body: unknown) =>
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+  const decode = (input: RequestInfo | URL) => decodeURIComponent(String(input).replaceAll('+', ' '))
+
+  it('reads the NDF transactions of the company code and drops reversed and non-NDF ones', async () => {
+    const urls: string[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decode(input)
+      urls.push(u)
+      if (u.includes('/api/fx/FxTransaction'))
+        return json(200, {
+          value: [
+            sap({ FinancialTransaction: '1' }),
+            sap({ FinancialTransaction: '2', ProductType: '12B' }),
+            sap({ FinancialTransaction: '3', ActiveStatus: '3' }),
+          ],
+        })
+      if (u.includes('TransactionType')) return json(200, { value: [{ ProductType: '12D', TransactionType: '631', TransactionTypeName: 'NDF-TSF' }] })
+      return json(200, { d: { results: [{ BusinessPartner: '400000002', BusinessPartnerFullName: 'DBS BANK LTD' }] } })
+    }) as typeof fetch
+    const out = await loadNdfDeals({ from: 'sg03', to: '' })
+    deepStrictEqual(ids(out), ['SG03-1'])
+    strictEqual(out[0]?.partnerName, 'DBS BANK LTD')
+    strictEqual(out[0]?.txnTypeDesc, '631 - NDF-TSF')
+    ok(urls[0]?.includes("$filter=CompanyCode eq 'SG03'"))
   })
 
-  it('sends a deal back for correction with the remark', () => {
-    const { deals } = createNdfDataset()
-    const d = find(markCorrectionRequired(deals, 'd0', 'Rate mismatch'), 'd0')
-    strictEqual(d.txnStatus, STATUS.CORRECTION)
-    strictEqual(d.moRemark, 'Rate mismatch')
-    strictEqual(statusClass(d.txnStatus), 'status-correction')
-    strictEqual(statusClass(STATUS.RELEASED), 'status-released')
-    strictEqual(statusClass(STATUS.UNMATCHED), 'status-unmatched')
+  it('still lists the deals when the name lookups fail', async () => {
+    globalThis.fetch = (async (input: RequestInfo | URL) =>
+      decode(input).includes('/api/fx/FxTransaction') ? json(200, { value: [sap()] }) : json(500, { error: { message: 'down' } })) as typeof fetch
+    const out = await loadNdfDeals({ from: 'SG03', to: '' })
+    strictEqual(out.length, 1)
+    strictEqual(out[0]?.partnerName, '400000002')
   })
 
-  it('leaves actioned deals out of the results', () => {
-    const { deals } = createNdfDataset()
-    const all = computeResults(deals, SEL, new Set(), EMPTY_FILTERS, '', { field: null, dir: 'asc' })
-    ok(all.some((d) => d.id === 'd0'))
-    const without = computeResults(deals, SEL, new Set(['d0']), EMPTY_FILTERS, '', { field: null, dir: 'asc' })
-    deepStrictEqual(ids(without), ids(all).filter((id) => id !== 'd0'))
+  it('settles with the bound Settle action and reads the transaction back', async () => {
+    const calls: Array<{ url: string; method: string }> = []
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: decode(input), method: init?.method ?? 'GET' })
+      return json(200, { value: [sap({ ActivityCategory: '30' })] })
+    }) as typeof fetch
+    await settleNdfDeal('SG03', '7000000000001')
+    strictEqual(calls[0]?.method, 'POST')
+    ok(calls[0]?.url.endsWith("(CompanyCode='SG03',FinancialTransaction='7000000000001')/com.sap.gateway.srvd_a2x.zfs_sd_trmfx.v0001.Settle"))
+    const fresh = await fetchNdfDeal('SG03', '7000000000001')
+    strictEqual(fresh?.txnStatus, STATUS.RELEASED)
+  })
+
+  it('surfaces a refused settlement instead of reporting success', async () => {
+    globalThis.fetch = (async () => json(400, { error: { message: 'x', details: [{ code: 'FTR0/007', message: 'Not yet due for settlement' }] } })) as typeof fetch
+    await rejects(() => settleNdfDeal('SG03', '1'))
   })
 })

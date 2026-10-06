@@ -48,11 +48,10 @@ function cellValue(d: NdfDeal, col: Column): ReactNode {
       ) : (
         DASH
       )
-    case 'foRemark':
-    case 'externalRef':
-      return d[col.key] || DASH
     default: {
+      // A value the SAP service does not provide (blank / null) shows a dash, never a made-up value.
       const v = d[col.key]
+      if (v === '' || v === null) return DASH
       return col.num && typeof v === 'number' ? formatAmount(v) : v
     }
   }
