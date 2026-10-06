@@ -2,20 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type
 import { isAbort } from '../../shared/fx/mw.ts'
 import { installMasters, loadBlotterMasters } from './masters.ts'
 import { applyDealIds, assignmentsFromDealIds, attachLegToDealId, createPairDealId, loadDealRows, toDealRecord } from './dealIds.ts'
-import { applyReleases, loadReleases, saveReleases, updateReleases } from './releases.ts'
+import { applyAppStr } from './appStr.ts'
+import { statusAfterRelease } from '../../shared/fx/txn-status.ts'
+import {
+  createBlotterDeal,
+  createBlotterSpot,
+  loadBlotterDeals,
+  releaseBlotterRows,
+  retryPendingAppData,
+  reverseBlotterDeal,
+  saveDealLink,
+  type Booked,
+  type DealLink,
+  type SaveOutcome,
+} from './workflow.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { AutoDealModal } from './AutoDealModal.tsx'
-import {
-  companyCodeOf,
-  createDeal,
-  createSpotDeal,
-  fromFxTransaction,
-  loadDeals,
-  reverseDeal,
-  sapMessage,
-  toCreatePayload,
-} from './api.ts'
+import { fromFxTransaction, sapMessage, toCreatePayload } from './api.ts'
 import { AutoSpotModal } from './AutoSpotModal.tsx'
 import { BlotterTable, type TableHandlers } from './BlotterTable.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
@@ -66,6 +70,7 @@ import {
   runTxnList,
   sampleUploadRows,
   saveNote,
+  setAppDataPending,
   setCtx,
   settle,
   sortRows,
@@ -218,6 +223,17 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   const loadLive = useCallback(
     async (signal?: AbortSignal) => {
       try {
+        // Application data that failed to save earlier is saved again first, so what is read back below includes it.
+        // Only the save is repeated: the SAP transaction / release / reversal it belongs to already happened.
+        const owed = latest.current.rows.filter((r) => r.appDataPending)
+        if (owed.length) {
+          const outs = await retryPendingAppData(owed, latest.current.ctx.date)
+          if (signal?.aborted) return
+          const fixed = new Map(outs.filter((o) => o.ok).map((o) => [o.row.id, {}]))
+          if (fixed.size) commit(setAppDataPending(latest.current, fixed), false)
+          const stillOwed = outs.filter((o) => !o.ok)
+          if (stillOwed.length) showToast(`Application data for ${stillOwed.length} transaction(s) still could not be saved: ${stillOwed[0]!.error}`, 'warn')
+        }
         const cur = latest.current
         // The Deal IDs in SAP replace the demo list the assign dialog used to offer.
         let dealRows: Awaited<ReturnType<typeof loadDealRows>> | null = null
@@ -227,7 +243,10 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
           if (signal?.aborted) return
           showToast(`Could not load Deal IDs from SAP: ${sapMessage(e)}`, 'warn')
         }
-        const deals = await loadDeals(cur.ctx.date, signal)
+        const { deals, records, appDataError } = await loadBlotterDeals(cur.ctx.date, signal)
+        if (appDataError) {
+          showToast(`Could not read the application data (Released to MO status) from SAP: ${appDataError}`, 'warn')
+        }
         let partners = cur.partners
         const rows: Parameters<typeof mergeLiveRows>[1] = []
         for (const d of deals) {
@@ -238,10 +257,10 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         }
         if (signal?.aborted) return
         let next = latest.current
-        // A deal released to MO from this browser comes back as Released, not as a fresh Created one; the Deal ID
-        // each deal is on, with its Master Contract and leg, is read back from SAP's Deal ID table.
+        // A deal released to MO comes back as Released from its stored TXN_STATUS (ZSGTSFTR_APP_STR), whichever browser
+        // or user released it; the Deal ID each deal is on, with its Master Contract and leg, is read back from SAP's Deal ID table.
         const assignments = dealRows ? assignmentsFromDealIds(dealRows) : new Map()
-        if (rows.length) next = mergeLiveRows(next, applyDealIds(applyReleases(rows, loadReleases()), assignments), partners)
+        if (rows.length) next = mergeLiveRows(next, applyDealIds(applyAppStr(rows, records), assignments), partners)
         if (dealRows) next = { ...next, deals: dealRows.map(toDealRecord).filter((d): d is NonNullable<typeof d> => d !== null) }
         if (next !== latest.current) commit(next)
       } catch (e) {
@@ -259,11 +278,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     void loadLive(ctl.signal)
     return () => ctl.abort()
   }, [loadLive])
-
-  // Release to MO has no home in SAP, so the releases are remembered here and put back on the next load.
-  useEffect(() => {
-    saveReleases(updateReleases(loadReleases(), b.rows))
-  }, [b.rows])
 
   // Escape closes the top-most popup.
   useEffect(() => {
@@ -307,6 +321,30 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   }
 
   const findRow = (id: string | null | undefined) => (id ? b.rows.find((r) => r.id === id) : undefined)
+
+  /** The rows as the blotter holds them now, by id (a SAP call may have taken a while since the caller read them). */
+  const rowsNow = (ids: readonly string[]): BlotterRow[] =>
+    ids.map((id) => latest.current.rows.find((r) => r.id === id)).filter((r): r is BlotterRow => !!r)
+
+  /**
+   * Records how saving the application data (ZSGTSFTR_APP_STR) went: a saved row takes the status written for it, a row
+   * whose save failed is flagged so the next Refresh saves it again. Returns the first failure's message, or ''.
+   */
+  const settleSaves = (outs: readonly SaveOutcome[], intent: 'create' | 'release', okStatus: (r: BlotterRow) => string): string => {
+    const changes = new Map(
+      outs.map((o) => [o.row.id, o.ok ? { txnStatus: okStatus(o.row) } : { pending: { intent } }] as const),
+    )
+    commit(setAppDataPending(latest.current, changes), false)
+    return outs.find((o) => !o.ok)?.error ?? ''
+  }
+
+  /** Saves the Deal ID fields and status 03 for rows just released to MO; returns a failure message, or ''. */
+  const saveRelease = async (ids: readonly string[], link?: DealLink): Promise<string> =>
+    settleSaves(
+      await releaseBlotterRows(rowsNow(ids), link, latest.current.ctx.date),
+      'release',
+      (r) => statusAfterRelease(r.txnStatus),
+    )
 
   // ------------------------------------------------------------------ derived
 
@@ -390,16 +428,21 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         ? `This will reverse transaction ${row.transactionNumber} in SAP (reason 04, Other reasons). This cannot be undone.`
         : `This will mark transaction ${row.transactionNumber} as reversed. This cannot be undone in this session.`,
       guarded(async () => {
+        let saved: Awaited<ReturnType<typeof reverseBlotterDeal>> | undefined
         if (row.live) {
           try {
-            await reverseDeal(companyCodeOf(row), row.transactionNumber)
+            saved = await reverseBlotterDeal(row, latest.current.ctx.date)
           } catch (e) {
             showToast(`SAP did not reverse ${row.transactionNumber}: ${sapMessage(e)}`, 'error')
             return
           }
         }
         commit(reverseTxn(latest.current, id))
-        showToast(`Transaction ${row.transactionNumber} reversed.`, 'error')
+        if (saved) {
+          commit(setAppDataPending(latest.current, new Map([[id, { ...(saved.pending ? { pending: saved.pending } : {}), txnStatus: saved.status }]])), false)
+        }
+        if (saved?.error) showToast(saved.error, 'warn')
+        else showToast(`Transaction ${row.transactionNumber} reversed.`, 'error')
       }),
     )
   }
@@ -417,23 +460,29 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       `Create ${drafts.length} transaction(s) in SAP? Each will receive its SAP transaction number and become mostly read-only.`,
       guarded(async () => {
         // One deal at a time, in the order the rows were checked. Each is its own SAP commit,
-        // so a failure stops the run and the deals already booked stay booked.
-        const created = new Map<string, { companyCode: string; transaction: string }>()
+        // so a failure stops the run and the deals already booked stay booked. A deal's application
+        // data is saved right after SAP books it; if that save fails the deal still counts as created.
+        const created = new Map<string, Booked>()
         let failure = ''
         for (const r of drafts) {
           try {
-            created.set(r.id, await createDeal(r))
+            created.set(r.id, await createBlotterDeal(r, latest.current.ctx.date))
           } catch (e) {
             failure = sapMessage(e)
             break
           }
         }
         if (created.size) commit(applyCreated(latest.current, created))
+        const unsaved = [...created.values()].filter((c) => c.appDataError)
         if (failure) {
           showToast(created.size ? `${created.size} of ${drafts.length} created. Stopped: ${failure}` : failure, 'error')
           return
         }
         const numbers = [...created.values()].map((c) => c.transaction).join(', ')
+        if (unsaved.length) {
+          showToast(unsaved.length === 1 ? unsaved[0]!.appDataError! : `${drafts.length} transaction(s) created in SAP: ${numbers}. The application data of ${unsaved.length} of them could not be saved; it is saved again on the next Refresh.`, 'warn')
+          return
+        }
         showToast(`${drafts.length} transaction(s) created in SAP: ${numbers}.`, 'success')
       }),
     )
@@ -496,10 +545,12 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       askConfirm(
         'Release to MO',
         `Release ${created.length} created Auto Deal transaction(s) to Mid-Office? Their Master Contract and Deal ID assignment will be retained.`,
-        () => {
+        guarded(async () => {
           commit(releaseRows(latest.current, ids))
-          showToast(`${created.length} transaction(s) released to MO.`, 'success')
-        },
+          const failed = await saveRelease(ids)
+          if (failed) showToast(failed, 'warn')
+          else showToast(`${created.length} transaction(s) released to MO.`, 'success')
+        }),
       )
       return
     }
@@ -530,15 +581,24 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // A single leg joins an existing Deal ID: SAP's Deal ID row gets the transaction in its next free slot.
   const confirmAssign = guarded(async () => {
     if (!assignRow || !assignDeal) return
+    let attached: Awaited<ReturnType<typeof attachLegToDealId>>
     try {
-      await attachLegToDealId(assignDeal.dealId, assignRow)
+      attached = await attachLegToDealId(assignDeal.dealId, assignRow)
     } catch (e) {
       showToast(sapMessage(e), 'error')
       return
     }
     modals.close('assign')
     commit(assignToDeal(latest.current, assignRow.id, assignDeal.dealId))
-    showToast(`Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`, 'success')
+    // The Deal ID is in SAP; now the application data: its Deal ID fields and TXN_STATUS 03 (FO -> MO Unmatched).
+    const failed = await saveRelease([assignRow.id], {
+      dealId: assignDeal.dealId,
+      mcRef: attached.mcRef || assignDeal.mcNumber,
+      dealDesc: attached.dealDesc,
+      dealType: attached.dealType,
+    })
+    if (failed) showToast(failed, 'warn')
+    else showToast(`Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`, 'success')
   })
 
   const mcLegs = (mcPick?.ids ?? []).map((id) => findRow(id)).filter((r): r is BlotterRow => !!r)
@@ -550,25 +610,31 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // The pair gets a real Deal ID: the number comes from SAP's range, the row from the original's rules.
   const confirmMc = guarded(async () => {
     if (!legA || !legB || !mcSelected) return
-    let dealId: string
+    let pair: Awaited<ReturnType<typeof createPairDealId>>
     try {
-      dealId = (
-        await createPairDealId({
-          mc: mcSelected,
-          legs: [legA, legB],
-          traderName: traderName(),
-          year: latest.current.ctx.date.getFullYear(),
-        })
-      ).dealId
+      pair = await createPairDealId({
+        mc: mcSelected,
+        legs: [legA, legB],
+        traderName: traderName(),
+        year: latest.current.ctx.date.getFullYear(),
+      })
     } catch (e) {
       showToast(sapMessage(e), 'error')
       return
     }
-    const out = assignMc(latest.current, legA.id, legB.id, mcSelected.mcNumber, dealId)
+    const out = assignMc(latest.current, legA.id, legB.id, mcSelected.mcNumber, pair.dealId)
     if (!out) return
     modals.close('mc')
     commit(out.blotter)
-    showToast(`Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`, 'success')
+    // The Deal ID is in SAP; now the application data of both legs: its Deal ID fields and TXN_STATUS 03 (FO -> MO Unmatched).
+    const failed = await saveRelease([legA.id, legB.id], {
+      dealId: pair.dealId,
+      mcRef: mcSelected.mcNumber,
+      dealDesc: pair.dealDesc,
+      dealType: pair.dealType,
+    })
+    if (failed) showToast(failed, 'warn')
+    else showToast(`Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`, 'success')
   })
 
   const openShortStraddle = (rows: BlotterRow[]) => {
@@ -630,10 +696,10 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       showToast(sapMessage(e), 'error')
       return
     }
-    const created: Array<{ companyCode: string; transaction: string }> = []
+    const created: Booked[] = []
     for (const [i, r] of legs.entries()) {
       try {
-        created.push(await createDeal(r))
+        created.push(await createBlotterDeal(r, latest.current.ctx.date))
       } catch (e) {
         const booked = created[0]
         showToast(
@@ -648,9 +714,9 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     }
     // Both legs are in SAP; the Deal ID joins them, as the original's auto deal does straight after creating them.
     const inSap = legs.map((r, i) => ({ ...r, live: true, companyCode: created[i]!.companyCode, transactionNumber: created[i]!.transaction })) as [BlotterRow, BlotterRow]
-    let dealId: string
+    let pair: Awaited<ReturnType<typeof createPairDealId>>
     try {
-      dealId = (await createPairDealId({ mc: autoMc, legs: inSap, traderName: traderName(), year: latest.current.ctx.date.getFullYear() })).dealId
+      pair = await createPairDealId({ mc: autoMc, legs: inSap, traderName: traderName(), year: latest.current.ctx.date.getFullYear() })
     } catch (e) {
       // The legs exist: close the popup so they cannot be booked twice, and show them.
       modals.close('auto')
@@ -662,14 +728,18 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       return
     }
     // Rebuilt on the blotter as it is now, in case it changed while SAP was answering.
-    const out = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs, dealId)
+    const out = confirmAutoDeal(latest.current, autoMc.mcNumber, auto.legs, pair.dealId)
     if (!out) return
     const ids = autoLegRows(out.blotter).map((r) => r.id)
     modals.close('auto')
     commit(applyCreated(out.blotter, new Map(ids.map((id, i) => [id, created[i]!]))))
+    // The legs now have a Deal ID: save it with their application data. Their status stays 01 until they are released to MO.
+    const outs = await saveDealLink(rowsNow(ids), { dealId: pair.dealId, mcRef: autoMc.mcNumber, dealDesc: pair.dealDesc, dealType: pair.dealType }, latest.current.ctx.date)
+    const unsaved = settleSaves(outs, 'create', (r) => r.txnStatus ?? '01') || created.find((c) => c.appDataError)?.appDataError || ''
     showToast(
-      `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under Deal ID ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
-      'success',
+      unsaved ||
+        `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under Deal ID ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
+      unsaved ? 'warn' : 'success',
     )
   })
 
@@ -683,10 +753,16 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // The popup stays open when SAP refuses, so the partner, type or amounts can be changed and retried.
   const createSpot = guarded(async () => {
     try {
-      const { transaction } = await createSpotDeal(spot)
+      const booked = await createBlotterSpot(spot, latest.current.ctx.date)
       modals.close('autospot')
-      showToast(`Spot created in SAP: ${transaction}.`, 'success')
-      void loadLive()
+      if (booked.appDataError) showToast(booked.appDataError, 'warn')
+      else showToast(`Spot created in SAP: ${booked.transaction}.`, 'success')
+      // The spot joins the grid from SAP; if its application data did not save, the row is flagged so Refresh saves it.
+      void loadLive().then(() => {
+        if (!booked.appDataPending) return
+        const row = latest.current.rows.find((r) => r.companyCode === booked.companyCode && r.transactionNumber === booked.transaction)
+        if (row) commit(setAppDataPending(latest.current, new Map([[row.id, { pending: booked.appDataPending! }]])), false)
+      })
     } catch (e) {
       showToast(sapMessage(e), 'error')
     }

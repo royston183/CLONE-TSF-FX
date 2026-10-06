@@ -80,6 +80,7 @@ export async function apiRoutes(app: FastifyInstance, services: Map<string, Serv
       rawQuery(req.raw.url ?? ''),
       body,
       req.headers['content-type'],
+      typeof req.headers['if-match'] === 'string' ? req.headers['if-match'] : undefined,
     )
 
     reply.code(result.status)

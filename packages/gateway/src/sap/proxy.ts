@@ -34,6 +34,8 @@ export async function proxyRequest(
   query: string,
   body: Buffer | undefined,
   contentType: string | undefined,
+  /** Optimistic-concurrency precondition for a write; RAP services answer a PATCH without one with 428. */
+  ifMatch?: string,
 ): Promise<ProxyResult> {
   const session = sessionFor(service.key)
   const url = serviceUrl(service, path, query)
@@ -45,6 +47,7 @@ export async function proxyRequest(
     const headers: Record<string, string> = { accept: 'application/json' }
     if (service.authHeader) headers['authorization'] = service.authHeader
     if (contentType) headers['content-type'] = contentType
+    if (ifMatch && WRITE_METHODS.has(method)) headers['if-match'] = ifMatch
     if (needsToken && session.token) headers['x-csrf-token'] = session.token
     const cookie = await cookieHeader(session, url)
     if (cookie) headers['cookie'] = cookie
