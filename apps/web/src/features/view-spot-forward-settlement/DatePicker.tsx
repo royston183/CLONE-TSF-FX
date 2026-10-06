@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { DEMO_TODAY } from './data.ts'
+import { TODAY } from './data.ts'
 import { fmtDMY, sameDay } from './format.ts'
 import { MONTH_NAMES, monthGrid, navMonth, viewOf, type CalendarView } from './logic.ts'
 
@@ -61,7 +61,7 @@ export function DatePicker({ value, initialView, open, onToggle, onPick, label }
               {Array.from({ length: days }, (_, i) => {
                 const day = i + 1
                 const cur = new Date(view.y, view.m, day)
-                const cls = `dp-day${sameDay(cur, DEMO_TODAY) ? ' today' : ''}${fmtDMY(cur) === value ? ' selected' : ''}`
+                const cls = `dp-day${sameDay(cur, TODAY) ? ' today' : ''}${fmtDMY(cur) === value ? ' selected' : ''}`
                 return (
                   <button key={day} type="button" className={cls} onClick={() => onPick(fmtDMY(cur))}>
                     {day}

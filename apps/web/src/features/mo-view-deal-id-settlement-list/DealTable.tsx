@@ -27,7 +27,9 @@ export function DealTable({
   onSort,
   onOpenDeal,
   onOpenMc,
+  emptyText,
 }: {
+  emptyText: string
   rows: readonly Deal[]
   sort: Sort
   onSort: (key: SortKey) => void
@@ -61,7 +63,7 @@ export function DealTable({
           {rows.length === 0 ? (
             <tr>
               <td colSpan={13} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>
-                No Data Found
+                {emptyText}
               </td>
             </tr>
           ) : (

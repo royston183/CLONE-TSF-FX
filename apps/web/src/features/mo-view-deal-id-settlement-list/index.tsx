@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO } from '../../shared/fx/logo.ts'
-import { CO_AREAS, DEAL_STATUSES, DEFAULT_PAGE_SIZE, ENTITIES, LAYOUTS, PAGE_SIZES, REGIONS } from './data.ts'
+import { INVOICES_WAITING, LIST_WAITING, MASTER_WAITING, loadSettlementList } from './api.ts'
+import { DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES } from './data.ts'
 import { DateBox } from './DateRangeField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DealModal, InvoiceModal, McModal } from './DetailModals.tsx'
@@ -10,8 +11,6 @@ import { fmtCompactUsd, parseDate } from './format.ts'
 import {
   DEFAULT_FILTERS,
   DEFAULT_SORT,
-  buildDeals,
-  buildMasterContracts,
   computeKpis,
   keyDateNote,
   layoutMessage,
@@ -32,7 +31,7 @@ import './mo-view-deal-id-settlement-list.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; imported after it.
 import './mo-view-deal-id-settlement-list.dark.css'
 import './mo-view-deal-id-settlement-list.overrides.css'
-import type { Filters, KpiFilter, Sort, SortKey } from './types.ts'
+import type { Deal, Filters, KpiFilter, MasterContract, Sort, SortKey } from './types.ts'
 
 const TOAST_MS = 3400
 const KPI_CARDS: { key: KpiFilter; cls: string; lbl: string; help: string; value: 'total' | 'pending' | 'settled' }[] = [
@@ -40,18 +39,22 @@ const KPI_CARDS: { key: KpiFilter; cls: string; lbl: string; help: string; value
   { key: 'OPEN', cls: 'k-pending', value: 'pending', lbl: 'Awaiting Settlement', help: 'Booked, confirmed, BL-attached or invoiced - not yet ready' },
   { key: 'DONE', cls: 'k-inuse', value: 'settled', lbl: 'Ready / Settled', help: 'Status 21 (Ready for Settlement) or 22 (Settled)' },
 ]
-const ENTITIES_BY_CODE = [...ENTITIES].sort((a, b) => (a.code < b.code ? -1 : 1))
 
 type DateField = 'from' | 'to'
 
 /**
  * MO: View List of Deal IDs for Settlement (ZSGTSFR106), converted from
- * legacy/mo-view-deal-id-settlement-list.html. UI only: it runs on the dummy Master Contracts
- * and Deal IDs in data.ts and calls no API.
+ * legacy/mo-view-deal-id-settlement-list.html.
+ *
+ * NO SOURCE: the list program behind ZSGTSFR106 is in no export and no dependency note (its
+ * drill-down ZSGTSF_RDEAL_TRD_INV is known only from its note). The selection of Deal IDs for
+ * settlement and the Status / Region / Origin Entity / CO Area value lists cannot be reproduced,
+ * so they show WAITING FOR API (api.ts). No sample data at runtime (fixtures.ts is for tests).
  */
 export default function MoViewDealIdSettlementList() {
-  const masterContracts = useMemo(() => buildMasterContracts(), [])
-  const deals = useMemo(() => buildDeals(masterContracts), [masterContracts])
+  const list = useMemo(() => loadSettlementList(), [])
+  const deals: readonly Deal[] = list.deals
+  const masterContracts: readonly MasterContract[] = list.masterContracts
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT)
@@ -78,7 +81,7 @@ export default function MoViewDealIdSettlementList() {
   const note = keyDateNote(filters.dateFrom, filters.dateTo)
 
   // Toast
-  const [toast, setToast] = useState(() => ({ message: loadedMessage(visibleDeals(deals, DEFAULT_FILTERS, DEFAULT_SORT).length, 'Ready'), show: true }))
+  const [toast, setToast] = useState(() => ({ message: list.reason, show: true }))
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true })
@@ -145,7 +148,7 @@ export default function MoViewDealIdSettlementList() {
   }
   const refresh = () => {
     setPage(1)
-    showToast(loadedMessage(filtered.length, 'Refreshed'))
+    showToast(deals.length ? loadedMessage(filtered.length, 'Refreshed') : list.reason)
   }
   const changeLayout = (value: string) => {
     setFilters((f) => ({ ...f, layout: value }))
@@ -269,43 +272,33 @@ export default function MoViewDealIdSettlementList() {
                   <label htmlFor="f-status">Status</label>
                   <select id="f-status" value={filters.status} onChange={(e) => patchFilters({ status: e.target.value })}>
                     <option value="ALL">All statuses</option>
-                    {DEAL_STATUSES.map((s) => (
-                      <option key={s.code} value={s.code}>
-                        {s.code} - {s.desc}
-                      </option>
-                    ))}
+                    <option value="" disabled>
+                      {MASTER_WAITING}
+                    </option>
                   </select>
                 </div>
                 <div className="filter-field">
                   <label htmlFor="f-region">Region</label>
                   <select id="f-region" value={filters.region} onChange={(e) => patchFilters({ region: e.target.value })}>
                     <option value="ALL">All regions</option>
-                    {REGIONS.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.id} - {r.name}
-                      </option>
-                    ))}
+                    <option value="" disabled>
+                      {MASTER_WAITING}
+                    </option>
                   </select>
                 </div>
                 <div className="filter-field entity-filter">
                   <label htmlFor="f-entity">Origin Entity</label>
                   <select id="f-entity" value={filters.entity} onChange={(e) => patchFilters({ entity: e.target.value })}>
                     <option value="ALL">All entities</option>
-                    {ENTITIES_BY_CODE.map((e) => (
-                      <option key={e.code} value={e.code}>
-                        {e.code} - {e.name}
-                      </option>
-                    ))}
+                    <option value="" disabled>
+                      {MASTER_WAITING}
+                    </option>
                   </select>
                 </div>
                 <div className="filter-field">
                   <label htmlFor="f-co">CO Area</label>
                   <select id="f-co" value={filters.co} onChange={(e) => patchFilters({ co: e.target.value })}>
-                    {CO_AREAS.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.code} - {c.desc}
-                      </option>
-                    ))}
+                    <option value="">{MASTER_WAITING}</option>
                   </select>
                 </div>
                 <div className="filter-field">
@@ -357,7 +350,14 @@ export default function MoViewDealIdSettlementList() {
             </div>
           </div>
 
-          <DealTable rows={shown} sort={sort} onSort={onSort} onOpenDeal={openDeal} onOpenMc={openMc} />
+          <DealTable
+            rows={shown}
+            sort={sort}
+            onSort={onSort}
+            onOpenDeal={openDeal}
+            onOpenMc={openMc}
+            emptyText={deals.length ? 'No Data Found' : LIST_WAITING}
+          />
 
           <div className="pager">
             <div className="pager-size">
@@ -428,7 +428,12 @@ export default function MoViewDealIdSettlementList() {
 
       <DealModal modal={dealModal} deal={modalDeal} mc={masterContracts.find((m) => m.mcRef === modalDeal?.mcRef)} onOpenMc={openMc} onOpenInvoices={openInvoices} />
       <McModal modal={mcModal} mc={modalMc} deals={deals} onOpenDeal={openDeal} onFilterByMc={filterByMc} />
-      <InvoiceModal modal={invModal} deal={invDeal} mc={masterContracts.find((m) => m.mcRef === invDeal?.mcRef)} />
+      <InvoiceModal
+        modal={invModal}
+        deal={invDeal}
+        mc={masterContracts.find((m) => m.mcRef === invDeal?.mcRef)}
+        waiting={INVOICES_WAITING}
+      />
     </div>
   )
 }

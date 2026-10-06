@@ -2,51 +2,61 @@ import { useEffect, useId, useMemo, useRef, useState, type DragEvent } from 'rea
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
-import { INVOICE_DB, PREMIUM_DB, makeDealsDb, makeDmsDb } from './data.ts'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import {
+  ACTION_WAITING,
+  DMS_LIST_WAITING,
+  PREMIUM_WAITING,
+  WAITING_DEAL_ID_API,
+  cancelDealId,
+  loadDealList,
+  loadDealScreen,
+  type DealList,
+} from './api.ts'
 import { DealDetails, InvoiceTable, PlTable } from './DetailTables.tsx'
 import { FxLegTable } from './FxLegTable.tsx'
 import {
   actionVisibility,
-  attachMockDocument,
-  cancelDealId,
   legNote,
   newEditDraft,
   nextSort,
   quickPickLabel,
   resolveDealId,
-  reverseMoConfirmation,
-  saveConfirmDeal,
   sortedFilteredLegs,
   toggleEditing,
   toggleLeg,
-  updateDealPair,
 } from './logic.ts'
 import { ChangeConfirmModal, DmsModal, EditDealPairModal, PremiumModal, PromptModal } from './Modals.tsx'
 import './mo-confirm-fx-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id.dark.css'
-import type { Deal, DmsDb, EditDraft, Leg, ModalId, Sort, SortKey, Toast, ToastType } from './types.ts'
+import type { DealScreen, EditDraft, Leg, ModalId, Sort, SortKey, Toast, ToastType } from './types.ts'
 
 const TOAST_MS = 3200
 
 /**
- * MO: Confirm FX Deal ID — Single Deal ID (ZSGTSFP002), converted from legacy/confirm-fx-deal.html.
+ * MO: Confirm FX Deal ID — Single Deal ID (ZSGTSFP002 / ZSGTSF_PDEAL_ID_ANALYS), converted from
+ * legacy/confirm-fx-deal.html and wired to SAP through the SLC middleware (api.ts).
  *
- * The original never called an API: its DEALS_DB / INVOICE_DB / PREMIUM_DB / DMS_DB were a mock
- * backend, so this is the same UI-only screen on that dummy data (see data.ts), held in component
- * state for the session. A Deal ID is loaded by typing it (with a datalist) or from the quick
- * picks; its legs, invoice plan and planned P&L show below, and the toolbar's actions follow the
- * ABAP PF-STATUS rules in logic.ts's actionVisibility. The selected leg can be dragged onto
- * "Edit Deal Pair", which opens the same popup as clicking it.
+ * The Deal IDs come from ZSGTSFTR_DEALID; a loaded one shows screen 9000's header (Deal ID, MC,
+ * model, trader, status from ZSGTSFTR_DEAL_ST), the FX legs (WAITING FOR API: ZSGTSFCDS_FX /
+ * _OPTION are not served), the planned trade invoices (ZSGTSFTR_INV_REF + the model's links) and
+ * the planned P&L (WAITING FOR API). The toolbar follows PF-STATUS 111's EXCLUDING rules
+ * (logic.ts). Cancel Deal ID is the ABAP's own UPDATE of ZSGTSFTR_DEALID; every other action
+ * posts through BAPIs / FMs in SAP and says WAITING FOR ACTION API without changing anything.
+ * Nothing falls back to sample data.
  */
 export default function MoConfirmFxDealId() {
-  const [deals, setDeals] = useState<readonly Deal[]>(makeDealsDb)
-  const [dms, setDms] = useState<DmsDb>(makeDmsDb)
+  const [list, setList] = useState<DealList | { state: 'loading' }>({ state: 'loading' })
+  const [screen, setScreen] = useState<DealScreen | null>(null)
+  const [loadingDeal, setLoadingDeal] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const dealAbort = useRef<AbortController | null>(null)
 
   const [searchText, setSearchText] = useState('')
   const [searchErr, setSearchErr] = useState<string | null>(null)
-  const [currentId, setCurrentId] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [noteTouched, setNoteTouched] = useState(false)
   const [fxSearch, setFxSearch] = useState('')
@@ -86,37 +96,87 @@ export default function MoConfirmFxDealId() {
     toastTimers.current.add(timer)
   }
 
-  const deal = currentId ? (deals.find((d) => d.dealId === currentId) ?? null) : null
+  /** P_DEAL's candidates: the ZSGTSFTR_DEALID rows. */
+  const reloadList = (signal?: AbortSignal) =>
+    loadDealList(signal)
+      .then(setList)
+      .catch((error: unknown) => {
+        if (!isAbort(error)) setList({ state: 'unavailable', reason: `${WAITING_DEAL_ID_API} — ${messageOf(error)}` })
+      })
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    void reloadList(ctrl.signal)
+    return () => {
+      ctrl.abort()
+      dealAbort.current?.abort()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const picks = list.state === 'sap' ? list.picks : []
+  const deal = screen?.deal ?? null
   const legs = useMemo(() => (deal ? sortedFilteredLegs(deal.legs, fxSearch, sort) : []), [deal, fxSearch, sort])
   const selectedLeg = deal && selected ? (deal.legs.find((l) => l.rfha === selected) ?? null) : null
   const vis = deal ? actionVisibility(deal) : null
-  const premium = deal ? (PREMIUM_DB[deal.dealId] ?? null) : null
 
   const closeModals = () => setModal(null)
 
   /* ---------- Deal search ---------- */
 
+  /** Reads screen 9000 for one Deal ID; resolves to whether it loaded. */
+  const fetchDeal = async (id: string): Promise<boolean> => {
+    dealAbort.current?.abort()
+    const ctrl = new AbortController()
+    dealAbort.current = ctrl
+    setLoadingDeal(true)
+    try {
+      const next = await loadDealScreen(id, ctrl.signal)
+      if (!next) {
+        setSearchErr('Deal ID not found. Try one of the quick picks below.')
+        return false
+      }
+      setScreen(next)
+      return true
+    } catch (error) {
+      if (isAbort(error)) return false
+      setSearchErr(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read: ${messageOf(error)}`)
+      return false
+    } finally {
+      if (dealAbort.current === ctrl) setLoadingDeal(false)
+    }
+  }
+
   const loadDeal = (text: string) => {
-    const r = resolveDealId(text, deals)
+    if (list.state !== 'sap') {
+      setSearchErr(list.state === 'loading' ? 'Loading Deal IDs…' : list.reason)
+      return
+    }
+    const r = resolveDealId(text, picks)
     if (!r.ok) {
       setSearchErr(r.error)
       return
     }
     setSearchErr(null)
-    setCurrentId(r.id)
     setSelected(null)
+    void fetchDeal(r.id)
   }
 
   const clearDeal = () => {
-    setCurrentId(null)
+    dealAbort.current?.abort()
+    setScreen(null)
     setSelected(null)
     setSearchText('')
     setSearchErr(null)
   }
 
+  /** REF: clears the tables and reads them again (PBO rebuilds them). */
   const refresh = () => {
     if (!deal) return
-    showToast('Data refreshed', 'success')
+    void reloadList()
+    void fetchDeal(deal.dealId).then((ok) => {
+      if (ok) showToast('Data refreshed', 'success')
+    })
   }
 
   const selectLeg = (rfha: string) => {
@@ -148,11 +208,16 @@ export default function MoConfirmFxDealId() {
 
   const openChangeConfirm = () => {
     if (!deal) return
+    // USER_COMMAND_9000 UPD: gv_mc = gv_omc.
     setCcMcRef(deal.mcRef)
     setCcAlert(null)
     setModal('changeConfirm')
   }
 
+  /**
+   * CONF validates, then FORM update_inv_ref writes ZSGTSFTR_INV_REF / ZSGTSFTR_DEALID from the
+   * legs and changes every FTR transaction through BAPIs — none of which has an API.
+   */
   const confirmChange = () => {
     if (!deal) return
     const mcRef = ccMcRef.trim()
@@ -160,14 +225,7 @@ export default function MoConfirmFxDealId() {
       setCcAlert('MC Ref No is required.')
       return
     }
-    const result = saveConfirmDeal(deals, deal.dealId, { mcRef })
-    if (!result.ok) {
-      setCcAlert(result.msg)
-      return
-    }
-    setDeals(result.deals)
-    closeModals()
-    showToast(result.msg, 'success')
+    setCcAlert(ACTION_WAITING.confirm)
   }
 
   /* ---------- Edit Deal Pair (DEAL_EDIT) — the click and the drop both land here ---------- */
@@ -188,45 +246,45 @@ export default function MoConfirmFxDealId() {
       showToast('Select a new transaction first.', 'error')
       return
     }
-    const result = updateDealPair(deals, deal.dealId, editDraft.oldRfha, editDraft.newRfha)
     closeModals()
-    if (result.ok) setDeals(result.deals)
-    setSelected(editDraft.newRfha)
-    showToast(result.msg, 'success')
+    showToast(ACTION_WAITING.editPair, 'error')
   }
 
   /* ---------- Cancel Deal ID (CAN) / Reverse MO Confirmation (REV) / SS Deal ---------- */
 
-  const confirmCancelDeal = () => {
-    if (!deal) return
-    const result = cancelDealId(deals, deal.dealId)
-    closeModals()
-    if (result.ok) setDeals(result.deals)
-    setCurrentId(null)
-    setSelected(null)
-    setSearchText('')
-    showToast(result.msg, 'success')
+  /** FORM deassign_data: the ABAP's own UPDATE of ZSGTSFTR_DEALID to status 30, then leave. */
+  const confirmCancelDeal = async () => {
+    if (!screen || busy) return
+    setBusy(true)
+    try {
+      await cancelDealId(screen.rows)
+      closeModals()
+      clearDeal()
+      showToast('FX Deal ID deassigned successfully.', 'success')
+      void reloadList()
+    } catch (error) {
+      closeModals()
+      showToast(messageOf(error), 'error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const confirmReverse = () => {
-    if (!deal) return
-    const result = reverseMoConfirmation(deals, deal.dealId)
     closeModals()
-    if (result.ok) setDeals(result.deals)
-    showToast(result.msg, result.ok ? 'success' : 'error')
+    showToast(ACTION_WAITING.reverse, 'error')
   }
 
   const confirmSsDeal = () => {
     closeModals()
-    showToast('SS Deal ID confirmed and saved successfully.', 'success')
+    showToast(ACTION_WAITING.ssDeal, 'error')
   }
 
   /* ---------- DMS ---------- */
 
   const uploadDocument = () => {
     if (!deal) return
-    setDms((d) => attachMockDocument(d, deal.dealId))
-    showToast('Document attached (mock upload)', 'success')
+    showToast(ACTION_WAITING.dms, 'error')
   }
 
   const editLeg = deal && editDraft ? (deal.legs.find((l) => l.rfha === editDraft.oldRfha) ?? null) : null
@@ -264,7 +322,7 @@ export default function MoConfirmFxDealId() {
                   <input
                     id={inputId}
                     list={listId}
-                    placeholder="e.g. FXD2026001"
+                    placeholder={picks[0] ? `e.g. ${picks[0].dealId}` : 'Deal ID'}
                     autoComplete="off"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
@@ -273,13 +331,13 @@ export default function MoConfirmFxDealId() {
                     }}
                   />
                   <datalist id={listId}>
-                    {deals.map((d) => (
+                    {picks.map((d) => (
                       <option key={d.dealId} value={d.dealId} />
                     ))}
                   </datalist>
                   {searchErr !== null && <div className="err-msg">{searchErr}</div>}
                 </div>
-                <button type="button" className="btn btn-primary" onClick={() => loadDeal(searchText)}>
+                <button type="button" className="btn btn-primary" disabled={loadingDeal} onClick={() => loadDeal(searchText)}>
                   Load Deal
                 </button>
                 {deal && (
@@ -290,7 +348,7 @@ export default function MoConfirmFxDealId() {
               </div>
             </div>
             <div className="quick-picks">
-              {deals.map((d) => (
+              {picks.map((d) => (
                 <div
                   key={d.dealId}
                   className="quick-pick"
@@ -392,11 +450,12 @@ export default function MoConfirmFxDealId() {
                   onSelect={selectLeg}
                   onDragStart={startLegDrag}
                   onDragEnd={endLegDrag}
+                  emptyText={deal.legs.length === 0 && screen?.legsWaiting ? screen.legsWaiting : 'No matching deal legs.'}
                 />
               </div>
 
-              {!deal.noInv && <InvoiceTable rows={INVOICE_DB[deal.dealId] ?? []} />}
-              {!deal.noInv && <PlTable deal={deal} premium={premium} />}
+              {!deal.noInv && screen && <InvoiceTable rows={screen.invoices} waiting={screen.invoiceWaiting} />}
+              {!deal.noInv && screen && <PlTable waiting={screen.plWaiting} />}
             </section>
           )}
 
@@ -404,10 +463,13 @@ export default function MoConfirmFxDealId() {
           {!deal && (
             <div className="empty-state">
               <div className="icon">&#128269;</div>
-              <h3>No deal loaded</h3>
+              <h3>{loadingDeal ? 'Loading deal…' : 'No deal loaded'}</h3>
               <p>
-                Search for a Deal ID above, or pick one of the quick-access deals to see its FX legs, invoice plan and
-                P&amp;L.
+                {list.state === 'loading'
+                  ? 'Loading Deal IDs…'
+                  : list.state === 'unavailable'
+                    ? list.reason
+                    : 'Search for a Deal ID above, or pick one of the quick-access deals to see its FX legs, invoice plan and P&L.'}
               </p>
             </div>
           )}
@@ -434,6 +496,7 @@ export default function MoConfirmFxDealId() {
             invoicePlan={ccInvoicePlan}
             mcRef={ccMcRef}
             alert={ccAlert}
+            mcHelp={screen?.mcHelp ?? []}
             onInvoicePlan={setCcInvoicePlan}
             onMcRef={setCcMcRef}
             onConfirm={confirmChange}
@@ -445,13 +508,15 @@ export default function MoConfirmFxDealId() {
             deal={deal}
             leg={editLeg}
             draft={editDraft}
+            replacements={[]}
+            waiting={screen?.replacementWaiting ?? ''}
             onToggleEdit={() => setEditDraft((d) => (d ? toggleEditing(d) : d))}
             onChoose={(rfha) => setEditDraft((d) => (d ? { ...d, newRfha: rfha } : d))}
             onUpdate={updatePair}
             onClose={closeModals}
           />
         )}
-        {deal && modal === 'premium' && <PremiumModal premium={premium} onClose={closeModals} />}
+        {deal && modal === 'premium' && <PremiumModal waiting={PREMIUM_WAITING} onClose={closeModals} />}
         {deal && modal === 'cancelDeal' && (
           <PromptModal
             title="Cancel Deal ID"
@@ -460,7 +525,7 @@ export default function MoConfirmFxDealId() {
             noLabel="No"
             yesLabel="Yes, Cancel Deal ID"
             yesClass="btn-danger"
-            onYes={confirmCancelDeal}
+            onYes={() => void confirmCancelDeal()}
             onClose={closeModals}
           />
         )}
@@ -477,7 +542,7 @@ export default function MoConfirmFxDealId() {
           />
         )}
         {deal && modal === 'dms' && (
-          <DmsModal docs={dms[deal.dealId] ?? []} onUpload={uploadDocument} onClose={closeModals} />
+          <DmsModal waiting={DMS_LIST_WAITING} onUpload={uploadDocument} onClose={closeModals} />
         )}
         {deal && modal === 'ssDeal' && (
           <PromptModal

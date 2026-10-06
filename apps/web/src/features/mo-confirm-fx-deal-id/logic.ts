@@ -1,41 +1,32 @@
 /**
- * The page's rules and mock service calls, as pure functions. Where the original mutated
- * DEALS_DB / DMS_DB in place, these return the next value and leave their input untouched.
+ * The page's UI rules, as pure functions. The former mock service calls (confirm, cancel,
+ * reverse, edit pair, mock upload) and the invented Planned P&L arithmetic are gone: the
+ * writes are api.ts's (or WAITING FOR ACTION API), the data is SAP's.
  */
-import { STATUS_META } from './data.ts'
-import type {
-  ActionVisibility,
-  Deal,
-  DmsDb,
-  EditDraft,
-  Leg,
-  PlRow,
-  Premium,
-  ServiceResult,
-  Sort,
-  SortKey,
-  StatusMeta,
-} from './types.ts'
+import { STATUS_CLS } from './data.ts'
+import type { ActionVisibility, Deal, DealPick, EditDraft, Leg, Sort, SortKey, StatusMeta } from './types.ts'
 
 /** parseInt(code, 10) || 0. */
 export function numStatus(code: string): number {
   return parseInt(code, 10) || 0
 }
 
-/** STATUS_META lookup with the badge's fallback for an unknown code. */
-export function statusMeta(code: string): StatusMeta {
-  return STATUS_META[code] ?? { desc: code, cls: 'status-01' }
+/** The badge: SAP's text (or the bare code when it has none) and the colour class for the code. */
+export function statusMeta(code: string, desc = ''): StatusMeta {
+  return { desc: desc || code, cls: STATUS_CLS[code] ?? 'status-01' }
 }
 
-/** A quick pick's text: "FXD2026001 · Created". */
-export function quickPickLabel(deal: Deal): string {
-  return `${deal.dealId} · ${statusMeta(deal.status).desc}`
+/** A quick pick's text: "7000000006 · FO: FX Deals Created". */
+export function quickPickLabel(pick: DealPick): string {
+  return `${pick.dealId} · ${statusMeta(pick.status, pick.statusText).desc}`
 }
 
 /**
- * Mirrors ABAP FUNCTION_BUTTON / SET PF-STATUS '111' EXCLUDING logic:
- * UPD / CAN / DEAL_EDIT only while status = 01 (Created); REV only while 02 or 03;
- * PRE / REF / DMS always; the SS button only for a short-straddle deal.
+ * FORM top_data / function_button: SET PF-STATUS '111' EXCLUDING —
+ * status 01: only REV is excluded; any other status: UPD, CAN and DEAL_EDIT are excluded, REV
+ * too unless the status is 02 / 03, and REV always when the user is not in TVARVC
+ * ZSGTSF_UNWIND. PRE / REF / DMS are never excluded; the SS button shows for a short-straddle
+ * model only (as the page always did; SS_DEAL has no toolbar slot in the GUI status).
  */
 export function actionVisibility(deal: Deal): ActionVisibility {
   const s = deal.status
@@ -43,7 +34,7 @@ export function actionVisibility(deal: Deal): ActionVisibility {
     upd: s === '01',
     can: s === '01',
     dealEdit: s === '01',
-    rev: s === '02' || s === '03',
+    rev: (s === '02' || s === '03') && deal.unwind,
     pre: true,
     ref: true,
     dms: true,
@@ -51,10 +42,10 @@ export function actionVisibility(deal: Deal): ActionVisibility {
   }
 }
 
-/** Load Deal's lookup: trims and uppercases the typed id. */
+/** Load Deal's lookup: trims and uppercases the typed id, which must be one of the Deal IDs read. */
 export function resolveDealId(
   input: string,
-  deals: readonly Deal[],
+  deals: readonly DealPick[],
 ): { ok: true; id: string } | { ok: false; error: string } {
   const id = input.trim().toUpperCase()
   if (!id) return { ok: false, error: 'Enter a Deal ID.' }
@@ -113,59 +104,6 @@ export function legNote(selected: string | null, touched: boolean): string {
     : 'Select a leg to enable Edit Deal Pair · drag it onto Edit Deal Pair'
 }
 
-function mapDeal(deals: readonly Deal[], dealId: string, fn: (d: Deal) => Deal): Deal[] {
-  return deals.map((d) => (d.dealId === dealId ? fn(d) : d))
-}
-
-/** Change / Confirm (UPD): every leg must already be at 07 or beyond. */
-export function saveConfirmDeal(deals: readonly Deal[], dealId: string, payload: { mcRef: string }): ServiceResult {
-  const deal = deals.find((d) => d.dealId === dealId)
-  if (!deal) return { ok: false, msg: 'Deal not found.' }
-  const blocking = deal.legs.find((l) => numStatus(l.txnStatus) < 7)
-  if (blocking) return { ok: false, msg: `Transaction ${blocking.rfha} is not yet ready to be confirmed.` }
-  return {
-    ok: true,
-    msg: 'Deal Confirmed Successfully',
-    deals: mapDeal(deals, dealId, (d) => ({
-      ...d,
-      status: '07',
-      legs: d.legs.map((l) => ({ ...l, txnStatus: '07' })),
-      mcRef: payload.mcRef || d.mcRef,
-    })),
-  }
-}
-
-/** Cancel Deal ID (CAN): the deal is deassigned completely — removed from the list. */
-export function cancelDealId(deals: readonly Deal[], dealId: string): ServiceResult {
-  if (!deals.some((d) => d.dealId === dealId)) return { ok: false, msg: 'Deal not found.' }
-  return { ok: true, msg: 'FX Deal ID deassigned successfully.', deals: deals.filter((d) => d.dealId !== dealId) }
-}
-
-/** Reverse MO Confirmation (REV): only from 02 or 03; deal and legs go back to 01. */
-export function reverseMoConfirmation(deals: readonly Deal[], dealId: string): ServiceResult {
-  const deal = deals.find((d) => d.dealId === dealId)
-  if (!deal) return { ok: false, msg: 'Deal not found.' }
-  if (deal.status !== '02' && deal.status !== '03') return { ok: false, msg: 'Selected Deal ID cannot be reversed.' }
-  return {
-    ok: true,
-    msg: 'MO Confirmation has been reversed successfully.',
-    deals: mapDeal(deals, dealId, (d) => ({ ...d, status: '01', legs: d.legs.map((l) => ({ ...l, txnStatus: '01' })) })),
-  }
-}
-
-/** Edit Deal Pair (DEAL_EDIT): the old leg takes the replacement transaction's number. */
-export function updateDealPair(deals: readonly Deal[], dealId: string, oldRfha: string, newRfha: string): ServiceResult {
-  if (!deals.some((d) => d.dealId === dealId)) return { ok: false, msg: 'Deal not found.' }
-  return {
-    ok: true,
-    msg: 'Deal pair updated successfully.',
-    deals: mapDeal(deals, dealId, (d) => ({
-      ...d,
-      legs: d.legs.map((l) => (l.rfha === oldRfha ? { ...l, rfha: newRfha } : l)),
-    })),
-  }
-}
-
 /** A fresh Edit Deal Pair draft: the select starts locked with nothing chosen. */
 export function newEditDraft(oldRfha: string): EditDraft {
   return { oldRfha, editing: false, newRfha: '' }
@@ -179,42 +117,4 @@ export function toggleEditing(draft: EditDraft): EditDraft {
 /** Deal Update is enabled only once a replacement is chosen. */
 export function canUpdatePair(draft: EditDraft): boolean {
   return draft.newRfha !== ''
-}
-
-/** The mock DMS upload: appends Supporting_Doc_<n>.pdf to the deal's documents. */
-export function attachMockDocument(dms: DmsDb, dealId: string): DmsDb {
-  const docs = dms[dealId] ?? []
-  return { ...dms, [dealId]: [...docs, { name: `Supporting_Doc_${docs.length + 1}.pdf`, type: 'Attachment' }] }
-}
-
-/**
- * Planned P&L. Sale / Purchase sum the legs by their first side; option premium comes from
- * the premium adjustment; NDF adjustment is the legs' FX P&L. The INR column converts at the
- * premium's invoice rate — with no premium record that is undefined, so those cells print "-".
- */
-export function buildPlRows(deal: Deal, prem: Premium | null): PlRow[] {
-  const sale = { famt: 0, lamt: 0 }
-  const purchase = { famt: 0, lamt: 0 }
-  for (const l of deal.legs) {
-    const side = l.bs1 === 'Sell' ? sale : purchase
-    side.famt += l.amt1
-    side.lamt += l.amt2
-  }
-  const netPremium = prem?.netPremium
-  const invoiceRate = prem?.invoiceRate ?? NaN
-  const optIncome = netPremium !== undefined && netPremium > 0 ? netPremium : 0
-  const optExpense = netPremium !== undefined && netPremium < 0 ? Math.abs(netPremium) : 0
-  const ndfAdj = deal.legs.reduce((s, l) => s + l.fxPl, 0)
-  const totalPl = optIncome - optExpense + ndfAdj
-  const salePct = sale.lamt ? (totalPl / sale.lamt) * 100 : 0
-
-  return [
-    { type: 'Sale', famt: sale.famt, lamt: sale.lamt, cls: '', pct: false },
-    { type: 'Purchase', famt: purchase.famt, lamt: purchase.lamt, cls: '', pct: false },
-    { type: 'Option Premium Income', famt: optIncome, lamt: optIncome * invoiceRate, cls: '', pct: false },
-    { type: 'Option Premium Expense', famt: -optExpense, lamt: -optExpense * invoiceRate, cls: '', pct: false },
-    { type: 'NDF Fixing-Profit Adj', famt: ndfAdj, lamt: ndfAdj * invoiceRate, cls: '', pct: false },
-    { type: 'P&L', famt: totalPl, lamt: totalPl * invoiceRate, cls: 'pl-total-row', pct: false },
-    { type: 'P&L Orign(%)', famt: salePct, lamt: salePct, cls: 'pl-pct-row', pct: true },
-  ]
 }

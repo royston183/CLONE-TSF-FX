@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { HOUSE_BANKS, TRANSFER_TYPES } from './data.ts'
+import { HOUSE_BANK_WAITING, TRANSFER_TYPE_WAITING } from './api.ts'
 import { fmtNum } from './format.ts'
 import { accountOptions, bankCandidates, transferTypeOf } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
-import type { BankForm, Deal, UpdateLogEntry } from './types.ts'
+import type { BankForm, Deal, HouseBanks, UpdateLogEntry } from './types.ts'
+
+/** T012 / T012K / T012T are not served (see api.ts): no house bank or account can be offered. */
+const HOUSE_BANKS: HouseBanks = {}
+/** VTBFHA-ZTSF_TRFTYPE is not served: transferTypeOf shows a dash. */
+const TRANSFER_TYPES: Record<string, string> = {}
 
 type Leg = {
   title: 'Incoming' | 'Outgoing'
@@ -28,7 +33,7 @@ function LegBox({ leg, bukrs }: { leg: Leg; bukrs: string }) {
       </div>
       <div className="assign-field">
         <label>Transfer Type</label>
-        <input type="text" readOnly value={transferTypeOf(TRANSFER_TYPES, leg.curr)} />
+        <input type="text" readOnly value={transferTypeOf(TRANSFER_TYPES, leg.curr)} title={TRANSFER_TYPE_WAITING} />
       </div>
       <div className="assign-field">
         <label>House Bank</label>
@@ -132,7 +137,7 @@ function BankBody({
         <div className="assign-note">
           {bothAssigned
             ? 'House bank & account are already assigned for both legs of this deal.'
-            : 'Selecting a house bank refreshes the account list for that bank. Both legs must be set before updating.'}
+            : HOUSE_BANK_WAITING}
         </div>
       </div>
       <div className="modal-footer" id="bank-footer">

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { STATUS_META, TXN_STATUS_META } from './data.ts'
+import { STATUS_BADGE, TXN_STATUS_META } from './data.ts'
 import type { BadgeMeta, ToolbarCode } from './types.ts'
 
 function Badge({ meta }: { meta: BadgeMeta }) {
@@ -11,8 +11,9 @@ function Badge({ meta }: { meta: BadgeMeta }) {
   )
 }
 
-export function StatusBadge({ code }: { code: string }) {
-  return <Badge meta={(STATUS_META as Record<string, BadgeMeta | undefined>)[code] ?? { text: code, badge: 'badge-gray' }} />
+/** The Deal ID status: ZSGTSFTR_DEAL_ST's text, coloured by code. */
+export function StatusBadge({ code, text }: { code: string; text: string }) {
+  return <Badge meta={{ text: text || code, badge: STATUS_BADGE[code] ?? 'badge-gray' }} />
 }
 
 export function TxnStatusBadge({ code }: { code: string }) {

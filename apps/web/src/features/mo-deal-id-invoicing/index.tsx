@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { loadScreen, statusOptions } from './api.ts'
+import { loadScreen, type DataSource } from './api.ts'
 import { BlListModal } from './BlListModal.tsx'
 import { ComplianceModal, type ComplianceNote } from './ComplianceModal.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
-import { ENTITIES, FX_MODELS, REGIONS } from './data.ts'
+import { ENTITIES, FX_MODELS, REGIONS, STATUS_OPTIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DiffModal } from './DiffModal.tsx'
@@ -15,18 +14,12 @@ import { HouseBankModal } from './HouseBankModal.tsx'
 import {
   DEFAULT_FILTERS,
   amendDealStatusNext,
-  applyAmendDealStatus,
   buildCsv,
-  deAssignBl,
   editInvDate as applyEditInvDate,
   editPrice as applyEditPrice,
   filterDeals,
-  finaliseInvoiceGeneration,
   invoiceGenerationCheck,
   nextSort,
-  recalcDeal,
-  reverseInvoiceGeneration as applyReverseInvoiceGeneration,
-  saveHouseBank as applySaveHouseBank,
   sortDeals,
   toggleMark as applyToggleMark,
 } from './logic.ts'
@@ -40,27 +33,32 @@ import './mo-deal-id-invoicing.dark.css'
 import type { Deal, Filters, Sort, SortKey, SubModal, Toast } from './types.ts'
 
 const PAGE_SIZE = 15
-const FIRST_INVOICE_SEQ = 600
-/** The rbill popup's actions belong to ZSGTSF_RBILL_ADJUST, which is not wired yet. */
-const NOT_SAVED_NOTE = 'Amendment applied on this screen only — invoice generation (ZSGTSF_RBILL_ADJUST) is not saved to MySQL yet.'
+/**
+ * The Deal ID hotspot SUBMITs ZSGTSF_RBILL_ADJUST, which is not in this export: its writes
+ * (BIL_ADJ / INV_REF / DEALID / BL_DASS updates, TRM invoice postings, cover letters) are
+ * unknown, so every action validates as before and then says so, changing nothing.
+ */
+const waitingAction = (what: string): string => `WAITING FOR ACTION API — ${what} (ZSGTSF_RBILL_ADJUST, not in this export) has no API yet. Nothing was posted to SAP.`
 
 /**
  * MO: View List of Deal IDs for Invoicing (ZSGTSFR008), converted from
  * legacy/View_List_of_Deal_IDs_for_Invoicing_CALENDAR_FIXED.html.
  *
  * The list, the planned / raised invoice legs and the assigned Bills of Lading come from
- * MySQL through the SLC middleware (api.ts), read-only as in the report; the seed deals in
- * data.ts are shown only when it cannot be reached. The invoice-generation popup
- * (ZSGTSF_RBILL_ADJUST: mark, price, bank, generate, reverse, amend status, de-assign BL)
- * still works on the screen only — that program needs tables not yet migrated.
+ * MySQL through the SLC middleware (api.ts), read-only as in the report. Nothing falls back to
+ * sample data: when the middleware cannot be read the list is empty and says why. The
+ * invoice-generation popup (ZSGTSF_RBILL_ADJUST: generate, reverse, amend status, bank,
+ * de-assign BL, save, letters) is WAITING FOR ACTION API: line ticks and price / date edits
+ * stay as unsaved input, and no action changes the deal.
  */
 export default function MoDealIdInvoicing() {
   const [deals, setDeals] = useState<Deal[]>([])
   /** The deals as loaded: the rbill popup's Refresh / Cancel restore a deal from here. */
   const seedRef = useRef<Deal[]>([])
-  const invoiceSeq = useRef(FIRST_INVOICE_SEQ)
-  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
-  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Where the rows came from; 'unavailable' means ZSGTSFTR_DEALID could not be read. */
+  const [source, setSource] = useState<DataSource | 'loading'>('loading')
+  /** Why the list is empty, or which columns / checks wait for an API. */
+  const [notes, setNotes] = useState<string[]>([])
   const [generation, setGeneration] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
@@ -70,6 +68,7 @@ export default function MoDealIdInvoicing() {
         seedRef.current = loaded.deals
         setDeals(loaded.deals.map((d) => ({ ...d })))
         setSource(loaded.source)
+        setNotes(loaded.notes)
       })
       .catch((error: unknown) => {
         if (!isAbort(error)) console.error('[fx] Deal IDs for invoicing failed to load', error)
@@ -123,9 +122,8 @@ export default function MoDealIdInvoicing() {
 
   const refreshList = () => {
     setGeneration((g) => g + 1)
-    invoiceSeq.current = FIRST_INVOICE_SEQ
     resetFilters()
-    pushToast(source === 'dummy' ? 'List refreshed to initial dataset.' : 'List reloaded from MySQL.')
+    pushToast('List reloaded from MySQL.')
   }
 
   const exportCsv = () => {
@@ -163,7 +161,7 @@ export default function MoDealIdInvoicing() {
     pushToast(`Deal ${openDealId} refreshed.`)
   }
 
-  const saveDeal = () => pushToast(`Deal ${openDealId} saved.`, 'success')
+  const saveDeal = () => pushToast(waitingAction('Save'), 'warn')
 
   const amendDealStatus = () => {
     if (!openDeal) return
@@ -173,10 +171,7 @@ export default function MoDealIdInvoicing() {
       title: 'Amend Deal Status',
       text: `Deal ID ${openDeal.dealId} is currently '${openDeal.dealStat}'.\nDo you want to reopen it to status ${next}?`,
       yesLabel: 'Yes, reopen',
-      onYes: () => {
-        updateDeal(openDeal.dealId, applyAmendDealStatus)
-        pushToast(`Deal ID ${openDeal.dealId} reopened.`, 'success')
-      },
+      onYes: () => pushToast(waitingAction(`Amend Deal Status to ${next}`), 'warn'),
     })
   }
 
@@ -199,13 +194,8 @@ export default function MoDealIdInvoicing() {
 
   const finaliseInvoice = () => {
     if (!openDealId) return
-    const target = deals.find((d) => d.dealId === openDealId)
-    if (!target) return
-    const { deal: updated, nextSeq } = finaliseInvoiceGeneration(target, pendingFullMatch, invoiceSeq.current)
-    invoiceSeq.current = nextSeq
-    setDeals((all) => all.map((d) => (d.dealId === openDealId ? updated : d)))
     setSub(null)
-    pushToast(`Invoice generation confirmed for Deal ID ${openDealId}.`, 'success')
+    pushToast(waitingAction(`Confirm Invoice Generation (${pendingFullMatch ? 'full' : 'partial'})`), 'warn')
   }
 
   const reverseInvoiceGeneration = () => {
@@ -215,21 +205,17 @@ export default function MoDealIdInvoicing() {
       title: 'Reverse Confirm Invoice Generation',
       text: `This will delete all invoice records for Deal ID ${openDeal.dealId} and reset its status to Booked. Continue?`,
       yesLabel: 'Yes, reverse',
-      onYes: () => {
-        updateDeal(openDeal.dealId, applyReverseInvoiceGeneration)
-        pushToast(`Invoice generation reversed for Deal ID ${openDeal.dealId}.`, 'success')
-      },
+      onYes: () => pushToast(waitingAction('Reverse Confirm Invoice Generation'), 'warn'),
     })
   }
 
   const recalcUpdate = () => {
     if (!openDealId) return
-    updateDeal(openDealId, recalcDeal)
-    pushToast('Due dates and FX rate re-calculated from the FX Deal.', 'success')
+    pushToast(waitingAction('Re-calculate and Update'), 'warn')
   }
 
   const letterAction = (kind: 'Import' | 'Export') => {
-    pushToast(`${kind} cover letter generated for Deal ID ${openDealId} (simulated — document generation is external to this demo).`)
+    pushToast(waitingAction(`${kind} cover letter`), 'warn')
   }
 
   const viewTxn = (bukrs: string, rfha: string) => {
@@ -244,10 +230,9 @@ export default function MoDealIdInvoicing() {
       pushToast('Enter a remark before updating.', 'warn')
       return
     }
-    updateDeal(openDealId, (d) => deAssignBl(d, pendingBlIdx))
     setPendingBlIdx(null)
     setSub(null)
-    pushToast(`BL de-assigned from Deal ID ${openDealId}.`, 'success')
+    pushToast(waitingAction('De-assign BL'), 'warn')
   }
 
   const pagerButtons = Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -281,7 +266,7 @@ export default function MoDealIdInvoicing() {
             <div className="panel-title-left">
               <h2>Deal IDs for Invoicing</h2>
               <span className="rec-count">{sortedDeals.length} records</span>
-              <SourceNote source={source} />
+              <SourceNote source={source} notes={notes} />
             </div>
             <div className="panel-title-right">
               <button className="btn-icon" title="Show/hide filters" onClick={() => setFiltersOpen((v) => !v)}>
@@ -354,7 +339,7 @@ export default function MoDealIdInvoicing() {
                 <label>Status</label>
                 <select value={filters.status} onChange={(e) => applyFilters({ status: e.target.value })}>
                   <option value="ALL">All statuses</option>
-                  {statusOptions(source).map(([code, label]) => (
+                  {STATUS_OPTIONS.map(([code, label]) => (
                     <option key={code} value={code}>
                       {code} - {label}
                     </option>
@@ -379,6 +364,7 @@ export default function MoDealIdInvoicing() {
             }}
             onOpenDetail={openDetail}
             onOpenMcDetails={(dealId) => setSub({ kind: 'mc', dealId })}
+            emptyText={source === 'unavailable' ? notes.join(' · ') : ''}
           />
 
           <div className="pager">
@@ -436,7 +422,7 @@ export default function MoDealIdInvoicing() {
           }}
           onConfirmAmendment={() => {
             setAmending(false)
-            pushToast(NOT_SAVED_NOTE, 'warn')
+            pushToast(waitingAction('Confirm Amendment'), 'warn')
           }}
           onAmendDealStatus={amendDealStatus}
           onConfirmInvoiceGeneration={confirmInvoiceGeneration}
@@ -483,12 +469,9 @@ export default function MoDealIdInvoicing() {
           deal={openDeal}
           leg={openDeal.inv[sub.legIdx]!}
           onClose={() => setSub(null)}
-          onSave={(hb, acct, ptnr) => {
-            const legIdx = sub.legIdx
-            const leg = openDeal.inv[legIdx]
-            if (openDealId) updateDeal(openDealId, (d) => applySaveHouseBank(d, legIdx, hb, acct, ptnr))
+          onSave={() => {
             setSub(null)
-            if (leg) pushToast(`House Bank/Account ID updated for ${leg.ttype}.`, 'success')
+            pushToast(waitingAction('Update House Bank / Account ID'), 'warn')
           }}
         />
       ) : null}
@@ -498,13 +481,8 @@ export default function MoDealIdInvoicing() {
   )
 }
 
-/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
-function SourceNote({ source }: { source: MasterSource | 'loading' }) {
-  const text =
-    source === 'loading'
-      ? 'Loading from MySQL…'
-      : source === 'mysql'
-        ? 'ZSGTSFTR_DEALID · MySQL — invoice actions are not saved yet'
-        : 'Dummy data — the middleware could not be reached'
+/** Says where the rows came from, and which columns / checks are waiting for an API. */
+function SourceNote({ source, notes }: { source: DataSource | 'loading'; notes: readonly string[] }) {
+  const text = source === 'loading' ? 'Loading from MySQL…' : source === 'sap' ? ['ZSGTSFTR_DEALID · MySQL', ...notes].join(' · ') : notes.join(' · ')
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

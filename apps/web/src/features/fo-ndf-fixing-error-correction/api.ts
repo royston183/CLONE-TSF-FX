@@ -106,7 +106,11 @@ export function rowFromView(r: FxRow, refTexts: Readonly<Record<string, string>>
 export function companyOptions(rows: readonly { CompanyCode?: string; CompanyCodeName?: string }[]): Option[] {
   return rows
     .filter((r) => r.CompanyCode)
-    .map((r) => ({ value: String(r.CompanyCode), label: String(r.CompanyCode), title: String(r.CompanyCodeName ?? '').trim() }))
+    .map((r) => {
+      const code = String(r.CompanyCode)
+      const name = String(r.CompanyCodeName ?? '').trim()
+      return { value: code, label: name ? `${code} - ${name}` : code, title: name }
+    })
     .sort((a, b) => (a.value < b.value ? -1 : a.value > b.value ? 1 : 0))
 }
 

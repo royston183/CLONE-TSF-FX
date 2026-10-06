@@ -1,7 +1,13 @@
-import { STATUS_MAP, modelDescription } from './data.ts'
+import { STATUS_MAP } from './data.ts'
 import { toDisplayDate } from './format.ts'
-import { buildFxRows, buildInvoiceRows, buildPlRows, currencyStringForModel, dealEntityString, mcDateFor, mcDescriptionFor, traderForRow } from './logic.ts'
 import type { DealRow, FxRow, InvoiceRow, PlRow } from './types.ts'
+
+/**
+ * The FX legs, planned invoices and planned P&L are ZSGTSF_PDEAL_ID_ANALYS's own reads (VTBFHA,
+ * ZSGTSFV_FX, ZSGTSFTR_INV_REF ...). That program is not in this export, so the grids stay
+ * empty and say why instead of showing generated values.
+ */
+const WAITING_ANALYSIS = 'WAITING FOR API — Deal ID Analysis (ZSGTSF_PDEAL_ID_ANALYS) is not in this export; its FX deal, planned invoice and P&L reads have no API yet'
 
 function BasicField({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
@@ -12,7 +18,7 @@ function BasicField({ label, value, strong = false }: { label: string; value: st
   )
 }
 
-function FxTable({ rows }: { rows: FxRow[] }) {
+function FxTable({ rows, emptyText }: { rows: FxRow[]; emptyText: string }) {
   return (
     <div className="analysis-table-wrap">
       <table className="analysis-table">
@@ -41,7 +47,7 @@ function FxTable({ rows }: { rows: FxRow[] }) {
           {rows.length === 0 ? (
             <tr>
               <td className="analysis-empty" colSpan={17}>
-                No records
+                {emptyText}
               </td>
             </tr>
           ) : (
@@ -73,7 +79,7 @@ function FxTable({ rows }: { rows: FxRow[] }) {
   )
 }
 
-function InvoiceTable({ rows }: { rows: InvoiceRow[] }) {
+function InvoiceTable({ rows, emptyText }: { rows: InvoiceRow[]; emptyText: string }) {
   return (
     <div className="analysis-table-wrap">
       <table className="analysis-table">
@@ -94,7 +100,7 @@ function InvoiceTable({ rows }: { rows: InvoiceRow[] }) {
           {rows.length === 0 ? (
             <tr>
               <td className="analysis-empty" colSpan={9}>
-                No records
+                {emptyText}
               </td>
             </tr>
           ) : (
@@ -118,7 +124,7 @@ function InvoiceTable({ rows }: { rows: InvoiceRow[] }) {
   )
 }
 
-function PlTable({ rows }: { rows: PlRow[] }) {
+function PlTable({ rows, emptyText }: { rows: PlRow[]; emptyText: string }) {
   return (
     <div className="analysis-table-wrap">
       <table className="analysis-table">
@@ -135,7 +141,7 @@ function PlTable({ rows }: { rows: PlRow[] }) {
           {rows.length === 0 ? (
             <tr>
               <td className="analysis-empty" colSpan={5}>
-                No records
+                {emptyText}
               </td>
             </tr>
           ) : (
@@ -177,11 +183,9 @@ export function DealWorkspace({
   onDms: () => void
   onReverse: () => void
 }) {
-  const trader = traderForRow(row)
-  const entityString = dealEntityString(row)
-  const fxRows = buildFxRows(row)
-  const invoiceRows = buildInvoiceRows(row)
-  const plRows = buildPlRows(row)
+  const fxRows: FxRow[] = []
+  const invoiceRows: InvoiceRow[] = []
+  const plRows: PlRow[] = []
   const showInitialActions = row.dealStatus === '01'
   const showReverse = (row.dealStatus as string) === '02' || (row.dealStatus as string) === '03'
 
@@ -251,15 +255,15 @@ export function DealWorkspace({
               <BasicField label="Deal Start Date" value={toDisplayDate(row.startDate)} />
               <BasicField label="Deal End Date" value={toDisplayDate(row.endDate)} />
               <BasicField label="MC Ref No" value={row.mcRef} />
-              <BasicField label="MC Description" value={mcDescriptionFor(row)} />
-              <BasicField label="MC Date" value={mcDateFor(row)} />
-              <BasicField label="Ship Start Date" value={toDisplayDate(row.startDate)} />
-              <BasicField label="Ship End Date" value={toDisplayDate(row.endDate)} />
+              <BasicField label="MC Description" value={row.mcDesc} />
+              <BasicField label="MC Date" value={toDisplayDate(row.mcDate)} />
+              <BasicField label="Ship Start Date" value={toDisplayDate(row.shipStart)} />
+              <BasicField label="Ship End Date" value={toDisplayDate(row.shipEnd)} />
               <BasicField label="FX Model ID" value={row.modelId} />
-              <BasicField label="Model Description" value={modelDescription(row.modelId)} />
-              <BasicField label="Entity String" value={entityString} />
-              <BasicField label="Currency String" value={currencyStringForModel(row.modelId)} />
-              <BasicField label="Trader" value={`${trader.code} — ${trader.desc}`} />
+              <BasicField label="Model Description" value={row.modelDesc} />
+              <BasicField label="Entity String" value={row.entityString} />
+              <BasicField label="Currency String" value={row.currencyString} />
+              <BasicField label="Trader" value={row.trader} />
               <div className="basic-field">
                 <label>Deal ID Status</label>
                 <select className="analysis-select" disabled value={row.dealStatus}>
@@ -277,18 +281,18 @@ export function DealWorkspace({
             <div className="analysis-card-head">
               FX Deals<span className="subtle">{fxRows.length} linked transaction(s)</span>
             </div>
-            <FxTable rows={fxRows} />
+            <FxTable rows={fxRows} emptyText={WAITING_ANALYSIS} />
           </section>
 
           {row.dealStatus !== '30' ? (
             <>
               <section className="analysis-card">
                 <div className="analysis-card-head">Deal ID: Planned Trade Invoices</div>
-                <InvoiceTable rows={invoiceRows} />
+                <InvoiceTable rows={invoiceRows} emptyText={WAITING_ANALYSIS} />
               </section>
               <section className="analysis-card">
                 <div className="analysis-card-head">Deal ID: Planned P&amp;L</div>
-                <PlTable rows={plRows} />
+                <PlTable rows={plRows} emptyText={WAITING_ANALYSIS} />
               </section>
             </>
           ) : null}

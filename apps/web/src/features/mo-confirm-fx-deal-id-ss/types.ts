@@ -1,12 +1,14 @@
-/** Deal ID status (ZSGTSF deal header). 01 is the only editable one. */
-export type DealStatus = '01' | '02' | '03' | '30' | '50'
+/** Deal ID status code (ZSGTSFTR_DEALID-ZDEAL_STAT). 01 is the only editable one. */
+export type DealStatus = string
 
-/** FX transaction status of one leg; 07 means settlement-ready. */
-export type TxnStatus = '03' | '07'
+/** FX transaction status of one leg (ZSGTSFCDS_FX-TXN_STATUS); 07 means settlement-ready. */
+export type TxnStatus = string
 
 export type BadgeMeta = { text: string; badge: string }
 
+/** One row of the "FX Deals" grid (gt_top: ZSGTSFCDS_FX + ZSGTSFCDS_OPTION). */
 export type Leg = {
+  bukrs: string
   rfha: string
   dealType: string
   bpName: string
@@ -25,7 +27,7 @@ export type Leg = {
   txnStatus: TxnStatus
   fxPl: number
   setPl: number
-  /** fxPl + setPl, computed once by the data's leg() helper, as the original did. */
+  /** fxPl + setPl, computed once by the leg() helper. */
   totPl: number
   premAmt: number
   premCurr: string
@@ -34,6 +36,7 @@ export type Leg = {
 
 export type LegInput = Omit<Leg, 'totPl'>
 
+/** One row of "Planned Trade Invoices" (gt_inv: FORM invoice_plan over ZSGTSFTR_INV_REF). */
 export type Invoice = {
   ttype: string
   dtype: string
@@ -47,7 +50,11 @@ export type Invoice = {
   mcRef: string
 }
 
+/** ZSGTSFTR_DEALID's key (the client is added by the middleware). */
+export type DealKey = { ZDEAL_ID: string; ZDEAL_TYPE: string; ZSUB_TYPE: string }
+
 export type Deal = {
+  key: DealKey
   dealId: string
   dealRef: string
   startDate: string
@@ -65,28 +72,22 @@ export type Deal = {
   traderDesc: string
   currString: string
   status: DealStatus
+  /** The status list box's text for the code ("01 - FO: FX Deals Created"). */
+  statusText: string
   noInvoiceModel: boolean
   isSS: boolean
   reversalAuthorized: boolean
   legs: Leg[]
+  /** Why the legs are not shown ('' once they are read). */
+  legsWaiting: string
   invoices: Invoice[]
+  /** Why the invoice plan cannot be shown ('' when it is). */
+  invoicesWaiting: string
 }
 
 export type DealDb = Record<string, Deal>
 
 export type ReplacementTxn = { rfha: string; label: string }
-
-export type PremiumAdjustment = {
-  damt: number
-  lnet: number
-  rbi: number
-  fnet: number
-  pnet: number
-  srate: number
-  irate: number
-}
-
-export type PlRow = { type: string; amtLocal: number; amtUsd: number; total?: true }
 
 export type DmsDoc = { name: string; cat: string; by: string; date: string }
 

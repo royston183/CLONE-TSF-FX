@@ -1,11 +1,11 @@
 import { money } from './format.ts'
-import { getDealUsdAmount } from './logic.ts'
-import type { Deal } from './types.ts'
+import type { DiffRow } from './types.ts'
 
-/** "Invoice Difference": the legacy #diffModal, comparing each invoice row against planned and FX deal amounts. */
-export function DiffModal({ deal, onClose }: { deal: Deal; onClose: () => void }) {
-  const dealAmt = getDealUsdAmount(deal)
-
+/**
+ * "Invoice Difference": the legacy #diffModal (screen 9004, FORM fetch_invoice_diff) — one row per
+ * ZSGTSFTR_INV_REF of the deal against the saved ZSGTSFTR_BIL_ADJ amounts and the FX deal amount.
+ */
+export function DiffModal({ rows, fxReason, onClose }: { rows: DiffRow[]; fxReason: string; onClose: () => void }) {
   return (
     <div className="modal-overlay open" role="dialog" aria-modal="true" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal md">
@@ -31,25 +31,30 @@ export function DiffModal({ deal, onClose }: { deal: Deal; onClose: () => void }
                 </tr>
               </thead>
               <tbody>
-                {deal.inv.map((r) => {
-                  const diff1 = r.amtUsd - r.planned
-                  const diff2 = r.amtUsd - dealAmt
-                  return (
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="empty">
+                      No Deal ID-Trade Invoice rows (ZSGTSFTR_INV_REF) for this Deal ID.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((r) => (
                     <tr key={r.ttype}>
                       <td>{r.ttype}</td>
-                      <td className="num">{money(r.amtUsd, 2)}</td>
-                      <td>USD</td>
+                      <td className="num">{money(r.finalAmt, 2)}</td>
+                      <td>{r.currency}</td>
                       <td className="num">{money(r.planned, 2)}</td>
-                      <td className="num">{money(diff1, 2)}</td>
-                      <td>D1</td>
-                      <td className="num">{money(dealAmt, 2)}</td>
-                      <td className="num">{money(diff2, 2)}</td>
+                      <td className="num">{money(r.diff1, 2)}</td>
+                      <td>{r.dealType}</td>
+                      <td className="num">{r.dealAmt === null ? '—' : money(r.dealAmt, 2)}</td>
+                      <td className="num">{r.diff2 === null ? '—' : money(r.diff2, 2)}</td>
                     </tr>
-                  )
-                })}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+          {fxReason ? <div className="hint">FX Deal Amt / Diff2 Amt: {fxReason}</div> : null}
         </div>
         <div className="modal-footer">
           <button className="action-btn" type="button" onClick={onClose}>

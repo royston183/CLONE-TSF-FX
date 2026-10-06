@@ -1,19 +1,19 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { COLUMNS, DEAL_SEEDS, LAYOUT_COLUMNS, MC_SEED } from './data.ts'
+import { COLUMNS, LAYOUT_COLUMNS } from './data.ts'
+import { fixtureData } from './fixtures.ts'
 import { addDaysISO, compactAmount, formatAmount, formatDMY, isoToDMY, parseDMY, trimMillions } from './format.ts'
 import {
   DEFAULT_SORT,
+  abapUtilisation,
   buildCsv,
   buildMailPlan,
-  buildMockTables,
-  calculateUtilisation,
   calendarGrid,
   cellText,
+  coAreaOptions,
   columnByKey,
   dealOptions,
   extendModelId,
-  fetchDeals,
   filterSortRows,
   getMasterContract,
   initialFilters,
@@ -21,20 +21,25 @@ import {
   nextSort,
   pageCountOf,
   pruneSelection,
+  regionOptions,
   resultCountLabel,
-  sendHeadsUpMails,
+  selectRows,
   sendMailState,
   shiftMonth,
   sortForLayout,
+  sortLegs,
   typedDateOnCommit,
   typedDateOnInput,
   viewForText,
   visibleColumns,
   yearRange,
 } from './logic.ts'
+import type { FxLeg, Leg } from './types.ts'
 
-const tables = buildMockTables()
-const rowsFor = (patch: Partial<ReturnType<typeof initialFilters>> = {}) => fetchDeals(tables, { ...initialFilters(), ...patch })
+// Seed rows live in fixtures.ts (test-only); the screen itself has no sample data.
+const data = fixtureData()
+const rowsFor = (patch: Partial<ReturnType<typeof initialFilters>> = {}) => selectRows(data, { ...initialFilters(), ...patch })
+const ids = (patch: Partial<ReturnType<typeof initialFilters>> = {}) => rowsFor(patch).map((r) => r.dealId)
 const col = (key: string) => {
   const c = columnByKey(key)
   if (!c) throw new Error(`no column ${key}`)
@@ -77,152 +82,132 @@ describe('model extension and mail plan', () => {
     strictEqual(extendModelId('M032', 'C001'), 'M032')
   })
 
-  it('FX1 models mail only with the FX indicator, FX2 only with the option indicator', () => {
-    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M032' }), ['Heads Up FX', 'Heads Up FX for DMCC'])
-    deepStrictEqual(mailPlanForRow({ status: '07', modelId: 'M03401' }), ['Heads Up Option', 'Heads Up Option for DMCC'])
-    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M041' }), [])
+  it('FX1 mails need ZHEAD_FX on the full model id; FX2 mails need ZHEAD_OPT on the first 4 characters', () => {
+    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M033' }, data.rules, data.indicators), ['Heads Up FX', 'Heads Up FX for DMCC'])
+    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M032' }, data.rules, data.indicators), []) // no flag on M032
+    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M03402' }, data.rules, data.indicators), ['Heads Up Option', 'Heads Up Option for DMCC'])
+    // FX2 matches the indicator on 4 characters, so M03401 finds M03402's flag, as the ABAP does
+    deepStrictEqual(mailPlanForRow({ status: '07', modelId: 'M03401' }, data.rules, data.indicators), ['Heads Up Option', 'Heads Up Option for DMCC'])
+    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M099' }, data.rules, data.indicators), []) // no RULE_BT row
   })
 
   it('only status 05 and 07 are mailed', () => {
-    deepStrictEqual(mailPlanForRow({ status: '03', modelId: 'M032' }), [])
-    deepStrictEqual(mailPlanForRow({ status: '08', modelId: 'M032' }), [])
-    deepStrictEqual(mailPlanForRow({ status: '05', modelId: 'M999' }), [])
+    deepStrictEqual(mailPlanForRow({ status: '01', modelId: 'M033' }, data.rules, data.indicators), [])
+    strictEqual(mailPlanForRow({ status: '07', modelId: 'M033' }, data.rules, data.indicators).length, 2)
   })
 
-  it('buildMailPlan counts eligible deals and mails', () => {
-    const plan = buildMailPlan([
-      { dealId: '1', status: '05', modelId: 'M032' },
-      { dealId: '2', status: '05', modelId: 'M041' },
-      { dealId: '3', status: '07', modelId: 'M03402' },
-      { dealId: '4', status: '02', modelId: 'M032' },
-    ])
-    deepStrictEqual(
-      plan.deals.map((d) => d.dealId),
-      ['1', '3'],
-    )
+  it('buildMailPlan counts eligible deals and mails over the selection', () => {
+    const plan = buildMailPlan(rowsFor(), data.rules, data.indicators)
+    deepStrictEqual(plan.deals.map((d) => d.dealId), ['7000000008', '7000000011'])
     strictEqual(plan.mailCount, 4)
   })
 
   it('Send Mail is disabled with the reason, enabled otherwise', () => {
-    const plan = buildMailPlan([{ dealId: '1', status: '05', modelId: 'M032' }])
+    const plan = buildMailPlan(rowsFor(), data.rules, data.indicators)
     strictEqual(sendMailState(null, plan).disabled, false)
-    strictEqual(sendMailState('x', plan).title, 'Not available without CO Area authorization')
-    strictEqual(sendMailState(null, { deals: [], mailCount: 0 }).title, 'No deal with status 05 / 07 and a heads-up indicator in the selection')
-  })
-
-  it('sendHeadsUpMails returns the success text only when there is a mail', () => {
-    deepStrictEqual(sendHeadsUpMails([]).texts, [])
-    const rows = rowsFor().rows
-    deepStrictEqual(sendHeadsUpMails(rows).texts, ['Successfully Sent'])
+    deepStrictEqual(sendMailState('WAITING FOR DEAL ID API — x', plan), { disabled: true, title: 'WAITING FOR DEAL ID API — x' })
+    strictEqual(sendMailState(null, { deals: [], mailCount: 0 }).disabled, true)
   })
 })
 
-describe('mock tables', () => {
-  it('builds every seeded deal with ids from 1000004101', () => {
-    strictEqual(tables.deals.length, DEAL_SEEDS.length)
-    strictEqual(tables.deals[0]?.dealId, '1000004101')
-    strictEqual(tables.deals[29]?.dealId, '1000004130')
-    strictEqual(tables.masterContracts.length, MC_SEED.length)
-    strictEqual(tables.masterContracts[0]?.ref, 'MC/OSIPL/2026/728')
+describe('selectRows (SUB_GET_DATA + DATA_FILTER)', () => {
+  it("keeps ZMC_REF <> space only, and LEFT OUTER JOINs a missing MC as blanks", () => {
+    deepStrictEqual(ids(), ['7000000006', '7000000007', '7000000008', '7000000011', '7000000021'])
+    const orphan = rowsFor({ dealId: '7000000021' })[0]
+    strictEqual(orphan?.origin, '')
+    strictEqual(orphan?.region, '')
+    strictEqual(orphan?.mcAmt, 0)
+    strictEqual(orphan?.statusDesc, 'Invoice Created in TRM')
   })
 
-  it('is deterministic', () => {
-    deepStrictEqual(buildMockTables(), tables)
+  it('Key Date deletes ze_date <> p_date; status, region, origin and Deal ID are exact', () => {
+    deepStrictEqual(ids({ keyDate: '2026-10-05' }), ['7000000007', '7000000008', '7000000021'])
+    deepStrictEqual(ids({ status: '05' }), ['7000000007', '7000000011', '7000000021'])
+    deepStrictEqual(ids({ region: 'R01' }), ['7000000007'])
+    deepStrictEqual(ids({ entity: 'OSIPL' }), ['7000000006', '7000000008', '7000000011'])
+    deepStrictEqual(ids({ dealId: '7000000008' }), ['7000000008'])
+    deepStrictEqual(ids({ keyDate: '2026-10-05', entity: 'OSIPL' }), ['7000000008'])
   })
 
-  it('settled-stage statuses carry a P&L and spot flag, the others do not', () => {
-    const settled = tables.deals.find((d) => d.status === '08')
-    strictEqual(settled?.plCurr, 'USD')
-    strictEqual(tables.spotDealIds[settled?.dealId ?? ''], true)
-    const open = tables.deals.find((d) => d.status === '05')
-    strictEqual(open?.plAmt, 0)
-    strictEqual(open?.plCurr, '')
-    strictEqual(tables.spotDealIds[open?.dealId ?? ''], undefined)
+  it('status text from DEAL_ST at FX1 even for an FX2 deal (the join is on FX1)', () => {
+    strictEqual(rowsFor({ dealId: '7000000011' })[0]?.statusDesc, 'Invoice Created in TRM')
   })
 
-  it('FX1 deals get one USD leg, FX2 deals get two option legs', () => {
-    strictEqual(tables.fxLegs.length + tables.optLegs.length / 2, tables.deals.length)
-    const first = tables.fxLegs[0]
-    strictEqual(first?.curr1, 'USD')
-    strictEqual(first?.curr2, 'INR')
-    strictEqual(first?.amt2, -9000000)
+  it('model: the MC model, extended for M030 / M034 by the deal currency; CO model from RULE_BT at P_CO', () => {
+    const opt = rowsFor({ dealId: '7000000011' })[0]
+    strictEqual(opt?.modelId, 'M03402')
+    strictEqual(opt?.modelDesc, 'INR – INR Staggered Call & Put Option')
+    strictEqual(opt?.coArea, '')
+    const at10 = selectRows(data, { ...initialFilters(), coArea: 'OL10', dealId: '7000000011' })[0]
+    strictEqual(at10?.coArea, 'OL10') // looked up on M034, before the extension
+    const at20 = selectRows(data, { ...initialFilters(), coArea: 'OL20', dealId: '7000000008' })[0]
+    strictEqual(at20?.coModelDesc, 'INR Forward at OL20')
+    strictEqual(selectRows(data, { ...initialFilters(), coArea: 'OL20', dealId: '7000000007' })[0]?.coArea, '')
   })
 
-  it('NDF legs (M032 / M037) carry bank and fixing day two days before maturity', () => {
-    const ndf = tables.fxLegs.find((l) => l.sgsart === '12D')
-    strictEqual(ndf?.bp, 'HSBC')
-    strictEqual(ndf?.ndfDate, '2026-10-11')
-    const other = tables.fxLegs.find((l) => l.sgsart === '11D')
-    strictEqual(other?.bp, '')
-    strictEqual(other?.ndfDate, '')
+  it('spot flag from ZSGTSFTR_IN_SPOT; legs not served leave utilization null and NDF fields blank', () => {
+    const r = rowsFor({ dealId: '7000000008' })[0]
+    strictEqual(r?.spot, true)
+    strictEqual(rowsFor({ dealId: '7000000007' })[0]?.spot, false)
+    strictEqual(r?.utiAmt, null)
+    strictEqual(r?.ndfDate, '')
+    strictEqual(r?.bank, '')
   })
 
-  it('utilisation is the absolute USD side of the deal legs', () => {
-    strictEqual(calculateUtilisation(tables, '1000004101'), 100000)
-    // option deal 727 / 250000: legs hold 125000 USD each side
-    strictEqual(calculateUtilisation(tables, '1000004102'), 250000)
-    strictEqual(calculateUtilisation(tables, 'nope'), 0)
-  })
-})
-
-describe('fetchDeals (SUB_GET_DATA + DATA_FILTER)', () => {
-  it('lists every deal for the default CO area', () => {
-    const r = rowsFor()
-    strictEqual(r.error, null)
-    strictEqual(r.rows.length, 30)
-  })
-
-  it('an unauthorized CO area gives the error and no rows', () => {
-    const r = rowsFor({ coArea: 'OL09' })
-    strictEqual(r.error, 'You are not authorized to execute for the CO Area OL09')
-    strictEqual(r.rows.length, 0)
-  })
-
-  it('no CO area is not checked and leaves the CO columns blank', () => {
-    const r = rowsFor({ coArea: '' })
-    strictEqual(r.error, null)
-    strictEqual(r.rows.every((x) => x.coArea === ''), true)
-  })
-
-  it('filters on key date (maturity), status, region, entity and deal id', () => {
-    strictEqual(rowsFor({ keyDate: '2026-10-13' }).rows.every((r) => r.maturityDate === '2026-10-13'), true)
-    strictEqual(rowsFor({ keyDate: '2026-10-13' }).rows.length, 5)
-    strictEqual(rowsFor({ status: '08' }).rows.length, 2)
-    strictEqual(rowsFor({ region: 'SEA' }).rows.every((r) => r.region === 'SEA'), true)
-    strictEqual(rowsFor({ entity: 'OVL' }).rows.every((r) => r.origin === 'OVL'), true)
-    deepStrictEqual(
-      rowsFor({ dealId: '1000004105' }).rows.map((r) => r.dealId),
-      ['1000004105'],
-    )
-    strictEqual(rowsFor({ keyDate: '2030-01-01' }).rows.length, 0)
-  })
-
-  it('a row carries the extended model id and CO model description', () => {
-    const row = rowsFor({ dealId: '1000004105' }).rows[0]
-    strictEqual(row?.modelId, 'M03401') // MC 725 / M034 / C001
-    strictEqual(row?.modelDesc, 'INR - INR Staggered Call & Put Option')
-    strictEqual(row?.coArea, 'OL01')
-    strictEqual(row?.mcDesc, 'OTL_SOYOIL_M034_0.022889M')
-    strictEqual(row?.statusDesc, 'Confirmed')
-  })
-
-  it('CO area OL02 only resolves the models that exist for it', () => {
-    const row = rowsFor({ coArea: 'OL02', dealId: '1000004101' }).rows[0] // M032 is an OL01 model
-    strictEqual(row?.coArea, '')
-    strictEqual(row?.coModelDesc, '')
-  })
-
-  it('getMasterContract resolves a reference, null otherwise', () => {
-    const mc = getMasterContract(tables, 'MC/OTL/2026/707')
+  it('getMasterContract reads the MC by key with its COMP entity', () => {
+    const mc = getMasterContract(data, '2000000015')
+    strictEqual(mc?.origin, 'OTL')
     strictEqual(mc?.originName, 'Olam (Thailand) Ltd')
-    strictEqual(mc?.region, 'SEA')
-    strictEqual(mc?.modelDesc, 'USD-INR-INR-Put & Call Option')
-    strictEqual(getMasterContract(tables, 'MC/X/1'), null)
+    strictEqual(mc?.region, 'R01')
+    strictEqual(mc?.amt, 30087)
+    strictEqual(getMasterContract(data, 'nope'), null)
+  })
+
+  it('helps: regions are COMP codes without text; CO areas are the ones RULE_BT holds', () => {
+    deepStrictEqual(regionOptions(data.entities), [
+      { id: 'R01', name: '' },
+      { id: 'R02', name: '' },
+    ])
+    deepStrictEqual(coAreaOptions(data.rules), ['OL10', 'OL20'])
+  })
+})
+
+describe('utilization (ZSGTSFCDS_FX / _OPTION), as the ABAP computes it', () => {
+  const leg = (dealId: string, type: string, curr1: string, amt1: number, curr2: string, amt2: number, mcRef = '2000000005'): Leg => ({
+    dealId, type, mcRef, curr1, curr2, amt1, amt2,
+  })
+  const legs = sortLegs([
+    leg('7000000008', 'D1', 'INR', 900000, 'USD', -10000),
+    leg('7000000006', 'D1', 'USD', 1000, 'INR', -90000),
+    leg('7000000006', 'D2', 'EUR', 5, 'INR', 7),
+    leg('7000000007', 'D2', 'USD', -250, 'INR', 1),
+  ])
+
+  it('sorts by deal id and deal type', () => {
+    deepStrictEqual(legs.map((l) => `${l.dealId}/${l.type}`), ['7000000006/D1', '7000000006/D2', '7000000007/D2', '7000000008/D1'])
+  })
+
+  it("runs from the deal's first D1 row to the end of the table (no EXIT on deal change)", () => {
+    strictEqual(abapUtilisation(legs, '7000000006'), 1000 + 0 + 250 + 10000)
+    strictEqual(abapUtilisation(legs, '7000000008'), 10000)
+    strictEqual(abapUtilisation(legs, '7000000007'), 0) // no D1 row: nothing
+  })
+
+  it('with both views served, the row sums FX + option and fills Fixing Day / Bank from the 12D leg', () => {
+    const fx: FxLeg[] = [{ ...leg('7000000006', 'D1', 'USD', 1000, 'INR', -90000), sgsart: '12D', bp: 'HSBC', ndfDate: '2026-10-28' }]
+    const op: Leg[] = [leg('7000000006', 'D1', 'INR', 1, 'USD', -500)]
+    const r = selectRows({ ...data, fxLegs: fx, optLegs: op }, { ...initialFilters(), dealId: '7000000006' })[0]
+    strictEqual(r?.utiAmt, 1500)
+    strictEqual(r?.ndfDate, '2026-10-28')
+    strictEqual(r?.bank, 'HSBC')
+    // FOR ALL ENTRIES: legs of MCs outside the selection are not read
+    const other = selectRows({ ...data, fxLegs: fx, optLegs: op }, { ...initialFilters(), dealId: '7000000008' })[0]
+    strictEqual(other?.utiAmt, 0)
   })
 })
 
 describe('columns, search and sort', () => {
-  const rows = rowsFor().rows
+  const rows = rowsFor()
 
   it('layouts pick their columns; unknown layouts fall back to the default', () => {
     strictEqual(visibleColumns('').length, LAYOUT_COLUMNS['']?.length)
@@ -231,36 +216,31 @@ describe('columns, search and sort', () => {
     strictEqual(visibleColumns('???').length, visibleColumns('').length)
   })
 
-  it('cell text formats dates, amounts, rates and flags', () => {
-    const r = rowsFor({ dealId: '1000004129' }).rows[0]
+  it('cell text formats dates, amounts, rates and flags; a missing amount is blank', () => {
+    const r = rowsFor({ dealId: '7000000007' })[0]
     if (!r) throw new Error('no row')
     strictEqual(cellText(col('maturityDate'), r), '05-10-2026')
     strictEqual(cellText(col('mcAmt'), r), '30,087.00')
     strictEqual(cellText(col('plRate'), r), '90.400000')
     strictEqual(cellText(col('plAmt'), r), '125.00')
     strictEqual(cellText(col('confirmed'), r), 'X')
-    strictEqual(cellText(col('spot'), r), 'X')
-    const open = rowsFor({ dealId: '1000004101' }).rows[0]
-    if (!open) throw new Error('no row')
-    strictEqual(cellText(col('spot'), open), '')
-    strictEqual(cellText(col('plAmt'), open), '0.00')
-    strictEqual(cellText(col('plCurr'), open), '')
+    strictEqual(cellText(col('spot'), r), '')
+    strictEqual(cellText(col('utiAmt'), r), '')
+    strictEqual(cellText(col('changedDate'), r), '')
   })
 
   it('default sort is Deal ID ascending', () => {
     const list = filterSortRows(rows, '', '', DEFAULT_SORT)
-    strictEqual(list[0]?.dealId, '1000004101')
-    strictEqual(list[29]?.dealId, '1000004130')
+    strictEqual(list[0]?.dealId, '7000000006')
+    strictEqual(list.at(-1)?.dealId, '7000000021')
   })
 
   it('sorts numbers numerically, text case-insensitively, ties by deal id', () => {
-    const byAmt = filterSortRows(rows, '', '', { field: 'utiAmt', dir: 'desc' })
-    strictEqual(byAmt[0]?.utiAmt, 250000)
-    strictEqual(byAmt[0]?.dealId, '1000004102')
-    strictEqual(byAmt[1]?.dealId, '1000004103')
+    const byAmt = filterSortRows(rows, '', '', { field: 'mcAmt', dir: 'desc' })
+    deepStrictEqual(byAmt.map((r) => r.dealId), ['7000000011', '7000000006', '7000000008', '7000000007', '7000000021'])
     const byOrigin = filterSortRows(rows, '', '', { field: 'origin', dir: 'asc' })
-    strictEqual(byOrigin[0]?.origin, 'OSIPL')
-    strictEqual(byOrigin[byOrigin.length - 1]?.origin, 'OVL')
+    strictEqual(byOrigin[0]?.origin, '')
+    strictEqual(byOrigin.at(-1)?.origin, 'OTL')
   })
 
   it('nextSort flips the same column and restarts ascending on another', () => {
@@ -274,25 +254,24 @@ describe('columns, search and sort', () => {
   })
 
   it('search matches the visible cell text only', () => {
-    strictEqual(filterSortRows(rows, '', 'palmolein', DEFAULT_SORT).length, 0) // not in the description columns...
-    strictEqual(filterSortRows(rows, '', '  1000004105 ', DEFAULT_SORT).length, 1)
-    strictEqual(filterSortRows(rows, '', '13-10-2026', DEFAULT_SORT).length, 5)
-    // "Created By" is not in the default layout but is in ALLCOLS
-    strictEqual(filterSortRows(rows, '', 'skapoor', DEFAULT_SORT).length, 0)
-    strictEqual(filterSortRows(rows, 'ALLCOLS', 'skapoor', DEFAULT_SORT).length > 0, true)
+    strictEqual(filterSortRows(rows, '', '  7000000008 ', DEFAULT_SORT).length, 1)
+    strictEqual(filterSortRows(rows, '', '05-10-2026', DEFAULT_SORT).length, 3)
+    // "Changed By" is not in the default layout but is in ALLCOLS
+    strictEqual(filterSortRows(rows, '', 'rmenon', DEFAULT_SORT).length, 0)
+    strictEqual(filterSortRows(rows, 'ALLCOLS', 'rmenon', DEFAULT_SORT).length, 1)
   })
 
   it('pruneSelection keeps the selection only while the row is listed', () => {
-    strictEqual(pruneSelection('1000004101', rows), '1000004101')
+    strictEqual(pruneSelection('7000000006', rows), '7000000006')
     strictEqual(pruneSelection('zzz', rows), null)
     strictEqual(pruneSelection(null, rows), null)
   })
 
-  it('dealOptions searches "<id> <description>" case-insensitively', () => {
-    strictEqual(dealOptions(tables.deals, '').length, 30)
-    strictEqual(dealOptions(tables.deals, '1000004101').length, 1)
-    strictEqual(dealOptions(tables.deals, 'otl inr - inr').length > 0, true)
-    strictEqual(dealOptions(tables.deals, 'zzz').length, 0)
+  it('dealOptions searches "<id> <description>" case-insensitively over every Deal ID', () => {
+    strictEqual(dealOptions(data.deals, '').length, 6)
+    strictEqual(dealOptions(data.deals, '7000000006').length, 1)
+    strictEqual(dealOptions(data.deals, 'say "HI"').length, 1)
+    strictEqual(dealOptions(data.deals, 'zzz').length, 0)
   })
 })
 
@@ -313,14 +292,13 @@ describe('pagination', () => {
 
 describe('CSV export', () => {
   it('starts with a BOM, quotes every cell, doubles quotes and uses CRLF', () => {
-    const rows = rowsFor({ dealId: '1000004101' }).rows
+    const rows = rowsFor({ dealId: '7000000011' })
     const csv = buildCsv(visibleColumns('HEADSUP'), rows)
     strictEqual(csv.charCodeAt(0), 0xfeff)
     const lines = csv.slice(1).split('\r\n')
     strictEqual(lines.length, 2)
     strictEqual(lines[0], '"Deal ID","Sub Type","Deal Description","Deal Maturity Date","MC Reference","Deal Status","Status Description","Origin Entity","FX Model","FX Utilisation Amount","Fixing Day","Bank name"')
-    strictEqual(lines[1]?.startsWith('"1000004101","FX1","OSIPL INR Long Forward USD 100K","13-10-2026"'), true)
-    strictEqual(buildCsv([col('dealDesc')], [{ ...(rows[0] as (typeof rows)[number]), dealDesc: 'say "hi"' }]), '﻿"Deal Description"\r\n"say ""hi"""')
+    strictEqual(lines[1], '"7000000011","FX2","Say ""hi"" option","02-11-2026","2000000008","05","Invoice Created in TRM","OSIPL","M03402","","",""')
   })
 
   it('an empty list exports the header only', () => {

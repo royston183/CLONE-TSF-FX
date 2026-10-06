@@ -1,17 +1,10 @@
-/** Report Type pill: Forex or Option deals. */
+/** Report Type pill: Forex (R_FX, ZSGTSFV_FX) or Option (R_OP, ZSGTSFV_OP) deals. */
 export type DealType = 'FX' | 'OP'
 
+/** A T001 company code. */
 export type Company = { code: string; name: string }
-export type FxPair = { pair: string; c1: string; c2: string; spot: number }
-export type Trader = { code: string; name: string }
-export type Partner = { code: string; name: string }
-export type TxnType = { code: string; desc: string }
-export type Portfolio = { code: string; name: string }
 
-export type TxnStatus = 'Active' | 'Pending' | 'Settled'
-export type MatchStatus = 'Matched' | 'Unmatched'
-
-/** One external deal row, keyed by the original's SAP field names. */
+/** One external deal row (a ZSGTSFV_FX row), keyed by the view's field names. */
 export type Deal = {
   _id: string
   RFHA: string
@@ -20,7 +13,7 @@ export type Deal = {
   SFHAART: string
   XTEXT: string
   CPAIR: string
-  BS_1: 'Buy' | 'Sell'
+  BS_1: string
   CURR1: string
   AMT1: number
   DBLFZ: string
@@ -31,8 +24,8 @@ export type Deal = {
   RBUSA: string
   RPORTB: string
   PRCTR: string
-  TXN_STATUS: TxnStatus
-  MAT_UNMAT: MatchStatus
+  TXN_STATUS: string
+  MAT_UNMAT: string
   ZTSF_DEAL_ID: string
   ZMC_REF_NO: string
   /** External Reference (editable). */
@@ -41,7 +34,7 @@ export type Deal = {
   ZOLAM_DEAL_NO: string
   _checked: boolean
   // Forex only
-  BS_2?: 'Buy' | 'Sell'
+  BS_2?: string
   CURR2?: string
   AMT2?: number
   SPOT?: number

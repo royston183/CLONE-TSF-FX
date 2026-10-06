@@ -1,5 +1,5 @@
-import { statusText } from './format.ts'
-import type { Deal, InvRow, Sort } from './types.ts'
+import { d1UsdAmount } from './invoice.ts'
+import type { Deal, DealListRow, InvRow, Sort } from './types.ts'
 
 function upper(v: unknown): string {
   return String(v ?? '').toUpperCase()
@@ -31,18 +31,20 @@ export function paginate<T>(rows: T[], page: number, size: number): { rows: T[];
   return { rows: rows.slice(start, start + size), total: rows.length, pages, start, page: clampedPage }
 }
 
+/** PAI 'UPD': the D1 deal's USD amount (curr1 USD ? |amt1| : |amt2|). */
 export function getDealUsdAmount(d: Deal | null): number {
-  if (!d) return 0
-  const d1 = d.fx.find((r) => r.dealType === 'D1')
-  if (!d1) return 0
-  return d1.curr1 === 'USD' ? Math.abs(d1.amt1) : Math.abs(d1.amt2)
+  return d ? d1UsdAmount(d.fx) : 0
 }
+
+/** PAI 'UPD' (GSDK938092): Σ |ZAMT_USD| of the invoice rows sold by OIL or OGA only. */
+export const INVOICING_SELLERS = ['OIL', 'OGA'] as const
 
 export function getInvoiceUsdAmount(d: Deal | null): number {
   if (!d) return 0
-  return d.inv.reduce((sum, r) => sum + Math.abs(Number(r.amtUsd || 0)), 0)
+  return d.inv.filter((r) => (INVOICING_SELLERS as readonly string[]).includes(r.seller)).reduce((sum, r) => sum + Math.abs(Number(r.amtUsd || 0)), 0)
 }
 
+/** The ALV toolbar's CALC: price = USD price × rate, amount = qty × price, USD amount = qty × USD price. */
 export function recalcInvoiceRow(r: InvRow): InvRow {
   const price = Number(r.usdPrice) * Number(r.rate)
   const amt = Number(r.qty) * price
@@ -50,6 +52,7 @@ export function recalcInvoiceRow(r: InvRow): InvRow {
   return { ...r, price, amt, amtUsd }
 }
 
+/** STATUS_9000: AMD_DEAL is offered only when gt_top has an R1-D1 or R1-D2 roll-over deal. */
 export function hasRollover(d: Deal | null): boolean {
   if (!d) return false
   return d.fx.some((r) => r.roll === 'R1-D1' || r.roll === 'R1-D2')
@@ -63,10 +66,15 @@ export function invSearchText(r: InvRow, key: string): string {
 
 export type InvoiceConfirmation = { status: '05' | '07'; message: string }
 
+/**
+ * PAI 'UPD': invoice total vs the D1 deal amount against tolerance T02. Above the deal amount, or
+ * below it within tolerance, confirms ('05'); below it beyond tolerance confirms partially ('07').
+ * Texts are TEXT-028 … TEXT-035.
+ */
 export function computeInvoiceConfirmation(d: Deal): InvoiceConfirmation {
   const invAmt = getInvoiceUsdAmount(d)
   const dealAmt = getDealUsdAmount(d)
-  const tol = d.tolerance
+  const tol = d.tolerance ?? 0
   const upperLimit = dealAmt + (dealAmt * tol) / 100
   const diff = Math.abs(invAmt - dealAmt)
   const rate = dealAmt ? ((dealAmt - invAmt) / dealAmt) * 100 : 0
@@ -79,7 +87,7 @@ export function computeInvoiceConfirmation(d: Deal): InvoiceConfirmation {
       message: `Inv Amt exceeds FX Deal Amt by USD ${diffStr}${invAmt < upperLimit ? ` within tol limit (${tolStr}%). Do you want to confirm invoice?` : ` exceeds tol limit (${tolStr}%). Do you want to confirm invoice?`}`,
     }
   }
-  if (Math.abs(invAmt - dealAmt) < 0.005) {
+  if (Math.abs(rate) < 0.005) {
     return { status: '05', message: `Inv Amt same as FX Deal Amt. Within tol limit (${tolStr}%). Do you want to generate invoice?` }
   }
   if (rate <= tol) {
@@ -88,6 +96,17 @@ export function computeInvoiceConfirmation(d: Deal): InvoiceConfirmation {
   return { status: '07', message: `Inv Amt less than FX Deal Amt by USD ${diffStr} exceeds tol limit (${tolStr}%). Do you want to confirm partial Invoice?` }
 }
 
-export function dealLookupText(d: Deal): string {
-  return [d.dealId, d.dealRef, d.modelId, d.entityString, statusText(d.status), d.mcRef, d.trader].join(' ')
+/** PAI 'UPD' first check: outside region R01 a profit percent (ZSGTSFTR_ORG_PRO) must cover today. */
+export function profitCheckError(d: Deal): string {
+  return d.region !== 'R01' && !d.profitMaintained ? 'Profit percent is not maintained for the current quarter' : ''
+}
+
+/** PAI 'CAN': only a Deal ID at 04, 05 or 07 can have its TRM invoice cancelled (TEXT-005 otherwise). */
+export const canCancelInvoice = (status: string): boolean => status === '04' || status === '05' || status === '07'
+
+/** PAI 'IMPORT' / 'EXPORT': letters only above status 04. */
+export const canPrintLetters = (status: string): boolean => status !== '' && status > '04'
+
+export function dealLookupText(d: DealListRow): string {
+  return [d.dealId, d.dealRef, d.modelId, d.entityString, d.statusLabel, d.mcRef, d.trader].join(' ')
 }

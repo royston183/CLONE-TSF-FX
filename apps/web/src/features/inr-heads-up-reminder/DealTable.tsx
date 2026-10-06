@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
-import { cellText, findStatus, sortArrow } from './logic.ts'
+import { cellText, sortArrow, statusTone } from './logic.ts'
 import type { Column, ColumnKey, HeadsUpRow, Sort } from './types.ts'
 
 /** The .status-text class of a deal status code (draft when the status is unknown). */
 export function statusToneClass(code: string): string {
-  return `status-text status-text-${findStatus(code)?.tone ?? 'draft'}`
+  return `status-text status-text-${statusTone(code)}`
 }
 
 function Cell({

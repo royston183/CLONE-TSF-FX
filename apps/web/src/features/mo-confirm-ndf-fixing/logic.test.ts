@@ -1,18 +1,17 @@
-import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { COMPANY_CODES, FIXING_DATE_POOL, STATUS, STATUSES, createNdfDataset, createRng } from './data.ts'
+import { STATUS, STATUSES } from './data.ts'
+import { COMPANY_CODES, FIXING_DATE_POOL, createNdfDataset, createRng, ensureDataForCriteria } from './fixtures.ts'
 import { formatAmount, formatDMY, parseDMY } from './format.ts'
 import {
   EMPTY_FILTERS,
   applyFilterPanel,
   computeResults,
   countActiveFilters,
-  ensureDataForCriteria,
   filterByCriteria,
   filterDropdownItems,
   isValidDMY,
-  markCorrectionRequired,
-  matchReleaseDeal,
+  filterPanelOptions,
   nextSort,
   pageOf,
   pagerWindow,
@@ -229,29 +228,21 @@ describe('paging', () => {
 })
 
 describe('actions', () => {
-  it('matches and releases, keeping existing refs and remarks when left blank', () => {
-    const { deals } = createNdfDataset()
-    const released = find(deals, 'd2')
-    const next = matchReleaseDeal(deals, 'd2', '', 'INT-1', '')
-    const d = find(next, 'd2')
-    strictEqual(d.txnStatus, STATUS.RELEASED)
-    strictEqual(d.externalRef, released.externalRef)
-    strictEqual(d.internalRef, 'INT-1')
-    const corr = find(matchReleaseDeal(deals, 'd1', 'EXT-9', '', 'ok'), 'd1')
-    strictEqual(corr.externalRef, 'EXT-9')
-    strictEqual(corr.moRemark, 'ok')
-    // The original list is untouched.
-    notStrictEqual(find(deals, 'd1').txnStatus, STATUS.RELEASED)
-  })
-
-  it('sends a deal back for correction with the remark', () => {
-    const { deals } = createNdfDataset()
-    const d = find(markCorrectionRequired(deals, 'd0', 'Rate mismatch'), 'd0')
-    strictEqual(d.txnStatus, STATUS.CORRECTION)
-    strictEqual(d.moRemark, 'Rate mismatch')
-    strictEqual(statusClass(d.txnStatus), 'status-correction')
+  it('classes each status text', () => {
+    strictEqual(statusClass(STATUS.CORRECTION), 'status-correction')
     strictEqual(statusClass(STATUS.RELEASED), 'status-released')
     strictEqual(statusClass(STATUS.UNMATCHED), 'status-unmatched')
+  })
+
+  it('offers the filter panel the distinct values of the deals held, and the three statuses', () => {
+    const { deals } = createNdfDataset()
+    const opts = filterPanelOptions(deals)
+    deepStrictEqual(opts.companyCode, [...COMPANY_CODES].sort())
+    deepStrictEqual(opts.fixingDate, [...new Set(deals.map((d) => d.fixingDate))].sort())
+    deepStrictEqual(opts.status, STATUSES)
+    // No deals (the list is WAITING FOR API): every select but status offers only "All".
+    const none = filterPanelOptions([])
+    deepStrictEqual([none.companyCode, none.partner, none.trader, none.fixingDate], [[], [], [], []])
   })
 
   it('leaves actioned deals out of the results', () => {

@@ -1,9 +1,9 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The page never called an API — Match & Release and Correction
- * Required only changed its in-memory deal list — so deals live in component state.
+ * component only holds state. ZSGTSFR024's ABAP source is not exported, so there is no deal
+ * queue and no action API yet (see api.ts); these rules run on whatever deals the screen holds.
  */
-import { COMPANY_CODES, COMPANY_INFO, PARTNERS, STATUS, STATUSES, TRADERS, TXN_TYPES } from './data.ts'
+import { STATUS, STATUSES } from './data.ts'
 import { parseDDMMYYYY } from './format.ts'
 import type {
   AppliedSelection,
@@ -44,47 +44,34 @@ export const applySelection = (form: SelectionForm): AppliedSelection => ({
   displayType: form.displayType,
 })
 
-export const COMPANY_OPTIONS: ComboOption[] = COMPANY_CODES.map((c) => {
-  const name = COMPANY_INFO[c]?.companyName ?? ''
-  return { code: c, display: c, searchText: `${c} ${name}`, sub: name }
-})
-
-export const TRADER_OPTIONS: ComboOption[] = TRADERS.map((t) => ({
-  code: t.code,
-  display: `${t.code} - ${t.name}`,
-  searchText: `${t.code} ${t.name}`,
-  sub: '',
-}))
-
 /** The combobox list for what is typed: a case-insensitive substring of the option's text. */
 export function filterComboOptions(options: readonly ComboOption[], text: string): ComboOption[] {
   const ft = text.toLowerCase()
   return options.filter((o) => o.searchText.toLowerCase().includes(ft))
 }
 
-/**
- * Company codes in the From..To range, compared as strings over the code list (so the range
- * follows code order, not list order). From after To selects nothing, as on the page.
- */
-export const companyCodesInRange = (from: string, to: string) => COMPANY_CODES.filter((c) => c >= from && c <= to)
-
 // ---------------------------------------------------------------- filter panel
 
 export const EMPTY_FILTERS: Filters = { coCode: '', txnType: '', partner: '', trader: '', ccy1: '', ccy2: '', status: '' }
 
-/** Each filter dropdown's options (after its "All"), as the page's populateFilterOptions built them. */
+/** One option per distinct value, sorted by value; the first label seen for a value is kept. */
+function distinct(pairs: Iterable<[string, string]>): SelectOption[] {
+  const out = new Map<string, string>()
+  for (const [value, label] of pairs) if (value && !out.has(value)) out.set(value, label)
+  return [...out].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([value, label]) => ({ value, label }))
+}
+
+/**
+ * Each filter dropdown's options (after its "All"). The page filled them from its dummy lists; with
+ * no sample data they come from the deals the screen holds (none until the queue has an API).
+ */
 export function filterOptions(deals: readonly Deal[]): Record<keyof Filters, SelectOption[]> {
-  const ccys = new Set<string>()
-  for (const d of deals) {
-    ccys.add(d.currency1)
-    ccys.add(d.currency2)
-  }
-  const ccyList = [...ccys].sort().map((c) => ({ value: c, label: c }))
+  const ccyList = distinct(deals.flatMap((d): Array<[string, string]> => [[d.currency1, d.currency1], [d.currency2, d.currency2]]))
   return {
-    coCode: COMPANY_CODES.map((c) => ({ value: c, label: c })),
-    txnType: TXN_TYPES.map((t) => ({ value: t.code, label: `${t.code} - ${t.desc}` })),
-    partner: PARTNERS.map((p) => ({ value: p.code, label: `${p.code} - ${p.name}` })),
-    trader: TRADERS.map((t) => ({ value: t.code, label: `${t.code} - ${t.name}` })),
+    coCode: distinct(deals.map((d) => [d.coCode, d.coCode])),
+    txnType: distinct(deals.map((d) => [d.txnTypeCode, d.txnTypeDesc])),
+    partner: distinct(deals.map((d) => [d.partnerCode, d.partnerName])),
+    trader: distinct(deals.map((d) => [d.traderCode, d.traderName])),
     ccy1: ccyList,
     ccy2: ccyList,
     status: STATUSES.filter((s) => s !== STATUS.MATCHED).map((s) => ({ value: s, label: s })),
@@ -138,15 +125,14 @@ export function filterDeals(
 
   if (selection.companyCode) {
     if (selection.companyCodeTo) {
-      const codes = companyCodesInRange(selection.companyCode, selection.companyCodeTo)
-      list = list.filter((d) => codes.includes(d.coCode))
+      // From..To compared as text, as SAP compares BUKRS; From after To selects nothing.
+      const { companyCode: from, companyCodeTo: to } = selection
+      list = list.filter((d) => d.coCode >= from && d.coCode <= to)
     } else {
       list = list.filter((d) => d.coCode === selection.companyCode)
     }
   }
-  // A deal read from SAP carries no trader (the service has none), so the trader choice cannot apply
-  // to it: it stays listed rather than vanishing, and only the dummy Options rows are narrowed.
-  if (selection.trader) list = list.filter((d) => d.live || d.traderCode === selection.trader)
+  if (selection.trader) list = list.filter((d) => d.traderCode === selection.trader)
 
   const f = filters
   if (f.coCode) list = list.filter((d) => d.coCode === f.coCode)
@@ -246,25 +232,6 @@ export const dealLabel = (d: Deal): string => d.dealId || d.transaction
 
 export const selectedDeals = (deals: readonly Deal[], selected: ReadonlySet<string>) => deals.filter((d) => selected.has(d.id))
 
-// ---------------------------------------------------------------- deals from SAP
-
-/**
- * The queue after (re)reading the FX deals from SAP: the SAP deals replace every FX row, the Options rows
- * (dummy data) are kept, and a deal this session sent back for correction stays in Correction Required
- * while SAP still has it unmatched — SAP has no field for that status, so it lives only here.
- */
-export function mergeLiveDeals(current: readonly Deal[], live: readonly Deal[]): Deal[] {
-  const corrected = new Map(current.filter((d) => d.live && d.status === STATUS.CORRECTION).map((d) => [d.id, d]))
-  const fx = live.map((d) => {
-    const c = corrected.get(d.id)
-    return c && d.status === STATUS.UNMATCHED ? { ...d, status: STATUS.CORRECTION, moRemark: c.moRemark } : d
-  })
-  return [...fx, ...current.filter((d) => d.dealType !== 'FX')]
-}
-
-/** The Options rows alone: the starting queue before the FX deals have been read from SAP. */
-export const withoutFxDeals = (deals: readonly Deal[]): Deal[] => deals.filter((d) => d.dealType !== 'FX')
-
 // ---------------------------------------------------------------- match & release / correction
 
 /** The modals' info strip and Cover No for one deal, or a summary for several. */
@@ -278,41 +245,8 @@ export function dealSummary(deals: readonly Deal[]): DealSummary {
   }
 }
 
-function updateDeals(deals: readonly Deal[], ids: ReadonlySet<string>, updates: Partial<Deal>): Deal[] {
-  return deals.map((d) => (ids.has(d.id) ? { ...d, ...updates } : d))
-}
-
-/**
- * Match & Release: the deals leave the queue with the MO remark recorded. The External and
- * Internal Ref fields are collected but, as on the page, not stored anywhere yet.
- */
-export function matchReleaseDeals(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
-  // Future: POST the match & release to the ZSGTSFR024 service.
-  return updateDeals(deals, ids, { status: STATUS.MATCHED, moRemark: remarks || '' })
-}
-
 /** A correction must give a reason: it becomes the MO remark FO sees. */
 export const isCorrectionValid = (remarks: string) => remarks.trim() !== ''
-
-/** Correction Required: back to FO with the (trimmed) remark. */
-export function markCorrectionRequired(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
-  // Future: POST the correction request to the ZSGTSFR024 service.
-  return updateDeals(deals, ids, { status: STATUS.CORRECTION, moRemark: remarks.trim() })
-}
-
-export function matchReleaseMessage(deals: readonly Deal[]): string {
-  const [first] = deals
-  return deals.length === 1 && first
-    ? `Deal ${dealLabel(first)} matched and released successfully.`
-    : `${deals.length} deals matched and released successfully.`
-}
-
-export function correctionMessage(deals: readonly Deal[]): string {
-  const [first] = deals
-  return deals.length === 1 && first
-    ? `Deal ${dealLabel(first)} was sent back to FO for correction.`
-    : `${deals.length} deals were sent back to FO for correction.`
-}
 
 // ---------------------------------------------------------------- calendar
 

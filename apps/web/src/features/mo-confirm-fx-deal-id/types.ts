@@ -1,9 +1,11 @@
-/** The Deal ID / transaction status codes the page knows (STATUS_META's keys). */
+import type { FxRow } from '../../shared/fx/mw.ts'
+
+/** The Deal ID / transaction status codes the badge has a colour for (STATUS_CLS's keys). */
 export type StatusCode = '01' | '02' | '03' | '07' | '30'
 
 export type StatusMeta = { desc: string; cls: string }
 
-/** One FX transaction (RFHA) assigned to the Deal ID — a row of the FX Deals table. */
+/** One FX transaction (RFHA) assigned to the Deal ID — a row of the FX Deals table (gt_top). */
 export type Leg = {
   rfha: string
   dealType: string
@@ -24,60 +26,76 @@ export type Leg = {
   fxPl: number
 }
 
+/** Screen 9000's header (FORM screen_desc_fields) plus the flags the PF-STATUS and containers follow. */
 export type Deal = {
   dealId: string
   dealDesc: string
+  /** ZSGTSFTR_DEALID-ZTRD_CODE. */
   trader: string
+  /** ZSGTRMTR_TRADER-ZTRADER (d~ztrader). */
   traderName: string
   startDate: string
   endDate: string
+  /** gv_mod: the MC's model, else ZSGTSFTR_DEALID-ZTSF_MODEL when it is in ZSGTSFTR_RULE_BT. */
   fxModel: string
   modelDesc: string
+  /** gv_ent: ZSGTSFTR_MAS_CON-ZENT_DESC. */
   entityString: string
+  /** gv_curr: ZSGTSFTR_DEALID-ZDEAL_CURR_DESC. */
   currString: string
+  /** gv_omc: ZSGTSFTR_MAS_CON-ZMC_REF_NO (blank when the Deal ID's MC is not found). */
   mcRef: string
   mcDesc: string
   mcDate: string
   shipStart: string
   shipEnd: string
+  /** The legs' company code (gs_top-bukrs); blank while the legs are not served. */
   bukrs: string
   status: string
-  /** No invoice plan: the invoice and P&L cards are hidden. */
+  /** ZSGTSFTR_DEAL_ST-ZDEAL_SDESC, from the status list box as FORM drop_down builds it. */
+  statusText: string
+  /** gv_noinv (RULE_BT-ZNO_INV) or status 30: the invoice and P&L containers are hidden. */
   noInv: boolean
-  /** Short-straddle model: shows "Confirm & Save SS Deal ID". */
+  /** Short-straddle model (RULE_BT-ZSS): shows "Confirm & Save SS Deal ID". */
   ssDeal: boolean
+  /** The user is in TVARVC ZSGTSF_UNWIND, so REV is not excluded. */
+  unwind: boolean
   legs: readonly Leg[]
 }
 
+/** A quick pick / datalist entry: one ZSGTSFTR_DEALID row. */
+export type DealPick = { dealId: string; status: string; statusText: string }
+
+/** One planned trade invoice (gt_inv / ZSGTSFTR_INV_REF). */
 export type Invoice = {
   tradeRef: string
   invType: string
   exRate: number
   amt: number
+  invAmt: number
   curr: string
   due: string
 }
 
-export type Premium = {
-  dealValue: number
-  dealCurr: string
-  netPremium: number
-  netPremiumCurr: string
-  rbiRate: number
-  rbiDate: string
-  netPremiumFwd: number
-  netPremiumFwdCurr: string
-  netPremiumPerUsd: number
-  strikeRate: number
-  invoiceRate: number
+/** One entry of the MC Ref No help (MODULE f4_help). */
+export type McHelp = { ref: string; desc: string }
+
+/** Everything the screen shows for one loaded Deal ID. */
+export type DealScreen = {
+  deal: Deal
+  /** The ZSGTSFTR_DEALID rows read for the Deal ID (the key of the Cancel write). */
+  rows: readonly FxRow[]
+  /** Why the FX Deals table is empty (the legs' view is not served); null when it is served. */
+  legsWaiting: string | null
+  /** The planned trade invoices, or null with `invoiceWaiting` saying why they cannot be built. */
+  invoices: readonly Invoice[] | null
+  invoiceWaiting: string | null
+  /** The Planned P&L is always gated while the legs are not served. */
+  plWaiting: string
+  mcHelp: readonly McHelp[]
+  /** Why the Edit Deal Pair replacement help is empty. */
+  replacementWaiting: string
 }
-
-export type Replacement = { rfha: string; label: string }
-
-export type DmsDoc = { name: string; type: string }
-
-/** Documents keyed by Deal ID. */
-export type DmsDb = Readonly<Record<string, readonly DmsDoc[]>>
 
 /** The FX Deals table's data-key columns. `mcRef` and `txnStatusDesc` are not leg fields. */
 export type SortKey =
@@ -107,18 +125,6 @@ export type ActionVisibility = {
   dms: boolean
   ssDeal: boolean
 }
-
-export type PlRow = {
-  type: string
-  famt: number
-  lamt: number
-  cls: '' | 'pl-total-row' | 'pl-pct-row'
-  /** The "P&L Orign(%)" row prints both columns as percentages. */
-  pct: boolean
-}
-
-/** Outcome of a mock service call; `deals` is the next deal list when it succeeded. */
-export type ServiceResult = { ok: true; msg: string; deals: readonly Deal[] } | { ok: false; msg: string }
 
 export type ToastType = 'success' | 'error' | 'info'
 export type Toast = { id: number; msg: string; type: ToastType }

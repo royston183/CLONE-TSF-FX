@@ -31,6 +31,7 @@ export function FxLegTable({
   onSelect,
   onDragStart,
   onDragEnd,
+  emptyText,
 }: {
   legs: readonly Leg[]
   mcRef: string
@@ -41,6 +42,8 @@ export function FxLegTable({
   onSelect: (rfha: string) => void
   onDragStart: (e: DragEvent<HTMLTableRowElement>, leg: Leg) => void
   onDragEnd: () => void
+  /** The empty-state text: why there are no legs (WAITING FOR API), or no search match. */
+  emptyText: string
 }) {
   return (
     <div className="table-scroll">
@@ -120,7 +123,7 @@ export function FxLegTable({
           ) : (
             <tr>
               <td colSpan={14} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 24 }}>
-                No matching deal legs.
+                {emptyText}
               </td>
             </tr>
           )}

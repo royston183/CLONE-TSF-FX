@@ -4,7 +4,7 @@ import { useFloatingPanel } from './floating.ts'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-const TODAY = new Date(2026, 8, 28)
+const TODAY = new Date()
 
 /** The Invoice Date cell: a dd-mm-yyyy text box plus the legacy's fixed-position calendar trigger. */
 export function DateCell({ value, disabled, onChange }: { value: string; disabled: boolean; onChange: (value: string) => void }) {

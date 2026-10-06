@@ -1,116 +1,16 @@
-import {
-  COMMODITIES,
-  DEAL_SEED,
-  DEAL_STATUSES,
-  DEFAULT_CO_AREA,
-  ENTITIES,
-  FX_MODELS,
-  MC_SEED,
-  PARTNER_BANKS,
-  REGIONS,
-} from './data.ts'
-import { addDays, parseDate } from './format.ts'
-import type {
-  Deal,
-  DealSeed,
-  Entity,
-  Filters,
-  InvoiceLeg,
-  KpiFilter,
-  Kpis,
-  MasterContract,
-  McSeed,
-  PagerItem,
-  Region,
-  Sort,
-  SortKey,
-} from './types.ts'
+import { parseDate } from './format.ts'
+import type { Deal, Filters, KpiFilter, Kpis, PagerItem, Sort, SortKey } from './types.ts'
 
 /* ---------- reference lookups ---------- */
 
-export const entityOf = (code: string): Entity | undefined => ENTITIES.find((e) => e.code === code)
-export const regionOf = (id: string): Region | undefined => REGIONS.find((r) => r.id === id)
-/** The region's name, or the raw id when the region is unknown. */
-export const regionName = (id: string): string => regionOf(id)?.name ?? id
+/**
+ * The region's name. No region master is named for ZSGTSFR106 (source not exported), so the
+ * code is shown as it is.
+ */
+export const regionName = (id: string): string => id
 
 /** Status 21 (Ready for Settlement) and 22 (Settled) are the settled-side statuses. */
 export const statusIsSettled = (code: string): boolean => code === '21' || code === '22'
-
-/* ---------- building the dummy rows ---------- */
-
-export function buildMasterContracts(seed: readonly McSeed[] = MC_SEED): MasterContract[] {
-  return seed.map((s) => {
-    const m = FX_MODELS.find((x) => x.code === s.model)
-    const commodity = COMMODITIES.find((c) => c.code === s.comm)
-    if (!m || !commodity) throw new Error(`bad Master Contract seed ${s.ref}`)
-    const origin = m.entities[m.entities.length - 1] ?? ''
-    const mcDate = parseDate(s.mcDate)
-    const shipStart = addDays(mcDate, s.shipStartOff)
-    const shipEnd = addDays(shipStart, s.shipDur)
-    return {
-      mcRef: s.ref,
-      fxModel: s.model,
-      modelDesc: m.desc,
-      entities: m.entities,
-      currChain: m.curr,
-      originEntity: origin,
-      region: entityOf(origin)?.region ?? '',
-      commodityCode: s.comm,
-      commodityDesc: commodity.desc,
-      qty: s.qty,
-      mcDate,
-      amtUSD: s.amtUSD,
-      shipStart,
-      shipEnd,
-      portOfShipment: s.port.ship,
-      portOfDestination: s.port.dest,
-    }
-  })
-}
-
-export function buildDeals(mcs: readonly MasterContract[], seed: readonly DealSeed[] = DEAL_SEED): Deal[] {
-  return seed.map((s, i) => {
-    const mc = mcs.find((m) => m.mcRef === s.mc)
-    const st = DEAL_STATUSES.find((x) => x.code === s.stat)
-    if (!mc || !st) throw new Error(`bad Deal ID seed ${s.id}`)
-    const trd = parseDate(s.trd)
-    const val = parseDate(s.val)
-    const createdOn = addDays(trd, -1)
-    const changed = s.stat !== '01'
-    return {
-      dealId: s.id,
-      dealType: 'FX1',
-      subType: 'D1',
-      dealDesc: `${mc.commodityDesc} deal under ${mc.mcRef} (${mc.fxModel})`,
-      shortDesc: `${mc.commodityDesc.slice(0, 12)} ${s.id.slice(-4)}`,
-      mcRef: s.mc,
-      fxModel: mc.fxModel,
-      modelDesc: mc.modelDesc,
-      origin: mc.originEntity,
-      region: mc.region,
-      status: s.stat,
-      statusDesc: st.desc,
-      confirm: changed,
-      tradeDate: trd,
-      valueDate: val,
-      revisedEndDate: statusIsSettled(s.stat) ? val : null,
-      coArea: s.co,
-      partner: PARTNER_BANKS[s.bank] ?? '',
-      plAmt: s.pl,
-      plCurr: 'USD',
-      plRate: +(1 + (i % 7) * 0.013).toFixed(4),
-      utiAmt: s.uti,
-      fixingDay: addDays(val, -5),
-      spot: s.spot,
-      createdBy: i % 2 === 0 ? 'TINAKSHAYM' : 'AERAHULY',
-      createdDate: createdOn,
-      createdTime: `${String(8 + (i % 9)).padStart(2, '0')}:${String((i * 11) % 60).padStart(2, '0')}:00`,
-      changedBy: changed ? (i % 2 === 0 ? 'AERAHULY' : 'TINAKSHAYM') : '',
-      changedDate: changed ? addDays(createdOn, 1 + (i % 4)) : null,
-      changedTime: changed ? `${String(9 + (i % 8)).padStart(2, '0')}:${String((i * 17) % 60).padStart(2, '0')}:00` : '',
-    }
-  })
-}
 
 export const dealsForMc = (deals: readonly Deal[], mcRef: string): Deal[] => deals.filter((d) => d.mcRef === mcRef)
 
@@ -139,7 +39,8 @@ export const DEFAULT_FILTERS: Filters = {
   status: 'ALL',
   region: 'ALL',
   entity: 'ALL',
-  co: DEFAULT_CO_AREA,
+  // The CO Area list had a hard-coded default (1000); with no master there is no default.
+  co: '',
   dateFrom: '',
   dateTo: '',
   layout: 'DEFAULT',
@@ -262,30 +163,3 @@ export function shiftMonth(year: number, month: number, delta: number): { year: 
 export const daysInMonth = (year: number, month: number): number => new Date(year, month + 1, 0).getDate()
 /** Blank cells before the 1st (the grid starts on Sunday). */
 export const leadingBlanks = (year: number, month: number): number => new Date(year, month, 1).getDay()
-
-/* ---------- invoice drill-down ---------- */
-
-/**
- * One invoice per leg of the Entity String. The first leg is invoiced at the utilised amount;
- * each onward leg adds a small, increasing trade markup on the running amount.
- */
-export function invoiceLegs(deal: Deal, mc: MasterContract): InvoiceLeg[] {
-  const legs = mc.entities.length - 1
-  const base = deal.utiAmt
-  let cumulative = base
-  const rows: InvoiceLeg[] = []
-  for (let i = 0; i < legs; i++) {
-    const markupPct = 0.001 + i * 0.0012
-    const markupAmt = i === 0 ? 0 : cumulative * markupPct
-    cumulative = i === 0 ? base : cumulative + markupAmt
-    rows.push({
-      leg: `T${i + 1}${i === legs - 1 ? ' (final)' : ''}`,
-      seller: mc.entities[i] ?? '',
-      buyer: mc.entities[i + 1] ?? '',
-      curr: mc.currChain[i + 1] ?? '',
-      amt: cumulative,
-      markup: i === 0 ? null : markupAmt,
-    })
-  }
-  return rows
-}

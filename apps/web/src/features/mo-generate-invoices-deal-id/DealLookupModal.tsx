@@ -1,10 +1,9 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
-import { statusText } from './format.ts'
 import { dealLookupText, searchRows } from './logic.ts'
-import type { Deal } from './types.ts'
+import type { DealListRow } from './types.ts'
 
-/** "View Deals": the legacy #dealLookupModal, a searchable list of all Deal IDs. */
-export function DealLookupModal({ deals, onClose, onPick }: { deals: Record<string, Deal>; onClose: () => void; onPick: (id: string) => void }) {
+/** "View Deals": the legacy #dealLookupModal, a searchable list of the Deal IDs (ZSGTSFTR_DEALID). */
+export function DealLookupModal({ deals, reason, onClose, onPick }: { deals: DealListRow[]; reason: string; onClose: () => void; onPick: (id: string) => void }) {
   const [q, setQ] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -12,7 +11,7 @@ export function DealLookupModal({ deals, onClose, onPick }: { deals: Record<stri
     inputRef.current?.focus()
   }, [])
 
-  const rows = useMemo(() => searchRows(Object.values(deals).map((d) => ({ ...d, __text: dealLookupText(d) })), q, ['__text']), [deals, q])
+  const rows = useMemo(() => searchRows(deals.map((d) => ({ ...d, __text: dealLookupText(d) })), q, ['__text']), [deals, q])
 
   return (
     <div className="modal-overlay open" role="dialog" aria-modal="true" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -42,7 +41,7 @@ export function DealLookupModal({ deals, onClose, onPick }: { deals: Record<stri
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="empty">
-                      No matching Deal IDs found.
+                      {reason ? `Deal IDs (ZSGTSFTR_DEALID) unavailable: ${reason}` : 'No matching Deal IDs found.'}
                     </td>
                   </tr>
                 ) : (
@@ -54,7 +53,7 @@ export function DealLookupModal({ deals, onClose, onPick }: { deals: Record<stri
                       <td>{d.dealRef}</td>
                       <td>{d.modelId}</td>
                       <td>{d.entityString}</td>
-                      <td>{statusText(d.status)}</td>
+                      <td>{d.statusLabel}</td>
                     </tr>
                   ))
                 )}

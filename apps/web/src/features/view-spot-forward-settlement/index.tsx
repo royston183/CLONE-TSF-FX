@@ -1,30 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO } from '../../shared/fx/logo.ts'
+import { ACTION_WAITING, loadCompanies, loadWorklistReason, type Option } from './api.ts'
 import { DatePicker } from './DatePicker.tsx'
 import { DealTable } from './DealTable.tsx'
-import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, INITIAL_DOC_COUNTER, NAMES, seedDeals } from './data.ts'
+import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, NAMES } from './data.ts'
 import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_SORT,
   PAGE_SIZES,
-  PDF_UNAVAILABLE_MESSAGE,
   REFRESHED_MESSAGE,
-  actionMessage,
   actionState,
   clampPage,
-  companyOptions,
   computeKpis,
   dealCountLabel,
   defaultFilters,
   filterDeals,
-  isdMessage,
   nextSort,
   pageRange,
   pageSlice,
   pageWindow,
-  postDeals,
   readyMessage,
   selectedDeals,
   setPageSelected,
@@ -38,7 +34,7 @@ import './view-spot-forward-settlement.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './view-spot-forward-settlement.dark.css'
-import type { ActionKind, Filters, FiDocWhich, IsdKind, KpiKey, Sort, SortKey, Status } from './types.ts'
+import type { ActionKind, Deal, Filters, FiDocWhich, IsdKind, KpiKey, Sort, SortKey, Status } from './types.ts'
 
 const TOAST_MS = 3600
 
@@ -56,12 +52,14 @@ type DatePick = 'from' | 'to'
  * View Spot-Forward Deals Settlement (ZSGTSFR062 / ZSGTSF_RBANKSETTLE_FX), converted from
  * legacy/view-spot-forward-settlement.html.
  *
- * UI only: the deals are the demo data in data.ts, Test Run and Post just change local state.
- * No SAP or middleware call is made from this page.
+ * Company codes are T001; the ZSGTSFV_FX worklist and every action wait for an API (api.ts).
+ * No sample data: an empty list says why.
  */
 export default function ViewSpotForwardSettlement() {
-  const [deals, setDeals] = useState(seedDeals)
-  const [docCounter, setDocCounter] = useState(INITIAL_DOC_COUNTER)
+  // ZSGTSFV_FX worklist: WAITING FOR API (api.ts), so no deal is ever listed — never seed data.
+  const [deals] = useState<Deal[]>([])
+  const [companies, setCompanies] = useState<Option[]>([])
+  const [worklistReason, setWorklistReason] = useState('Loading from SAP…')
   const [filters, setFilters] = useState<Filters>(() => defaultFilters(DEFAULT_DATE_FROM, DEFAULT_DATE_TO))
   const [kpi, setKpi] = useState<KpiKey>(null)
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT)
@@ -103,7 +101,7 @@ export default function ViewSpotForwardSettlement() {
   const chosen = selectedDeals(deals, selected)
   const buttons = actionState(chosen.length)
   const range = pageRange(current, pageSize, filtered.length)
-  const companies = useMemo(() => companyOptions(seedDeals(), NAMES), [])
+  const emptyText = deals.length ? 'No deals match the current filters.' : worklistReason
   const dealByRfha = (rfha: string | null) => deals.find((d) => d.rfha === rfha) ?? null
 
   // ---------------------------------------------------- global listeners
@@ -135,9 +133,29 @@ export default function ViewSpotForwardSettlement() {
     }
   }, [])
 
+  /** T001 (names filled in place into NAMES.company) and the worklist reason. */
+  const load = useCallback(async (signal?: AbortSignal) => {
+    const [comp, reason] = await Promise.all([loadCompanies(signal), loadWorklistReason(signal)])
+    const list = comp.state === 'ok' ? comp.value : []
+    for (const k of Object.keys(NAMES.company)) delete NAMES.company[k]
+    for (const c of list) NAMES.company[c.value] = c.title
+    setCompanies(list)
+    const why = comp.state === 'ok' ? reason : `${reason} ${comp.reason}`
+    setWorklistReason(why)
+    return why
+  }, [])
+
   useEffect(() => {
-    showToast(readyMessage(filtered.length))
-    return () => clearTimeout(toastTimer.current)
+    const ctl = new AbortController()
+    load(ctl.signal)
+      .then((why) => showToast(deals.length ? readyMessage(filtered.length) : why))
+      .catch((e: unknown) => {
+        if ((e as { name?: string } | null)?.name !== 'AbortError') console.warn('[bank-settle-fx] load failed', e)
+      })
+    return () => {
+      ctl.abort()
+      clearTimeout(toastTimer.current)
+    }
     // Once, on first render, as the original's init() did.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -165,16 +183,18 @@ export default function ViewSpotForwardSettlement() {
   const onSort = (key: SortKey) => setSort((s) => nextSort(s, key))
 
   const refresh = () => {
-    setDeals(seedDeals())
     setSelected(new Set())
     resetFilters()
-    showToast(REFRESHED_MESSAGE)
+    load()
+      .then((why) => showToast(deals.length ? REFRESHED_MESSAGE : why))
+      .catch(() => showToast('Refresh failed — SAP could not be read.', 'error'))
   }
 
   const runIsd = (kind: IsdKind) => {
     setIsdOpen(false)
     const d = chosen[0]
-    if (d) showToast(isdMessage(kind, d.dealId), 'success')
+    // Adobe Forms via FP_* have no API: nothing is printed or generated.
+    if (d) showToast(kind === 'print' ? ACTION_WAITING.isdPrint : ACTION_WAITING.isdPdf, 'error')
   }
 
   const openLetter = () => {
@@ -190,17 +210,9 @@ export default function ViewSpotForwardSettlement() {
   }
 
   const confirmAction = () => {
-    const list = chosen
     setAction((a) => ({ ...a, open: false }))
-    if (action.kind === 'test') {
-      showToast(actionMessage('test', list.length), 'success')
-      return
-    }
-    const result = postDeals(deals, selected, docCounter)
-    setDeals(result.deals)
-    setDocCounter(result.counter)
-    setSelected(new Set())
-    showToast(actionMessage('post', list.length), 'success')
+    // RFTBBB00 / TBB1 has no API: no document is created and no deal changes.
+    showToast(action.kind === 'test' ? ACTION_WAITING.test : ACTION_WAITING.post, 'error')
   }
 
   const statusOptions: { value: Status | 'ALL'; label: string }[] = [
@@ -405,6 +417,7 @@ export default function ViewSpotForwardSettlement() {
 
           <DealTable
             rows={rows}
+            emptyText={emptyText}
             selected={selected}
             sort={sort}
             onSort={onSort}
@@ -487,7 +500,7 @@ export default function ViewSpotForwardSettlement() {
         deal={dealByRfha(letterRfha)}
         onClose={() => setLetterOpen(false)}
         onPrint={() => window.print()}
-        onDownload={() => showToast(PDF_UNAVAILABLE_MESSAGE)}
+        onDownload={() => showToast(ACTION_WAITING.letterPdf, 'error')}
       />
       <ActionModal
         open={action.open}

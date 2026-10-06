@@ -6,8 +6,8 @@ import type { Deal, DragKind, DragState, DocPreview } from './types.ts'
 const DASH = <span className="muted-dash">{'–'}</span>
 const PENDING = <span className="doc-link-pending">not posted</span>
 
-export function StatusBadge({ status }: { status: number }) {
-  const si = statusInfo(status)
+export function StatusBadge({ deal }: { deal: Deal }) {
+  const si = statusInfo(deal.status, deal.statusCode, deal.statusText)
   return (
     <span className={`status-cell ${si.cls}`}>
       <span className="dot"></span>
@@ -157,7 +157,7 @@ export function FxTable({
         <tbody>
           {deal.top.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={10}>No FX deal legs found for this Deal ID.</td>
+              <td colSpan={10}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.top.map((r, idx) => {
@@ -239,7 +239,7 @@ export function InvTable({
         <tbody>
           {deal.inv.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={10}>No trade invoice legs found for this Deal ID.</td>
+              <td colSpan={10}>{deal.invWaiting ?? 'No trade invoice legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.inv.map((r, idx) => {

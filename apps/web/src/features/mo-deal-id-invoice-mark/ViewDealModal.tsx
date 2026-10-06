@@ -1,5 +1,5 @@
 import { formatAmount, formatRate } from './format.ts'
-import { buildViewDealData } from './logic.ts'
+import { WAITING_VIEW_DEAL, buildViewDealData } from './logic.ts'
 import type { DealRow, FxRow, InvoiceRow } from './types.ts'
 
 function DealField({ label, value, sub, wide, status }: { label: string; value: string; sub?: string; wide?: boolean; status?: boolean }) {
@@ -204,7 +204,7 @@ export function ViewDealModal({
             <section className="deal-section">
               <div className="deal-section-head">
                 <span>FX Deals</span>
-                <span className="deal-section-meta">{detail.fxRows.length} transaction(s)</span>
+                <span className="deal-section-meta">{detail.fxRows.length ? `${detail.fxRows.length} transaction(s)` : WAITING_VIEW_DEAL}</span>
               </div>
               <FxDealsTable rows={detail.fxRows} onOpenTxn={onOpenTxn} />
             </section>
@@ -212,7 +212,7 @@ export function ViewDealModal({
             <section className="deal-section">
               <div className="deal-section-head">
                 <span>Invoice Planned / Invoice Amount</span>
-                <span className="deal-section-meta">{detail.invoiceRows.length} line(s)</span>
+                <span className="deal-section-meta">{detail.invoiceRows.length ? `${detail.invoiceRows.length} line(s)` : WAITING_VIEW_DEAL}</span>
               </div>
               <InvoiceTable rows={detail.invoiceRows} />
             </section>

@@ -1,6 +1,7 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { DEAL_LIBRARY, INITIAL_DOC_COUNTER } from './data.ts'
+import { ACTION_WAITING, INVOICE_WAITING, LEG_VIEW_COLUMNS, gateOutcome, legsWaitingReason, missingColumns, normalizeDealId, toDeal } from './api.ts'
+import { DEAL_LIBRARY, INITIAL_DOC_COUNTER } from './fixtures.ts'
 import { fiscalYear, fmtAmt, fmtMoney, fmtRate } from './format.ts'
 import {
   accountingCompleted,
@@ -12,7 +13,6 @@ import {
   initiateSettlement,
   invoiceEntry,
   isRowDraggable,
-  loadDeal,
   pendingPostAll,
   postAllConfirm,
   postFxDeal,
@@ -24,11 +24,7 @@ import {
 } from './logic.ts'
 import type { Deal } from './types.ts'
 
-const fresh = (): Deal => {
-  const r = loadDeal(DEAL_LIBRARY, 'tsf-9081')
-  if (!r.ok) throw new Error(r.message)
-  return r.deal
-}
+const fresh = (): Deal => structuredClone(DEAL_LIBRARY['TSF-9081']!)
 const initiated = (): Deal => initiateSettlement(fresh()).deal
 const fxPosted = (): Deal => postFxDeal(initiated(), docCounter(INITIAL_DOC_COUNTER)).deal
 const allPosted = (): Deal => postAllConfirm(fxPosted(), docCounter(1900020001)).deal
@@ -50,35 +46,11 @@ describe('docCounter', () => {
 })
 
 describe('statusInfo', () => {
-  it('maps 10/20/22 and anything beyond', () => {
-    strictEqual(statusInfo(10).cls, 'st-confirmed')
-    strictEqual(statusInfo(20).label, '20 · Settlement Initiated')
-    strictEqual(statusInfo(22).cls, 'st-complete')
-    strictEqual(statusInfo(25).cls, 'st-complete')
-  })
-})
-
-describe('loadDeal', () => {
-  it('requires an id', () => {
-    const r = loadDeal(DEAL_LIBRARY, '   ')
-    strictEqual(r.ok, false)
-    if (!r.ok) strictEqual(r.message, 'Enter a Deal ID to continue.')
-  })
-  it('reports an unknown id in upper case', () => {
-    const r = loadDeal(DEAL_LIBRARY, 'abc')
-    if (r.ok) throw new Error('expected failure')
-    strictEqual(r.message, "No Deal ID found for 'ABC'. Try TSF-9081.")
-  })
-  it('does not resolve inherited object keys', () => {
-    strictEqual(loadDeal(DEAL_LIBRARY, 'constructor').ok, false)
-  })
-  it('trims, upper-cases and returns a private copy', () => {
-    const a = loadDeal(DEAL_LIBRARY, '  tsf-9081 ')
-    if (!a.ok) throw new Error('expected success')
-    strictEqual(a.deal.dealId, 'TSF-9081')
-    strictEqual(a.deal.status, 10)
-    a.deal.top[0]!.doc1 = 'X'
-    strictEqual(DEAL_LIBRARY['TSF-9081']!.top[0]!.doc1, '')
+  it('colours by 20 / 22 and labels with the ZSGTSFTR_DEAL_ST text', () => {
+    strictEqual(statusInfo(2, '02', 'MO: FX Deals & MC Assignment Confirmed').cls, 'st-confirmed')
+    strictEqual(statusInfo(20, '20', 'Settlement Initiated').label, '20 · Settlement Initiated')
+    strictEqual(statusInfo(22, '22', 'Settlement Completed - Accounting').cls, 'st-complete')
+    strictEqual(statusInfo(30, '30', '').label, '30')
   })
 })
 
@@ -300,5 +272,41 @@ describe('content helpers', () => {
       { dc: 'Debit', account: 'OIL · Trade Receivable', amount: 'USD 5,000,000.00' },
       { dc: 'Credit', account: 'DMCC · Trade Revenue', amount: 'USD 5,000,000.00' },
     ])
+  })
+})
+
+describe('api (SAP header by key, legs and actions waiting)', () => {
+  it('maps ZSGTSFTR_DEALID + MAS_CON + DEAL_ST + TRADER rows, as served on 2026-10-06', () => {
+    const d = toDeal({
+      deal: { ZDEAL_ID: '7000000019', ZSUB_TYPE: 'FX1', ZDEAL_REF: '', ZS_DATE: '2026-10-05', ZE_DATE: '2026-11-07', ZMC_REF: '2000000032', ZTRD_CODE: 'C', ZTSF_MODEL: 'M033', ZDEAL_STAT: '01', ZDEAL_CURR_DESC: 'INR-INR-INR', ZFX_INV_MODEL: '' },
+      mc: { ZMC_REF_NO: '2000000032', ZMC_DESC: 'FX BLOTTER TEST - RICE M033 (OGA/OGA)', ZMC_DATE: '2026-10-01', ZSHIP_END: '2027-02-28', ZENT_DESC: 'OGA-OSIPL-DMCC', ZMOD_ID: 'M033', ZMOD_DESC: 'INR-INR-INR Forward' },
+      trader: { ZTCODE: 'C', ZTRADER: 'Nidhi S' },
+      statuses: [{ ZSUB_TYPE: 'FX2', ZDEAL_STAT: '01', ZDEAL_SDESC: 'FO: Option Deals Created' }, { ZSUB_TYPE: 'FX1', ZDEAL_STAT: '01', ZDEAL_SDESC: 'FO: FX Deals Created' }],
+      legsReason: 'L',
+    })
+    deepStrictEqual(
+      [d.dealId, d.dealStartDate, d.dealEndDate, d.mcRefNo, d.mcDate, d.shipEndDate, d.fxModelId, d.modelDesc, d.entityString, d.currencyString, d.traderCode, d.traderDesc, d.status, d.statusCode, d.statusText],
+      ['7000000019', '05.10.2026', '07.11.2026', '2000000032', '01.10.2026', '28.02.2027', 'M033', 'INR-INR-INR Forward', 'OGA-OSIPL-DMCC', 'INR-INR-INR', 'C', 'Nidhi S', 1, '01', 'FO: FX Deals Created'],
+    )
+    deepStrictEqual([d.top, d.inv, d.fxWaiting, d.invWaiting], [[], [], 'L', INVOICE_WAITING])
+  })
+  it('falls back to ZTSF_MODEL without an MC', () => {
+    const d = toDeal({ deal: { ZDEAL_ID: '1', ZTSF_MODEL: 'M021', ZDEAL_STAT: '20' }, mc: undefined, trader: undefined, statuses: [], legsReason: '' })
+    deepStrictEqual([d.fxModelId, d.modelDesc, d.mcDesc, d.status, d.statusText], ['M021', '', '', 20, ''])
+  })
+  it('normalises the typed Deal ID', () => strictEqual(normalizeDealId('  tsf-9081 '), 'TSF-9081'))
+  it('gates the FX legs on tsfvFx columns (as registered on 2026-10-06) and on ZSGTSFCDS_OPTION', () => {
+    // prettier-ignore
+    const served = ['BUKRS','RFHA','SAKTIV','SGSART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','DBLFZ','DELFZ','ZCOM_ID','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','OSPOT','OSWAP','OTOT_RATE']
+    deepStrictEqual(missingColumns(served, LEG_VIEW_COLUMNS), ['PRCTR', 'ZTSF_EXE_CO', 'ZTSF_MC_REF_NO', 'TXN_STATUS', 'ZTSF_DEAL_TYPE', 'EXT_STAT_DESC', 'ZTSF_DEAL_ID'])
+    strictEqual(legsWaitingReason(served).startsWith('WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve PRCTR'), true)
+    strictEqual(legsWaitingReason(LEG_VIEW_COLUMNS), 'WAITING FOR API — ZSGTSFCDS_OPTION (option legs) has no middleware resource.')
+  })
+  it('an action that would change the deal waits; a refusal keeps its message', () => {
+    const d = fresh()
+    deepStrictEqual(gateOutcome(d, initiateSettlement(d), ACTION_WAITING.initiate), { message: ACTION_WAITING.initiate, kind: 'error' })
+    const refused = postFxDeal(d, docCounter(1))
+    deepStrictEqual(gateOutcome(d, refused, ACTION_WAITING.postFx), refused.toast)
+    strictEqual(ACTION_WAITING.invPost, 'WAITING FOR ACTION API — Post Document (BAPI_ACC_DOCUMENT_POST, BAPI_TRANSACTION_COMMIT / _ROLLBACK, UPDATE ZSGTSFTR_TRD_POS) has no API yet. Nothing was posted to SAP.')
   })
 })

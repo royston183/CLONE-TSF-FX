@@ -1,10 +1,23 @@
-import { BANK_TYPES, DMS_DOC_TYPES, TRANSFER_TYPES } from './data.ts'
+import { OPTIONS_WAITING } from './api.ts'
 import { formatAmount } from './format.ts'
 import { diff1Amount, plAmount } from './logic.ts'
 import { ModalFrame } from './modal.tsx'
 import type { DmsDoc, FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
 
 type Base = { open: boolean; onClose: () => void }
+
+/**
+ * Bank type, transfer type and DMS doc type had hard-coded lists. Their SAP value helps
+ * (ZSGTSFTR_SET_FX / T012 / ZSGTSFTR_DEALDMS) are not exported, so they say so.
+ */
+const gatedOptions = <option value="">{OPTIONS_WAITING}</option>
+
+/** One empty-state row spanning the table. */
+const EmptyRow = ({ span, text }: { span: number; text: string }) => (
+  <tr className="empty-row">
+    <td colSpan={span}>{text}</td>
+  </tr>
+)
 
 const Cancel = ({ onClick, label = 'Cancel' }: { onClick: () => void; label?: string }) => (
   <button className="btn-cancel" type="button" onClick={onClick}>
@@ -60,7 +73,13 @@ export function AmendModal({
 
 // ------------------------------------------------------------------ Headsup (9004)
 
-export function HeadsupModal({ open, onClose, dealId, items }: Base & { dealId: string; items: readonly Headsup[] }) {
+export function HeadsupModal({
+  open,
+  onClose,
+  dealId,
+  items,
+  emptyText,
+}: Base & { dealId: string; items: readonly Headsup[]; emptyText: string }) {
   return (
     <ModalFrame
       open={open}
@@ -82,7 +101,7 @@ export function HeadsupModal({ open, onClose, dealId, items }: Base & { dealId: 
           <tbody>
             {items.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={3}>No reminders.</td>
+                <td colSpan={3}>{emptyText}</td>
               </tr>
             ) : (
               items.map((h) => (
@@ -109,7 +128,9 @@ export function DiffModal({
   spots,
   onSpot,
   onSave,
+  emptyText,
 }: Base & {
+  emptyText: string
   rows: readonly FxDeal[]
   spots: readonly string[]
   onSpot: (idx: number, value: string) => void
@@ -147,6 +168,7 @@ export function DiffModal({
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 ? <EmptyRow span={8} text={emptyText} /> : null}
             {rows.map((r, idx) => (
               <tr key={r.rfha}>
                 <td className="left">
@@ -194,7 +216,8 @@ export function DmsModal({
   dealId,
   docs,
   onEdit,
-}: Base & { dealId: string; docs: readonly DmsDoc[]; onEdit: () => void }) {
+  emptyText,
+}: Base & { dealId: string; docs: readonly DmsDoc[]; onEdit: () => void; emptyText: string }) {
   return (
     <ModalFrame
       open={open}
@@ -224,7 +247,7 @@ export function DmsModal({
           <tbody>
             {docs.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={4}>No documents uploaded yet.</td>
+                <td colSpan={4}>{emptyText}</td>
               </tr>
             ) : (
               docs.map((d, i) => (
@@ -284,9 +307,7 @@ export function EditDmsModal({
       <div className="ffield" style={{ marginBottom: '12px' }}>
         <label htmlFor="editDmsType">Doc Type</label>
         <select id="editDmsType" value={docType} onChange={(e) => onDocType(e.target.value)}>
-          {DMS_DOC_TYPES.map((t) => (
-            <option key={t}>{t}</option>
-          ))}
+          {gatedOptions}
         </select>
       </div>
       <div className="ffield">
@@ -306,7 +327,13 @@ export function EditDmsModal({
 
 // ------------------------------------------------------------------ View P&L (9008)
 
-export function PlModal({ open, onClose, fxDeals, currencyString }: Base & { fxDeals: readonly FxDeal[]; currencyString: string }) {
+export function PlModal({
+  open,
+  onClose,
+  fxDeals,
+  currencyString,
+  emptyText,
+}: Base & { fxDeals: readonly FxDeal[]; currencyString: string; emptyText: string }) {
   return (
     <ModalFrame
       open={open}
@@ -337,6 +364,7 @@ export function PlModal({ open, onClose, fxDeals, currencyString }: Base & { fxD
             </tr>
           </thead>
           <tbody>
+            {fxDeals.length === 0 ? <EmptyRow span={13} text={emptyText} /> : null}
             {fxDeals.map((r) => {
               const pl = plAmount(fxDeals, r)
               return (
@@ -372,7 +400,13 @@ export function PlModal({ open, onClose, fxDeals, currencyString }: Base & { fxD
 
 // ------------------------------------------------------------------ View Trade Invoice
 
-export function ViewInvModal({ open, onClose, dealId, rows }: Base & { dealId: string; rows: readonly TradeInvoice[] }) {
+export function ViewInvModal({
+  open,
+  onClose,
+  dealId,
+  rows,
+  emptyText,
+}: Base & { dealId: string; rows: readonly TradeInvoice[]; emptyText: string }) {
   return (
     <ModalFrame
       open={open}
@@ -397,6 +431,7 @@ export function ViewInvModal({ open, onClose, dealId, rows }: Base & { dealId: s
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 ? <EmptyRow span={7} text={emptyText} /> : null}
             {rows.map((r) => (
               <tr key={r.leg}>
                 <td className="left">
@@ -436,8 +471,8 @@ export function FxPostModal({
   onField: <K extends keyof FxPostForm>(key: K, value: FxPostForm[K]) => void
   onAction: (kind: PostKind) => void
 }) {
-  const bankOptions = BANK_TYPES.map((b) => <option key={b}>{b}</option>)
-  const trfOptions = TRANSFER_TYPES.map((t) => <option key={t}>{t}</option>)
+  const bankOptions = gatedOptions
+  const trfOptions = gatedOptions
   return (
     <ModalFrame
       open={open}

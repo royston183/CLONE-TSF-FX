@@ -5,7 +5,6 @@ import type {
   DetailCell,
   FiDocWhich,
   Filters,
-  IsdKind,
   KpiKey,
   Kpis,
   Names,
@@ -52,18 +51,6 @@ export function matchesDeal(d: Deal, f: Filters, kpi: KpiKey, names: Names): boo
 
 export function filterDeals(deals: readonly Deal[], f: Filters, kpi: KpiKey, names: Names): Deal[] {
   return deals.filter((d) => matchesDeal(d, f, kpi, names))
-}
-
-/** Distinct company codes in first-seen order, for the Company Code dropdown. */
-export function companyOptions(deals: readonly Deal[], names: Names): { value: string; label: string }[] {
-  const seen = new Set<string>()
-  const out: { value: string; label: string }[] = []
-  for (const d of deals) {
-    if (seen.has(d.bukrs)) continue
-    seen.add(d.bukrs)
-    out.push({ value: d.bukrs, label: `${d.bukrs} · ${names.company[d.bukrs] ?? d.bukrs}` })
-  }
-  return out
 }
 
 // -------------------------------------------------------------------- sorting
@@ -178,43 +165,10 @@ export function actionState(count: number): ActionState {
 
 // -------------------------------------------------------- Test run / Post
 
-/**
- * Post (TBB1): every selected deal becomes Settled and gets two new document numbers. The
- * number source is injected (`counter` is the next free number) so the result is deterministic.
- */
-export function postDeals(
-  deals: readonly Deal[],
-  selected: ReadonlySet<string>,
-  counter: number,
-): { deals: Deal[]; counter: number } {
-  let next = counter
-  const out = deals.map((d) => {
-    if (!selected.has(d.rfha)) return d
-    const doc1 = String(next++)
-    const doc2 = String(next++)
-    return { ...d, status: 'SETTLED' as const, doc1, doc2 }
-  })
-  return { deals: out, counter: next }
-}
-
 export function readyMessage(count: number): string {
   return `Ready. ${count} deal(s) loaded for the selected company codes and value date range.`
 }
 
-export function isdMessage(kind: IsdKind, dealId: string): string {
-  return kind === 'print'
-    ? `India Settlement Document for ${dealId} sent to printer (demo).`
-    : `India Settlement Document PDF generated for ${dealId} (demo).`
-}
-
-export function actionMessage(kind: ActionKind, count: number): string {
-  return kind === 'test'
-    ? `Test run completed — 0 document(s) posted (simulation) for ${count} deal(s).`
-    : `Posting submitted — ${count * 2} accounting document(s) created for ${count} deal(s) (demo).`
-}
-
-export const PDF_UNAVAILABLE_MESSAGE =
-  'PDF generation uses Adobe Document Services (form ZSGTSFAF_IND_SETT_DOC) — not available in this offline demo.'
 export const REFRESHED_MESSAGE = 'Data refreshed.'
 
 export function actionTitles(kind: ActionKind): { title: string; subtitle: string; confirm: string } {

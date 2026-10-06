@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { loadScreen } from './api.ts'
+import { loadScreen, type DataSource } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { MODELS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
 import { DealWorkspace } from './DealWorkspace.tsx'
@@ -63,14 +62,17 @@ function cellDisplay(row: DealRow, col: Column): { text: string; empty: boolean 
  * legacy/ZSGTSF_RDEAL_ID_INV_STAT_NO_TXN_UNDERLINE.html.
  *
  * The Deal IDs come from ZSGTSFTR_DEALID through the SLC middleware (api.ts), read-only as in
- * the report; the seed rows in data.ts are shown only when it cannot be reached. The Deal ID
- * workspace (FX legs, planned invoices, P&L, DMS) still runs on the screen's own values: its
- * sources are ZSGTSFCDS_FX / _OPTION, not in MySQL yet.
+ * the report. Nothing falls back to sample data: when the middleware cannot be read the list
+ * stays empty and says WAITING FOR DEAL ID API. The Deal ID workspace (ZSGTSF_PDEAL_ID_ANALYS,
+ * not in this export) shows the Deal ID / MC fields; its FX legs, planned invoices and P&L say
+ * WAITING FOR API, and its popups WAITING FOR ACTION API.
  */
 export default function MoDealIdInvoiceStatus() {
   const [rows, setRows] = useState<DealRow[]>([])
-  /** Where the rows came from; 'dummy' means the middleware could not be reached. */
-  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Where the rows came from; 'unavailable' means ZSGTSFTR_DEALID could not be read. */
+  const [source, setSource] = useState<DataSource | 'loading'>('loading')
+  /** Why the list is empty, or which columns wait for an API. */
+  const [notes, setNotes] = useState<string[]>([])
   /** Bumped by Refresh, which re-reads MySQL. */
   const [generation, setGeneration] = useState(0)
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function MoDealIdInvoiceStatus() {
       .then((loaded) => {
         setRows(loaded.rows)
         setSource(loaded.source)
+        setNotes(loaded.notes)
       })
       .catch((error: unknown) => {
         if (!isAbort(error)) console.error('[fx] Deal ID invoice status failed to load', error)
@@ -181,7 +184,7 @@ export default function MoDealIdInvoiceStatus() {
             <div className="card-title">Deal ID List Report: Invoice Status</div>
             <div className="record-count">
               {sorted.length + (sorted.length === 1 ? ' record' : ' records')}
-              <SourceNote source={source} />
+              <SourceNote source={source} notes={notes} />
             </div>
             <div className="card-title-actions">
               <button className="icon-btn" type="button" title="Download CSV" onClick={downloadCsv}>
@@ -243,7 +246,7 @@ export default function MoDealIdInvoiceStatus() {
                 <option value="">Region</option>
                 {REGION_OPTIONS.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.id} {'\u2014'} {r.desc}
+                    {r.desc ? `${r.id} \u2014 ${r.desc}` : r.id}
                   </option>
                 ))}
               </select>
@@ -312,7 +315,7 @@ export default function MoDealIdInvoiceStatus() {
                 {pageRows.length === 0 ? (
                   <tr>
                     <td className="no-rows" colSpan={COLUMNS.length + 1}>
-                      No record found
+                      {source === 'unavailable' ? notes.join(' · ') : 'No record found'}
                     </td>
                   </tr>
                 ) : (
@@ -435,13 +438,8 @@ export default function MoDealIdInvoiceStatus() {
   )
 }
 
-/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
-function SourceNote({ source }: { source: MasterSource | 'loading' }) {
-  const text =
-    source === 'loading'
-      ? 'Loading from MySQL…'
-      : source === 'mysql'
-        ? 'ZSGTSFTR_DEALID · MySQL'
-        : 'Dummy data — the middleware could not be reached'
+/** Says where the rows came from, and which columns are waiting for an API. */
+function SourceNote({ source, notes }: { source: DataSource | 'loading'; notes: readonly string[] }) {
+  const text = source === 'loading' ? 'Loading from MySQL…' : source === 'sap' ? ['ZSGTSFTR_DEALID · MySQL', ...notes].join(' · ') : notes.join(' · ')
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

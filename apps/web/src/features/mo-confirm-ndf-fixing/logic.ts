@@ -1,10 +1,9 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The page never called an API — Match & Release and Correction
- * Required only changed its in-memory deal list — so deals live in component state for the
- * session.
+ * component only holds state. ZSGTSFR026's ABAP source is not exported, so there is no deal
+ * list and no action API yet (see api.ts); these rules run on whatever deals the screen holds.
  */
-import { STATUS, STATUSES, buildDeal, type Rng } from './data.ts'
+import { STATUS, STATUSES } from './data.ts'
 import { parseDMY } from './format.ts'
 import type { DropdownItem, Filters, NdfDeal, NdfStatus, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
@@ -62,25 +61,6 @@ export function filterDropdownItems(items: DropdownItem[], query: string): Dropd
   )
 }
 
-// ---------------------------------------------------------------- dummy data top-up
-
-/**
- * Guarantees that whatever Company Code + Fixing Date the user tests with, a handful of deals
- * (3–5, cycling through all three statuses) exist for it. Returns the same list when some do.
- */
-export function ensureDataForCriteria(deals: NdfDeal[], rng: Rng, coCode: string, fixingDateStr: string): NdfDeal[] {
-  const ccUpper = coCode.trim().toUpperCase()
-  const already = deals.some((d) => d.coCode.toUpperCase() === ccUpper && d.fixingDate === fixingDateStr)
-  if (already) return deals
-  const next = deals.slice()
-  const n = rng.rndInt(3, 5)
-  for (let i = 0; i < n; i++) {
-    const status = STATUSES[i % STATUSES.length] ?? STATUS.UNMATCHED
-    next.push(buildDeal(rng, next.length + rng.rndInt(1000, 999999), ccUpper, fixingDateStr, status))
-  }
-  return next
-}
-
 // ---------------------------------------------------------------- selection / filters / search / sort
 
 /**
@@ -133,6 +113,20 @@ const FILTER_FIELD: Record<keyof Filters, keyof NdfDeal> = {
   currency2: 'currency2',
   status: 'txnStatus',
   fixingDate: 'fixingDate',
+}
+
+/**
+ * The filter panel's options. The page filled them from its dummy lists; with no sample data they
+ * are the distinct values of the deals the screen holds (none until the list has an API), sorted.
+ * Transaction Status keeps the screen's three status texts.
+ */
+export function filterPanelOptions(deals: readonly NdfDeal[]): Record<keyof Filters, string[]> {
+  const out = {} as Record<keyof Filters, string[]>
+  for (const k of Object.keys(FILTER_FIELD) as Array<keyof Filters>) {
+    out[k] = [...new Set(deals.map((d) => String(d[FILTER_FIELD[k]])).filter(Boolean))].sort()
+  }
+  out.status = [...STATUSES]
+  return out
 }
 
 /** The filter panel: every select that is not on "All" must match exactly. */
@@ -240,30 +234,4 @@ export function statusClass(status: NdfStatus): string {
   if (status === STATUS.RELEASED) return 'status-released'
   if (status === STATUS.CORRECTION) return 'status-correction'
   return 'status-unmatched'
-}
-
-/** Match & Release: blank External Ref / MO Remarks keep what the deal already had. */
-export function matchReleaseDeal(
-  deals: NdfDeal[],
-  id: string,
-  externalRef: string,
-  internalRef: string,
-  moRemarks: string,
-): NdfDeal[] {
-  return deals.map((d) =>
-    d.id === id
-      ? {
-          ...d,
-          txnStatus: STATUS.RELEASED,
-          externalRef: externalRef || d.externalRef,
-          internalRef: internalRef || '',
-          moRemark: moRemarks || d.moRemark,
-        }
-      : d,
-  )
-}
-
-/** Correction Required sends the deal back to FO with the (required) MO remark. */
-export function markCorrectionRequired(deals: NdfDeal[], id: string, moRemarks: string): NdfDeal[] {
-  return deals.map((d) => (d.id === id ? { ...d, txnStatus: STATUS.CORRECTION, moRemark: moRemarks } : d))
 }

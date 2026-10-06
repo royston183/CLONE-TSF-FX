@@ -85,7 +85,7 @@ export default function FoNdfFixingErrorCorrection() {
     })
     return () => ctrl.abort()
   }, [])
-  const companies = companyHelp?.state === 'ok' ? companyHelp.value.map((c) => c.value) : []
+  const companies = companyHelp?.state === 'ok' ? companyHelp.value : []
 
   /* GET_DATA for the NDF Fixing Date (P_DATE); Refresh — and a real correction — run it again. */
   const worklistAbort = useRef<AbortController | null>(null)
@@ -241,8 +241,8 @@ export default function FoNdfFixingErrorCorrection() {
               >
                 <option value="">Company Code</option>
                 {companies.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                  <option key={c.value} value={c.value}>
+                    {c.label}
                   </option>
                 ))}
               </select>

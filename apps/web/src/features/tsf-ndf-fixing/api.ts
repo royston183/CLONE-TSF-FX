@@ -81,11 +81,15 @@ export function traderOptions(rows: readonly FxRow[]): Option[] {
     .map((r) => ({ value: txt(r, 'ZTCODE'), label: `${txt(r, 'ZTCODE')} - ${txt(r, 'ZTRADER')}` }))
 }
 
-/** T001 by code; the name rides along as the option title. */
+/** T001 by code, shown as "<code> - <name>". */
 export function companyOptions(rows: readonly { CompanyCode?: string; CompanyCodeName?: string }[]): Option[] {
   return rows
     .filter((r) => r.CompanyCode)
-    .map((r) => ({ value: String(r.CompanyCode), label: String(r.CompanyCode), title: String(r.CompanyCodeName ?? '').trim() }))
+    .map((r) => {
+      const code = String(r.CompanyCode)
+      const name = String(r.CompanyCodeName ?? '').trim()
+      return { value: code, label: name ? `${code} - ${name}` : code, title: name }
+    })
     .sort(sortBy((o) => o.value))
 }
 

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { COMPANIES } from './data.ts'
 import { DASH, fmtDate, fmtNum, fmtRate } from './format.ts'
 import { statusClass } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
@@ -23,7 +22,16 @@ function Leg({ side, amt, curr }: { side: Deal['bs1']; amt: number; curr: string
 }
 
 /** Transaction Details (RFHA hotspot -> TB_TRANSACTION_TO_DISPLAY). */
-export function TxnModal({ modal, deal }: { modal: Modal; deal: Deal | null }) {
+export function TxnModal({
+  modal,
+  deal,
+  companies,
+}: {
+  modal: Modal
+  deal: Deal | null
+  /** T001 code -> name. */
+  companies: Readonly<Record<string, string>>
+}) {
   const d = deal
   return (
     <Overlay id="txn-overlay" modal={modal}>
@@ -55,7 +63,7 @@ export function TxnModal({ modal, deal }: { modal: Modal; deal: Deal | null }) {
                 <Cell label="MC Reference No">{d.mcRef}</Cell>
                 <Cell label="Transaction No (RFHA)">{d.rfha}</Cell>
                 <Cell label="Company Code">
-                  {d.bukrs} · {COMPANIES[d.bukrs] ?? d.bukrs}
+                  {d.bukrs} · {companies[d.bukrs] ?? d.bukrs}
                 </Cell>
                 <Cell label="Counterparty">{d.counterparty}</Cell>
                 <Cell label="Trader">{d.trader}</Cell>

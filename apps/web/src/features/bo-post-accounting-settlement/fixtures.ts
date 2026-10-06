@@ -1,7 +1,8 @@
 /**
- * Dummy data, quarantined here. The legacy page ships a single worked example (Model M021,
+ * TEST FIXTURES ONLY (imported by logic.test.ts, never by the screen; the screen reads SAP via
+ * api.ts). Former dummy data. The legacy page ships a single worked example (Model M021,
  * 5,000 MT soybean oil, Master Contract MC-7001 -> Deal ID TSF-9081 -> invoices T1/T2/T3).
- * Nothing here is read from SAP; no API exists for this screen yet.
+ * Nothing here is read from SAP.
  */
 import type { Deal } from './types.ts'
 
@@ -28,6 +29,8 @@ export const DEAL_LIBRARY: Readonly<Record<string, Deal>> = {
     traderCode: 'T01',
     traderDesc: 'J. Fernandes',
     status: 10,
+    statusCode: '10',
+    statusText: 'Confirmed by MO',
     top: [
       {
         entity: 'OIL', dealType: 'D1', rfha: '5000011041', buyCurr: 'INR', buyAmt: 415500000.0, sellCurr: 'USD',
