@@ -2,37 +2,28 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
-import {
-  CO_AREAS,
-  CSV_FILE_NAME,
-  DEFAULT_PAGE_SIZE,
-  EMPTY_TEXT,
-  ENTITIES,
-  LAYOUTS,
-  MAIL_SUCCESS_TEXT,
-  PAGE_SIZES,
-  REGIONS,
-  STATUSES,
-  TOAST_MS,
-} from './data.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadScreen } from './api.ts'
+import { CSV_FILE_NAME, DEFAULT_PAGE_SIZE, EMPTY_TEXT, LAYOUTS, LOADING_TEXT, PAGE_SIZES, TOAST_MS, WAITING_MAIL } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealDropdown } from './DealDropdown.tsx'
 import { DealTable } from './DealTable.tsx'
 import { isoToDMY } from './format.ts'
 import {
   DEFAULT_SORT,
+  EMPTY_DATA,
   buildCsv,
   buildMailPlan,
-  buildMockTables,
-  fetchDeals,
+  coAreaOptions,
   filterSortRows,
   getMasterContract,
   initialFilters,
   nextSort,
   pageCountOf,
   pruneSelection,
+  regionOptions,
   resultCountLabel,
-  sendHeadsUpMails,
+  selectRows,
   sendMailState,
   sortForLayout,
   visibleColumns,
@@ -43,18 +34,57 @@ import './inr-heads-up-reminder.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './inr-heads-up-reminder.dark.css'
-import type { ColumnKey, Filters, Sort } from './types.ts'
+import type { ColumnKey, Filters, ScreenData, Sort } from './types.ts'
 
 /**
  * MO: INR Head-Ups Reminder (SAP program ZSGTSF_RDEAL_ID_SETT, tcode ZSGTSFR061), converted
  * from legacy/inr-heads-up-reminder.html.
  *
- * UI only: the screen runs on the dummy Master Contracts, Deal IDs and legs in data.ts and
- * calls no SAP, middleware or API. Send Mail only plans the mails and shows the "Email Sent"
- * toast; nothing is sent.
+ * Runs on SAP's ZSGTSFTR_DEALID and its masters through the SLC middleware (api.ts); the
+ * report's selection and filters are reproduced in logic.ts. Read-only, like the report.
+ * ZSGTSFCDS_FX / _OPTION are not served, so utilization, Fixing Day and Bank name wait for an
+ * API (banner). Send Mail and the Deal ID hotspot (Trade Invoice report) have no API: they say
+ * WAITING FOR ACTION API and send / post nothing. AUTHORITY-CHECK C_PROJ_KOK: WAITING FOR AUTH,
+ * nothing is refused.
  */
 export default function InrHeadsUpReminder() {
-  const [tables, setTables] = useState(buildMockTables)
+  const [tables, setTables] = useState<ScreenData>(EMPTY_DATA)
+  /** 'loading' until the first answer; 'unavailable' carries the reason in `loadError`. */
+  const [source, setSource] = useState<'loading' | 'sap' | 'unavailable'>('loading')
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const loadCtl = useRef<AbortController | null>(null)
+  const load = useCallback(() => {
+    loadCtl.current?.abort()
+    const ctl = new AbortController()
+    loadCtl.current = ctl
+    setSource('loading')
+    setLoadError(null)
+    loadScreen(ctl.signal)
+      .then((res) => {
+        if (ctl.signal.aborted) return
+        if (res.source === 'sap') {
+          setTables(res.data)
+          setNotice(res.notice)
+          setSource('sap')
+        } else {
+          setTables(EMPTY_DATA)
+          setNotice(null)
+          setLoadError(res.reason)
+          setSource('unavailable')
+        }
+      })
+      .catch((e: unknown) => {
+        if (isAbort(e) || ctl.signal.aborted) return
+        setTables(EMPTY_DATA)
+        setLoadError(String(e))
+        setSource('unavailable')
+      })
+  }, [])
+  useEffect(() => {
+    load()
+    return () => loadCtl.current?.abort()
+  }, [load])
 
   // The SAP "selection" and the table view state
   const [filters, setFilters] = useState<Filters>(initialFilters)
@@ -88,16 +118,20 @@ export default function InrHeadsUpReminder() {
   useEffect(() => () => clearTimeout(toastTimer.current), [])
 
   // The SAP selection re-run on every filter change.
-  const { rows, error } = useMemo(() => fetchDeals(tables, filters), [tables, filters])
+  const rows = useMemo(() => selectRows(tables, filters), [tables, filters])
+  const regions = useMemo(() => regionOptions(tables.entities), [tables])
+  const coAreas = useMemo(() => coAreaOptions(tables.rules), [tables])
   const cols = useMemo(() => visibleColumns(layout), [layout])
   const list = useMemo(() => filterSortRows(rows, layout, search, sort), [rows, layout, search, sort])
-  const plan = useMemo(() => buildMailPlan(rows), [rows])
+  const plan = useMemo(() => buildMailPlan(rows, tables.rules, tables.indicators), [rows, tables])
+  /** The banner: why part of the screen has no data (FX / option legs not served). */
+  const error = notice
 
   const total = list.length
   const pageCount = pageCountOf(total, pageSize)
   const currentPage = Math.min(page, pageCount)
   const pageRows = list.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  const mail = sendMailState(error, plan)
+  const mail = sendMailState(loadError, plan)
 
   // Escape closes every popup.
   const { close: closeMc } = mcModal
@@ -120,7 +154,7 @@ export default function InrHeadsUpReminder() {
     filtersRef.current = next
     setFilters(next)
     setPage(1)
-    setSelectedId((cur) => pruneSelection(cur, fetchDeals(tables, next).rows))
+    setSelectedId((cur) => pruneSelection(cur, selectRows(tables, next)))
   }
 
   const resetScreen = () => {
@@ -142,7 +176,7 @@ export default function InrHeadsUpReminder() {
     mcModal.hide()
     invoiceModal.hide()
     mailModal.hide()
-    setTables(buildMockTables())
+    load()
     resetScreen()
   }
 
@@ -164,13 +198,13 @@ export default function InrHeadsUpReminder() {
   }
 
   const openMailConfirm = () => {
-    if (error || !plan.deals.length) return
+    if (loadError || !plan.deals.length) return
     mailModal.open()
   }
+  /** FORM send_email: the mail plan is validated as before, but the ZSGTSFCL_CLASS mail methods have no API. */
   const confirmSendMail = () => {
-    const res = sendHeadsUpMails(rows)
     mailModal.close()
-    if (res.texts.includes(MAIL_SUCCESS_TEXT)) showToast('Email Sent')
+    showToast(WAITING_MAIL, true)
   }
 
   const exportCsv = () => {
@@ -249,9 +283,9 @@ export default function InrHeadsUpReminder() {
                 onChange={(e) => commitFilters({ region: e.target.value })}
               >
                 <option value="">All regions</option>
-                {REGIONS.map((r) => (
+                {regions.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.id} - {r.name}
+                    {r.name ? `${r.id} - ${r.name}` : r.id}
                   </option>
                 ))}
               </select>
@@ -264,7 +298,7 @@ export default function InrHeadsUpReminder() {
                 onChange={(e) => commitFilters({ entity: e.target.value })}
               >
                 <option value="">All entities</option>
-                {ENTITIES.map((en) => (
+                {tables.entities.map((en) => (
                   <option key={en.code} value={en.code}>
                     {en.code} - {en.name}
                   </option>
@@ -282,7 +316,7 @@ export default function InrHeadsUpReminder() {
                 onChange={(e) => commitFilters({ status: e.target.value })}
               >
                 <option value="">All statuses</option>
-                {STATUSES.map((s) => (
+                {tables.statuses.map((s) => (
                   <option key={s.code} value={s.code}>
                     {s.code} - {s.sdesc}
                   </option>
@@ -297,7 +331,7 @@ export default function InrHeadsUpReminder() {
                 onChange={(e) => commitFilters({ coArea: e.target.value })}
               >
                 <option value="">Select CO Area</option>
-                {CO_AREAS.map((c) => (
+                {coAreas.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -362,9 +396,9 @@ export default function InrHeadsUpReminder() {
               onOpenMc={openMc}
               onOpenInvoice={openInvoice}
             />
-            <div className="empty-state" id="emptyState" style={{ display: total === 0 && !error ? 'block' : 'none' }}>
+            <div className="empty-state" id="emptyState" style={{ display: total === 0 ? 'block' : 'none' }}>
               <div className="big">&#128196;</div>
-              <span id="emptyText">{EMPTY_TEXT}</span>
+              <span id="emptyText">{source === 'loading' ? LOADING_TEXT : (loadError ?? EMPTY_TEXT)}</span>
             </div>
 
             <div className="table-footer">

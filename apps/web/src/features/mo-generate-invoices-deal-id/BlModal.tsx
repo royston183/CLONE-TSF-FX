@@ -6,10 +6,12 @@ import type { BlRow } from './types.ts'
 /** "View List of BLs": the legacy #blModal. Drag a selected BL row onto De-assign, or use the checkbox + button. */
 export function BlModal({
   rows,
+  reason,
   onClose,
   onDeassign,
 }: {
   rows: BlRow[]
+  reason: string
   onClose: () => void
   onDeassign: (index: number) => void
 }) {
@@ -23,7 +25,7 @@ export function BlModal({
   )
 
   const trySelect = (index: number) => {
-    if (rows[index]?.status === 'De-assigned') return
+    if (rows[index]?.locked) return
     setSelected(index)
   }
 
@@ -79,12 +81,19 @@ export function BlModal({
                 </tr>
               </thead>
               <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={14} className="empty">
+                      {reason || 'No BLs (ZSGTSFTR_BL / ZSGTSFTR_BL_RUSE) are assigned to this Deal ID.'}
+                    </td>
+                  </tr>
+                ) : null}
                 {filtered.map((r) => {
-                  const deassigned = r.status === 'De-assigned'
+                  const deassigned = r.locked
                   const isSelected = selected === r.index && !deassigned
                   return (
                     <tr
-                      key={r.blNo}
+                      key={`${r.tfNo}-${r.tfSplit}-${r.blNo}-${r.blSplit}-${r.reuse}`}
                       draggable={!deassigned}
                       className={`${deassigned ? 'bl-locked ' : ''}${isSelected ? 'selected' : ''}`}
                       onClick={() => trySelect(r.index)}
@@ -98,7 +107,7 @@ export function BlModal({
                       }}
                     >
                       <td className="select-cell">
-                        <input className="row-check" type="checkbox" checked={isSelected} disabled={deassigned} title={deassigned ? 'Already de-assigned' : undefined} onChange={() => trySelect(r.index)} onClick={(e) => e.stopPropagation()} />
+                        <input className="row-check" type="checkbox" checked={isSelected} disabled={deassigned} title={deassigned ? 'BL already carries an invoice type' : undefined} onChange={() => trySelect(r.index)} onClick={(e) => e.stopPropagation()} />
                       </td>
                       <td>{r.blNo}</td>
                       <td>{r.blDate}</td>
@@ -111,7 +120,7 @@ export function BlModal({
                       <td>{r.commodity}</td>
                       <td className="num">{money(r.qty, 2)}</td>
                       <td>
-                        <span className={`status-text ${r.status === 'Invoiced' ? 'status-ok' : deassigned ? '' : 'status-info'}`}>{r.status}</span>
+                        <span className={`status-text ${deassigned ? 'status-ok' : 'status-info'}`}>{r.status}</span>
                       </td>
                       <td>{r.invType}</td>
                       <td>{r.invDate}</td>

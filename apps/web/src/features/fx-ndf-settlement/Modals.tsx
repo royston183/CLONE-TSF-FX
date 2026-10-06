@@ -46,7 +46,8 @@ export function TransactionModal({ modal, row }: { modal: Modal; row: Deal | nul
               <DetailItem label="TSF Deal ID" value={row.ztsf_deal_id} />
               <DetailItem label="MC Reference No" value={row.ztsf_mc_ref_no} />
               <DetailItem label="Product Type" value={row.ltx} />
-              <DetailItem label="Transaction Type" value={`${row.sfhaart} - ${row.xtext}`} />
+              {/* ZSGTSFV_FX-XTEXT already reads "<sfhaart> - <text>" */}
+              <DetailItem label="Transaction Type" value={row.xtext || row.sfhaart} />
               <DetailItem label="Trader" value={row.rdealer} />
               <DetailItem label="Business Area" value={`${row.rbusa} - ${row.ba_name}`} />
               <DetailItem label="Profit Center" value={`${row.prctr} - ${row.pc_name}`} />

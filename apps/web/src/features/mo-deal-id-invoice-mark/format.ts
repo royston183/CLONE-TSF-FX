@@ -1,4 +1,5 @@
-export const TODAY = new Date(2026, 8, 28)
+/** sy-datum: the day counts run against today, as the report computes them. */
+export const TODAY = ((d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()))(new Date())
 
 const pad2 = (n: number): string => (n < 10 ? '0' + n : String(n))
 

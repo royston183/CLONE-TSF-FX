@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react'
-import { AS_OF, CALENDAR_FIRST_YEAR, CALENDAR_LAST_YEAR, COMPANIES, MONTHS, WEEKDAYS } from './data.ts'
+import { AS_OF, CALENDAR_FIRST_YEAR, CALENDAR_LAST_YEAR, MONTHS, WEEKDAYS } from './data.ts'
 import { useFloatingPanel } from './floating.ts'
-import { allCompanies, calendarCells, calendarYears, companySummary, shiftMonth, toggleCompany, viewForDate } from './logic.ts'
-import type { CalendarView, DropdownItem } from './types.ts'
+import { allCompanies, calendarCells, companyLabel, calendarYears, companySummary, shiftMonth, toggleCompany, viewForDate } from './logic.ts'
+import type { CalendarView, CompanyOption, DropdownItem } from './types.ts'
 
 /** Closes a popup panel on any click outside its wrapper. */
 function useOutsideClose(wrapRef: RefObject<HTMLElement | null>, close: () => void) {
@@ -18,15 +18,28 @@ function useOutsideClose(wrapRef: RefObject<HTMLElement | null>, close: () => vo
   }, [wrapRef, close])
 }
 
-/** Company Code multi-select (S_BUKRS): a trigger summarising the choice and a panel of checkboxes. */
-export function CompanySelect({ selected, onChange }: { selected: string[]; onChange: (list: string[]) => void }) {
+/**
+ * Company Code multi-select (S_BUKRS): a trigger summarising the choice and a panel of checkboxes.
+ * The entries are T001 (A_CompanyCode); `notice` explains an empty panel (loading / not readable).
+ */
+export function CompanySelect({
+  companies,
+  notice,
+  selected,
+  onChange,
+}: {
+  companies: readonly CompanyOption[]
+  notice: string | null
+  selected: string[]
+  onChange: (list: string[]) => void
+}) {
   const [open, setOpen] = useState(false)
   const [alignRight, setAlignRight] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => setOpen(false), [])
   useOutsideClose(wrapRef, close)
 
-  const summary = companySummary(selected)
+  const summary = companySummary(selected, companies)
 
   return (
     <div className={`ms${open ? ' open' : ''}`} id="ms-bukrs" ref={wrapRef}>
@@ -46,20 +59,21 @@ export function CompanySelect({ selected, onChange }: { selected: string[]; onCh
         <span className="caret"></span>
       </button>
       <div className={`ms-panel${alignRight ? ' align-right' : ''}`} id="msPanel" role="listbox">
-        {COMPANIES.map((c) => (
-          <label key={c.code} className="ms-item">
+        {notice ? <div className="ms-item">{notice}</div> : null}
+        {companies.map((c) => (
+          <label key={c.code} className="ms-item" title={companyLabel(c)}>
             <input
               type="checkbox"
               value={c.code}
               checked={selected.includes(c.code)}
-              onChange={(e) => onChange(toggleCompany(selected, c.code, e.target.checked))}
+              onChange={(e) => onChange(toggleCompany(selected, c.code, e.target.checked, companies))}
             />
             <span className="ms-code">{c.code}</span>
             <span className="ms-name">{c.name}</span>
           </label>
         ))}
         <div className="ms-foot">
-          <button type="button" className="btn btn-ghost" onClick={() => onChange(allCompanies())}>
+          <button type="button" className="btn btn-ghost" onClick={() => onChange(allCompanies(companies))}>
             Select all
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => onChange([])}>

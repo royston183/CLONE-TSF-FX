@@ -9,9 +9,14 @@ import type { Deal, DealStatus, Filters, InvoiceLeg, Sort, SortKey } from './typ
 
 // ---------------------------------------------------------------- derived amounts
 
+/** Total Invoiced Amt: the report's ZTOT_AMT_INV (T1 BIL_ADJ ZAMT_USD) when loaded; the legs' value otherwise. */
 export function totalInvoiced(deal: Deal): number {
+  if (deal.totInvUsd !== undefined) return deal.totInvUsd
   return deal.inv.reduce((t, r) => (r.invoiced ? t + r.qty * r.usdPrice : t), 0)
 }
+
+/** Whether the FX legs behind UTI_AMT were read; without them utilization and balance stay blank. */
+export const utilizationKnown = (deal: Deal): boolean => deal.fx.length > 0
 
 /** The D1 leg's absolute amount — what the FX Deal actually utilized of the Master Contract. */
 export function fxUtilAmt(deal: Deal): number {
@@ -20,7 +25,7 @@ export function fxUtilAmt(deal: Deal): number {
 }
 
 /** The MC's origin when the deal came from MySQL; the seed deals read it off the entity string. */
-export const originEntityOf = (deal: Deal): string => deal.origin || FX_MODELS[deal.model]!.entities[0]!
+export const originEntityOf = (deal: Deal): string => deal.origin || FX_MODELS[deal.model]?.entities[0] || ''
 
 // ---------------------------------------------------------------- filtering / sorting
 
@@ -33,13 +38,13 @@ function dealSearchText(d: Deal): string {
   return [
     d.dealId,
     d.dealDesc,
-    STATUS_META[d.dealStat]!.label,
+    STATUS_META[d.dealStat]?.label ?? '',
     d.dealStat,
     d.mcRef,
     originEntity,
-    ENTITIES[originEntity]!.name,
+    ENTITIES[originEntity]?.name ?? '',
     d.model,
-    FX_MODELS[d.model]!.desc,
+    FX_MODELS[d.model]?.desc ?? '',
     d.commodity,
     d.dealStart,
     d.dealEnd,
@@ -64,9 +69,12 @@ export function filterDeals(deals: readonly Deal[], filters: Filters): Deal[] {
 
   return deals.filter((d) => {
     const originEntity = originEntityOf(d)
-    const region = d.region ?? FX_MODELS[d.model]!.region
+    const region = d.region ?? FX_MODELS[d.model]?.region ?? ''
     const dEnd = parseDMY(d.dealEnd)
-    if (dFrom && dEnd && dEnd < dFrom) return false
+    // a~ze_date IN p_date: low only = EQ, low + high = BT; a deal without an end date never matches.
+    if ((dFrom || dTo) && !dEnd) return false
+    if (dFrom && !dTo && dEnd && dEnd.getTime() !== dFrom.getTime()) return false
+    if (dFrom && dTo && dEnd && dEnd < dFrom) return false
     if (dTo && dEnd && dEnd > dTo) return false
     if (filters.region !== 'ALL' && region !== filters.region) return false
     if (filters.origin !== 'ALL' && originEntity !== filters.origin) return false
@@ -115,7 +123,7 @@ export function buildCsv(deals: readonly Deal[]): string {
     const totInv = totalInvoiced(d)
     const bal = util - totInv
     lines.push(
-      [d.dealId, d.dealDesc, STATUS_META[d.dealStat]!.label, d.mcRef, originEntity, d.model, d.commodity, d.dealStart, d.dealEnd, d.mcAmtUsd.toFixed(2), util.toFixed(2), totInv.toFixed(2), bal.toFixed(2)]
+      [d.dealId, d.dealDesc, STATUS_META[d.dealStat]!.label, d.mcRef, originEntity, d.model, d.commodity, d.dealStart, d.dealEnd, d.mcAmtUsd.toFixed(2), utilizationKnown(d) ? util.toFixed(2) : '', totInv.toFixed(2), utilizationKnown(d) ? bal.toFixed(2) : '']
         .map(csvCell)
         .join(','),
     )

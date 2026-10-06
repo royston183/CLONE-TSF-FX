@@ -3,25 +3,16 @@
  * script (fetchDeals / rejectDeals / getVisibleDeals / pruneMarks / the Upto Blotter Date entry
  * rules / the calendar maths).
  */
-import {
-  AUTHORIZED_COMPANY_CODES,
-  FX_FIELD_DEFS,
-  MONTH_NAMES,
-  OP_FIELD_DEFS,
-  TABLE_COLUMNS,
-  TXN_STATUS_META,
-} from './data.ts'
+import { FX_FIELD_DEFS, MONTH_NAMES, OP_FIELD_DEFS, TABLE_COLUMNS } from './data.ts'
 import { formatAmount, formatDMY, formatRate, parseDMY } from './format.ts'
 import type {
   CalendarCell,
   CalendarView,
   Deal,
-  Deals,
   FieldDef,
   FieldDefs,
   Flags,
   MarkedItem,
-  RejectResult,
   SortState,
   TxnType,
 } from './types.ts'
@@ -34,9 +25,14 @@ export function str(d: Deal, key: string): string {
   return v === undefined || v === null ? '' : String(v)
 }
 
-/** Identity of a deal across the two result sets and company codes. */
+/**
+ * Identity of a deal across the two result sets and company codes. ZSGTSFV_FX has no unique deal
+ * key (the REFON join gives some forwards several rows, keyed BUKRS+RFHA+REFNR), so REFNR is added
+ * when the row carries one.
+ */
 export function dealKey(type: TxnType, d: Deal): string {
-  return `${type}:${str(d, 'bukrs')}:${str(d, 'rfha')}`
+  const refnr = str(d, 'refnr')
+  return `${type}:${str(d, 'bukrs')}:${str(d, 'rfha')}${refnr ? `:${refnr}` : ''}`
 }
 
 /** The transaction number part of a deal key. */
@@ -72,77 +68,116 @@ export function cellText(d: Deal, def: FieldDef, type: TxnType, remarks: Record<
   return String(v)
 }
 
-/** Status transition on rejection: 07 -> 08, 13 -> 11 (ABAP USER_COMMAND, REVERSE). */
-export function targetStatusFor(status: string): string {
-  return TXN_STATUS_META[status]?.target ?? status
+// ------------------------------------------------------------------ GET_DATA status selection
+
+/**
+ * The status / activity selection of GET_DATA.
+ *  FX:      txn_status IN (gv_txn_status1, gv_txn_status2, gv_txn_status3) AND rfhazul >= gv_actvt,
+ *           all four derived from ZGTCATR_PARAM (see statusSelection in api.ts).
+ *  Options: txn_status IN ('07', '13') AND rfhazul >= '03' (constants c_07, c_13, c_3).
+ * `found` is false when ZGTCATR_PARAM had no MAPID 'A' row: SAP then selects with the initial
+ * (blank) statuses, which matches no deal.
+ */
+export type StatusSelection = { fx: string[]; actvt: number; found: boolean }
+
+export const OP_STATUSES = ['07', '13'] as const
+export const OP_MIN_ACTIVITY = 3
+
+export function selectedStatuses(type: TxnType, sel: StatusSelection): string[] {
+  if (type === 'OP') return [...OP_STATUSES]
+  const out: string[] = []
+  for (const s of sel.found ? sel.fx : []) if (s && !out.includes(s)) out.push(s)
+  return out
+}
+
+export function minActivity(type: TxnType, sel: StatusSelection): number {
+  return type === 'OP' ? OP_MIN_ACTIVITY : sel.actvt
+}
+
+/**
+ * Status transition on rejection (USER_COMMAND, REVERSE -> ls_trm-txn_status):
+ *  FX:      gv_txn_status2 / gv_txn_status1 -> 08, 13 -> 11
+ *  Options: 07 -> 08, 13 -> 11
+ * Any other status: the ABAP leaves ls_trm unchanged (it is not cleared per row), so no target is
+ * defined; '' is returned and shown as unchanged.
+ */
+export function targetStatusFor(type: TxnType, status: string, sel: StatusSelection): string {
+  if (type === 'FX') {
+    if (sel.found && status !== '' && (status === sel.fx[1] || status === sel.fx[0])) return '08'
+    if (status === '13') return '11'
+    return ''
+  }
+  if (status === '07') return '08'
+  if (status === '13') return '11'
+  return ''
 }
 
 export type FetchParams = {
-  /** '' = every authorised company code. */
-  companyCode: string
+  /** The company codes of S_BUKRS (one picked code, or every T001 code). */
+  companyCodes: string[]
   /** dd-mm-yyyy; '' or malformed lists nothing. */
   uptoDate: string
+  sel: StatusSelection
 }
 
-/** Mirrors ABAP GET_DATA: company code (authorised) / blotter date / status / activity selection. */
-export function fetchDeals(deals: Deals, rejected: Flags, type: TxnType, params: FetchParams): Deal[] {
-  const codes = params.companyCode ? [params.companyCode] : AUTHORIZED_COMPANY_CODES
+/**
+ * GET_DATA's WHERE: bukrs IN s_bukrs AND blotter_date <= p_date AND txn_status IN (...) AND
+ * rfhazul >= (...). The middleware read already applies it; this repeats it on the rows so the
+ * list never shows a row the ABAP would not select.
+ */
+export function fetchDeals(deals: readonly Deal[], type: TxnType, params: FetchParams): Deal[] {
   const upto = parseDMY(params.uptoDate)
   if (!upto) return []
-  const minActivity = type === 'OP' ? 3 : 4
-  return deals[type].filter((d) => {
-    if (!codes.includes(str(d, 'bukrs'))) return false
-    if (!AUTHORIZED_COMPANY_CODES.includes(str(d, 'bukrs'))) return false
+  const statuses = selectedStatuses(type, params.sel)
+  const minAct = minActivity(type, params.sel)
+  return deals.filter((d) => {
+    if (!params.companyCodes.includes(str(d, 'bukrs'))) return false
     const blotter = parseDMY(str(d, 'blotter_date'))
     if (!blotter || blotter.getTime() > upto.getTime()) return false
-    if (!TXN_STATUS_META[str(d, 'txn_status')]) return false
-    if (parseInt(str(d, 'rfhazul'), 10) < minActivity) return false
-    if (rejected[dealKey(type, d)]) return false
+    if (!statuses.includes(str(d, 'txn_status'))) return false
+    if ((parseInt(str(d, 'rfhazul'), 10) || 0) < minAct) return false
     return true
   })
 }
 
-/**
- * Mock of ZSGTRMFM_VTBFHA_EXPORT + BAPI_FTR_*_CHANGE + BAPI_FTR_*_REVERSE + COMMIT: every item
- * moves to its target status, keeps its remark as the BO remark and is flagged as rejected.
- * Returns new objects; the inputs are left untouched.
- */
-export function rejectDeals(
-  deals: Deals,
-  rejected: Flags,
-  type: TxnType,
-  items: MarkedItem[],
-): { deals: Deals; rejected: Flags; results: RejectResult[] } {
-  const results: RejectResult[] = []
-  const nextRejected: Flags = { ...rejected }
-  const byKey = new Map(items.map((it) => [it.key, it]))
-  const list = deals[type].map((d) => {
-    const it = byKey.get(dealKey(type, d))
-    if (!it) return d
-    const newStatus = targetStatusFor(str(d, 'txn_status'))
-    nextRejected[it.key] = true
-    results.push({ rfha: str(d, 'rfha'), bukrs: str(d, 'bukrs'), newStatus })
-    return { ...d, txn_status: newStatus, bo_rem: it.remark }
+/** The Txn Status filter: the statuses GET_DATA selects, labelled with the view's EXT_STAT_DESC. */
+export function statusOptions(type: TxnType, sel: StatusSelection, deals: readonly Deal[]): { value: string; label: string }[] {
+  return selectedStatuses(type, sel).map((code) => {
+    const ext = deals.find((d) => str(d, 'txn_status') === code && str(d, 'ext_stat_desc'))
+    return { value: code, label: ext ? `${code} - ${str(ext, 'ext_stat_desc')}` : code }
   })
-  return { deals: { ...deals, [type]: list }, rejected: nextRejected, results }
+}
+
+/** The BAPIs / FMs USER_COMMAND 'REVERSE' runs per marked deal. */
+export const REJECT_CALLS: Record<TxnType, string[]> = {
+  FX: ['ZSGTRMFM_VTBFHA_EXPORT', 'BAPI_FTR_FXT_CHANGE', 'BAPI_FTR_FXT_REVERSE (reason 04)', 'BAPI_TRANSACTION_COMMIT / BAPI_TRANSACTION_ROLLBACK'],
+  OP: ['ZSGTRMFM_VTBFHA_EXPORT', 'BAPI_FTR_CHANGE_FXOPTIONS', 'BAPI_FTR_REVERSE_FXOPTIONS', 'BAPI_TRANSACTION_COMMIT / BAPI_TRANSACTION_ROLLBACK'],
+}
+
+/** What Reject shows instead of posting: the rejection is BAPI work with no API yet. */
+export function rejectWaitingText(count: number, type: TxnType): string {
+  const what = `BO rejection of ${count} ${type === 'FX' ? 'FX' : 'Options'} deal${count === 1 ? '' : 's'} (TXN_STATUS 08/11 + BO remark, change and reverse)`
+  return `WAITING FOR ACTION API — ${what} (${REJECT_CALLS[type].join(', ')}) has no API yet. Nothing was posted to SAP.`
 }
 
 export type ViewQuery = {
   type: TxnType
-  companyCode: string
+  companyCodes: string[]
   uptoDate: string
   /** False when the typed date is invalid: the list is then empty. */
   uptoDateValid: boolean
+  sel: StatusSelection
   statusFilter: string
   search: string
   sort: SortState
 }
 
 /** The rows the table lists: selection, status filter, search, then sort. */
-export function visibleDeals(deals: Deals, rejected: Flags, remarks: Record<string, string>, q: ViewQuery): Deal[] {
-  let list = fetchDeals(deals, rejected, q.type, {
-    companyCode: q.companyCode,
+export function visibleDeals(deals: readonly Deal[], remarks: Record<string, string>, q: ViewQuery): Deal[] {
+  let list = fetchDeals(deals, q.type, {
+    companyCodes: q.companyCodes,
     uptoDate: q.uptoDateValid ? q.uptoDate : '',
+    sel: q.sel,
   })
   if (q.statusFilter) list = list.filter((d) => str(d, 'txn_status') === q.statusFilter)
 
@@ -249,18 +284,16 @@ export function resultCountText(total: number): string {
   return `${total}${total === 1 ? ' deal' : ' deals'}`
 }
 
-export function emptyText(uptoDateValid: boolean): string {
-  return uptoDateValid ? 'No deals found for the selection.' : 'Enter a valid Upto Blotter Date to list deals.'
+/** The empty-state text; `notice` (loading / WAITING FOR API / read failure) takes precedence. */
+export function emptyText(uptoDateValid: boolean, notice = ''): string {
+  if (!uptoDateValid) return 'Enter a valid Upto Blotter Date to list deals.'
+  return notice || 'No deals found for the selection.'
 }
 
 export function rejectNote(count: number, type: TxnType): string {
   const typeLabel = type === 'FX' ? 'FX' : 'Options'
   const one = count === 1
   return `Reject ${count} ${typeLabel} deal${one ? '' : 's'} and return ${one ? 'it' : 'them'} to Front Office for correction? The transaction${one ? ' is' : 's are'} reversed and no longer appear${one ? 's' : ''} in this list.`
-}
-
-export function rejectedToast(count: number): string {
-  return `${count} deal${count === 1 ? '' : 's'} rejected and returned to Front Office.`
 }
 
 export function dragGhostText(count: number, key: string): string {

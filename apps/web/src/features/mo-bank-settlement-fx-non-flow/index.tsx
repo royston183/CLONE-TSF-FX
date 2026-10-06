@@ -3,8 +3,9 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO } from '../../shared/fx/logo.ts'
 import { PostDialog } from './ActionDialog.tsx'
+import { ACTION_WAITING, AUTH_NOTE, loadCompanies, loadWorklistReason, type Option } from './api.ts'
 import { BankModal } from './BankModal.tsx'
-import { COMPANY_CODES, DEFAULT_PAGE_SIZE, PAGE_SIZES, seedDeals } from './data.ts'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from './data.ts'
 import { DatePicker } from './DatePicker.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DocModal, TxnModal } from './DetailModals.tsx'
@@ -12,23 +13,19 @@ import {
   ALL,
   DEFAULT_FILTERS,
   DEFAULT_SORT,
-  applyBankUpdate,
+  bankUpdateCheck,
   bankUpdateToast,
   ccyPairs,
   computeKpis,
   dealCountLabel,
   filterDeals,
-  newDocNo,
   nextSort,
   pageOf,
   pagerWindow,
-  postDeal,
   postGuard,
-  postedMessage,
   pruneSelection,
   selectedLabel,
   sortDeals,
-  testRunMessage,
   toggleBukrs,
   toggleSelected,
 } from './logic.ts'
@@ -54,8 +51,15 @@ import type {
 
 const TOAST_MS = 3600
 
+/**
+ * MO: Bank Settlement: FX Non-Flow Deals (ZSGTSFR104 / ZSGTSF_RNFX_DEALFLOW). Company codes are
+ * T001; the worklist, house banks and every action wait for an API — see api.ts. No sample data.
+ */
 export default function MoBankSettlementFxNonFlow() {
-  const [deals, setDeals] = useState<Deal[]>(seedDeals)
+  // ZSGTSFV_FX worklist: WAITING FOR API (api.ts), so no deal is ever listed — never seed data.
+  const [deals] = useState<Deal[]>([])
+  const [companies, setCompanies] = useState<Option[]>([])
+  const [worklistReason, setWorklistReason] = useState<string>('Loading from SAP…')
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT)
   const [sortArrow, setSortArrow] = useState(false)
@@ -85,13 +89,11 @@ export default function MoBankSettlementFxNonFlow() {
   const kpis = useMemo(() => computeKpis(deals), [deals])
   const pg = pageOf(filtered, page, pageSize)
   const dealById = (id: string | null) => deals.find((d) => d.dealId === id) ?? null
+  const companyNames = useMemo(() => Object.fromEntries(companies.map((c) => [c.value, c.title])), [companies])
+  const emptyText = deals.length ? 'No deals match the current filters.' : worklistReason
 
-  // Toast — the page opened with a "Ready" message.
-  const [toast, setToast] = useState<Toast>(() => ({
-    message: `Ready. ${filterDeals(seedDeals(), DEFAULT_FILTERS).length} deal(s) loaded.`,
-    kind: '',
-    show: true,
-  }))
+  // Toast — the page opens with the load state.
+  const [toast, setToast] = useState<Toast>(() => ({ message: 'Loading from SAP…', kind: '', show: true }))
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const showToast = useCallback((message: string, kind: ToastKind) => {
     clearTimeout(toastTimer.current)
@@ -102,6 +104,25 @@ export default function MoBankSettlementFxNonFlow() {
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, kind: '', show: false })), TOAST_MS)
     return () => clearTimeout(toastTimer.current)
   }, [])
+
+  /** T001 for the Company Code chips, and the worklist reason (always WAITING FOR API today). */
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const [comp, reason] = await Promise.all([loadCompanies(signal), loadWorklistReason(signal)])
+      setCompanies(comp.state === 'ok' ? comp.value : [])
+      setWorklistReason(comp.state === 'ok' ? reason : `${reason} ${comp.reason}`)
+      if (comp.state === 'ok') console.info(`[nfx-dealflow] ${AUTH_NOTE}`)
+      return reason
+    },
+    [],
+  )
+  useEffect(() => {
+    const ctl = new AbortController()
+    load(ctl.signal).catch((e: unknown) => {
+      if ((e as { name?: string } | null)?.name !== 'AbortError') console.warn('[nfx-dealflow] load failed', e)
+    })
+    return () => ctl.abort()
+  }, [load])
 
   // Escape closes every popup; a click outside a date picker closes it.
   const { close: closeTxn } = txnModal
@@ -142,7 +163,9 @@ export default function MoBankSettlementFxNonFlow() {
   const onRefresh = () => {
     setCheckedId(null)
     setPage(1)
-    showToast(`Refreshed. ${filtered.length} deal(s) loaded.`, 'info')
+    load()
+      .then((reason) => showToast(deals.length ? `Refreshed. ${filtered.length} deal(s) loaded.` : reason, 'info'))
+      .catch(() => showToast('Refresh failed — SAP could not be read.', 'error'))
   }
 
   const onSort = (key: 'valueDate') => {
@@ -157,8 +180,8 @@ export default function MoBankSettlementFxNonFlow() {
     bankModal.open()
   }
   const askTestRun = (id: string) => {
-    const d = dealById(id)
-    if (d) showToast(testRunMessage(d), 'info')
+    // RFTBBB00 / TBB1 test mode has no API: nothing runs.
+    if (dealById(id)) showToast(ACTION_WAITING.test, 'info')
   }
   const askPost = (id: string) => {
     const d = dealById(id)
@@ -180,23 +203,19 @@ export default function MoBankSettlementFxNonFlow() {
   const onBankUpdate = (form: BankForm): UpdateLogEntry[] => {
     const d = dealById(bankId)
     if (!d) return []
-    const result = applyBankUpdate(d, form)
-    if (!result.logs.length) return []
-    setDeals((all) => all.map((x) => (x.dealId === d.dealId ? result.deal : x)))
-    const t = bankUpdateToast(result.logs)
+    // Validates as before; a complete leg would need BAPI_FTR_PAYDET_CREATE: nothing is changed.
+    const logs = bankUpdateCheck(d, form, ACTION_WAITING.bank)
+    if (!logs.length) return []
+    const t = bankUpdateToast(logs, ACTION_WAITING.bank)
     showToast(t.message, t.kind)
-    return result.logs
+    return logs
   }
 
   const onPostConfirm = () => {
-    const d = dealById(postId)
-    if (!d) return
-    const posted = postDeal(d, newDocNo(), newDocNo())
-    const nextDeals = deals.map((x) => (x.dealId === d.dealId ? posted : x))
-    setDeals(nextDeals)
+    if (!dealById(postId)) return
+    // RFTBBB00 / TBB1 has no API: no document is created and the deal is not changed.
     postModal.close()
-    commit(filters, nextDeals)
-    showToast(postedMessage(posted), 'success')
+    showToast(ACTION_WAITING.post, 'info')
   }
 
   // ------------------------------------------------------------------ drag a selected row onto an action
@@ -336,12 +355,13 @@ export default function MoBankSettlementFxNonFlow() {
                 <div className="filter-field">
                   <label>Company Code</label>
                   <div className="chip-group" id="f-bukrs-group">
-                    {[ALL, ...COMPANY_CODES].map((code) => (
+                    {[ALL, ...companies.map((c) => c.value)].map((code) => (
                       <button
                         key={code}
                         type="button"
                         className={`chip-toggle${filters.bukrs.includes(code) ? ' active' : ''}`}
                         data-code={code}
+                        title={code === ALL ? undefined : companyNames[code]}
                         onClick={() => patch({ bukrs: toggleBukrs(filters.bukrs, code) })}
                       >
                         {code === ALL ? 'All' : code}
@@ -450,6 +470,8 @@ export default function MoBankSettlementFxNonFlow() {
 
           <DealTable
             rows={pg.rows}
+            companies={companyNames}
+            emptyText={emptyText}
             checkedId={checkedId}
             draggingId={draggingId}
             sort={sort}
@@ -520,7 +542,7 @@ export default function MoBankSettlementFxNonFlow() {
         </div>
       </main>
 
-      <TxnModal modal={txnModal} deal={dealById(txnId)} />
+      <TxnModal modal={txnModal} deal={dealById(txnId)} companies={companyNames} />
       <DocModal modal={docModal} deal={dealById(docId)} />
       <BankModal
         modal={bankModal}

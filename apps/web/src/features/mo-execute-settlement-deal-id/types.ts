@@ -25,6 +25,8 @@ export type FxDeal = {
   dealType: string
   dealTypeChip: string
   rfha: string
+  /** BUKRS of the leg (ZSGTSFCDS_FX). */
+  bukrs: string
   bp: string
   txnDate: string
   valDate: string

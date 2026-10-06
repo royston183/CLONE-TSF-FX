@@ -66,6 +66,7 @@ export function FxGrid({
   onViewTxn,
   onViewDoc,
   onToast,
+  emptyText,
 }: {
   rows: readonly Indexed<FxDeal>[]
   total: number
@@ -77,6 +78,8 @@ export function FxGrid({
   onViewTxn: (idx: number) => void
   onViewDoc: (doc: string) => void
   onToast: (message: string, kind: ToastKind) => void
+  /** Shown when there are no rows, e.g. the WAITING FOR API reason. */
+  emptyText?: string | undefined
 }) {
   const docCell = (doc: string) =>
     doc ? (
@@ -137,7 +140,7 @@ export function FxGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={19}>No FX deal transactions for this Deal ID.</td>
+                <td colSpan={19}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -202,6 +205,7 @@ export function InvGrid({
   onOpen,
   onViewDoc,
   onToast,
+  emptyText,
 }: {
   rows: readonly Indexed<TradeInvoice>[]
   total: number
@@ -213,6 +217,8 @@ export function InvGrid({
   onOpen: (idx: number) => void
   onViewDoc: (doc: string) => void
   onToast: (message: string, kind: ToastKind) => void
+  /** Shown when there are no rows, e.g. the WAITING FOR API reason. */
+  emptyText?: string | undefined
 }) {
   return (
     <div className={hidden ? 'panel hidden' : 'panel'}>
@@ -254,7 +260,7 @@ export function InvGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={15}>No trade invoice legs for this Deal ID.</td>
+                <td colSpan={15}>{emptyText ?? 'No trade invoice legs for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (

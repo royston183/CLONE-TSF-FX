@@ -1,71 +1,12 @@
-// Dummy lookup masters from the original page (unchanged business data). The legacy screen
-// never called an API; every deal is generated from these on demand.
-import type { Column, Company, FxPair, MatchStatus, Partner, Portfolio, Trader, TxnStatus, TxnType } from './types.ts'
+// Static screen configuration only. Every list the screen offers comes from SAP (see api.ts);
+// the legacy page's dummy masters now live in fixtures.ts for the tests.
+import type { Column } from './types.ts'
 
-export const COMPANIES: readonly Company[] = [
-  { code: 'AE13', name: 'Olam International DMCC' },
-  { code: 'ES12', name: 'SEDA OUTSPAN IBERIA S.L.U' },
-  { code: 'IN11', name: 'Olam Agri India Pvt Ltd' },
-  { code: 'SG10', name: 'Olam Global Holdings Pte Ltd' },
-  { code: 'TH10', name: 'Olam (Thailand) Ltd' },
-  { code: 'US15', name: 'Olam Americas Inc' },
-  { code: 'VN10', name: 'Olam Vietnam Limited' },
-]
-
-export const FX_PAIRS: readonly FxPair[] = [
-  { pair: 'USD/INR', c1: 'USD', c2: 'INR', spot: 87.15 },
-  { pair: 'USD/THB', c1: 'USD', c2: 'THB', spot: 34.2 },
-  { pair: 'USD/VND', c1: 'USD', c2: 'VND', spot: 25150.0 },
-  { pair: 'EUR/USD', c1: 'EUR', c2: 'USD', spot: 1.087 },
-  { pair: 'USD/AED', c1: 'USD', c2: 'AED', spot: 3.6725 },
-  { pair: 'USD/SGD', c1: 'USD', c2: 'SGD', spot: 1.312 },
-  { pair: 'USD/CNH', c1: 'USD', c2: 'CNH', spot: 7.18 },
-]
-
-export const TRADERS: readonly Trader[] = [
-  { code: 'SKHAN', name: 'S. Khan' },
-  { code: 'SALVA', name: 'S. Alva' },
-  { code: 'RGUPTA', name: 'R. Gupta' },
-  { code: 'NPATEL', name: 'N. Patel' },
-  { code: 'MTAN', name: 'M. Tan' },
-]
-
-export const PARTNERS: readonly Partner[] = [
-  { code: 'P100234', name: 'HSBC' },
-  { code: 'P100567', name: 'Citi' },
-  { code: 'P100812', name: 'Standard Chartered' },
-  { code: 'P101045', name: 'JPMorgan' },
-  { code: 'P101390', name: 'Deutsche Bank' },
-]
-
-export const FX_TXN_TYPES: readonly TxnType[] = [
-  { code: 'FWD', desc: 'Forward' },
-  { code: 'SPT', desc: 'Spot' },
-  { code: 'SWP', desc: 'FX Swap' },
-  { code: 'NDF', desc: 'Non-Deliverable Forward' },
-]
-
-export const OP_TXN_TYPES: readonly TxnType[] = [
-  { code: 'CALL', desc: 'Call Option' },
-  { code: 'PUT', desc: 'Put Option' },
-  { code: 'CPCB', desc: 'Call & Put Combo' },
-]
-
-export const TXN_STATUSES: readonly TxnStatus[] = ['Active', 'Pending', 'Settled']
-export const MATCH_STATUSES: readonly MatchStatus[] = ['Matched', 'Unmatched']
-export const PORTFOLIOS: readonly Portfolio[] = [
-  { code: 'P0010', name: 'Trading Book' },
-  { code: 'P0020', name: 'Hedging Book' },
-  { code: 'P0030', name: 'Treasury Book' },
-]
-export const PROFIT_CENTERS: readonly string[] = ['PC-1001', 'PC-1002', 'PC-1003', 'PC-2001']
-export const BUSINESS_AREAS: readonly string[] = ['BA01', 'BA02', 'BA03']
-
-export const LAYOUTS: readonly { value: string; label: string }[] = [
-  { value: '', label: 'Default Layout' },
-  { value: 'STD', label: 'Standard View' },
-  { value: 'MYVAR', label: 'My Layout' },
-]
+/**
+ * P_LAYOUT: the ABAP offers the user's ALV variants (LTDX, REUSE_ALV_VARIANT_F4). There is no
+ * API for them, so only the default layout is selectable (see LAYOUT_WAITING in api.ts).
+ */
+export const LAYOUTS: readonly { value: string; label: string }[] = [{ value: '', label: 'Default Layout' }]
 
 export const PAGE_SIZES: readonly number[] = [10, 15, 25, 50]
 export const DEFAULT_PAGE_SIZE = 15

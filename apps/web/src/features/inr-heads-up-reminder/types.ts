@@ -1,41 +1,35 @@
 /** Tone of a deal status; picks the .status-text-<tone> colour. */
 export type StatusTone = 'draft' | 'pending' | 'confirmed' | 'matured' | 'in-use'
 
-export type Entity = { code: string; companyCode: string; name: string; currency: string; regionId: string; fxRate: number }
+/** ZSGTSFTR_COMP (search help ZSGTSFSH_ENTITY): origin entity and its region. */
+export type Entity = { code: string; name: string; regionId: string }
+/** ZSGTSFSH_REGION: the region codes ZSGTSFTR_COMP carries; no region text table is served. */
 export type Region = { id: string; name: string }
-export type DealStatus = { code: string; sdesc: string; tone: StatusTone }
+/** ZSGTSFTR_DEAL_ST at ZSUB_TYPE 'FX1'. */
+export type DealStatus = { code: string; sdesc: string }
 
-/** zsgtsftr_rule_bt + zsgtsftr_set_typ: a model per CO area and sub type, with its heads-up indicators. */
-export type Model = {
-  id: string
-  desc: string
-  subType: 'FX1' | 'FX2'
-  coArea: string
-  /** 'X' when the model has the FX heads-up indicator. */
-  headFx: string
-  /** 'X' when the model has the option heads-up indicator. */
-  headOpt: string
-}
+/** ZSGTSFTR_RULE_BT: an FX model per CO area. */
+export type RuleBt = { coArea: string; id: string; desc: string; subType: string }
+/** ZSGTSFTR_SET_TYP rows WHERE zhead_fx <> space OR zhead_opt <> space. */
+export type HeadsUpIndicator = { modelId: string; headFx: string; headOpt: string }
 
 export type LayoutOption = { id: string; name: string }
-export type CurrentUser = { name: string; authorizedCoAreas: readonly string[] }
 
-/** zsgtsftr_mas_con row as seeded (before its reference is derived). */
-export type McSeed = {
-  no: string
+/** ZSGTSFTR_MAS_CON, the fields the report reads. */
+export type MasterContract = {
+  ref: string
   origin: string
   modelId: string
+  modelDesc: string
   currId: string
+  desc: string
   commodity: string
-  /** ISO yyyy-mm-dd */
+  /** ISO yyyy-mm-dd, '' for none */
   date: string
   amt: number
 }
-export type MasterContract = McSeed & { ref: string }
 
-/** zsgtsftr_dealid seed: [MC no, start date, maturity date, status, confirmed (1/0), USD amount]. */
-export type DealSeed = readonly [mcNo: string, start: string, maturity: string, status: string, confirmed: number, usd: number]
-
+/** ZSGTSFTR_DEALID, the fields the report reads. Dates are ISO yyyy-mm-dd ('' for none). */
 export type Deal = {
   dealId: string
   dealType: string
@@ -58,16 +52,26 @@ export type Deal = {
   changedTime: string
 }
 
-export type Leg = { dealId: string; type: string; curr1: string; curr2: string; amt1: number; amt2: number }
+/** ZSGTSFCDS_OPTION row (and the common part of ZSGTSFCDS_FX). */
+export type Leg = { dealId: string; type: string; mcRef: string; curr1: string; curr2: string; amt1: number; amt2: number }
+/** ZSGTSFCDS_FX row. */
 export type FxLeg = Leg & { sgsart: string; bp: string; ndfDate: string }
 
-/** The derived tables the original builds once in buildMockTables(). */
-export type Tables = {
-  masterContracts: MasterContract[]
+/** Everything the report reads, as loaded from the middleware. */
+export type ScreenData = {
+  /** ZSGTSFTR_DEALID, all rows (the Deal ID help lists them; the report keeps ZMC_REF <> space). */
   deals: Deal[]
-  fxLegs: FxLeg[]
-  optLegs: Leg[]
+  masterContracts: MasterContract[]
+  entities: Entity[]
+  statuses: DealStatus[]
+  rules: RuleBt[]
+  indicators: HeadsUpIndicator[]
+  /** ZSGTSFTR_IN_SPOT: Deal IDs with spot data saved. */
   spotDealIds: Record<string, boolean>
+  /** ZSGTSFCDS_FX legs; null while the middleware cannot serve them (WAITING FOR API). */
+  fxLegs: FxLeg[] | null
+  /** ZSGTSFCDS_OPTION legs; null while the middleware cannot serve them (WAITING FOR API). */
+  optLegs: Leg[] | null
 }
 
 /** One ALV row (ty_data). */
@@ -90,7 +94,8 @@ export type HeadsUpRow = {
   mcDesc: string
   mcDate: string
   mcAmt: number
-  utiAmt: number
+  /** null while ZSGTSFCDS_FX / _OPTION are not served: no utilization can be computed. */
+  utiAmt: number | null
   dealCurrId: string
   confirmed: boolean
   plAmt: number
@@ -131,12 +136,10 @@ export type Filters = {
 
 export type Sort = { field: ColumnKey; dir: 'asc' | 'desc' }
 
-export type FetchResult = { error: string | null; rows: HeadsUpRow[] }
-
 export type MailPlanDeal = { dealId: string; mails: string[] }
 export type MailPlan = { deals: MailPlanDeal[]; mailCount: number }
 
-/** What ZSGTSFFM_MC_DETAILS stand-in returns for the Master Contract modal. */
+/** The Master Contract popup (hotspot ZMC_REF -> ZSGTSFFM_MC_DETAILS), from ZSGTSFTR_MAS_CON + COMP. */
 export type MasterContractDetail = {
   ref: string
   origin: string

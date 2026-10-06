@@ -32,29 +32,16 @@ const ok = (message: string): ToastMessage => ({ message, kind: 'success' })
 
 // ---------------------------------------------------------------- status
 
-export function statusInfo(code: number): StatusInfo {
-  if (code >= 22) return { cls: 'st-complete', label: '22 · Accounting Complete' }
-  if (code >= 20) return { cls: 'st-initiated', label: '20 · Settlement Initiated' }
-  return { cls: 'st-confirmed', label: '10 · Confirmed by MO' }
+/** The badge: its colour by the thresholds, its text from ZSGTSFTR_DEAL_ST ("<code> · <text>"). */
+export function statusInfo(code: number, statusCode: string, text: string): StatusInfo {
+  const label = text ? `${statusCode} · ${text}` : statusCode
+  if (code >= 22) return { cls: 'st-complete', label }
+  if (code >= 20) return { cls: 'st-initiated', label }
+  return { cls: 'st-confirmed', label }
 }
 
 export const isInitiated = (deal: Deal) => deal.status >= 20
 export const isComplete = (deal: Deal) => deal.status >= 22
-
-// ---------------------------------------------------------------- loading
-
-export const normalizeDealId = (raw: string) => raw.trim().toUpperCase()
-
-export type LoadResult = { ok: true; deal: Deal } | { ok: false; message: string }
-
-/** Looks a Deal ID up and returns a private copy, so working on it never touches the library. */
-export function loadDeal(library: Readonly<Record<string, Deal>>, raw: string): LoadResult {
-  const key = normalizeDealId(raw)
-  if (!key) return { ok: false, message: 'Enter a Deal ID to continue.' }
-  const src = Object.hasOwn(library, key) ? library[key] : undefined
-  if (!src) return { ok: false, message: `No Deal ID found for '${key}'. Try TSF-9081.` }
-  return { ok: true, deal: structuredClone(src) }
-}
 
 // ---------------------------------------------------------------- posted-ness
 

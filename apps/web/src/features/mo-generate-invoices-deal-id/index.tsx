@@ -1,23 +1,50 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './mo-generate-invoices-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-generate-invoices-deal-id.dark.css'
+import { isAbort } from '../../shared/fx/mw.ts'
+import {
+  BANK_WAITING,
+  actionWaiting,
+  amendDealStatus,
+  amendedStatus,
+  confirmAmendment,
+  loadDeal,
+  loadDealList,
+  messageOf,
+  recalculateAndUpdate,
+  saveInitialData,
+  type DealContext,
+} from './api.ts'
 import { BankModal } from './BankModal.tsx'
 import { BlModal } from './BlModal.tsx'
 import { ComplianceModal } from './ComplianceModal.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
+import { setStatusTexts } from './data.ts'
 import { DateCell } from './DateCell.tsx'
 import { DealLookupModal } from './DealLookupModal.tsx'
 import { DiffModal } from './DiffModal.tsx'
+import { money, parseNum, statusText, validDMY } from './format.ts'
+import {
+  canCancelInvoice,
+  canPrintLetters,
+  computeInvoiceConfirmation,
+  getDealUsdAmount,
+  getInvoiceUsdAmount,
+  hasRollover,
+  invSearchText,
+  paginate,
+  profitCheckError,
+  recalcInvoiceRow,
+  searchRows,
+  sortRows,
+} from './logic.ts'
 import { RemarkModal } from './RemarkModal.tsx'
 import { TxnModal } from './TxnModal.tsx'
-import { DEFAULT_DEAL_ID, INITIAL_DEALS } from './data.ts'
-import { money, parseNum, statusText, validDMY } from './format.ts'
-import { computeInvoiceConfirmation, getDealUsdAmount, getInvoiceUsdAmount, hasRollover, invSearchText, paginate, recalcInvoiceRow, searchRows, sortRows } from './logic.ts'
-import type { ConfirmDialogState, Deal, DealStatus, FxRow, InvRow, Sort, Toast } from './types.ts'
+import type { ConfirmDialogState, Deal, DealListRow, DealStatus, FxRow, InvRow, Sort, Toast } from './types.ts'
 
 const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'dealType', label: 'Deal Type' },
@@ -65,6 +92,15 @@ const INV_COLS: Array<{ key: string; label: string }> = [
 
 const PAGE_SIZE = 8
 
+/** Form-based outputs and postings with no API (the ABAP's own FMs / classes are listed). */
+const LETTER_APIS =
+  'Adobe Form via FP_FUNCTION_MODULE_NAME / FP_JOB_OPEN / FP_JOB_CLOSE, BAPI_BUPA_ADDRESS_GETDETAIL, READ_TEXT, SPELL_AMOUNT, ZSGPTSFFM_CHANGE_AMT_TO_WORDS, HR_RU_MONTH_NAME_IN_GENITIVE'
+const SAVE_INVOICE_APIS =
+  'NUMBER_GET_NEXT ZSGTSFNR08 for ZINV_NO, then MODIFY ZSGTSFTR_BIL_ADJ / UPDATE ZSGTSFTR_IF_INV / ZSGTSFTR_DEALID / MODIFY ZSGTSFTR_BL, _BL_RUSE and the e-mail ZSGTSFCL_CLASS->ZSGTSFIF_EMAIL~INV_CON'
+const CANCEL_APIS = 'DELETE FROM ZSGTSFTR_BIL_ADJ — the middleware client has no delete — then UPDATE ZSGTSFTR_DEALID / ZSGTSFTR_BL'
+const DEASSIGN_APIS =
+  'UPDATE ZSGTSFTR_BL / _BL_RUSE, MODIFY ZSGTSFTR_BL_DASS, DELETE FROM ZSGTSFTR_PRE_INV, UPDATE ZSGTSFTR_DEALID / ZSGTSFTR_TRDFLOW and the e-mail ZSGTSFCL_CLASS->ZSGTSFIF_EMAIL~TFBL (E002)'
+
 function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (p: number) => void }) {
   const nums = Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1)
   return (
@@ -85,9 +121,13 @@ function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (p: n
 }
 
 export default function MoGenerateInvoicesDealId() {
-  const [deals, setDeals] = useState<Record<string, Deal>>(INITIAL_DEALS)
-  const [dealId, setDealId] = useState(DEFAULT_DEAL_ID)
-  const [dealLookupInput, setDealLookupInput] = useState(DEFAULT_DEAL_ID)
+  const [dealList, setDealList] = useState<DealListRow[]>([])
+  const [dealListReason, setDealListReason] = useState('')
+  const [deal, setDeal] = useState<Deal | null>(null)
+  const [ctx, setCtx] = useState<DealContext | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [dealLookupInput, setDealLookupInput] = useState('')
+  const loadSeq = useRef(0)
 
   const [fxSearch, setFxSearch] = useState('')
   const [invSearch, setInvSearch] = useState('')
@@ -112,21 +152,34 @@ export default function MoGenerateInvoicesDealId() {
   const [diffOpen, setDiffOpen] = useState(false)
   const [bankRow, setBankRow] = useState(-1)
 
-  const deal = deals[dealId] ?? null
-
   const toast = (message: string, kind: Toast['kind'] = 'success') => {
     const id = Date.now() + Math.random()
     setToasts((t) => [...t, { id, message, kind }])
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200)
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'warn' || kind === 'error' ? 7000 : 3200)
   }
 
+  // The Deal IDs P_DEAL offers (matchcode ZSGTSFSH_DEAL_ID -> ZSGTSFTR_DEALID).
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadDealList(ctrl.signal)
+      .then((r) => {
+        if (r.ok) {
+          setDealList(r.value)
+          setDealListReason('')
+        } else setDealListReason(r.reason)
+      })
+      .catch((e) => {
+        if (!isAbort(e)) setDealListReason(messageOf(e))
+      })
+    return () => ctrl.abort()
+  }, [])
+
+  /** Local edits of the grids, as the ALV holds them until a save. */
   const updateDeal = (fn: (d: Deal) => Deal) => {
-    setDeals((prev) => ({ ...prev, [dealId]: fn(prev[dealId]!) }))
+    setDeal((prev) => (prev ? fn(prev) : prev))
   }
 
-  const selectDeal = (id: string) => {
-    setDealId(id)
-    setDealLookupInput(id)
+  const resetView = () => {
     setFxSearch('')
     setInvSearch('')
     setFxPage(1)
@@ -134,34 +187,58 @@ export default function MoGenerateInvoicesDealId() {
     setSelectedFx(-1)
     setSelectedInv(-1)
     setAmendMode(false)
+  }
+
+  /** GET_DATA for a Deal ID (START-OF-SELECTION -> screen 9000, and every gv_flag toggle). */
+  const fetchDeal = async (id: string, quiet = false) => {
+    const seq = ++loadSeq.current
+    setLoading(true)
+    try {
+      const loaded = await loadDeal(id)
+      if (seq !== loadSeq.current) return
+      setStatusTexts(loaded.statusOptions)
+      setDeal(loaded.deal)
+      setCtx(loaded.ctx)
+      if (loaded.notice && !quiet) toast(loaded.notice, 'warn')
+    } catch (e) {
+      if (isAbort(e) || seq !== loadSeq.current) return
+      setDeal(null)
+      setCtx(null)
+      toast(`Deal ID ${id} could not be read from SAP: ${messageOf(e)}`, 'error')
+    } finally {
+      if (seq === loadSeq.current) setLoading(false)
+    }
+  }
+
+  const selectDeal = (id: string) => {
+    setDealLookupInput(id)
+    resetView()
+    void fetchDeal(id)
   }
 
   const loadTypedDeal = (value: string) => {
     const id = value.trim()
     if (!id) {
-      setDealId('')
+      setDeal(null)
+      setCtx(null)
       return
     }
-    if (deals[id]) {
+    if (dealList.some((d) => d.dealId === id)) {
       selectDeal(id)
       return
     }
-    toast(`Deal ID ${id} was not found. Use View Deals to search.`, 'warn')
+    toast(dealListReason ? `Deal IDs could not be read: ${dealListReason}` : `Deal ID ${id} was not found. Use View Deals to search.`, 'warn')
   }
 
+  /** REF: gv_flag toggles and GET_DATA runs again for the same Deal ID. */
   const refreshAll = () => {
-    setDeals(INITIAL_DEALS)
-    setDealId('')
-    setDealLookupInput('')
-    setFxSearch('')
-    setInvSearch('')
-    setFxPage(1)
-    setInvPage(1)
-    setSelectedFx(-1)
-    setSelectedInv(-1)
-    setAmendMode(false)
     setMoreOpen(false)
-    toast('Workbench refreshed to its initial state.', 'info')
+    resetView()
+    if (!deal) {
+      toast('Select a Deal ID to load invoice data.', 'info')
+      return
+    }
+    void fetchDeal(deal.dealId, true).then(() => toast('Workbench refreshed from SAP.', 'info'))
   }
 
   const fxRows = useMemo(() => (deal ? sortRows(searchRows(deal.fx, fxSearch, FX_COLS.map((c) => c.key)), fxSort) : []), [deal, fxSearch, fxSort])
@@ -184,16 +261,32 @@ export default function MoGenerateInvoicesDealId() {
   const canConfirmInvoice = !!deal && !deal.dm && deal.status === '04'
   const rollover = hasRollover(deal)
 
+  /** The invoice grid is built from gt_top: without it the grid-based actions cannot run. */
+  const invoiceGridMissing = (): boolean => {
+    if (!deal) return true
+    if (deal.invReason) {
+      toast(deal.invReason, 'warn')
+      return true
+    }
+    return false
+  }
+
   const calculateInvoices = (showMessage: boolean) => {
     if (!deal) return
+    if (showMessage && invoiceGridMissing()) return
     updateDeal((d) => ({ ...d, inv: d.inv.map(recalcInvoiceRow) }))
     if (showMessage) toast('Adjusted Price / Qty recalculated.', 'info')
   }
 
   const initiateInvoiceConfirmation = () => {
-    if (!deal) return
-    calculateInvoices(false)
-    const fresh = deals[dealId]!
+    if (!deal || invoiceGridMissing()) return
+    const profitError = profitCheckError(deal)
+    if (profitError) {
+      toast(profitError, 'error')
+      return
+    }
+    const fresh = { ...deal, inv: deal.inv.map(recalcInvoiceRow) }
+    setDeal(fresh)
     const { status, message } = computeInvoiceConfirmation(fresh)
     const dealAmt = getDealUsdAmount(fresh)
     const invAmt = getInvoiceUsdAmount(fresh)
@@ -210,81 +303,113 @@ export default function MoGenerateInvoicesDealId() {
     })
   }
 
+  /** 9002 YES -> FORM save_data: number range, Z-table updates and the invoice e-mail. */
   const saveInvoice = () => {
     if (!deal) return
-    const base = 9000051200
-    updateDeal((d) => ({
-      ...d,
-      status: pendingInvoiceStatus,
-      inv: d.inv.map((r, i) => ({ ...r, invNo: r.invNo || String(base + i + 1), pc: pendingInvoiceStatus === '07' ? 'P' : 'C', locked: true })),
-    }))
-    setAmendMode(false)
     setComplianceOpen(false)
-    toast('SAP GT Invoice Data Updated Successfully')
+    toast(actionWaiting(`Generate Invoice for Deal ID ${deal.dealId} (status ${pendingInvoiceStatus})`, SAVE_INVOICE_APIS), 'warn')
   }
 
   const cancelInvoice = () => {
     if (!deal) return
+    setMoreOpen(false)
+    if (!canCancelInvoice(deal.status)) {
+      toast('Selected Deal ID can not be canceled', 'warn')
+      return
+    }
     setConfirmState({
       title: 'Cancel TRM Invoice',
       text: 'Do you really want to cancel the invoice?',
       note: `Deal ID ${deal.dealId}`,
       yesLabel: 'Yes',
       onYes: () => {
-        updateDeal((d) => ({ ...d, status: '04', inv: d.inv.map((r) => ({ ...r, invNo: '', pc: '', locked: false })) }))
-        setAmendMode(false)
         setConfirmState(null)
-        toast('TRM Invoice has been canceled successfully.', 'warn')
+        toast(actionWaiting(`Cancel TRM Invoice for Deal ID ${deal.dealId}`, CANCEL_APIS), 'warn')
       },
     })
   }
 
   const toggleAmendDeal = () => {
-    if (!deal) return
-    const next: DealStatus = deal.status === '05' ? '07' : '05'
+    if (!deal || !ctx) return
+    setMoreOpen(false)
+    const next = amendedStatus(deal.status)
+    if (!next) {
+      toast('Deal ID status can be amended only from 05 or 07.', 'warn')
+      return
+    }
     setConfirmState({
       title: 'Amend Deal Status',
       text: `Deal ID ${deal.dealId} status will change to ${statusText(next)}.`,
-      note: 'This action mirrors the source-proven amendment status toggle.',
+      note: 'ZSGTSFTR_DEALID-ZDEAL_STAT and ZSGTSFTR_BIL_ADJ-ZPC are updated as FORM ammend_deal does.',
       yesLabel: 'Yes',
       onYes: () => {
-        updateDeal((d) => ({ ...d, status: next }))
         setConfirmState(null)
-        toast(`Deal status amended to ${statusText(next)}.`, 'info')
+        amendDealStatus(deal, ctx)
+          .then((s) => {
+            toast(`Deal status amended to ${statusText(s)}.`, 'info')
+            return fetchDeal(deal.dealId, true)
+          })
+          .catch((e) => toast(`Amend Deal Status failed: ${messageOf(e)}`, 'error'))
       },
     })
   }
 
   const enableAmendment = () => {
-    setAmendMode(true)
     setMoreOpen(false)
+    if (invoiceGridMissing()) return
+    setAmendMode(true)
     toast('Amendment mode enabled: Invoice Date and Price (USD) are editable.', 'info')
   }
 
-  const confirmAmendment = () => {
-    if (!deal) return
-    updateDeal((d) => ({ ...d, inv: d.inv.map((r) => ({ ...r, locked: true })) }))
-    setAmendMode(false)
+  /** AMDC: FORM save_alv2_data — MODIFY ZSGTSFTR_BIL_ADJ, then GET_DATA again. */
+  const confirmAmendmentAction = () => {
+    if (!deal || !ctx) return
     setMoreOpen(false)
-    toast(`Amendment confirmed for Deal ID ${deal.dealId}.`)
+    if (invoiceGridMissing()) return
+    confirmAmendment(deal, ctx)
+      .then((r) => {
+        if (r === 'needsNumber') {
+          toast(actionWaiting(`Amendment Confirm for Deal ID ${deal.dealId} (an invoice row has no saved ZINV_NO)`, 'NUMBER_GET_NEXT ZSGTSFNR08'), 'warn')
+          return
+        }
+        setAmendMode(false)
+        toast(`Amendment confirmed for Deal ID ${deal.dealId}.`)
+        return fetchDeal(deal.dealId, true)
+      })
+      .catch((e) => toast(`Amendment Confirm failed: ${messageOf(e)}`, 'error'))
   }
 
+  /** SAVE: FORM save_initial_data — MODIFY ZSGTSFTR_BIL_ADJ for the unconfirmed rows. */
   const saveInitial = () => {
-    if (!deal) return
+    if (!deal || !ctx) return
     setMoreOpen(false)
-    toast(`Initial invoice data saved for Deal ID ${deal.dealId}.`)
+    if (invoiceGridMissing()) return
+    saveInitialData(deal, ctx)
+      .then((n) => toast(n ? `Initial invoice data saved for Deal ID ${deal.dealId}.` : `Deal ID ${deal.dealId} has no unconfirmed invoice rows to save.`, n ? 'success' : 'info'))
+      .catch((e) => toast(`Save Initial Data failed: ${messageOf(e)}`, 'error'))
   }
 
+  /** C_UPD: FORM calcuate_update_invoice — UPDATE ZSGTSFTR_BIL_ADJ / ZSGTSFTR_INV_REF from gt_top. */
   const recalcUpdate = () => {
+    if (!deal || !ctx) return
     setMoreOpen(false)
-    calculateInvoices(false)
-    toast('Invoice values recalculated and updated.')
+    if (invoiceGridMissing()) return
+    recalculateAndUpdate(deal, ctx)
+      .then(() => {
+        toast('Invoice values recalculated and updated.')
+        return fetchDeal(deal.dealId, true)
+      })
+      .catch((e) => toast(`Re-calculate & Update failed: ${messageOf(e)}`, 'error'))
   }
 
-  const letter = (kind: string) => {
+  const letter = (kind: 'Import' | 'Export') => {
     if (!deal) return
     setMoreOpen(false)
-    toast(`${kind} letter prepared for Deal ID ${deal.dealId}.`, 'info')
+    if (!canPrintLetters(deal.status)) {
+      toast('Letters cannot be generated at this status id', 'warn')
+      return
+    }
+    toast(actionWaiting(`${kind} Letter for Deal ID ${deal.dealId}`, LETTER_APIS), 'warn')
   }
 
   const setInvField = (index: number, edit: string, rawValue: string) => {
@@ -306,18 +431,20 @@ export default function MoGenerateInvoicesDealId() {
   }
 
   const openBank = (index: number) => setBankRow(index)
+  /** UPD_HB only changes the grid row (gt_inv); it reaches SAP with the next save, as in the ABAP. */
   const saveBank = (houseBank: string, accountId: string, partnerBank: string) => {
     updateDeal((d) => ({ ...d, inv: d.inv.map((r, i) => (i === bankRow ? { ...r, houseBank, accountId, partnerBank } : r)) }))
     setBankRow(-1)
-    toast('House Bank / Partner Bank updated.')
+    toast('House Bank / Partner Bank updated in the grid.')
   }
 
   const openDeassign = (index: number) => setRemarkBlIndex(index)
-  const saveRemark = (remark: string) => {
-    updateDeal((d) => ({ ...d, bl: d.bl.map((b, i) => (i === remarkBlIndex ? { ...b, status: 'De-assigned', remark, invType: '', invDate: '' } : b)) }))
+  /** 9003 UPDATE: Z-table updates plus the BL e-mail — no API for the e-mail and the delete. */
+  const saveRemark = () => {
+    const bl = deal?.bl[remarkBlIndex]
     setRemarkBlIndex(-1)
     setBlVersion((v) => v + 1)
-    toast('BL de-assigned and status updated.')
+    toast(actionWaiting(`De-assign BL ${bl?.blNo ?? ''}`, DEASSIGN_APIS), 'warn')
   }
 
   const nextFxSort = (key: keyof FxRow) => setFxSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
@@ -381,16 +508,16 @@ export default function MoGenerateInvoicesDealId() {
                 <button className="more-item" type="button" disabled={!deal || !amendable} onClick={enableAmendment}>
                   Amendment
                 </button>
-                <button className="more-item" type="button" disabled={!deal || !amendable || !amendMode} onClick={confirmAmendment}>
+                <button className="more-item" type="button" disabled={!deal || !amendable || !amendMode} onClick={confirmAmendmentAction}>
                   Amendment Confirm
                 </button>
                 <button className="more-item" type="button" disabled={!deal || !amendable || !rollover} onClick={toggleAmendDeal}>
                   Amend Deal Status
                 </button>
-                <button className="more-item" type="button" disabled={!deal || !(Number(deal?.status) > 4)} onClick={() => letter('Import')}>
+                <button className="more-item" type="button" disabled={!deal || !canPrintLetters(deal.status)} onClick={() => letter('Import')}>
                   Import Letter
                 </button>
-                <button className="more-item" type="button" disabled={!deal || !(Number(deal?.status) > 4)} onClick={() => letter('Export')}>
+                <button className="more-item" type="button" disabled={!deal || !canPrintLetters(deal.status)} onClick={() => letter('Export')}>
                   Export Letter
                 </button>
                 <button className="more-item danger" type="button" disabled={!deal} onClick={cancelInvoice}>
@@ -406,7 +533,7 @@ export default function MoGenerateInvoicesDealId() {
           <section className="card context-card selection-card">
             <div className="section-head">
               <div className="section-title">Selection Criteria</div>
-              <div className="section-meta">Select a Deal ID to load invoice data</div>
+              <div className="section-meta">{dealListReason ? `Deal IDs (ZSGTSFTR_DEALID) unavailable: ${dealListReason}` : loading ? 'Loading Deal ID from SAP…' : 'Select a Deal ID to load invoice data'}</div>
             </div>
             <div className="selection-grid">
               <div className="field">
@@ -424,9 +551,9 @@ export default function MoGenerateInvoicesDealId() {
                     onKeyDown={(e) => e.key === 'Enter' && loadTypedDeal(dealLookupInput)}
                   />
                   <datalist id="dealOptions">
-                    {Object.values(deals).map((d) => (
+                    {dealList.map((d) => (
                       <option key={d.dealId} value={d.dealId}>
-                        {`${d.entityString} — ${statusText(d.status)}`}
+                        {`${d.entityString} — ${d.statusLabel}`}
                       </option>
                     ))}
                   </datalist>
@@ -442,7 +569,7 @@ export default function MoGenerateInvoicesDealId() {
           <section className="card context-card" id="basicCard">
             <div className="section-head">
               <div className="section-title">Basic Details</div>
-              <div className="section-meta">{deal ? `Deal ${deal.dealId} • ${statusText(deal.status)} • Tolerance ${money(deal.tolerance, 2)}%` : 'Select a Deal ID to load invoice data'}</div>
+              <div className="section-meta">{deal ? `Deal ${deal.dealId} • ${statusText(deal.status)} • Tolerance ${deal.tolerance === null ? '—' : money(deal.tolerance, 2)}%` : 'Select a Deal ID to load invoice data'}</div>
             </div>
             <div className="basic-grid">
               <div className="basic-row row-deal">
@@ -452,11 +579,11 @@ export default function MoGenerateInvoicesDealId() {
                 </div>
                 <div className="field">
                   <label>Deal Start Date</label>
-                  <div className="date-value">{deal?.dealStart ?? '—'}</div>
+                  <div className="date-value">{deal?.dealStart || '—'}</div>
                 </div>
                 <div className="field">
                   <label>Deal End Date</label>
-                  <div className="date-value">{deal?.dealEnd ?? '—'}</div>
+                  <div className="date-value">{deal?.dealEnd || '—'}</div>
                 </div>
                 <div className="field">
                   <label>Deal ID Status</label>
@@ -477,15 +604,15 @@ export default function MoGenerateInvoicesDealId() {
                 </div>
                 <div className="field">
                   <label>MC Date</label>
-                  <div className="date-value">{deal?.mcDate ?? '—'}</div>
+                  <div className="date-value">{deal?.mcDate || '—'}</div>
                 </div>
                 <div className="field">
                   <label>Ship Start Date</label>
-                  <div className="date-value">{deal?.shipStart ?? '—'}</div>
+                  <div className="date-value">{deal?.shipStart || '—'}</div>
                 </div>
                 <div className="field">
                   <label>Ship End Date</label>
-                  <div className="date-value">{deal?.shipEnd ?? '—'}</div>
+                  <div className="date-value">{deal?.shipEnd || '—'}</div>
                 </div>
               </div>
 
@@ -546,7 +673,9 @@ export default function MoGenerateInvoicesDealId() {
               </div>
               <div className="grid-wrap">
                 {!deal ? (
-                  <div className="empty">Select a Deal ID to view FX deals.</div>
+                  <div className="empty">{loading ? 'Loading Deal ID from SAP…' : 'Select a Deal ID to view FX deals.'}</div>
+                ) : deal.fxReason ? (
+                  <div className="empty">{deal.fxReason}</div>
                 ) : (
                   <table>
                     <thead>
@@ -645,7 +774,9 @@ export default function MoGenerateInvoicesDealId() {
               </div>
               <div className="grid-wrap">
                 {!deal ? (
-                  <div className="empty">Select a Deal ID to view adjusted price / quantity.</div>
+                  <div className="empty">{loading ? 'Loading Deal ID from SAP…' : 'Select a Deal ID to view adjusted price / quantity.'}</div>
+                ) : deal.invReason ? (
+                  <div className="empty">{deal.invReason}</div>
                 ) : (
                   <table>
                     <thead>
@@ -685,12 +816,13 @@ export default function MoGenerateInvoicesDealId() {
                             <td>{r.invType}</td>
                             <td>{r.seller}</td>
                             <td>{r.buyer}</td>
+                            <td>{r.bp}</td>
                             <td>{r.partnerBank || r.houseBank || '—'}</td>
                             <td>
                               <button
                                 className="assign-btn"
                                 type="button"
-                                disabled={r.locked && !amendMode}
+                                disabled={r.locked}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   openBank(idx)
@@ -706,13 +838,13 @@ export default function MoGenerateInvoicesDealId() {
                             <td>{r.commodity}</td>
                             <td>{r.gtComm}</td>
                             <td className="editable-cell">
-                              <input className="cell-input" disabled={!canEdit} defaultValue={money(r.qty, 2)} onBlur={(e) => setInvField(idx, 'qty', e.target.value)} />
+                              <input className="cell-input" disabled={!canEdit || amendMode} defaultValue={money(r.qty, 2)} onBlur={(e) => setInvField(idx, 'qty', e.target.value)} />
                             </td>
                             <td className="editable-cell">
                               <input className="cell-input" disabled={!canEdit} defaultValue={money(r.usdPrice, 9)} onBlur={(e) => setInvField(idx, 'usdPrice', e.target.value)} />
                             </td>
                             <td className="editable-cell">
-                              <input className="cell-input" disabled={!canEdit || amendMode || !!r.partnerBank} defaultValue={money(r.rate, 9)} onBlur={(e) => setInvField(idx, 'rate', e.target.value)} />
+                              <input className="cell-input" disabled={!canEdit || amendMode || r.curr === 'USD'} defaultValue={money(r.rate, 9)} onBlur={(e) => setInvField(idx, 'rate', e.target.value)} />
                             </td>
                             <td className="num">{money(r.price, 9)}</td>
                             <td className="num">{money(r.amt, 2)}</td>
@@ -748,7 +880,8 @@ export default function MoGenerateInvoicesDealId() {
 
       {dealLookupOpen ? (
         <DealLookupModal
-          deals={deals}
+          deals={dealList}
+          reason={dealListReason}
           onClose={() => setDealLookupOpen(false)}
           onPick={(id) => {
             setDealLookupOpen(false)
@@ -759,10 +892,10 @@ export default function MoGenerateInvoicesDealId() {
       {txnRow ? <TxnModal row={txnRow} onClose={() => setTxnRow(null)} /> : null}
       {confirmState ? <ConfirmModal state={confirmState} onClose={() => setConfirmState(null)} /> : null}
       {complianceOpen && deal ? <ComplianceModal resultingStatus={pendingInvoiceStatus} onClose={() => setComplianceOpen(false)} onProceed={saveInvoice} /> : null}
-      {blOpen && deal ? <BlModal key={blVersion} rows={deal.bl} onClose={() => setBlOpen(false)} onDeassign={openDeassign} /> : null}
+      {blOpen && deal ? <BlModal key={blVersion} rows={deal.bl} reason={deal.blReason} onClose={() => setBlOpen(false)} onDeassign={openDeassign} /> : null}
       {remarkBlIndex >= 0 ? <RemarkModal onClose={() => setRemarkBlIndex(-1)} onUpdate={saveRemark} /> : null}
-      {diffOpen && deal ? <DiffModal deal={deal} onClose={() => setDiffOpen(false)} /> : null}
-      {bankRow >= 0 && deal ? <BankModal row={deal.inv[bankRow]!} onClose={() => setBankRow(-1)} onUpdate={saveBank} /> : null}
+      {diffOpen && deal ? <DiffModal rows={deal.diff} fxReason={deal.fxReason} onClose={() => setDiffOpen(false)} /> : null}
+      {bankRow >= 0 && deal ? <BankModal row={deal.inv[bankRow]!} reason={BANK_WAITING} onClose={() => setBankRow(-1)} onUpdate={saveBank} /> : null}
     </div>
   )
 }

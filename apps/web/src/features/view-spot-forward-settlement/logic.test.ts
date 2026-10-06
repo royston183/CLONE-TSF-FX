@@ -1,14 +1,14 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, INITIAL_DOC_COUNTER, NAMES, seedDeals } from './data.ts'
+import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, worklistWaitingReason } from './api.ts'
+import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, NAMES as RUNTIME_NAMES } from './data.ts'
+import { NAMES, seedDeals } from './fixtures.ts'
 import { fmtAmt, fmtDMY, fmtRate, parseDMY } from './format.ts'
 import {
   DEFAULT_SORT,
-  actionMessage,
   actionState,
   allPageSelected,
   clampPage,
-  companyOptions,
   computeKpis,
   dealCountLabel,
   dealDetailCells,
@@ -22,7 +22,6 @@ import {
   pageRange,
   pageSlice,
   pageWindow,
-  postDeals,
   selectedDeals,
   setPageSelected,
   sortArrow,
@@ -82,13 +81,7 @@ describe('filtering', () => {
     const open = { ...base, dateFrom: '', dateTo: '', status: 'OVERDUE' as const }
     strictEqual(filterDeals(deals, open, 'SETTLED', NAMES).every((d) => d.status === 'SETTLED'), true)
   })
-  it('lists each company code once, in first-seen order', () => {
-    deepStrictEqual(
-      companyOptions(deals, NAMES).map((c) => c.value),
-      ['IN01', 'DM01', 'SG01'],
-    )
-    strictEqual(companyOptions(deals, NAMES)[0]?.label, 'IN01 · Olam Agro India Pvt Ltd')
-  })
+
 })
 
 describe('sorting', () => {
@@ -190,44 +183,6 @@ describe('selection', () => {
   })
 })
 
-describe('Post (TBB1)', () => {
-  it('settles the selected deals and numbers two documents each from the injected counter', () => {
-    const r = postDeals(deals, new Set(['0001345671', '0001345672']), INITIAL_DOC_COUNTER)
-    const a = r.deals.find((d) => d.rfha === '0001345671')
-    const b = r.deals.find((d) => d.rfha === '0001345672')
-    strictEqual(a?.status, 'SETTLED')
-    strictEqual(a?.doc1, '1900000200')
-    strictEqual(a?.doc2, '1900000201')
-    strictEqual(b?.doc1, '1900000202')
-    strictEqual(b?.doc2, '1900000203')
-    strictEqual(r.counter, INITIAL_DOC_COUNTER + 4)
-  })
-  it('leaves other deals untouched and does not mutate its input', () => {
-    const r = postDeals(deals, new Set(['0001345671']), 10)
-    strictEqual(deals.find((d) => d.rfha === '0001345671')?.status, 'PENDING')
-    strictEqual(r.deals.filter((d) => d.status === 'SETTLED').length, 3)
-    strictEqual(r.deals.find((d) => d.rfha === '0001345672')?.doc1, '')
-  })
-  it('an empty selection changes nothing', () => {
-    const r = postDeals(deals, new Set(), 5)
-    strictEqual(r.counter, 5)
-    deepStrictEqual(r.deals, deals)
-  })
-  it('KPI counts follow a Post', () => {
-    const r = postDeals(deals, new Set(['0001345671']), 1)
-    const k = computeKpis(r.deals)
-    strictEqual(k.PENDING, 7)
-    strictEqual(k.SETTLED, 3)
-  })
-  it('words the result messages', () => {
-    strictEqual(actionMessage('test', 2), 'Test run completed — 0 document(s) posted (simulation) for 2 deal(s).')
-    strictEqual(
-      actionMessage('post', 2),
-      'Posting submitted — 4 accounting document(s) created for 2 deal(s) (demo).',
-    )
-  })
-})
-
 describe('modal content', () => {
   const d = deals[0]!
   it('builds the transaction display cells', () => {
@@ -265,5 +220,36 @@ describe('calendar', () => {
   it('centres on the value, or keeps the fallback', () => {
     deepStrictEqual(viewOf('15-03-2027', { y: 2026, m: 8 }), { y: 2027, m: 2 })
     deepStrictEqual(viewOf('', { y: 2026, m: 8 }), { y: 2026, m: 8 })
+  })
+})
+
+describe('api', () => {
+  it('runtime lookups start empty: no seeded companies, partners or transfer texts', () => {
+    deepStrictEqual(RUNTIME_NAMES.partner, {})
+    deepStrictEqual(RUNTIME_NAMES.transfer, {})
+  })
+  it('Company Code: T001 "<code> - <name>", leading zeros kept, one per code, sorted', () => {
+    deepStrictEqual(
+      companyOptions([
+        { CompanyCode: 'SG03', CompanyCodeName: 'OLAM GlobalAgri Pte. Ltd' },
+        { CompanyCode: '0001', CompanyCodeName: 'SAP SE' },
+        { CompanyCode: '0001', CompanyCodeName: 'dup' },
+      ]).map((o) => o.label),
+      ['0001 - SAP SE', 'SG03 - OLAM GlobalAgri Pte. Ltd'],
+    )
+  })
+  it('the worklist always waits and names what tsfvFx lacks (as served 2026-10-06)', () => {
+    // prettier-ignore
+    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
+    deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS).slice(0, 5), ['BLOTTER_DATE', 'PRCTR', 'PC_NAME', 'TXN_STATUS', 'ZTRCODE'])
+    const reason = worklistWaitingReason(served)
+    strictEqual(reason.startsWith('WAITING FOR API — ZSGTSF_RBANKSETTLE_FX source not exported (only dependency notes)'), true)
+    strictEqual(reason.includes('ZTSF_DEAL_ID'), true)
+    strictEqual(worklistWaitingReason(VIEW_REQUIRED_COLUMNS).includes('does not serve'), false)
+  })
+  it('Test Run / Post / forms wait for an action API and post nothing', () => {
+    for (const m of Object.values(ACTION_WAITING)) strictEqual(m.endsWith('has no API yet. Nothing was posted to SAP.'), true)
+    strictEqual(ACTION_WAITING.post.includes('RFTBBB00 / TBB1'), true)
+    strictEqual(ACTION_WAITING.isdPdf.includes('FP_JOB_OPEN'), true)
   })
 })

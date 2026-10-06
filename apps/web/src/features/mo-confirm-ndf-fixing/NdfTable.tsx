@@ -69,6 +69,8 @@ export function NdfTable({
   selectedId,
   onSort,
   onSelect,
+  emptyTitle = 'No NDF Fixing Deals Found',
+  emptyDesc = 'No deals match the selected Company Code, Fixing Date and optional filters.',
 }: {
   loaded: boolean
   /** The current page's rows. */
@@ -77,6 +79,9 @@ export function NdfTable({
   selectedId: string | null
   onSort: (field: SortField) => void
   onSelect: (id: string) => void
+  /** The no-rows notice: why nothing is listed (e.g. WAITING FOR API). */
+  emptyTitle?: string
+  emptyDesc?: string
 }) {
   if (!loaded) {
     return (
@@ -95,8 +100,8 @@ export function NdfTable({
       <div id="tableRegion">
         <div className="empty-state">
           <div className="icon">📭</div>
-          <div className="title">No NDF Fixing Deals Found</div>
-          <div className="desc">No deals match the selected Company Code, Fixing Date and optional filters.</div>
+          <div className="title">{emptyTitle}</div>
+          <div className="desc">{emptyDesc}</div>
         </div>
       </div>
     )

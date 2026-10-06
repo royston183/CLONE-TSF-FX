@@ -5,6 +5,8 @@ import type { Deal, FiDocWhich, Sort, SortKey } from './types.ts'
 
 type Props = {
   rows: Deal[]
+  /** The empty-state text: a filter miss, or why SAP has nothing to list (WAITING FOR API). */
+  emptyText: string
   selected: ReadonlySet<string>
   sort: Sort
   onSort: (key: SortKey) => void
@@ -26,7 +28,7 @@ function Leg({ side, curr, amt }: { side: 'BUY' | 'SELL'; curr: string; amt: num
   )
 }
 
-export function DealTable({ rows, selected, sort, onSort, onToggleRow, onToggleAll, onOpenDeal, onOpenFiDoc }: Props) {
+export function DealTable({ rows, emptyText, selected, sort, onSort, onToggleRow, onToggleAll, onOpenDeal, onOpenFiDoc }: Props) {
   return (
     <div className="table-wrap" id="table-wrap">
       <table className="list-table" id="deal-table">
@@ -142,7 +144,7 @@ export function DealTable({ rows, selected, sort, onSort, onToggleRow, onToggleA
           {!rows.length && (
             <tr>
               <td colSpan={21} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 26 }}>
-                No deals match the current filters.
+                {emptyText}
               </td>
             </tr>
           )}

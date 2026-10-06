@@ -1,7 +1,7 @@
-import { apiFetch, list, odataString, service } from '@slc/api-client'
+import { apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, type FxRow } from '../../shared/fx/mw.ts'
-import { sapMessage, settleFxDeal, type FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import { sapMessage, type FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import { STATUS } from './data.ts'
 import type { NdfDeal, Trader } from './types.ts'
 
@@ -189,5 +189,10 @@ export async function loadCompanyCodes(signal?: AbortSignal): Promise<string[]> 
   return [...new Set((v2?.d?.results ?? []).map((c) => (c.CompanyCode ?? '').trim()).filter(Boolean))].sort()
 }
 
+const SETTLE = 'com.sap.gateway.srvd_a2x.zfs_sd_trmfx.v0001.Settle'
+
 /** Match & Release: BAPI_FTR_FXT_SETTLE through the bound Settle action. Each call is its own SAP commit. */
-export const settleNdfDeal = settleFxDeal
+export async function settleNdfDeal(companyCode: string, transaction: string): Promise<void> {
+  const key = entityPath('FxTransaction', { CompanyCode: companyCode, FinancialTransaction: transaction })
+  await apiFetch(`${fxApi(key)}/${SETTLE}`, { method: 'POST', body: {} })
+}
