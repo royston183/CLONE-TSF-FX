@@ -1,3 +1,4 @@
+import { WAITING_TRADE_INVOICE } from './data.ts'
 import { statusToneClass } from './DealTable.tsx'
 import { formatAmount, isoToDMY } from './format.ts'
 import { DetailItem, KvRow, ModalCard, type Modal } from './modal.tsx'
@@ -70,12 +71,11 @@ export function InvoiceModal({ modal, row }: { modal: Modal; row: HeadsUpRow | n
                 <DetailItem label="Deal Description" value={row.dealDesc} full />
                 <DetailItem label="MC Reference" value={row.mcRef} />
                 <DetailItem label="Deal Maturity Date" value={isoToDMY(row.maturityDate)} />
-                <DetailItem label="FX Utilisation Amount" value={formatAmount(row.utiAmt)} />
+                <DetailItem label="FX Utilisation Amount" value={row.utiAmt === null ? '' : formatAmount(row.utiAmt)} />
               </div>
             </div>
-            <div className="proto-note" title="Will be wired in the future">
-              <b>Invoice report (ZSGTSF_RDEAL_TRD_INV)</b> is called with this Deal ID. It is outside this program and will be
-              wired in the future.
+            <div className="proto-note" title="No API yet">
+              {WAITING_TRADE_INVOICE}
             </div>
           </>
         ) : null

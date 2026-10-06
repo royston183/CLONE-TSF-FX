@@ -2,15 +2,13 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
-import { DEAL_LIBRARY, INITIAL_DOC_COUNTER, SAMPLE_DEAL_ID } from './data.ts'
+import { ACTION_WAITING, gateOutcome, loadDeal } from './api.ts'
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
 import { DocPreviewModal } from './DocModals.tsx'
 import {
   accountingCompleted,
   canPostTradeInvoice,
-  docCounter,
   initiateSettlement,
-  loadDeal,
   noPendingPostAllToast,
   pendingPostAll,
   postAllConfirm,
@@ -18,6 +16,7 @@ import {
   postingAction,
   resolveDrop,
   txnAction,
+  type NextDoc,
   type PostingAction,
   type TxnAction,
 } from './logic.ts'
@@ -32,12 +31,15 @@ import { PostingModal } from './PostingModal.tsx'
 import { TxnModal } from './TxnModal.tsx'
 import type { ActiveModal, Deal, DocPreview, DragKind, DragState, Outcome, ToastKind, ToastMessage } from './types.ts'
 
+/** The pure rules only validate here: their outcome is never applied, so no document number is drawn. */
+const NO_DOC: NextDoc = () => ''
+
 const TOAST_MS = 3600
 
 /**
  * BO: Post Accounting Entries for Settlement (ZSGTSFR081 / ZSGTSF_RDEAL_TRD_POST), converted
- * from legacy/bo-post-accounting-settlement.html. UI-only: the deal library is dummy data and
- * every posting happens in component state; no SAP call exists for this screen yet.
+ * from legacy/bo-post-accounting-settlement.html. The Deal ID header is read from SAP by key; the
+ * FX / trade invoice legs and every posting wait for an API (see api.ts). No sample data.
  */
 export default function BoPostAccountingSettlement() {
   const [dealInput, setDealInput] = useState('')
@@ -55,12 +57,9 @@ export default function BoPostAccountingSettlement() {
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [over, setOver] = useState<DragKind | null>(null)
 
-  // Document numbers
-  const nextDoc = useRef(docCounter(INITIAL_DOC_COUNTER))
-
   // Toast
   const [toast, setToast] = useState<ToastMessage & { show: boolean }>({
-    message: 'Ready. Enter a Deal ID or try the sample TSF-9081.',
+    message: 'Ready. Enter a Deal ID.',
     kind: '',
     show: true,
   })
@@ -78,15 +77,21 @@ export default function BoPostAccountingSettlement() {
   const closeAll = useCallback(() => setModal(null), [])
   useEscape(closeAll)
 
-  const apply = (o: Outcome) => {
-    setDeal(o.deal)
-    setStatus(o.toast.message, o.toast.kind)
+  /** Runs the screen's rule for its validation only; a change it would make has to come from SAP. */
+  const gate = (d: Deal, o: Outcome, waiting: string) => {
+    const t = gateOutcome(d, o, waiting)
+    setStatus(t.message, t.kind)
   }
 
   // ---------------------------------------------------------------- load / refresh
 
-  const load = (raw: string) => {
-    const r = loadDeal(DEAL_LIBRARY, raw)
+  const load = async (raw: string) => {
+    let r: Awaited<ReturnType<typeof loadDeal>>
+    try {
+      r = await loadDeal(raw)
+    } catch {
+      return
+    }
     if (!r.ok) {
       setStatus(r.message, 'error')
       if (raw.trim()) setDeal(null)
@@ -102,15 +107,14 @@ export default function BoPostAccountingSettlement() {
       setStatus('Load a Deal ID first.', 'error')
       return
     }
-    // Everything is already rendered from state; the original only re-drew it.
-    setDeal({ ...deal })
-    setStatus('Screen refreshed.', '')
+    // Re-reads the Deal ID from SAP.
+    void load(deal.dealId).then(() => setStatus('Screen refreshed.', ''))
   }
 
   // ---------------------------------------------------------------- toolbar
 
   const onPostFx = () => {
-    if (deal) apply(postFxDeal(deal, nextDoc.current))
+    if (deal) gate(deal, postFxDeal(deal, NO_DOC), ACTION_WAITING.postFx)
   }
 
   const onPostInvoice = () => {
@@ -118,6 +122,10 @@ export default function BoPostAccountingSettlement() {
     const guard = canPostTradeInvoice(deal)
     if (!guard.allowed) {
       setStatus(guard.toast.message, guard.toast.kind)
+      return
+    }
+    if (!deal.inv.length && deal.invWaiting) {
+      setStatus(deal.invWaiting, 'error')
       return
     }
     if (!pendingPostAll(deal).length) {
@@ -129,11 +137,11 @@ export default function BoPostAccountingSettlement() {
   }
 
   const onAccounting = () => {
-    if (deal) apply(accountingCompleted(deal))
+    if (deal) gate(deal, accountingCompleted(deal), ACTION_WAITING.accounting)
   }
 
   const onInitiate = () => {
-    if (deal) apply(initiateSettlement(deal))
+    if (deal) gate(deal, initiateSettlement(deal), ACTION_WAITING.initiate)
   }
 
   // ---------------------------------------------------------------- popups
@@ -153,21 +161,24 @@ export default function BoPostAccountingSettlement() {
 
   const onTxnAction = (action: TxnAction) => {
     if (!deal) return
-    const o = txnAction(deal, txnIdx, action, nextDoc.current)
-    apply(o)
-    if (o.close) setModal(null)
+    const o = txnAction(deal, txnIdx, action, NO_DOC)
+    if (!deal.top[txnIdx]) return setStatus(o.toast.message, o.toast.kind)
+    if (action === 'TEST') return setStatus(ACTION_WAITING.txnTest, 'error')
+    if (action === 'UPD') return setStatus(ACTION_WAITING.txnUpdate, 'error')
+    gate(deal, o, ACTION_WAITING.txnPost)
   }
 
   const onPostingAction = (action: PostingAction) => {
     if (!deal) return
-    const o = postingAction(deal, postingIdx, action, nextDoc.current)
-    apply(o)
-    if (o.close) setModal(null)
+    const o = postingAction(deal, postingIdx, action, NO_DOC)
+    if (!deal.inv[postingIdx]) return setStatus(o.toast.message, o.toast.kind)
+    if (action === 'UPD_DATA') return setStatus(ACTION_WAITING.invUpdate, 'error')
+    gate(deal, o, action === 'SET_EXE' ? ACTION_WAITING.invSettle : ACTION_WAITING.invPost)
   }
 
   const onPostAllConfirm = () => {
     if (!deal) return
-    apply(postAllConfirm(deal, nextDoc.current))
+    gate(deal, postAllConfirm(deal, NO_DOC), ACTION_WAITING.postAll)
     setModal(null)
   }
 
@@ -305,22 +316,12 @@ export default function BoPostAccountingSettlement() {
                   value={dealInput}
                   onChange={(e) => setDealInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') load(dealInput)
+                    if (e.key === 'Enter') void load(dealInput)
                   }}
                 />
               </div>
-              <button type="button" className="btn-go" onClick={() => load(dealInput)}>
+              <button type="button" className="btn-go" onClick={() => void load(dealInput)}>
                 Go
-              </button>
-              <button
-                type="button"
-                className="sample-chip"
-                onClick={() => {
-                  setDealInput(SAMPLE_DEAL_ID)
-                  load(SAMPLE_DEAL_ID)
-                }}
-              >
-                Try sample · {SAMPLE_DEAL_ID}
               </button>
             </div>
           </div>
@@ -336,7 +337,7 @@ export default function BoPostAccountingSettlement() {
                   <h2>Deal ID {deal.dealId}</h2>
                 </div>
                 <span>
-                  <StatusBadge status={deal.status} />
+                  <StatusBadge deal={deal} />
                 </span>
               </div>
               <div className="panel-body">

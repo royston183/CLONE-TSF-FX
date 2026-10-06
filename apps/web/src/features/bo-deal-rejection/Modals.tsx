@@ -1,23 +1,25 @@
-import { GROUP_ORDER, TXN_STATUS_META } from './data.ts'
-import { cellText, defsFor, str, targetStatusFor } from './logic.ts'
+import { GROUP_ORDER, STATUS_TEXT_CLASS } from './data.ts'
+import { cellText, defsFor, str, targetStatusFor, type StatusSelection } from './logic.ts'
 import { OverlayShell, type Overlay } from './modal.tsx'
 import type { Deal, MarkedItem, TxnType } from './types.ts'
 
 /** The Txn Status text, coloured by status (an unknown status falls back to the draft colour). */
 export function StatusText({ status }: { status: string }) {
-  const meta = TXN_STATUS_META[status]
-  return <span className={`status-text ${meta ? meta.textCls : 'status-text-draft'}`}>{status}</span>
+  return <span className={`status-text ${STATUS_TEXT_CLASS[status] ?? 'status-text-draft'}`}>{status}</span>
 }
 
 type RejectProps = {
   overlay: Overlay
   note: string
   items: MarkedItem[]
+  type: TxnType
+  /** GET_DATA's status selection: the FX rejection targets depend on it. */
+  sel: StatusSelection
   onConfirm: () => void
 }
 
 /** Reject confirmation: what will be rejected, the status change and the remark of each deal. */
-export function RejectModal({ overlay, note, items, onConfirm }: RejectProps) {
+export function RejectModal({ overlay, note, items, type, sel, onConfirm }: RejectProps) {
   return (
     <OverlayShell id="rejectModal" overlay={overlay}>
       <div className="modal modal-left modal-scrollable reject-modal">
@@ -50,7 +52,7 @@ export function RejectModal({ overlay, note, items, onConfirm }: RejectProps) {
                       <span className="transition">
                         {str(it.deal, 'txn_status')}
                         <span className="arrow">&rarr;</span>
-                        {targetStatusFor(str(it.deal, 'txn_status'))}
+                        {targetStatusFor(type, str(it.deal, 'txn_status'), sel) || str(it.deal, 'txn_status')}
                       </span>
                     </td>
                     <td>{it.remark ? it.remark : <span style={{ color: 'var(--text-faint)' }}>—</span>}</td>

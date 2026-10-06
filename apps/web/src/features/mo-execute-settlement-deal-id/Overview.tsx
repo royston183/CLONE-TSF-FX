@@ -1,19 +1,27 @@
 import type { ReactNode } from 'react'
-import { STATUS_LIST } from './data.ts'
 import { statusMeta, type ToolbarVisibility } from './logic.ts'
-import type { Deal } from './types.ts'
+import type { Deal, StatusMeta } from './types.ts'
 
-export function StatusPill({ code }: { code: string }) {
-  const sm = statusMeta(code)
+export function StatusPill({ code, statuses }: { code: string; statuses: readonly StatusMeta[] }) {
+  const sm = statusMeta(code, statuses)
   return (
     <span className={`pill ${sm.cls}`}>
       <span className="dot"></span>
-      {sm.code} &middot; {sm.text}
+      {sm.code}{sm.text ? <> &middot; {sm.text}</> : null}
     </span>
   )
 }
 
-export function HeaderGrid({ deal, onStatus }: { deal: Deal; onStatus: (code: string) => void }) {
+/** Deal ID Status list box: ZSGTSFTR_DEAL_ST of the deal's type + sub type (api.ts statusList). */
+export function HeaderGrid({
+  deal,
+  statuses,
+  onStatus,
+}: {
+  deal: Deal
+  statuses: readonly StatusMeta[]
+  onStatus: (code: string) => void
+}) {
   const cells: [string, ReactNode][] = [
     ['Deal ID', <span className="accent">{deal.dealId}</span>],
     ['Deal Start Date', deal.dealStartDate],
@@ -32,7 +40,7 @@ export function HeaderGrid({ deal, onStatus }: { deal: Deal; onStatus: (code: st
     [
       'Deal ID Status',
       <select id="hdrStatusSel" value={deal.dealStatus} onChange={(e) => onStatus(e.target.value)} style={{ width: '100%' }}>
-        {STATUS_LIST.map((s) => (
+        {(statuses.some((s) => s.code === deal.dealStatus) ? statuses : [statusMeta(deal.dealStatus, statuses), ...statuses]).map((s) => (
           <option key={s.code} value={s.code}>
             {s.code} - {s.text}
           </option>

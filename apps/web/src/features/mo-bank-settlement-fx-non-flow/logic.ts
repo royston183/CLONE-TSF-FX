@@ -192,47 +192,28 @@ export function transferTypeOf(types: Record<string, string>, curr: string): str
   return types[curr] ?? '—'
 }
 
-export const BANK_UPDATED_MSG = 'House Bank and Acc ID Successfully updated'
 export const BANK_REQUIRED_MSG = 'House bank and account ID are required'
 
 /**
  * The Update button of the Assign House Bank popup. A leg that already has a bank is left
- * alone; an open leg needs both bank and account. The deal becomes ASSIGNED once both legs
- * carry a bank. No log entries means there was nothing to do.
+ * alone; an open leg needs both bank and account. A complete leg would go to SAP through
+ * BAPI_FTR_PAYDET_CREATE / BAPI_FTR_FXT_CHANGE, which have no API: it logs `waiting` and the
+ * deal is never changed. No log entries means there was nothing to do.
  */
-export function applyBankUpdate(deal: Deal, form: BankForm): { deal: Deal; logs: UpdateLogEntry[] } {
-  const next: Deal = { ...deal }
+export function bankUpdateCheck(deal: Deal, form: BankForm, waiting: string): UpdateLogEntry[] {
   const logs: UpdateLogEntry[] = []
-  if (!deal.hb1) {
-    if (form.hb1 && form.acc1) {
-      next.hb1 = form.hb1
-      next.acc1 = form.acc1
-      logs.push({ leg: 'Incoming', ok: true, msg: BANK_UPDATED_MSG })
-    } else logs.push({ leg: 'Incoming', ok: false, msg: BANK_REQUIRED_MSG })
-  }
-  if (!deal.hb2) {
-    if (form.hb2 && form.acc2) {
-      next.hb2 = form.hb2
-      next.acc2 = form.acc2
-      logs.push({ leg: 'Outgoing', ok: true, msg: BANK_UPDATED_MSG })
-    } else logs.push({ leg: 'Outgoing', ok: false, msg: BANK_REQUIRED_MSG })
-  }
-  if (logs.length && next.hb1 && next.hb2) next.bankStatus = 'ASSIGNED'
-  return { deal: next, logs }
+  if (!deal.hb1) logs.push({ leg: 'Incoming', ok: false, msg: form.hb1 && form.acc1 ? waiting : BANK_REQUIRED_MSG })
+  if (!deal.hb2) logs.push({ leg: 'Outgoing', ok: false, msg: form.hb2 && form.acc2 ? waiting : BANK_REQUIRED_MSG })
+  return logs
 }
 
-export function bankUpdateToast(logs: UpdateLogEntry[]): { message: string; kind: ToastKind } {
-  const anyOk = logs.some((l) => l.ok)
-  return anyOk
-    ? { message: BANK_UPDATED_MSG, kind: 'success' }
-    : { message: 'Bank assignment failed — check the fields', kind: 'error' }
+export function bankUpdateToast(logs: UpdateLogEntry[], waiting: string): { message: string; kind: ToastKind } {
+  return logs.some((l) => l.msg === BANK_REQUIRED_MSG)
+    ? { message: 'Bank assignment failed — check the fields', kind: 'error' }
+    : { message: waiting, kind: 'info' }
 }
 
 // ---------------------------------------------------------------- test run / post
-
-export function testRunMessage(deal: Deal): string {
-  return `Test run completed for ${deal.dealId} (Txn ${deal.rfha}). RFTBBB00 ran in test mode — no documents were posted.`
-}
 
 /** TBB1 Post is only offered once both legs have a bank, and never twice. */
 export function postGuard(deal: Deal): PostGuard {
@@ -247,18 +228,4 @@ export function postGuard(deal: Deal): PostGuard {
 
 export function postHint(deal: Deal): string {
   return `This runs RFTBBB00 for real (P_TEST = space) and creates the settlement document for both legs on value date ${fmtDate(deal.valueDate)}. This cannot be undone from this screen.`
-}
-
-/** A dummy settlement document number: "19" + 7 digits. `rand` is injectable for tests. */
-export function newDocNo(rand: () => number = Math.random): string {
-  return `19${1000000 + Math.floor(rand() * 8999999)}`
-}
-
-/** The deal after a successful post: both documents set, first one shown, status Settled. */
-export function postDeal(deal: Deal, doc1: string, doc2: string): Deal {
-  return { ...deal, doc1, doc2, fiDoc: doc1, status: 'Settled' }
-}
-
-export function postedMessage(deal: Deal): string {
-  return `Posting submitted for ${deal.dealId}. Settlement document ${deal.fiDoc ?? ''} created.`
 }

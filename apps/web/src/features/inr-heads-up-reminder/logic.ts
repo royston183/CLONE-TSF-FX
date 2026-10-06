@@ -1,73 +1,66 @@
-import {
-  ABAP,
-  AUTH_ERROR_PREFIX,
-  BANKS,
-  COLUMNS,
-  CURRENT_USER,
-  DEAL_SEEDS,
-  DEFAULT_CO_AREA,
-  ENTITIES,
-  LAYOUT_COLUMNS,
-  MAIL_SUCCESS_TEXT,
-  MC_SEED,
-  MODELS,
-  REGIONS,
-  SETTLED_STAGE_STATUSES,
-  STATUSES,
-  USERS,
-} from './data.ts'
-import {
-  addDaysISO,
-  compactAmount,
-  dateToISO,
-  formatAmount,
-  formatDMY,
-  formatRate,
-  isoToDMY,
-  pad2,
-  parseDMY,
-  trimMillions,
-} from './format.ts'
+import { ABAP, COLUMNS, LAYOUT_COLUMNS, STATUS_TONE } from './data.ts'
+import { dateToISO, formatAmount, formatDMY, formatRate, isoToDMY, parseDMY } from './format.ts'
 import type {
   CalendarGrid,
   Column,
   ColumnKey,
   Deal,
-  DealStatus,
   Entity,
-  FetchResult,
   Filters,
   FxLeg,
+  HeadsUpIndicator,
   HeadsUpRow,
   Leg,
   MailPlan,
-  MasterContract,
   MasterContractDetail,
-  Model,
   Region,
+  RuleBt,
+  ScreenData,
   Sort,
-  Tables,
+  StatusTone,
   TypedDateResult,
 } from './types.ts'
 
-/* ---------- lookups ---------- */
-
-export const findEntity = (code: string): Entity | undefined => ENTITIES.find((e) => e.code === code)
-export const findRegion = (id: string): Region | undefined => REGIONS.find((r) => r.id === id)
-export const findStatus = (code: string): DealStatus | undefined => STATUSES.find((s) => s.code === code)
-export const modelRule = (id: string): Model | undefined => MODELS.find((m) => m.id === id)
-export const findMcByRef = (tables: Tables, ref: string): MasterContract | undefined =>
-  tables.masterContracts.find((m) => m.ref === ref)
-
 /* ---------- selection screen ---------- */
 
+/** P_CO has no default in the report, so the CO Area starts empty. */
 export function initialFilters(): Filters {
-  return { keyDate: '', region: '', entity: '', dealId: '', status: '', coArea: DEFAULT_CO_AREA }
+  return { keyDate: '', region: '', entity: '', dealId: '', status: '', coArea: '' }
 }
 
 export const DEFAULT_SORT: Sort = { field: 'dealId', dir: 'asc' }
 
-/* ---------- business logic ---------- */
+export const EMPTY_DATA: ScreenData = {
+  deals: [],
+  masterContracts: [],
+  entities: [],
+  statuses: [],
+  rules: [],
+  indicators: [],
+  spotDealIds: {},
+  fxLegs: null,
+  optLegs: null,
+}
+
+export const statusTone = (code: string): StatusTone => STATUS_TONE[code] ?? 'draft'
+
+const byText = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
+
+/** ZSGTSFSH_REGION: the distinct region codes of ZSGTSFTR_COMP (no region text table is served). */
+export function regionOptions(entities: readonly Entity[]): Region[] {
+  return [...new Set(entities.map((e) => e.regionId).filter(Boolean))].sort(byText).map((id) => ({ id, name: '' }))
+}
+
+/**
+ * P_CO is a plain KOKRS parameter (F4 on TKA01, which no API serves). The list offers the CO
+ * areas ZSGTSFTR_RULE_BT is maintained for, the only values the report's
+ * `SELECT ... FROM zsgtsftr_rule_bt WHERE zco_area = @p_co` can match.
+ */
+export function coAreaOptions(rules: readonly RuleBt[]): string[] {
+  return [...new Set(rules.map((r) => r.coArea).filter(Boolean))].sort(byText)
+}
+
+/* ---------- business logic (FORM sub_get_data / data_filter / send_email) ---------- */
 
 /** "Model extension" (SUB_GET_DATA): M030 / M034 get a currency suffix after the CO-area lookup. */
 export function extendModelId(modelId: string, currId: string): string {
@@ -78,48 +71,144 @@ export function extendModelId(modelId: string, currId: string): string {
 
 /** Absolute USD-side amount of one leg; 0 when neither side is USD. */
 export function legUsdAmount(leg: Leg): number {
-  if (leg.curr1 === 'USD') return Math.abs(leg.amt1)
-  if (leg.curr2 === 'USD') return Math.abs(leg.amt2)
+  if (leg.curr1 === ABAP.USD) return Math.abs(leg.amt1)
+  if (leg.curr2 === ABAP.USD) return Math.abs(leg.amt2)
   return 0
 }
 
-/**
- * FX / option utilisation amount: absolute USD-side amount of the deal's legs.
- * The ABAP loops from the first D1 row to the end of the table without leaving on a deal
- * change; the intended per-deal total is implemented here, as the original does.
- */
-export function calculateUtilisation(tables: Tables, dealId: string): number {
-  let total = 0
-  for (const legs of [tables.fxLegs, tables.optLegs]) {
-    const mine = legs.filter((l) => l.dealId === dealId)
-    if (mine.some((l) => l.type === ABAP.LEG_TYPE)) {
-      for (const l of mine) total += legUsdAmount(l)
-    }
-  }
-  return Math.round(total * 100) / 100
+/** SORT lt_fx / lt_op BY ztsf_deal_id ztsf_deal_type (stable here). */
+export function sortLegs<T extends Leg>(legs: readonly T[]): T[] {
+  return legs.slice().sort((a, b) => byText(a.dealId, b.dealId) || byText(a.type, b.type))
 }
 
 /**
- * Mail plan of SEND_EMAIL: status 05/07, model sub type FX1 -> FX mails (indicator on the full
- * model id); FX2 -> option mails (indicator on the first 4 chars of the model id).
+ * The report's utilization "parallel cursor", reproduced exactly: from the first row of the
+ * deal with ztsf_deal_type 'D1', LOOP AT ... FROM lv_index runs to the END of the sorted table
+ * (there is no EXIT on a deal change), so the legs of every later Deal ID in the selection are
+ * added too. That is what SAP shows; it is not the per-deal total. `sorted` must be sortLegs().
  */
-export function mailPlanForRow(row: Pick<HeadsUpRow, 'status' | 'modelId'>): string[] {
+export function abapUtilisation(sorted: readonly Leg[], dealId: string): number {
+  const from = sorted.findIndex((l) => l.dealId === dealId && l.type === ABAP.LEG_TYPE)
+  if (from < 0) return 0
+  let total = 0
+  for (let i = from; i < sorted.length; i++) total += legUsdAmount(sorted[i] as Leg)
+  return Math.round(total * 100) / 100
+}
+
+/** LEFT OUTER JOIN zsgtsftr_deal_st ON zdeal_stat = a~zdeal_stat AND zsub_type = 'FX1'. */
+export function statusText(data: Pick<ScreenData, 'statuses'>, code: string): string {
+  return data.statuses.find((s) => s.code === code)?.sdesc ?? ''
+}
+
+/**
+ * SUB_GET_DATA + DATA_FILTER. ZSGTSFTR_DEALID WHERE zmc_ref <> space, LEFT OUTER JOINed to
+ * MAS_CON (on zmc_ref_no), COMP (on zcom_id = MC origin) and DEAL_ST ('FX1'); then the in-program
+ * deletes: s_deal, p_date (ze_date <> p_date), p_stat, s_reg, s_org. The legs are read FOR ALL
+ * ENTRIES of the remaining rows' MC references, sorted, and summed per row as the report does.
+ * The model is looked up in RULE_BT at the selected CO area before the model extension.
+ *
+ * AUTHORITY-CHECK C_PROJ_KOK (KOKRS = P_CO, ACTVT 03): WAITING FOR AUTH — no browser source for
+ * the user's authorizations, so nothing is refused here.
+ */
+export function selectRows(data: ScreenData, p: Filters): HeadsUpRow[] {
+  const mcs = new Map(data.masterContracts.map((m) => [m.ref, m]))
+  const comp = new Map<string, Entity>()
+  for (const e of data.entities) if (!comp.has(e.code)) comp.set(e.code, e)
+
+  const picked = data.deals
+    .filter((d) => d.mcRef !== '')
+    .map((d) => {
+      const mc = mcs.get(d.mcRef)
+      const entity = mc ? comp.get(mc.origin) : undefined
+      return { d, mc, origin: mc?.origin ?? '', region: entity?.regionId ?? '' }
+    })
+    .filter(({ d }) => !p.dealId || d.dealId === p.dealId)
+    .filter(({ d }) => !p.keyDate || d.maturityDate === p.keyDate)
+    .filter(({ d }) => !p.status || d.status === p.status)
+    .filter((r) => !p.region || r.region === p.region)
+    .filter((r) => !p.entity || r.origin === p.entity)
+
+  const refs = new Set(picked.map((r) => r.d.mcRef))
+  const fx = data.fxLegs ? sortLegs(data.fxLegs.filter((l) => refs.has(l.mcRef))) : null
+  const op = data.optLegs ? sortLegs(data.optLegs.filter((l) => refs.has(l.mcRef))) : null
+  const rulesAtCo = data.rules.filter((r) => r.coArea === p.coArea)
+
+  return picked.map(({ d, mc, origin, region }) => {
+    const ndf: FxLeg | undefined = fx?.find((l) => l.dealId === d.dealId && l.sgsart === ABAP.EXT_PRODUCT_NDF)
+    const baseModel = mc?.modelId ?? ''
+    const rule = rulesAtCo.find((r) => r.id === baseModel)
+    return {
+      dealId: d.dealId,
+      dealType: d.dealType,
+      subType: d.subType,
+      dealDesc: d.dealDesc,
+      startDate: d.startDate,
+      maturityDate: d.maturityDate,
+      mcRef: d.mcRef,
+      status: d.status,
+      statusDesc: statusText(data, d.status),
+      origin,
+      region,
+      modelId: extendModelId(baseModel, d.currId),
+      modelDesc: mc?.modelDesc ?? '',
+      coArea: rule?.coArea ?? '',
+      coModelDesc: rule?.desc ?? '',
+      mcDesc: mc?.desc ?? '',
+      mcDate: mc?.date ?? '',
+      mcAmt: mc?.amt ?? 0,
+      utiAmt: fx && op ? Math.round((abapUtilisation(fx, d.dealId) + abapUtilisation(op, d.dealId)) * 100) / 100 : null,
+      dealCurrId: d.currId,
+      confirmed: d.confirmed,
+      plAmt: d.plAmt,
+      plCurr: d.plCurr,
+      plRate: d.plRate,
+      ndfDate: ndf?.ndfDate ?? '',
+      bank: ndf?.bp ?? '',
+      spot: !!data.spotDealIds[d.dealId],
+      createdBy: d.createdBy,
+      createdDate: d.createdDate,
+      createdTime: d.createdTime,
+      changedBy: d.changedBy,
+      changedDate: d.changedDate,
+      changedTime: d.changedTime,
+    }
+  })
+}
+
+/**
+ * FORM send_email's decision per row: status 05 / 07; the model's sub type from RULE_BT
+ * (WHERE zmod_id <> space, matched on the first 4 characters); FX1 -> the SET_TYP indicator row
+ * of the full model id must carry ZHEAD_FX; FX2 -> the indicator row matched on the first 4
+ * characters must carry ZHEAD_OPT. `indicators` holds SET_TYP WHERE zhead_fx <> space OR
+ * zhead_opt <> space, so the first match is the first flagged row, as the ABAP ASSIGN finds it.
+ */
+export function mailPlanForRow(
+  row: Pick<HeadsUpRow, 'status' | 'modelId'>,
+  rules: readonly RuleBt[],
+  indicators: readonly HeadsUpIndicator[],
+): string[] {
   if (!ABAP.MAIL_STATUSES.includes(row.status)) return []
-  const rule = modelRule(row.modelId.substring(0, 4))
-  if (!rule) return []
-  if (rule.subType === ABAP.SUB_FX1) {
-    const full = modelRule(row.modelId)
-    if (full?.headFx) return ['Heads Up FX', 'Heads Up FX for DMCC']
-  } else if (rule.subType === ABAP.SUB_FX2) {
-    if (rule.headOpt) return ['Heads Up Option', 'Heads Up Option for DMCC']
+  const m4 = row.modelId.substring(0, 4)
+  const type = rules.find((r) => r.id !== '' && r.id.substring(0, 4) === m4)
+  if (!type) return []
+  if (type.subType === ABAP.SUB_FX1) {
+    const ind = indicators.find((i) => i.modelId === row.modelId)
+    if (ind?.headFx) return ['Heads Up FX', 'Heads Up FX for DMCC']
+  } else if (type.subType === ABAP.SUB_FX2) {
+    const ind = indicators.find((i) => i.modelId.substring(0, 4) === m4)
+    if (ind?.headOpt) return ['Heads Up Option', 'Heads Up Option for DMCC']
   }
   return []
 }
 
-export function buildMailPlan(rows: readonly Pick<HeadsUpRow, 'dealId' | 'status' | 'modelId'>[]): MailPlan {
+export function buildMailPlan(
+  rows: readonly Pick<HeadsUpRow, 'dealId' | 'status' | 'modelId'>[],
+  rules: readonly RuleBt[],
+  indicators: readonly HeadsUpIndicator[],
+): MailPlan {
   const plan: MailPlan = { deals: [], mailCount: 0 }
   for (const r of rows) {
-    const mails = mailPlanForRow(r)
+    const mails = mailPlanForRow(r, rules, indicators)
     if (mails.length) {
       plan.deals.push({ dealId: r.dealId, mails })
       plan.mailCount += mails.length
@@ -135,187 +224,28 @@ export function sendMailState(error: string | null, plan: MailPlan): { disabled:
     disabled: !can,
     title: can
       ? 'Send heads-up mail for the deals matching the selection'
-      : error
-        ? 'Not available without CO Area authorization'
-        : 'No deal with status 05 / 07 and a heads-up indicator in the selection',
+      : (error ?? 'No deal with status 05 / 07 and a heads-up indicator in the selection'),
   }
 }
 
-/* ---------- mock table builder (deterministic) ---------- */
-
-export function mcDescription(mc: Pick<MasterContract, 'origin' | 'commodity' | 'modelId' | 'amt'>): string {
-  return `${mc.origin}_${mc.commodity}_${mc.modelId}_${trimMillions(mc.amt)}M`
-}
-
-export function buildMockTables(): Tables {
-  const masterContracts: MasterContract[] = MC_SEED.map((mc) => ({ ...mc, ref: `MC/${mc.origin}/2026/${mc.no}` }))
-  const tables: Tables = { masterContracts, deals: [], fxLegs: [], optLegs: [], spotDealIds: {} }
-
-  DEAL_SEEDS.forEach((s, i) => {
-    const [mcNo, startDate, maturityDate, status, confirmed, usd] = s
-    const mc = masterContracts.find((m) => m.no === mcNo)
-    const rule = mc && modelRule(mc.modelId)
-    const entity = mc && findEntity(mc.origin)
-    if (!mc || !rule || !entity) return
-    const dealId = String(1000004101 + i)
-    const settledStage = SETTLED_STAGE_STATUSES.includes(status)
-    const plAmt = settledStage ? Math.round(usd * 0.0125 * (i % 2 ? -1 : 1) * 100) / 100 : 0
-
-    tables.deals.push({
-      dealId,
-      dealType: ABAP.LEG_TYPE,
-      subType: rule.subType,
-      dealDesc: `${mc.origin} ${rule.desc} USD ${compactAmount(usd)}`,
-      startDate,
-      maturityDate,
-      mcRef: mc.ref,
-      status,
-      confirmed: !!confirmed,
-      plAmt,
-      plCurr: settledStage ? 'USD' : '',
-      plRate: settledStage ? entity.fxRate + 0.4 : 0,
-      currId: mc.currId,
-      createdBy: USERS[i % 4] ?? '',
-      createdDate: startDate,
-      createdTime: `${pad2(8 + (i % 9))}:${pad2((i * 7) % 60)}:${pad2((i * 13) % 60)}`,
-      changedBy: USERS[(i + 1) % 4] ?? '',
-      changedDate: addDaysISO(startDate, (i % 5) + 1),
-      changedTime: `${pad2(9 + (i % 8))}:${pad2((i * 11) % 60)}:${pad2((i * 17) % 60)}`,
-    })
-
-    if (rule.subType === ABAP.SUB_FX1) {
-      const ndf = ABAP.NDF_MODELS.includes(mc.modelId)
-      const leg: FxLeg = {
-        dealId,
-        type: ABAP.LEG_TYPE,
-        curr1: 'USD',
-        curr2: entity.currency,
-        amt1: usd,
-        amt2: -Math.round(usd * entity.fxRate * 100) / 100,
-        sgsart: ndf ? ABAP.EXT_PRODUCT_NDF : ABAP.EXT_PRODUCT_OTHER,
-        bp: ndf ? (BANKS[i % BANKS.length] ?? '') : '',
-        ndfDate: ndf ? addDaysISO(maturityDate, -2) : '',
-      }
-      tables.fxLegs.push(leg)
-    } else {
-      // Staggered / put & call options: two legs, alternating which side holds USD.
-      const half = Math.round((usd / 2) * 100) / 100
-      tables.optLegs.push({
-        dealId,
-        type: ABAP.LEG_TYPE,
-        curr1: 'INR',
-        curr2: 'USD',
-        amt1: Math.round(half * entity.fxRate * 100) / 100,
-        amt2: -half,
-      })
-      tables.optLegs.push({
-        dealId,
-        type: ABAP.LEG_TYPE,
-        curr1: 'USD',
-        curr2: 'INR',
-        amt1: usd - half,
-        amt2: -Math.round((usd - half) * entity.fxRate * 100) / 100,
-      })
-    }
-    if (settledStage) tables.spotDealIds[dealId] = true
-  })
-  return tables
-}
-
-/* ---------- data / service layer (mock; swap for API calls) ---------- */
-
-export function buildRow(tables: Tables, d: Deal, coArea: string): HeadsUpRow | null {
-  const mc = findMcByRef(tables, d.mcRef)
-  const entity = mc && findEntity(mc.origin)
-  if (!mc || !entity) return null
-  const status = findStatus(d.status)
-  const baseRule = modelRule(mc.modelId)
-  const coRule = MODELS.find((m) => m.coArea === coArea && m.id === mc.modelId)
-  const ndfLeg = tables.fxLegs.find((l) => l.dealId === d.dealId && l.sgsart === ABAP.EXT_PRODUCT_NDF)
-  return {
-    dealId: d.dealId,
-    dealType: d.dealType,
-    subType: d.subType,
-    dealDesc: d.dealDesc,
-    startDate: d.startDate,
-    maturityDate: d.maturityDate,
-    mcRef: d.mcRef,
-    status: d.status,
-    statusDesc: status ? status.sdesc : '',
-    origin: mc.origin,
-    region: entity.regionId,
-    modelId: extendModelId(mc.modelId, d.currId),
-    modelDesc: baseRule?.desc ?? '',
-    coArea: coRule ? coRule.coArea : '',
-    coModelDesc: coRule ? coRule.desc : '',
-    mcDesc: mcDescription(mc),
-    mcDate: mc.date,
-    mcAmt: mc.amt,
-    utiAmt: calculateUtilisation(tables, d.dealId),
-    dealCurrId: d.currId,
-    confirmed: d.confirmed,
-    plAmt: d.plAmt,
-    plCurr: d.plCurr,
-    plRate: d.plRate,
-    ndfDate: ndfLeg ? ndfLeg.ndfDate : '',
-    bank: ndfLeg ? ndfLeg.bp : '',
-    spot: !!tables.spotDealIds[d.dealId],
-    createdBy: d.createdBy,
-    createdDate: d.createdDate,
-    createdTime: d.createdTime,
-    changedBy: d.changedBy,
-    changedDate: d.changedDate,
-    changedTime: d.changedTime,
-  }
-}
-
-/** SUB_GET_DATA + DATA_FILTER. An unauthorized CO area gives an error and no rows. */
-export function fetchDeals(tables: Tables, p: Filters): FetchResult {
-  if (p.coArea && !CURRENT_USER.authorizedCoAreas.includes(p.coArea)) {
-    return { error: AUTH_ERROR_PREFIX + p.coArea, rows: [] }
-  }
-  const rows: HeadsUpRow[] = []
-  for (const d of tables.deals) {
-    if (!d.mcRef) continue
-    if (p.dealId && d.dealId !== p.dealId) continue
-    const mc = findMcByRef(tables, d.mcRef)
-    const entity = mc && findEntity(mc.origin)
-    if (!mc || !entity) continue
-    if (p.keyDate && d.maturityDate !== p.keyDate) continue // ze_date <> p_date -> deleted
-    if (p.status && d.status !== p.status) continue
-    if (p.region && entity.regionId !== p.region) continue
-    if (p.entity && mc.origin !== p.entity) continue
-    const row = buildRow(tables, d, p.coArea)
-    if (row) rows.push(row)
-  }
-  return { error: null, rows }
-}
-
-/** Stand-in for ZSGTSFFM_MC_DETAILS. */
-export function getMasterContract(tables: Tables, ref: string): MasterContractDetail | null {
-  const mc = findMcByRef(tables, ref)
+/** Hotspot ZMC_REF -> ZSGTSFFM_MC_DETAILS: the MC's ZSGTSFTR_MAS_CON row read by key, with its COMP entity. */
+export function getMasterContract(data: Pick<ScreenData, 'masterContracts' | 'entities'>, ref: string): MasterContractDetail | null {
+  const mc = data.masterContracts.find((m) => m.ref === ref)
   if (!mc) return null
-  const entity = findEntity(mc.origin)
-  const rule = modelRule(mc.modelId)
+  const entity = data.entities.find((e) => e.code === mc.origin)
   return {
     ref: mc.ref,
     origin: mc.origin,
     originName: entity?.name ?? '',
     region: entity?.regionId ?? '',
     modelId: mc.modelId,
-    modelDesc: rule?.desc ?? '',
+    modelDesc: mc.modelDesc,
     currId: mc.currId,
-    desc: mcDescription(mc),
+    desc: mc.desc,
     commodity: mc.commodity,
     date: mc.date,
     amt: mc.amt,
   }
-}
-
-/** Stand-in for the zsgtsfcl_class heads-up e-mail methods; returns the text the class returns. */
-export function sendHeadsUpMails(rows: readonly HeadsUpRow[]): { plan: MailPlan; texts: string[] } {
-  const plan = buildMailPlan(rows)
-  return { plan, texts: plan.mailCount ? [MAIL_SUCCESS_TEXT] : [] }
 }
 
 /* ---------- columns, cell text, search, sort ---------- */
@@ -341,7 +271,8 @@ export function cellText(col: Column, row: HeadsUpRow): string {
     case 'date':
       return isoToDMY(typeof v === 'string' ? v : '')
     case 'amt':
-      return v === '' ? '' : formatAmount(typeof v === 'number' ? v : 0)
+      // null: the amount has no source yet (utilization while ZSGTSFCDS_FX / _OPTION are not served).
+      return v === '' || v === null ? '' : formatAmount(typeof v === 'number' ? v : 0)
     case 'rate':
       return v === '' ? '' : formatRate(typeof v === 'number' ? v : 0)
     case 'flag':

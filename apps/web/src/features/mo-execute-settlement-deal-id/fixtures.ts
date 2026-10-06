@@ -1,7 +1,9 @@
 /**
- * Dummy data — quarantined. The legacy page ran entirely on these seeds ("mirrors the worked
- * example used across the TSF suite: Model M021 (INR Long Forward), MC-7001, 5,000 MT soybean
- * oil, Deal ID TSF-9081, entity chain OIL -> DMCC -> OAIPL"). Nothing here is read from SAP.
+ * TEST FIXTURES ONLY — imported by the *.test.ts files, never by the screen.
+ *
+ * The legacy page's dummy deal ("mirrors the worked example used across the TSF suite: Model M021,
+ * MC-7001, Deal ID TSF-9081"), kept so the pure helpers in logic.ts stay covered while the FX legs
+ * (ZSGTSFCDS_FX / _OPTION) and ZSGTSFTR_TRD_POS are not served by the middleware.
  */
 import type { Deal, DmsDoc, FxDeal, Headsup, StatusMeta, TradeInvoice } from './types.ts'
 
@@ -40,13 +42,13 @@ export const seedDeal = (): Deal => ({
 
 export const seedFxDeals = (): FxDeal[] => [
   {
-    seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '5000001', bp: 'DMCC (Olam International DMCC)',
+    seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '5000001', bukrs: 'AE13', bp: 'DMCC (Olam International DMCC)',
     txnDate: '15-01-2026', valDate: '15-03-2026', entity: 'OIL', bs1: 'Sell', curr1: 'USD', amt1: 5000000.0,
     bs2: 'Buy', curr2: 'INR', amt2: 415000000.0, spot: '83.0000', rate: '83.0000', mcRefNo: 'MC-7001',
     status: 'Confirmed', statusChip: 'chip-open', doc1: '', doc2: '',
   },
   {
-    seq: '02', dealType: 'D2', dealTypeChip: 'chip-d2', rfha: '5000002', bp: 'OAIPL (Olam Agri India Pvt Ltd)',
+    seq: '02', dealType: 'D2', dealTypeChip: 'chip-d2', rfha: '5000002', bukrs: 'AE13', bp: 'OAIPL (Olam Agri India Pvt Ltd)',
     txnDate: '15-01-2026', valDate: '15-03-2026', entity: 'OAIPL', bs1: 'Buy', curr1: 'USD', amt1: 5000000.0,
     bs2: 'Sell', curr2: 'INR', amt2: 415425000.0, spot: '83.0850', rate: '83.0850', mcRefNo: 'MC-7001',
     status: 'Confirmed', statusChip: 'chip-open', doc1: '', doc2: '',
@@ -83,18 +85,3 @@ export const seedDms = (): DmsDoc[] => [
   { type: 'FX Confirmation', file: 'FXCONF-5000002.pdf', date: '15-01-2026', by: 'fo.trader' },
 ]
 
-export const DMS_DOC_TYPES: readonly string[] = [
-  'Bill of Lading',
-  'Commercial Invoice',
-  'SSI / Bank Letter',
-  'FX Confirmation',
-  'Other Supporting Document',
-]
-
-export const BANK_TYPES: readonly string[] = ['Standard Chartered Bank', 'HSBC', 'DBS Bank', 'Barclays PLC']
-export const TRANSFER_TYPES: readonly string[] = ['TT Form', 'ECM', 'Letter', 'Indirect']
-
-/** Fixed values the legacy posting popups filled in. */
-export const FX_POST_COMPANY_CODE = 'AE13'
-export const INV_POST_BANK = 'Standard Chartered Bank Singapore'
-export const LETTER_SIGNATORY = 'Olam Agri India Private Limited'

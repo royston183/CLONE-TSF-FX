@@ -36,6 +36,7 @@ export function DealTable({
   onOpenMc,
   onDragStart,
   onDragEnd,
+  emptyReason,
 }: {
   rows: DealRow[]
   selected: ReadonlySet<string>
@@ -47,6 +48,8 @@ export function DealTable({
   onOpenMc: (row: DealRow) => void
   onDragStart: (id: string) => void
   onDragEnd: () => void
+  /** Why there are no rows when the list could not be read (WAITING FOR DEAL ID API). */
+  emptyReason?: string
 }) {
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.dealId))
 
@@ -105,7 +108,7 @@ export function DealTable({
                     </td>
                   )
                 }
-                if (col.amount) return <td key={col.key} className="amount">{formatAmount(row[col.key] as number)}</td>
+                if (col.amount) return <td key={col.key} className="amount">{row[col.key] === null ? '' : formatAmount(row[col.key] as number)}</td>
                 if (col.num) {
                   const v = Number(row[col.key])
                   return (
@@ -134,7 +137,7 @@ export function DealTable({
             <path d="M8 10h8M8 14h5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           <strong>No record found</strong>
-          <span>Adjust the live filters or refresh the workbench.</span>
+          <span>{emptyReason || 'Adjust the live filters or refresh the workbench.'}</span>
         </div>
       ) : null}
     </div>

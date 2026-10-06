@@ -1,5 +1,8 @@
-/** Deal status as ZSGTSFR081 keeps it: 10 Confirmed by MO, 20 Settlement Initiated, 22 Accounting Complete. */
-export type DealStatus = 10 | 20 | 22
+/**
+ * ZSGTSFTR_DEALID-ZDEAL_STAT as a number, for the toolbar thresholds (20 Settlement Initiated,
+ * 22 Settlement Completed - Accounting, as ZSGTSFTR_DEAL_ST holds them).
+ */
+export type DealStatus = number
 
 /** One FX deal leg (D1/D2) in the "FX Deal Settlement" grid. */
 export type FxLeg = {
@@ -58,6 +61,12 @@ export type Deal = {
   traderCode: string
   traderDesc: string
   status: DealStatus
+  /** ZDEAL_STAT as stored ('02', '20', …) and its ZSGTSFTR_DEAL_ST text. */
+  statusCode: string
+  statusText: string
+  /** Why the FX Deal / Trade Invoice grids are empty (WAITING FOR API); absent in fixtures. */
+  fxWaiting?: string
+  invWaiting?: string
   top: FxLeg[]
   inv: InvLeg[]
 }

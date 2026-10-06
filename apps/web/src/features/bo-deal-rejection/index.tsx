@@ -3,15 +3,8 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DatePopup } from './DatePopup.tsx'
 import { DealTable } from './DealTable.tsx'
-import {
-  AUTHORIZED_COMPANY_CODES,
-  COMPANY_CODES,
-  DEFAULT_PAGE_SIZE,
-  DEMO_TODAY,
-  PAGE_SIZES,
-  TXN_STATUS_META,
-  loadAllDeals,
-} from './data.ts'
+import { loadCompanies, loadWorklist, type Avail, type Option, type Worklist } from './api.ts'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from './data.ts'
 import { formatDMY, parseDMY } from './format.ts'
 import {
   DATE_ERROR,
@@ -29,15 +22,16 @@ import {
   pageCount,
   pageSlice,
   pruneMarks,
-  rejectDeals,
   rejectNote,
-  rejectedToast,
+  rejectWaitingText,
   resultCountText,
   setMarks,
   showingText,
+  statusOptions,
   toggleMark,
   typedDate,
   visibleDeals,
+  type StatusSelection,
 } from './logic.ts'
 import { DealModal, RejectModal } from './Modals.tsx'
 import { useOverlay } from './modal.tsx'
@@ -48,22 +42,36 @@ import './bo-deal-rejection.legacy.css'
 import './bo-deal-rejection.dark.css'
 // Hand-written deviation from the generated sheet (the header's action alignment) — see inside.
 import './bo-deal-rejection.overrides.css'
-import type { CalendarView, Deals, Flags, MarkedItem, SortState, Toast, TxnType } from './types.ts'
+import type { CalendarView, Deal, Flags, MarkedItem, SortState, Toast, TxnType } from './types.ts'
 
 const TOAST_MS = 3200
 
 const EMPTY_TOAST: Toast = { text: '', error: false, show: false }
+const NO_SELECTION: StatusSelection = { fx: ['', '', ''], actvt: 0, found: false }
+const NO_DEALS: Deal[] = []
+const NO_OPTIONS: Option[] = []
+const LOADING = 'Loading deals from SAP…'
+const NO_PARAM =
+  "ZGTCATR_PARAM has no MAPID 'A' row for ZSGTSF_RDEAL_TRD_INV in the selected company codes: SAP then selects with blank statuses, so no FX deal is listed."
+
+/** P_DATE has no default in the ABAP; the page starts on today. */
+const todayText = () => formatDMY(new Date())
 
 /**
  * BO Deal Rejection and return to FO (ZSGTSFR092), converted from legacy/bo-deal-rejection.html.
  *
- * UI only: the FX / Options deals are demo data in data.ts and "Reject" just moves them to their
- * target status (07 to 08, 13 to 11) locally. No SAP or middleware call is made from this page.
+ * Company codes come from T001, the FX / Options deals from ZSGTSFV_FX / ZSGTSFV_OP with GET_DATA's
+ * selection (api.ts); while the middleware cannot serve them the list shows WAITING FOR API. Reject
+ * runs SAP BAPIs that have no API yet: it validates, then says WAITING FOR ACTION API and changes
+ * nothing.
  */
 export default function BoDealRejection() {
-  const [deals, setDeals] = useState<Deals>(() => loadAllDeals())
-  /** Deals rejected in this session; they leave the list until Refresh. */
-  const [rejected, setRejected] = useState<Flags>({})
+  /** T001 (null while loading). */
+  const [companies, setCompanies] = useState<Avail<Option[]> | null>(null)
+  /** GET_DATA's result for the current selection (null while loading). */
+  const [worklist, setWorklist] = useState<Avail<Worklist> | null>(null)
+  /** Bumped by Refresh to read SAP again. */
+  const [reloadTick, setReloadTick] = useState(0)
   /** The Remarks typed per deal (BO_REM), by deal key. */
   const [remarks, setRemarks] = useState<Record<string, string>>({})
   const [type, setType] = useState<TxnType>('FX')
@@ -71,8 +79,8 @@ export default function BoDealRejection() {
   const [companyCode, setCompanyCode] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   /** What is in the Upto Blotter Date box; the applied date and its validity follow typing. */
-  const [dateText, setDateText] = useState(DEMO_TODAY)
-  const [uptoDate, setUptoDate] = useState(DEMO_TODAY)
+  const [dateText, setDateText] = useState(todayText)
+  const [uptoDate, setUptoDate] = useState(todayText)
   const [uptoDateValid, setUptoDateValid] = useState(true)
   const [dateError, setDateError] = useState(false)
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
@@ -94,10 +102,59 @@ export default function BoDealRejection() {
   const dateFieldRef = useRef<HTMLDivElement>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  const list = useMemo(
-    () => visibleDeals(deals, rejected, remarks, { type, companyCode, uptoDate, uptoDateValid, statusFilter, search, sort }),
-    [deals, rejected, remarks, type, companyCode, uptoDate, uptoDateValid, statusFilter, search, sort],
+  const companyList = companies?.state === 'ok' ? companies.value : NO_OPTIONS
+  // S_BUKRS: the picked code, or every T001 code (AUTHORITY-CHECK F_BKPF_BUK: WAITING FOR AUTH).
+  const companyCodes = useMemo(
+    () => (companyCode ? [companyCode] : companyList.map((c) => c.value)),
+    [companyCode, companyList],
   )
+  const deals = worklist?.state === 'ok' ? worklist.value.deals : NO_DEALS
+  const sel = worklist?.state === 'ok' ? worklist.value.sel : NO_SELECTION
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setCompanies(null)
+    loadCompanies(ctrl.signal).then(setCompanies, () => undefined)
+    return () => ctrl.abort()
+  }, [reloadTick])
+
+  useEffect(() => {
+    if (companies === null) return
+    if (companies.state !== 'ok') {
+      setWorklist(companies)
+      return
+    }
+    if (!uptoDateValid) return
+    const ctrl = new AbortController()
+    setWorklist(null)
+    loadWorklist(type, companyCodes, !companyCode, uptoDate, ctrl.signal).then(setWorklist, () => undefined)
+    return () => ctrl.abort()
+  }, [companies, companyCodes, companyCode, type, uptoDate, uptoDateValid])
+
+  const notice =
+    worklist === null
+      ? LOADING
+      : worklist.state !== 'ok'
+        ? worklist.reason
+        : type === 'FX' && !worklist.value.sel.found
+          ? NO_PARAM
+          : ''
+
+  const list = useMemo(
+    () =>
+      visibleDeals(deals, remarks, {
+        type,
+        companyCodes,
+        uptoDate,
+        uptoDateValid,
+        sel,
+        statusFilter,
+        search,
+        sort,
+      }),
+    [deals, remarks, type, companyCodes, uptoDate, uptoDateValid, sel, statusFilter, search, sort],
+  )
+  const statuses = useMemo(() => statusOptions(type, sel, deals), [type, sel, deals])
   // A mark on a row that left the result (filter / date / type change) is dropped for good.
   const marks = useMemo(() => pruneMarks(rawMarks, list, type), [rawMarks, list, type])
   useEffect(() => {
@@ -109,7 +166,7 @@ export default function BoDealRejection() {
   const current = clampPage(page, total, pageSize)
   const rows = pageSlice(list, current, pageSize)
   const markedCount = markedItems(list, marks, remarks, type).length
-  const detailDeal = detailKey ? (deals[type].find((d) => dealKey(type, d) === detailKey) ?? null) : null
+  const detailDeal = detailKey ? (deals.find((d) => dealKey(type, d) === detailKey) ?? null) : null
 
   const showToast = (text: string, error: boolean) => {
     setToast({ text, error, show: true })
@@ -162,9 +219,10 @@ export default function BoDealRejection() {
     setSearch('')
     setCompanyCode('')
     setStatusFilter('')
-    setUptoDate(DEMO_TODAY)
+    const today = todayText()
+    setUptoDate(today)
     setUptoDateValid(true)
-    setDateText(DEMO_TODAY)
+    setDateText(today)
     setDateError(false)
     setType('FX')
     setSort(DEFAULT_SORT)
@@ -175,13 +233,12 @@ export default function BoDealRejection() {
   /** Reset: search, filters, date, type, sort, pagination and marks; the data is not reloaded. */
   const resetFilters = () => restoreFilters()
 
-  /** Refresh: reload the demo data and restore the initial screen state (incl. edits and rejections). */
+  /** Refresh: read SAP again and restore the initial screen state (incl. typed remarks). */
   const refresh = () => {
     rejectOv.hideNow()
     dealOv.hideNow()
-    setRejected({})
     setRemarks({})
-    setDeals(loadAllDeals())
+    setReloadTick((t) => t + 1)
     restoreFilters()
     setPageSize(DEFAULT_PAGE_SIZE)
     showToast(REFRESHED_MESSAGE, false)
@@ -262,17 +319,15 @@ export default function BoDealRejection() {
     rejectOv.show()
   }
 
+  /**
+   * USER_COMMAND 'REVERSE' runs ZSGTRMFM_VTBFHA_EXPORT, the FTR change and reverse BAPIs and a
+   * commit per marked deal. None of that has an API: nothing is posted, nothing changes locally.
+   */
   const confirmReject = () => {
     const items = markedItems(list, marks, remarks, type)
     rejectOv.hide()
     if (items.length === 0) return
-    const result = rejectDeals(deals, rejected, type, items)
-    setDeals(result.deals)
-    setRejected(result.rejected)
-    const done = new Set(items.map((it) => it.key))
-    setRawMarks(Object.fromEntries(Object.keys(marks).filter((k) => !done.has(k)).map((k) => [k, true as const])))
-    setRemarks((r) => Object.fromEntries(Object.entries(r).filter(([k]) => !done.has(k))))
-    showToast(rejectedToast(result.results.length), false)
+    showToast(rejectWaitingText(items.length, type), true)
   }
 
   const openDeal = (key: string) => {
@@ -294,7 +349,7 @@ export default function BoDealRejection() {
             <button
               className="btn btn-secondary"
               id="btnRefresh"
-              title="Reload the demo data and restore the initial state"
+              title="Read the deals from SAP again and restore the initial state"
               onClick={refresh}
             >
               &#8635; Refresh
@@ -348,9 +403,9 @@ export default function BoDealRejection() {
                   }}
                 >
                   <option value="">All authorised</option>
-                  {COMPANY_CODES.filter((c) => AUTHORIZED_COMPANY_CODES.includes(c.code)).map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} - {c.name}
+                  {companyList.map((c) => (
+                    <option key={c.value} value={c.value} title={c.title}>
+                      {c.label}
                     </option>
                   ))}
                 </select>
@@ -445,9 +500,9 @@ export default function BoDealRejection() {
                   }}
                 >
                   <option value="">All statuses</option>
-                  {Object.entries(TXN_STATUS_META).map(([code, meta]) => (
-                    <option key={code} value={code}>
-                      {code} - {meta.ext}
+                  {statuses.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
                     </option>
                   ))}
                 </select>
@@ -512,7 +567,7 @@ export default function BoDealRejection() {
             </div>
             <div className="empty-state" id="emptyState" style={{ display: total === 0 ? 'block' : 'none' }}>
               <div className="big">&#128196;</div>
-              <span id="emptyText">{emptyText(uptoDateValid)}</span>
+              <span id="emptyText">{emptyText(uptoDateValid, notice)}</span>
             </div>
 
             <div className="table-footer">
@@ -561,7 +616,7 @@ export default function BoDealRejection() {
         </div>
       </div>
 
-      <RejectModal overlay={rejectOv} note={rejectNoteText} items={rejectItems} onConfirm={confirmReject} />
+      <RejectModal overlay={rejectOv} note={rejectNoteText} items={rejectItems} type={type} sel={sel} onConfirm={confirmReject} />
       <DealModal overlay={dealOv} type={type} deal={detailDeal} />
 
       <div className={`toast${toast.show ? ' show' : ''}${toast.error ? ' error' : ''}`} id="toast">

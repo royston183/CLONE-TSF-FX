@@ -1,5 +1,5 @@
 import { fmtDate, fmtNum } from './format.ts'
-import { dealsForMc, invoiceLegs, regionName } from './logic.ts'
+import { dealsForMc, regionName } from './logic.ts'
 import { DetailCell, ModalHeader, Overlay, type ModalTarget } from './modal.tsx'
 import { StatusCell } from './DealTable.tsx'
 import type { Deal, MasterContract } from './types.ts'
@@ -228,12 +228,17 @@ export function InvoiceModal({
   modal,
   deal,
   mc,
+  waiting,
 }: {
   modal: ModalTarget
   deal: Deal | undefined
   mc: MasterContract | undefined
+  /** Why the invoice legs are not shown (ZSGTSF_RDEAL_TRD_INV is known only from its notes). */
+  waiting: string
 }) {
-  const rows = deal && mc ? invoiceLegs(deal, mc) : []
+  // The legacy page invented one invoice per entity-string leg with a made-up markup; the real
+  // legs come from ZSGTSF_RDEAL_TRD_INV, whose source is not exported.
+  const rows: { leg: string; seller: string; buyer: string; curr: string; amt: number; markup: number | null }[] = []
   return (
     <Overlay isOpen={modal.isOpen} onClose={modal.close} maxWidth={900}>
       <ModalHeader
@@ -280,6 +285,13 @@ export function InvoiceModal({
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>
+                    {waiting}
+                  </td>
+                </tr>
+              ) : null}
               {rows.map((r) => (
                 <tr key={r.leg}>
                   <td className="left">{r.leg}</td>
@@ -295,7 +307,7 @@ export function InvoiceModal({
           </table>
         </div>
         <div className="note">
-          {deal ? (
+          {deal && rows.length ? (
             <>
               <strong>Note:</strong> One invoice is generated per leg of the Entity String once the Bill of Lading is
               attached to this Deal ID - {rows.length} legs here ({rows.map((r) => r.leg).join(', ')}). The small markup

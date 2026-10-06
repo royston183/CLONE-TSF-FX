@@ -1,5 +1,4 @@
 import type { DragEvent } from 'react'
-import { COMPANIES } from './data.ts'
 import { DASH, fmtDate, fmtNum } from './format.ts'
 import { bankClass, bankLabel, statusClass } from './logic.ts'
 import type { Deal, Sort } from './types.ts'
@@ -14,6 +13,8 @@ function LegCell({ side, amt, curr }: { side: Deal['bs1']; amt: number; curr: st
 
 export function DealTable({
   rows,
+  companies,
+  emptyText,
   checkedId,
   draggingId,
   sort,
@@ -26,6 +27,10 @@ export function DealTable({
   onDragEnd,
 }: {
   rows: Deal[]
+  /** T001 code -> name. */
+  companies: Readonly<Record<string, string>>
+  /** The empty-state text: a filter miss, or why SAP has nothing to list (WAITING FOR API). */
+  emptyText: string
   checkedId: string | null
   draggingId: string | null
   sort: Sort
@@ -68,7 +73,7 @@ export function DealTable({
         <tbody id="deal-tbody">
           {rows.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={15}>No deals match the current filters.</td>
+              <td colSpan={15}>{emptyText}</td>
             </tr>
           ) : (
             rows.map((d) => {
@@ -111,7 +116,7 @@ export function DealTable({
                     </a>
                   </td>
                   <td className="left">
-                    {d.bukrs} · {COMPANIES[d.bukrs] ?? d.bukrs}
+                    {d.bukrs} · {companies[d.bukrs] ?? d.bukrs}
                   </td>
                   <td className="left">{d.mcRef}</td>
                   <td className="left">{d.counterparty}</td>

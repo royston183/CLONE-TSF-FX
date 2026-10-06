@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { REPLACEMENT_POOL } from './data.ts'
-import { fmtAmt, fmtRate } from './format.ts'
 import { canUpdatePair } from './logic.ts'
-import type { Deal, DmsDoc, EditDraft, Leg, Premium } from './types.ts'
+import type { Deal, EditDraft, Leg, McHelp } from './types.ts'
 
 /** One .modal card: header with its × close, then the popup's own body and footer. */
 function ModalCard({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
@@ -24,6 +22,7 @@ export function ChangeConfirmModal({
   invoicePlan,
   mcRef,
   alert,
+  mcHelp,
   onInvoicePlan,
   onMcRef,
   onConfirm,
@@ -33,6 +32,8 @@ export function ChangeConfirmModal({
   invoicePlan: string
   mcRef: string
   alert: string | null
+  /** MODULE f4_help: the MCs of the deal's model at status 03 / 04. */
+  mcHelp: readonly McHelp[]
   onInvoicePlan: (v: string) => void
   onMcRef: (v: string) => void
   onConfirm: () => void
@@ -59,10 +60,18 @@ export function ChangeConfirmModal({
             <label htmlFor="ccMcRef">MC Ref No</label>
             <input
               id="ccMcRef"
+              list="ccMcRefHelp"
               placeholder="Master Contract reference no."
               value={mcRef}
               onChange={(e) => onMcRef(e.target.value)}
             />
+            <datalist id="ccMcRefHelp">
+              {mcHelp.map((m) => (
+                <option key={m.ref} value={m.ref}>
+                  {m.desc}
+                </option>
+              ))}
+            </datalist>
           </div>
         </div>
         {alert !== null && <div className="inline-alert err">{alert}</div>}
@@ -83,6 +92,8 @@ export function EditDealPairModal({
   deal,
   leg,
   draft,
+  replacements,
+  waiting,
   onToggleEdit,
   onChoose,
   onUpdate,
@@ -91,6 +102,10 @@ export function EditDealPairModal({
   deal: Deal
   leg: Leg
   draft: EditDraft
+  /** MODULE f4_rfha_help's candidates; empty while ZSGTSFV_FX lacks TXN_STATUS. */
+  replacements: readonly { rfha: string; label: string }[]
+  /** Why `replacements` is empty. */
+  waiting: string
   onToggleEdit: () => void
   onChoose: (rfha: string) => void
   onUpdate: () => void
@@ -121,7 +136,7 @@ export function EditDealPairModal({
               onChange={(e) => onChoose(e.target.value)}
             >
               <option value="">Select ...</option>
-              {REPLACEMENT_POOL.map((r) => (
+              {replacements.map((r) => (
                 <option key={r.rfha} value={r.rfha}>
                   {r.label}
                 </option>
@@ -129,6 +144,7 @@ export function EditDealPairModal({
             </select>
           </div>
         </div>
+        {!replacements.length && <div className="inline-alert err">{waiting}</div>}
         {!draft.editing && (
           <div className="inline-alert info">
             Click <strong>Edit</strong> to choose a replacement transaction.
@@ -150,34 +166,16 @@ export function EditDealPairModal({
   )
 }
 
-/** Premium Adjustments (PRE) — read-only. */
-export function PremiumModal({ premium, onClose }: { premium: Premium | null; onClose: () => void }) {
-  const rows: [string, string][] = premium
-    ? [
-        ['Deal Value', `${fmtAmt(premium.dealValue)} ${premium.dealCurr}`],
-        ['Net Premium', `${fmtAmt(premium.netPremium)} ${premium.netPremiumCurr}`],
-        ['RBI Rate', fmtRate(premium.rbiRate)],
-        ['RBI Rate Date', premium.rbiDate],
-        ['Net Premium (Fwd)', `${fmtAmt(premium.netPremiumFwd)} ${premium.netPremiumFwdCurr}`],
-        ['Net Premium per USD', fmtRate(premium.netPremiumPerUsd)],
-        ['Strike Rate', fmtRate(premium.strikeRate)],
-        ['Invoice Rate', fmtRate(premium.invoiceRate)],
-      ]
-    : []
+/**
+ * Premium Adjustments (PRE, screen 9003) — read-only. Its values come from class
+ * ZSGTSFCL_GET_PRE_ADJUSTMENT, which has no API, so the popup says why it is empty.
+ */
+export function PremiumModal({ waiting, onClose }: { waiting: string; onClose: () => void }) {
   return (
     <ModalCard title="Premium Adjustments" onClose={onClose}>
       <div className="modal-body">
         <div className="modal-form-grid">
-          {premium ? (
-            rows.map(([k, v]) => (
-              <div className="field" key={k}>
-                <label>{k}</label>
-                <div className="readonly-field">{v}</div>
-              </div>
-            ))
-          ) : (
-            <div className="full modal-msg">No premium adjustment data for this deal.</div>
-          )}
+          <div className="full modal-msg">{waiting}</div>
         </div>
       </div>
       <div className="modal-foot">
@@ -229,39 +227,18 @@ export function PromptModal({
   )
 }
 
-export function DmsModal({
-  docs,
-  onUpload,
-  onClose,
-}: {
-  docs: readonly DmsDoc[]
-  onUpload: () => void
-  onClose: () => void
-}) {
+/** DMS (FM ZSGTSFFM_DMS): neither the document list nor the upload has an API yet. */
+export function DmsModal({ waiting, onUpload, onClose }: { waiting: string; onUpload: () => void; onClose: () => void }) {
   return (
     <ModalCard title="Document Management" onClose={onClose}>
       <div className="modal-body">
         <div>
-          {docs.length ? (
-            docs.map((d, i) => (
-              <div className="dms-row" key={`${i}-${d.name}`}>
-                <span className="name">
-                  &#128196; {d.name}
-                  <span className="table-note">({d.type})</span>
-                </span>
-                <button type="button" className="btn btn-secondary btn-sm">
-                  View
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="table-note" style={{ marginBottom: 12 }}>
-              No documents attached yet.
-            </p>
-          )}
+          <p className="table-note" style={{ marginBottom: 12 }}>
+            {waiting}
+          </p>
         </div>
         <div className="dms-upload" onClick={onUpload}>
-          &#8593; Click to attach a supporting document (mock upload)
+          &#8593; Click to attach a supporting document
         </div>
       </div>
       <div className="modal-foot">

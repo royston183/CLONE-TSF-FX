@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { STATUS_META } from './data.ts'
 import { searchDeals } from './logic.ts'
 import type { DealDb } from './types.ts'
 
@@ -12,11 +11,14 @@ export function DealCombo({
   value,
   onChange,
   onPick,
+  emptyText = 'No matching Deal ID',
 }: {
   db: DealDb
   value: string
   onChange: (v: string) => void
   onPick: (dealId: string) => void
+  /** Shown when nothing matches, e.g. why ZSGTSFTR_DEALID could not be read. */
+  emptyText?: string
 }) {
   const [open, setOpen] = useState(false)
   const [term, setTerm] = useState('')
@@ -55,10 +57,9 @@ export function DealCombo({
       />
       <div className={`combo-list${open ? ' open' : ''}`}>
         {results.length === 0 ? (
-          <div className="combo-empty">No matching Deal ID</div>
+          <div className="combo-empty">{emptyText}</div>
         ) : (
           results.map((d) => {
-            const meta = STATUS_META[d.status]
             return (
               <div
                 key={d.dealId}
@@ -73,7 +74,7 @@ export function DealCombo({
                   <span>
                     {d.dealId} — {d.dealRef}
                   </span>
-                  <span className="text-faint">{meta.text}</span>
+                  <span className="text-faint">{d.statusText}</span>
                 </div>
                 <div className="ci-bottom">
                   {d.fxModel} · {d.fxModelDesc} · MC {d.mcRefNo}

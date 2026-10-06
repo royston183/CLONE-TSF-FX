@@ -1,62 +1,12 @@
-/** One company code (VTBFHA-BUKRS) with the values derived from it for every deal and for the letter. */
-export type Company = {
-  code: string
-  name: string
-  tsfEntity: string
-  pair: string
-  local: string
-  ba: string
-  baName: string
-  pc: string
-  pcName: string
-  /** Settlement account printed on the bank letter. */
-  acct: string
-}
+/** One T001 company code of the S_BUKRS value help (API_COMPANYCODE_SRV / A_CompanyCode). */
+export type CompanyOption = { code: string; name: string }
 
-/** A bank business partner (VTBFHA-KONTRH). */
-export type Partner = {
-  id: string
-  name: string
-  contact: string
-  swift: string
-  formal: string
-  addr: [string, string, string]
-  attn: string
-}
-
-export type Portfolio = { rportb: string; xportb: string }
-
-/** Buy or Sell of the first currency. */
-export type BuySell = 'B' | 'S'
-
-/**
- * rfha, company, partner index, buy/sell, notional USD, contract rate, fixing rate, value date,
- * tenor days, txn_status, saktiv, sgsart, MC reference, trader index.
- */
-export type DealSeed = readonly [
-  string,
-  string,
-  number,
-  BuySell,
-  number,
-  number,
-  number,
-  string,
-  number,
-  string,
-  string,
-  string,
-  string,
-  number,
-]
-
-/** BKPF seed: bukrs, belnr, gjahr, xblnr (= rfha), waers, blart, budat, xref2_hd, xreversal, xreversing. */
-export type BkpfSeed = readonly [string, string, string, string, string, string, string, string, string, string]
-
-/** A VTBFHA / ZSGTSFV_FX row. Field names keep the SAP names the report uses. */
+/** A ZSGTSFV_FX row (GET_DATA's select list). Field names keep the SAP names the report uses. */
 export type Deal = {
   bukrs: string
   rfha: string
+  /** Part of the view's row key (BUKRS + RFHA + REFNR); not shown. */
+  refnr: string
   saktiv: string
   sgsart: string
   rfhazul: string
@@ -90,7 +40,8 @@ export type Deal = {
   mo_remark: string
   ndf_fo_rem: string
   ndf_mo_rem: string
-  bs: BuySell
+  /** VTBFHA buy/sell indicator as SAP holds it (BS_1 / BS_2 carry the texts). */
+  bs: string
   bs_1: string
   bs_2: string
   curr1: string
@@ -112,30 +63,11 @@ export type Deal = {
   dcrdat: string
   upuser: string
   dupdat: string
+  /** BKPF-BELNR found by GET_DATA (empty while BKPF has no API — see api.ts). */
   fi_doc: string
-  /** Fiscal year of the matched FI document (GET_DATA fills it; empty when none). */
+  /** Fiscal year of the matched FI document (empty when none). */
   fi_gjahr?: string
 }
-
-/** BKPF header row. */
-export type Bkpf = {
-  bukrs: string
-  belnr: string
-  gjahr: string
-  xblnr: string
-  waers: string
-  blart: string
-  budat: string
-  xref2_hd: string
-  xreversal: string
-  xreversing: string
-}
-
-/** VTBFHAPO flow row. */
-export type FlowRow = { bukrs: string; rfha: string; rfhazu: string; sbewebe: string }
-
-/** The mock database: stands in for VTBFHA / ZSGTSFV_FX, VTBFHAPO and BKPF. */
-export type Db = { vtbfha: Deal[]; vtbfhapo: FlowRow[]; bkpf: Bkpf[]; nextDocNo: number }
 
 /** The report's select-options. Dates are ISO yyyy-mm-dd, empty when not set. */
 export type Criteria = { bukrs: string[]; dateFrom: string; dateTo: string; rfha: string }
@@ -243,11 +175,6 @@ export type LetterModel = {
   lines: string[]
 }
 
-/** One drawing operation of the minimal PDF writer: a text run or a horizontal rule. */
-export type PdfItem =
-  | { rule: true; y: number }
-  | { rule?: false; t: string; y: number; bold?: boolean | undefined; size?: number | undefined; x?: number | undefined }
-
 /** The calendar's displayed month (month is 0-based). */
 export type CalendarView = { y: number; m: number }
 export type CalendarCell = { iso: string; day: number; muted: boolean; selected: boolean; today: boolean }
@@ -258,3 +185,9 @@ export type Toast = { message: string; error: boolean; show: boolean }
 
 /** A drop-down entry of the Transaction No / Layout value helps. */
 export type DropdownItem = { value: string; primary: string; secondary?: string; selected: boolean }
+
+/** Where a list stands: loaded from SAP, still loading, or not readable (with the reason the screen shows). */
+export type Loaded<T> =
+  | { state: 'loading' }
+  | { state: 'ok'; value: T }
+  | { state: 'waiting' | 'error'; reason: string }

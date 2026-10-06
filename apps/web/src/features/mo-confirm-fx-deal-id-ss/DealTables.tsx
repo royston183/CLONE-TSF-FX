@@ -1,6 +1,7 @@
 import type { DragEvent } from 'react'
 import { fmtAmt, plClass } from './format.ts'
-import { buildPlRows, invoicesEditable, invoicesVisible } from './logic.ts'
+import { PL_WAITING } from './api.ts'
+import { invoicesEditable, invoicesVisible } from './logic.ts'
 import { StatusBadge, TxnStatusBadge } from './parts.tsx'
 import type { Deal, Leg } from './types.ts'
 
@@ -20,7 +21,7 @@ export function HeaderCard({ deal }: { deal: Deal }) {
     ['FX Model Description', deal.fxModelDesc, 'muted'],
     ['Entity String', deal.entityString, 'mono'],
     ['FX Inv Model', deal.fxInvModel, ''],
-    ['Trader', `${deal.traderCode} — ${deal.traderDesc}`, 'muted'],
+    ['Trader', [deal.traderCode, deal.traderDesc].filter(Boolean).join(' — '), 'muted'],
     ['Currency String', deal.currString, 'mono'],
   ]
   return (
@@ -28,7 +29,7 @@ export function HeaderCard({ deal }: { deal: Deal }) {
       <div className="card-head">
         <div className="card-title">Deal ID Analysis</div>
         <div>
-          <StatusBadge code={deal.status} />
+          <StatusBadge code={deal.status} text={deal.statusText} />
           {deal.isSS ? (
             <>
               {' '}
@@ -56,6 +57,7 @@ export function HeaderCard({ deal }: { deal: Deal }) {
 /** "FX Deals": one selectable, draggable row per leg; the transaction number opens its details. */
 export function LegTable({
   legs,
+  waiting,
   selectedRfha,
   draggingRfha,
   onToggle,
@@ -64,6 +66,8 @@ export function LegTable({
   onDragEnd,
 }: {
   legs: readonly Leg[]
+  /** Why there are no legs (ZSGTSFCDS_FX / _OPTION not served). */
+  waiting: string
   selectedRfha: string | null
   draggingRfha: string | null
   onToggle: (rfha: string) => void
@@ -100,6 +104,15 @@ export function LegTable({
             </tr>
           </thead>
           <tbody>
+            {legs.length === 0 ? (
+              <tr>
+                <td colSpan={14}>
+                  <div className="empty-state" style={{ padding: 20 }}>
+                    {waiting || 'No FX deals for this Deal ID'}
+                  </div>
+                </td>
+              </tr>
+            ) : null}
             {legs.map((l, i) => {
               const selected = selectedRfha === l.rfha
               const cls = ['selectable', selected ? 'row-selected' : '', draggingRfha === l.rfha ? 'dragging' : '']
@@ -172,7 +185,6 @@ export function InvoiceAndPlCards({ deal }: { deal: Deal }) {
   const visible = invoicesVisible(deal)
   const hidden = visible ? '' : ' hidden'
   const editable = invoicesEditable(deal)
-  const rows = visible ? buildPlRows(deal) : []
   return (
     <>
       <div className={`card${hidden}`}>
@@ -224,7 +236,7 @@ export function InvoiceAndPlCards({ deal }: { deal: Deal }) {
                 <tr>
                   <td colSpan={10}>
                     <div className="empty-state" style={{ padding: 20 }}>
-                      No invoice legs for this Deal ID
+                      {deal.invoicesWaiting || 'No invoice legs for this Deal ID'}
                     </div>
                   </td>
                 </tr>
@@ -248,13 +260,13 @@ export function InvoiceAndPlCards({ deal }: { deal: Deal }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.type} className={r.total ? 'row-total' : ''}>
-                  <td>{r.type}</td>
-                  <td className={`num ${plClass(r.amtLocal)}`}>{fmtAmt(r.amtLocal)}</td>
-                  <td className={`num ${plClass(r.amtUsd)}`}>{fmtAmt(r.amtUsd)}</td>
-                </tr>
-              ))}
+              <tr>
+                <td colSpan={3}>
+                  <div className="empty-state" style={{ padding: 20 }}>
+                    {PL_WAITING}
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

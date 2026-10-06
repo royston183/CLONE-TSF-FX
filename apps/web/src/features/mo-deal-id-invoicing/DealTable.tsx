@@ -1,6 +1,6 @@
 import { ENTITIES, FX_MODELS, STATUS_META } from './data.ts'
 import { fmtAmt } from './format.ts'
-import { fxUtilAmt, originEntityOf, totalInvoiced } from './logic.ts'
+import { fxUtilAmt, originEntityOf, totalInvoiced, utilizationKnown } from './logic.ts'
 import type { Deal, Sort, SortKey } from './types.ts'
 
 function SortArrow({ active, dir }: { active: boolean; dir: 1 | -1 }) {
@@ -13,12 +13,15 @@ export function DealTable({
   onSort,
   onOpenDetail,
   onOpenMcDetails,
+  emptyText,
 }: {
   deals: readonly Deal[]
   sort: Sort
   onSort: (key: SortKey) => void
   onOpenDetail: (dealId: string) => void
   onOpenMcDetails: (dealId: string) => void
+  /** Why there are no rows when the list could not be read; the filter message otherwise. */
+  emptyText?: string
 }) {
   return (
     <div className="table-wrap">
@@ -52,7 +55,7 @@ export function DealTable({
         <tbody>
           {deals.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={14}>No Deal ID matches the current filters.</td>
+              <td colSpan={14}>{emptyText || 'No Deal ID matches the current filters.'}</td>
             </tr>
           ) : (
             deals.map((d) => {
@@ -90,9 +93,9 @@ export function DealTable({
                   <td className="num">{d.dealStart}</td>
                   <td className="num">{d.dealEnd}</td>
                   <td className="num">{fmtAmt(d.mcAmtUsd)}</td>
-                  <td className="num">{fmtAmt(util)}</td>
+                  <td className="num">{utilizationKnown(d) ? fmtAmt(util) : ''}</td>
                   <td className="num">{fmtAmt(totInv)}</td>
-                  <td className="num">{fmtAmt(bal)}</td>
+                  <td className="num">{utilizationKnown(d) ? fmtAmt(bal) : ''}</td>
                   <td className="left">
                     {d.inv.map((r) => (
                       <span className={`badge ${r.invoiced ? 'badge-green' : 'badge-orange'}`} style={{ marginRight: 4 }} key={r.ttype}>

@@ -3,7 +3,8 @@ import { flushSync } from 'react-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
-import { COMPANIES, DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES, TRADERS, TXN_STATUSES } from './data.ts'
+import { LAYOUT_WAITING, distinctOptions, loadCompanies, loadDeals, updateBlockedText } from './api.ts'
+import { DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealGrid } from './DealGrid.tsx'
 import { isoOf, parseDMY } from './format.ts'
@@ -16,14 +17,11 @@ import {
   columnsFor,
   csvFileName,
   filterSortRows,
-  generateDeals,
   isValid,
   nextSort,
   pageCountOf,
   recordCountText,
   resultsTitle,
-  txnTypesFor,
-  updateToastText,
   validateSelection,
   type SelectionErrors,
 } from './logic.ts'
@@ -42,7 +40,6 @@ const TOAST_MS = 3200
 type DropTarget = 'update' | 'view'
 
 const companyProps = {
-  items: COMPANIES,
   keyOf: (c: Company) => c.code,
   searchText: (c: Company) => `${c.code} ${c.name}`,
   primaryText: (c: Company) => `${c.code}    ${c.name}`,
@@ -51,20 +48,28 @@ const companyProps = {
 }
 
 /**
- * External Deals: Update Bank Reference (ZSGTSFR002), converted from
+ * External Deals: Update Bank Reference (ZSGTSFR002 / ZSGTSF_RFX_EXTDEAL_ALV), converted from
  * legacy/update bank reference.html.
  *
- * The original never called an API, so this is the same UI-only screen: Execute generates
- * seeded dummy deals from the Company Code range, Key Date, Report Type and External Reference
- * choice, and every edit lives in component state for the session.
+ * Company codes come from T001 and Execute runs the report's GET_DATA against ZSGTSFV_FX
+ * (api.ts). Where SAP data has no API yet the screen says so (WAITING FOR API) instead of
+ * showing sample rows. Update Bank Reference is BAPI-only in SAP, so it posts nothing
+ * (WAITING FOR ACTION API); the grid's edits live in component state for the session.
  */
 export default function MoUpdateBankReference() {
   // Basic Selection
   const [sel, setSel] = useState<Selection>(EMPTY_SELECTION)
   const [errors, setErrors] = useState<SelectionErrors>(NO_ERRORS)
+  /** T001 company codes; companyNote is why they are missing, when they are. */
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [companyNote, setCompanyNote] = useState('')
 
   // Results
   const [results, setResults] = useState<Deal[]>([])
+  /** Why the list is empty when it could not be read (WAITING FOR API / read error); '' otherwise. */
+  const [resultNote, setResultNote] = useState('')
+  const [loading, setLoading] = useState(false)
+  const loadCtl = useRef<AbortController | null>(null)
   const [showResults, setShowResults] = useState(false)
   /** Report Type and Key Date the current results were generated for. */
   const [executed, setExecuted] = useState<{ dealType: DealType; keyDateIso: string }>({ dealType: 'FX', keyDateIso: '' })
@@ -103,12 +108,39 @@ export default function MoUpdateBankReference() {
 
   const patchSel = (patch: Partial<Selection>) => setSel((s) => ({ ...s, ...patch }))
 
-  const execute = () => {
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadCompanies(ctl.signal)
+      .then((res) => {
+        if (res.state === 'ok') setCompanies(res.value)
+        else setCompanyNote(res.reason)
+      })
+      .catch(() => {})
+    return () => {
+      ctl.abort()
+      loadCtl.current?.abort()
+    }
+  }, [])
+
+  const execute = async () => {
     const errs = validateSelection(sel)
     setErrors(errs)
     if (!isValid(errs)) return
     const keyDateIso = isoOf(parseDMY(sel.keyDate))
-    setResults(generateDeals(sel.dealType, sel.coFrom, sel.coTo || sel.coFrom, keyDateIso, sel.withRef))
+    loadCtl.current?.abort()
+    const ctl = new AbortController()
+    loadCtl.current = ctl
+    setLoading(true)
+    let res: Awaited<ReturnType<typeof loadDeals>>
+    try {
+      res = await loadDeals({ dealType: sel.dealType, coFrom: sel.coFrom, coTo: sel.coTo, keyDateIso, withRef: sel.withRef }, ctl.signal)
+    } catch {
+      return // aborted by a newer Execute or by leaving the screen
+    } finally {
+      if (loadCtl.current === ctl) setLoading(false)
+    }
+    setResults(res.state === 'ok' ? res.value : [])
+    setResultNote(res.state === 'ok' ? '' : res.reason)
     setExecuted({ dealType: sel.dealType, keyDateIso })
     setPage(1)
     setSort(DEFAULT_SORT)
@@ -124,6 +156,8 @@ export default function MoUpdateBankReference() {
   }, [execSeq])
 
   const resetSelection = () => {
+    loadCtl.current?.abort()
+    setLoading(false)
     setSel(EMPTY_SELECTION)
     setErrors(NO_ERRORS)
     setShowResults(false)
@@ -147,6 +181,10 @@ export default function MoUpdateBankReference() {
   const checkedCount = results.filter((r) => r._checked).length
   const updateDisabled = checkedCount === 0
   const viewDisabled = !activeRowId
+  // The column filters offer what the loaded list holds, as the ALV filter does.
+  const typeOptions = useMemo(() => distinctOptions(results, (r) => r.SFHAART, (r) => r.XTEXT), [results])
+  const statusOptions = useMemo(() => distinctOptions(results, (r) => r.TXN_STATUS), [results])
+  const traderOptions = useMemo(() => distinctOptions(results, (r) => r.RDEALER), [results])
 
   const patchColFilters = (patch: Partial<ColFilters>) => {
     setColFilters((f) => ({ ...f, ...patch }))
@@ -181,12 +219,15 @@ export default function MoUpdateBankReference() {
   // ------------------------------------------------------------------ actions
   // The buttons and the drag-and-drop targets below call exactly these.
 
+  /**
+   * USER_COMMAND 'UPD': per checked row UPDATE VTBFHA-ZOLAM_DEAL_NO, then BAPI_FTR_FXT_CHANGE
+   * (Forex) / BAPI_FTR_CHANGE_FXOPTIONS (Option) for the external reference and
+   * BAPI_TRANSACTION_COMMIT. None of it has an API, so nothing is posted and the list stays.
+   */
   const doUpdateBankReference = () => {
     const n = results.filter((r) => r._checked).length
     if (n === 0) return
-    showToast(updateToastText(n))
-    setShowResults(false)
-    setResults([])
+    showToast(updateBlockedText(executed.dealType), true)
   }
 
   const openViewTransaction = (id: string) => {
@@ -254,8 +295,9 @@ export default function MoUpdateBankReference() {
 
   // ------------------------------------------------------------------ render
 
-  const selectedFrom = COMPANIES.find((c) => c.code === sel.coFrom)
-  const selectedTo = COMPANIES.find((c) => c.code === sel.coTo)
+  const selectedFrom = companies.find((c) => c.code === sel.coFrom)
+  const selectedTo = companies.find((c) => c.code === sel.coTo)
+  const companyItems = { ...companyProps, items: companies, placeholder: companyNote || companyProps.placeholder }
 
   return (
     <div className="mo-update-bank-reference">
@@ -289,7 +331,7 @@ export default function MoUpdateBankReference() {
                   Company Code (From)<span className="req">*</span>
                 </label>
                 <SearchDropdown
-                  {...companyProps}
+                  {...companyItems}
                   selected={selectedFrom}
                   onSelect={(c) => {
                     patchSel({ coFrom: c.code })
@@ -303,7 +345,7 @@ export default function MoUpdateBankReference() {
               <div className="field gc-3">
                 <label>Company Code (To)</label>
                 <SearchDropdown
-                  {...companyProps}
+                  {...companyItems}
                   selected={selectedTo}
                   onSelect={(c) => patchSel({ coTo: c.code })}
                   onClear={() => patchSel({ coTo: '' })}
@@ -330,6 +372,9 @@ export default function MoUpdateBankReference() {
                       {l.label}
                     </option>
                   ))}
+                  <option value="__waiting" disabled>
+                    {LAYOUT_WAITING}
+                  </option>
                 </select>
               </div>
             </div>
@@ -374,7 +419,7 @@ export default function MoUpdateBankReference() {
             and expired deals).
           </div>
           <div className="sel-actions">
-            <button type="button" className="btn btn-primary" onClick={execute}>
+            <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void execute()}>
               Execute
             </button>
             <button type="button" className="btn btn-secondary" onClick={resetSelection}>
@@ -404,25 +449,25 @@ export default function MoUpdateBankReference() {
             </div>
             <select className="control filter-select" value={colFilters.type} onChange={(e) => patchColFilters({ type: e.target.value })}>
               <option value="">All types</option>
-              {txnTypesFor(executed.dealType).map((t) => (
-                <option key={t.code} value={t.code}>
-                  {t.desc}
+              {typeOptions.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
                 </option>
               ))}
             </select>
             <select className="control filter-select" value={colFilters.status} onChange={(e) => patchColFilters({ status: e.target.value })}>
               <option value="">All statuses</option>
-              {TXN_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
                 </option>
               ))}
             </select>
             <select className="control filter-select" value={colFilters.trader} onChange={(e) => patchColFilters({ trader: e.target.value })}>
               <option value="">All traders</option>
-              {TRADERS.map((t) => (
-                <option key={t.code} value={t.code}>
-                  {t.code} — {t.name}
+              {traderOptions.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
                 </option>
               ))}
             </select>
@@ -478,7 +523,7 @@ export default function MoUpdateBankReference() {
 
           <div className={`empty-state${total === 0 ? '' : ' hidden'}`}>
             <div className="big">📋</div>
-            No record found. No external deals match the selected criteria.
+            {resultNote || 'No record found. No external deals match the selected criteria.'}
           </div>
 
           <div className={`table-footer${total === 0 ? ' hidden' : ''}`}>

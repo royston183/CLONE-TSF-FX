@@ -1,26 +1,25 @@
-import { useCallback, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
-import { makeDealDb, seedDocs } from './data.ts'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import {
+  CONFIRM_WAITING,
+  DEAL_PAIR_WAITING,
+  DMS_WAITING,
+  PREMIUM_WAITING,
+  SAVE_PL_WAITING,
+  cancelDealId,
+  loadScreen,
+  reverseMoConfirmation,
+  ssDeallocate,
+  type DataSource,
+} from './api.ts'
 import { DealCombo } from './DealCombo.tsx'
 import { HeaderCard, InvoiceAndPlCards, LegTable } from './DealTables.tsx'
-import { todayStr } from './format.ts'
-import {
-  cancelDealId,
-  collectRates,
-  confirmInvoicePlan,
-  firstUnreadyLeg,
-  removeDoc,
-  reverseMoConfirmation,
-  saveInvoiceRates,
-  ssDeallocate,
-  toggleLeg,
-  toolbarButtons,
-  updateDealPair,
-  uploadDoc,
-} from './logic.ts'
+import { firstUnreadyLeg, toggleLeg, toolbarButtons } from './logic.ts'
 import { useModal } from './modal.tsx'
 import {
   ConfirmModal,
@@ -36,7 +35,7 @@ import './mo-confirm-fx-deal-id-ss.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id-ss.dark.css'
-import type { Deal, DealDb, DmsDoc, Leg, Toast, ToastKind, ToolbarCode } from './types.ts'
+import type { Deal, DealDb, Leg, Toast, ToastKind, ToolbarCode } from './types.ts'
 
 const TOAST_MS = 3200
 const TOAST_FADE_MS = 250
@@ -48,18 +47,20 @@ type PendingConfirm = { title: string; message: string; onYes: () => void }
  * ZSGTSFP017: MO — Confirm FX Deal ID for SS (Single Deal ID), converted from
  * legacy/confirm-fx-deal-id for ss.html. A no-invoice-model deal shows the ZSGTSFP018 tcode.
  *
- * The original never called an API, so this is the same UI-only screen on the page's dummy
- * deals, which live in component state for the session: pick a Deal ID, review its legs,
- * invoice plan and planned P&L (with the Short Straddle premium rows), and run the toolbar
- * functions (Change / Confirm, Premium Adjustment, Edit Deal Pair, Cancel, SS Deallocation,
- * Save P&L Value, Reverse MO Confirmation, DMS).
+ * The Deal IDs, their header, status texts and invoice plan are read from SAP through the
+ * middleware (api.ts, which maps every field to its table); the FX legs, Planned P&L and
+ * Premium Adjustments say WAITING FOR API. Cancel, SS Deallocation and Reverse MO Confirmation
+ * write ZSGTSFTR_DEALID exactly as the ABAP does; every function that needs a BAPI / FM says
+ * WAITING FOR ACTION API and changes nothing.
  */
 export default function MoConfirmFxDealIdSs() {
-  const [db, setDb] = useState<DealDb>(makeDealDb)
+  const [db, setDb] = useState<DealDb>({})
+  const [source, setSource] = useState<DataSource | 'loading'>('loading')
+  const [reason, setReason] = useState('')
+  const [replacementsWaiting, setReplacementsWaiting] = useState('')
   const [dealId, setDealId] = useState<string | null>(null)
   const [comboText, setComboText] = useState('')
   const [selectedRfha, setSelectedRfha] = useState<string | null>(null)
-  const [docsByDeal, setDocsByDeal] = useState<Record<string, DmsDoc[]>>({})
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const ipModal = useModal()
@@ -99,11 +100,38 @@ export default function MoConfirmFxDealIdSs() {
     }, TOAST_MS)
   }, [])
 
-  const patchDeal = (id: string, fn: (d: Deal) => Deal) =>
-    setDb((cur) => {
-      const d = cur[id]
-      return d ? { ...cur, [id]: fn(d) } : cur
+  /** Reads every Deal ID again; there is no local copy to patch, as the ABAP re-selects too. */
+  const reload = useCallback(async (signal?: AbortSignal) => {
+    const loaded = await loadScreen(signal)
+    setDb(loaded.deals)
+    setSource(loaded.source)
+    setReason(loaded.reason)
+    setReplacementsWaiting(loaded.replacementsWaiting)
+    return loaded
+  }, [])
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    reload(ctrl.signal).catch((error: unknown) => {
+      if (!isAbort(error)) console.warn('[fx] Confirm FX Deal ID for SS: load failed', error)
     })
+    return () => ctrl.abort()
+  }, [reload])
+
+  /** Runs a ZSGTSFTR_DEALID write, then re-reads the deals; a failure is reported, never hidden. */
+  const write = async (run: () => Promise<{ posted: boolean; message: string }>) => {
+    try {
+      const { posted, message } = await run()
+      if (!posted) {
+        showToast(message, 'error')
+        return
+      }
+      await reload()
+      showToast(message, 'success')
+    } catch (error) {
+      showToast(messageOf(error), 'error')
+    }
+  }
 
   const askConfirm = (title: string, message: string, onYes: () => void) => {
     setPending({ title, message, onYes })
@@ -131,8 +159,12 @@ export default function MoConfirmFxDealIdSs() {
       showToast('Nothing to refresh.')
       return
     }
-    // The original re-read the deal from its in-page DEAL_DB, i.e. the same (edited) record.
-    showToast('Deal ID refreshed.')
+    // 'REF' clears the grids, so STATUS_9000 selects the deal again.
+    reload()
+      .then((loaded) =>
+        loaded.source === 'sap' ? showToast('Deal ID refreshed.') : showToast(loaded.reason, 'error'),
+      )
+      .catch((error: unknown) => showToast(messageOf(error), 'error'))
   }
 
   const viewTxn = (rfha: string) => {
@@ -156,10 +188,8 @@ export default function MoConfirmFxDealIdSs() {
       setUnreadyRfha(notReady.rfha)
       return
     }
-    const rates = collectRates(deal, rateTexts)
-    patchDeal(deal.dealId, (d) => confirmInvoicePlan(saveInvoiceRates(d, rates)))
-    ipModal.close()
-    showToast('Invoice plan confirmed.', 'success')
+    // FORM update_inv_ref needs BAPIs (exchange rate, FTR change): nothing is written.
+    showToast(CONFIRM_WAITING, 'error')
   }
 
   /* ---------- Edit Deal Pair ---------- */
@@ -182,63 +212,57 @@ export default function MoConfirmFxDealIdSs() {
       setEdError(true)
       return
     }
-    const oldRfha = edRfha
-    const newRfha = edNewTxn
-    patchDeal(deal.dealId, (d) => updateDealPair(d, oldRfha, newRfha))
-    setSelectedRfha(newRfha)
-    edModal.close()
-    showToast(`Deal pair updated: ${newRfha} replaces ${oldRfha ?? ''}.`, 'success')
+    // FORM update_deal_id changes both FTR transactions by BAPI before ZSGTSFTR_DEALID: nothing is written.
+    showToast(DEAL_PAIR_WAITING, 'error')
   }
 
   /* ---------- Cancel / SS Deallocation / Reverse ---------- */
   const cancelDealConfirm = () => {
     if (!deal) return
-    const id = deal.dealId
+    const target = deal
     cancelModal.close()
     askConfirm('Cancel Deal ID', 'FX Deal ID deassigned completely. Do you want to confirm?', () => {
-      patchDeal(id, cancelDealId)
-      showToast(`Deal ID ${id} deassigned.`, 'success')
+      void write(async () => {
+        await cancelDealId(target)
+        return { posted: true, message: `Deal ID ${target.dealId} deassigned.` }
+      })
     })
   }
 
   const ssDeallocConfirm = () => {
     if (!deal) return
-    const id = deal.dealId
+    const target = deal
     ssModal.close()
     askConfirm('SS Deallocation', 'Do you want to confirm SS Deallocation?', () => {
-      patchDeal(id, ssDeallocate)
-      showToast(`Deal ID ${id} has been SS deallocated.`, 'success')
+      void write(async () => {
+        await ssDeallocate(target)
+        return { posted: true, message: `Deal ID ${target.dealId} has been SS deallocated.` }
+      })
     })
   }
 
   const reverseMo = () => {
     if (!deal) return
-    const id = deal.dealId
+    const target = deal
+    if (target.status !== '02' && target.status !== '03') {
+      showToast('Selected Deal ID can not be reversed', 'error')
+      return
+    }
     askConfirm('Reverse MO Confirmation', 'Do you really want to Reverse MO Confirmation?', () => {
-      patchDeal(id, reverseMoConfirmation)
-      showToast('MO Confirmation has been reversed successfully.', 'success')
+      void write(() => reverseMoConfirmation(target))
     })
   }
 
   /* ---------- DMS ---------- */
+  // 'DMS' calls ZSGTSFFM_DMS, which has no API: the list stays empty and uploads are refused.
   const openDms = () => {
     if (!deal) return
-    const id = deal.dealId
-    setDocsByDeal((m) => (m[id] ? m : { ...m, [id]: seedDocs(todayStr()) }))
     dmsModal.open()
   }
 
   const dmsUpload = () => {
     if (!deal) return
-    const id = deal.dealId
-    setDocsByDeal((m) => ({ ...m, [id]: uploadDoc(m[id] ?? [], todayStr()) }))
-    showToast('Document uploaded (mock).', 'success')
-  }
-
-  const dmsRemove = (index: number) => {
-    if (!deal) return
-    const id = deal.dealId
-    setDocsByDeal((m) => ({ ...m, [id]: removeDoc(m[id] ?? [], index) }))
+    showToast(DMS_WAITING, 'error')
   }
 
   /* ---------- Drag and drop ----------
@@ -291,7 +315,7 @@ export default function MoConfirmFxDealIdSs() {
     DEAL_EDIT: () => openEditPair(selectedRfha),
     CAN: cancelModal.open,
     SS_DEALLOC: ssModal.open,
-    SS_DEAL: () => showToast('Deal Confirmed Successfully.', 'success'),
+    SS_DEAL: () => showToast(SAVE_PL_WAITING, 'error'),
     REV: reverseMo,
     DMS: openDms,
     REF: refresh,
@@ -341,7 +365,15 @@ export default function MoConfirmFxDealIdSs() {
             <div className="field-label">
               Deal ID<span className="req">*</span>
             </div>
-            <DealCombo db={db} value={comboText} onChange={setComboText} onPick={loadDeal} />
+            <DealCombo
+              db={db}
+              value={comboText}
+              onChange={setComboText}
+              onPick={loadDeal}
+              emptyText={
+                source === 'unavailable' ? reason : source === 'loading' ? 'Loading Deal IDs…' : 'No matching Deal ID'
+              }
+            />
           </div>
           <div className="selector-hint">Select a Deal ID to load its FX legs, invoice plan and settlement P&amp;L.</div>
         </div>
@@ -372,6 +404,7 @@ export default function MoConfirmFxDealIdSs() {
 
             <LegTable
               legs={deal.legs}
+              waiting={deal.legsWaiting}
               selectedRfha={selectedRfha}
               draggingRfha={draggingRfha}
               onToggle={(rfha) => setSelectedRfha((cur) => toggleLeg(cur, rfha))}
@@ -388,7 +421,13 @@ export default function MoConfirmFxDealIdSs() {
             <div className="empty-state">
               <div className="es-icon">🔍</div>
               <div style={{ fontWeight: 600, color: 'var(--text-soft)', marginBottom: 2 }}>No Deal ID selected</div>
-              <div>Search for a Deal ID above to begin the confirmation workflow.</div>
+              <div>
+                {source === 'unavailable'
+                  ? reason
+                  : source === 'loading'
+                    ? 'Loading Deal IDs from SAP…'
+                    : 'Search for a Deal ID above to begin the confirmation workflow.'}
+              </div>
             </div>
           </div>
         )}
@@ -404,11 +443,12 @@ export default function MoConfirmFxDealIdSs() {
         onRecalc={() => showToast('Exchange rates recalculated.')}
         onConfirm={invoicePlanConfirm}
       />
-      <PremiumModal modal={preModal} deal={deal} />
+      <PremiumModal modal={preModal} deal={deal} waiting={PREMIUM_WAITING} />
       <EditPairModal
         modal={edModal}
-        deal={deal}
         leg={edLeg}
+        replacements={[]}
+        replacementsWaiting={replacementsWaiting}
         newTxn={edNewTxn}
         onNewTxnChange={setEdNewTxn}
         inputEnabled={edInputEnabled}
@@ -441,9 +481,9 @@ export default function MoConfirmFxDealIdSs() {
       />
       <DmsModal
         modal={dmsModal}
-        docs={(dealId ? docsByDeal[dealId] : undefined) ?? []}
+        docs={[]}
         onUpload={dmsUpload}
-        onRemove={dmsRemove}
+        onRemove={() => undefined}
       />
       <TxnViewModal modal={txModal} deal={deal} leg={txLeg} />
 

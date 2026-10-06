@@ -1,0 +1,207 @@
+/**
+ * MO: Execute Settlement for Deal ID (Single Deal ID) — ZSGTSFR060 / ZSGTSF_RDEAL_TRD_INV,
+ * against the SLC middleware.
+ *
+ * NOTES ONLY: the ABAP source is not exported. The program is known only from its dependency
+ * note (scratchpad/bo/tracker/ABAP_Program_Dependency_Tracker_All/"deal trade invoice.txt"),
+ * which lists tables, fields and BAPIs/FMs but NOT the WHERE clauses or in-program filters.
+ * So only reads keyed by the Deal ID the user enters are made (source: dependency note
+ * "deal trade invoice.txt"; WHERE not exported):
+ *
+ *   Header            ZSGTSFTR_DEALID   WHERE zdeal_id = P_DEAL          middleware "tsfDealId"
+ *   MC context        ZSGTSFTR_MAS_CON  by key ZMC_REF_NO = deal ZMC_REF "masterContract"
+ *                     (ZMC_DESC, ZMC_DATE, ZSHIP_END, ZENT_DESC, ZMOD_ID, ZMOD_DESC)
+ *   Model flag        ZSGTSFTR_RULE_BT  by key ZMOD_ID = MC ZMOD_ID (ZNO_INV)     "fxModel"
+ *   Trader            ZSGTRMTR_TRADER   by key ZTCODE = deal ZTRD_CODE (ZTRADER)  "trmTrader"
+ *   Status text/list  ZSGTSFTR_DEAL_ST  by key prefix ZDEAL_TYPE + ZSUB_TYPE of the deal
+ *                                                                        "tsfDealStatus"
+ *   Deal ID picker    ZSGTSFTR_DEALID, unrestricted (as mo-confirm-fx-deal-id does): the P_DEAL
+ *                     search help is not exported.
+ *
+ * Gated:
+ *   FX Deal Settlement grid  ZSGTSFCDS_FX / ZSGTSFCDS_OPTION -> column gate on "tsfvFx".
+ *   Trade Invoice grid       ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is
+ *                            ZSGSLCTR_TRD_POS, the SLC table) and its default rows come from
+ *                            ZSGTSFTR_SET_TYP by a selection that is not exported.
+ *   Headsup, DMS list, View Trade Invoice, P&L, FX-Invoice Difference, bank / transfer / DMS
+ *   type value helps -> WAITING FOR API.
+ *   Every action -> WAITING FOR ACTION API (no middleware writes on a notes-only screen).
+ *
+ * Nothing falls back to sample data (the legacy seeds live in fixtures.ts, for tests only).
+ */
+import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { txt } from '../../shared/fx/masters.ts'
+import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { dmyFromIso } from '../../shared/fx/sap.ts'
+import { statusClass } from './logic.ts'
+import type { Deal, StatusMeta } from './types.ts'
+
+export const WAITING = 'WAITING FOR API'
+export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
+const PROGRAM = 'ZSGTSF_RDEAL_TRD_INV'
+const NOT_EXPORTED = `${PROGRAM} source not exported (only dependency notes)`
+
+const FX_VIEW = 'tsfvFx'
+
+/** Columns the dependency note lists for ZSGTSFCDS_FX (the CDS over ZSGTSFV_FX). */
+// prettier-ignore
+export const LEG_VIEW_COLUMNS = [
+  'BUKRS', 'RFHA', 'RFHAZUL', 'DBLFZ', 'DELFZ', 'XTEXT', 'SGSART', 'SFHAART', 'PRCTR', 'RBUSA', 'KONTRH',
+  'BP_NAME', 'ZCOM_ID', 'ZTSF_EXE_CO', 'BS_1', 'BS_2', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP',
+  'OTOT_RATE', 'ZTSF_MC_REF_NO', 'ZTSF_DEAL_TYPE', 'TXN_STATUS', 'ZTSF_DEAL_SQ', 'EXT_STAT_DESC',
+  'ZTSF_DEAL_ID', 'SAKTIV',
+] as const
+
+export const missingColumns = (have: readonly string[], need: readonly string[]): string[] => {
+  const served = new Set(have)
+  return need.filter((c) => !served.has(c))
+}
+
+/** The FX Deal Settlement gate: ZSGTSFCDS_OPTION has no resource, so the legs are never complete. */
+export function legsWaitingReason(viewColumns: readonly string[] | null): string {
+  const fx =
+    viewColumns === null
+      ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") could not be read`
+      : (() => {
+          const missing = missingColumns(viewColumns, LEG_VIEW_COLUMNS)
+          return missing.length ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}` : ''
+        })()
+  return `${WAITING} — ${fx ? `${fx}; ` : ''}ZSGTSFCDS_OPTION (option legs) has no middleware resource.`
+}
+
+export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is ZSGSLCTR_TRD_POS, the SLC table), and ${NOT_EXPORTED}: the default legs from ZSGTSFTR_SET_TYP / ZSGTSFTR_BIL_ADJ / ZSGTSFTR_INV_REF cannot be reproduced.`
+export const HEADSUP_WAITING = `${WAITING} — ${NOT_EXPORTED}; the Headsup reminders (ZSGTSFTR_EMLBD / READ_TEXT) cannot be reproduced.`
+export const DMS_LIST_WAITING = `${WAITING} — the Deal ID documents are kept by FM ZSGTSFFM_DMS / ZSGTSFTR_DEALDMS, which have no API.`
+export const VIEW_INVOICE_WAITING = `${WAITING} — View Trade Invoice submits ZSGTSF_RDEAL_ID_INV (ZSGTSFTR_BIL_ADJ / ZSGTSFTR_BL / ZSGTSFTR_BL_RUSE); ${NOT_EXPORTED}.`
+export const OPTIONS_WAITING = `${WAITING} — value help not exported`
+export const pnlWaiting = (legs: string) => `${legs} The P&L is computed from the FX legs.`
+export const diffWaiting = (legs: string) => `${legs} The FX-Invoice Difference is computed from the FX legs and ZSGTSFTR_IN_SPOT.`
+
+/** WAITING FOR ACTION API, in the brief's words. */
+export const waitingAction = (what: string, apis: string): string =>
+  `WAITING FOR ACTION API — ${what} (${apis}) has no API yet. Nothing was posted to SAP.`
+
+/** Every function code; the BAPIs / FMs / tables are those the dependency note lists. */
+export const ACTION_WAITING = {
+  status: waitingAction('Deal ID Status change', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
+  amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
+  initiate: waitingAction('Initiate Settlement', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT, ZSGTSFTR_TRD_POS, ZSGTSFTR_IN_SPOT — statements not exported'),
+  executionComplete: waitingAction('Execution Complete', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
+  printing: waitingAction('Initiate Printing', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS, BAPI_BUPA_ADDRESS_GETDETAIL'),
+  spot: waitingAction('Save Spot Data', 'MODIFY ZSGTSFTR_IN_SPOT, BAPI_EXCHANGERATE_GETDETAIL'),
+  dms: waitingAction('Edit DMS', 'FM ZSGTSFFM_DMS, UPDATE ZSGTSFTR_DEALDMS ZDDATE'),
+  fxTest: waitingAction('Post Test Run', 'BAPI_FTR_FXT_CHANGE test run'),
+  fxPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
+  fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
+  fxPost: waitingAction('Post Accounting Entry', 'BAPI_FTR_FXT_CHANGE, MODIFY ZSGTSFTR_TRD_POS, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
+  fxComplete: waitingAction('Settlement Complete (FX leg)', 'MODIFY ZSGTSFTR_TRD_POS ZSET_CHECK — statement not exported'),
+  invPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
+  invUpdate: waitingAction('Update invoice posting', 'MODIFY ZSGTSFTR_TRD_POS — statement not exported'),
+  invPost: waitingAction('Post Document', 'FI posting into BKPF, MODIFY ZSGTSFTR_TRD_POS ZBELNR — FM not named in the dependency note'),
+  invComplete: waitingAction('Settlement Complete (invoice leg)', 'MODIFY ZSGTSFTR_TRD_POS ZSET_CHECK / ZPOST_CHECK — statement not exported'),
+  letterPdf: waitingAction('Print PDF', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE'),
+} as const
+
+/* ------------------------------------------------------------------ Deal ID picker */
+
+export type DealPick = { dealId: string; statusText: string }
+export type DealList = { state: 'sap'; picks: DealPick[] } | { state: 'unavailable'; reason: string }
+
+export function toPick(row: FxRow, statuses: readonly FxRow[]): DealPick {
+  return { dealId: txt(row, 'ZDEAL_ID'), statusText: dealStatusText({ statuses }, txt(row, 'ZSUB_TYPE'), txt(row, 'ZDEAL_STAT')) }
+}
+
+/** Every ZSGTSFTR_DEALID row (newest first), unrestricted: the P_DEAL search help is not exported. */
+export async function loadDealList(signal?: AbortSignal): Promise<DealList> {
+  try {
+    const [rows, statuses] = await Promise.all([listDealIds({}, signal), fxList('tsfDealStatus', {}, { signal })])
+    const seen = new Set<string>()
+    const picks = rows
+      .map((r) => toPick(r, statuses))
+      .filter((p) => p.dealId && !seen.has(p.dealId) && (seen.add(p.dealId), true))
+    return { state: 'sap', picks }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    return { state: 'unavailable', reason: `${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read: ${messageOf(error)}` }
+  }
+}
+
+/* ------------------------------------------------------------------ Header */
+
+/** ZSGTSFTR_DEAL_ST rows of the deal's type + sub type, non-blank, sorted, one per code. */
+export function statusList(statuses: readonly FxRow[], dealType: string, subType: string): StatusMeta[] {
+  const list = statuses
+    .filter((r) => txt(r, 'ZDEAL_TYPE') === dealType && txt(r, 'ZSUB_TYPE') === subType && txt(r, 'ZDEAL_STAT') !== '')
+    .map((r) => ({ code: txt(r, 'ZDEAL_STAT'), text: txt(r, 'ZDEAL_SDESC'), cls: statusClass(txt(r, 'ZDEAL_STAT')) }))
+    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+  return list.filter((v, i) => i === 0 || list[i - 1]!.code !== v.code)
+}
+
+export function toDeal(input: { deal: FxRow; mc: FxRow | undefined; model: FxRow | undefined; trader: FxRow | undefined }): Deal {
+  const { deal, mc, model, trader } = input
+  const m = (col: string) => (mc ? txt(mc, col) : '')
+  return {
+    dealId: txt(deal, 'ZDEAL_ID'),
+    dealStartDate: dmyFromIso(deal['ZS_DATE']),
+    dealEndDate: dmyFromIso(deal['ZE_DATE']),
+    revisedEndDate: dmyFromIso(deal['ZREV_DEDATE']),
+    mcRefNo: txt(deal, 'ZMC_REF'),
+    mcDesc: m('ZMC_DESC'),
+    mcDate: dmyFromIso(mc?.['ZMC_DATE']),
+    shipEndDate: dmyFromIso(mc?.['ZSHIP_END']),
+    fxModelId: m('ZMOD_ID'),
+    fxModelDesc: m('ZMOD_DESC'),
+    entityString: m('ZENT_DESC'),
+    fxInvModel: txt(deal, 'ZFX_INV_MODEL'),
+    trader: txt(deal, 'ZTRD_CODE'),
+    traderDesc: trader ? txt(trader, 'ZTRADER') : '',
+    currencyString: txt(deal, 'ZDEAL_CURR_DESC'),
+    dealStatus: txt(deal, 'ZDEAL_STAT'),
+    noInvoiceFlag: model ? txt(model, 'ZNO_INV') !== '' : false,
+  }
+}
+
+/* ------------------------------------------------------------------ One Deal ID */
+
+export type DealScreen = {
+  deal: Deal
+  statuses: StatusMeta[]
+  legsWaiting: string
+}
+
+async function columnsOrNull(resource: string, signal?: AbortSignal): Promise<string[] | null> {
+  try {
+    return await fxColumns(resource, signal)
+  } catch (error) {
+    if (isAbort(error)) throw error
+    return null
+  }
+}
+
+const none = Promise.resolve([] as FxRow[])
+
+/** The Deal ID's header by key. Null when ZSGTSFTR_DEALID has no such row; throws when unreadable. */
+export async function loadDealScreen(dealId: string, signal?: AbortSignal): Promise<DealScreen | null> {
+  const rows = await fxList('tsfDealId', { ZDEAL_ID: dealId }, { signal })
+  const deal = rows[0]
+  if (!deal) return null
+  const mcRef = txt(deal, 'ZMC_REF')
+  const trdCode = txt(deal, 'ZTRD_CODE')
+  const dealType = txt(deal, 'ZDEAL_TYPE')
+  const subType = txt(deal, 'ZSUB_TYPE')
+  const [mcs, traders, statuses, viewColumns] = await Promise.all([
+    mcRef ? fxList('masterContract', { ZMC_REF_NO: mcRef }, { signal }) : none,
+    trdCode ? fxList('trmTrader', { ZTCODE: trdCode }, { signal }) : none,
+    dealType && subType ? fxList('tsfDealStatus', { ZDEAL_TYPE: dealType, ZSUB_TYPE: subType }, { signal }) : none,
+    columnsOrNull(FX_VIEW, signal),
+  ])
+  const mc = mcs[0]
+  const modelId = mc ? txt(mc, 'ZMOD_ID') : ''
+  const models = modelId ? await fxList('fxModel', { ZMOD_ID: modelId }, { signal }) : []
+  return {
+    deal: toDeal({ deal, mc, model: models[0], trader: traders[0] }),
+    statuses: statusList(statuses, dealType, subType),
+    legsWaiting: legsWaitingReason(viewColumns),
+  }
+}

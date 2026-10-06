@@ -61,6 +61,9 @@ export type Deal = {
   /** The origin's region (ZSGTSFTR_COMP-ZREG_ID); seed deals leave it to the model. */
   region?: string
   mcAmtUsd: number
+  /** ZTOT_AMT_INV: the T1 ZSGTSFTR_BIL_ADJ ZAMT_USD the report sums; fixtures leave it to the legs. */
+  totInvUsd?: number
+  /** ZSGTSFCDS_FX_N / _OPTION_N legs; empty while those views are not served (WAITING FOR API). */
   fx: FxLeg[]
   inv: InvoiceLeg[]
   bls: BillOfLading[]

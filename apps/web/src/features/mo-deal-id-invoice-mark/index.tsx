@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
-import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { ELIGIBLE_STATUS, loadScreen, MARKED_STATUS, markForInvoicing } from './api.ts'
+import { ELIGIBLE_STATUS, loadScreen, markForInvoicing, WAITING_DEAL_ID_API, type DataSource } from './api.ts'
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { parseDate } from './format.ts'
@@ -23,26 +23,26 @@ const PAGE_SIZE = 20
 const DEFAULT_DATE_FROM = '01-09-2026'
 const DEFAULT_DATE_TO = '31-12-2026'
 
-function uniqueValues(rows: readonly DealRow[], key: 'origin' | 'region' | 'model'): string[] {
-  return Array.from(new Set(rows.map((r) => r[key]))).sort()
-}
-
 /**
  * MO: Deal ID Invoice Marking (ZSGTSFR015), converted from
  * legacy/ZSGTSF_RDEAL_ID_INV_MARK_MANUAL_DEFAULT_LAYOUT.html.
  *
  * The eligible Deal IDs come from ZSGTSFTR_DEALID through the SLC middleware (api.ts), and
- * Mark for Invoicing writes 02 -> 03 there; the seed rows in data.ts are shown, and marks stay
- * on the screen, only when it cannot be reached. The workflow popups (View Deal, settlement,
- * premium, invoice plan) still run on the screen's own values. Only the "Manual Mark"
- * invoicing-selection mode exists in the legacy page's HTML, so that's the only mode here too.
+ * Mark for Invoicing writes 02 -> 03 there exactly as the report's UPDATE does. Nothing falls
+ * back to sample data: when the middleware cannot be read the list is empty, says WAITING FOR
+ * DEAL ID API, and nothing can be marked. The View Deal popups (ZSGTSF_RVIEW_DEAL, not in this
+ * export) show the Deal ID / MC fields and say WAITING FOR API / ACTION API for the rest. Only
+ * the "Manual Mark" invoicing-selection mode exists in the legacy page's HTML, so P_VIEW
+ * (auto-mark) is not reached.
  */
 export default function MoDealIdInvoiceMark() {
   const [rows, setRows] = useState<DealRow[]>([])
   /** The DEALID rows behind the screen rows: Mark writes against their keys. */
   const keys = useRef<ReadonlyMap<string, DealIdRow>>(new Map())
-  /** Where the rows came from; 'dummy' means marks stay on this screen. */
-  const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Where the rows came from; 'unavailable' means ZSGTSFTR_DEALID could not be read. */
+  const [source, setSource] = useState<DataSource | 'loading'>('loading')
+  /** Why the list is empty, or which columns / checks wait for an API. */
+  const [notes, setNotes] = useState<string[]>([])
   const [generation, setGeneration] = useState(0)
   const busy = useRef(false)
   useEffect(() => {
@@ -53,6 +53,7 @@ export default function MoDealIdInvoiceMark() {
         keys.current = loaded.keys
         setRows(loaded.rows)
         setSource(loaded.source)
+        setNotes(loaded.notes)
       })
       .catch((error: unknown) => {
         if (!isAbort(error)) console.error('[fx] Deal IDs for invoice marking failed to load', error)
@@ -85,9 +86,10 @@ export default function MoDealIdInvoiceMark() {
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3600)
   }
 
-  const originOptions = useMemo(() => uniqueValues(rows, 'origin'), [rows])
-  const regionOptions = useMemo(() => uniqueValues(rows, 'region'), [rows])
-  const modelOptions = useMemo(() => uniqueValues(rows, 'model'), [rows])
+  // The helps are swapped in place once `source` settles, so they are re-read then.
+  const originOptions = useMemo(() => [...ORIGIN_OPTIONS], [source])
+  const regionOptions = useMemo(() => [...REGION_OPTIONS], [source])
+  const modelOptions = useMemo(() => [...MODEL_OPTIONS], [source])
 
   const fromDate = parseDate(dateFrom.trim())
   const toDate = parseDate(dateTo.trim())
@@ -117,7 +119,7 @@ export default function MoDealIdInvoiceMark() {
   const refreshWorkbench = () => {
     setGeneration((g) => g + 1)
     resetFilters()
-    pushToast(source === 'dummy' ? 'Workbench refreshed to the original demo data.' : 'Workbench reloaded from MySQL.', 'info')
+    pushToast('Workbench reloaded from MySQL.', 'info')
   }
 
   const toggleRow = (id: string, checked: boolean) => {
@@ -147,26 +149,26 @@ export default function MoDealIdInvoiceMark() {
       return
     }
     if (busy.current) return
-    if (source === 'mysql') {
-      const targets = eligible.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
-      busy.current = true
-      try {
-        await markForInvoicing(targets)
-      } catch (error) {
-        pushToast(messageOf(error), 'warn')
-        // Whatever did move is re-read, so the list never shows a status MySQL lacks.
-        setGeneration((g) => g + 1)
-        return
-      } finally {
-        busy.current = false
-      }
+    if (source !== 'sap') {
+      pushToast(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read, so nothing was marked.`, 'warn')
+      return
     }
-    const marked = new Set(eligible.map((r) => r.dealId))
-    setRows((all) =>
-      all.map((r) => (marked.has(r.dealId) ? { ...r, status: MARKED_STATUS, statusDesc: 'Deal ID marked for Invoicing', manualMarked: true } : r)),
-    )
+    const targets = eligible.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
+    busy.current = true
+    try {
+      await markForInvoicing(targets)
+    } catch (error) {
+      pushToast(messageOf(error), 'warn')
+      // Whatever did move is re-read, so the list never shows a status MySQL lacks.
+      setGeneration((g) => g + 1)
+      return
+    } finally {
+      busy.current = false
+    }
+    // PERFORM get_data + rs_selfield-refresh: the marked deals (now 03) drop out on re-read.
     setSelected(new Set())
     setPage(1)
+    setGeneration((g) => g + 1)
     pushToast(`Invoice Marking Updated Successfully — ${eligible.length} deal(s) updated.`, 'success')
   }
 
@@ -227,7 +229,7 @@ export default function MoDealIdInvoiceMark() {
               <div className="table-heading">
                 Deal ID List Report: Mark for Invoicing
                 <span className="record-count">{sorted.length} records</span>
-                <SourceNote source={source} />
+                <SourceNote source={source} notes={notes} />
               </div>
               <div className="table-tools">
                 <button className="icon-btn" type="button" title="Download CSV" aria-label="Download CSV" onClick={downloadCsv}>
@@ -411,6 +413,7 @@ export default function MoDealIdInvoiceMark() {
                 setDragId(id)
                 setDropReady(true)
               }}
+              emptyReason={source === 'unavailable' ? notes.join(' · ') : ''}
               onDragEnd={() => {
                 setDragId(null)
                 setDropReady(false)
@@ -474,13 +477,8 @@ export default function MoDealIdInvoiceMark() {
   )
 }
 
-/** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
-function SourceNote({ source }: { source: MasterSource | 'loading' }) {
-  const text =
-    source === 'loading'
-      ? 'Loading from MySQL…'
-      : source === 'mysql'
-        ? 'ZSGTSFTR_DEALID · MySQL'
-        : 'Dummy data — the middleware could not be reached, so marks stay on this screen'
+/** Says where the rows came from, and which columns / checks are waiting for an API. */
+function SourceNote({ source, notes }: { source: DataSource | 'loading'; notes: readonly string[] }) {
+  const text = source === 'loading' ? 'Loading from MySQL…' : source === 'sap' ? ['ZSGTSFTR_DEALID · MySQL', ...notes].join(' · ') : notes.join(' · ')
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

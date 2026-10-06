@@ -1,12 +1,12 @@
 export type DealStatusCode = '02' | '03' | '05'
 
-/** One row of the legacy page's makeRow(): a Deal ID eligible for manual invoice marking. */
+/** One row of FORM get_data's GT_DATA: a Deal ID eligible for manual invoice marking. */
 export type DealRow = {
   dealId: string
   dealDesc: string
   mcRef: string
   commodity: string
-  /** DD-MM-YYYY, as the legacy sample data stored it. */
+  /** DD-MM-YYYY. */
   dealStart: string
   dealEnd: string
   status: string
@@ -15,11 +15,18 @@ export type DealRow = {
   model: string
   region: string
   modelDesc: string
-  amount: number
+  /** UTI_AMT (ZSGTSFCDS_FX / _OPTION); null while those views are not served (WAITING FOR API). */
+  amount: number | null
   shipStart: string
   shipEnd: string
+  /** The View Deal ID header: the Deal ID's trader and its MC's fields. */
+  trader: string
+  mcDesc: string
+  mcDate: string
+  entityString: string
+  currencyString: string
   manualMarked: boolean
-  // Derived by enrichRow — always present once seeded.
+  // Derived by enrichRow.
   earliestStart: string
   daysShip: number
   daysEnd: number

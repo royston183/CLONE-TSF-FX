@@ -1,9 +1,9 @@
-import { REPLACEMENT_TXN_POOL, TXN_STATUS_META } from './data.ts'
-import { fmtAmt, todayStr } from './format.ts'
-import { companyCode, computePremiumAdjustment, invoicesEditable, legForInvoice } from './logic.ts'
+import { TXN_STATUS_META } from './data.ts'
+import { fmtAmt } from './format.ts'
+import { invoicesEditable, legForInvoice } from './logic.ts'
 import { Field, ModalHeader, Overlay, type Modal } from './modal.tsx'
 import { ICON_UPLOAD, TxnStatusBadge } from './parts.tsx'
-import type { BadgeMeta, Deal, DmsDoc, Leg } from './types.ts'
+import type { BadgeMeta, Deal, DmsDoc, Leg, ReplacementTxn } from './types.ts'
 
 /** Invoice Plan Change/Confirm (screen 9001). The rate inputs are controlled by the screen. */
 export function InvoicePlanModal({
@@ -104,9 +104,11 @@ export function InvoicePlanModal({
   )
 }
 
-/** Premium Adjustments (screen 9003), read-only. */
-export function PremiumModal({ modal, deal }: { modal: Modal; deal: Deal | null }) {
-  const c = deal ? computePremiumAdjustment(deal) : null
+/**
+ * Premium Adjustments (screen 9003), read-only. Its figures come from ZSGTSFCL_GET_PRE_ADJUSTMENT
+ * and the FX legs, neither of which is served, so every value is '—' and `waiting` says why.
+ */
+export function PremiumModal({ modal, deal, waiting }: { modal: Modal; deal: Deal | null; waiting: string }) {
   return (
     <Overlay modal={modal}>
       <div className="modal">
@@ -117,13 +119,16 @@ export function PremiumModal({ modal, deal }: { modal: Modal; deal: Deal | null 
         />
         <div className="modal-body">
           <div className="form-grid">
-            <Field label="Deal Value" value={c ? fmtAmt(c.damt) : '—'} />
-            <Field label="Net Premium" value={c ? fmtAmt(c.lnet) : '—'} />
-            <Field label="RBI Rate (as of)" value={c ? `${fmtAmt(c.rbi, 4)} (as of ${todayStr()})` : '—'} />
-            <Field label="Net Premium (USD)" value={c ? fmtAmt(c.fnet) : '—'} />
-            <Field label="Net Premium per USD" value={c ? fmtAmt(c.pnet, 4) : '—'} />
-            <Field label="Strike Rate" value={c ? fmtAmt(c.srate, 4) : '—'} />
-            <Field label="Invoice Rate" value={c ? fmtAmt(c.irate, 4) : '—'} calc wide />
+            <Field label="Deal Value" value="—" />
+            <Field label="Net Premium" value="—" />
+            <Field label="RBI Rate (as of)" value="—" />
+            <Field label="Net Premium (USD)" value="—" />
+            <Field label="Net Premium per USD" value="—" />
+            <Field label="Strike Rate" value="—" />
+            <Field label="Invoice Rate" value="—" calc wide />
+          </div>
+          <div style={{ marginTop: 14 }}>
+            {waiting ? <div className="banner banner-warn">{waiting}</div> : null}
           </div>
         </div>
         <div className="modal-footer">
@@ -139,8 +144,9 @@ export function PremiumModal({ modal, deal }: { modal: Modal; deal: Deal | null 
 /** Edit Deal Pair (screen 9004): swap the selected leg for a replacement transaction. */
 export function EditPairModal({
   modal,
-  deal,
   leg,
+  replacements,
+  replacementsWaiting,
   newTxn,
   onNewTxnChange,
   inputEnabled,
@@ -149,8 +155,11 @@ export function EditPairModal({
   onUpdate,
 }: {
   modal: Modal
-  deal: Deal | null
   leg: Leg | null
+  /** MODULE f4_rfha_help: ZSGTSFV_FX candidates for the selected leg. */
+  replacements: readonly ReplacementTxn[]
+  /** Why the F4 has no candidates ('' when it is served). */
+  replacementsWaiting: string
   newTxn: string
   onNewTxnChange: (v: string) => void
   inputEnabled: boolean
@@ -165,13 +174,13 @@ export function EditPairModal({
         <div className="modal-body">
           <div className="form-grid">
             <Field label="Deal Type" value={leg?.dealType ?? '—'} />
-            <Field label="Company Code" value={deal ? companyCode(deal) : '—'} />
+            <Field label="Company Code" value={leg?.bukrs || '—'} />
             <Field label="Old Transaction" value={leg?.rfha ?? '—'} />
             <div className="form-field">
               <label>New Transaction</label>
               <select value={newTxn} disabled={!inputEnabled} onChange={(e) => onNewTxnChange(e.target.value)}>
                 <option value="">Select …</option>
-                {REPLACEMENT_TXN_POOL.map((r) => (
+                {replacements.map((r) => (
                   <option key={r.rfha} value={r.rfha}>
                     {r.label}
                   </option>
@@ -182,6 +191,8 @@ export function EditPairModal({
           <div style={{ marginTop: 14 }}>
             {showError ? (
               <div className="banner banner-error">Please enter a new transaction before updating the deal pair.</div>
+            ) : replacementsWaiting ? (
+              <div className="banner banner-warn">{replacementsWaiting}</div>
             ) : null}
           </div>
         </div>

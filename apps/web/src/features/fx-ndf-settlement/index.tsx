@@ -2,14 +2,18 @@
  * FX NDF Settlement — SAP program ZSGTSFR028 (bank settlement of TSF NDF deals: view the deals,
  * preview / print the bank settlement letter, and run the TBB1 posting run in test or update mode).
  *
- * UI-only demo: every deal, FI document and bank address is dummy data from ./data.ts, and the
- * posting run (RFTBBB00) is simulated in ./logic.ts. Nothing here talks to SAP or any API.
+ * Real SAP data (see ./api.ts): company codes from T001 (A_CompanyCode), the deals from ZSGTSFV_FX
+ * (middleware "tsfvFx", column-gated -> WAITING FOR API while the view lacks TXN_STATUS and the NDF
+ * fields), the letter form name from ZSGTSFTR_BS_PDF. Posting (RFTBBB00 / TBB1), the status update
+ * to 50, the bank letter class and the Adobe form have no API: those actions validate as before and
+ * then show WAITING FOR ACTION API without changing anything. No sample data at runtime.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { CompanySelect, DateField, SearchDropdown } from './controls.tsx'
+import { loadCompanies, loadDeals, loadLetterFormName } from './api.ts'
 import { CONFIRM_DELAY_MS, DEFAULTS, PAGE_SIZES, TOAST_MS } from './data.ts'
 import { DealTable } from './DealTable.tsx'
 import { isoToDmy } from './format.ts'
@@ -21,10 +25,6 @@ import './fx-ndf-settlement.dark.css'
 import './fx-ndf-settlement.overrides.css'
 import {
   NO_SORT,
-  buildLetterModel,
-  buildMockDb,
-  buildPdfBytes,
-  cloneDb,
   commitTypedDate,
   defaultCriteria,
   emptyText,
@@ -33,14 +33,13 @@ import {
   getVisibleRows,
   keyDateOf,
   layoutItems,
-  letterPdfItems,
   nextSort,
   pageSlice,
-  pdfFileName,
-  postAll,
+  pdfView,
+  postAllView,
   rfhaItems,
   rowId,
-  singlePost,
+  singlePostView,
   singleTestView,
   validateCriteria,
 } from './logic.ts'
@@ -49,9 +48,11 @@ import { ConfirmModal, FiDocumentModal, LetterModal, RunModal, TransactionModal 
 import type {
   ActionName,
   ColumnKey,
+  CompanyOption,
   ConfirmRequest,
   CriteriaKey,
   Deal,
+  Loaded,
   PostingType,
   RunView,
   Sort,
@@ -67,25 +68,12 @@ const ACTIONS: { name: ActionName; id: string; label: string; title: string; pri
 
 const DATE_FORMAT = /^\d{2}-\d{2}-\d{4}$/
 
-/** Saves a Blob through a temporary link. */
-function downloadBlob(filename: string, blob: Blob) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  setTimeout(() => {
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, 500)
-}
-
 export default function FxNdfSettlement() {
-  // The mock database, and the frozen copy the list is read from (taken at the last reload, like gt_data).
-  const [mockDb, setMockDb] = useState(buildMockDb)
-  const [dbView, setDbView] = useState(() => cloneDb(mockDb))
+  // T001 for S_BUKRS, and GET_DATA's database read (gt_data) for the current company codes / value dates.
+  const [companies, setCompanies] = useState<Loaded<CompanyOption[]>>({ state: 'loading' })
+  const [deals, setDeals] = useState<Loaded<Deal[]>>({ state: 'loading' })
+  /** Bumped by Refresh (REF) to re-read the deals. */
+  const [reloadKey, setReloadKey] = useState(0)
 
   const [criteria, setCriteria] = useState(defaultCriteria)
   /** Text typed in a date field that could not be parsed. */
@@ -134,10 +122,39 @@ export default function FxNdfSettlement() {
     [],
   )
 
+  useEffect(() => {
+    const ac = new AbortController()
+    loadCompanies(ac.signal).then(setCompanies, () => undefined)
+    return () => ac.abort()
+  }, [])
+
   // ------------------------------------------------------------------ derived
   const errors = useMemo(() => validateCriteria(criteria, dateErr), [criteria, dateErr])
+  const readable = !errors.length
+  const bukrsKey = criteria.bukrs.join(',')
+  useEffect(() => {
+    if (!readable) return
+    const ac = new AbortController()
+    setDeals({ state: 'loading' })
+    loadDeals({ bukrs: bukrsKey ? bukrsKey.split(',') : [], dateFrom: criteria.dateFrom, dateTo: criteria.dateTo }, ac.signal).then(
+      setDeals,
+      () => undefined,
+    )
+    return () => ac.abort()
+  }, [readable, bukrsKey, criteria.dateFrom, criteria.dateTo, reloadKey])
+  const baseRows = useMemo(() => (deals.state === 'ok' ? deals.value : []), [deals])
+  const unavailable = deals.state === 'waiting' || deals.state === 'error' ? deals.reason : null
+  const companyList = companies.state === 'ok' ? companies.value : []
+  const companyNotice =
+    companies.state === 'loading'
+      ? 'Loading company codes…'
+      : companies.state === 'ok'
+        ? companies.value.length
+          ? null
+          : 'No company codes in T001.'
+        : companies.reason
   /** Result of GET_DATA for the current criteria. */
-  const rows = useMemo(() => (errors.length ? [] : getData(criteria, dbView)), [errors, criteria, dbView])
+  const rows = useMemo(() => (errors.length ? [] : getData(baseRows, criteria)), [errors, criteria, baseRows])
   const selectedRow = useMemo(() => rows.find((r) => rowId(r) === selectedId) ?? null, [rows, selectedId])
   // A selection that is no longer listed is dropped.
   useEffect(() => {
@@ -234,18 +251,24 @@ export default function FxNdfSettlement() {
     setSort(NO_SORT)
     setPage(1)
     setSelectedId(null)
-    setDbView(cloneDb(mockDb))
-    showToast('Deals reloaded from the database.')
+    setReloadKey((k) => k + 1)
+    showToast(readable ? 'Deals reloaded from SAP.' : 'Complete the required selection criteria first.', !readable)
   }
 
   // ------------------------------------------------------------------ actions
+  /** PDF1: reads the form name (ZSGTSFTR_BS_PDF L003); the Adobe form itself has no API. */
   const generatePdf = (row: Deal) => {
-    const name = pdfFileName(row)
-    downloadBlob(name, new Blob([buildPdfBytes(letterPdfItems(buildLetterModel(row)))], { type: 'application/pdf' }))
-    showToast(`PDF generated: ${name}`)
+    loadLetterFormName().then(
+      (form) => {
+        setRunView(pdfView(row, form))
+        runModal.open()
+      },
+      () => undefined,
+    )
   }
+  /** TEST: RFTBBB00 test run has no API. */
   const runSingleTest = (row: Deal) => {
-    setRunView(singleTestView(mockDb, row))
+    setRunView(singleTestView(row))
     runModal.open()
   }
   const askSinglePost = (row: Deal) => {
@@ -258,11 +281,9 @@ export default function FxNdfSettlement() {
     setConfirmReq({ kind: 'postAll', keyDate: keyDateOf(criteria), count: rows.length })
     confirmModal.open()
   }
+  /** TBB1 / Execute: nothing is posted and the list is left as it is (WAITING FOR ACTION API). */
   const runConfirmed = (req: ConfirmRequest) => {
-    const res = req.kind === 'post' ? singlePost(mockDb, req.row) : postAll(mockDb, rows, criteria, req.keyDate)
-    setMockDb(res.db)
-    setDbView(cloneDb(res.db)) // posted deals drop out of the list straight away
-    setRunView(res.view)
+    setRunView(req.kind === 'post' ? singlePostView(req.row) : postAllView(rows, criteria, req.keyDate))
     runModal.open()
   }
   const onConfirm = () => {
@@ -351,7 +372,7 @@ export default function FxNdfSettlement() {
           </div>
           <div className="header-actions">
             <BackButton className="btn btn-secondary" />
-            <button type="button" className="btn btn-secondary" id="btnRefresh" title="Reload deals from the database" onClick={onRefresh}>
+            <button type="button" className="btn btn-secondary" id="btnRefresh" title="Reload deals from SAP" onClick={onRefresh}>
               ↻ Refresh
             </button>
             <SignOutButton className="btn btn-secondary" />
@@ -386,7 +407,7 @@ export default function FxNdfSettlement() {
                 <label>
                   Company Code<span className="req">*</span>
                 </label>
-                <CompanySelect selected={criteria.bukrs} onChange={changeCompanies} />
+                <CompanySelect companies={companyList} notice={companyNotice} selected={criteria.bukrs} onChange={changeCompanies} />
               </div>
 
               <div className={`tb-field tb-w-date${hasError('dateFrom') ? ' has-error' : ''}`} id="field-dateFrom">
@@ -427,7 +448,7 @@ export default function FxNdfSettlement() {
                   fieldKey="rfha"
                   typing
                   value={rfhaText}
-                  items={(filter) => rfhaItems(criteria, hasError('bukrs'), dbView, filter)}
+                  items={(filter) => rfhaItems(baseRows, criteria, hasError('bukrs'), filter)}
                   onType={typeRfha}
                   onSelect={pickRfha}
                 />
@@ -552,7 +573,7 @@ export default function FxNdfSettlement() {
             {pg.total === 0 ? (
               <div className="empty-state" id="emptyState" style={{ display: 'block' }}>
                 <div className="big">📄</div>
-                <span id="emptyText">{emptyText(errors.length > 0, search)}</span>
+                <span id="emptyText">{emptyText(errors.length > 0, search, unavailable, deals.state === 'loading')}</span>
               </div>
             ) : null}
 

@@ -1,44 +1,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
 import {
-  BANK_TYPES,
-  DMS_DOC_TYPES,
-  SAMPLE_DEAL_ID,
-  HEADSUP_DATA,
-  seedDeal,
-  seedDms,
-  seedFxDeals,
-  seedTradeInvoices,
-  TRANSFER_TYPES,
-} from './data.ts'
+  ACTION_WAITING,
+  DMS_LIST_WAITING,
+  HEADSUP_WAITING,
+  INVOICE_WAITING,
+  VIEW_INVOICE_WAITING,
+  WAITING_DEAL_ID_API,
+  diffWaiting,
+  legsWaitingReason,
+  loadDealList,
+  loadDealScreen,
+  pnlWaiting,
+  type DealList,
+} from './api.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
 import {
   DEAL_ID_REQUIRED,
-  END_DATE_UPDATED,
   REMAINING_LEGS_MESSAGE,
-  SPOT_SAVED,
-  addDmsDocument,
   amendDateInitial,
-  applyEndDate,
-  applySpotData,
-  buildFxLetter,
-  buildInvoiceLetter,
   completeFx,
   completeInv,
+  dealNotFound,
   filterFxDeals,
   filterInvoices,
   fxPostDefaults,
   invPostDefaults,
   normalizeDealId,
-  postFxEntry,
-  postInvDocument,
   settlementComplete,
-  statusChangedToast,
   toggleRowSelection,
   toolbarVisibility,
-  updateFxPartner,
-  updateInvPostDate,
+  validateDate,
 } from './logic.ts'
 import {
   AmendModal,
@@ -48,7 +43,6 @@ import {
   FxPostModal,
   HeadsupModal,
   InvPostModal,
-  LetterModal,
   PlModal,
   ViewInvModal,
   type PostKind,
@@ -59,7 +53,18 @@ import './mo-execute-settlement-deal-id.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-execute-settlement-deal-id.dark.css'
 import { ActionToolbar, HeaderGrid, StatusPill } from './Overview.tsx'
-import type { FxPostForm, InvPostForm, Toast, ToastKind } from './types.ts'
+import type {
+  Deal,
+  DmsDoc,
+  FxDeal,
+  FxPostForm,
+  Headsup,
+  InvPostForm,
+  StatusMeta,
+  Toast,
+  ToastKind,
+  TradeInvoice,
+} from './types.ts'
 
 const TOAST_MS = 3800
 
@@ -70,19 +75,45 @@ const BLANK_FX_FORM: FxPostForm = {
   partner: '',
   bAmt: '',
   bDoc: '',
-  bBankType: BANK_TYPES[0] ?? '',
-  bTrfType: TRANSFER_TYPES[0] ?? '',
+  bBankType: '',
+  bTrfType: '',
   bBankId: '',
   bAcc: '',
   subNo: false,
   sAmt: '',
   sDoc: '',
-  sBankType: BANK_TYPES[0] ?? '',
-  sTrfType: TRANSFER_TYPES[0] ?? '',
+  sBankType: '',
+  sTrfType: '',
   sBankId: '',
   sAcc: '',
   remit: false,
 }
+
+const BLANK_DEAL: Deal = {
+  dealId: '',
+  dealStartDate: '',
+  dealEndDate: '',
+  revisedEndDate: '',
+  mcRefNo: '',
+  mcDesc: '',
+  mcDate: '',
+  shipEndDate: '',
+  fxModelId: '',
+  fxModelDesc: '',
+  entityString: '',
+  fxInvModel: '',
+  trader: '',
+  traderDesc: '',
+  currencyString: '',
+  dealStatus: '',
+  noInvoiceFlag: false,
+}
+
+/** Never loaded: the FX legs, invoice legs, headsups and DMS documents have no API (see api.ts). */
+const NO_FX: FxDeal[] = []
+const NO_INVOICES: TradeInvoice[] = []
+const NO_HEADSUPS: Headsup[] = []
+const NO_DOCS: DmsDoc[] = []
 
 const BLANK_INV_FORM: InvPostForm = { date: '', bank: '', sender: '', receiver: '', amt: '', fiDoc: '', docMsg: '' }
 
@@ -90,19 +121,26 @@ const BLANK_INV_FORM: InvPostForm = { date: '', bank: '', sender: '', receiver: 
  * MO: Execute Settlement for Deal ID (Single Deal ID) — ZSGTSF_RDEAL_TRD_INV / ZSGTSFR060,
  * converted from legacy/mo-execute-settlement-deal-id.html.
  *
- * UI only: the page runs on the dummy deal in data.ts and calls no API, exactly as the
- * original did. A selection screen takes the Deal ID; the main screen shows the deal header,
- * the status-driven toolbar and the FX / trade-invoice settlement grids.
+ * The selection screen takes P_DEAL; the header is read by that key from ZSGTSFTR_DEALID /
+ * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). The ABAP source is not exported (only
+ * its dependency note), so the FX legs, trade-invoice legs, Headsup, DMS, P&L and difference
+ * views show WAITING FOR API, and every action validates as before and then says WAITING FOR
+ * ACTION API without changing anything. No sample data at runtime (fixtures.ts is for tests).
  */
 export default function MoExecuteSettlementDealId() {
-  const [deal, setDeal] = useState(seedDeal)
-  const [fxDeals, setFxDeals] = useState(seedFxDeals)
-  const [invoices, setInvoices] = useState(seedTradeInvoices)
-  const [dms, setDms] = useState(seedDms)
+  const [deal, setDeal] = useState<Deal>(BLANK_DEAL)
+  const [statuses, setStatuses] = useState<StatusMeta[]>([])
+  const [legsWaiting, setLegsWaiting] = useState(() => legsWaitingReason(null))
+  const fxDeals = NO_FX
+  const invoices = NO_INVOICES
+  const dms = NO_DOCS
 
   // Selection screen
   const [dealIdInput, setDealIdInput] = useState('')
-  const [selError, setSelError] = useState(false)
+  const [selError, setSelError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [list, setList] = useState<DealList | null>(null)
+  const loadCtrl = useRef<AbortController | null>(null)
   const [mainShown, setMainShown] = useState(false)
   const dealInputRef = useRef<HTMLInputElement>(null)
 
@@ -118,11 +156,10 @@ export default function MoExecuteSettlementDealId() {
   const modals = useModals()
   const [amendDate, setAmendDate] = useState('')
   const [spots, setSpots] = useState<string[]>([])
-  const [editDocType, setEditDocType] = useState(DMS_DOC_TYPES[0] ?? '')
+  const [editDocType, setEditDocType] = useState('')
   const [editDate, setEditDate] = useState('')
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
-  const [letterText, setLetterText] = useState('')
 
   // Toast (one at a time, like the original)
   const [toast, setToast] = useState<Toast>({ message: '', kind: null, visible: false })
@@ -145,19 +182,51 @@ export default function MoExecuteSettlementDealId() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  // P_DEAL picker: every ZSGTSFTR_DEALID row, unrestricted (the search help is not exported).
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadDealList(ctrl.signal)
+      .then(setList)
+      .catch((error) => {
+        if (!isAbort(error)) setList({ state: 'unavailable', reason: `${WAITING_DEAL_ID_API} — ${messageOf(error)}` })
+      })
+    return () => {
+      ctrl.abort()
+      loadCtrl.current?.abort()
+    }
+  }, [])
+
   // ------------------------------------------------------------------ selection screen
 
-  const executeSelection = (raw: string) => {
+  const executeSelection = async (raw: string) => {
     const id = normalizeDealId(raw)
     if (id === null) {
-      setSelError(true)
+      setSelError(DEAL_ID_REQUIRED)
       return
     }
-    setSelError(false)
-    setDeal((d) => ({ ...d, dealId: id }))
-    setMainShown(true)
-    setSelFx(null)
-    setSelInv(null)
+    loadCtrl.current?.abort()
+    const ctrl = new AbortController()
+    loadCtrl.current = ctrl
+    setLoading(true)
+    try {
+      const screen = await loadDealScreen(id, ctrl.signal)
+      if (!screen) {
+        setSelError(dealNotFound(id))
+        return
+      }
+      setSelError(null)
+      setDeal(screen.deal)
+      setStatuses(screen.statuses)
+      setLegsWaiting(screen.legsWaiting)
+      setMainShown(true)
+      setSelFx(null)
+      setSelInv(null)
+    } catch (error) {
+      if (isAbort(error)) return
+      setSelError(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read: ${messageOf(error)}`)
+    } finally {
+      if (loadCtrl.current === ctrl) setLoading(false)
+    }
   }
 
   const backToSelection = () => {
@@ -169,22 +238,17 @@ export default function MoExecuteSettlementDealId() {
 
   const refreshScreen = () => {
     if (!mainShown) return
-    setSelFx(null)
-    setSelInv(null)
-    showToast('Screen refreshed.', 'info')
+    void executeSelection(deal.dealId).then(() => showToast('Screen refreshed.', 'info'))
   }
 
   // ------------------------------------------------------------------ toolbar-driven actions
 
+  // Each action validates as before, then says it has no API; nothing local changes.
   const changeStatus = (code: string) => {
-    setDeal((d) => ({ ...d, dealStatus: code }))
-    showToast(statusChangedToast(code), 'info')
+    if (code !== deal.dealStatus) showToast(ACTION_WAITING.status, 'error')
   }
 
-  const initiateSettlement = () => {
-    setDeal((d) => ({ ...d, dealStatus: '20' }))
-    showToast(`Settlement initiated for Deal ID ${deal.dealId}.`, 'success')
-  }
+  const initiateSettlement = () => showToast(ACTION_WAITING.initiate, 'error')
 
   const executionComplete = () => {
     // fcode EXE_C: every FX leg / invoice leg has to be marked settled first (SET_CO = 'X').
@@ -192,11 +256,10 @@ export default function MoExecuteSettlementDealId() {
       showToast(REMAINING_LEGS_MESSAGE, 'error')
       return
     }
-    setDeal((d) => ({ ...d, dealStatus: '21' }))
-    showToast('Deal ID marked as Settlement Complete.', 'success')
+    showToast(ACTION_WAITING.executionComplete, 'error')
   }
 
-  const initiatePrinting = () => showToast(`Settlement letters queued for printing for Deal ID ${deal.dealId}.`, 'info')
+  const initiatePrinting = () => showToast(ACTION_WAITING.printing, 'error')
 
   // Amend Deal End Date (9005)
   const openAmend = () => {
@@ -204,14 +267,12 @@ export default function MoExecuteSettlementDealId() {
     modals.open('amend')
   }
   const updateEndDate = () => {
-    const result = applyEndDate(deal, amendDate)
+    const result = validateDate(amendDate)
     if (!result.ok) {
       showToast(result.error, 'error')
       return
     }
-    setDeal(result.value)
-    modals.close('amend')
-    showToast(END_DATE_UPDATED, 'success')
+    showToast(ACTION_WAITING.amend, 'error')
   }
 
   // FX-Invoice Difference (9006)
@@ -219,11 +280,7 @@ export default function MoExecuteSettlementDealId() {
     setSpots(fxDeals.map((r) => r.spot))
     modals.open('diff')
   }
-  const saveSpotData = () => {
-    setFxDeals((list) => applySpotData(list, spots))
-    modals.close('diff')
-    showToast(SPOT_SAVED, 'success')
-  }
+  const saveSpotData = () => showToast(ACTION_WAITING.spot, 'error')
 
   // DMS viewer + Edit DMS (9007)
   const openEditDms = () => {
@@ -236,14 +293,12 @@ export default function MoExecuteSettlementDealId() {
     else modals.open('dms')
   }
   const confirmEditDms = () => {
-    const result = addDmsDocument(dms, editDocType, editDate, deal.dealId)
+    const result = validateDate(editDate)
     if (!result.ok) {
       showToast(result.error, 'error')
       return
     }
-    setDms(result.value)
-    modals.close('editDms')
-    showToast(`Document uploaded against Deal ID ${deal.dealId}.`, 'success')
+    showToast(ACTION_WAITING.dms, 'error')
   }
 
   const openViewInvoice = () => {
@@ -265,34 +320,16 @@ export default function MoExecuteSettlementDealId() {
   }
   const setFxField = <K extends keyof FxPostForm>(key: K, value: FxPostForm[K]) =>
     setFxForm((f) => ({ ...f, [key]: value }))
-  const replaceFx = (idx: number, next: (typeof fxDeals)[number]) =>
-    setFxDeals((list) => list.map((r, i) => (i === idx ? next : r)))
-
   const postFxAction = (kind: PostKind) => {
     const r = activeFx === null ? undefined : fxDeals[activeFx]
     if (activeFx === null || !r) return
-    if (kind === 'test') {
-      showToast('Test run posted - no FI documents created.', 'info')
-    } else if (kind === 'print') {
-      setLetterText(buildFxLetter(r, deal.dealId))
-      modals.open('letter')
-    } else if (kind === 'update') {
-      replaceFx(activeFx, updateFxPartner(r, fxForm.partner))
-      showToast('Transaction details updated.', 'success')
-    } else if (kind === 'post') {
-      const posted = postFxEntry(r, activeFx)
-      replaceFx(activeFx, posted)
-      setFxForm((f) => ({ ...f, bDoc: posted.doc2, sDoc: posted.doc1 }))
-      showToast(`Accounting entries posted. FI documents ${posted.doc1} / ${posted.doc2} created.`, 'success')
-    } else {
+    if (kind === 'test') showToast(ACTION_WAITING.fxTest, 'error')
+    else if (kind === 'print') showToast(ACTION_WAITING.fxPrint, 'error')
+    else if (kind === 'update') showToast(ACTION_WAITING.fxUpdate, 'error')
+    else if (kind === 'post') showToast(ACTION_WAITING.fxPost, 'error')
+    else {
       const result = completeFx(r)
-      if (!result.ok) {
-        showToast(result.error, 'error')
-        return
-      }
-      replaceFx(activeFx, result.value)
-      modals.close('fxPost')
-      showToast(`FX leg ${r.rfha} marked Settlement Complete.`, 'success')
+      showToast(result.ok ? ACTION_WAITING.fxComplete : result.error, 'error')
     }
   }
 
@@ -307,38 +344,16 @@ export default function MoExecuteSettlementDealId() {
   }
   const setInvField = <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) =>
     setInvForm((f) => ({ ...f, [key]: value }))
-  const replaceInv = (idx: number, next: (typeof invoices)[number]) =>
-    setInvoices((list) => list.map((r, i) => (i === idx ? next : r)))
-
   const postInvAction = (kind: Exclude<PostKind, 'test'>) => {
     const r = activeInv === null ? undefined : invoices[activeInv]
     if (activeInv === null || !r) return
-    if (kind === 'print') {
-      setLetterText(buildInvoiceLetter(r, deal.dealId))
-      modals.open('letter')
-    } else if (kind === 'update') {
-      replaceInv(activeInv, updateInvPostDate(r, invForm.date))
-      showToast('Invoice posting details updated.', 'success')
-    } else if (kind === 'post') {
-      const posted = postInvDocument(r, activeInv)
-      replaceInv(activeInv, posted)
-      setInvForm((f) => ({ ...f, fiDoc: posted.fiDoc }))
-      showToast(`Document posted. FI document ${posted.fiDoc} created for leg ${r.leg}.`, 'success')
-    } else {
+    if (kind === 'print') showToast(ACTION_WAITING.invPrint, 'error')
+    else if (kind === 'update') showToast(ACTION_WAITING.invUpdate, 'error')
+    else if (kind === 'post') showToast(ACTION_WAITING.invPost, 'error')
+    else {
       const result = completeInv(r)
-      if (!result.ok) {
-        showToast(result.error, 'error')
-        return
-      }
-      replaceInv(activeInv, result.value)
-      modals.close('invPost')
-      showToast(`Invoice leg ${r.leg} marked Settlement Complete.`, 'success')
+      showToast(result.ok ? ACTION_WAITING.invComplete : result.error, 'error')
     }
-  }
-
-  const printLetterPdf = () => {
-    showToast('Letter sent to print (PDF generated via FP_JOB_OPEN / FP_JOB_CLOSE in SAP).', 'success')
-    modals.close('letter')
   }
 
   // ------------------------------------------------------------------ derived
@@ -397,27 +412,33 @@ export default function MoExecuteSettlementDealId() {
                   placeholder="ENTER DEAL ID..."
                   value={dealIdInput}
                   onChange={(e) => setDealIdInput(e.target.value)}
+                  list="selDealIdList"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') executeSelection(dealIdInput)
+                    if (e.key === 'Enter') void executeSelection(dealIdInput)
                   }}
                 />
+                {/* P_DEAL picker: ZSGTSFTR_DEALID, unrestricted — the search help is not exported. */}
+                <datalist id="selDealIdList">
+                  {list?.state === 'sap'
+                    ? list.picks.map((p) => (
+                        <option key={p.dealId} value={p.dealId}>
+                          {p.statusText}
+                        </option>
+                      ))
+                    : null}
+                </datalist>
               </div>
-              <button className="btn-primary-inline" type="button" onClick={() => executeSelection(dealIdInput)}>
+              <button
+                className="btn-primary-inline"
+                type="button"
+                disabled={loading}
+                onClick={() => void executeSelection(dealIdInput)}
+              >
                 Go
               </button>
-              <button
-                type="button"
-                className="sample-chip"
-                onClick={() => {
-                  setDealIdInput(SAMPLE_DEAL_ID)
-                  executeSelection(SAMPLE_DEAL_ID)
-                }}
-              >
-                Try sample &middot; <strong>{SAMPLE_DEAL_ID}</strong>
-              </button>
             </div>
-            <div className={selError ? 'select-err show' : 'select-err'} id="selErr">
-              {DEAL_ID_REQUIRED}
+            <div className={selError || list?.state === 'unavailable' ? 'select-err show' : 'select-err'} id="selErr">
+              {selError ?? (list?.state === 'unavailable' ? list.reason : '')}
             </div>
           </div>
         </div>
@@ -431,11 +452,11 @@ export default function MoExecuteSettlementDealId() {
                 <h2>Deal ID Overview</h2>
               </div>
               <span className="panel-sub">
-                <StatusPill code={deal.dealStatus} />
+                <StatusPill code={deal.dealStatus} statuses={statuses} />
               </span>
             </div>
             <div className="panel-body">
-              <HeaderGrid deal={deal} onStatus={changeStatus} />
+              <HeaderGrid deal={deal} statuses={statuses} onStatus={changeStatus} />
             </div>
           </div>
 
@@ -481,6 +502,7 @@ export default function MoExecuteSettlementDealId() {
             }
             onViewDoc={(doc) => showToast(`In SAP, this hotspot opens document ${doc} in transaction FB03.`, 'info')}
             onToast={showToast}
+            emptyText={fxDeals.length ? undefined : legsWaiting}
           />
 
           <InvGrid
@@ -494,6 +516,7 @@ export default function MoExecuteSettlementDealId() {
             onOpen={openInvPost}
             onViewDoc={(doc) => showToast(`In SAP, this hotspot opens document ${doc} in transaction FB03.`, 'info')}
             onToast={showToast}
+            emptyText={invoices.length ? undefined : INVOICE_WAITING}
           />
         </div>
       </main>
@@ -514,7 +537,8 @@ export default function MoExecuteSettlementDealId() {
         open={modals.isOpen('headsup')}
         onClose={() => modals.close('headsup')}
         dealId={deal.dealId}
-        items={HEADSUP_DATA}
+        items={NO_HEADSUPS}
+        emptyText={HEADSUP_WAITING}
       />
       <DiffModal
         open={modals.isOpen('diff')}
@@ -523,6 +547,7 @@ export default function MoExecuteSettlementDealId() {
         spots={spots}
         onSpot={(idx, v) => setSpots((list) => list.map((s, i) => (i === idx ? v : s)))}
         onSave={saveSpotData}
+        emptyText={diffWaiting(legsWaiting)}
       />
       <DmsModal
         open={modals.isOpen('dms')}
@@ -530,6 +555,7 @@ export default function MoExecuteSettlementDealId() {
         dealId={deal.dealId}
         docs={dms}
         onEdit={openEditDms}
+        emptyText={DMS_LIST_WAITING}
       />
       <EditDmsModal
         open={modals.isOpen('editDms')}
@@ -546,6 +572,7 @@ export default function MoExecuteSettlementDealId() {
         onClose={() => modals.close('pl')}
         fxDeals={fxDeals}
         currencyString={deal.currencyString}
+        emptyText={pnlWaiting(legsWaiting)}
       />
       <FxPostModal
         open={modals.isOpen('fxPost')}
@@ -564,17 +591,12 @@ export default function MoExecuteSettlementDealId() {
         onField={setInvField}
         onAction={postInvAction}
       />
-      <LetterModal
-        open={modals.isOpen('letter')}
-        onClose={() => modals.close('letter')}
-        text={letterText}
-        onPrint={printLetterPdf}
-      />
       <ViewInvModal
         open={modals.isOpen('viewInv')}
         onClose={() => modals.close('viewInv')}
         dealId={deal.dealId}
         rows={invoices}
+        emptyText={VIEW_INVOICE_WAITING}
       />
     </div>
   )

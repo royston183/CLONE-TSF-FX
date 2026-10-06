@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react'
 import { DmsPanel } from './DmsPanel.tsx'
-import { formatAmount, toDisplayDate } from './format.ts'
-import { buildFxRows, traderForRow } from './logic.ts'
+import { formatAmount } from './format.ts'
 import type { DmsDocState, ModalState } from './types.ts'
+
+/** The workspace popups belong to ZSGTSF_PDEAL_ID_ANALYS (screens 9001-9004), not in this export. */
+const WAITING_ACTION = 'WAITING FOR ACTION API — Deal ID Analysis (ZSGTSF_PDEAL_ID_ANALYS) actions have no API yet. Nothing is saved to SAP.'
+const WAITING_ANALYSIS_API = 'WAITING FOR API — premium and rates are read by ZSGTSF_PDEAL_ID_ANALYS, which is not in this export.'
 
 function InfoGrid({ fields }: { fields: Array<[string, string]> }) {
   return (
@@ -98,46 +101,47 @@ function renderBody(
             <PopupField label="Invoice Plan" value={state.row.modelId} editable />
             <PopupField label="MC Ref No" value={state.row.mcRef} editable />
           </div>
-          <div className="sap-popup-note">This mirrors screen 9001. Demo changes are not persisted.</div>
+          <div className="sap-popup-note">{WAITING_ACTION}</div>
         </div>,
       ]
-    case 'premium': {
-      const row = state.row
-      const base = Math.max(100000, Math.round(row.utiAmt * 0.01))
+    case 'premium':
+      // Premium, RBI rate and strike are ZSGTSF_PDEAL_ID_ANALYS's FX/option reads (not in this
+      // export): the fields stay empty rather than show generated rates.
       return [
         'Premium Adjustment',
         false,
-        <div className="sap-popup-form">
-          <PopupField label="Deal Value" value={formatAmount(row.utiAmt)} />
-          <PopupField label="Deal Currency" value="USD" />
-          <PopupField label="Net Premium" value={formatAmount(base)} />
-          <PopupField label="Premium Currency" value="USD" />
-          <PopupField label="RBI Rate" value="83.2500000" />
-          <PopupField label="RBI Rate Date" value={toDisplayDate(row.startDate)} />
-          <PopupField label="Net Premium per USD" value={(base / row.utiAmt).toFixed(7)} />
-          <PopupField label="Strike Rate" value="83.2500000" />
-          <PopupField label="Invoice Rate" value="83.3700000" />
+        <div>
+          <div className="sap-popup-form">
+            <PopupField label="Deal Value" value={state.row.utiAmt === null ? '' : formatAmount(state.row.utiAmt)} />
+            <PopupField label="Deal Currency" value="" />
+            <PopupField label="Net Premium" value="" />
+            <PopupField label="Premium Currency" value="" />
+            <PopupField label="RBI Rate" value="" />
+            <PopupField label="RBI Rate Date" value="" />
+            <PopupField label="Net Premium per USD" value="" />
+            <PopupField label="Strike Rate" value="" />
+            <PopupField label="Invoice Rate" value="" />
+          </div>
+          <div className="sap-popup-note">{WAITING_ANALYSIS_API}</div>
         </div>,
       ]
-    }
-    case 'editPair': {
-      const fx = buildFxRows(state.row)[0]
+    case 'editPair':
+      // D1 as ZSGTSFTR_DEALID holds it: ZBUKRS1 / ZRFHA1.
       return [
         'Edit Deal Pair',
         false,
         <div>
           <div className="sap-popup-form">
-            <PopupField label="Deal Type" value={fx?.type ?? 'D1'} />
-            <PopupField label="Company Code" value={fx?.bukrs ?? 'IN11'} />
-            <PopupField label="Old Transaction" value={fx?.rfha ?? ''} />
+            <PopupField label="Deal Type" value="D1" />
+            <PopupField label="Company Code" value={state.row.bukrs1} />
+            <PopupField label="Old Transaction" value={state.row.rfha1} />
             <PopupField label="New Transaction" value="" editable />
           </div>
-          <div className="sap-popup-note">New Transaction has F4/value-help in SAP screen 9004.</div>
+          <div className="sap-popup-note">{WAITING_ACTION}</div>
         </div>,
       ]
-    }
     case 'cancel': {
-      const trader = traderForRow(state.row)
+      const trader = { code: state.row.trader }
       return [
         'Cancel Deal ID',
         false,
@@ -148,7 +152,7 @@ function renderBody(
             <PopupField label="FX Model ID" value={state.row.modelId} />
             <PopupField label="Trader" value={trader.code} />
           </div>
-          <div className="sap-popup-note">Cancel Deal ID is available for status 01 in the attached SAP program.</div>
+          <div className="sap-popup-note">{WAITING_ACTION}</div>
         </div>,
       ]
     }

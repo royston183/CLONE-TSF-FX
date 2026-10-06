@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { DEMO_TODAY, loadAllDeals, makeRng } from './data.ts'
+import { AUTHORIZED_COMPANY_CODES, DEMO_TODAY, FIXTURE_SELECTION, loadAllDeals, makeRng } from './fixtures.ts'
 import { dateOffset, formatAmount, formatDMY, formatRate, parseDMY } from './format.ts'
 import {
   DEFAULT_SORT,
@@ -17,14 +17,16 @@ import {
   pageCount,
   pageSlice,
   pruneMarks,
-  rejectDeals,
+  emptyText,
   rejectNote,
-  rejectedToast,
+  rejectWaitingText,
   resultCountText,
+  selectedStatuses,
   setMarks,
   shiftMonth,
   showingText,
   sortDeals,
+  statusOptions,
   str,
   targetStatusFor,
   toggleMark,
@@ -32,20 +34,24 @@ import {
   visibleDeals,
   type ViewQuery,
 } from './logic.ts'
-import type { Deals, Flags } from './types.ts'
+import type { Deal, Flags } from './types.ts'
 
-const deals: Deals = loadAllDeals()
+// Fixture deals only (fixtures.ts): the page itself never lists sample data.
+const deals = loadAllDeals()
+const sel = FIXTURE_SELECTION
+const codes = AUTHORIZED_COMPANY_CODES
 const query = (over: Partial<ViewQuery> = {}): ViewQuery => ({
   type: 'FX',
-  companyCode: '',
+  companyCodes: codes,
   uptoDate: DEMO_TODAY,
   uptoDateValid: true,
+  sel,
   statusFilter: '',
   search: '',
   sort: DEFAULT_SORT,
   ...over,
 })
-const keysOf = (list: Deals['FX'], type: 'FX' | 'OP' = 'FX') => list.map((d) => dealKey(type, d))
+const keysOf = (list: Deal[], type: 'FX' | 'OP' = 'FX') => list.map((d) => dealKey(type, d))
 
 describe('format', () => {
   it('parses and formats dd-mm-yyyy', () => {
@@ -66,7 +72,7 @@ describe('format', () => {
   })
 })
 
-describe('seeded dataset', () => {
+describe('seeded fixtures', () => {
   it('is identical on every load', () => {
     deepStrictEqual(loadAllDeals(), loadAllDeals())
   })
@@ -86,81 +92,109 @@ describe('seeded dataset', () => {
   })
 })
 
-describe('fetchDeals', () => {
-  it('lists only authorised, active (activity >= 4 FX / 3 OP) deals up to the date', () => {
-    const fx = fetchDeals(deals, {}, 'FX', { companyCode: '', uptoDate: DEMO_TODAY })
+describe('fetchDeals (GET_DATA WHERE)', () => {
+  const p = (over: Partial<{ companyCodes: string[]; uptoDate: string }> = {}) => ({ companyCodes: codes, uptoDate: DEMO_TODAY, sel, ...over })
+  it('FX: txn_status IN (param statuses) AND rfhazul >= gv_actvt; Options: 07/13 AND rfhazul >= 3', () => {
+    const fx = fetchDeals(deals.FX, 'FX', p())
     ok(fx.length > 0 && fx.length <= 28)
-    for (const d of fx) ok(parseInt(str(d, 'rfhazul'), 10) >= 4)
-    const op = fetchDeals(deals, {}, 'OP', { companyCode: '', uptoDate: DEMO_TODAY })
-    for (const d of op) ok(parseInt(str(d, 'rfhazul'), 10) >= 3)
+    for (const d of fx) {
+      ok(sel.fx.includes(str(d, 'txn_status')))
+      ok(parseInt(str(d, 'rfhazul'), 10) >= sel.actvt)
+    }
+    const op = fetchDeals(deals.OP, 'OP', p())
+    for (const d of op) {
+      ok(['07', '13'].includes(str(d, 'txn_status')))
+      ok(parseInt(str(d, 'rfhazul'), 10) >= 3)
+    }
+    const rows: Deal[] = [
+      { bukrs: 'IN11', rfha: '1', blotter_date: '01-10-2026', txn_status: '59', rfhazul: '00002' },
+      { bukrs: 'IN11', rfha: '2', blotter_date: '01-10-2026', txn_status: '08', rfhazul: '00004' },
+      { bukrs: 'IN11', rfha: '3', blotter_date: '01-10-2026', txn_status: '07', rfhazul: '00001' },
+      { bukrs: 'IN11', rfha: '4', blotter_date: '01-10-2026', txn_status: '07', rfhazul: '00002' },
+    ]
+    deepStrictEqual(fetchDeals(rows, 'FX', p()).map((d) => d.rfha), ['1', '4'])
+    deepStrictEqual(fetchDeals(rows, 'OP', p()).map((d) => d.rfha), [])
   })
-  it('applies the company code and the upto date', () => {
-    const all = fetchDeals(deals, {}, 'FX', { companyCode: '', uptoDate: DEMO_TODAY })
-    const in11 = fetchDeals(deals, {}, 'FX', { companyCode: 'IN11', uptoDate: DEMO_TODAY })
+  it('selects nothing when ZGTCATR_PARAM had no MAPID A row (blank statuses)', () => {
+    strictEqual(fetchDeals(deals.FX, 'FX', { companyCodes: codes, uptoDate: DEMO_TODAY, sel: { fx: ['', '', ''], actvt: 0, found: false } }).length, 0)
+  })
+  it('applies the company codes and the upto date', () => {
+    const all = fetchDeals(deals.FX, 'FX', p())
+    const in11 = fetchDeals(deals.FX, 'FX', p({ companyCodes: ['IN11'] }))
     ok(in11.length > 0 && in11.length < all.length)
     for (const d of in11) strictEqual(str(d, 'bukrs'), 'IN11')
-    const early = fetchDeals(deals, {}, 'FX', { companyCode: '', uptoDate: '01-01-2020' })
-    strictEqual(early.length, 0)
-    const noDate = fetchDeals(deals, {}, 'FX', { companyCode: '', uptoDate: '' })
-    strictEqual(noDate.length, 0)
-    const unauthorised = fetchDeals(deals, {}, 'FX', { companyCode: 'XX99', uptoDate: DEMO_TODAY })
-    strictEqual(unauthorised.length, 0)
-  })
-  it('leaves rejected deals out', () => {
-    const [first] = fetchDeals(deals, {}, 'FX', { companyCode: '', uptoDate: DEMO_TODAY })
-    ok(first)
-    const rejected: Flags = { [dealKey('FX', first)]: true }
-    const after = fetchDeals(deals, rejected, 'FX', { companyCode: '', uptoDate: DEMO_TODAY })
-    strictEqual(after.some((d) => dealKey('FX', d) === dealKey('FX', first)), false)
+    strictEqual(fetchDeals(deals.FX, 'FX', p({ uptoDate: '01-01-2020' })).length, 0)
+    strictEqual(fetchDeals(deals.FX, 'FX', p({ uptoDate: '' })).length, 0)
+    strictEqual(fetchDeals(deals.FX, 'FX', p({ companyCodes: ['XX99'] })).length, 0)
   })
 })
 
-describe('rejection', () => {
-  it('moves 07 to 08 and 13 to 11, anything else stays', () => {
-    strictEqual(targetStatusFor('07'), '08')
-    strictEqual(targetStatusFor('13'), '11')
-    strictEqual(targetStatusFor('99'), '99')
+describe('rejection (USER_COMMAND REVERSE)', () => {
+  it('FX: gv_txn_status2 / gv_txn_status1 -> 08, 13 -> 11, else no target', () => {
+    strictEqual(targetStatusFor('FX', '07', sel), '08')
+    strictEqual(targetStatusFor('FX', '59', sel), '08')
+    strictEqual(targetStatusFor('FX', '13', sel), '11')
+    strictEqual(targetStatusFor('FX', '99', sel), '')
   })
-  it('rejects the items with their remark and removes them from the list', () => {
-    const list = visibleDeals(deals, {}, {}, query())
+  it('Options: 07 -> 08, 13 -> 11', () => {
+    strictEqual(targetStatusFor('OP', '07', sel), '08')
+    strictEqual(targetStatusFor('OP', '13', sel), '11')
+    strictEqual(targetStatusFor('OP', '59', sel), '')
+  })
+  it('names the BAPIs and posts nothing', () => {
+    strictEqual(
+      rejectWaitingText(2, 'FX'),
+      'WAITING FOR ACTION API — BO rejection of 2 FX deals (TXN_STATUS 08/11 + BO remark, change and reverse) (ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_FTR_FXT_REVERSE (reason 04), BAPI_TRANSACTION_COMMIT / BAPI_TRANSACTION_ROLLBACK) has no API yet. Nothing was posted to SAP.',
+    )
+    ok(rejectWaitingText(1, 'OP').includes('BAPI_FTR_CHANGE_FXOPTIONS, BAPI_FTR_REVERSE_FXOPTIONS'))
+  })
+  it('collects the marked items with their remark', () => {
+    const list = visibleDeals(deals.FX, {}, query())
     const picked = list.slice(0, 2)
     const marks = setMarks({}, keysOf(picked), true)
     const remarks = { [dealKey('FX', picked[0] ?? {})]: 'wrong rate' }
     const items = markedItems(list, marks, remarks, 'FX')
-    strictEqual(items.length, 2)
-    const result = rejectDeals(deals, {}, 'FX', items)
-    strictEqual(result.results.length, 2)
-    const first = result.deals.FX.find((d) => str(d, 'rfha') === str(picked[0] ?? {}, 'rfha'))
-    strictEqual(str(first ?? {}, 'bo_rem'), 'wrong rate')
-    strictEqual(str(first ?? {}, 'txn_status'), targetStatusFor(str(picked[0] ?? {}, 'txn_status')))
-    // the originals are untouched
-    strictEqual(str(picked[0] ?? {}, 'bo_rem'), '')
-    const after = visibleDeals(result.deals, result.rejected, {}, query())
-    strictEqual(after.length, list.length - 2)
+    deepStrictEqual(items.map((i) => i.remark), ['wrong rate', ''])
+  })
+})
+
+describe('status filter', () => {
+  it('offers the statuses GET_DATA selects, labelled from EXT_STAT_DESC', () => {
+    deepStrictEqual(selectedStatuses('FX', sel), ['59', '07', '13'])
+    deepStrictEqual(selectedStatuses('OP', sel), ['07', '13'])
+    deepStrictEqual(statusOptions('OP', sel, [{ txn_status: '13', ext_stat_desc: 'Offset' }]), [
+      { value: '07', label: '07' },
+      { value: '13', label: '13 - Offset' },
+    ])
+  })
+  it('the empty state shows the API notice', () => {
+    strictEqual(emptyText(true, 'WAITING FOR API — x'), 'WAITING FOR API — x')
+    strictEqual(emptyText(true), 'No deals found for the selection.')
+    strictEqual(emptyText(false, 'x'), 'Enter a valid Upto Blotter Date to list deals.')
   })
 })
 
 describe('visibleDeals', () => {
   it('filters by txn status', () => {
-    const list = visibleDeals(deals, {}, {}, query({ statusFilter: '13' }))
+    const list = visibleDeals(deals.FX, {}, query({ statusFilter: '13' }))
     ok(list.length > 0)
     for (const d of list) strictEqual(str(d, 'txn_status'), '13')
   })
   it('searches the displayed cell text, including typed remarks', () => {
-    const base = visibleDeals(deals, {}, {}, query())
+    const base = visibleDeals(deals.FX, {}, query())
     const target = base[3]
     ok(target)
     const key = dealKey('FX', target)
-    const hit = visibleDeals(deals, {}, { [key]: 'zzqx remark' }, query({ search: ' ZZQX ' }))
+    const hit = visibleDeals(deals.FX, { [key]: 'zzqx remark' }, query({ search: ' ZZQX ' }))
     strictEqual(hit.length, 1)
     strictEqual(dealKey('FX', hit[0] ?? {}), key)
-    strictEqual(visibleDeals(deals, {}, {}, query({ search: 'no such text anywhere' })).length, 0)
+    strictEqual(visibleDeals(deals.FX, {}, query({ search: 'no such text anywhere' })).length, 0)
   })
   it('returns nothing for an invalid date', () => {
-    strictEqual(visibleDeals(deals, {}, {}, query({ uptoDateValid: false })).length, 0)
+    strictEqual(visibleDeals(deals.FX, {}, query({ uptoDateValid: false })).length, 0)
   })
   it('sorts by blotter date descending by default, and by amount / text on request', () => {
-    const list = visibleDeals(deals, {}, {}, query())
+    const list = visibleDeals(deals.FX, {}, query())
     const dates = list.map((d) => parseDMY(str(d, 'blotter_date'))?.getTime() ?? 0)
     deepStrictEqual(dates, [...dates].sort((a, b) => b - a))
     const byAmt = sortDeals(list, 'FX', { field: 'amt1', dir: 'asc' }).map((d) => Number(d.amt1))
@@ -187,7 +221,7 @@ describe('marks', () => {
     deepStrictEqual(setMarks({ a: true, b: true }, ['a'], false), { b: true })
   })
   it('drops marks on rows that left the result and keeps the object when nothing changed', () => {
-    const list = visibleDeals(deals, {}, {}, query())
+    const list = visibleDeals(deals.FX, {}, query())
     const keep = dealKey('FX', list[0] ?? {})
     const marks: Flags = { [keep]: true, 'FX:IN11:gone': true }
     deepStrictEqual(pruneMarks(marks, list, 'FX'), { [keep]: true })
@@ -236,8 +270,6 @@ describe('paging and texts', () => {
       rejectNote(3, 'OP'),
       'Reject 3 Options deals and return them to Front Office for correction? The transactions are reversed and no longer appear in this list.',
     )
-    strictEqual(rejectedToast(1), '1 deal rejected and returned to Front Office.')
-    strictEqual(rejectedToast(2), '2 deals rejected and returned to Front Office.')
     strictEqual(dragGhostText(1, 'FX:IN11:1000004100'), 'Deal 1000004100')
     strictEqual(dragGhostText(4, 'FX:IN11:1000004100'), '4 deals')
   })

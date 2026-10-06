@@ -1,9 +1,9 @@
 import { fmtAmt, fmtRate } from './format.ts'
-import { buildPlRows, statusMeta } from './logic.ts'
-import type { Deal, Invoice, Premium } from './types.ts'
+import { statusMeta } from './logic.ts'
+import type { Deal, Invoice } from './types.ts'
 
-export function StatusBadge({ code }: { code: string }) {
-  const meta = statusMeta(code)
+export function StatusBadge({ code, desc }: { code: string; desc?: string }) {
+  const meta = statusMeta(code, desc)
   return (
     <span className={`status-badge ${meta.cls}`}>
       <span className="status-dot"></span>
@@ -17,7 +17,7 @@ export function DealDetails({ deal }: { deal: Deal }) {
   const items: [string, string][] = [
     ['Deal ID', deal.dealId],
     ['Deal Description', deal.dealDesc],
-    ['Trader', `${deal.trader} — ${deal.traderName}`],
+    ['Trader', deal.traderName ? `${deal.trader} — ${deal.traderName}` : deal.trader],
   ]
   const rest: [string, string][] = [
     ['Deal Start Date', deal.startDate],
@@ -45,7 +45,7 @@ export function DealDetails({ deal }: { deal: Deal }) {
         {items.map(item)}
         <div className="detail-item">
           <span className="k">Deal ID Status</span>
-          <StatusBadge code={deal.status} />
+          <StatusBadge code={deal.status} desc={deal.statusText} />
         </div>
         {rest.map(item)}
       </div>
@@ -53,7 +53,8 @@ export function DealDetails({ deal }: { deal: Deal }) {
   )
 }
 
-export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
+/** `rows` null: the plan cannot be built yet, and `waiting` says why in the empty-state row. */
+export function InvoiceTable({ rows, waiting }: { rows: readonly Invoice[] | null; waiting: string | null }) {
   return (
     <div className="card" id="invoiceCard">
       <div className="card-head">
@@ -73,14 +74,14 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.length ? (
+            {rows && rows.length ? (
               rows.map((r) => (
                 <tr key={r.tradeRef}>
                   <td className="mono">{r.tradeRef}</td>
                   <td>{r.invType}</td>
                   <td className="num mono">{fmtRate(r.exRate)}</td>
                   <td className="num mono">{fmtAmt(r.amt)}</td>
-                  <td className="num mono">{fmtAmt(r.amt * r.exRate)}</td>
+                  <td className="num mono">{fmtAmt(r.invAmt)}</td>
                   <td>{r.curr}</td>
                   <td>{r.due}</td>
                 </tr>
@@ -88,7 +89,7 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
             ) : (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 20 }}>
-                  No planned invoices.
+                  {waiting ?? 'No planned invoices.'}
                 </td>
               </tr>
             )}
@@ -99,9 +100,11 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
   )
 }
 
-export function PlTable({ deal, premium }: { deal: Deal; premium: Premium | null }) {
-  const rows = buildPlRows(deal, premium)
-  const cell = (n: number, pct: boolean) => (pct ? `${fmtRate(n, 2)}%` : fmtAmt(n))
+/**
+ * Deal ID: Planned P&L. FORM alv_data_3 builds it from the FX legs (premium, FX P&L) and the
+ * tickets; while the legs are not served the table shows why instead of invented figures.
+ */
+export function PlTable({ waiting }: { waiting: string }) {
   return (
     <div className="card" id="plCard">
       <div className="card-head">
@@ -117,13 +120,11 @@ export function PlTable({ deal, premium }: { deal: Deal; premium: Premium | null
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.type} className={r.cls}>
-                <td>{r.type}</td>
-                <td className="num mono">{cell(r.famt, r.pct)}</td>
-                <td className="num mono">{cell(r.lamt, r.pct)}</td>
-              </tr>
-            ))}
+            <tr>
+              <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 20 }}>
+                {waiting}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>

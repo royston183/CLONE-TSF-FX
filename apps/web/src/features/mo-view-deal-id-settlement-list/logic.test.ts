@@ -1,14 +1,13 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import { INVOICES_WAITING, LIST_WAITING, loadSettlementList } from './api.ts'
+import { buildDeals, buildMasterContracts, invoiceLegs } from './fixtures.ts'
 import { fmtCompactUsd, fmtDate, fmtNum, parseDate } from './format.ts'
 import {
   DEFAULT_FILTERS,
   DEFAULT_SORT,
-  buildDeals,
-  buildMasterContracts,
   computeKpis,
   daysInMonth,
-  invoiceLegs,
   keyDateNote,
   leadingBlanks,
   matchesFilters,
@@ -16,6 +15,7 @@ import {
   pageRows,
   pageWindow,
   pagerRange,
+  regionName,
   resultCountLabel,
   shiftMonth,
   sortArrow,
@@ -93,8 +93,10 @@ describe('KPIs', () => {
 })
 
 describe('filtering', () => {
-  it('starts on CO Area 1000', () => {
-    strictEqual(visibleDeals(deals, DEFAULT_FILTERS, DEFAULT_SORT).length, 7)
+  it('starts with no CO Area filter (there is no CO Area master to default from)', () => {
+    strictEqual(DEFAULT_FILTERS.co, '')
+    strictEqual(visibleDeals(deals, DEFAULT_FILTERS, DEFAULT_SORT).length, 11)
+    strictEqual(visibleDeals(deals, { ...DEFAULT_FILTERS, co: '1000' }, DEFAULT_SORT).length, 7)
   })
   it('searches Deal ID, MC ref, partner and description, ignoring case', () => {
     const f = { ...DEFAULT_FILTERS, co: '' }
@@ -213,7 +215,7 @@ describe('calendar', () => {
   })
 })
 
-describe('invoice legs', () => {
+describe('invoice legs (fixture only: the legacy page invented them)', () => {
   it('invoices the first leg at the utilised amount with no markup', () => {
     const d = deal('TSF-9081')
     const mc = mcs.find((m) => m.mcRef === d.mcRef)
@@ -238,5 +240,21 @@ describe('invoice legs', () => {
     const markup = 5000000 * 0.0022
     strictEqual(Math.round((legs[1]?.markup ?? 0) * 100), Math.round(markup * 100))
     strictEqual(Math.round((legs[1]?.amt ?? 0) * 100), Math.round((5000000 + markup) * 100))
+  })
+})
+
+describe('runtime data', () => {
+  it('has no worklist and says why', () => {
+    const list = loadSettlementList()
+    strictEqual(list.state, 'waiting')
+    strictEqual(list.deals.length, 0)
+    strictEqual(list.masterContracts.length, 0)
+    strictEqual(list.reason, LIST_WAITING)
+    strictEqual(LIST_WAITING.startsWith('WAITING FOR API — ABAP source for ZSGTSFR106 not exported'), true)
+    strictEqual(INVOICES_WAITING.includes('ZSGTSF_RDEAL_TRD_INV'), true)
+    strictEqual(computeKpis(list.deals).total, 0)
+  })
+  it('shows region codes as they are', () => {
+    strictEqual(regionName('R01'), 'R01')
   })
 })

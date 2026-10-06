@@ -1,12 +1,12 @@
-/** ZSGTSFTR_DEAL_ST's ZDEAL_STAT; the seed data uses 01, 04, 05, 07, 20, 21 and 30. */
+/** ZSGTSFTR_DEAL_ST's ZDEAL_STAT. */
 export type DealStatusCode = string
 
-/** One row of the legacy page's sampleRow(): a Deal ID and its FX/invoice linkage. */
+/** One row of FORM get_data's GT_DATA: a Deal ID and its FX/invoice linkage. */
 export type DealRow = {
   dealId: string
   dealDesc: string
   mcRef: string
-  /** ISO yyyy-mm-dd, as the legacy sample data stored it. */
+  /** ISO yyyy-mm-dd. */
   startDate: string
   endDate: string
   rfha1: string
@@ -20,11 +20,21 @@ export type DealRow = {
   modelId: string
   region: string
   modelDesc: string
-  utiAmt: number
+  /** D1(USD) from ZSGTSFV_FX / ZSGTSFV_OP; null while those views are not served (WAITING FOR API). */
+  utiAmt: number | null
   invStatus: string
   t1Amt: number | null
   bukrs1: string
   bukrs2: string
+  /** The Deal ID Analysis header: the Deal ID's own and its Master Contract's fields. */
+  trader: string
+  mcDesc: string
+  /** ISO yyyy-mm-dd, '' when the MC has none. */
+  mcDate: string
+  shipStart: string
+  shipEnd: string
+  entityString: string
+  currencyString: string
 }
 
 export type CodeDesc = { id: string; desc: string }

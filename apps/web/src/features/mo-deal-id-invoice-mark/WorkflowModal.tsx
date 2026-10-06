@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { formatAmount, formatRate, parseDate } from './format.ts'
-import { buildAdjustedInvoiceRows, buildBlRows, buildFxRows, buildInvoiceRows, buildPlannedPnlRows, buildSettlementInvoiceRows, buildViewDealData } from './logic.ts'
+import { buildAdjustedInvoiceRows, buildBlRows, buildFxRows, buildInvoiceRows, buildPlannedPnlRows, buildSettlementInvoiceRows, buildViewDealData, waitingAction } from './logic.ts'
 import type { AdjustedInvoiceRow, DealRow, FxRow, InvoiceRow, PlannedPlRow, SettlementRow, WorkflowExtra, WorkflowKind } from './types.ts'
 
 function WorkflowField({ label, value }: { label: string; value: string }) {
@@ -274,7 +274,7 @@ function InvoiceDifferenceTable({ row, rows }: { row: DealRow; rows: AdjustedInv
                 <td className="num">{formatAmount(r.planned)}</td>
                 <td className="num">{formatAmount(diff)}</td>
                 <td>{r.dealType}</td>
-                <td className="num">{formatAmount(row.amount * (shares[i] ?? 0))}</td>
+                <td className="num">{row.amount === null ? '' : formatAmount(row.amount * (shares[i] ?? 0))}</td>
                 <td className="num">{formatAmount(diff)}</td>
               </tr>
             )
@@ -364,10 +364,10 @@ function ExtraContent({ extra, onToast }: { extra: NonNullable<WorkflowExtra>; o
             <input className="workflow-input" defaultValue={extra.row.mcRef} />
           </label>
           <div className="workflow-form-actions">
-            <button className="secondary-btn" type="button" onClick={() => onToast('Invoice plan is open for change in the demo.', 'info')}>
+            <button className="secondary-btn" type="button" onClick={() => onToast(waitingAction('Change invoice plan'), 'warn')}>
               Change
             </button>
-            <button className="primary-btn" type="button" onClick={() => onToast('Deal confirmed successfully in the demo.', 'success')}>
+            <button className="primary-btn" type="button" onClick={() => onToast(waitingAction('Confirm Deal ID'), 'warn')}>
               Confirm
             </button>
           </div>
@@ -376,17 +376,15 @@ function ExtraContent({ extra, onToast }: { extra: NonNullable<WorkflowExtra>; o
     }
     case 'premium': {
       const row = extra.row
-      const rate = row.region === 'MEA' ? 3.6725 : row.region === 'EUR' ? 0.9345 : 83.12
-      const localCurr = row.region === 'MEA' ? 'AED' : row.region === 'EUR' ? 'EUR' : 'INR'
-      const premium = row.amount * (row.model === 'MIXED' ? 0.0014 : 0.0006)
+      // Premium and rates are ZSGTSF_RVIEW_DEAL's option / rate reads: WAITING FOR API, so empty.
       const fields: Array<[string, string]> = [
-        ['Deal Value', `${formatAmount(row.amount)} USD`],
-        ['Net Premium', `${formatAmount(premium * rate)} ${localCurr}`],
-        ['RBI Rate', formatRate(rate)],
-        ['Net Premium', `${formatAmount(premium)} USD`],
-        ['Net Premium per USD', formatRate(premium / row.amount)],
-        ['Strike Rate', formatRate(rate + 0.11)],
-        ['Invoice Rate', formatRate(rate + 0.03)],
+        ['Deal Value', row.amount === null ? '' : `${formatAmount(row.amount)} USD`],
+        ['Net Premium', ''],
+        ['RBI Rate', ''],
+        ['Net Premium', ''],
+        ['Net Premium per USD', ''],
+        ['Strike Rate', ''],
+        ['Invoice Rate', ''],
       ]
       return (
         <div className="workflow-mini-grid">
@@ -449,7 +447,7 @@ export function WorkflowModal({
   const [extra, setExtra] = useState<WorkflowExtra>(null)
   const [adjusted, setAdjusted] = useState<AdjustedInvoiceRow[]>(() => buildAdjustedInvoiceRows(row))
   const [settlementRows, setSettlementRows] = useState<SettlementRow[]>(() => buildSettlementInvoiceRows(row))
-  const [settlementStatus, setSettlementStatus] = useState('Ready')
+  const [settlementStatus] = useState('Ready')
   const [amendEndDate, setAmendEndDate] = useState(row.dealEnd)
 
   const detail = buildViewDealData(row)
@@ -492,14 +490,11 @@ export function WorkflowModal({
                   <button
                     className="deal-action-btn"
                     type="button"
-                    onClick={() => {
-                      setAdjusted((rows) => rows.map((r) => ({ ...r, invUsd: r.qty * r.usdPrice, finalInv: r.qty * r.usdPrice })))
-                      toast('Adjusted invoice values recalculated and updated in the demo.', 'success')
-                    }}
+                    onClick={() => toast(waitingAction('Re-calculate and Update of the adjusted invoice values'), 'warn')}
                   >
                     Re-calculate and Update
                   </button>
-                  <button className="deal-action-btn" type="button" onClick={() => toast('Invoice finalisation changes saved in the demo.', 'success')}>
+                  <button className="deal-action-btn" type="button" onClick={() => toast(waitingAction('Save invoice finalisation'), 'warn')}>
                     Save
                   </button>
                 </>
@@ -509,10 +504,7 @@ export function WorkflowModal({
                   <button
                     className="deal-action-btn primary-action"
                     type="button"
-                    onClick={() => {
-                      setSettlementStatus('Settlement Initiated')
-                      toast('Settlement initiated in the demo.', 'success')
-                    }}
+                    onClick={() => toast(waitingAction('Initiate Settlement'), 'warn')}
                   >
                     Initiate Settlement
                   </button>
@@ -532,10 +524,7 @@ export function WorkflowModal({
                     className="deal-action-btn"
                     type="button"
                     disabled={!settlementComplete}
-                    onClick={() => {
-                      setSettlementStatus('Execution Complete')
-                      toast('Settlement execution completed in the demo.', 'success')
-                    }}
+                    onClick={() => toast(waitingAction('Execution Complete'), 'warn')}
                   >
                     Execution Complete
                   </button>
@@ -670,7 +659,7 @@ export function WorkflowModal({
                             toast('Enter the date in dd-mm-yyyy format.', 'error')
                             return
                           }
-                          toast(`Deal end date updated to ${amendEndDate} in the demo.`, 'success')
+                          toast(waitingAction('Amend Deal End Date'), 'warn')
                         }}
                       >
                         Update Deal End Date
@@ -740,7 +729,7 @@ function BlTable({ row }: { row: DealRow }) {
 
 function SettlementPlTable({ row }: { row: DealRow }) {
   const detail = buildPlannedPnlRows(row)
-  const total = detail.rows[detail.rows.length - 1]!
+  const total = detail.rows[detail.rows.length - 1]
   return (
     <div className="deal-table-scroll">
       <table className="deal-table">
@@ -755,13 +744,13 @@ function SettlementPlTable({ row }: { row: DealRow }) {
         <tbody>
           <tr>
             <td>USD</td>
-            <td className="num">{formatAmount(total.usd)}</td>
+            <td className="num">{total ? formatAmount(total.usd) : ''}</td>
             <td>{row.dealEnd}</td>
             <td>{row.model}</td>
           </tr>
           <tr>
             <td>{detail.localCurr}</td>
-            <td className="num">{formatAmount(total.local)}</td>
+            <td className="num">{total ? formatAmount(total.local) : ''}</td>
             <td>{row.dealEnd}</td>
             <td>{row.model}</td>
           </tr>

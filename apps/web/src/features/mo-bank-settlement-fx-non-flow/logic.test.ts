@@ -1,28 +1,26 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { HOUSE_BANKS, TRANSFER_TYPES, seedDeals } from './data.ts'
+import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, worklistWaitingReason } from './api.ts'
+import { HOUSE_BANKS, TRANSFER_TYPES, seedDeals } from './fixtures.ts'
 import { fmtDate, fmtNum, fmtRate, parseDMY } from './format.ts'
 import {
   DEFAULT_FILTERS,
   DEFAULT_SORT,
   accountOptions,
-  applyBankUpdate,
   bankCandidates,
+  bankUpdateCheck,
   bankUpdateToast,
   ccyPairs,
   computeKpis,
   dealCountLabel,
   filterDeals,
-  newDocNo,
   nextSort,
   pageOf,
   pagerWindow,
-  postDeal,
   postGuard,
   pruneSelection,
   selectedLabel,
   sortDeals,
-  testRunMessage,
   toggleBukrs,
   toggleSelected,
   transferTypeOf,
@@ -175,48 +173,29 @@ describe('house bank / account options', () => {
   })
 })
 
-describe('bank update', () => {
+describe('bank update (WAITING FOR ACTION API)', () => {
   const deals = seedDeals()
-  it('assigns both legs and marks the deal ASSIGNED', () => {
+  const W = ACTION_WAITING.bank
+  it('a complete leg is not assigned: it logs the waiting reason and the toast says so', () => {
     const d = find(deals, 'TSF-20261001')
-    const r = applyBankUpdate(d, { hb1: 'CITISG', acc1: 'USD01', hb2: 'SCBSG', acc2: 'USD02' })
-    strictEqual(r.deal.bankStatus, 'ASSIGNED')
-    strictEqual(r.deal.hb2, 'SCBSG')
-    deepStrictEqual(r.logs.map((l) => `${l.leg}:${l.ok}`), ['Incoming:true', 'Outgoing:true'])
+    const logs = bankUpdateCheck(d, { hb1: 'CITISG', acc1: 'USD01', hb2: 'SCBSG', acc2: 'USD02' }, W)
+    deepStrictEqual(logs.map((l) => `${l.leg}:${l.ok}:${l.msg === W}`), ['Incoming:false:true', 'Outgoing:false:true'])
+    deepStrictEqual(bankUpdateToast(logs, W), { message: W, kind: 'info' })
+    strictEqual(d.hb1, null)
     strictEqual(d.bankStatus, 'NOT_ASSIGNED')
   })
-  it('requires bank and account on an open leg, and stays NOT_ASSIGNED', () => {
-    const d = find(deals, 'TSF-20261001')
-    const r = applyBankUpdate(d, { hb1: 'CITISG', acc1: '', hb2: '', acc2: '' })
-    deepStrictEqual(r.logs.map((l) => l.ok), [false, false])
-    strictEqual(r.deal.hb1, null)
-    strictEqual(r.deal.bankStatus, 'NOT_ASSIGNED')
-    strictEqual(bankUpdateToast(r.logs).kind, 'error')
-  })
-  it('partial success keeps the deal unassigned but reports success', () => {
-    const d = find(deals, 'TSF-20261001')
-    const r = applyBankUpdate(d, { hb1: 'CITISG', acc1: 'USD01', hb2: '', acc2: '' })
-    deepStrictEqual(r.logs.map((l) => l.ok), [true, false])
-    strictEqual(r.deal.hb1, 'CITISG')
-    strictEqual(r.deal.bankStatus, 'NOT_ASSIGNED')
-    deepStrictEqual(bankUpdateToast(r.logs), { message: 'House Bank and Acc ID Successfully updated', kind: 'success' })
+  it('still requires bank and account on an open leg', () => {
+    const logs = bankUpdateCheck(find(deals, 'TSF-20261001'), { hb1: 'CITISG', acc1: '', hb2: '', acc2: '' }, W)
+    deepStrictEqual(logs.map((l) => l.msg), ['House bank and account ID are required', 'House bank and account ID are required'])
+    strictEqual(bankUpdateToast(logs, W).kind, 'error')
   })
   it('leaves an already assigned leg alone and logs nothing when both are set', () => {
-    const d = find(deals, 'TSF-20261002')
-    const r = applyBankUpdate(d, { hb1: 'ENBD', acc1: 'USD12', hb2: 'ENBD', acc2: 'USD12' })
-    deepStrictEqual(r.logs, [])
-    strictEqual(r.deal.hb1, 'MASHQ')
+    deepStrictEqual(bankUpdateCheck(find(deals, 'TSF-20261002'), { hb1: 'ENBD', acc1: 'USD12', hb2: 'ENBD', acc2: 'USD12' }, W), [])
   })
 })
 
 describe('test run and post', () => {
   const deals = seedDeals()
-  it('test run message names the deal and txn', () => {
-    strictEqual(
-      testRunMessage(find(deals, 'TSF-20261001')),
-      'Test run completed for TSF-20261001 (Txn 5001234501). RFTBBB00 ran in test mode — no documents were posted.',
-    )
-  })
   it('post is blocked until bank details are assigned and when already settled', () => {
     const open = postGuard(find(deals, 'TSF-20261001'))
     strictEqual(open.ok, false)
@@ -229,15 +208,37 @@ describe('test run and post', () => {
     }
     strictEqual(postGuard(find(deals, 'TSF-20261002')).ok, true)
   })
-  it('post settles the deal with both document numbers', () => {
-    const posted = postDeal(find(deals, 'TSF-20261002'), '191', '192')
-    strictEqual(posted.status, 'Settled')
-    strictEqual(posted.fiDoc, '191')
-    strictEqual(posted.doc2, '192')
-    strictEqual(find(deals, 'TSF-20261002').status, 'Unmatured')
+  it('test run and post name the reports from the note and post nothing', () => {
+    strictEqual(ACTION_WAITING.test, 'WAITING FOR ACTION API — TBB1 Test Run (RFTBBB00 / TBB1 in test mode) has no API yet. Nothing was posted to SAP.')
+    strictEqual(ACTION_WAITING.post.startsWith('WAITING FOR ACTION API — TBB1 Post (RFTBBB00 / TBB1'), true)
+    strictEqual(ACTION_WAITING.bank.includes('BAPI_FTR_PAYDET_CREATE'), true)
   })
-  it('document numbers are 19 + 7 digits', () => {
-    strictEqual(newDocNo(() => 0), '191000000')
-    strictEqual(/^19\d{7}$/.test(newDocNo()), true)
+})
+
+describe('api', () => {
+  it('Company Code: T001 "<code> - <name>", leading zeros kept, one per code, sorted', () => {
+    deepStrictEqual(
+      companyOptions([
+        { CompanyCode: 'SG03', CompanyCodeName: 'OLAM GlobalAgri Pte. Ltd' },
+        { CompanyCode: '0001', CompanyCodeName: 'SAP SE' },
+        { CompanyCode: '0001', CompanyCodeName: 'dup' },
+        { CompanyCode: '', CompanyCodeName: 'blank' },
+      ]),
+      [
+        { value: '0001', label: '0001 - SAP SE', title: 'SAP SE' },
+        { value: 'SG03', label: 'SG03 - OLAM GlobalAgri Pte. Ltd', title: 'OLAM GlobalAgri Pte. Ltd' },
+      ],
+    )
+  })
+  it('worklist always waits (source not exported) and names the view columns tsfvFx lacks (as served 2026-10-06)', () => {
+    // prettier-ignore
+    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
+    const missing = missingColumns(served, VIEW_REQUIRED_COLUMNS)
+    deepStrictEqual(missing.slice(0, 4), ['PRCTR', 'PC_NAME', 'BLOTTER_DATE', 'TXN_STATUS'])
+    const reason = worklistWaitingReason(served)
+    strictEqual(reason.startsWith('WAITING FOR API — ZSGTSF_RNFX_DEALFLOW source not exported (only dependency notes)'), true)
+    strictEqual(reason.includes('ZTSF_DEAL_ID'), true)
+    strictEqual(worklistWaitingReason(VIEW_REQUIRED_COLUMNS).includes('does not serve'), false)
+    strictEqual(worklistWaitingReason(null).includes('could not be read'), true)
   })
 })

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { isAbort } from '../../shared/fx/mw.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal, InfoModal, MatchReleaseModal, type MatchReleaseValues } from './ActionModals.tsx'
-import { COMPANY_CODES, TRADERS, createNdfDataset } from './data.ts'
+import { LIST_UNAVAILABLE, WAITING, WAITING_ACTION, actionUnavailable, loadCompanies, loadTraders } from './api.ts'
 import { FilterPanel } from './FilterPanel.tsx'
 import { FixingDateField } from './FixingDateField.tsx'
 import { formatAmount } from './format.ts'
@@ -10,9 +11,7 @@ import {
   EMPTY_FILTERS,
   computeResults,
   countActiveFilters,
-  ensureDataForCriteria,
-  markCorrectionRequired,
-  matchReleaseDeal,
+  filterPanelOptions,
   nextSort,
   pageOf,
   pagerWindow,
@@ -28,8 +27,10 @@ import './mo-confirm-ndf-fixing.legacy.css'
 import './mo-confirm-ndf-fixing.dark.css'
 import type { DropdownItem, Filters, InfoMessage, NdfDeal, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
-const COMPANY_CODE_ITEMS: DropdownItem[] = COMPANY_CODES.map((c) => ({ primary: c }))
-const TRADER_ITEMS: DropdownItem[] = TRADERS.map((t) => ({ primary: `${t.code} - ${t.name}`, code: t.code }))
+/** The NDF deal list: none until ZSGTSFR026's selection has an API (see api.ts). No sample rows. */
+const NO_DEALS: NdfDeal[] = []
+/** Nothing is actioned while the actions have no API. */
+const NONE_PROCESSED: ReadonlySet<string> = new Set()
 const EMPTY_SELECTION: Selection = { companyCode: '', companyCodeTo: '', fixingDate: '', ndfValue: '', trader: '' }
 const NO_ERRORS: SelectionErrors = { companyCode: null, fixingDate: null }
 const EMPTY_MR: MatchReleaseValues = { externalRef: '', internalRef: '', remarks: '' }
@@ -42,16 +43,15 @@ type OpenModal = 'matchRelease' | 'correction' | null
 /**
  * MO: Confirm NDF Fixing (ZSGTSFR026), converted from legacy/confirm-ndf-fixing.html.
  *
- * The original never called an API, so this is the same UI-only screen: the deals are the
- * page's generated dummy data and live in component state for the session. Deals matched &
- * released or sent back for correction drop out of the list until the page is reloaded.
+ * ZSGTSFR026's ABAP source is not exported: the Company Code (T001) and Trader (ZSGTRMTR_TRADER)
+ * value helps are read from SAP, the deal list shows WAITING FOR API, and Match & Release /
+ * Correction Required show WAITING FOR ACTION API (nothing is posted, nothing changes on screen).
+ * See api.ts.
  */
 export default function MoConfirmNdfFixing() {
-  // One initialiser for both, so the generator's position always matches the deals it made.
-  const [initial] = useState(createNdfDataset)
-  const rng = initial.rng
-  const [deals, setDeals] = useState<NdfDeal[]>(initial.deals)
-  const [processedIds, setProcessedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const deals = NO_DEALS
+  const [companyItems, setCompanyItems] = useState<DropdownItem[]>([])
+  const [traderItems, setTraderItems] = useState<DropdownItem[]>([])
 
   // Basic Selection: the text in each box, and the page's state.selection behind it.
   const [ccText, setCcText] = useState('')
@@ -93,10 +93,31 @@ export default function MoConfirmNdfFixing() {
     timers.current.push(setTimeout(fn, ms))
   }
 
+  // The two value helps, once, on opening. A failed read leaves its list empty and says why.
+  useEffect(() => {
+    const ctl = new AbortController()
+    const load = async () => {
+      const [companies, traders] = await Promise.all([loadCompanies(ctl.signal), loadTraders(ctl.signal)])
+      if (ctl.signal.aborted) return
+      if (companies.state === 'ok') setCompanyItems(companies.value)
+      if (traders.state === 'ok') setTraderItems(traders.value)
+      const failed = [companies, traders].flatMap((a) => (a.state === 'error' ? [a.reason] : []))
+      if (failed.length) {
+        setInfo({ variant: 'warn', title: 'Value help not loaded', desc: failed.join(' ') })
+        setInfoOpen(true)
+      }
+    }
+    load().catch((error: unknown) => {
+      if (!isAbort(error)) console.warn('[mo-confirm-ndf-fixing] value helps', error)
+    })
+    return () => ctl.abort()
+  }, [])
+
   const results = useMemo(
-    () => (dealsLoaded ? computeResults(deals, applied, processedIds, filters, search, sort) : []),
-    [dealsLoaded, deals, applied, processedIds, filters, search, sort],
+    () => (dealsLoaded ? computeResults(deals, applied, NONE_PROCESSED, filters, search, sort) : []),
+    [dealsLoaded, deals, applied, filters, search, sort],
   )
+  const panelOptions = useMemo(() => filterPanelOptions(deals), [deals])
   const paged = dealsLoaded && results.length ? pageOf(results, page, pageSize) : null
   // The page pulled state.page back to the last page whenever the list shrank below it.
   useEffect(() => {
@@ -123,9 +144,7 @@ export default function MoConfirmNdfFixing() {
     const next = { ...selection, companyCode: cc }
     setSelection(next)
     setCcText(cc)
-    if (!selection.companyCodeTo.trim()) {
-      setDeals(ensureDataForCriteria(deals, rng, cc, selection.fixingDate.trim()))
-    }
+    // No dummy top-up any more: the list itself is WAITING FOR API (see api.ts).
     setDealsLoaded(true)
     setPage(1)
     setSelectedId(null)
@@ -165,12 +184,9 @@ export default function MoConfirmNdfFixing() {
   const refresh = () => {
     setSpinning(true)
     later(() => setSpinning(false), SPIN_MS)
-    // The original simulated a re-fetch that kept the session's edits; nothing is reset.
     if (dealsLoaded) reapply()
-    later(
-      () => showInfo({ variant: 'success', title: 'Deals Refreshed', desc: 'All NDF fixing deals have been refreshed successfully.' }),
-      REFRESH_NOTICE_MS,
-    )
+    // Nothing to re-read: the list has no API yet, and Refresh says so instead of pretending.
+    later(() => showInfo({ variant: 'warn', title: WAITING, desc: LIST_UNAVAILABLE }), REFRESH_NOTICE_MS)
   }
 
   // ------------------------------------------------------------------ actions
@@ -192,31 +208,25 @@ export default function MoConfirmNdfFixing() {
 
   const closeModal = () => setOpenModal(null)
 
-  const confirmMatchRelease = () => {
-    const deal = selectedDeal
-    if (!deal) return
-    setDeals(matchReleaseDeal(deals, deal.id, mrValues.externalRef.trim(), mrValues.internalRef.trim(), mrValues.remarks.trim()))
-    setProcessedIds((s) => new Set(s).add(deal.id))
-    setSelectedId(null)
+  /** An action that has no API: the dialog closes, nothing is posted and the deal stays as it was. */
+  const actionWaiting = (what: string) => {
     closeModal()
-    reapply()
-    showInfo({ variant: 'success', title: 'NDF Fixing Confirmed', desc: `Deal ${deal.dealId} was matched and released successfully.` })
+    showInfo({ variant: 'warn', title: WAITING_ACTION, desc: actionUnavailable(what) })
+  }
+
+  const confirmMatchRelease = () => {
+    if (!selectedDeal) return
+    actionWaiting('Match & Release')
   }
 
   const confirmCorrection = () => {
-    const deal = selectedDeal
-    if (!deal) return
-    const remarks = crRemarks.trim()
-    if (!remarks) {
+    if (!selectedDeal) return
+    // The MO remark is still required, as before; then WAITING FOR ACTION API.
+    if (!crRemarks.trim()) {
       setCrError(true)
       return
     }
-    setDeals(markCorrectionRequired(deals, deal.id, remarks))
-    setProcessedIds((s) => new Set(s).add(deal.id))
-    setSelectedId(null)
-    closeModal()
-    reapply()
-    showInfo({ variant: 'warn', title: 'Correction Requested', desc: 'The selected NDF deal has been sent back to FO for correction.' })
+    actionWaiting('Correction Required')
   }
 
   // ------------------------------------------------------------------ render
@@ -262,7 +272,7 @@ export default function MoConfirmNdfFixing() {
                   placeholder="Select company code"
                   wrapStyle={{ flex: 1 }}
                   value={ccText}
-                  items={COMPANY_CODE_ITEMS}
+                  items={companyItems}
                   invalid={!!errors.companyCode}
                   onType={(raw) => {
                     setCcText(raw)
@@ -286,7 +296,7 @@ export default function MoConfirmNdfFixing() {
                   inputClassName="input to-input"
                   placeholder="Optional"
                   value={ccToText}
-                  items={COMPANY_CODE_ITEMS}
+                  items={companyItems}
                   onType={(raw) => {
                     setCcToText(raw)
                     patchSelection({ companyCodeTo: raw.trim() })
@@ -353,7 +363,7 @@ export default function MoConfirmNdfFixing() {
                 panelId="traderPanel"
                 placeholder="Select..."
                 value={traderText}
-                items={TRADER_ITEMS}
+                items={traderItems}
                 onType={(raw) => {
                   setTraderText(raw)
                   if (raw.trim() === '') patchSelection({ trader: '' })
@@ -408,7 +418,7 @@ export default function MoConfirmNdfFixing() {
             </button>
           </div>
 
-          <FilterPanel open={filterOpen} filters={filters} onChange={onFilter} onClear={clearFilters} />
+          <FilterPanel open={filterOpen} filters={filters} options={panelOptions} onChange={onFilter} onClear={clearFilters} />
 
           <div className="action-row">
             <button className="btn btn-primary" id="matchReleaseBtn" type="button" disabled={!selectedId} onClick={openMatchRelease}>
@@ -436,6 +446,8 @@ export default function MoConfirmNdfFixing() {
             selectedId={selectedId}
             onSort={onSort}
             onSelect={setSelectedId}
+            emptyTitle={WAITING}
+            emptyDesc={LIST_UNAVAILABLE}
           />
 
           <div className={`pagination-bar${paged ? '' : ' hidden'}`} id="paginationBar">

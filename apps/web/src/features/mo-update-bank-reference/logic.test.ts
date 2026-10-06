@@ -2,26 +2,22 @@ import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { FX_COLUMNS, OP_COLUMNS } from './data.ts'
 import { fmtNum, parseDMY } from './format.ts'
+import { companiesInRange, generateDeals, hashCode, mulberry32 } from './fixtures.ts'
 import {
   DEFAULT_SORT,
   EMPTY_COL_FILTERS,
   EMPTY_SELECTION,
   buildCsv,
-  companiesInRange,
   csvFileName,
   filterSortRows,
-  generateDeals,
-  hashCode,
   isValid,
-  mulberry32,
   nextSort,
   pageCountOf,
   recordCountText,
-  updateToastText,
   validateSelection,
 } from './logic.ts'
 
-describe('seeded generator', () => {
+describe('test fixtures (seeded generator, test-only)', () => {
   it('hashCode and mulberry32 match the original', () => {
     strictEqual(hashCode(''), 0)
     strictEqual(hashCode('a'), 97)
@@ -123,11 +119,6 @@ describe('text and CSV', () => {
     strictEqual(fmtNum(1234567.891, 2), '1,234,567.89')
     strictEqual(fmtNum(-0.5, 4), '-0.5000')
     strictEqual(fmtNum(undefined), '')
-  })
-
-  it('words the update toast', () => {
-    strictEqual(updateToastText(1), 'External Reference Updated Successfully (1 transaction)')
-    strictEqual(updateToastText(3), 'External Reference Updated Successfully (3 transactions)')
   })
 
   it('builds the CSV with quoted cells and names the file', () => {
