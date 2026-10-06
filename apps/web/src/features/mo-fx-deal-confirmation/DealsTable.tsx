@@ -34,8 +34,6 @@ export function DealsTable({
   onRowClick,
   onCheckboxDown,
   onCheckboxEnter,
-  emptyTitle = 'No deals found',
-  emptyText = 'No FX or Option deals match the selected criteria.',
 }: {
   /** The current page only. */
   rows: readonly Deal[]
@@ -46,9 +44,6 @@ export function DealsTable({
   onRowClick: (deal: Deal) => void
   onCheckboxDown: (rowIndex: number, deal: Deal) => void
   onCheckboxEnter: (rowIndex: number) => void
-  /** The empty row's heading and line: why there are no rows (e.g. WAITING FOR API). */
-  emptyTitle?: string
-  emptyText?: string
 }) {
   return (
     <table className={`deals-table${dragging ? ' dragging' : ''}`} id="dealsTable">
@@ -77,8 +72,8 @@ export function DealsTable({
               <div className="state-icon" style={{ margin: '0 auto 10px auto' }}>
                 &#128203;
               </div>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{emptyTitle}</div>
-              <div style={{ color: 'var(--muted)', fontSize: 12 }}>{emptyText}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>No deals found</div>
+              <div style={{ color: 'var(--muted)', fontSize: 12 }}>No FX or Option deals match the selected criteria.</div>
             </td>
           </tr>
         ) : (

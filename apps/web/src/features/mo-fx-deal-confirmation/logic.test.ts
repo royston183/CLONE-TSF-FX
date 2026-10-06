@@ -1,15 +1,17 @@
 import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { companyOptions, traderOptions } from './api.ts'
-import { STATUS } from './data.ts'
-import { COMPANY_CODES, COMPANY_INFO, FIXED_DEAL_IDS, RANDOM_DEAL_COUNT, TRADERS, createRng, generateDeals } from './fixtures.ts'
+import { FIXED_DEAL_IDS, RANDOM_DEAL_COUNT, STATUS, createRng, generateDeals } from './data.ts'
 import { addDays, fmtAmount, fmtDate, fmtRate, parseDDMMYYYY } from './format.ts'
 import {
+  COMPANY_OPTIONS,
   EMPTY_FILTERS,
   EMPTY_SELECTION,
+  TRADER_OPTIONS,
   applyDragRange,
   applySelection,
   calendarCells,
+  companyCodesInRange,
+  correctionMessage,
   dealCountLabel,
   dealSummary,
   dragModeFor,
@@ -18,6 +20,9 @@ import {
   filterOptions,
   isBlotterDateValid,
   isCorrectionValid,
+  markCorrectionRequired,
+  matchReleaseDeals,
+  matchReleaseMessage,
   nextSort,
   pageOf,
   pagerWindow,
@@ -29,10 +34,6 @@ import {
   statusClass,
 } from './logic.ts'
 import type { AppliedSelection, Deal, Sort } from './types.ts'
-
-/** The value helps as api.ts builds them, from the fixture masters (T001 / ZSGTRMTR_TRADER shapes). */
-const COMPANY_OPTIONS = companyOptions(COMPANY_CODES.map((c) => ({ CompanyCode: c, CompanyCodeName: COMPANY_INFO[c]?.companyName ?? '' })))
-const TRADER_OPTIONS = traderOptions(TRADERS.map((t) => ({ ZTCODE: t.code, ZNAME: t.name, ZTRADER: t.shortName })))
 
 const FX: AppliedSelection = applySelection(EMPTY_SELECTION)
 const OPTIONS: AppliedSelection = { ...FX, displayType: 'Options' }
@@ -167,6 +168,11 @@ describe('selection screen', () => {
     strictEqual(filterComboOptions(TRADER_OPTIONS, 'zzz').length, 0)
   })
 
+  it('takes a company code range in code order', () => {
+    deepStrictEqual(companyCodesInRange('AE11', 'AE13'), ['AE13', 'AE11'])
+    deepStrictEqual(companyCodesInRange('AE11', 'SG03'), ['SG03', 'AE13', 'AE11'])
+    deepStrictEqual(companyCodesInRange('SG03', 'AE11'), [])
+  })
 })
 
 describe('filterDeals', () => {
@@ -230,29 +236,18 @@ describe('filterDeals', () => {
     deepStrictEqual(nextSort({ key: 'dealId', dir: 'desc' }, 'coCode'), { key: 'coCode', dir: 'asc' })
   })
 
-  it('offers each filter from the deals held, deduped and sorted, and every status but Matched & Released', () => {
+  it('offers currencies from all deals and every status but Matched & Released', () => {
     const opts = filterOptions(list)
     deepStrictEqual(
       opts.ccy1.map((o) => o.value),
       ['INR', 'SGD', 'USD'],
     )
     deepStrictEqual(
-      opts.coCode.map((o) => o.value),
-      ['AE11', 'AE13', 'SG03'],
-    )
-    deepStrictEqual(
       opts.status.map((o) => o.value),
       [STATUS.UNMATCHED, STATUS.CORRECTION],
     )
-    deepStrictEqual(
-      opts.txnType.map((o) => o.value),
-      ['604', '619', '631'],
-    )
-    strictEqual(opts.txnType[1]?.label, '619 - Forward-TSF')
+    strictEqual(opts.txnType[0]?.label, '619 - Forward-TSF')
     strictEqual(opts.partner[0]?.label, '0660000645 - DBS BANK LTD')
-    // No deals (the queue is WAITING FOR API): nothing but each dropdown's "All", and the statuses.
-    const none = filterOptions([])
-    deepStrictEqual([none.coCode, none.txnType, none.partner, none.trader, none.ccy1], [[], [], [], [], []])
   })
 
   it('labels the count and status like the page', () => {
@@ -329,12 +324,41 @@ describe('match & release / correction', () => {
     deepStrictEqual(ids(selectedDeals(list, new Set(['c', 'a']))), ['a', 'c'])
   })
 
-  it('requires a remark to send deals back', () => {
-    strictEqual(isCorrectionValid('   '), false)
-    strictEqual(isCorrectionValid(' x '), true)
+  it('releases the selected deals with the MO remark, so they leave the queue', () => {
+    const out = matchReleaseDeals(list, new Set(['a', 'c']), 'ok ')
+    deepStrictEqual(
+      out.map((d) => [d.id, d.status, d.moRemark]),
+      [
+        ['a', STATUS.MATCHED, 'ok '],
+        ['b', STATUS.UNMATCHED, ''],
+        ['c', STATUS.MATCHED, 'ok '],
+      ],
+    )
+    deepStrictEqual(ids(filterDeals(out, FX, EMPTY_FILTERS, '', NO_SORT)), ['b'])
+    strictEqual(list[0]?.status, STATUS.UNMATCHED, 'the input list is not mutated')
   })
 
+  it('requires a remark to send deals back, and stores it trimmed', () => {
+    strictEqual(isCorrectionValid('   '), false)
+    strictEqual(isCorrectionValid(' x '), true)
+    const out = markCorrectionRequired(list, new Set(['b']), '  Wrong value date ')
+    strictEqual(out[1]?.status, STATUS.CORRECTION)
+    strictEqual(out[1]?.moRemark, 'Wrong value date')
+    strictEqual(out[0], list[0])
+  })
 
+  it('updates every deal carrying a selected ID (the seed repeats 1100000916)', () => {
+    const seeded = generateDeals()
+    const out = matchReleaseDeals(seeded, new Set(['1100000916']), '')
+    strictEqual(out.filter((d) => d.id === '1100000916' && d.status === STATUS.MATCHED).length, 2)
+  })
+
+  it('words the toasts like the page', () => {
+    strictEqual(matchReleaseMessage(list.slice(0, 1)), 'Deal a matched and released successfully.')
+    strictEqual(matchReleaseMessage(list), '3 deals matched and released successfully.')
+    strictEqual(correctionMessage(list.slice(0, 1)), 'Deal a was sent back to FO for correction.')
+    strictEqual(correctionMessage(list.slice(0, 2)), '2 deals were sent back to FO for correction.')
+  })
 })
 
 describe('calendar', () => {

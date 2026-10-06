@@ -1,112 +1,23 @@
-/*
- * SAP data for TSF MO Deal Confirmation - FX & Options (ZSGTSFR024). Nothing falls back to sample data.
- *
- * The ABAP source for ZSGTSFR024 was not exported (no program, no dependency note), so only the standard
- * masters whose meaning the screen's labels make unambiguous are read. Nothing else is guessed.
- *
- *   Company Code (from / to)  T001 (API_COMPANYCODE_SRV / A_CompanyCode), "<code> - <name>", leading zeros kept.
- *                             Any AUTHORITY-CHECK the program does is unknown (WAITING FOR AUTH).
- *   Trader Name               ZSGTRMTR_TRADER (middleware "trmTrader"): the trader-code master, one row per ZTCODE,
- *                             "<ZTCODE> - <ZNAME>". Unrestricted: the program's search help / WHERE is not exported.
- *   Deal queue                WAITING FOR API: which deals are in the MO queue (status values, tables, the FX vs
- *                             Options split, the blotter-date condition) is decided by the unexported program.
- *   Match & Release,          WAITING FOR ACTION API: the program's BAPIs / FMs / table updates are unknown.
- *   Correction Required
- *
- * Audit of the previous version (a teammate's): FX rows came from the FxTransaction OData service (trmfx /
- * ZFS_SB_TRMFX_O4_API) and Match & Release ran its bound `Settle` action (BAPI_FTR_FXT_SETTLE). That was a
- * substitute, not ZSGTSFR024's read: FxTransaction has no Deal ID, TXN_STATUS, trader, group, NDF, option or
- * remark fields, so it listed every FX transaction of three hard-coded company codes, guessed the MO status from
- * ActivityCategory (20/30), and posted a settlement in SAP where the program's own posting is unknown. Both are
- * removed from this screen. The FxTransaction type, dealKey, dealIdsByTransaction and sapMessage stay exported
- * (bottom of this file) only because other screens import them.
- */
-import { ApiError, apiFetch, service } from '@slc/api-client'
+import { ApiError, apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
-import type { ComboOption } from './types.ts'
+import { fxList, type FxRow } from '../../shared/fx/mw.ts'
+import { COMPANY_CODES, COMPANY_INFO, SAP_TXN_DESC, STATUS } from './data.ts'
+import type { Deal } from './types.ts'
 
-const companyApi = service('companycode')
-
-export const TCODE = 'ZSGTSFR024'
-export const WAITING = 'WAITING FOR API'
-export const WAITING_ACTION = 'WAITING FOR ACTION API'
-
-/** Why the deal table is empty: shown in its empty row and by Refresh. */
-export const QUEUE_UNAVAILABLE =
-  `${WAITING} — ABAP source for ${TCODE} not exported; the MO confirmation queue ` +
-  '(which deals, statuses and tables it selects) cannot be reproduced.'
-
-/** What an action says instead of posting. */
-export const actionUnavailable = (what: string) =>
-  `${WAITING_ACTION} — ${what} (ABAP source for ${TCODE} not exported; its BAPIs / FMs / table updates are unknown) ` +
-  'has no API yet. Nothing was posted to SAP.'
-
-export type Avail<T> = { state: 'ok'; value: T } | { state: 'error'; reason: string }
-
-const byCode = (a: ComboOption, b: ComboOption) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0)
-
-/* ---------------- pure mappings (tested) ---------------- */
-
-/** T001 by code; the option reads "<code> - <name>" with the name under the code in the list. */
-export function companyOptions(rows: readonly { CompanyCode?: string; CompanyCodeName?: string }[]): ComboOption[] {
-  return rows
-    .filter((r) => r.CompanyCode)
-    .map((r) => {
-      const code = String(r.CompanyCode)
-      const name = String(r.CompanyCodeName ?? '').trim()
-      return { code, display: name ? `${code} - ${name}` : code, searchText: `${code} ${name}`, sub: name }
-    })
-    .sort(byCode)
-}
-
-/** ZSGTRMTR_TRADER: blank codes dropped, sorted, one option per ZTCODE (first kept), "<code> - <full name>". */
-export function traderOptions(rows: readonly FxRow[]): ComboOption[] {
-  const seen = new Set<string>()
-  const out: ComboOption[] = []
-  for (const r of rows) {
-    const code = txt(r, 'ZTCODE')
-    if (!code || seen.has(code)) continue
-    seen.add(code)
-    const name = txt(r, 'ZNAME') || txt(r, 'ZTRADER')
-    out.push({ code, display: name ? `${code} - ${name}` : code, searchText: `${code} ${name}`, sub: '' })
-  }
-  return out.sort(byCode)
-}
-
-/* ---------------- reads ---------------- */
-
-const failure = <T,>(what: string, error: unknown): Avail<T> => {
-  if (isAbort(error)) throw error
-  console.warn(`[mo-fx-deal-confirmation] ${what} unavailable`, error)
-  return { state: 'error', reason: `${what} could not be read from SAP.` }
-}
-
-export async function loadCompanies(signal?: AbortSignal): Promise<Avail<ComboOption[]>> {
-  try {
-    const params = new URLSearchParams({ $select: 'CompanyCode,CompanyCodeName', $top: '5000', $format: 'json' })
-    const v2 = await apiFetch<{ d?: { results?: { CompanyCode?: string; CompanyCodeName?: string }[] } }>(
-      `${companyApi('A_CompanyCode')}?${params.toString()}`,
-      signal ? { signal } : undefined,
-    )
-    return { state: 'ok', value: companyOptions(v2?.d?.results ?? []) }
-  } catch (error) {
-    return failure('Company codes (T001)', error)
-  }
-}
-
-export async function loadTraders(signal?: AbortSignal): Promise<Avail<ComboOption[]>> {
-  try {
-    return { state: 'ok', value: traderOptions(await fxList('trmTrader', {}, { sort: 'ZTCODE', signal })) }
-  } catch (error) {
-    return failure('Traders (ZSGTRMTR_TRADER)', error)
-  }
-}
-
-/* ---------------- shared with other screens (not used by ZSGTSFR024 itself) ----------------
- * fo-fx-error-correction and fo-change-deal-id import these from here; they are kept unchanged so those
- * screens keep compiling. This screen no longer reads FxTransaction (see the audit note at the top).
+/**
+ * The FX half of the MO confirmation queue, from the FxTransaction OData service
+ * (ZFS_SB_TRMFX_O4_API). Match & Release runs its bound `Settle` action, which calls
+ * BAPI_FTR_FXT_SETTLE; nothing else the original program does is exposed by that service:
+ *
+ *   - BAPI_FTR_FXT_CHANGE (the external reference / post-custom-update) has no action, and the
+ *     entity has no field for an external reference, internal reference or remark;
+ *   - "Correction Required" is a status this screen keeps itself — SAP has no field for it.
+ *
+ * The Options half stays on its own dummy rows: the options BAPIs are not part of this service.
  */
+const fxApi = service('fx')
+const FX = fxApi('FxTransaction')
+const SETTLE = 'com.sap.gateway.srvd_a2x.zfs_sd_trmfx.v0001.Settle'
 
 /** What the service returns for a deal; only the fields this screen shows. */
 export type FxTransaction = {
@@ -132,9 +43,29 @@ export type FxTransaction = {
   ActivityCategory?: string
 }
 
+const ACTIVE_REVERSED = '3'
+const CATEGORY_SETTLED = '30'
+
+const n = (v: unknown): number => {
+  const x = Number(v)
+  return Number.isFinite(x) ? x : 0
+}
+
+const parseDay = (v: string | null | undefined): Date | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v ?? '')
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
+}
+
 /** A deal's id on this screen. The transaction number alone repeats across company codes. */
 export const dealKey = (companyCode: string, transaction: string): string => `${companyCode}-${transaction}`
 
+/**
+ * An FxTransaction as a queue row, or null for a reversed deal or one without dates. Leg 1 is
+ * the lead currency, as in the blotter; a sell leg carries a negative amount, as the screen's
+ * rows always have. Fields the service does not carry are left blank rather than invented: the
+ * trader, accounting, assignment, fixing reference and the two remarks. The fixing date is the
+ * value date (the service has no fixing date).
+ */
 /**
  * The Deal ID each SAP transaction is on, from ZSGTSFTR_DEALID: a row lists up to eight transactions
  * (ZBUKRS1/ZRFHA1 .. ZBUKRS8/ZRFHA8). Keyed like Deal.id. A cancelled Deal ID (status 30) holds nothing. A transaction
@@ -154,6 +85,73 @@ export function dealIdsByTransaction(dealRows: readonly FxRow[]): Map<string, st
   return out
 }
 
+export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = new Map()): Deal | null {
+  if (d.ActiveStatus === ACTIVE_REVERSED) return null
+  const tradeDate = parseDay(d.ContractDate)
+  const valueDate = parseDay(d.ValueDate)
+  if (!tradeDate || !valueDate) return null
+
+  const lead = d.LeadCurrency || d.BuyCurrency || ''
+  const follow = d.FollowCurrency || d.SellCurrency || ''
+  const buysLead = d.BuyCurrency === lead
+  const leadAmt = n(buysLead ? d.BuyAmount : d.SellAmount)
+  const followAmt = n(buysLead ? d.SellAmount : d.BuyAmount)
+  const info = COMPANY_INFO[d.CompanyCode]
+  const desc = SAP_TXN_DESC[d.TransactionType]
+  return {
+    id: dealKey(d.CompanyCode, d.FinancialTransaction),
+    dealId: dealIds.get(dealKey(d.CompanyCode, d.FinancialTransaction)) ?? '',
+    dealType: 'FX',
+    coCode: d.CompanyCode,
+    transaction: d.FinancialTransaction,
+    partnerCode: d.Partner,
+    partnerName: d.Partner,
+    txnTypeCode: d.TransactionType,
+    txnTypeDesc: desc ? `${d.TransactionType} - ${desc}` : d.TransactionType,
+    tradeDate,
+    buySell1: buysLead ? 'Buy' : 'Sell',
+    currency1: lead,
+    amount1: buysLead ? leadAmt : -leadAmt,
+    buySell2: buysLead ? 'Sell' : 'Buy',
+    currency2: follow,
+    amount2: buysLead ? -followAmt : followAmt,
+    fixingDate: valueDate,
+    valueDate,
+    allInRate: n(d.ForwardRate),
+    status: d.ActivityCategory === CATEGORY_SETTLED ? STATUS.MATCHED : STATUS.UNMATCHED,
+    traderCode: '',
+    traderName: '',
+    traderShort: '',
+    groupDesc: info?.group ?? '',
+    companyName: info?.companyName ?? '',
+    profitCenterDesc: info?.profitCenter ?? '',
+    businessAreaDesc: info?.businessArea ?? '',
+    accounting: '',
+    assignment: '',
+    fixRefId: '',
+    foRemark: '',
+    moRemark: '',
+    live: true,
+  }
+}
+
+/** The FX deals of the screen's company codes. The service cannot filter on dates, so the screen does. */
+export async function loadFxDeals(signal?: AbortSignal): Promise<Deal[]> {
+  const filter = COMPANY_CODES.map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
+  const [rows, dealRows] = await Promise.all([
+    list<FxTransaction>(FX, { filter, top: 1000 }, signal ? { signal } : undefined),
+    fxList('tsfDealId', {}, { sort: '-ZDEAL_ID', signal }),
+  ])
+  const dealIds = dealIdsByTransaction(dealRows)
+  return rows.map((d) => toDeal(d, dealIds)).filter((d): d is Deal => d !== null)
+}
+
+/** Settles one deal in SAP (BAPI_FTR_FXT_SETTLE through the bound Settle action). */
+export async function settleFxDeal(companyCode: string, transaction: string): Promise<void> {
+  const key = entityPath('FxTransaction', { CompanyCode: companyCode, FinancialTransaction: transaction })
+  await apiFetch(`${fxApi(key)}/${SETTLE}`, { method: 'POST', body: {} })
+}
+
 /** FTR0/161 "BAPI processing was terminated" and FTR0/030 "No payment details entered" say nothing about the cause. */
 const NOISE_CODES = new Set(['FTR0/161', 'FTR0/030'])
 
@@ -169,4 +167,23 @@ export function sapMessage(e: unknown): string {
     if (causes.length) return [...new Set(causes)].join(' ')
   }
   return e instanceof Error ? e.message : String(e)
+}
+
+export type SettleOutcome = { settled: string[]; failed?: { id: string; reason: string } }
+
+/**
+ * Settles the deals in order and stops at the first SAP refusal: each settlement is its own SAP
+ * commit, so the ones already done stay done and the rest are not attempted.
+ */
+export async function settleFxDeals(deals: readonly Deal[]): Promise<SettleOutcome> {
+  const settled: string[] = []
+  for (const d of deals) {
+    try {
+      await settleFxDeal(d.coCode, d.transaction)
+      settled.push(d.id)
+    } catch (e) {
+      return { settled, failed: { id: d.id, reason: sapMessage(e) } }
+    }
+  }
+  return { settled }
 }

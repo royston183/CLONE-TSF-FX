@@ -5,13 +5,17 @@ import { BlotterDateField } from './BlotterDateField.tsx'
 import { ComboBox } from './ComboBox.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { QUEUE_UNAVAILABLE, WAITING, WAITING_ACTION, actionUnavailable, loadCompanies, loadTraders } from './api.ts'
+import { loadFxDeals, sapMessage, settleFxDeals } from './api.ts'
+import { generateDeals } from './data.ts'
 import { DealsTable } from './DealsTable.tsx'
 import {
+  COMPANY_OPTIONS,
   EMPTY_FILTERS,
   EMPTY_SELECTION,
+  TRADER_OPTIONS,
   applyDragRange,
   applySelection,
+  correctionMessage,
   dealCountLabel,
   dealSummary,
   dragModeFor,
@@ -19,10 +23,15 @@ import {
   filterOptions,
   isBlotterDateValid,
   isCorrectionValid,
+  markCorrectionRequired,
+  matchReleaseDeals,
+  matchReleaseMessage,
+  mergeLiveDeals,
   nextSort,
   pageOf,
   rowClickSelection,
   selectedDeals,
+  withoutFxDeals,
 } from './logic.ts'
 import { MatchReleaseModal, type MatchReleaseValues } from './MatchReleaseModal.tsx'
 import { useModal } from './modal.tsx'
@@ -35,7 +44,6 @@ import './mo-fx-deal-confirmation.legacy.css'
 import './mo-fx-deal-confirmation.dark.css'
 import type {
   AppliedSelection,
-  ComboOption,
   Deal,
   DealSummary,
   DealType,
@@ -53,8 +61,6 @@ const TOAST_MS = 3800
 const TOAST_FADE_MS = 260
 const EMPTY_SUMMARY: DealSummary = { dealId: '-', partner: '-', coverNo: '' }
 const EMPTY_MR: MatchReleaseValues = { externalRef: '', internalRef: '', remarks: '' }
-/** The deal queue: none until ZSGTSFR024's selection has an API (see api.ts). No sample rows. */
-const NO_DEALS: Deal[] = []
 
 const FILTER_FIELDS: Array<{ key: keyof Filters; id: string; label: string }> = [
   { key: 'coCode', id: 'filterCoCode', label: 'Company Code' },
@@ -70,16 +76,14 @@ const FILTER_FIELDS: Array<{ key: keyof Filters; id: string; label: string }> = 
  * TSF MO Deal Confirmation - FX & Options (ZSGTSFR024), converted from
  * legacy/fx-deal-confirmation.html.
  *
- * MO picks a Company Code range, Upto Blotter Date and Display Type, then Matches & Releases deals
- * or sends them back to FO as Correction Required. ZSGTSFR024's ABAP source is not exported: the
- * Company Code (T001) and Trader (ZSGTRMTR_TRADER) value helps are read from SAP, the deal queue
- * shows WAITING FOR API and both actions WAITING FOR ACTION API (nothing is posted, nothing changes
- * on screen). See api.ts.
+ * The original never called an API, so this is the same UI-only screen: the deal queue lives
+ * in component state for the session, seeded from data.ts. MO picks a Company Code range,
+ * Upto Blotter Date and Display Type, then Matches & Releases deals (they leave the queue) or
+ * sends them back to FO as Correction Required.
  */
 export default function MoFxDealConfirmation() {
-  const deals = NO_DEALS
-  const [companyOptions, setCompanyOptions] = useState<ComboOption[]>([])
-  const [traderOptions, setTraderOptions] = useState<ComboOption[]>([])
+  // Options rows are dummy data; the FX rows are read from SAP (see loadFx) and are not shown until they are.
+  const [deals, setDeals] = useState<Deal[]>(() => withoutFxDeals(generateDeals()))
 
   // Basic Selection
   const [form, setForm] = useState<SelectionForm>(EMPTY_SELECTION)
@@ -203,35 +207,49 @@ export default function MoFxDealConfirmation() {
     setSelected((s) => applyDragRange(s, pageIds, d.anchor, rowIndex, d.mode))
   }
 
-  // The two value helps, once, on opening. A failed read leaves its list empty and says why.
+  /**
+   * Reads the FX deals from SAP into the queue. A failure leaves the queue as it was and says so:
+   * no stand-in FX rows are ever shown.
+   */
+  const loadFx = useCallback(async (signal?: AbortSignal): Promise<string | null> => {
+    try {
+      const live = await loadFxDeals(signal)
+      if (signal?.aborted) return null
+      setDeals((current) => mergeLiveDeals(current, live))
+      return null
+    } catch (error) {
+      if (signal?.aborted || isAbort(error)) return null
+      return sapMessage(error)
+    }
+  }, [])
+
+  // Once, on opening. The toast is the only signal a failed read gets, so it names the reason.
   useEffect(() => {
     const ctl = new AbortController()
-    const load = async () => {
-      const [companies, traders] = await Promise.all([loadCompanies(ctl.signal), loadTraders(ctl.signal)])
+    setRefreshing(true)
+    void loadFx(ctl.signal).then((message) => {
       if (ctl.signal.aborted) return
-      if (companies.state === 'ok') setCompanyOptions(companies.value)
-      else showToast('error', 'Company codes not loaded', companies.reason)
-      if (traders.state === 'ok') setTraderOptions(traders.value)
-      else showToast('error', 'Traders not loaded', traders.reason)
-    }
-    load().catch((error: unknown) => {
-      if (!isAbort(error)) console.warn('[mo-fx-deal-confirmation] value helps', error)
+      setRefreshing(false)
+      if (message) showToast('error', 'FX deals not loaded', message)
     })
     return () => ctl.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- showToast only reaches refs and setState
-  }, [])
+  }, [loadFx])
 
-  /** Nothing to re-read: the queue has no API yet, and Refresh says so instead of pretending. */
-  const refresh = () => {
+  const refresh = async () => {
     setRefreshing(true)
-    later(() => setRefreshing(false), 300)
-    setStatus({ type: 'error', title: 'Refresh', heading: WAITING, message: QUEUE_UNAVAILABLE })
-    statusModal.open()
-  }
-
-  /** An action that has no API: the modal closes, nothing is posted and no deal changes. */
-  const actionWaiting = (what: string) => {
-    setStatus({ type: 'error', title: what, heading: WAITING_ACTION, message: actionUnavailable(what) })
+    const message = await loadFx()
+    setRefreshing(false)
+    setStatus(
+      message
+        ? { type: 'error', title: 'Refresh Failed', heading: 'Could not read the FX deals from SAP', message }
+        : {
+            type: 'success',
+            title: 'Deals Refreshed',
+            heading: 'Deals Refreshed',
+            message: 'The FX deals were read from SAP again; the Options rows are sample data.',
+          },
+    )
     statusModal.open()
   }
 
@@ -245,15 +263,48 @@ export default function MoFxDealConfirmation() {
     mrModal.open()
   }
 
+  /** True while Settle calls are running: the modal closes at once, so a second click must not start another run. */
+  const settling = useRef(false)
+
   /**
-   * Match & Release: ZSGTSFR024's posting (BAPI / FM / table update) is not exported, so nothing is
-   * sent to SAP and the deals stay in the queue.
+   * FX deals are settled in SAP (BAPI_FTR_FXT_SETTLE), one at a time, stopping at the first
+   * refusal; only the ones SAP settled leave the queue. The Options rows have no BAPI here and
+   * keep their on-screen behaviour. The External / Internal Ref fields and the remark are not
+   * stored for an FX deal — the service has no field for them — and the message says so.
    */
-  const confirmMatchRelease = () => {
+  const confirmMatchRelease = async () => {
     const list = selectedDeals(deals, selected)
-    if (list.length === 0) return
+    if (list.length === 0 || settling.current) return
+    settling.current = true
     mrModal.close()
-    actionWaiting('Match & Release')
+    try {
+      const fx = list.filter((d) => d.live)
+      const outcome = await settleFxDeals(fx)
+      const done = new Set([...outcome.settled, ...list.filter((d) => !d.live).map((d) => d.id)])
+      if (done.size) setDeals((all) => matchReleaseDeals(all, done, mrValues.remarks))
+      setSelected((s) => new Set([...s].filter((id) => !done.has(id))))
+
+      if (outcome.failed) {
+        setStatus({
+          type: 'error',
+          title: 'Match & Release stopped',
+          heading: 'SAP did not settle ' + outcome.failed.id,
+          message:
+            (outcome.settled.length ? outcome.settled.length + ' deal(s) were settled before it. ' : 'Nothing was settled. ') +
+            outcome.failed.reason,
+        })
+        statusModal.open()
+        return
+      }
+      const unsaved = fx.length > 0 && (mrValues.externalRef.trim() || mrValues.internalRef.trim() || mrValues.remarks.trim())
+      showToast(
+        'success',
+        'Matched & Released',
+        matchReleaseMessage(list) + (unsaved ? ' The references and remark were not saved: SAP has no field for them in this service.' : ''),
+      )
+    } finally {
+      settling.current = false
+    }
   }
 
   const openCorrection = () => {
@@ -272,9 +323,10 @@ export default function MoFxDealConfirmation() {
       setCrError(true)
       return
     }
-    // The remark is still required, as before; then WAITING FOR ACTION API — nothing is sent back to FO.
+    setDeals((all) => markCorrectionRequired(all, selected, crRemarks))
+    setSelected(new Set())
     crModal.close()
-    actionWaiting('Correction Required')
+    showToast('error', 'Correction Requested', correctionMessage(list))
   }
 
   // ------------------------------------------------------------------ render
@@ -321,7 +373,7 @@ export default function MoFxDealConfirmation() {
                       inputId="companyCodeInput"
                       panelId="companyCodePanel"
                       text={form.companyCodeText}
-                      options={companyOptions}
+                      options={COMPANY_OPTIONS}
                       showSub
                       onText={(t) => patchForm({ companyCodeText: t })}
                       onPick={(o) => patchForm({ companyCode: o ? o.code : '' })}
@@ -332,7 +384,7 @@ export default function MoFxDealConfirmation() {
                       inputId="companyCodeToInput"
                       panelId="companyCodeToPanel"
                       text={form.companyCodeToText}
-                      options={companyOptions}
+                      options={COMPANY_OPTIONS}
                       showSub
                       onText={(t) => patchForm({ companyCodeToText: t })}
                       onPick={(o) => patchForm({ companyCodeTo: o ? o.code : '' })}
@@ -364,7 +416,7 @@ export default function MoFxDealConfirmation() {
                     inputId="traderInput"
                     panelId="traderPanel"
                     text={form.traderText}
-                    options={traderOptions}
+                    options={TRADER_OPTIONS}
                     showSub={false}
                     onText={(t) => patchForm({ traderText: t })}
                     onPick={(o) => patchForm({ trader: o ? o.code : '' })}
@@ -504,8 +556,6 @@ export default function MoFxDealConfirmation() {
                 onRowClick={(deal) => setSelected((s) => rowClickSelection(s, deal.id))}
                 onCheckboxDown={onCheckboxDown}
                 onCheckboxEnter={onCheckboxEnter}
-                emptyTitle={WAITING}
-                emptyText={QUEUE_UNAVAILABLE}
               />
             </div>
 
