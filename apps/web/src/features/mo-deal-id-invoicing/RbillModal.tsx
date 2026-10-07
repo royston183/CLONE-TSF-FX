@@ -236,7 +236,7 @@ export function RbillModal({
                       <td className="left">{f.curr2}</td>
                       <td className="num">{fmtAmt(f.amt2)}</td>
                       <td className="left">
-                        {f.bp} - {f.bpName}
+                        {f.bpName ? `${f.bp} - ${f.bpName}` : f.bp}
                       </td>
                       <td className="num">{f.rate.toFixed(4)}</td>
                       <td className="left">

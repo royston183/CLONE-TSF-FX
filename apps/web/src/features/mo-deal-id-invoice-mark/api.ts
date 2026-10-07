@@ -23,23 +23,38 @@
  *    WHERE zdeal_id = .. AND zdeal_type = .. AND zsub_type = ..
  * one row per checked deal (shared/fx/deal-id.ts setDealStatus).
  *
+ * P_VIEW ("Deals Automarked for invoicing"): the same select, but the date rule is
+ * b~zship_start <= sy-datum (the selected range is NOT used), and every row found is MODIFYed to
+ * 03 (autoCandidates / markDealsForInvoicing, never through the manual selection).
+ *
+ * Deal Amt (USD) (UTI_AMT) comes from amount.ts: APP_STR (ZTSF_DEAL_ID / _TYPE / _MC_REF_NO) merged
+ * with the standard FxTransaction on BUKRS + RFHA. Option legs have no service yet.
+ *
+ * Only ZDEAL_STAT (the Deal ID status) is written. ZSGTSFTR_APP_STR.TXN_STATUS, a different status
+ * domain in which 03 means FO -> MO Unmatched, is never read for this or written, and no FX /
+ * Option transaction is changed.
+ *
  * Not reproduced:
- *  - Deal Amt (USD) (UTI_AMT): summed from ZSGTSFCDS_FX + ZSGTSFCDS_OPTION (D1, USD legs).
- *    "tsfvFx" lacks the TSF deal columns and no option view is served: WAITING FOR API.
  *  - AUTHORITY-CHECK F_BKPF_BUK on the CDS company codes: WAITING FOR AUTH, nothing refused.
- *  - P_VIEW ("Deals Automarked for invoicing", MODIFY to 03 on display): the screen has no
- *    such mode (LEGACY-NOT REACHED).
  *
  * Nothing falls back to sample data: when ZSGTSFTR_DEALID cannot be read the list stays empty
  * and says WAITING FOR DEAL ID API, and nothing can be marked.
  */
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
+<<<<<<< HEAD
 import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatus, type DealContext } from '../../shared/fx/deal-id.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
 import { dmyFromIso } from '../../shared/fx/sap.ts'
 import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
+=======
+import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatusEach, type DealContext, type DealUpdateOutcome } from '../../shared/fx/deal-id.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { dmyFromIso, isoFromDate } from '../../shared/fx/sap.ts'
+import { loadUsdAmounts } from './amount.ts'
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
+>>>>>>> origin/sp_tsfx
 import { enrichRow } from './logic.ts'
 import type { DealRow } from './types.ts'
 
@@ -51,10 +66,9 @@ export const MARKED_STATUS = '03'
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
 export const WAITING_AUTH = 'WAITING FOR AUTH — AUTHORITY-CHECK F_BKPF_BUK (ACTVT 03) on the deals’ company codes has no browser source; nothing is refused'
 
-/** The columns FORM get_data reads from ZSGTSFCDS_FX / _OPTION to sum the Deal Amt (USD). */
-export const UTILIZATION_COLUMNS = ['BUKRS', 'ZTSF_DEAL_ID', 'ZTSF_DEAL_TYPE', 'ZTSF_MC_REF_NO', 'CURR1', 'CURR2', 'AMT1', 'AMT2'] as const
-
 export type DataSource = 'sap' | 'unavailable'
+/** P_MARK (manual selection) or P_VIEW (automatic marking). */
+export type Mode = 'manual' | 'auto'
 export type Loaded = {
   rows: DealRow[]
   /** The DEALID rows behind the screen rows, by Deal ID — their key is needed to write. */
@@ -63,13 +77,18 @@ export type Loaded = {
   notes: string[]
 }
 
-export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
+export async function loadScreen(mode: Mode = 'manual', signal?: AbortSignal, today: Date = new Date()): Promise<Loaded> {
   try {
+<<<<<<< HEAD
     const [ctx, deals, ruleBt, utilization, regions] = await Promise.all([
+=======
+    const [ctx, deals, ruleBt] = await Promise.all([
+>>>>>>> origin/sp_tsfx
       loadDealContext(signal),
       listDealIds({ ZDEAL_STAT: ELIGIBLE_STATUS }, signal),
       // Every RULE_BT row: a model may carry several, and the join takes any with ZNO_INV = ''.
       fxList('fxModel', {}, { signal }),
+<<<<<<< HEAD
       utilizationGate(signal),
       loadRegions(signal).catch((error: unknown) => {
         if (isAbort(error)) throw error
@@ -78,9 +97,17 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
     ])
     applyMasters(ctx, ruleBt, regions)
     const eligible = eligibleDeals(deals, ctx, ruleBt)
+=======
+    ])
+    applyMasters(ctx, ruleBt)
+    const base = eligibleDeals(deals, ctx, ruleBt)
+    const eligible = mode === 'auto' ? autoCandidates(base, ctx, today) : base
+    const wanted = new Map(eligible.map((d) => [txt(d, 'ZDEAL_ID'), txt(d, 'ZMC_REF')]))
+    const usd = await loadUsdAmounts(wanted, signal)
+>>>>>>> origin/sp_tsfx
     const keys = new Map<string, DealIdRow>()
     for (const d of eligible) keys.set(txt(d, 'ZDEAL_ID'), d)
-    return { rows: eligible.map((d) => toRow(d, ctx)), keys, source: 'sap', notes: [utilization, WAITING_AUTH] }
+    return { rows: eligible.map((d) => toRow(d, ctx, usd.amounts?.get(txt(d, 'ZDEAL_ID')) ?? null)), keys, source: 'sap', notes: [usd.note, WAITING_AUTH] }
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[fx] Deal IDs for invoice marking: ZSGTSFTR_DEALID unavailable', error)
@@ -91,16 +118,16 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   }
 }
 
-export async function utilizationGate(signal?: AbortSignal): Promise<string> {
-  let missing: string[] = [...UTILIZATION_COLUMNS]
-  try {
-    const served = new Set(await fxColumns('tsfvFx', signal))
-    missing = UTILIZATION_COLUMNS.filter((c) => !served.has(c))
-  } catch (error) {
-    if (isAbort(error)) throw error
-  }
-  const fx = missing.length ? `ZSGTSFCDS_FX (middleware "tsfvFx") does not serve ${missing.join(', ')}; ` : ''
-  return `Deal Amt (USD): WAITING FOR API — ${fx}ZSGTSFCDS_OPTION has no middleware resource`
+/**
+ * P_VIEW's date rule: the MC's shipment start is today or earlier (b~zship_start <= sy-datum). It is
+ * today, never the selected range; a deal whose MC has no shipment start is not a candidate.
+ */
+export function autoCandidates(deals: readonly DealIdRow[], ctx: DealContext, today: Date = new Date()): DealIdRow[] {
+  const cutoff = isoFromDate(today) ?? ''
+  return deals.filter((d) => {
+    const start = String(dealJoin(ctx, d).mc?.['ZSHIP_START'] ?? '').slice(0, 10)
+    return !!start && start <= cutoff
+  })
 }
 
 /**
@@ -146,7 +173,7 @@ function applyMasters(ctx: DealContext, ruleBt: readonly FxRow[], regions: reado
   replaceInPlace(MODEL_OPTIONS, helps.models)
 }
 
-export function toRow(d: DealIdRow, ctx: DealContext): DealRow {
+export function toRow(d: DealIdRow, ctx: DealContext, amount: number | null = null): DealRow {
   const { mc, comp } = dealJoin(ctx, d)
   const status = txt(d, 'ZDEAL_STAT')
   const fx1 = ctx.statuses.find((s) => txt(s, 'ZSUB_TYPE') === FORWARD_SUB_TYPE && txt(s, 'ZDEAL_STAT') === status)
@@ -162,8 +189,8 @@ export function toRow(d: DealIdRow, ctx: DealContext): DealRow {
     origin: mc ? txt(mc, 'ZORIGIN') : '',
     model: mc ? txt(mc, 'ZMOD_ID') : '',
     region: comp ? txt(comp, 'ZREG_ID') : '',
-    // UTI_AMT: ZSGTSFCDS_FX / _OPTION not served — WAITING FOR API.
-    amount: null,
+    // UTI_AMT (amount.ts); null while it could not be read.
+    amount,
     shipStart: mc ? dmyFromIso(mc['ZSHIP_START']) : '',
     shipEnd: mc ? dmyFromIso(mc['ZSHIP_END']) : '',
     trader: txt(d, 'ZTRD_CODE'),
@@ -182,7 +209,19 @@ export function toRow(d: DealIdRow, ctx: DealContext): DealRow {
   }
 }
 
-/** Mark for Invoicing: each checked eligible Deal ID to 03. Throws on the first failure, naming what moved. */
-export async function markForInvoicing(deals: readonly DealIdRow[]): Promise<void> {
-  await setDealStatus(deals, MARKED_STATUS)
+/**
+ * 02 -> 03 on ZSGTSFTR_DEALID.ZDEAL_STAT for the given Deal IDs, manual selection and automatic
+ * candidates alike. Each deal is tried; a failure is reported per Deal ID and never undoes the
+ * ones that moved. Marking an already-03 deal again is harmless, so a retry is idempotent.
+ */
+export function markDealsForInvoicing(deals: readonly DealIdRow[], write?: Parameters<typeof setDealStatusEach>[2]): Promise<DealUpdateOutcome> {
+  return setDealStatusEach(deals, MARKED_STATUS, write)
+}
+
+/** One line for the user: how many moved, and which Deal IDs failed and why. */
+export function describeOutcome(outcome: DealUpdateOutcome): string {
+  const done = `${outcome.succeeded.length} deal(s) marked for invoicing`
+  if (!outcome.failed.length) return `Invoice Marking Updated Successfully — ${done}.`
+  const failed = outcome.failed.map((f) => `${f.dealId} (${f.reason})`).join('; ')
+  return `${done}; ${outcome.failed.length} failed and can be retried: ${failed}`
 }

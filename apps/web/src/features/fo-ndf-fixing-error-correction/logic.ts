@@ -2,7 +2,7 @@
  * The page's business rules, lifted out of the legacy script as pure functions so the
  * component only holds state.
  */
-import { money, parseDMY, rate } from './format.ts'
+import { money, oldRateText, parseDMY } from './format.ts'
 import type { NdfRow, Sort } from './types.ts'
 
 function searchableString(r: NdfRow): string {
@@ -28,6 +28,8 @@ export function sortRows(rows: readonly NdfRow[], sort: Sort): NdfRow[] {
   return rows.slice().sort((a, b) => {
     let va: unknown = a[sort.key]
     let vb: unknown = b[sort.key]
+    if (va === null) va = -Infinity
+    if (vb === null) vb = -Infinity
     if (sort.key === 'fixDate') {
       va = parseDMY(String(va))?.getTime() ?? 0
       vb = parseDMY(String(vb))?.getTime() ?? 0
@@ -69,7 +71,7 @@ function csvCell(v: unknown): string {
 export function buildCsv(rows: readonly NdfRow[]): string {
   const lines = [CSV_HEADERS.map(csvCell).join(',')]
   for (const r of rows) {
-    lines.push([r.rfha, r.bukrs, r.company, r.product, r.pair, r.side, r.amt1, r.curr1, r.amt2, r.curr2, r.fixDate, r.fixRef, rate(r.oldRate), r.trader, r.partner, `${r.status} ${r.statusText}`].map(csvCell).join(','))
+    lines.push([r.rfha, r.bukrs, r.company, r.product, r.pair, r.side, r.amt1, r.curr1, r.amt2, r.curr2, r.fixDate, r.fixRef, oldRateText(r.oldRate), r.trader, r.partner, `${r.status} ${r.statusText}`].map(csvCell).join(','))
   }
   return lines.join('\r\n')
 }

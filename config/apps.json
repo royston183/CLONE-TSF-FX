@@ -373,7 +373,7 @@
       "status": "scaffold",
       "services": ["trmfx", "trmmaster", "slctsfbpbank", "companycode", "businesspartner", "middleware"],
       "legacy": "legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html",
-      "note": "Create Spot books through FxTransaction (trmfx). Its drop-downs read SAP (valueHelps.ts): Company Code = A_CompanyCode limited to the TSF entities in ZSGTSFTR_COMP; Transaction Type = TransactionType under 12A/12B; Business Partner = SlcTsfBpBank for the picked company code, named from A_BusinessPartner. The deal rows are still the legacy seed data — no SAP entity serves the FX/DSS deal tables yet."
+      "note": "Create Spot books a standard FxTransaction (12A, the transaction type configured in ZGTCATR_PARAM PARAM3 for ZSGTSFR_SPOT_CREATE, company code derived from ZSGTSFTR_SET_SPT + ZSGTSFTR_COMP), then writes ZSGTSFTR_APP_STR for the new BUKRS+RFHA (TXN_STATUS 03, BLOTTER_DATE today, ZTSF_DEAL_TYPE = DSS type, Deal ID / description / MC ref / sequence copied from the original), then ZSGTSFTR_IN_SPOT (ZSPOT_TXN, ZSPOT_CREATE). The original transaction and ZSGTSFTR_DEALID are never written. A failed APP_STR or IN_SPOT write offers a retry and never books a second deal. The worklist is ZSGTSFTR_IN_SPOT (rows need a DSS type and a non-zero difference). Backend dependencies: middleware resource setSpt (SET_SPT; sign column ZSIGN assumed); ProfitCenter/ContractTime are not on FxTransaction; the transaction group (ZGRP) is not served, so partners come from SlcTsfBpBank for the Spot company; no notification workflow exists yet."
     },
     {
       "code": "ZSGTSFR008",

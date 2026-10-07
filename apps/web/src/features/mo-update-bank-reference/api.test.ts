@@ -1,8 +1,12 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { afterEach, describe, it } from 'node:test'
 import {
   OPTION_VIEW_WAITING,
-  VIEW_REQUIRED_COLUMNS,
+  APP_COLUMNS,
+  BLANK_COLUMNS_NOTE,
+  DISPLAY_COLUMNS,
+  SELECTION_COLUMNS,
+  UNSERVED_COLUMNS,
   alphaOut,
   companiesFromT001,
   companyFilter,
@@ -68,20 +72,14 @@ describe('selection screen', () => {
 })
 
 describe('GET_DATA (ZSGTSFV_FX)', () => {
-  it('names the fields the middleware view does not serve (as registered on 2026-10-05)', () => {
+  it('splits the screen columns into view, TrmFxApp and unserved (view as registered on 2026-10-05)', () => {
     // prettier-ignore
     const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
-    deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS), [
-      'CPAIR',
-      'PRCTR',
-      'TXN_STATUS',
-      'MAT_UNMAT',
-      'ZTSF_DEAL_ID',
-      'ZMC_REF_NO',
-      'ZOLAM_DEAL_NO',
-    ])
-    // Every column GET_DATA itself filters or sorts on is served.
-    deepStrictEqual(missingColumns(served, ['BUKRS', 'DELFZ', 'SAKTIV', 'NORDEXT', 'RFHA']), [])
+    // Everything GET_DATA itself filters or sorts on, and every display column the view carries, is served.
+    deepStrictEqual(missingColumns(served, [...SELECTION_COLUMNS, ...DISPLAY_COLUMNS]), [])
+    deepStrictEqual([...APP_COLUMNS], ['TXN_STATUS', 'ZTSF_DEAL_ID', 'ZMC_REF_NO', 'ZOLAM_DEAL_NO'])
+    deepStrictEqual([...UNSERVED_COLUMNS], ['PRCTR', 'CPAIR', 'MAT_UNMAT'])
+    deepStrictEqual(missingColumns(served, UNSERVED_COLUMNS), [...UNSERVED_COLUMNS])
   })
 
   it('drops SAKTIV 3, keeps rows by External Reference Type, sorts by RFHA', () => {
@@ -130,6 +128,70 @@ describe('GET_DATA (ZSGTSFV_FX)', () => {
       state: 'waiting',
       reason: OPTION_VIEW_WAITING,
     })
+  })
+})
+
+const realFetch = globalThis.fetch
+afterEach(() => {
+  globalThis.fetch = realFetch
+})
+
+describe('loadDeals (ZSGTSFV_FX + TrmFxApp)', () => {
+  const COLUMNS = [...SELECTION_COLUMNS, ...DISPLAY_COLUMNS].map((name) => ({ name }))
+  const second = { ...VIEW_ROW, RFHA: '0000005000001', NORDEXT: 'HSBC1' }
+
+  function stub(columns = COLUMNS): URL[] {
+    const seen: URL[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), 'http://gateway')
+      seen.push(url)
+      const body = url.pathname.includes('/meta/resources/')
+        ? { columns }
+        : url.pathname.includes('/data/tsfvFx')
+          ? { rows: [second, VIEW_ROW] }
+          : {
+              value: [
+                { CompanyCode: 'AE13', FinancialTransaction: '0000005000000', TxnStatus: '07', ZtsfDealID: '7000000001', ZtsfMcRefNo: 'MC1', ZolamDealNo: 'INT9' },
+              ],
+            }
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+    }) as typeof fetch
+    return seen
+  }
+
+  it('fills Deal ID, MC reference, TXN_STATUS and Int Ref from TrmFxApp by company code + transaction; others stay blank', async () => {
+    const seen = stub()
+    const res = await loadDeals({ dealType: 'FX', coFrom: 'AE13', coTo: '', keyDateIso: '2026-10-05', withRef: false })
+    ok(res.state === 'ok')
+    strictEqual(res.value.length, 1) // the view row without NORDEXT; sorted/filtered like GET_DATA
+    const d = res.value[0]!
+    strictEqual(d.RFHA, '5000000')
+    strictEqual(d.TXN_STATUS, '07')
+    strictEqual(d.ZTSF_DEAL_ID, '7000000001')
+    strictEqual(d.ZMC_REF_NO, 'MC1')
+    strictEqual(d.ZOLAM_DEAL_NO, 'INT9')
+    strictEqual(d.PRCTR, '')
+    strictEqual(d.CPAIR, '')
+    strictEqual(res.note, BLANK_COLUMNS_NOTE)
+    const app = seen.find((u) => u.pathname.includes('trmfxapp'))
+    ok(app?.searchParams.get('$filter')?.includes("CompanyCode eq 'AE13' and FinancialTransaction eq '0000005000000'"))
+  })
+
+  it('a deal with no TrmFxApp row has blank application columns', async () => {
+    stub()
+    const res = await loadDeals({ dealType: 'FX', coFrom: 'AE13', coTo: '', keyDateIso: '2026-10-05', withRef: true })
+    ok(res.state === 'ok')
+    strictEqual(res.value.length, 1)
+    strictEqual(res.value[0]?.NORDEXT, 'HSBC1')
+    strictEqual(res.value[0]?.TXN_STATUS, '')
+    strictEqual(res.value[0]?.ZTSF_DEAL_ID, '')
+  })
+
+  it('waits, naming the column, when the view lacks one the selection needs', async () => {
+    stub(COLUMNS.filter((c) => c.name !== 'NORDEXT'))
+    const res = await loadDeals({ dealType: 'FX', coFrom: 'AE13', coTo: '', keyDateIso: '2026-10-05', withRef: true })
+    ok(res.state === 'waiting')
+    ok(res.reason.startsWith('WAITING FOR API') && res.reason.includes('NORDEXT'))
   })
 })
 

@@ -8,6 +8,7 @@ import {
   dealInfoByTransaction,
   loadQueue,
   reverseTxns,
+  statusOf,
   toCorrectionPatch,
   toTxn,
   txnTypeKey,
@@ -98,6 +99,27 @@ describe('toTxn', () => {
     const t = toTxn(sap({ FinancialTransaction: '9' }), deals, EMPTY_NAMES)
     ok(t)
     deepStrictEqual([t.dealId, t.mc, t.companyName, t.prodTypeDesc, t.partnerName], ['', '', '', '', ''])
+  })
+})
+
+describe('statusOf', () => {
+  it('reads TXN_STATUS from APP_STR: 04 is Correction Required, 02/05 Reversed, 06/03/07 Released to MO', () => {
+    strictEqual(statusOf('1', '04'), STATUS.ERRCORR)
+    strictEqual(statusOf('1', '05'), STATUS.REVERSED)
+    strictEqual(statusOf('1', '02'), STATUS.REVERSED)
+    strictEqual(statusOf('1', '06'), STATUS.RESUB)
+    strictEqual(statusOf('1', '03'), STATUS.RESUB)
+    strictEqual(statusOf('1', '07'), STATUS.RESUB)
+  })
+  it('stays Open with no record, a blank status or 01, and SAP reversing always wins', () => {
+    strictEqual(statusOf('1', undefined), STATUS.OPEN)
+    strictEqual(statusOf('1', ''), STATUS.OPEN)
+    strictEqual(statusOf('1', '01'), STATUS.OPEN)
+    strictEqual(statusOf('3', '04'), STATUS.REVERSED)
+  })
+  it('toTxn picks the status up by company code + transaction', () => {
+    const t = toTxn(sap(), new Map(), EMPTY_NAMES, new Map([['SG03::7000000000001', '04']]))
+    strictEqual(t?.status, STATUS.ERRCORR)
   })
 })
 

@@ -1,6 +1,9 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
-import { dealFromRows, inSpotFromRow, invertedDate, isoFromInverted, lookupsFrom, type Masters } from './api.ts'
+import { afterEach, beforeEach, describe, it } from 'node:test'
+import { TXN_WAITING, dealFromRows, inSpotFromRow, invertedDate, isoFromInverted, loadDealTxns, lookupsFrom, txnFromFx, type Masters } from './api.ts'
+import { emptyLookups } from './data.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import type { TrmFxApp } from '../../shared/fx/app-str.ts'
 
 // Row shapes as the SLC middleware served them on 2026-10-01.
 
@@ -106,5 +109,63 @@ describe('TCURR dates', () => {
     strictEqual(invertedDate('2026-10-01'), '79738998') // 99999999 - 20261001
     strictEqual(isoFromInverted('79739069'), '2026-09-30') // 99999999 - 79739069 = 20260930
     strictEqual(isoFromInverted(invertedDate('2026-10-01')), '2026-10-01')
+  })
+})
+
+describe('FETCH_TXN_DATA from TrmFxApp + FxTransaction', () => {
+  const FX: FxTransaction = {
+    CompanyCode: 'IN11', FinancialTransaction: '3000000000004', ProductType: '12B', TransactionType: '619', Partner: '0220136244',
+    ContractDate: '2026-10-01', ValueDate: '2026-12-01', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD',
+    FollowCurrency: 'INR', BuyAmount: 100000, SellAmount: 9600000, SpotRate: 95.5, SwapRate: 0.5, ForwardRate: 96, ActiveStatus: '0',
+  }
+  const APP: TrmFxApp = {
+    CompanyCode: 'IN11', FinancialTransaction: '3000000000004', ZtsfDealID: '7000000024', ZtsfDealType: 'D1', ZtsfMcRefNo: '2000000033', TxnStatus: '03',
+  }
+
+  it('maps the transaction field for field; the sell side is negative; unserved fields stay blank', () => {
+    const l = emptyLookups()
+    l.bps = [{ bp: '0220136244', name: 'MUFG_IN', grp: 'G02' }]
+    l.companies = [{ code: 'IN11', name: 'Olam India', entity: 'OIL' }]
+    const t = txnFromFx({ fx: FX, app: APP }, l)
+    deepStrictEqual(
+      [t.dealId, t.rfha, t.bukrs, t.sfhaart, t.sgsart, t.dealType, t.cpty, t.cptyName, t.entity, t.tradeDate, t.valueDate],
+      ['7000000024', '3000000000004', 'IN11', '619', '12B', 'D1', '0220136244', 'MUFG_IN', 'OIL', '2026-10-01', '2026-12-01'],
+    )
+    deepStrictEqual(
+      [t.bs1, t.curr1, t.amt1, t.bs2, t.curr2, t.amt2, t.ospot, t.oswap, t.rate, t.status, t.mcRef, t.cpair],
+      ['Buy', 'USD', 100000, 'Sell', 'INR', -9600000, 95.5, 0.5, 96, '03', '2000000033', 'USD/INR'],
+    )
+    deepStrictEqual([t.grp, t.ndfRef, t.pc1, t.strike, t.settlfl], ['', '', '', 0, ''])
+  })
+
+  describe('read', () => {
+    const realFetch = globalThis.fetch
+    let urls: string[] = []
+    beforeEach(() => {
+      urls = []
+      globalThis.fetch = (async (input: unknown) => {
+        const url = String(input instanceof Request ? input.url : input)
+        urls.push(url)
+        const value = url.includes('trmfxapp') ? [APP] : url.includes('/fx/') ? [FX, { ...FX, ActiveStatus: '3', FinancialTransaction: '9' }] : []
+        return new Response(JSON.stringify({ value }), { status: 200, headers: { 'content-type': 'application/json' } })
+      }) as typeof fetch
+    })
+    afterEach(() => {
+      globalThis.fetch = realFetch
+    })
+
+    it('asks TrmFxApp for the listed Deal IDs only and skips the network when there are none', async () => {
+      const txns = await loadDealTxns(['7000000024', '7000000023', ''], emptyLookups())
+      deepStrictEqual(txns.map((t) => t.rfha), ['3000000000004'])
+      const q = decodeURIComponent((urls.find((u) => u.includes('trmfxapp')) ?? '').replace(/[+]/g, ' '))
+      strictEqual(q.includes("ZtsfDealID eq '7000000024' or ZtsfDealID eq '7000000023'"), true)
+      urls = []
+      deepStrictEqual(await loadDealTxns([], emptyLookups()), [])
+      strictEqual(urls.length, 0)
+    })
+  })
+
+  it('keeps the option gap in the note shown for a deal without FX transactions', () => {
+    strictEqual(TXN_WAITING.includes('ZSGTSFCDS_OPTION'), true)
   })
 })

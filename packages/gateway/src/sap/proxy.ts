@@ -49,7 +49,7 @@ export async function proxyRequest(
     const headers: Record<string, string> = { accept: accept && /xml/i.test(accept) ? accept : 'application/json' }
     if (service.authHeader) headers['authorization'] = service.authHeader
     if (contentType) headers['content-type'] = contentType
-    if (ifMatch) headers['if-match'] = ifMatch
+    if (ifMatch && WRITE_METHODS.has(method)) headers['if-match'] = ifMatch
     if (needsToken && session.token) headers['x-csrf-token'] = session.token
     const cookie = await cookieHeader(session, url)
     if (cookie) headers['cookie'] = cookie

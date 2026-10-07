@@ -15,14 +15,10 @@
  * deal, so a screen that cannot read IN_SPOT shows nothing rather than invented rows.
  */
 import { txt } from '../../shared/fx/masters.ts'
-import { messageOf } from '../../shared/fx/master-contract.ts'
-import { fxList, fxUpdate, type FxRow } from '../../shared/fx/mw.ts'
-import { changedStamp, dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { fxList, type FxRow } from '../../shared/fx/mw.ts'
+import { dmyFromIso, num } from '../../shared/fx/sap.ts'
 import { DEFAULT_TXN_TYPE } from './data.ts'
 import type { Side, SpotRow } from './types.ts'
-
-/** What Create Spot writes back once SAP has booked the deal. */
-export const SPOT_CREATED_FLAG = 'X'
 
 /** The business-partner column of ZSGTSFV_FX reads "0400000002 - FMC Corporation". */
 export function splitPartner(value: string): { code: string; name: string } {
@@ -96,6 +92,13 @@ async function inChunks(resource: string, column: string, values: readonly strin
   return out
 }
 
+/**
+ * The legacy load condition: a row needs a DSS deal type and a non-zero difference amount. Everything
+ * else in IN_SPOT is not a Spot candidate and is dropped. (The Upto Trade Date is not a database filter
+ * in the legacy SUB_GET_DATA either, so none is applied here.)
+ */
+export const isWorklistRow = (r: FxRow): boolean => !!txt(r, 'ZDSS_TYPE') && num(r['ZD_AMT']) !== 0
+
 export type LoadedSpots = { rows: SpotRow[] }
 
 /** Every IN_SPOT row. The joins are best-effort: a miss leaves their columns blank. */
@@ -107,19 +110,5 @@ export async function loadSpotRows(signal?: AbortSignal): Promise<LoadedSpots> {
     companies: new Map(comp.map((r) => [txt(r, 'ZBUKRS'), txt(r, 'ZBUTXT')])),
     fx: new Map(fxRows.map((r) => [fxKey(txt(r, 'BUKRS'), txt(r, 'RFHA')), r])),
   }
-  return { rows: inSpot.map((r) => toSpotRow(r, ctx)) }
-}
-
-/**
- * After SAP has booked the spot: the new transaction number and the created flag go back on
- * the IN_SPOT row. Returns '' on success, or the reason it failed — by then the deal exists in
- * SAP, so the caller must show the spot number whatever happens here.
- */
-export async function recordSpot(row: SpotRow, transaction: string): Promise<string> {
-  try {
-    await fxUpdate('inSpot', spotKey(row), { ZSPOT_TXN: transaction, ZSPOT_CREATE: SPOT_CREATED_FLAG, ...(await changedStamp()) })
-    return ''
-  } catch (error) {
-    return messageOf(error)
-  }
+  return { rows: inSpot.filter(isWorklistRow).map((r) => toSpotRow(r, ctx)) }
 }

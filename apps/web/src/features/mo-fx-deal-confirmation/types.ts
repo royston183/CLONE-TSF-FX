@@ -1,7 +1,7 @@
 export type DealType = 'FX' | 'Options'
 
 /** The three statuses the page knows, exactly as the SAP status text reads. */
-export type DealStatus = 'FO->MO: Unmatched' | 'MO->FO: Correction Required' | 'Matched & Released'
+export type DealStatus = 'FO->MO: Unmatched' | 'MO->FO: Correction Required' | 'FO: Error Correction - Corrected' | 'Matched & Released'
 
 export type CompanyInfo = { companyName: string; group: string; profitCenter: string; businessArea: string }
 export type Partner = { code: string; name: string }
@@ -32,6 +32,8 @@ export type Deal = {
   valueDate: Date
   allInRate: number
   status: DealStatus
+  /** The workflow state itself: ZSGTSFTR_APP_STR.TXN_STATUS ('03', '04', '06', ...). `status` is only its wording. */
+  txnStatus: string
   traderCode: string
   traderName: string
   traderShort: string
@@ -44,6 +46,14 @@ export type Deal = {
   fixRefId: string
   foRemark: string
   moRemark: string
+  /** True for a deal read from SAP (FxTransaction); the Options rows are dummy data. */
+  live?: boolean
+  /** APP_STR ZTSF_DEAL_TYPE; '00' marks a cancellation deal, which Match & Release writes as 59. */
+  dealTypeCode?: string
+  /** SAP already shows the transaction settled while its workflow status is still open: only the workflow save is owed. */
+  settledInSap?: boolean
+  /** The Deal ID is flagged over its limit (ZSGTSFTR_DEALID-ZOVER_UTL = X). */
+  overUtilised?: boolean
 }
 
 /**
@@ -65,6 +75,8 @@ export type SelectionForm = {
 
 /** What View Deals ran with: the criteria the table is filtered by. */
 export type AppliedSelection = {
+  /** Upto Blotter Date: the worklist holds deals with BLOTTER_DATE up to and including it. */
+  upTo: Date | null
   companyCode: string
   companyCodeTo: string
   trader: string
@@ -104,7 +116,7 @@ export type Sort = { key: SortKey | null; dir: SortDir }
 export type Column =
   | { key: 'select'; label: string; sortable?: undefined; type?: undefined }
   | { key: SortKey; label: string; sortable: true; type?: ColumnType }
-  | { key: Exclude<keyof Deal, 'dealType'>; label: string; sortable?: false; type?: ColumnType }
+  | { key: Exclude<keyof Deal, 'dealType' | 'live'>; label: string; sortable?: false; type?: ColumnType }
 
 /** Checkbox-column drag: the anchor row's state decides whether the sweep selects or clears. */
 export type DragMode = 'select' | 'deselect'
@@ -114,7 +126,7 @@ export type ComboOption = { code: string; display: string; searchText: string; s
 export type SelectOption = { value: string; label: string }
 
 /** The Match & Release / Correction Required info strip and Cover No. */
-export type DealSummary = { dealId: string; partner: string; coverNo: string }
+export type DealSummary = { dealId: string; partner: string; coverNo: string; warning?: string }
 
 export type ToastType = 'success' | 'error'
 export type Toast = { id: number; type: ToastType; title: string; message: string; fading: boolean }

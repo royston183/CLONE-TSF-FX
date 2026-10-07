@@ -166,3 +166,22 @@
 :root[data-theme='dark'] .tfmanage .modal-title {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .tfmanage .modal-close-btn:hover {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tfmanage #screenWorkspace .section-box {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .tfmanage #screenWorkspace .section-head {
+  border-bottom: 1px solid #2d4a6b;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tfmanage #screenWorkspace .field-grid label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tfmanage #screenWorkspace .field-grid select,
+:root[data-theme='dark'] .tfmanage #screenWorkspace .field-grid input:not([type="checkbox"]) {
+  color: #e6eef8;
+}

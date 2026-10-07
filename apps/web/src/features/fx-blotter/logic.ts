@@ -31,8 +31,10 @@ import {
   partnerOf,
   txnTypeOf,
 } from './data.ts'
+import { FX_TXN_STATUS, fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { addDays, fmtDate, fmtNum, parseAmount, parseGridDate, parseUiDate, toISO } from './format.ts'
 import type {
+  AppDataPending,
   AutoLeg,
   AutoLegField,
   AutoSpotForm,
@@ -684,6 +686,26 @@ export function deleteDrafts(b: Blotter, ids: string[]): { blotter: Blotter; del
 
 export const canReverse = (r: BlotterRow | undefined): boolean => r?.status === 'CREATED' || r?.status === 'RELEASED'
 
+/**
+ * Marks rows as owing, or no longer owing, an application-data save (ZSGTSFTR_APP_STR). A row that has saved
+ * takes the TXN_STATUS written for it, so the grid and the stored status agree.
+ */
+export function setAppDataPending(
+  b: Blotter,
+  changes: ReadonlyMap<string, { pending?: AppDataPending; txnStatus?: string }>,
+): Blotter {
+  if (!changes.size) return b
+  return {
+    ...b,
+    rows: b.rows.map((r) => {
+      const c = changes.get(r.id)
+      if (!c) return r
+      const { appDataPending: _owed, ...rest } = r
+      return { ...rest, ...(c.pending ? { appDataPending: c.pending } : {}), ...(c.txnStatus ? { txnStatus: c.txnStatus } : {}) }
+    }),
+  }
+}
+
 /** Reverse: the row turns Reversed and gives back whatever it drew on its Master Contract. */
 export function reverseTxn(b: Blotter, id: string): Blotter {
   const row = b.rows.find((r) => r.id === id)
@@ -728,14 +750,25 @@ export function createDrafts(b: Blotter, ids: string[]): Blotter {
 }
 
 /** SAP's answer to Create for the rows it accepted: they take the real transaction number. */
-export function applyCreated(b: Blotter, created: Map<string, { companyCode: string; transaction: string }>): Blotter {
+export function applyCreated(
+  b: Blotter,
+  created: Map<string, { companyCode: string; transaction: string; appDataPending?: AppDataPending }>,
+): Blotter {
   return {
     ...b,
     rows: b.rows.map((r) => {
       const c = created.get(r.id)
-      return c
-        ? { ...r, status: 'CREATED', transactionNumber: c.transaction, companyCode: c.companyCode, live: true, draftLabel: '' }
-        : r
+      if (!c) return r
+      return {
+        ...r,
+        status: 'CREATED',
+        transactionNumber: c.transaction,
+        companyCode: c.companyCode,
+        live: true,
+        draftLabel: '',
+        // 01 once the application data is saved; until then the row owes that save.
+        ...(c.appDataPending ? { appDataPending: c.appDataPending } : { txnStatus: FX_TXN_STATUS.FO_CREATE }),
+      }
     }),
     checked: b.checked.filter((id) => !created.has(id)),
   }
@@ -770,6 +803,11 @@ export function mergeLiveRows(
     if (reversed.has(key(r)) && r.status !== 'REVERSED') next = { ...next, status: 'REVERSED' as const }
     // A Deal ID created since the row was loaded (by another screen, or just now): SAP's word on it wins.
     const inc = incomingByKey.get(key(r))
+    // The stored TXN_STATUS says how far the deal has got, e.g. released by another user or session since this
+    // row was loaded. It only moves a row forwards (Created -> Released), and not while this session still owes
+    // the save, so a status is never taken back.
+    if (inc?.txnStatus && !r.appDataPending) next = { ...next, txnStatus: inc.txnStatus }
+    if (inc?.status === 'RELEASED' && next.status === 'CREATED' && !r.appDataPending) next = { ...next, status: 'RELEASED' }
     if (inc?.dealId && !r.dealId) next = { ...next, dealId: inc.dealId, mcRef: inc.mcRef, fxModel: inc.fxModel, dealType: inc.dealType }
     return next
   })
@@ -1549,6 +1587,8 @@ export function viewRowPairs(r: BlotterRow, partners: BusinessPartner[]): Array<
     ['NDF Fixing Ref.', r.ndfRef || '–'],
     ['Master Contract', r.mcRef || '–'],
     ['Deal ID / Type', `${r.dealId || '–'} / ${r.dealType || '–'}`],
+    ['SAP Txn Status', r.txnStatus ? `${r.txnStatus} - ${fxTxnStatusLabel(r.txnStatus)}` : '–'],
+    ...(r.appDataPending ? ([['Application Data', 'Not saved yet – saved again on Refresh']] as Array<[string, string]>) : []),
   ]
 }
 

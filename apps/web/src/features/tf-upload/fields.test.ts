@@ -1,6 +1,17 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { TF_FIELD_MAP, buildRowPayload, isCreateRow, lookupCommodity, padKey, toIsoDate } from './fields.ts'
+import {
+  TF_FIELD_MAP,
+  buildRowPayload,
+  datsToIso,
+  isCreateRow,
+  lookupCommodity,
+  padKey,
+  buildBlPayload,
+  createKey,
+  toIsoDate,
+} from './fields.ts'
+import { displayCell } from './display.ts'
 import type { CellValue } from './xlsx.ts'
 
 const BUSINESS_UNITS = [
@@ -174,5 +185,110 @@ describe('TF_FIELD_MAP', () => {
 
   it('uses no field name twice', () => {
     strictEqual(new Set(TF_FIELD_MAP.map((f) => f.field)).size, TF_FIELD_MAP.length)
+  })
+})
+
+describe('SAP DATS dates', () => {
+  it('reads an 8-digit YYYYMMDD, as a number or as text', () => {
+    strictEqual(datsToIso(20241218), '2024-12-18')
+    strictEqual(datsToIso('20241125'), '2024-11-25')
+  })
+
+  it('takes DATS before the Excel serial reading, which would put it in the year 57,000-odd', () => {
+    strictEqual(toIsoDate(20241218), '2024-12-18')
+    strictEqual(toIsoDate(45000), '2023-03-15')
+  })
+
+  it('treats the placeholder an SAP export writes for an empty date as no date', () => {
+    strictEqual(toIsoDate('0001-01-02'), null)
+    strictEqual(toIsoDate('0001-01-01'), null)
+    strictEqual(toIsoDate(10102), '1927-08-28')
+  })
+
+  it('refuses a month or day out of range', () => {
+    strictEqual(datsToIso(20241318), null)
+    strictEqual(datsToIso(20241200), null)
+    strictEqual(datsToIso(2024121), null)
+  })
+
+  it('shows a DATS cell in the preview as DD-MM-YYYY', () => {
+    strictEqual(displayCell(20241218, 0, [{ index: 0, name: 'TF Upload Date', type: 'date' }]), '18-12-2024')
+  })
+})
+
+describe('createKey', () => {
+  it('leaves the Trade Flow ID to the SNRO range and writes split 01, as SAP does', () => {
+    deepStrictEqual(createKey(), { ZtfNo: '', ZtfSplit: '01' })
+  })
+
+  it('treats every blank-ID row as a create of its own, whatever its TF Split ID', () => {
+    // The RICE workbook: 01, 02, 01, 01 with no Trade Flow ID. Four rows, four creates, so
+    // four numbers — none of them shares the number issued to the row above.
+    const rows: CellValue[][] = [['', '01'], ['', '02'], ['', '01'], ['', '01']]
+    deepStrictEqual(rows.map(isCreateRow), [true, true, true, true])
+  })
+})
+
+describe('buildBlPayload', () => {
+  const tradeFlow = {
+    Zbu: 'RICE',
+    ZblVsslName: 'MV SUPRA BARON V.24001',
+    Zsldate: '2024-11-25',
+    Zquantity: 3000,
+    ZbuId: 'B02',
+    Zremark: 'ALLOCATED TO BDB/BCI SOFISA DEAL',
+  }
+
+  it('keys the BL under its trade flow and leaves the BL number to the SNRO range', () => {
+    const bl = buildBlPayload(tradeFlow, '3000000018', '01')
+    strictEqual(bl['ZtfNo'], '3000000018')
+    strictEqual(bl['ZtfSplit'], '01')
+    strictEqual(bl['ZblNo'], '')
+    strictEqual(bl['ZblSplit'], '01')
+    strictEqual(bl['ZblReuse'], '')
+  })
+
+  it('creates the BL in status 01, BL Created', () => {
+    strictEqual(buildBlPayload(tradeFlow, '3000000018', '01')['ZblStatId'], '01')
+  })
+
+  it('dates the BL on the Sailing Date', () => {
+    strictEqual(buildBlPayload(tradeFlow, '3000000018', '01')['ZblDate'], '2024-11-25')
+    strictEqual(buildBlPayload({ ...tradeFlow, Zsldate: '' }, '3000000018', '01')['ZblDate'], undefined)
+  })
+
+  it('carries the trade flow fields the BL repeats', () => {
+    const bl = buildBlPayload(tradeFlow, '3000000018', '01')
+    strictEqual(bl['ZblVsslName'], 'MV SUPRA BARON V.24001')
+    strictEqual(bl['Zquantity'], 3000)
+  })
+
+  it('cuts the columns ZSGTSFTR_BL holds narrower, as a SAP MOVE would', () => {
+    const bl = buildBlPayload({ ...tradeFlow, Zbu: 'X'.repeat(30), Zremark: 'R'.repeat(250) }, '3000000018', '01')
+    strictEqual(String(bl['Zbu']).length, 20)
+    strictEqual(String(bl['Zremark']).length, 80)
+  })
+
+  it('does not change the trade flow payload it was given', () => {
+    const copy = { ...tradeFlow, Zremark: 'R'.repeat(250) }
+    buildBlPayload(copy, '3000000018', '01')
+    strictEqual(copy.Zremark.length, 250)
+  })
+})
+
+describe('TF_FIELD_MAP tail columns', () => {
+  it('puts the last four workbook columns in the ZSGTSFTR_TRDFLOW columns SE11 names for them', () => {
+    // AP Blocked Status Desc, AQ OGBS Status Desc, AR POL Country, AS POD Country.
+    deepStrictEqual(
+      TF_FIELD_MAP.slice(41).map((f) => f.field),
+      ['ZflwStas2', 'ZogbsStatDesc', 'ZpolCtry', 'ZpodCtry'],
+    )
+  })
+
+  it('never sends a workbook cell to a status code column', () => {
+    const fields = TF_FIELD_MAP.map((f) => f.field)
+    strictEqual(fields.includes('ZogbsStatId'), false)
+    strictEqual(fields.includes('ZflwCod1'), false)
+    strictEqual(fields.includes('ZflwCod2'), false)
   })
 })

@@ -122,6 +122,21 @@ describe('gateway proxying', () => {
     strictEqual(post?.headers['x-csrf-token'], 'stub-token')
   })
 
+  it('forwards If-Match on a write, which a RAP service needs to accept a PATCH', async () => {
+    const cookie = await signIn()
+    received = []
+    await fetch(`${origin}/api/dealid/DealId(CompanyCode='SG03',FinancialTransaction='100024')`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, 'if-match': '*' },
+      body: JSON.stringify({ TxnStatus: '03' }),
+    })
+    const patch = received.filter((r) => r.method === 'PATCH').at(-1)
+    strictEqual(patch?.headers['if-match'], '*')
+    received = []
+    await fetch(`${origin}/api/dealid/DealId`, { method: 'GET', headers: { cookie, 'if-match': '*' } })
+    strictEqual(received.filter((r) => r.method === 'GET').at(-1)?.headers['if-match'], undefined)
+  })
+
   it('forwards the query string without re-encoding it', async () => {
     const cookie = await signIn()
     received = []

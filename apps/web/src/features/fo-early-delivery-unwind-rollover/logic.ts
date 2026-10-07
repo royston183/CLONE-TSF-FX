@@ -2,6 +2,7 @@
  * Pure business rules of the Premature Settlement screen, lifted from the legacy script so
  * they can be unit-tested and later wired to a backend. No React, no DOM.
  */
+import { amountOf, followOfPair, recomputeOnRateChange } from './calc.ts'
 import { fmtAmt } from './format.ts'
 import type { BookingForm, Filters, Kpis, Leg, PairForm, Sort, SortField, UnwindForm } from './types.ts'
 
@@ -40,22 +41,11 @@ export const MSG = {
   earlyCancelBeforeNew: 'Cancellation Value Date cannot be earlier than the New Booking Value Date.',
   rollCancelAfterNew: 'Cancellation Value Date cannot be later than the New Booking Value Date.',
   mandatory: 'Please fill all mandatory fields.',
+  amountRequired: 'Enter an amount (or a rate and the other amount) for both transactions.',
   unwindTradeAfterValue: 'Trade date is greater than the Value date.',
   earlyDone: 'Premature Settlement Created Successfully',
   unwindDone: 'Unwinding Succesfully Done..',
   rollDone: 'Rollover transaction created successfully.',
-} as const
-
-/**
- * The three creates have no API yet: each is a chain of BAPI_FTR_FXT_GETDETAIL, two or one
- * BAPI_FTR_FXT_CREATE and a BAPI_FTR_FXT_CHANGE of the original, every step carrying VTBFHA
- * extension fields through ZSGTRMFM_VTBFHA_EXPORT in the same session. FxTransaction's
- * single-deal create cannot carry those, so nothing is posted and nothing is marked done.
- */
-export const ACTION_WAITING = {
-  early: 'WAITING FOR API — Create Early Delivery (FORM create_txn) has no backend action yet. Nothing was posted to SAP.',
-  unwind: 'WAITING FOR API — Create Unwinding Txn (FORM create_unwind) has no backend action yet. Nothing was posted to SAP.',
-  roll: 'WAITING FOR API — Rollover (FORM create_roll_txn) has no backend action yet. Nothing was posted to SAP.',
 } as const
 
 /* ---------------- Load deal ---------------- */
@@ -208,6 +198,67 @@ export function pairCurrencies(l: Leg | null): { newBuy: string; newSell: string
   return { newBuy: side1, newSell: side2, cancelBuy: side2, cancelSell: side1 }
 }
 
+/** The currency codes of the four read-only boxes: the New Booking keeps the original's directions, the Cancellation swaps them. */
+export function legCurrencies(l: Leg | null): { newBuy: string; newSell: string; cancelBuy: string; cancelSell: string } {
+  if (!l) return { newBuy: '', newSell: '', cancelBuy: '', cancelSell: '' }
+  const buy = l.bs1 === 'Buy' ? l.curr1 : l.curr2
+  const sell = l.bs1 === 'Buy' ? l.curr2 : l.curr1
+  return { newBuy: buy, newSell: sell, cancelBuy: sell, cancelSell: buy }
+}
+
+/**
+ * process_data on a user edit of one side of the form. Typing an amount makes it the anchor; changing the
+ * rate recomputes the OTHER amount from the anchor (ON CHANGE OF rate), with the 1000 factor for IDR / KWA / VND.
+ * Nothing else is rewritten, so what the user typed is never overwritten.
+ */
+export function applyBookingEdit(prev: BookingForm, next: BookingForm, buyCcy: string, sellCcy: string, cpair: string): BookingForm {
+  const out: BookingForm = { ...next }
+  if (next.buyAmt !== prev.buyAmt) out.anchor = 'buy'
+  else if (next.sellAmt !== prev.sellAmt) out.anchor = 'sell'
+  if (next.rate === prev.rate) return out
+  const buy = amountOf(out.buyAmt)
+  const sell = amountOf(out.sellAmt)
+  const keep = out.anchor ?? (buy ? 'buy' : sell ? 'sell' : undefined)
+  if (!keep) return out
+  const done = recomputeOnRateChange({ tCurr: buyCcy, tCurr2: sellCcy, amt: buy, amt2: sell, rate: amountOf(out.rate) }, followOfPair(cpair), keep === 'buy' ? 'amt' : 'amt2')
+  if (keep === 'buy') out.sellAmt = done.amt2 ? fmtAmt(done.amt2) : out.sellAmt
+  else out.buyAmt = done.amt ? fmtAmt(done.amt) : out.buyAmt
+  return out
+}
+
+/** The pair form after an edit: each side runs applyBookingEdit with its own currencies. */
+export function applyPairEdit(prev: PairForm, next: PairForm, l: Leg | null): PairForm {
+  if (!l) return next
+  const c = legCurrencies(l)
+  return {
+    ...next,
+    newTxn: applyBookingEdit(prev.newTxn, next.newTxn, c.newBuy, c.newSell, l.cpair),
+    cancel: applyBookingEdit(prev.cancel, next.cancel, c.cancelBuy, c.cancelSell, l.cpair),
+  }
+}
+
+/** Unwinding's single booking is the cancellation side. */
+export function applyUnwindEdit(prev: UnwindForm, next: UnwindForm, l: Leg | null): UnwindForm {
+  if (!l) return next
+  const c = legCurrencies(l)
+  const asBooking = (f: UnwindForm): BookingForm => ({ type: '', tdate: f.tdate, vdate: f.vdate, bp: f.bp, rate: f.rate, buyAmt: f.buyAmt, sellAmt: f.sellAmt, ...(f.anchor ? { anchor: f.anchor } : {}) })
+  const b = applyBookingEdit(asBooking(prev), asBooking(next), c.cancelBuy, c.cancelSell, l.cpair)
+  return { ...next, buyAmt: b.buyAmt, sellAmt: b.sellAmt, ...(b.anchor ? { anchor: b.anchor } : {}) }
+}
+
+/**
+ * The New Booking's INR amount from the invoice plan (fetch_data1): put on the INR side only, and only while the
+ * user has not typed an amount there.
+ */
+export function withInvoiceAmount(form: PairForm, l: Leg, inr: number): PairForm {
+  if (!(inr > 0)) return form
+  const c = legCurrencies(l)
+  const n = { ...form.newTxn }
+  if (c.newBuy === 'INR' && !amountOf(n.buyAmt)) n.buyAmt = fmtAmt(inr)
+  if (c.newSell === 'INR' && !amountOf(n.sellAmt)) n.sellAmt = fmtAmt(inr)
+  return { ...form, newTxn: n }
+}
+
 /* ---------------- Submit validation ---------------- */
 
 type DateCheck = 'cancelNotBeforeNew' | 'cancelNotAfterNew'
@@ -286,7 +337,11 @@ export function unwindEvent(l: Leg, f: UnwindForm): string {
   ])}`
 }
 
-/* ---------------- State after submit ---------------- */
+/*
+ * ---------------- State after submit ----------------
+ * Not used by the screen any more: after a create the grid is read again from the backend (TrmFxApp +
+ * FxTransaction), never rebuilt from local state, so another session sees the same 49 / 61 / flags / new RFHAs.
+ */
 
 const patch = (legs: readonly Leg[], rfha: string, change: Partial<Leg>) =>
   legs.map((l) => (l.rfha === rfha ? { ...l, ...change } : l))

@@ -128,6 +128,7 @@ export function DiffModal({
   spots,
   onSpot,
   onSave,
+  saving = false,
   emptyText,
 }: Base & {
   emptyText: string
@@ -135,6 +136,7 @@ export function DiffModal({
   spots: readonly string[]
   onSpot: (idx: number, value: string) => void
   onSave: () => void
+  saving?: boolean
 }) {
   return (
     <ModalFrame
@@ -147,8 +149,8 @@ export function DiffModal({
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="btn-confirm" type="button" onClick={onSave}>
-            Save Spot Data
+          <button className="btn-confirm" type="button" onClick={onSave} disabled={saving}>
+            {saving ? 'Booking Spot…' : 'Save Spot Data'}
           </button>
         </>
       }

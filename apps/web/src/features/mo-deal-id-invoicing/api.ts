@@ -26,7 +26,10 @@
  *
  * Gated:
  *  - FX Utilization Amt / Current Balance: UTI_AMT and BP D1/D2 come from ZSGTSFCDS_FX_N /
- *    ZSGTSFCDS_OPTION_N, which the middleware does not serve: WAITING FOR API (blank cells).
+ *    ZSGTSFCDS_OPTION_N. The forward legs are read from TrmFxApp (ZtsfDealID + ZtsfDealType D1 / D2) with
+ *    their FxTransaction (dealFx.ts); the utilization is the D1 leg's USD amount (the same rule as Deal
+ *    Amt (USD) on Deal ID Invoice Marking). The header states no further rule, so a deal whose D1 leg
+ *    is an option (ZSGTSFCDS_OPTION_N, not served) or has no USD side stays WAITING FOR API (blank).
  *  - FORM auth_check (AUTHORITY-CHECK K_PCA on the deals' VTBFHA profit centres): WAITING FOR
  *    AUTH; the report only shows an info message, nothing is refused here either.
  *  - The Deal ID hotspot SUBMITs ZSGTSF_RBILL_ADJUST (not in this export). Its popup shows the
@@ -42,14 +45,16 @@ import { dealJoin, FORWARD_SUB_TYPE, listDealIds, loadDealContext, type DealCont
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadRegions, regionLabel, type RegionOption } from '../../shared/fx/regions.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { loadFxLegsByDeal } from './dealFx.ts'
 import { ENTITIES, FX_MODELS, REGIONS, STATUS_META, STATUS_OPTIONS, TRADERS } from './data.ts'
-import type { BillOfLading, Deal, InvoiceLeg } from './types.ts'
+import type { BillOfLading, Deal, FxLeg, InvoiceLeg } from './types.ts'
 
 const STATUS_CLASS: Readonly<Record<string, string>> = { '04': 'st-booked', '05': 'st-confirmed', '07': 'st-partial' }
 
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
 export const PARAM_PROGRAM = 'ZSGTSFVNP_BP_WORKBENCH'
-export const WAITING_UTILIZATION = 'FX Utilization Amt / Current Balance: WAITING FOR API — ZSGTSFCDS_FX_N / ZSGTSFCDS_OPTION_N have no middleware resource'
+export const WAITING_UTILIZATION = 'FX Utilization Amt / Current Balance: from the D1 forward leg (ZSGTSFTR_APP_STR + FxTransaction); WAITING FOR API where the D1 leg is an option (ZSGTSFCDS_OPTION_N, not served), has no USD side or is not linked'
+export const WAITING_UTILIZATION_READ = 'FX Utilization Amt / Current Balance: WAITING FOR API — ZSGTSFTR_APP_STR (trmfxapp) or FxTransaction (fx) could not be read'
 export const WAITING_AUTH = 'WAITING FOR AUTH — AUTHORITY-CHECK K_PCA on the deals’ profit centres has no browser source; nothing is refused'
 
 export type DataSource = 'sap' | 'unavailable'
@@ -117,6 +122,15 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
     const comodit = new Map(commodities.map((r) => [txt(r, 'ZCOM_ID'), r]))
     const joined = deals.filter((d) => joins(d, ctx, comodit))
     const ids = joined.map((d) => txt(d, 'ZDEAL_ID'))
+    let legs = new Map<string, FxLeg[]>()
+    let utilizationNote = WAITING_UTILIZATION
+    try {
+      legs = await loadFxLegsByDeal(signal)
+    } catch (error) {
+      if (isAbort(error)) throw error
+      console.warn('[fx] Deal IDs for invoicing: APP_STR / FxTransaction unavailable for FX Utilization Amt', error)
+      utilizationNote = WAITING_UTILIZATION_READ
+    }
     const [plans, invoices, bls, blStatuses] = await Promise.all([
       inChunks('invRef', 'ZDEAL_ID', ids, signal),
       inChunks('billAdjustment', 'ZDEAL_ID', ids, signal),
@@ -127,9 +141,9 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
     for (const d of joined) {
       const t1 = invoices.filter((r) => txt(r, 'ZDEAL_ID') === txt(d, 'ZDEAL_ID') && isT1(r))
       if (!dealListed(txt(d, 'ZDEAL_STAT'), t1, th)) continue
-      out.push(toDeal(d, ctx, comodit, { plans, invoices, bls, blStatuses }))
+      out.push(toDeal(d, ctx, comodit, { plans, invoices, bls, blStatuses, legs }))
     }
-    return { deals: out, source: 'sap', notes: [WAITING_UTILIZATION, WAITING_AUTH] }
+    return { deals: out, source: 'sap', notes: [utilizationNote, WAITING_AUTH] }
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[fx] Deal IDs for invoicing: ZSGTSFTR_DEALID unavailable', error)
@@ -210,7 +224,7 @@ function applyMasters(ctx: DealContext, traders: readonly FxRow[], th: Threshold
   STATUS_OPTIONS.push(...statusHelp(ctx.statuses, th))
 }
 
-type Related = { plans: readonly FxRow[]; invoices: readonly FxRow[]; bls: readonly FxRow[]; blStatuses: readonly FxRow[] }
+type Related = { plans: readonly FxRow[]; invoices: readonly FxRow[]; bls: readonly FxRow[]; blStatuses: readonly FxRow[]; legs?: ReadonlyMap<string, readonly FxLeg[]> }
 
 export function toDeal(d: DealIdRow, ctx: DealContext, comodit: ReadonlyMap<string, FxRow>, rel: Related): Deal {
   const { mc, comp } = dealJoin(ctx, d)
@@ -243,8 +257,8 @@ export function toDeal(d: DealIdRow, ctx: DealContext, comodit: ReadonlyMap<stri
     region: comp ? txt(comp, 'ZREG_ID') : '',
     // b~zamt.
     mcAmtUsd: mc ? num(mc['ZAMT']) : 0,
-    // ZSGTSFCDS_FX_N / _OPTION_N are not served: WAITING FOR API.
-    fx: [],
+    // ZSGTSFCDS_FX_N: the D1 / D2 forward legs (dealFx.ts); _OPTION_N is not served.
+    fx: [...(rel.legs?.get(dealId) ?? [])],
     totInvUsd: totalInvoicedT1(t1),
     inv: invoiceLegs(dealId, rel),
     bls: rel.bls.filter((b) => txt(b, 'ZDEAL_ID') === dealId).map((b) => toBl(b, rel.blStatuses)),

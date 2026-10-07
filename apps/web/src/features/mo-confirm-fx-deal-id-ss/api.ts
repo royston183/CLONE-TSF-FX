@@ -13,9 +13,11 @@
  * Reverse authorisation: TVARVC NAME = 'ZSGTSF_UNWIND', SIGN 'I', OPTI 'EQ', LOW = SY-UNAME
  *   -> "tvarvc".
  * FX legs (FORM deal_id_alv): ZSGTSFCDS_FX + ZSGTSFCDS_OPTION WHERE ztsf_deal_id = deal, plus
- *   VTBFHA-ZTSF_EX_OPT_NO -> WAITING FOR API: "tsfvFx" (ZSGTSFV_FX) lacks the deal-id, status,
- *   deal-type and P&L columns, and neither the option view nor VTBFHA is served. Planned P&L
- *   and Premium Adjustments are built from those legs, so they wait with them.
+ *   VTBFHA-ZTSF_EX_OPT_NO -> the forward / swap legs are TrmFxApp rows (ZSGTSFTR_APP_STR) WHERE
+ *   ZtsfDealID = deal, each with its FxTransaction (shared/fx/app-str.ts): Deal type (D1..), MC ref
+ *   and TXN_STATUS from the APP_STR row, partner / dates / amounts / rate from SAP. Still
+ *   WAITING FOR API: the option legs (ZSGTSFCDS_OPTION: strike, premium), the partner name, and the
+ *   legs' P&L. Planned P&L and Premium Adjustments are built from those, so they wait with them.
  * Invoice plan (FORM invoice_plan): ZSGTSFTR_ENT_STR / _CUR_STR / _RULE_BT links, amounts from
  *   ZSGTSFTR_INV_REF ("invRef"), then FORM profit_margin_check (ZSGTSFTR_ORG_PRO "orgPro").
  *   Wherever the ABAP would compute from the legs instead (Short Straddle, no INV_REF row,
@@ -30,7 +32,9 @@ import { setDealStatus } from '../../shared/fx/deal-id.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num, sapUser } from '../../shared/fx/sap.ts'
-import type { Deal, DealDb, Invoice } from './types.ts'
+import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { leg } from './data.ts'
+import type { Deal, DealDb, Invoice, Leg } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_ACTION = 'WAITING FOR ACTION API'
@@ -39,13 +43,6 @@ const NOT_POSTED = 'Nothing was posted to SAP.'
 
 /** ZSGTSFV_FX, the SQL view of ZSGTSFCDS_FX. */
 export const FX_VIEW = 'tsfvFx'
-
-/** The ZSGTSFCDS_FX columns FORM deal_id_alv selects (and filters on: ZTSF_DEAL_ID). */
-export const FX_LEG_COLUMNS = [
-  'BUKRS', 'RFHA', 'SFHAART', 'BP_NAME', 'KONTRH', 'DBLFZ', 'DELFZ', 'XTEXT', 'ZCOM_ID', 'BS_1', 'BS_2',
-  'CURR1', 'CURR2', 'F_CURR1', 'T_CURR1', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP', 'OTOT_RATE', 'ZTSF_MC_REF_NO',
-  'TXN_STATUS', 'ZCASH_AMT', 'ZTSF_DEAL_TYPE', 'ZTSF_DEAL_SQ', 'ZTSF_DEAL_ID',
-] as const
 
 /** The ZSGTSFV_FX columns MODULE f4_rfha_help selects and filters on (New Transaction F4). */
 export const FX_F4_COLUMNS = [
@@ -56,17 +53,64 @@ export const FX_F4_COLUMNS = [
 export const missingColumns = (have: readonly string[], need: readonly string[]): string[] =>
   need.filter((c) => !have.includes(c))
 
-/** Why the FX Deals grid is empty. ZSGTSFCDS_OPTION and VTBFHA have no middleware resource at all. */
-export function legsWaitingReason(fxCols: readonly string[] | null): string {
-  const fx =
-    fxCols === null
-      ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") could not be read`
-      : (() => {
-          const missing = missingColumns(fxCols, FX_LEG_COLUMNS)
-          return missing.length ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}` : ''
-        })()
-  const rest = 'ZSGTSFCDS_OPTION and VTBFHA (ZTSF_EX_OPT_NO) are not served by the middleware'
-  return `${WAITING} — ${fx ? `${fx}; ` : ''}${rest}.`
+/** Why the FX Deals grid is empty: nothing carries the Deal ID, or the legs could not be read. */
+export function legsWaitingReason(subType: string, readError: string | null): string {
+  if (readError !== null) return `${WAITING} — the FX legs (ZSGTSFTR_APP_STR / FxTransaction) could not be read: ${readError}`
+  const option = subType === 'FX2' ? ' Its option legs (ZSGTSFCDS_OPTION) are not served.' : ''
+  return `No FX transaction in ZSGTSFTR_APP_STR carries this Deal ID.${option}`
+}
+
+/** What is still missing on a grid that does show legs (option legs, strike, premium, P&L). */
+export const LEGS_PARTIAL_NOTE =
+  `${WAITING} — option legs (ZSGTSFCDS_OPTION: strike, premium), the partner name and the legs' P&L are not served; the P&L columns show —.`
+
+/** Deal IDs carried by TrmFxApp rows (ZSGTSFCDS_FX-ZTSF_DEAL_ID); '' is not a Deal ID. */
+export const LEG_APP_FILTER = "ZtsfDealID ne ''"
+
+const day = (v: string | null | undefined): string => (v ? dmyFromIso(v) : '')
+
+/** One FX Deals row (gt_top) from a TrmFxApp row and its FxTransaction; amounts are signed, a sold currency negative. */
+export function toLeg({ fx, app }: FxWithApp): Leg {
+  const lead = fx.LeadCurrency || fx.BuyCurrency || ''
+  const follow = fx.FollowCurrency || fx.SellCurrency || ''
+  const buysLead = fx.BuyCurrency === lead
+  const leadAmt = num(buysLead ? fx.BuyAmount : fx.SellAmount)
+  const followAmt = num(buysLead ? fx.SellAmount : fx.BuyAmount)
+  return leg({
+    bukrs: fx.CompanyCode,
+    rfha: fx.FinancialTransaction,
+    dealType: app.ZtsfDealType ?? '',
+    bpName: fx.Partner,
+    instrument: fx.TransactionType,
+    tradeDate: day(fx.ContractDate),
+    valueDate: day(fx.ValueDate),
+    bs1: buysLead ? 'Buy' : 'Sell',
+    curr1: lead,
+    amt1: buysLead ? leadAmt : -leadAmt,
+    bs2: buysLead ? 'Sell' : 'Buy',
+    curr2: follow,
+    amt2: buysLead ? -followAmt : followAmt,
+    allInRate: num(fx.ForwardRate),
+    strike: 0,
+    mcRef: app.ZtsfMcRefNo ?? '',
+    txnStatus: app.TxnStatus ?? '',
+    fxPl: 0,
+    setPl: 0,
+    premAmt: 0,
+    premCurr: '',
+    pInr: 0,
+  })
+}
+
+/** The legs by Deal ID, in transaction order. A reversed transaction (ActiveStatus 3) is not a leg. */
+export function legsByDeal(rows: readonly FxWithApp[]): Map<string, Leg[]> {
+  const out = new Map<string, Leg[]>()
+  for (const r of rows) {
+    const id = r.app.ZtsfDealID ?? ''
+    if (!id || r.fx.ActiveStatus === '3') continue
+    out.set(id, [...(out.get(id) ?? []), toLeg(r)])
+  }
+  return out
 }
 
 /** Why the New Transaction F4 on Edit Deal Pair has no candidates. */
@@ -77,10 +121,10 @@ export function replacementsWaitingReason(fxCols: readonly string[] | null): str
 }
 
 export const PL_WAITING =
-  `${WAITING} — the Planned P&L (FORM alv_data_3) is built from the FX deal legs (ZSGTSFCDS_FX / ZSGTSFCDS_OPTION), which are not served.`
+  `${WAITING} — the Planned P&L (FORM alv_data_3) also needs the option legs (ZSGTSFCDS_OPTION) and the settlement / exchange-rate figures, which are not served.`
 
 export const PREMIUM_WAITING =
-  `${WAITING} — Premium Adjustments come from class ZSGTSFCL_GET_PRE_ADJUSTMENT->GET_DATA (not in the export) and the FX deal legs; neither has an API yet.`
+  `${WAITING} — Premium Adjustments come from class ZSGTSFCL_GET_PRE_ADJUSTMENT->GET_DATA (not in the export) and the option legs (ZSGTSFCDS_OPTION); neither has an API yet.`
 
 export const CONFIRM_WAITING =
   `${WAITING_ACTION} — Change / Confirm (MODIFY ZSGTSFTR_INV_REF and UPDATE ZSGTSFTR_DEALID to 02 with the P&L, ` +
@@ -166,7 +210,7 @@ export function planInvoices(p: PlanInput): Plan {
 
   const legsNeeded = (why: string): Plan => ({
     invoices: [],
-    waiting: `${WAITING} — ${why} needs the FX deal legs (ZSGTSFCDS_FX / ZSGTSFCDS_OPTION), which are not served.`,
+    waiting: `${WAITING} — ${why} needs the option legs (ZSGTSFCDS_OPTION) and the ABAP's amount computation (FORM new_inv_value), which are not served.`,
   })
 
   const modelRules = p.rules.filter((r) => txt(r, 'ZMOD_ID') === p.modelId)
@@ -265,6 +309,10 @@ export type Masters = {
   user: string
   /** ZSGTSFV_FX's columns, or null when its meta could not be read. */
   fxColumns: readonly string[] | null
+  /** The FX legs by Deal ID (TrmFxApp + FxTransaction). */
+  legs: ReadonlyMap<string, readonly Leg[]>
+  /** Why the legs could not be read; null when they were. */
+  legsError: string | null
 }
 
 const first = (rows: readonly FxRow[], column: string, value: string): FxRow | undefined =>
@@ -335,8 +383,8 @@ export function toDeal(row: FxRow, m: Masters): Deal {
     noInvoiceModel: flags ? txt(flags, 'ZNO_INV') !== '' : false,
     isSS,
     reversalAuthorized: unwindAuthorized(m.unwind, m.user),
-    legs: [],
-    legsWaiting: legsWaitingReason(m.fxColumns),
+    legs: [...(m.legs.get(dealId) ?? [])],
+    legsWaiting: legsWaitingReason(txt(row, 'ZSUB_TYPE'), m.legsError),
     invoices: plan.invoices,
     invoicesWaiting: plan.waiting,
   }
@@ -369,6 +417,14 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
         return null
       }),
     ])
+    let legs: ReadonlyMap<string, readonly Leg[]> = new Map()
+    let legsError: string | null = null
+    try {
+      legs = legsByDeal(await loadFxWithApp(LEG_APP_FILTER, signal))
+    } catch (error) {
+      if (isAbort(error)) throw error
+      legsError = messageOf(error)
+    }
     const m: Masters = {
       mcs,
       rules,
@@ -381,6 +437,8 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
       unwind,
       user,
       fxColumns: fxCols,
+      legs,
+      legsError,
     }
     const deals: DealDb = {}
     for (const r of rows) {

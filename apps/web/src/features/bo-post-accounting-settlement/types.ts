@@ -64,7 +64,7 @@ export type Deal = {
   /** ZDEAL_STAT as stored ('02', '20', …) and its ZSGTSFTR_DEAL_ST text. */
   statusCode: string
   statusText: string
-  /** Why the FX Deal / Trade Invoice grids are empty (WAITING FOR API); absent in fixtures. */
+  /** What the FX Deal grid still lacks, or why it is empty (WAITING FOR API); absent in fixtures. */
   fxWaiting?: string
   invWaiting?: string
   top: FxLeg[]

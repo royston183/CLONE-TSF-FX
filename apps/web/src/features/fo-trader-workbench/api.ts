@@ -13,27 +13,34 @@
  *   Straddle spot    ZSGTSFTR_SS_SPOT;   settlement data: ZSGTSFTR_IN_SPOT
  *   Rates            TCURR kurst M / RBI (GDATU inverted), TCURF kurst MTM
  *
- *   Transactions     ZSGTSFCDS_FX / ZSGTSFCDS_OPTION WHERE ztsf_deal_id = …  -> WAITING FOR API
+ *   Transactions     ZSGTSFCDS_FX WHERE ztsf_deal_id = …: TrmFxApp (ZSGTSFTR_APP_STR, ZtsfDealID) joined with SAP's
+ *                    FxTransaction on CompanyCode + FinancialTransaction (shared/fx/app-str.ts).
+ *                    ZSGTSFCDS_OPTION: no service -> WAITING FOR API (option transactions are not listed).
  */
-import { apiFetch, service } from '@slc/api-client'
+import { apiFetch, odataString, service } from '@slc/api-client'
+import { FX_TXN_STATUS_LABEL } from '../../shared/fx/txn-status.ts'
+import { loadFxFor, joinFxWithApp, listTrmFxApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
-import { emptyLookups } from './data.ts'
+import { emptyLookups, mkTxn } from './data.ts'
 import { leadCurr } from './logic.ts'
-import type { AppData, Deal, InSpot, Lookups } from './types.ts'
+import type { AppData, Deal, InSpot, Lookups, Txn } from './types.ts'
 
 const middleware = service('middleware')
 
 export const WAITING = 'WAITING FOR API'
 
 /**
- * FETCH_TXN_DATA reads ZSGTSFCDS_FX and ZSGTSFCDS_OPTION by ZTSF_DEAL_ID. No service serves
- * that: the middleware's ZSGTSFV_FX has no ZTSF_DEAL_ID (and no option view at all), and
- * FxTransaction exposes no Deal ID, deal type, txn status, group, NDF or option fields.
+ * Shown in a deal's Transactions and Action Items when it lists nothing. FETCH_TXN_DATA reads ZSGTSFCDS_FX
+ * (served here by TrmFxApp + FxTransaction) and ZSGTSFCDS_OPTION, which no service exposes, so a deal's
+ * option transactions can never be listed yet.
  */
 export const TXN_WAITING =
-  'WAITING FOR API — the deal’s transactions come from ZSGTSFCDS_FX / ZSGTSFCDS_OPTION by ZTSF_DEAL_ID, which no service exposes yet.'
+  'No FX transactions are linked to this deal in TrmFxApp. WAITING FOR API for its option transactions — ZSGTSFCDS_OPTION is not exposed by any service.'
+
+/** The FX transactions could not be read at all (not the same as "none linked"). */
+export const TXN_FAILED = 'The deal’s FX transactions could not be read from TrmFxApp / FxTransaction.'
 
 /** The deal list's sub type for the status texts (… AND d~zsub_type = 'FX1'). */
 const FX1 = 'FX1'
@@ -169,6 +176,66 @@ export function lookupsFrom(m: Masters): Lookups {
   return l
 }
 
+/** One FxTransaction + its TrmFxApp row as a transaction of the workbench (a ZSGTSFCDS_FX row). */
+export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups()): Txn {
+  const lead = fx.LeadCurrency || fx.BuyCurrency || ''
+  const follow = fx.FollowCurrency || fx.SellCurrency || ''
+  const buysLead = fx.BuyCurrency === lead
+  const buyAmt = Math.abs(num(fx.BuyAmount))
+  // ZSGTSFCDS_FX signs the sell side negative.
+  const sellAmt = -Math.abs(num(fx.SellAmount))
+  const partner = fx.Partner ?? ''
+  const status = app.TxnStatus ?? ''
+  return mkTxn(app.ZtsfDealID ?? '', fx.FinancialTransaction, {
+    bukrs: fx.CompanyCode,
+    sfhaart: fx.TransactionType,
+    sgsart: fx.ProductType ?? '',
+    dealType: app.ZtsfDealType ?? '',
+    cpty: partner,
+    // BP short name from ZSGTRMTR_BPEXT where the partner is one of the listed banks; else the number.
+    cptyName: lookups.bps.find((b) => b.bp === partner)?.name || partner,
+    entity: lookups.companies.find((c) => c.code === fx.CompanyCode)?.entity ?? '',
+    tradeDate: (fx.ContractDate ?? '').slice(0, 10),
+    valueDate: (fx.ValueDate ?? '').slice(0, 10),
+    xtext: lookups.txnTypes[fx.TransactionType] ?? '',
+    bs1: buysLead ? 'Buy' : 'Sell',
+    curr1: lead,
+    amt1: buysLead ? buyAmt : sellAmt,
+    bs2: buysLead ? 'Sell' : 'Buy',
+    curr2: follow,
+    amt2: buysLead ? sellAmt : buyAmt,
+    ospot: num(fx.SpotRate),
+    oswap: num(fx.SwapRate),
+    rate: num(fx.ForwardRate),
+    status,
+    mcRef: app.ZtsfMcRefNo ?? '',
+    cpair: lead && follow ? `${lead}/${follow}` : '',
+    portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
+    seq: Number(app.ZtsfDealSq) || 1,
+  })
+}
+
+/** Deal IDs per request: `ZtsfDealID eq 'a' or ZtsfDealID eq 'b' …`. */
+const DEAL_CHUNK = 25
+
+/**
+ * FETCH_TXN_DATA for every listed deal: TrmFxApp rows whose ZtsfDealID is one of them, with their
+ * FxTransaction. Reversed deals (saktiv 3) are left out, as the CDS view's selection does.
+ */
+export async function loadDealTxns(dealIds: readonly string[], lookups: Lookups, signal?: AbortSignal): Promise<Txn[]> {
+  const ids = [...new Set(dealIds.filter(Boolean))]
+  const pages = await Promise.all(
+    Array.from({ length: Math.ceil(ids.length / DEAL_CHUNK) }, (_, i) =>
+      listTrmFxApp(ids.slice(i * DEAL_CHUNK, (i + 1) * DEAL_CHUNK).map((d) => `ZtsfDealID eq ${odataString(d)}`).join(' or '), signal),
+    ),
+  )
+  const apps = pages.flat()
+  if (!apps.length) return []
+  return joinFxWithApp(apps, await loadFxFor(apps, signal))
+    .filter(({ fx }) => fx.ActiveStatus !== '3')
+    .map((r) => txnFromFx(r, lookups))
+}
+
 /* ---------------- reads ---------------- */
 
 /** TCURR kurst M for a pair: the latest row dated on or before `iso` (one row). */
@@ -196,6 +263,8 @@ export async function loadWorkbench(today: string, signal?: AbortSignal): Promis
     fxList('tcurf', { KURST: 'MTM' }, o),
   ])
   const lookups = lookupsFrom({ comp, models, statuses, bpGrp, bpext, trdwai, ssSpot, tcurf })
+  // txn_status texts: ZSGTSFTR_TXNSTAT (ZTYPE 01), as the shared status table names them.
+  for (const [code, desc] of Object.entries(FX_TXN_STATUS_LABEL)) lookups.txnStatus[code] = { desc, cls: 'status-text-draft' }
 
   const mcByRef = new Map(mcs.map((r) => [txt(r, 'ZMC_REF_NO'), r]))
   const list = deals.map((d) => dealFromRows(d, mcByRef.get(txt(d, 'ZMC_REF'))))
@@ -218,5 +287,16 @@ export async function loadWorkbench(today: string, signal?: AbortSignal): Promis
     }),
   )
 
-  return { data: { deals: list, txns: [], inSpot, nextRfha: 0 }, lookups, txnWaiting: TXN_WAITING }
+  // A failed read must not look like "no transactions linked": it says so, and the deal list still loads.
+  let txns: Txn[] = []
+  let txnWaiting = TXN_WAITING
+  try {
+    txns = await loadDealTxns(ids, lookups, signal)
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[trader-workbench] TrmFxApp / FxTransaction unavailable', error)
+    txnWaiting = TXN_FAILED
+  }
+
+  return { data: { deals: list, txns, inSpot, nextRfha: 0 }, lookups, txnWaiting }
 }

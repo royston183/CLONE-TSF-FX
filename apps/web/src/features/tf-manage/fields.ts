@@ -16,6 +16,8 @@ export type FieldDescriptor = {
   type: 'text' | 'date' | 'number'
   control?: 'input' | 'select'
   readOnly?: boolean
+  /** Shows a looked-up value rather than a column (see FieldGrid's `derivedValue`). */
+  derived?: boolean
 }
 
 /**
@@ -36,11 +38,12 @@ export const BASIC_SECTIONS: readonly Section[] = [
     grid: 'grid6',
     fields: [
       { id: 'bdBu', label: 'BU', field: 'Zbu', type: 'text', readOnly: true },
-      { id: 'bdBuCode', label: 'BU Code', type: 'text', readOnly: true },
+      { id: 'bdBuCode', label: 'BU Code', field: 'ZbuId', type: 'text', readOnly: true },
       { id: 'bdGtCommod', label: 'GT Commodity', field: 'Zcmmd', type: 'text', control: 'select' },
-      { id: 'bdBuCommodity', label: 'BU Commodity', type: 'text', readOnly: true },
-      { id: 'bdChild1', label: 'Child Comm: Name 1', type: 'text' },
-      { id: 'bdChild2', label: 'Child Comm: Name 2', type: 'text' },
+      // Not a column: the commodity master's description, looked up (see masters.buCommodity).
+      { id: 'bdBuCommodity', label: 'BU Commodity', type: 'text', readOnly: true, derived: true },
+      { id: 'bdChild1', label: 'Child Comm: Name 1', field: 'ZchName1', type: 'text' },
+      { id: 'bdChild2', label: 'Child Comm: Name 2', field: 'ZchName2', type: 'text' },
     ],
   },
   {
@@ -48,17 +51,18 @@ export const BASIC_SECTIONS: readonly Section[] = [
     grid: 'grid5',
     fields: [
       { id: 'idQty', label: 'Qty (MT)', field: 'Zquantity', type: 'number', readOnly: true },
-      { id: 'idContractPrice', label: 'Contract Price', field: 'Zcprice', type: 'number' },
-      { id: 'idCmp', label: 'Current Market Price(MT)', field: 'Zunit', type: 'number' },
-      { id: 'idContractAmt', label: 'Contract Amount', field: 'Zttv', type: 'number', readOnly: true },
-      { id: 'idCpmtAmt', label: 'CPMT Amount', type: 'number', readOnly: true },
+      // ZUNIT is SE11's "Contract Price", ZCPRICE the current market price (see TF_FIELD_MAP).
+      { id: 'idContractPrice', label: 'Contract Price (USD)', field: 'Zunit', type: 'number' },
+      { id: 'idCmp', label: 'Current Market Price(MT)', field: 'Zcprice', type: 'number' },
+      { id: 'idContractAmt', label: 'Contract Amount (USD)', field: 'Zttv', type: 'number', readOnly: true },
+      { id: 'idCpmtAmt', label: 'CPMT Amount (USD)', field: 'ZcpmAmt', type: 'number', readOnly: true },
     ],
   },
   {
     heading: 'Other Data',
     grid: 'grid5',
     fields: [
-      { id: 'odTfType', label: 'TF Type', type: 'text', control: 'select' },
+      { id: 'odTfType', label: 'TF Type', field: 'ZtfType', type: 'text', control: 'select' },
       { id: 'odBuContact', label: 'BU Contact Person', type: 'text', readOnly: true },
     ],
   },
@@ -145,38 +149,44 @@ export const STATUS_SECTIONS: readonly Section[] = [
         type: 'text',
         control: 'select',
       },
-      { id: 'stOgbsRemarks', label: 'OGBS Remarks', type: 'text' },
+      // ZREMARK is the OGBS remark: the upload fills it from the workbook's "OGBS Remark" column.
+      { id: 'stOgbsRemarks', label: 'OGBS Remarks', field: 'Zremark', type: 'text' },
     ],
   },
   {
     heading: 'Blocked-Allocated Status',
     grid: 'grid5',
     fields: [
-      { id: 'stBlockedStatus', label: 'Blocked Status', type: 'text', control: 'select' },
-      { id: 'stBlockedAmount', label: 'Amount', type: 'number' },
-      { id: 'stBlockedFrom', label: 'Blocked From', type: 'date' },
-      { id: 'stBlockedTo', label: 'Blocked To', type: 'date' },
-      { id: 'stBlockedRemarks', label: 'Blocked Remarks', type: 'text' },
-      { id: 'stTrader', label: 'Trader', type: 'text' },
-      { id: 'stCpmtAmount', label: 'CPMT Amount', type: 'number', readOnly: true },
-      { id: 'stDealId', label: 'Deal ID', type: 'text', readOnly: true },
-      { id: 'stOttkNo', label: 'OTTK No', type: 'text' },
-      { id: 'stDttkNo', label: 'DTTK No', type: 'text' },
+      // SE11: ZFLW_COD2 "Blocked Status" (ZSGTSFTR_TF_STAT type 02: 11, 12, 14), its text in
+      // ZFLW_STAS2 "Blocked Status Desc", written with the code on save.
+      { id: 'stBlockedStatus', label: 'Blocked Status', field: 'ZflwCod2', type: 'text', control: 'select' },
+      { id: 'stBlockedAmount', label: 'Amount', field: 'Zamt', type: 'number' },
+      { id: 'stBlockedFrom', label: 'Blocked From', field: 'ZblkFrom', type: 'date' },
+      { id: 'stBlockedTo', label: 'Blocked To', field: 'ZblkTo', type: 'date' },
+      { id: 'stBlockedRemarks', label: 'Blocked Remarks', field: 'ZblkRemark', type: 'text' },
+      // SE11 lists ZFO_TRADER ("Trader") among the blocking columns; ZTRADER is another field.
+      { id: 'stTrader', label: 'Trader', field: 'ZfoTrader', type: 'text' },
+      { id: 'stCpmtAmount', label: 'CPMT Amount', field: 'ZcpmAmt', type: 'number', readOnly: true },
+      { id: 'stDealId', label: 'Deal ID', field: 'ZdealId', type: 'text', control: 'select' },
+      { id: 'stOttkNo', label: 'OTTK No', field: 'ZottkNo', type: 'text', control: 'select' },
+      { id: 'stDttkNo', label: 'DTTK No', field: 'ZdttkNo', type: 'text', control: 'select' },
     ],
   },
   {
     heading: 'TF Status Details',
     grid: 'grid5',
     fields: [
-      { id: 'stTfStatus', label: 'TF Status', field: 'ZflwSts', type: 'text', control: 'select' },
-      { id: 'stTfExpired', label: 'Tradeflow Expired', type: 'text' },
-      { id: 'stTfDeleted', label: 'Tradeflow Deleted', type: 'text' },
-      { id: 'stCreatedBy', label: 'Created By', type: 'text', readOnly: true },
-      { id: 'stCreatedDate', label: 'Created Date', type: 'date', readOnly: true },
-      { id: 'stCreatedTime', label: 'Created Time', type: 'text', readOnly: true },
-      { id: 'stChangedBy', label: 'Changed By', type: 'text', readOnly: true },
-      { id: 'stChangedDate', label: 'Changed Date', type: 'date', readOnly: true },
-      { id: 'stChangedTime', label: 'Changed Time', type: 'text', readOnly: true },
+      // SE11: ZFLW_COD1 "TF Status" (ZSGTSFTR_TF_STAT type 01: 01, 03, 04), its text in
+      // ZFLW_STAS1 "TF Status Desc", written with the code on save.
+      { id: 'stTfStatus', label: 'TF Status', field: 'ZflwCod1', type: 'text', control: 'select' },
+      { id: 'stTfExpired', label: 'Tradeflow Expired', field: 'ZtfExp', type: 'text' },
+      { id: 'stTfDeleted', label: 'Tradeflow Deleted', field: 'ZtfDelete', type: 'text' },
+      { id: 'stCreatedBy', label: 'Created By', field: 'ZcreatedBy', type: 'text', readOnly: true },
+      { id: 'stCreatedDate', label: 'Created Date', field: 'ZcreatedDate', type: 'date', readOnly: true },
+      { id: 'stCreatedTime', label: 'Created Time', field: 'ZcreatedTime', type: 'text', readOnly: true },
+      { id: 'stChangedBy', label: 'Changed By', field: 'ZchangedBy', type: 'text', readOnly: true },
+      { id: 'stChangedDate', label: 'Changed Date', field: 'ZchangedDate', type: 'date', readOnly: true },
+      { id: 'stChangedTime', label: 'Changed Time', field: 'ZchangedTime', type: 'text', readOnly: true },
     ],
   },
 ]
@@ -230,4 +240,84 @@ export function subtotal(rows: readonly TrdFlowRow[]): number {
 export function rowKey(row: TrdFlowRow): TrdFlowKey | null {
   if (!row.ZtfNo || !row.ZtfSplit) return null
   return { ZtfNo: row.ZtfNo, ZtfSplit: row.ZtfSplit }
+}
+
+export type SortDirection = 'asc' | 'desc'
+
+/**
+ * Sorts rows by one column for the List of Trade Flows header click. A numeric column
+ * compares numerically; everything else, including the ISO dates the rows carry, compares as
+ * text (ISO sorts correctly lexically). A row missing the field always sorts last, in either
+ * direction, rather than jumping to the top on 'desc'.
+ */
+export function sortRows(
+  rows: readonly TrdFlowRow[],
+  field: keyof TrdFlowRow,
+  direction: SortDirection,
+  kind?: 'num',
+): TrdFlowRow[] {
+  const sign = direction === 'asc' ? 1 : -1
+  return [...rows].sort((a, b) => {
+    const av = a[field]
+    const bv = b[field]
+    const aEmpty = av === undefined || av === null || av === ''
+    const bEmpty = bv === undefined || bv === null || bv === ''
+    if (aEmpty || bEmpty) return aEmpty && bEmpty ? 0 : aEmpty ? 1 : -1
+    if (kind === 'num') return (Number(av) - Number(bv)) * sign
+    return String(av).localeCompare(String(bv)) * sign
+  })
+}
+
+const round2 = (n: number): number => Math.round(n * 100) / 100
+
+function finite(value: unknown): number | null {
+  if (value === undefined || value === null || String(value).trim() === '') return null
+  const n = Number(String(value).replace(/,/g, ''))
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * The popup's derived fields, recomputed when one of their inputs is edited, as the legacy
+ * page's input listeners did:
+ *   Contract Amount (ZTTV)     = Quantity x Contract Price (ZUNIT)
+ *   CPMT Amount (ZCPM_AMT)     = Quantity x Current Market Price (ZCPRICE)
+ *   Transit time (ZDAYS)       = ETA at POD - Sailing Date, in days ('' when negative)
+ * Only the fields the edit feeds are touched, and nothing is changed while an input is not a
+ * number or a date — a half-typed "12." still counts as 12, "abc" leaves the amount alone.
+ */
+export function withDerivedFields(draft: TrdFlowRow, changed: keyof TrdFlowRow): TrdFlowRow {
+  const next: TrdFlowRow = { ...draft }
+  const qty = finite(draft.Zquantity)
+  if (changed === 'Zquantity' || changed === 'Zunit') {
+    const price = finite(draft.Zunit)
+    if (qty !== null && price !== null) next.Zttv = round2(qty * price)
+  }
+  if (changed === 'Zquantity' || changed === 'Zcprice') {
+    const cmp = finite(draft.Zcprice)
+    if (qty !== null && cmp !== null) next.ZcpmAmt = round2(qty * cmp)
+  }
+  if (changed === 'Zsldate' || changed === 'ZetaDsPort') {
+    const sailing = Date.parse(String(draft.Zsldate ?? '').slice(0, 10))
+    const eta = Date.parse(String(draft.ZetaDsPort ?? '').slice(0, 10))
+    if (Number.isFinite(sailing) && Number.isFinite(eta)) {
+      const days = Math.round((eta - sailing) / 86400000)
+      next.Zdays = days >= 0 ? String(days) : ''
+    }
+  }
+  return next
+}
+
+/**
+ * CPMT Amount as the row is first opened, before any edit — Quantity x Current Market Price
+ * (ZCPRICE), the same formula withDerivedFields applies on an edit. Needed because a trade flow
+ * can be stored with ZCPM_AMT still 0 even though Quantity and Current Market Price are both
+ * present (the value upstream never computed it); this keeps what's shown consistent with the
+ * formula rather than trusting a stored figure that was never actually calculated. Only
+ * ZCPM_AMT is touched — Contract Amount (ZTTV) is left exactly as stored.
+ */
+export function withCpmtAmount(row: TrdFlowRow): TrdFlowRow {
+  const qty = finite(row.Zquantity)
+  const cmp = finite(row.Zcprice)
+  if (qty === null || cmp === null) return row
+  return { ...row, ZcpmAmt: round2(qty * cmp) }
 }

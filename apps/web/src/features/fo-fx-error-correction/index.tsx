@@ -695,9 +695,9 @@ export default function FoFxErrorCorrection() {
             </div>
           </div>
           <div className="note">
-            <strong>Note:</strong> This list is read from <strong>SAP</strong> (the FX transaction service). SAP does not record whether
-            Mid-Office sent a transaction back, so there is no <em>Correction Required</em> status to show: every live transaction is
-            <strong> Open</strong>, and only a transaction SAP reversed is <strong>Reversed</strong>. The MO remark, trader, mode of
+            <strong>Note:</strong> This list is read from <strong>SAP</strong> (the FX transaction service). The status comes from <strong>TXN_STATUS</strong> in ZSGTSFTR_APP_STR: <em>Correction Required</em> when Mid-Office sent the transaction
+            back (04), <strong>Reversed</strong> once reversed, <em>Released to MO</em> once corrected or released, and <strong>Open</strong>
+            for a transaction with no status there yet. The MO remark, trader, mode of
             trade, account category, business area, profit center and blotter date are not held in SAP either, so they are blank
             and cannot be edited here. <strong>FX Error Correction</strong> changes the rates, Amount 1, Value Date and Trade Date
             in SAP; <strong>Reverse</strong> reverses the transaction in SAP.

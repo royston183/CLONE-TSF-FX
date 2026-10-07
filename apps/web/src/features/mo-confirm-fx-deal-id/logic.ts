@@ -1,32 +1,30 @@
 /**
- * The page's UI rules, as pure functions. The former mock service calls (confirm, cancel,
- * reverse, edit pair, mock upload) and the invented Planned P&L arithmetic are gone: the
- * writes are api.ts's (or WAITING FOR ACTION API), the data is SAP's.
+ * The page's rules as pure functions. Nothing here changes a deal: the only write the screen can
+ * make (Cancel Deal ID) is a SAP call in api.ts, and the deal is read back afterwards.
  */
-import { STATUS_CLS } from './data.ts'
-import type { ActionVisibility, Deal, DealPick, EditDraft, Leg, Sort, SortKey, StatusMeta } from './types.ts'
+import { STATUS_META } from './data.ts'
+import { fmtAmt, fmtRate } from './format.ts'
+import type { ActionVisibility, Deal, Leg, PlRow, Sort, SortKey, StatusMeta } from './types.ts'
 
 /** parseInt(code, 10) || 0. */
 export function numStatus(code: string): number {
   return parseInt(code, 10) || 0
 }
 
-/** The badge: SAP's text (or the bare code when it has none) and the colour class for the code. */
-export function statusMeta(code: string, desc = ''): StatusMeta {
-  return { desc: desc || code, cls: STATUS_CLS[code] ?? 'status-01' }
+/** STATUS_META lookup with the badge's fallback for an unknown code. */
+export function statusMeta(code: string): StatusMeta {
+  return STATUS_META[code] ?? { desc: code, cls: 'status-01' }
 }
 
-/** A quick pick's text: "7000000006 · FO: FX Deals Created". */
-export function quickPickLabel(pick: DealPick): string {
-  return `${pick.dealId} · ${statusMeta(pick.status, pick.statusText).desc}`
+/** A quick pick's text: "1000000231 · Created". */
+export function quickPickLabel(entry: { dealId: string; status: string }): string {
+  return `${entry.dealId} · ${statusMeta(entry.status).desc}`
 }
 
 /**
- * FORM top_data / function_button: SET PF-STATUS '111' EXCLUDING —
- * status 01: only REV is excluded; any other status: UPD, CAN and DEAL_EDIT are excluded, REV
- * too unless the status is 02 / 03, and REV always when the user is not in TVARVC
- * ZSGTSF_UNWIND. PRE / REF / DMS are never excluded; the SS button shows for a short-straddle
- * model only (as the page always did; SS_DEAL has no toolbar slot in the GUI status).
+ * Mirrors ABAP FUNCTION_BUTTON / SET PF-STATUS '111' EXCLUDING logic:
+ * UPD / CAN / DEAL_EDIT only while status = 01 (Created); REV only while 02 or 03;
+ * PRE / REF / DMS always; the SS button only for a short-straddle deal.
  */
 export function actionVisibility(deal: Deal): ActionVisibility {
   const s = deal.status
@@ -34,7 +32,7 @@ export function actionVisibility(deal: Deal): ActionVisibility {
     upd: s === '01',
     can: s === '01',
     dealEdit: s === '01',
-    rev: (s === '02' || s === '03') && deal.unwind,
+    rev: s === '02' || s === '03',
     pre: true,
     ref: true,
     dms: true,
@@ -42,20 +40,13 @@ export function actionVisibility(deal: Deal): ActionVisibility {
   }
 }
 
-/** Load Deal's lookup: trims and uppercases the typed id, which must be one of the Deal IDs read. */
-export function resolveDealId(
-  input: string,
-  deals: readonly DealPick[],
-): { ok: true; id: string } | { ok: false; error: string } {
-  const id = input.trim().toUpperCase()
-  if (!id) return { ok: false, error: 'Enter a Deal ID.' }
-  if (!deals.some((d) => d.dealId === id)) {
-    return { ok: false, error: 'Deal ID not found. Try one of the quick picks below.' }
-  }
-  return { ok: true, id }
+/** Load Deal's input: the typed id, trimmed. Whether it exists is SAP's answer, not the screen's. */
+export function resolveDealId(input: string): { ok: true; id: string } | { ok: false; error: string } {
+  const id = input.trim()
+  return id ? { ok: true, id } : { ok: false, error: 'Enter a Deal ID.' }
 }
 
-function sortValue(leg: Leg, key: SortKey): string | number | undefined {
+function sortValue(leg: Leg, key: SortKey): string | number | null | undefined {
   if (key === 'txnStatusDesc') return statusMeta(leg.txnStatus).desc
   // "MC Ref No" carries a data-key but is not a leg field, so every row compares equal.
   if (key === 'mcRef') return undefined
@@ -74,7 +65,10 @@ export function sortedFilteredLegs(legs: readonly Leg[], search: string, sort: S
     out.sort((a, b) => {
       const av = sortValue(a, key)
       const bv = sortValue(b, key)
-      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+      // A value SAP does not provide (null) sorts before any real one.
+      if (typeof av === 'number' || typeof bv === 'number' || av === null || bv === null) {
+        return ((typeof av === 'number' ? av : Number.NEGATIVE_INFINITY) - (typeof bv === 'number' ? bv : Number.NEGATIVE_INFINITY) || 0) * dir
+      }
       return String(av).localeCompare(String(bv)) * dir
     })
   }
@@ -96,25 +90,22 @@ export function legRowClass(leg: Leg, selected: boolean): string {
   return [leg.txnStatus === '02' ? 'row-pending' : '', selected ? 'row-selected' : ''].filter(Boolean).join(' ')
 }
 
-/** The hint beside the leg search. It keeps its longer drag hint until a leg is first clicked. */
-export function legNote(selected: string | null, touched: boolean): string {
-  if (selected) return `Leg ${selected} selected`
-  return touched
-    ? 'Select a leg to enable Edit Deal Pair'
-    : 'Select a leg to enable Edit Deal Pair · drag it onto Edit Deal Pair'
+/** The hint beside the leg search. */
+export function legNote(selected: string | null): string {
+  return selected ? `Leg ${selected} selected` : 'Click a leg to select it'
 }
 
-/** A fresh Edit Deal Pair draft: the select starts locked with nothing chosen. */
-export function newEditDraft(oldRfha: string): EditDraft {
-  return { oldRfha, editing: false, newRfha: '' }
-}
-
-/** The Edit / Editing… toggle. The chosen replacement stays as it was, as the select's value did. */
-export function toggleEditing(draft: EditDraft): EditDraft {
-  return { ...draft, editing: !draft.editing }
-}
-
-/** Deal Update is enabled only once a replacement is chosen. */
-export function canUpdatePair(draft: EditDraft): boolean {
-  return draft.newRfha !== ''
+/**
+ * The P&L the deal was confirmed with (the figures stored on the Deal ID). With none stored — the
+ * deal has not been confirmed — there is nothing to show: the planned P&L is calculated in SAP from
+ * data this app cannot read yet.
+ */
+export function storedPlRows(deal: Deal): PlRow[] {
+  const pl = deal.storedPl
+  if (!pl) return []
+  return [
+    { type: `P&L (${pl.currency || 'USD'})`, value: fmtAmt(pl.amount) },
+    { type: `P&L Local (${pl.localCurrency || '—'})`, value: fmtAmt(pl.localAmount) },
+    { type: 'P&L Rate', value: fmtRate(pl.rate) },
+  ]
 }

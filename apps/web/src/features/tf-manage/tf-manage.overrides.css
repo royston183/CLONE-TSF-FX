@@ -1,0 +1,43 @@
+/*
+ * The only deviations from the generated legacy stylesheet, and why.
+ *
+ * tf-manage.legacy.css is produced by tools/scope-css.mjs from legacy/Manage TF.html and is
+ * re-generated whenever that page changes, so it cannot be hand-edited — anything written
+ * there is lost on the next run. Deliberate departures from the original look live here
+ * instead, scoped under .tfmanage so they cannot reach another app, and imported after the
+ * generated sheet so they win on order alone rather than on specificity tricks.
+ */
+
+/*
+ * BL Data 1's TF Quantity field: a little extra room after BL Split so the read-only quantity
+ * display doesn't crowd the button beside it, and the (MT) unit moved onto the same line as
+ * the value (to its right) instead of wrapping onto its own line below it.
+ */
+.tfmanage .tf-qty-field {
+  margin-left: 10px;
+}
+.tfmanage .tf-qty-value-row {
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * BL Details' BL Number / Vessel Name / Grade-Commodity inline inputs: .bl-inline-input alone
+ * is sized and right-aligned for a short number (70px), which is too narrow and wrong-aligned
+ * for free text. This widens and left-aligns just those three, leaving the Quantity/CPMT
+ * inputs — plain .bl-inline-input, unmodified — exactly as they were.
+ */
+.tfmanage .bl-inline-input.bl-inline-text {
+  width: 100%;
+  min-width: 110px;
+  text-align: left;
+}
+
+/*
+ * An Update error, shown in the popup's footer: the page's banner is behind the modal, so a
+ * refused Update (e.g. "Total quantity is more than the TF quantity") was easy to miss.
+ */
+.tfmanage .modal-footer .modal-error {
+  color: var(--red);
+  font-weight: 600;
+}

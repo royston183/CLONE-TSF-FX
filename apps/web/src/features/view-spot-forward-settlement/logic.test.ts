@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, worklistWaitingReason } from './api.ts'
+import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, unservedColumns, worklistWaitingReason } from './api.ts'
 import { DEFAULT_DATE_FROM, DEFAULT_DATE_TO, NAMES as RUNTIME_NAMES } from './data.ts'
 import { NAMES, seedDeals } from './fixtures.ts'
 import { fmtAmt, fmtDMY, fmtRate, parseDMY } from './format.ts'
@@ -244,7 +244,11 @@ describe('api', () => {
     deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS).slice(0, 5), ['BLOTTER_DATE', 'PRCTR', 'PC_NAME', 'TXN_STATUS', 'ZTRCODE'])
     const reason = worklistWaitingReason(served)
     strictEqual(reason.startsWith('WAITING FOR API — ZSGTSF_RBANKSETTLE_FX source not exported (only dependency notes)'), true)
-    strictEqual(reason.includes('ZTSF_DEAL_ID'), true)
+    // TrmFxApp serves the VTBFHA append columns, so only what no service has is named.
+    strictEqual(reason.includes('ZTSF_DEAL_ID'), false)
+    strictEqual(reason.includes('TXN_STATUS'), false)
+    strictEqual(reason.includes('PRCTR'), true)
+    deepStrictEqual(unservedColumns(served, VIEW_REQUIRED_COLUMNS).slice(0, 3), ['PRCTR', 'PC_NAME', 'TRD_NAME'])
     strictEqual(worklistWaitingReason(VIEW_REQUIRED_COLUMNS).includes('does not serve'), false)
   })
   it('Test Run / Post / forms wait for an action API and post nothing', () => {

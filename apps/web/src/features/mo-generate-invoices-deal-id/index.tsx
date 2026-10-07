@@ -9,7 +9,6 @@ import { isAbort } from '../../shared/fx/mw.ts'
 import {
   BANK_WAITING,
   actionWaiting,
-  amendDealStatus,
   amendedStatus,
   confirmAmendment,
   loadDeal,
@@ -21,6 +20,9 @@ import {
 } from './api.ts'
 import { BankModal } from './BankModal.tsx'
 import { BlModal } from './BlModal.tsx'
+import { middlewarePorts, loadFinalisationSellers } from './ports.ts'
+import { DEAL_INVOICE_STATUS, canReverseInvoice, isFinalInvoiceStatus, type InvoiceFinalStatus } from './invoice-status.ts'
+import { amendDealStatus, confirmInvoiceGeneration, deassignBls, pcMismatches, reconcileInvoicePc, reverseInvoiceConfirmation, type WorkflowResult } from './workflow.ts'
 import { ComplianceModal } from './ComplianceModal.tsx'
 import { ConfirmModal } from './ConfirmModal.tsx'
 import { setStatusTexts } from './data.ts'
@@ -44,7 +46,7 @@ import {
 } from './logic.ts'
 import { RemarkModal } from './RemarkModal.tsx'
 import { TxnModal } from './TxnModal.tsx'
-import type { ConfirmDialogState, Deal, DealListRow, DealStatus, FxRow, InvRow, Sort, Toast } from './types.ts'
+import type { ConfirmDialogState, Deal, DealListRow, FxRow, InvRow, Sort, Toast } from './types.ts'
 
 const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'dealType', label: 'Deal Type' },
@@ -95,11 +97,6 @@ const PAGE_SIZE = 8
 /** Form-based outputs and postings with no API (the ABAP's own FMs / classes are listed). */
 const LETTER_APIS =
   'Adobe Form via FP_FUNCTION_MODULE_NAME / FP_JOB_OPEN / FP_JOB_CLOSE, BAPI_BUPA_ADDRESS_GETDETAIL, READ_TEXT, SPELL_AMOUNT, ZSGPTSFFM_CHANGE_AMT_TO_WORDS, HR_RU_MONTH_NAME_IN_GENITIVE'
-const SAVE_INVOICE_APIS =
-  'NUMBER_GET_NEXT ZSGTSFNR08 for ZINV_NO, then MODIFY ZSGTSFTR_BIL_ADJ / UPDATE ZSGTSFTR_IF_INV / ZSGTSFTR_DEALID / MODIFY ZSGTSFTR_BL, _BL_RUSE and the e-mail ZSGTSFCL_CLASS->ZSGTSFIF_EMAIL~INV_CON'
-const CANCEL_APIS = 'DELETE FROM ZSGTSFTR_BIL_ADJ — the middleware client has no delete — then UPDATE ZSGTSFTR_DEALID / ZSGTSFTR_BL'
-const DEASSIGN_APIS =
-  'UPDATE ZSGTSFTR_BL / _BL_RUSE, MODIFY ZSGTSFTR_BL_DASS, DELETE FROM ZSGTSFTR_PRE_INV, UPDATE ZSGTSFTR_DEALID / ZSGTSFTR_TRDFLOW and the e-mail ZSGTSFCL_CLASS->ZSGTSFIF_EMAIL~TFBL (E002)'
 
 function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (p: number) => void }) {
   const nums = Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1)
@@ -119,6 +116,7 @@ function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (p: n
     </div>
   )
 }
+
 
 export default function MoGenerateInvoicesDealId() {
   const [dealList, setDealList] = useState<DealListRow[]>([])
@@ -144,7 +142,8 @@ export default function MoGenerateInvoicesDealId() {
   const [dealLookupOpen, setDealLookupOpen] = useState(false)
   const [txnRow, setTxnRow] = useState<FxRow | null>(null)
   const [confirmState, setConfirmState] = useState<ConfirmDialogState | null>(null)
-  const [pendingInvoiceStatus, setPendingInvoiceStatus] = useState<DealStatus>('05')
+  const [pendingInvoiceStatus, setPendingInvoiceStatus] = useState<InvoiceFinalStatus>(DEAL_INVOICE_STATUS.INVOICE_CREATED)
+  const [busy, setBusy] = useState(false)
   const [complianceOpen, setComplianceOpen] = useState(false)
   const [blOpen, setBlOpen] = useState(false)
   const [blVersion, setBlVersion] = useState(0)
@@ -257,8 +256,11 @@ export default function MoGenerateInvoicesDealId() {
     return rows.filter((r) => INV_COLS.some((c) => String(invSearchText(r, c.key)).toUpperCase().indexOf(u) >= 0))
   }
 
-  const amendable = deal ? deal.status === '05' || deal.status === '07' : false
-  const canConfirmInvoice = !!deal && !deal.dm && deal.status === '04'
+  const amendable = deal ? isFinalInvoiceStatus(deal.status) : false
+  // 04 starts a finalisation; at 05 / 07 a row still without its BL invoice type means a finalisation stopped part-way.
+  const finalisationPending = !!deal && isFinalInvoiceStatus(deal.status) && deal.inv.some((r) => !r.locked)
+  const canConfirmInvoice = !!deal && !deal.dm && !busy && (deal.status === DEAL_INVOICE_STATUS.INVOICE_REVERSED || finalisationPending)
+  const pcStale = deal && ctx ? pcMismatches(deal.status, ctx.bilAdj).length : 0
   const rollover = hasRollover(deal)
 
   /** The invoice grid is built from gt_top: without it the grid-based actions cannot run. */
@@ -269,6 +271,21 @@ export default function MoGenerateInvoicesDealId() {
       return true
     }
     return false
+  }
+
+  /** Runs a multi-step operation, shows exactly where it stopped, and reloads SAP's state either way. */
+  const runWorkflow = async (run: () => Promise<WorkflowResult>, dealId: string, after?: () => void) => {
+    setBusy(true)
+    try {
+      const result = await run()
+      toast(result.message, result.ok ? (result.steps.some((x) => x.status === 'skipped') ? 'warn' : 'success') : 'error')
+      if (result.ok) after?.()
+      await fetchDeal(dealId, true)
+    } catch (e) {
+      toast(messageOf(e), 'error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const calculateInvoices = (showMessage: boolean) => {
@@ -283,6 +300,26 @@ export default function MoGenerateInvoicesDealId() {
     const profitError = profitCheckError(deal)
     if (profitError) {
       toast(profitError, 'error')
+      return
+    }
+    if (finalisationPending) {
+      // The Deal ID already moved to 05 / 07: finish what stopped, with the status it reached.
+      const status = deal.status as InvoiceFinalStatus
+      setPendingInvoiceStatus(status)
+      setConfirmState({
+        title: 'Complete Invoice Generation',
+        text: `Invoice generation for Deal ID ${deal.dealId} stopped part-way at status ${statusText(status)}. Run the remaining steps?`,
+        note: 'Steps already written are repeated safely.',
+        yesLabel: 'Yes',
+        onYes: () => {
+          setConfirmState(null)
+          void saveInvoice(status)
+        },
+      })
+      return
+    }
+    if (deal.tolerance === null) {
+      toast('Tolerance T02 (ZSGTSFTR_TOLR) could not be read, so the invoice cannot be compared with the deal.', 'error')
       return
     }
     const fresh = { ...deal, inv: deal.inv.map(recalcInvoiceRow) }
@@ -304,16 +341,21 @@ export default function MoGenerateInvoicesDealId() {
   }
 
   /** 9002 YES -> FORM save_data: number range, Z-table updates and the invoice e-mail. */
-  const saveInvoice = () => {
-    if (!deal) return
+  const saveInvoice = async (status: InvoiceFinalStatus = pendingInvoiceStatus) => {
+    if (!deal || !ctx) return
     setComplianceOpen(false)
-    toast(actionWaiting(`Generate Invoice for Deal ID ${deal.dealId} (status ${pendingInvoiceStatus})`, SAVE_INVOICE_APIS), 'warn')
+    const sellers = await loadFinalisationSellers().catch(() => [])
+    await runWorkflow(
+      () => confirmInvoiceGeneration({ deal, dealRows: ctx.dealRows, diffRule: ctx.diffRule, status, sellers }, middlewarePorts),
+      deal.dealId,
+      resetView,
+    )
   }
 
   const cancelInvoice = () => {
     if (!deal) return
     setMoreOpen(false)
-    if (!canCancelInvoice(deal.status)) {
+    if (!canCancelInvoice(deal.status) || !canReverseInvoice(deal.status)) {
       toast('Selected Deal ID can not be canceled', 'warn')
       return
     }
@@ -324,7 +366,8 @@ export default function MoGenerateInvoicesDealId() {
       yesLabel: 'Yes',
       onYes: () => {
         setConfirmState(null)
-        toast(actionWaiting(`Cancel TRM Invoice for Deal ID ${deal.dealId}`, CANCEL_APIS), 'warn')
+        if (!ctx) return
+        void runWorkflow(() => reverseInvoiceConfirmation(deal, ctx.dealRows, middlewarePorts), deal.dealId, resetView)
       },
     })
   }
@@ -344,12 +387,7 @@ export default function MoGenerateInvoicesDealId() {
       yesLabel: 'Yes',
       onYes: () => {
         setConfirmState(null)
-        amendDealStatus(deal, ctx)
-          .then((s) => {
-            toast(`Deal status amended to ${statusText(s)}.`, 'info')
-            return fetchDeal(deal.dealId, true)
-          })
-          .catch((e) => toast(`Amend Deal Status failed: ${messageOf(e)}`, 'error'))
+        void runWorkflow(() => amendDealStatus(deal, ctx.dealRows, middlewarePorts), deal.dealId)
       },
     })
   }
@@ -402,6 +440,13 @@ export default function MoGenerateInvoicesDealId() {
       .catch((e) => toast(`Re-calculate & Update failed: ${messageOf(e)}`, 'error'))
   }
 
+  /** Repairs 05 <=> C / 07 <=> P after an amendment stopped between its two writes. */
+  const reconcilePc = () => {
+    if (!deal) return
+    setMoreOpen(false)
+    void runWorkflow(() => reconcileInvoicePc(deal, middlewarePorts), deal.dealId)
+  }
+
   const letter = (kind: 'Import' | 'Export') => {
     if (!deal) return
     setMoreOpen(false)
@@ -440,11 +485,16 @@ export default function MoGenerateInvoicesDealId() {
 
   const openDeassign = (index: number) => setRemarkBlIndex(index)
   /** 9003 UPDATE: Z-table updates plus the BL e-mail — no API for the e-mail and the delete. */
-  const saveRemark = () => {
-    const bl = deal?.bl[remarkBlIndex]
+  const saveRemark = (remark: string) => {
+    const raw = ctx?.bls[remarkBlIndex]
     setRemarkBlIndex(-1)
-    setBlVersion((v) => v + 1)
-    toast(actionWaiting(`De-assign BL ${bl?.blNo ?? ''}`, DEASSIGN_APIS), 'warn')
+    if (!deal || !ctx || !raw) return
+    setBlOpen(false)
+    void runWorkflow(
+      () => deassignBls({ deal, dealRows: ctx.dealRows, allBls: ctx.bls, selected: [raw], remark }, middlewarePorts),
+      deal.dealId,
+      () => setBlVersion((v) => v + 1),
+    )
   }
 
   const nextFxSort = (key: keyof FxRow) => setFxSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }))
@@ -511,6 +561,11 @@ export default function MoGenerateInvoicesDealId() {
                 <button className="more-item" type="button" disabled={!deal || !amendable || !amendMode} onClick={confirmAmendmentAction}>
                   Amendment Confirm
                 </button>
+                {pcStale ? (
+                  <button className="more-item" type="button" onClick={reconcilePc}>
+                    Reconcile invoice P/C ({pcStale})
+                  </button>
+                ) : null}
                 <button className="more-item" type="button" disabled={!deal || !amendable || !rollover} onClick={toggleAmendDeal}>
                   Amend Deal Status
                 </button>
@@ -891,7 +946,7 @@ export default function MoGenerateInvoicesDealId() {
       ) : null}
       {txnRow ? <TxnModal row={txnRow} onClose={() => setTxnRow(null)} /> : null}
       {confirmState ? <ConfirmModal state={confirmState} onClose={() => setConfirmState(null)} /> : null}
-      {complianceOpen && deal ? <ComplianceModal resultingStatus={pendingInvoiceStatus} onClose={() => setComplianceOpen(false)} onProceed={saveInvoice} /> : null}
+      {complianceOpen && deal ? <ComplianceModal resultingStatus={pendingInvoiceStatus} onClose={() => setComplianceOpen(false)} onProceed={() => void saveInvoice()} /> : null}
       {blOpen && deal ? <BlModal key={blVersion} rows={deal.bl} reason={deal.blReason} onClose={() => setBlOpen(false)} onDeassign={openDeassign} /> : null}
       {remarkBlIndex >= 0 ? <RemarkModal onClose={() => setRemarkBlIndex(-1)} onUpdate={saveRemark} /> : null}
       {diffOpen && deal ? <DiffModal rows={deal.diff} fxReason={deal.fxReason} onClose={() => setDiffOpen(false)} /> : null}

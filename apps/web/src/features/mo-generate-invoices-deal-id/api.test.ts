@@ -1,32 +1,19 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
-  FX_REQUIRED_COLUMNS,
   amendDealWrites,
   amendedStatus,
   amendmentRecords,
   blFromRow,
   dealBls,
   dealListRow,
-  fxWaitingReason,
   headerJoin,
   initialRecords,
-  missingColumns,
   recalcWrites,
   toWire,
 } from './api.ts'
 import { SAMPLE_DEAL, fxRow, invRow } from './fixtures.ts'
 import { emptyAdj } from './invoice.ts'
-
-describe('FORM deal_detals source', () => {
-  it('names the ZSGTSFCDS_FX fields the middleware view does not serve (as registered on 2026-10-05)', () => {
-    // prettier-ignore
-    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
-    const missing = missingColumns(served, FX_REQUIRED_COLUMNS)
-    deepStrictEqual(missing, ['ZTSF_MC_REF_NO', 'TXN_STATUS', 'ZTSF_DEAL_TYPE', 'ZTSF_DEAL_ID'])
-    ok(fxWaitingReason(missing).startsWith('WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve ZTSF_MC_REF_NO'))
-  })
-})
 
 describe('FORM screen_desc_fields', () => {
   const deal = { ZDEAL_ID: '7000000009', ZMC_REF: '2000000028', ZTRD_CODE: 'C' }
@@ -97,6 +84,9 @@ describe('writes', () => {
     const ctx = {
       dealRows: [],
       rule: undefined,
+      diffRule: undefined,
+      bls: [],
+      blReuse: [],
       bilAdj: [{ ZDEAL_ID: 'D', ZINV_REF: 'D-T2', ZINV_TYPE: 'I01', ZPRE_T_REF: '' }],
       invRef: [{ ZDEAL_ID: 'D', ZINV_TRM_NO: 'D-T2', ZDTYPE: 'D2' }, { ZDEAL_ID: 'D', ZINV_TRM_NO: 'D-T2X', ZDTYPE: 'D2' }],
     }

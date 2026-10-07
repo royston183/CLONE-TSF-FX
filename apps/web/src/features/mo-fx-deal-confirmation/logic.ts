@@ -1,10 +1,12 @@
 /**
- * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. ZSGTSFR024's ABAP source is not exported, so there is no deal
- * queue and no action API yet (see api.ts); these rules run on whatever deals the screen holds.
+ * The page's business rules as pure functions so the component only holds state. The queue is
+ * rebuilt from the backend on every load (APP_STR + FxTransaction); the in-memory list only mirrors
+ * what the backend has just accepted.
  */
-import { STATUS, STATUSES } from './data.ts'
+import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
+import { COMPANY_CODES, dealStatusOf, COMPANY_INFO, PARTNERS, STATUS, STATUSES, TRADERS, TXN_TYPES } from './data.ts'
 import { parseDDMMYYYY } from './format.ts'
+import type { MoDone } from './workflow.ts'
 import type {
   AppliedSelection,
   CalendarCell,
@@ -38,11 +40,24 @@ export const EMPTY_SELECTION: SelectionForm = {
 export const isBlotterDateValid = (s: string) => !!s && parseDDMMYYYY(s) !== null
 
 export const applySelection = (form: SelectionForm): AppliedSelection => ({
+  upTo: parseDDMMYYYY(form.blotterDate),
   companyCode: form.companyCode,
   companyCodeTo: form.companyCodeTo,
   trader: form.trader,
   displayType: form.displayType,
 })
+
+export const COMPANY_OPTIONS: ComboOption[] = COMPANY_CODES.map((c) => {
+  const name = COMPANY_INFO[c]?.companyName ?? ''
+  return { code: c, display: c, searchText: `${c} ${name}`, sub: name }
+})
+
+export const TRADER_OPTIONS: ComboOption[] = TRADERS.map((t) => ({
+  code: t.code,
+  display: `${t.code} - ${t.name}`,
+  searchText: `${t.code} ${t.name}`,
+  sub: '',
+}))
 
 /** The combobox list for what is typed: a case-insensitive substring of the option's text. */
 export function filterComboOptions(options: readonly ComboOption[], text: string): ComboOption[] {
@@ -50,28 +65,35 @@ export function filterComboOptions(options: readonly ComboOption[], text: string
   return options.filter((o) => o.searchText.toLowerCase().includes(ft))
 }
 
+/**
+ * Company codes in the From..To range, compared as strings over the code list (so the range
+ * follows code order, not list order). From after To selects nothing, as on the page.
+ */
+export const companyCodesInRange = (from: string, to: string) => COMPANY_CODES.filter((c) => c >= from && c <= to)
+
+/** The company codes a selection reads from SAP: the range, the one code, or every code of the screen. */
+export function selectedCompanyCodes(s: Pick<AppliedSelection, 'companyCode' | 'companyCodeTo'>): string[] {
+  if (!s.companyCode) return [...COMPANY_CODES]
+  return s.companyCodeTo ? companyCodesInRange(s.companyCode, s.companyCodeTo) : [s.companyCode]
+}
+
 // ---------------------------------------------------------------- filter panel
 
 export const EMPTY_FILTERS: Filters = { coCode: '', txnType: '', partner: '', trader: '', ccy1: '', ccy2: '', status: '' }
 
-/** One option per distinct value, sorted by value; the first label seen for a value is kept. */
-function distinct(pairs: Iterable<[string, string]>): SelectOption[] {
-  const out = new Map<string, string>()
-  for (const [value, label] of pairs) if (value && !out.has(value)) out.set(value, label)
-  return [...out].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([value, label]) => ({ value, label }))
-}
-
-/**
- * Each filter dropdown's options (after its "All"). The page filled them from its dummy lists; with
- * no sample data they come from the deals the screen holds (none until the queue has an API).
- */
+/** Each filter dropdown's options (after its "All"), as the page's populateFilterOptions built them. */
 export function filterOptions(deals: readonly Deal[]): Record<keyof Filters, SelectOption[]> {
-  const ccyList = distinct(deals.flatMap((d): Array<[string, string]> => [[d.currency1, d.currency1], [d.currency2, d.currency2]]))
+  const ccys = new Set<string>()
+  for (const d of deals) {
+    ccys.add(d.currency1)
+    ccys.add(d.currency2)
+  }
+  const ccyList = [...ccys].sort().map((c) => ({ value: c, label: c }))
   return {
-    coCode: distinct(deals.map((d) => [d.coCode, d.coCode])),
-    txnType: distinct(deals.map((d) => [d.txnTypeCode, d.txnTypeDesc])),
-    partner: distinct(deals.map((d) => [d.partnerCode, d.partnerName])),
-    trader: distinct(deals.map((d) => [d.traderCode, d.traderName])),
+    coCode: COMPANY_CODES.map((c) => ({ value: c, label: c })),
+    txnType: TXN_TYPES.map((t) => ({ value: t.code, label: `${t.code} - ${t.desc}` })),
+    partner: PARTNERS.map((p) => ({ value: p.code, label: `${p.code} - ${p.name}` })),
+    trader: TRADERS.map((t) => ({ value: t.code, label: `${t.code} - ${t.name}` })),
     ccy1: ccyList,
     ccy2: ccyList,
     status: STATUSES.filter((s) => s !== STATUS.MATCHED).map((s) => ({ value: s, label: s })),
@@ -125,14 +147,15 @@ export function filterDeals(
 
   if (selection.companyCode) {
     if (selection.companyCodeTo) {
-      // From..To compared as text, as SAP compares BUKRS; From after To selects nothing.
-      const { companyCode: from, companyCodeTo: to } = selection
-      list = list.filter((d) => d.coCode >= from && d.coCode <= to)
+      const codes = companyCodesInRange(selection.companyCode, selection.companyCodeTo)
+      list = list.filter((d) => codes.includes(d.coCode))
     } else {
       list = list.filter((d) => d.coCode === selection.companyCode)
     }
   }
-  if (selection.trader) list = list.filter((d) => d.traderCode === selection.trader)
+  // A SAP deal whose APP_STR record carries no trader cannot be told apart by trader, so it stays listed
+  // rather than vanishing; a deal with a trader, and every sample Options row, is narrowed.
+  if (selection.trader) list = list.filter((d) => d.traderCode === selection.trader || (d.live && !d.traderCode))
 
   const f = filters
   if (f.coCode) list = list.filter((d) => d.coCode === f.coCode)
@@ -156,6 +179,7 @@ export const dealCountLabel = (total: number) => `${total}${total === 1 ? ' deal
 export function statusClass(status: DealStatus): string {
   if (status === STATUS.CORRECTION) return 'status-correction'
   if (status === STATUS.MATCHED) return 'status-matched'
+  if (status === STATUS.CORRECTED) return 'status-corrected'
   return 'status-unmatched'
 }
 
@@ -232,21 +256,76 @@ export const dealLabel = (d: Deal): string => d.dealId || d.transaction
 
 export const selectedDeals = (deals: readonly Deal[], selected: ReadonlySet<string>) => deals.filter((d) => selected.has(d.id))
 
+// ---------------------------------------------------------------- deals from SAP
+
+/**
+ * The queue after (re)reading the FX deals from the backend: they replace every FX row, the Options rows (dummy
+ * data) are kept. The status is whatever APP_STR holds; nothing is carried over from the session.
+ */
+export function mergeLiveDeals(current: readonly Deal[], live: readonly Deal[]): Deal[] {
+  return [...live, ...current.filter((d) => d.dealType !== 'FX')]
+}
+
+/** The Options rows alone: the starting queue before the FX deals have been read from SAP. */
+export const withoutFxDeals = (deals: readonly Deal[]): Deal[] => deals.filter((d) => d.dealType !== 'FX')
+
 // ---------------------------------------------------------------- match & release / correction
 
 /** The modals' info strip and Cover No for one deal, or a summary for several. */
 export function dealSummary(deals: readonly Deal[]): DealSummary {
   const [first] = deals
-  if (deals.length === 1 && first) return { dealId: first.dealId || '–', partner: first.partnerName, coverNo: first.transaction }
-  return {
-    dealId: `${deals.length} deals selected`,
-    partner: deals.map(dealLabel).join(', '),
-    coverNo: `${deals.length} deals selected`,
-  }
+  const over = deals.filter((d) => d.overUtilised)
+  const warning = over.length
+    ? `Limit management: Deal ID ${[...new Set(over.map((d) => d.dealId))].join(', ')} is over its utilisation limit. This is a warning only; you can still continue.`
+    : undefined
+  const base: DealSummary =
+    deals.length === 1 && first
+      ? { dealId: first.dealId || '–', partner: first.partnerName, coverNo: first.transaction }
+      : { dealId: `${deals.length} deals selected`, partner: deals.map(dealLabel).join(', '), coverNo: `${deals.length} deals selected` }
+  return warning ? { ...base, warning } : base
+}
+
+/**
+ * Mirrors what the backend accepted into the queue: each finished deal takes its new status and remark. A deal now
+ * Matched & Released (07 / 59) is filtered out of the queue by filterDeals; one sent to FO (04) stays, as Correction Required.
+ */
+export function applyDone(deals: readonly Deal[], done: readonly MoDone[]): Deal[] {
+  const byId = new Map(done.map((d) => [d.id, d]))
+  return deals.map((d) => {
+    const r = byId.get(d.id)
+    if (!r) return d
+    return { ...d, txnStatus: r.txnStatus, status: dealStatusOf(r.txnStatus), moRemark: r.moRemark || d.moRemark }
+  })
+}
+
+/** The sample Options rows have no backend: their Match & Release only changes the in-memory list. */
+export function matchReleaseDeals(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
+  return deals.map((d) => (ids.has(d.id) ? { ...d, status: STATUS.MATCHED, txnStatus: FX_TXN_STATUS.MO_MATCH_RELEASE, moRemark: remarks || '' } : d))
 }
 
 /** A correction must give a reason: it becomes the MO remark FO sees. */
 export const isCorrectionValid = (remarks: string) => remarks.trim() !== ''
+
+/** The sample Options rows' Correction Required, in memory only. */
+export function markCorrectionRequired(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
+  return deals.map((d) =>
+    ids.has(d.id) ? { ...d, status: STATUS.CORRECTION, txnStatus: FX_TXN_STATUS.MO_TO_FO_CORRECTION, moRemark: remarks.trim() } : d,
+  )
+}
+
+export function matchReleaseMessage(deals: readonly Deal[]): string {
+  const [first] = deals
+  return deals.length === 1 && first
+    ? `Deal ${dealLabel(first)} matched and released successfully.`
+    : `${deals.length} deals matched and released successfully.`
+}
+
+export function correctionMessage(deals: readonly Deal[]): string {
+  const [first] = deals
+  return deals.length === 1 && first
+    ? `Deal ${dealLabel(first)} was sent back to FO for correction.`
+    : `${deals.length} deals were sent back to FO for correction.`
+}
 
 // ---------------------------------------------------------------- calendar
 

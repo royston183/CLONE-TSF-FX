@@ -61,7 +61,7 @@ const todayText = () => formatDMY(new Date())
  * BO Deal Rejection and return to FO (ZSGTSFR092), converted from legacy/bo-deal-rejection.html.
  *
  * Company codes come from T001, the FX / Options deals from ZSGTSFV_FX / ZSGTSFV_OP with GET_DATA's
- * selection (api.ts); while the middleware cannot serve them the list shows WAITING FOR API. Reject
+ * selection (api.ts); the FX list is TrmFxApp joined to FxTransaction; Options show WAITING FOR API. Reject
  * runs SAP BAPIs that have no API yet: it validates, then says WAITING FOR ACTION API and changes
  * nothing.
  */

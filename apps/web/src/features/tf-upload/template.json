@@ -10,32 +10,6 @@
     "defaultPageSize": 10
   },
   "masterData": {
-    "businessUnits": [
-      {
-        "code": "B01",
-        "name": "GRAINS"
-      },
-      {
-        "code": "B02",
-        "name": "RICE"
-      },
-      {
-        "code": "B03",
-        "name": "COTTON"
-      },
-      {
-        "code": "B05",
-        "name": "EDIBLE OIL"
-      },
-      {
-        "code": "B06",
-        "name": "RUBBER"
-      },
-      {
-        "code": "B10",
-        "name": "FERTILIZER"
-      }
-    ],
     "tfTypes": [
       {
         "code": "CONTAINER",

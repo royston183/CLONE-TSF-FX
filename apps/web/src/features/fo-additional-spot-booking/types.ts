@@ -21,6 +21,8 @@ export type SpotRow = {
   spotTxn: string
   /** The FTR product type the spot was booked with, once created. */
   spotProductType?: string
+  /** The company code the spot was booked in (it is not the original deal's), once created. */
+  spotCompanyCode?: string
   tradeDate: string
   valueDate: string
   partner: string
@@ -35,7 +37,7 @@ export type SpotRow = {
 
 export type CodeLabel = { key: string; text: string }
 
-/** A Create Spot transaction type: the code is unique, and it carries the product type it books under. */
+/** A transaction type with the product type it books under. */
 export type TxnTypeOption = CodeLabel & { productType: string }
 
 /** A Create Spot drop-down read from SAP (valueHelps.ts). */
@@ -74,14 +76,12 @@ export type Filters = {
   showCreated: boolean
 }
 
-export type CreateFormErrors = Partial<Record<'company' | 'txnType' | 'partner' | 'tradeDate' | 'valueDate' | 'rate', string>>
+export type CreateFormErrors = Partial<Record<'partner' | 'tradeDate' | 'rate', string>>
 
+/** What the user edits in Create Spot. Company, transaction type and value date are derived, not editable. */
 export type CreateFormValues = {
-  companyCode: string
-  txnType: string
   partner: string
   tradeDate: string
-  valueDate: string
   rate: string
 }
 

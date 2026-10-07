@@ -107,7 +107,7 @@ export function pairProblem(mc: MasterContract | undefined, legs: readonly Blott
  * If the contract cannot be moved the Deal ID already exists, so the error says which one — nothing
  * is rolled back, as in the original (two separate commits).
  */
-export async function createPairDealId(args: Omit<PairArgs, 'traderCode'>): Promise<{ dealId: string }> {
+export async function createPairDealId(args: Omit<PairArgs, 'traderCode'>): Promise<{ dealId: string; dealType: string; dealDesc: string }> {
   const problem = pairProblem(args.mc, args.legs)
   if (problem) throw new Error(problem)
   const [traders, existing] = await Promise.all([fxList('trmTrader', {}), fxList('tsfDealId', {})])
@@ -115,14 +115,15 @@ export async function createPairDealId(args: Omit<PairArgs, 'traderCode'>): Prom
     const holder = dealIdListing(existing, leg.companyCode ?? '', leg.transactionNumber)
     if (holder) throw new Error(`Transaction ${leg.transactionNumber} is already on Deal ID ${holder}; it cannot be given another.`)
   }
-  const dealId = await bookDealRow(dealIdColumns({ ...args, traderCode: traderCodeOf(traders, args.traderName) }))
+  const columns = dealIdColumns({ ...args, traderCode: traderCodeOf(traders, args.traderName) })
+  const dealId = await bookDealRow(columns)
   try {
     await setMcStatus([args.mc.mcNumber], '04')
   } catch (error) {
     const why = error instanceof Error ? error.message : String(error)
     throw new Error(`Deal ID ${dealId} was created, but Master Contract ${args.mc.mcNumber} could not be moved to In Use: ${why}`)
   }
-  return { dealId }
+  return { dealId, dealType: String(columns['ZDEAL_TYPE']), dealDesc: String(columns['ZDEAL_DESC']) }
 }
 
 // ---------------------------------------------------------------- existing Deal IDs
@@ -218,7 +219,10 @@ export function listsTransaction(row: FxRow, companyCode: string, transaction: s
  * Adds one SAP transaction to an existing Deal ID, in its next free slot, as FORM update_spot_deal_id does.
  * Refuses a transaction the Deal ID already lists or a Deal ID with no free slot.
  */
-export async function attachLegToDealId(dealId: string, leg: BlotterRow): Promise<{ slot: number }> {
+export async function attachLegToDealId(
+  dealId: string,
+  leg: BlotterRow,
+): Promise<{ slot: number; dealType: string; dealDesc: string; mcRef: string }> {
   if (!isInSap(leg)) throw new Error(`${leg.transactionNumber || leg.draftLabel || 'This row'} is not a SAP transaction, so it cannot be added to a real Deal ID.`)
   const all = await fxList('tsfDealId', {})
   const row = all.find((r) => txt(r, 'ZDEAL_ID') === dealId)
@@ -235,5 +239,5 @@ export async function attachLegToDealId(dealId: string, leg: BlotterRow): Promis
     [`ZRFHA${slot}`]: clip(leg.transactionNumber, 13),
     ...(await changedStamp()),
   })
-  return { slot }
+  return { slot, dealType: txt(row, 'ZDEAL_TYPE'), dealDesc: txt(row, 'ZDEAL_DESC'), mcRef: txt(row, 'ZMC_REF') }
 }
