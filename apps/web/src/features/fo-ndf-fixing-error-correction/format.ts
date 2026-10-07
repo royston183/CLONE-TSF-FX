@@ -22,8 +22,13 @@ export function money(v: number): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function rate(v: number): string {
+export function rate(v: number | null): string {
+  if (v === null) return ''
   const n = Number(v)
   if (!Number.isFinite(n)) return ''
   return n.toFixed(6)
 }
+
+/** The Old Fixing Rate as shown: NDF_RATE is served by no API yet, so a missing one says so. */
+export const OLD_RATE_WAITING = 'WAITING FOR API'
+export const oldRateText = (v: number | null): string => (v === null ? OLD_RATE_WAITING : rate(v))

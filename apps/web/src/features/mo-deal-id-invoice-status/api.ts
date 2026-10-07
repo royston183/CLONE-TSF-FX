@@ -16,8 +16,10 @@
  *
  * Read-only, like the report. What stays empty, and why:
  *  - D1(USD) (UTI_AMT): summed from ZSGTSFV_FX + ZSGTSFV_OP by ZTSF_MC_REF_NO / ZTSF_DEAL_ID.
- *    The middleware's "tsfvFx" lacks those columns and no option view is served, so the column
- *    shows '—' and the screen says WAITING FOR API (checked live with fxColumns).
+ *    The FX part is now rebuilt from TrmFxApp (Deal ID / Deal Type / MC ref) joined with
+ *    FxTransaction (currencies, amounts) by mo-deal-id-invoice-mark/amount.ts (loadUsdAmounts).
+ *    ZSGTSFV_OP (option deals) has no service, so the amount is the FX part only and the screen
+ *    says so (WAITING FOR API, narrowed to the option legs).
  *  - Inv Status / T1(USD): the report reads ZSGTSFTR_BIL_ADJ but its assignment block is
  *    commented out, so it shows nothing there either — reproduced as blank.
  *
@@ -27,14 +29,12 @@
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
-import { fxColumns, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadUsdAmounts } from '../mo-deal-id-invoice-mark/amount.ts'
 import { MODELS, ORIGIN_OPTIONS, REGION_OPTIONS, STATUS_MAP } from './data.ts'
 import type { CodeDesc, DealRow } from './types.ts'
 
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
-
-/** The columns FORM get_data reads from ZSGTSFV_FX (and ZSGTSFV_OP) to sum D1(USD). */
-export const UTILIZATION_COLUMNS = ['BUKRS', 'RFHA', 'ZTSF_DEAL_ID', 'ZTSF_DEAL_TYPE', 'ZTSF_MC_REF_NO', 'CURR1', 'CURR2', 'AMT1', 'AMT2'] as const
 
 /** 'sap': ZSGTSFTR_DEALID and its masters were read; 'unavailable': they could not be. */
 export type DataSource = 'sap' | 'unavailable'
@@ -50,36 +50,16 @@ const iso = (value: string | null | undefined): string => (value ? String(value)
 
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-    const [ctx, deals, utilization] = await Promise.all([loadDealContext(signal), listDealIds({}, signal), utilizationGate(signal)])
+    const [ctx, deals] = await Promise.all([loadDealContext(signal), listDealIds({}, signal)])
     applyMasters(ctx)
-    return { rows: deals.map((d) => toRow(d, ctx)), source: 'sap', notes: [utilization] }
+    const usd = await loadUsdAmounts(new Map(deals.map((d) => [txt(d, 'ZDEAL_ID'), txt(d, 'ZMC_REF')])), signal)
+    return { rows: deals.map((d) => toRow(d, ctx, usd.amounts?.get(txt(d, 'ZDEAL_ID')) ?? null)), source: 'sap', notes: [usd.note] }
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[fx] Deal ID invoice status: ZSGTSFTR_DEALID unavailable', error)
     clearMasters()
     return { rows: [], source: 'unavailable', notes: [`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read`] }
   }
-}
-
-/**
- * D1(USD) needs ZSGTSFV_FX and ZSGTSFV_OP with the TSF deal columns. ZSGTSFV_OP has no
- * middleware resource at all, so the sum cannot be reproduced; the message names exactly
- * what is missing from what is served.
- */
-export async function utilizationGate(signal?: AbortSignal): Promise<string> {
-  let missing: string[] = [...UTILIZATION_COLUMNS]
-  try {
-    const served = new Set(await fxColumns('tsfvFx', signal))
-    missing = UTILIZATION_COLUMNS.filter((c) => !served.has(c))
-  } catch (error) {
-    if (isAbort(error)) throw error
-  }
-  return utilizationReason(missing)
-}
-
-export function utilizationReason(missingFxColumns: readonly string[]): string {
-  const fx = missingFxColumns.length ? `ZSGTSFV_FX (middleware "tsfvFx") does not serve ${missingFxColumns.join(', ')}; ` : ''
-  return `D1(USD): WAITING FOR API — ${fx}ZSGTSFV_OP (option deals) has no middleware resource`
 }
 
 function clearMasters(): void {
@@ -130,7 +110,8 @@ function applyMasters(ctx: DealContext): void {
   Object.assign(STATUS_MAP, fx1Statuses(ctx.statuses))
 }
 
-export function toRow(d: DealIdRow, ctx: DealContext): DealRow {
+/** `utiAmt` is D1(USD) from loadUsdAmounts; null (blank) when TrmFxApp / FxTransaction could not be read. */
+export function toRow(d: DealIdRow, ctx: DealContext, utiAmt: number | null = null): DealRow {
   const { mc, comp } = dealJoin(ctx, d)
   const status = txt(d, 'ZDEAL_STAT')
   return {
@@ -152,8 +133,8 @@ export function toRow(d: DealIdRow, ctx: DealContext): DealRow {
     modelId: mc ? txt(mc, 'ZMOD_ID') : '',
     region: comp ? txt(comp, 'ZREG_ID') : '',
     modelDesc: mc ? txt(mc, 'ZMOD_DESC') : '',
-    // ZSGTSFV_FX / ZSGTSFV_OP are not served with their TSF columns: WAITING FOR API.
-    utiAmt: null,
+    // ZSGTSFV_FX part from TrmFxApp + FxTransaction; the ZSGTSFV_OP (option) part has no service.
+    utiAmt,
     // The report's BIL_ADJ assignment is commented out: always blank.
     invStatus: '',
     t1Amt: null,

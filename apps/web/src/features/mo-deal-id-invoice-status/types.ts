@@ -20,7 +20,7 @@ export type DealRow = {
   modelId: string
   region: string
   modelDesc: string
-  /** D1(USD) from ZSGTSFV_FX / ZSGTSFV_OP; null while those views are not served (WAITING FOR API). */
+  /** D1(USD): FX legs from TrmFxApp + FxTransaction (option legs have no service); null when those cannot be read. */
   utiAmt: number | null
   invStatus: string
   t1Amt: number | null

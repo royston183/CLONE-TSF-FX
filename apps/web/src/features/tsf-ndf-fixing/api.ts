@@ -8,50 +8,34 @@
  *                           ZTCODE, "<code> - <name>"  (SLC middleware "trdGrp")
  *   Worklist                FORM get_data: ZSGTSFV_FX WHERE bukrs IN s_bukrs AND txn_status = '07'
  *                           AND saktiv <> 3 AND v_date = p_date; then ztrcode = p_trd and
- *                           sgsart+2(1) = 'D'   (middleware "tsfvFx" -> WAITING FOR API, see below)
+ *                           sgsart+2(1) = 'D'. The legacy view lacks the VTBFHA appends, so the
+ *                           same selection is read from TrmFxApp (service "trmfxapp") joined with
+ *                           FxTransaction (service "fx"):
+ *                             txn_status = '07'     TrmFxApp.TxnStatus eq '07' (server side)
+ *                             saktiv <> 3           FxTransaction.ActiveStatus <> '3'
+ *                             sgsart+2(1) = 'D'     FxTransaction.ProductType 3rd character
+ *                             v_date = p_date       FxTransaction.ValueDate
+ *                             ztrcode = p_trd       TrmFxApp.Ztrcode (name: ZSGTRMTR_TRD_GRP)
+ *                           Blank on a status-07 deal because nothing has written them yet: NDF_DATE,
+ *                           NDF_REF, CASH_CURR, ZCASH_AMT (all set by the fixing itself); not served by
+ *                           any service either way. NDF_FO_REM / NDF_MO_REM come from TrmFxApp.
  *   9001 default rate       TCURR kurst 'RBI', fcurr/tcurr = curr1/curr2, gdatu = p_date, USD:INR only
  *   9001 rate scaling       TCURF kurst 'MTM'
  *   9001 reference text     FTRT_FIX_DEF_T fix_id -> fix_id_text
  */
 import { apiFetch, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { loadFxWithApp, statusFilter, type TrmFxApp } from '../../shared/fx/app-str.ts'
+import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import type { NdfDeal, Side } from './types.ts'
 
 const companyApi = service('companycode')
 const middleware = service('middleware')
 
 export const WAITING = 'WAITING FOR API'
-
-/** The middleware resource behind ZSGTSFV_FX. */
-export const FX_VIEW = 'tsfvFx'
-
-/** ZSGTSFV_FX fields GET_DATA filters on or the screen shows. */
-export const VIEW_REQUIRED_COLUMNS = [
-  'BUKRS',
-  'RFHA',
-  'SAKTIV',
-  'SGSART',
-  'TXN_STATUS',
-  'V_DATE',
-  'ZTRCODE',
-  'TRD_NAME',
-  'NDF_DATE',
-  'NDF_REF',
-  'CPAIR',
-  'CASH_CURR',
-  'ZCASH_AMT',
-  'BS_1',
-  'CURR1',
-  'CURR2',
-  'AMT1',
-  'AMT2',
-  'OSPOT',
-  'OSWAP',
-  'OTOT_RATE',
-  'EXT_STAT_DESC',
-] as const
 
 /** GET_DATA's constants. */
 export const TXN_STATUS_TO_FIX = '07'
@@ -93,51 +77,66 @@ export function companyOptions(rows: readonly { CompanyCode?: string; CompanyCod
     .sort(sortBy((o) => o.value))
 }
 
-export const missingColumns = (have: readonly string[], need: readonly string[]) => {
-  const present = new Set(have.map((c) => c.toUpperCase()))
-  return need.filter((c) => !present.has(c))
+const ACTIVE_REVERSED = '3'
+const n = (v: unknown): number => {
+  const x = Number(v)
+  return Number.isFinite(x) ? x : 0
 }
 
-/** One ZSGTSFV_FX row as a worklist deal. */
-export function dealFromView(r: FxRow): NdfDeal {
-  const c1 = txt(r, 'CURR1')
-  const c2 = txt(r, 'CURR2')
-  return {
-    id: txt(r, 'RFHA'),
-    company: txt(r, 'BUKRS'),
-    trader: txt(r, 'TRD_NAME'),
-    traderCode: txt(r, 'ZTRCODE'),
-    side: (txt(r, 'BS_1') === 'Sell' ? 'Sell' : 'Buy') as Side,
-    pair: `${c1}/${c2}`,
-    amt1: num(r['AMT1']),
-    c1,
-    amt2: num(r['AMT2']),
-    c2,
-    spot: num(r['OSPOT']),
-    swap: num(r['OSWAP']),
-    fwd: num(r['OTOT_RATE']),
-    date: dmyFromIso(txt(r, 'NDF_DATE')),
-    vDate: dmyFromIso(txt(r, 'V_DATE')),
-    ndf: num(r['ZCASH_AMT']),
-    cashCurr: txt(r, 'CASH_CURR'),
-    cpair: txt(r, 'CPAIR'),
-    ref: txt(r, 'NDF_REF'),
-    status: txt(r, 'EXT_STAT_DESC'),
-    txnStatus: txt(r, 'TXN_STATUS'),
-    remarks: '',
-    moRemarks: '',
-  }
-}
+/** sgsart+2(1) = 'D': an NDF product type (12D). */
+export const isNdfProduct = (productType: string | undefined): boolean => (productType ?? '').charAt(2) === 'D'
 
-/** GET_DATA's in-program deletes: P_TRD when given, and NDF product types only (sgsart+2(1) = 'D'). */
-export function eligible(rows: readonly FxRow[], traderCode: string): FxRow[] {
+/**
+ * GET_DATA's in-program deletes on the joined rows: saktiv <> 3, NDF product types only, v_date = P_DATE
+ * (ValueDate) and P_TRD when given. TXN_STATUS 07 is already in the TrmFxApp filter.
+ */
+export function eligible(rows: readonly { fx: FxTransaction; app: TrmFxApp }[], valueDateIso: string, traderCode = '') {
   return rows.filter(
-    (r) =>
-      txt(r, 'TXN_STATUS') === TXN_STATUS_TO_FIX &&
-      txt(r, 'SAKTIV') !== '3' &&
-      txt(r, 'SGSART').charAt(2) === 'D' &&
-      (!traderCode || txt(r, 'ZTRCODE') === traderCode),
+    ({ fx, app }) =>
+      app.TxnStatus === TXN_STATUS_TO_FIX &&
+      fx.ActiveStatus !== ACTIVE_REVERSED &&
+      isNdfProduct(fx.ProductType) &&
+      (fx.ValueDate ?? '').slice(0, 10) === valueDateIso &&
+      (!traderCode || (app.Ztrcode ?? '') === traderCode),
   )
+}
+
+/**
+ * One transaction (SAP) with its TrmFxApp row as a worklist deal. Leg 1 is SAP's lead currency; amounts carry
+ * the sign the old view had (bought leg +, sold leg -). NDF_DATE, NDF_REF, CASH_CURR, ZCASH_AMT are blank:
+ * no service serves them, and a deal waiting for its fixing has none yet.
+ */
+export function dealFromApp(fx: FxTransaction, app: TrmFxApp, traderNames: Readonly<Record<string, string>> = {}): NdfDeal {
+  const c1 = fx.LeadCurrency || fx.BuyCurrency || ''
+  const c2 = fx.FollowCurrency || fx.SellCurrency || ''
+  const buysLead = fx.BuyCurrency === c1
+  const code = app.Ztrcode ?? ''
+  return {
+    id: fx.FinancialTransaction,
+    company: fx.CompanyCode,
+    trader: traderNames[code] ?? '',
+    traderCode: code,
+    side: buysLead ? 'Buy' : 'Sell',
+    pair: `${c1}/${c2}`,
+    amt1: buysLead ? n(fx.BuyAmount) : -n(fx.SellAmount),
+    c1,
+    amt2: buysLead ? -n(fx.SellAmount) : n(fx.BuyAmount),
+    c2,
+    spot: n(fx.SpotRate),
+    swap: n(fx.SwapRate),
+    fwd: n(fx.ForwardRate),
+    date: '',
+    vDate: dmyFromIso((fx.ValueDate ?? '').slice(0, 10)),
+    ndf: 0,
+    cashCurr: '',
+    cpair: c1 && c2 ? `${c1}:${c2}` : '',
+    ref: '',
+    status: fxTxnStatusLabel(app.TxnStatus ?? ''),
+    txnStatus: app.TxnStatus ?? '',
+    remarks: '',
+    moRemarks: app.NdfMoRem ?? '',
+    foRemarks: app.NdfFoRem ?? '',
+  }
 }
 
 /* ---------------- reads ---------------- */
@@ -169,22 +168,30 @@ export async function loadTraders(signal?: AbortSignal): Promise<Avail<Option[]>
   }
 }
 
-/**
- * GET_DATA for one Fixing Date. Checks the view's columns first: without TXN_STATUS, V_DATE and
- * the NDF fields the eligibility cannot be reproduced, so the worklist says WAITING FOR API
- * instead of listing unrelated FX transactions.
- */
+/** ZTCODE -> trader name (ZSGTRMTR_TRD_GRP); a failed read leaves the names blank. */
+export async function loadTraderNames(signal?: AbortSignal): Promise<Record<string, string>> {
+  const out: Record<string, string> = {}
+  try {
+    for (const r of await fxList('trdGrp', {}, { signal })) {
+      const code = txt(r, 'ZTCODE')
+      if (code && !(code in out)) out[code] = txt(r, 'ZTRADER')
+    }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[ndf-fixing] trader names unavailable', error)
+  }
+  return out
+}
+
+/** GET_DATA for one Fixing Date: TrmFxApp rows in TXN_STATUS 07, joined with FxTransaction (see the header). */
 export async function loadWorklist(fixingDateDmy: string, signal?: AbortSignal): Promise<Avail<NdfDeal[]>> {
   try {
-    const missing = missingColumns(await fxColumns(FX_VIEW, signal), VIEW_REQUIRED_COLUMNS)
-    if (missing.length)
-      return { state: 'waiting', reason: `${WAITING} — ZSGTSFV_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}.` }
     const iso = isoOf(fixingDateDmy)
     if (!iso) return { state: 'ok', value: [] }
-    const rows = await fxList(FX_VIEW, { TXN_STATUS: TXN_STATUS_TO_FIX, 'SAKTIV[ne]': '3', V_DATE: iso }, { signal })
-    return { state: 'ok', value: eligible(rows, '').map(dealFromView) }
+    const [joined, names] = await Promise.all([loadFxWithApp(statusFilter([TXN_STATUS_TO_FIX]), signal), loadTraderNames(signal)])
+    return { state: 'ok', value: eligible(joined, iso).map(({ fx, app }) => dealFromApp(fx, app, names)) }
   } catch (error) {
-    return failure('ZSGTSFV_FX', error)
+    return failure('NDF transactions (TrmFxApp / FxTransaction)', error)
   }
 }
 

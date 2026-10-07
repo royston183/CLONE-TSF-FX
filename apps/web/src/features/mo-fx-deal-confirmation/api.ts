@@ -1,17 +1,18 @@
 import { ApiError, apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, type FxRow } from '../../shared/fx/mw.ts'
-import { COMPANY_CODES, COMPANY_INFO, SAP_TXN_DESC, STATUS } from './data.ts'
+import { loadMoAppRecords, transactionKey, type MoAppRecord } from './appStr.ts'
+import { COMPANY_CODES, COMPANY_INFO, SAP_TXN_DESC, TRADERS, dealStatusOf } from './data.ts'
 import type { Deal } from './types.ts'
 
 /**
- * The FX half of the MO confirmation queue, from the FxTransaction OData service
- * (ZFS_SB_TRMFX_O4_API). Match & Release runs its bound `Settle` action, which calls
- * BAPI_FTR_FXT_SETTLE; nothing else the original program does is exposed by that service:
+ * The FX half of the MO confirmation queue. The worklist is read from ZSGTSFTR_APP_STR (TXN_STATUS 03 / 04 / 06,
+ * BLOTTER_DATE up to the chosen day), and each record is joined by BUKRS + RFHA to its transaction in the
+ * FxTransaction OData service (ZFS_SB_TRMFX_O4_API). Match & Release runs that service's bound `Settle` action,
+ * which calls BAPI_FTR_FXT_SETTLE; nothing else the original program does is exposed by it:
  *
- *   - BAPI_FTR_FXT_CHANGE (the external reference / post-custom-update) has no action, and the
- *     entity has no field for an external reference, internal reference or remark;
- *   - "Correction Required" is a status this screen keeps itself — SAP has no field for it.
+ *   - BAPI_FTR_FXT_CHANGE (the external reference) has no action, and the entity has no external reference field;
+ *   - the workflow status, remarks and Internal Ref are APP_STR data (see appStr.ts / workflow.ts).
  *
  * The Options half stays on its own dummy rows: the options BAPIs are not part of this service.
  */
@@ -85,7 +86,17 @@ export function dealIdsByTransaction(dealRows: readonly FxRow[]): Map<string, st
   return out
 }
 
-export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = new Map()): Deal | null {
+/** The Deal IDs flagged over their limit (ZSGTSFTR_DEALID-ZOVER_UTL = X). */
+export function overUtilisedDealIds(dealRows: readonly FxRow[]): Set<string> {
+  return new Set(dealRows.filter((r) => txt(r, 'ZOVER_UTL') === 'X').map((r) => txt(r, 'ZDEAL_ID')))
+}
+
+export function toDeal(
+  d: FxTransaction,
+  dealIds: ReadonlyMap<string, string> = new Map(),
+  rec?: MoAppRecord,
+  overUtil: ReadonlySet<string> = new Set(),
+): Deal | null {
   if (d.ActiveStatus === ACTIVE_REVERSED) return null
   const tradeDate = parseDay(d.ContractDate)
   const valueDate = parseDay(d.ValueDate)
@@ -98,9 +109,13 @@ export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = 
   const followAmt = n(buysLead ? d.SellAmount : d.BuyAmount)
   const info = COMPANY_INFO[d.CompanyCode]
   const desc = SAP_TXN_DESC[d.TransactionType]
+  const txnStatus = (rec?.TxnStatus ?? '').trim()
+  const dealId = dealIds.get(dealKey(d.CompanyCode, d.FinancialTransaction)) || rec?.ZtsfDealID || ''
+  const trader = TRADERS.find((t) => t.code === rec?.Ztrcode)
+  const isNdf = d.TransactionType === '631' || d.TransactionType === '632'
   return {
     id: dealKey(d.CompanyCode, d.FinancialTransaction),
-    dealId: dealIds.get(dealKey(d.CompanyCode, d.FinancialTransaction)) ?? '',
+    dealId,
     dealType: 'FX',
     coCode: d.CompanyCode,
     transaction: d.FinancialTransaction,
@@ -118,10 +133,14 @@ export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = 
     fixingDate: valueDate,
     valueDate,
     allInRate: n(d.ForwardRate),
-    status: d.ActivityCategory === CATEGORY_SETTLED ? STATUS.MATCHED : STATUS.UNMATCHED,
-    traderCode: '',
-    traderName: '',
-    traderShort: '',
+    status: dealStatusOf(txnStatus),
+    txnStatus,
+    dealTypeCode: rec?.ZtsfDealType ?? '',
+    settledInSap: d.ActivityCategory === CATEGORY_SETTLED,
+    overUtilised: !!dealId && overUtil.has(dealId),
+    traderCode: trader?.code ?? '',
+    traderName: trader ? `${trader.code} - ${trader.name}` : '',
+    traderShort: trader?.shortName ?? '',
     groupDesc: info?.group ?? '',
     companyName: info?.companyName ?? '',
     profitCenterDesc: info?.profitCenter ?? '',
@@ -129,21 +148,53 @@ export function toDeal(d: FxTransaction, dealIds: ReadonlyMap<string, string> = 
     accounting: '',
     assignment: '',
     fixRefId: '',
-    foRemark: '',
-    moRemark: '',
+    foRemark: (isNdf ? rec?.NdfFoRem : '') ?? '',
+    moRemark: (isNdf ? rec?.NdfMoRem : '') ?? '',
     live: true,
   }
 }
 
-/** The FX deals of the screen's company codes. The service cannot filter on dates, so the screen does. */
-export async function loadFxDeals(signal?: AbortSignal): Promise<Deal[]> {
-  const filter = COMPANY_CODES.map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
-  const [rows, dealRows] = await Promise.all([
-    list<FxTransaction>(FX, { filter, top: 1000 }, signal ? { signal } : undefined),
+/** Transactions per request: the filter is one `(CompanyCode eq .. and FinancialTransaction eq ..)` per key. */
+const CHUNK = 25
+
+async function loadFxTransactions(records: readonly MoAppRecord[], signal?: AbortSignal): Promise<FxTransaction[]> {
+  const chunks: MoAppRecord[][] = []
+  for (let i = 0; i < records.length; i += CHUNK) chunks.push(records.slice(i, i + CHUNK))
+  const pages = await Promise.all(
+    chunks.map((chunk) =>
+      list<FxTransaction>(
+        FX,
+        {
+          filter: chunk
+            .map((r) => `(CompanyCode eq ${odataString(r.CompanyCode)} and FinancialTransaction eq ${odataString(r.FinancialTransaction)})`)
+            .join(' or '),
+          top: CHUNK,
+        },
+        signal ? { signal } : undefined,
+      ),
+    ),
+  )
+  return pages.flat()
+}
+
+/**
+ * The MO worklist of FX deals: APP_STR records in status 03 / 04 / 06 with BLOTTER_DATE up to `upTo` for the given
+ * company codes, each joined on BUKRS + RFHA to its SAP transaction. A record with no FxTransaction (an Options deal)
+ * is not an FX row and is left out; so is a reversed deal. The screen is rebuilt from the backend alone.
+ */
+export async function loadFxDeals(upTo: Date, companyCodes: readonly string[] = COMPANY_CODES, signal?: AbortSignal): Promise<Deal[]> {
+  const [records, dealRows] = await Promise.all([
+    loadMoAppRecords(upTo, companyCodes, signal),
     fxList('tsfDealId', {}, { sort: '-ZDEAL_ID', signal }),
   ])
+  if (!records.length) return []
+  const txns = await loadFxTransactions(records, signal)
+  const recordOf = new Map(records.map((r) => [transactionKey(r.CompanyCode, r.FinancialTransaction), r]))
   const dealIds = dealIdsByTransaction(dealRows)
-  return rows.map((d) => toDeal(d, dealIds)).filter((d): d is Deal => d !== null)
+  const overUtil = overUtilisedDealIds(dealRows)
+  return txns
+    .map((t) => toDeal(t, dealIds, recordOf.get(transactionKey(t.CompanyCode, t.FinancialTransaction)), overUtil))
+    .filter((d): d is Deal => d !== null)
 }
 
 /** Settles one deal in SAP (BAPI_FTR_FXT_SETTLE through the bound Settle action). */
@@ -167,23 +218,4 @@ export function sapMessage(e: unknown): string {
     if (causes.length) return [...new Set(causes)].join(' ')
   }
   return e instanceof Error ? e.message : String(e)
-}
-
-export type SettleOutcome = { settled: string[]; failed?: { id: string; reason: string } }
-
-/**
- * Settles the deals in order and stops at the first SAP refusal: each settlement is its own SAP
- * commit, so the ones already done stay done and the rest are not attempted.
- */
-export async function settleFxDeals(deals: readonly Deal[]): Promise<SettleOutcome> {
-  const settled: string[] = []
-  for (const d of deals) {
-    try {
-      await settleFxDeal(d.coCode, d.transaction)
-      settled.push(d.id)
-    } catch (e) {
-      return { settled, failed: { id: d.id, reason: sapMessage(e) } }
-    }
-  }
-  return { settled }
 }

@@ -26,17 +26,12 @@ export const CANCELLED_STATUS = '30'
  * not placeholders.
  */
 export const GAPS = {
-  confirm:
-    'SAP gap: Confirm needs the invoice plan (currency string ZSGTSFTR_CUR_STR and profit margin ZSGTSFTR_ORG_PRO are not readable), the SAP exchange rate (BAPI_EXCHANGERATE_GETDETAIL), the lead currency (ZSGTRMFM_LEAD_CURR), a server-side number from SNRO ZSGTRMNR14 for the invoice reference, a write to ZSGTSFTR_INV_REF, and BAPI_FTR_FXT_CHANGE to stamp the Master Contract on the transactions.',
-  editPair:
-    'SAP gap: Edit Deal Pair rewrites the TSF fields of the old and new transaction through BAPI_FTR_FXT_CHANGE (ZSGTRMFM_VTBFHA_EXPORT), which the FxTransaction service does not offer.',
-  reverse:
-    'SAP gap: Reverse MO Confirmation sets the status to 01 and then deletes the saved invoice plan (ZSGTSFTR_INV_REF). The middleware client has no delete, and running only the first step would leave the deal half-reversed.',
-  premium: 'SAP gap: Premium Adjustment reads ZSGTSFCDS_OPTION, and no FX options service is registered.',
-  dms: 'SAP gap: no document (DMS) service is registered for ZSGTSFFM_DMS, so the Deal ID documents cannot be shown or attached.',
   ssDeal:
-    'SAP gap: Confirm & Save SS Deal ID creates the short-straddle deal in SAP and uses the same missing pieces as Confirm.',
+    'Not available yet: Confirm & Save SS Deal ID creates the short-straddle deal from the option legs (ZSGTSFCDS_OPTION), which no service provides.',
+  premium:
+    'Not available yet: Premium Adjustment needs the option data (ZSGTSFCDS_OPTION, no FX options service is registered) and an RBI exchange-rate API (BAPI_EXCHANGERATE_GETDETAIL, rate type RBI). The rate must come from the backend, not the browser.',
+  dms: 'Not available yet: no document (DMS) service is registered for ZSGTSFFM_DMS (Deal ID, category 11), so the Deal ID documents cannot be shown or attached.',
   options:
-    'SAP gap: this is an option deal (FX2). Its transactions come from ZSGTSFCDS_OPTION and no FX options service is registered, so only the transaction numbers are shown.',
+    'This is an option deal (FX2). Its transactions come from ZSGTSFCDS_OPTION and no FX options service is registered, so only the transaction numbers are shown.',
   pl: 'The planned P&L is worked out in SAP from the exchange rate, the currency string and the profit margin, none of which can be read yet. The figures here are the ones stored on the Deal ID when it was confirmed.',
 } as const

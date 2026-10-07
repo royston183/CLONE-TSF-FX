@@ -14,7 +14,13 @@
  *                 source: dependency note "deal trade post.txt"; WHERE not exported (key reads only).
  *                 Any status restriction the program puts on P_DEAL is not exported and not applied.
  *   FX Deal Settlement   ZSGTSFCDS_FX / ZSGTSFCDS_OPTION WHERE ztsf_deal_id = <deal>
- *                 -> WAITING FOR API: "tsfvFx" lacks the columns; ZSGTSFCDS_OPTION has no resource
+ *                 FX legs: ZSGTSFTR_APP_STR (TrmFxApp) WHERE ZtsfDealID = <deal>, each joined by CompanyCode +
+ *                 FinancialTransaction to FxTransaction (the "tsfvFx" view lacks the Deal ID column). The legs
+ *                 are every row of the Deal ID, as the header comment states no further selection; reversed
+ *                 ones are kept. Entity is the company code (TSF entity ZCOM_ID has no source).
+ *                 STILL WAITING FOR API: ZSGTSFCDS_OPTION (option legs, no resource) and the legs' FI documents
+ *                 FI Doc 1 / 2 (BKPF, no resource) - those cells say so instead of "not posted"; Status is
+ *                 'Confirmed' because 'Posted' would need the documents; DSS Deal has no source.
  *   Trade Invoice Settlement   ZSGTSFTR_TRD_POS WHERE zdeal_id = <deal> (+ ZSGTSFTR_SET_TYP / _SET_FX /
  *                 _TRD_ACC, BKPF)  -> WAITING FOR API: ZSGTSFTR_TRD_POS has no middleware resource
  *                 (middleware "tradePosition" is the SLC table ZSGSLCTR_TRD_POS, not this one)
@@ -27,37 +33,22 @@
 import { dealStatusText } from '../../shared/fx/deal-id.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
-import { dmyFromIso } from '../../shared/fx/sap.ts'
-import type { Deal, Outcome, ToastMessage } from './types.ts'
+import { odataString } from '@slc/api-client'
+import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import type { Deal, FxLeg, Outcome, ToastMessage } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const PROGRAM = 'ZSGTSF_RDEAL_TRD_POST'
-export const FX_VIEW = 'tsfvFx'
 
-/** ZSGTSFCDS_FX fields the dependency note lists, ZTSF_DEAL_ID (the key the legs are read by) included. */
-// prettier-ignore
-export const LEG_VIEW_COLUMNS = [
-  'BUKRS', 'RFHA', 'RFHAZUL', 'DBLFZ', 'DELFZ', 'XTEXT', 'SGSART', 'PRCTR', 'RBUSA', 'KONTRH', 'BP_NAME', 'ZCOM_ID',
-  'ZTSF_EXE_CO', 'BS_1', 'BS_2', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP', 'OTOT_RATE', 'ZTSF_MC_REF_NO',
-  'TXN_STATUS', 'ZTSF_DEAL_TYPE', 'EXT_STAT_DESC', 'ZTSF_DEAL_ID', 'SAKTIV',
-] as const
+/** What the FX Deal Settlement grid still cannot show once the legs come from TrmFxApp + FxTransaction. */
+export const LEGS_STILL_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (option legs) and BKPF (the FI Doc 1 / 2 of each leg, so its Posted status) have no middleware resource.`
 
-export const missingColumns = (have: readonly string[], need: readonly string[]): string[] => {
-  const present = new Set(have.map((c) => c.toUpperCase()))
-  return need.filter((c) => !present.has(c))
-}
-
-/** The FX Deal Settlement gate: ZSGTSFCDS_OPTION has no resource, so the legs are never complete. */
-export function legsWaitingReason(viewColumns: readonly string[] | null): string {
-  const fx =
-    viewColumns === null
-      ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") could not be read`
-      : (() => {
-          const missing = missingColumns(viewColumns, LEG_VIEW_COLUMNS)
-          return missing.length ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}` : ''
-        })()
-  return `${WAITING} — ${fx ? `${fx}; ` : ''}ZSGTSFCDS_OPTION (option legs) has no middleware resource.`
+/** The grid's note: why no leg could be read, that none exists in APP_STR, or what the listed legs still lack. */
+export function legsWaitingReason(failure = '', legCount = 1): string {
+  if (failure) return `${WAITING} — ZSGTSFTR_APP_STR / FxTransaction could not be read: ${failure} ${LEGS_STILL_WAITING}`
+  return legCount ? LEGS_STILL_WAITING : `No FX deal legs for this Deal ID in ZSGTSFTR_APP_STR. ${LEGS_STILL_WAITING}`
 }
 
 export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_TRD_POS (trade invoice settlement rows) has no middleware resource; ${PROGRAM} source not exported (only dependency notes), so the rows built from ZSGTSFTR_SET_TYP / _SET_FX / _TRD_ACC cannot be reproduced.`
@@ -105,8 +96,9 @@ export function toDeal(input: {
   trader: FxRow | undefined
   statuses: readonly FxRow[]
   legsReason: string
+  legs?: readonly FxLeg[]
 }): Deal {
-  const { deal, mc, trader, statuses, legsReason } = input
+  const { deal, mc, trader, statuses, legsReason, legs = [] } = input
   const code = txt(deal, 'ZDEAL_STAT')
   const mcModel = mc ? txt(mc, 'ZMOD_ID') : ''
   return {
@@ -129,7 +121,7 @@ export function toDeal(input: {
     status: Number(code) || 0,
     statusCode: code,
     statusText: dealStatusText({ statuses }, txt(deal, 'ZSUB_TYPE'), code),
-    top: [],
+    top: [...legs],
     inv: [],
     fxWaiting: legsReason,
     invWaiting: INVOICE_WAITING,
@@ -140,13 +132,31 @@ export const normalizeDealId = (raw: string) => raw.trim().toUpperCase()
 
 export type LoadResult = { ok: true; deal: Deal } | { ok: false; message: string }
 
-async function columnsOrNull(resource: string, signal?: AbortSignal): Promise<string[] | null> {
-  try {
-    return await fxColumns(resource, signal)
-  } catch (error) {
-    if (isAbort(error)) throw error
-    return null
+/** One TrmFxApp row joined to its transaction as a grid leg; documents and DSS deal have no source (blank). */
+export function toLeg({ fx, app }: FxWithApp): FxLeg {
+  return {
+    entity: fx.CompanyCode,
+    dealType: (app.ZtsfDealType ?? '').trim(),
+    rfha: fx.FinancialTransaction,
+    buyCurr: fx.BuyCurrency ?? '',
+    buyAmt: Math.abs(num(fx.BuyAmount)),
+    sellCurr: fx.SellCurrency ?? '',
+    sellAmt: Math.abs(num(fx.SellAmount)),
+    rate: num(fx.ForwardRate),
+    status: 'Confirmed',
+    doc1: '',
+    doc2: '',
+    dssDeal: '',
+    sgsart: fx.ProductType ?? '',
   }
+}
+
+/** The FX legs of a Deal ID: its TrmFxApp rows with their transactions, by deal type then transaction number. */
+export async function loadLegs(dealId: string, signal?: AbortSignal): Promise<FxLeg[]> {
+  const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
+  return joined
+    .map(toLeg)
+    .sort((a, b) => a.dealType.localeCompare(b.dealType) || a.rfha.localeCompare(b.rfha))
 }
 
 /** One Deal ID, read by key. Never seed data: an unknown or unreadable Deal ID says so. */
@@ -158,15 +168,29 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
     if (!deal) return { ok: false, message: `No Deal ID '${key}' in ZSGTSFTR_DEALID.` }
     const mcRef = txt(deal, 'ZMC_REF')
     const trdCode = txt(deal, 'ZTRD_CODE')
-    const [mcs, traders, statuses, viewColumns] = await Promise.all([
+    const [mcs, traders, statuses, legsRead] = await Promise.all([
       mcRef ? fxList('masterContract', { ZMC_REF_NO: mcRef }, { signal }) : Promise.resolve([] as FxRow[]),
       trdCode ? fxList('trmTrader', { ZTCODE: trdCode }, { signal }) : Promise.resolve([] as FxRow[]),
       fxList('tsfDealStatus', { ZDEAL_STAT: txt(deal, 'ZDEAL_STAT') }, { signal }),
-      columnsOrNull(FX_VIEW, signal),
+      loadLegs(txt(deal, 'ZDEAL_ID') || key, signal).then(
+        (legs) => ({ legs, failure: '' }),
+        (error: unknown) => {
+          if (isAbort(error)) throw error
+          console.warn('[deal-trd-post] FX legs unavailable', error)
+          return { legs: [] as FxLeg[], failure: messageOf(error) }
+        },
+      ),
     ])
     return {
       ok: true,
-      deal: toDeal({ deal, mc: first(mcs), trader: first(traders), statuses, legsReason: legsWaitingReason(viewColumns) }),
+      deal: toDeal({
+        deal,
+        mc: first(mcs),
+        trader: first(traders),
+        statuses,
+        legs: legsRead.legs,
+        legsReason: legsWaitingReason(legsRead.failure, legsRead.legs.length),
+      }),
     }
   } catch (error) {
     if (isAbort(error)) throw error

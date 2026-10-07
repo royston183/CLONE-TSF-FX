@@ -17,7 +17,7 @@ function cellText(deal: Deal, col: Exclude<Column, { key: 'select' }>): string {
   const v = deal[col.key]
   if (v instanceof Date) return fmtDate(v)
   if (typeof v === 'number') return col.type === 'rate' ? fmtRate(v) : fmtAmount(v)
-  return v || ''
+  return typeof v === 'string' ? v : ''
 }
 
 /**

@@ -1,4 +1,4 @@
-import { money, rate } from './format.ts'
+import { money, oldRateText, rate } from './format.ts'
 import type { NdfRow } from './types.ts'
 
 /** "Transaction Details": the legacy #detailOverlay, opened via the Transaction hotspot or a row double-click. */
@@ -15,7 +15,7 @@ export function DetailModal({ row, onClose }: { row: NdfRow; onClose: () => void
     ['Fixing Date', row.fixDate],
     ['Fixing Ref', row.fixRef],
     ['Fixing Ref Description', row.fixRefName],
-    ['Old Fixing Rate', rate(row.oldRate)],
+    ['Old Fixing Rate', oldRateText(row.oldRate)],
     ['Trader', row.trader],
     ['Business Partner', row.partner],
     ['Transaction Status', row.status],

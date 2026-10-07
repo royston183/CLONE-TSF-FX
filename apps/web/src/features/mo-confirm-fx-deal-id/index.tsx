@@ -4,11 +4,13 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { cancelDeal, loadDeal as loadDealFromSap, loadDealIndex, type DealIndexEntry, type LoadedDeal } from './api.ts'
+import { loadReplacementCandidates, loadReplacementReference, partialFailureMessage, replaceDealTransaction, reverseMoConfirmation, type OpResult, type ReplacementCandidate } from './analysis.ts'
+import { confirmPrepared, prepareConfirmation, type Prepared } from './analysisConfirm.ts'
 import { GAPS } from './data.ts'
 import { DealDetails } from './DetailTables.tsx'
 import { FxLegTable } from './FxLegTable.tsx'
 import { actionVisibility, legNote, nextSort, quickPickLabel, resolveDealId, sortedFilteredLegs, toggleLeg } from './logic.ts'
-import { PromptModal } from './Modals.tsx'
+import { ConfirmModal, EditPairModal, PromptModal, type ConfirmPreview } from './Modals.tsx'
 import { InvoiceTable, PlTable } from './PlanTables.tsx'
 import './mo-confirm-fx-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -32,6 +34,18 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  * Edit Deal Pair, Reverse MO Confirmation, Premium Adjustment, DMS and the SS confirmation.
  * Nothing is mocked and nothing is written that SAP has not accepted.
  */
+/** The screen's view of a calculated confirmation. */
+function previewOf(p: Prepared): ConfirmPreview {
+  return {
+    mcRef: p.mcRef,
+    contracts: p.contracts.map((m) => ({ ref: String(m['ZMC_REF_NO'] ?? ''), desc: String(m['ZMC_DESC'] ?? '') })),
+    rate: p.rate,
+    rateDate: p.rateDate,
+    lines: p.lines.map((l) => ({ ttype: l.ZTTYPE, link: l.linked, seller: l.seller, buyer: l.buyer, currency: l.ZTRD_CURR, amount: l.ZAMT, rate: l.ZEX_RATE, invAmount: l.ZINV_AMT, reused: l.reused })),
+    pl: { amount: p.confirm.pl?.pl ?? 0, localAmount: p.confirm.pl?.localAmount ?? 0, localCurrency: p.confirm.pl?.localCurrency ?? '' },
+  }
+}
+
 export default function MoConfirmFxDealId() {
   const [index, setIndex] = useState<readonly DealIndexEntry[]>([])
   const [loaded, setLoaded] = useState<LoadedDeal | null>(null)
@@ -44,6 +58,10 @@ export default function MoConfirmFxDealId() {
   const [fxSearch, setFxSearch] = useState('')
   const [sort, setSort] = useState<Sort>({ key: null, dir: 1 })
   const [modal, setModal] = useState<ModalId | null>(null)
+  const [pair, setPair] = useState<{ candidates: ReplacementCandidate[]; loading: boolean; error: string | null }>({ candidates: [], loading: false, error: null })
+  /** Set when Reverse MO Confirmation stopped after the status step; the next run finishes the deletion only. */
+  const [confirmState, setConfirmState] = useState<{ loading: boolean; reason: string | null; prepared: Prepared | null }>({ loading: false, reason: null, prepared: null })
+  const [reverseResume, setReverseResume] = useState<string | null>(null)
 
   const [toast, setToast] = useState<Toast | null>(null)
   const toastSeq = useRef(0)
@@ -162,6 +180,101 @@ export default function MoConfirmFxDealId() {
     await refreshIndex()
   }
 
+
+  /* ---------- Reverse MO Confirmation: Deal ID back to 01, invoice references deleted ---------- */
+
+  /** Reports a finished or stopped run, then re-reads the deal: a partial failure says what was kept. */
+  const finishOp = async (result: OpResult, success: string, dealId: string): Promise<boolean> => {
+    closeModals()
+    showToast(result.ok ? success : partialFailureMessage(result), result.ok ? 'success' : 'error')
+    await readDeal(dealId)
+    await refreshIndex()
+    return result.ok
+  }
+
+  const confirmReverse = async () => {
+    if (!deal) return
+    setBusy(true)
+    try {
+      const result = await reverseMoConfirmation(deal.dealId, { resume: reverseResume === deal.dealId })
+      const done = await finishOp(result, 'MO confirmation reversed; the Deal ID is Created again.', deal.dealId)
+      setReverseResume(!done && result.steps.some((s) => s.status === 'done') ? deal.dealId : null)
+    } catch (error) {
+      closeModals()
+      showToast(messageOf(error), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /* ---------- Edit Deal Pair ---------- */
+
+  const selectedLeg = deal?.legs.find((l) => l.rfha === selected) ?? null
+
+  const openEditPair = async () => {
+    if (!selectedLeg) return
+    setPair({ candidates: [], loading: true, error: null })
+    setModal('editPair')
+    try {
+      const ref = await loadReplacementReference({ bukrs: selectedLeg.bukrs, rfha: selectedLeg.rfha })
+      setPair({ candidates: await loadReplacementCandidates(ref), loading: false, error: null })
+    } catch (error) {
+      setPair({ candidates: [], loading: false, error: messageOf(error) })
+    }
+  }
+
+  const applyEditPair = async (newRfha: string) => {
+    if (!deal || !selectedLeg) return
+    const next = pair.candidates.find((c) => c.rfha === newRfha)
+    if (!next) return
+    setBusy(true)
+    try {
+      const result = await replaceDealTransaction({
+        dealId: deal.dealId,
+        slot: selectedLeg.dealType,
+        oldTxn: { bukrs: selectedLeg.bukrs, rfha: selectedLeg.rfha },
+        newTxn: { bukrs: next.bukrs, rfha: next.rfha },
+        dealDesc: deal.dealDesc,
+        mcRef: deal.mcRef,
+      })
+      if (await finishOp(result, `Transaction ${next.rfha} replaces ${selectedLeg.rfha} in ${selectedLeg.dealType}.`, deal.dealId)) setSelected(null)
+    } catch (error) {
+      closeModals()
+      showToast(messageOf(error), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /* ---------- Change / Confirm ---------- */
+
+  /** Calculates the plan and P&L for the Deal ID (and the chosen Master Contract) and shows them; nothing is saved yet. */
+  const openConfirm = async (mcRef = '') => {
+    if (!deal) return
+    setConfirmState({ loading: true, reason: null, prepared: null })
+    setModal('confirm')
+    try {
+      const result = await prepareConfirmation(deal.dealId, deal.legs, mcRef)
+      setConfirmState(result.ok ? { loading: false, reason: null, prepared: result } : { loading: false, reason: result.reason, prepared: null })
+    } catch (error) {
+      setConfirmState({ loading: false, reason: messageOf(error), prepared: null })
+    }
+  }
+
+  const applyConfirm = async () => {
+    if (!deal || !confirmState.prepared) return
+    setBusy(true)
+    try {
+      const result = await confirmPrepared(confirmState.prepared)
+      await finishOp(result, `Deal ID ${deal.dealId} confirmed.`, deal.dealId)
+    } catch (error) {
+      closeModals()
+      showToast(messageOf(error), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="mo-confirm-fx-deal-id">
       <div className="app">
@@ -251,7 +364,7 @@ export default function MoConfirmFxDealId() {
                 </div>
                 <div className="toolbar-actions">
                   {vis.upd && (
-                    <button type="button" className="btn btn-primary" disabled title={GAPS.confirm}>
+                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void openConfirm()}>
                       Change / Confirm
                     </button>
                   )}
@@ -261,7 +374,7 @@ export default function MoConfirmFxDealId() {
                     </button>
                   )}
                   {vis.dealEdit && (
-                    <button type="button" className="btn btn-secondary" disabled title={GAPS.editPair}>
+                    <button type="button" className="btn btn-secondary" disabled={busy || !selectedLeg} title={selectedLeg ? undefined : 'Select the leg to replace first'} onClick={() => void openEditPair()}>
                       Edit Deal Pair
                     </button>
                   )}
@@ -271,8 +384,8 @@ export default function MoConfirmFxDealId() {
                   <button type="button" className="btn btn-secondary" disabled title={GAPS.dms}>
                     DMS
                   </button>
-                  {vis.rev && (
-                    <button type="button" className="btn btn-danger" disabled title={GAPS.reverse}>
+                  {(vis.rev || reverseResume === deal.dealId) && (
+                    <button type="button" className="btn btn-danger" disabled={busy} onClick={() => setModal('reverse')}>
                       Reverse MO Confirmation
                     </button>
                   )}
@@ -284,7 +397,7 @@ export default function MoConfirmFxDealId() {
                 </div>
               </div>
               <div className="inline-alert info" id="sapGapNote">
-                SAP gap: the greyed-out actions cannot run on the services registered today. Hover one for the reason.
+                Greyed-out actions need services that are not available yet. Hover one for the reason.
               </div>
               {deal.subType === 'FX2' && <div className="inline-alert info">{GAPS.options}</div>}
 
@@ -332,6 +445,43 @@ export default function MoConfirmFxDealId() {
           if (e.target === e.currentTarget && !busy) closeModals()
         }}
       >
+        {deal && modal === 'confirm' && (
+          <ConfirmModal
+            loading={confirmState.loading}
+            reason={confirmState.reason}
+            preview={confirmState.prepared ? previewOf(confirmState.prepared) : null}
+            busy={busy}
+            onChangeMc={(mc) => void openConfirm(mc)}
+            onConfirm={() => void applyConfirm()}
+            onClose={closeModals}
+          />
+        )}
+        {deal && modal === 'reverse' && (
+          <PromptModal
+            title="Reverse MO Confirmation"
+            icon="warn"
+            message={`The Deal ID goes back to Created and its saved invoice references are deleted. Treasury transactions are not reversed.${deal.dealId === reverseResume ? ' A previous attempt stopped part-way; this finishes it.' : ''}`}
+            noLabel="No"
+            yesLabel="Yes, Reverse"
+            yesClass="btn-danger"
+            busy={busy}
+            onYes={() => void confirmReverse()}
+            onClose={closeModals}
+          />
+        )}
+        {deal && selectedLeg && modal === 'editPair' && (
+          <EditPairModal
+            slot={selectedLeg.dealType}
+            bukrs={selectedLeg.bukrs}
+            oldRfha={selectedLeg.rfha}
+            candidates={pair.candidates}
+            loading={pair.loading}
+            error={pair.error}
+            busy={busy}
+            onApply={(rfha) => void applyEditPair(rfha)}
+            onClose={closeModals}
+          />
+        )}
         {deal && modal === 'cancelDeal' && (
           <PromptModal
             title="Cancel Deal ID"

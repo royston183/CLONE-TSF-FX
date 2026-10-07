@@ -15,13 +15,22 @@ export function totalInvoiced(deal: Deal): number {
   return deal.inv.reduce((t, r) => (r.invoiced ? t + r.qty * r.usdPrice : t), 0)
 }
 
-/** Whether the FX legs behind UTI_AMT were read; without them utilization and balance stay blank. */
-export const utilizationKnown = (deal: Deal): boolean => deal.fx.length > 0
+const d1Leg = (deal: Deal) => deal.fx.find((f) => f.type === 'D1')
 
-/** The D1 leg's absolute amount — what the FX Deal actually utilized of the Master Contract. */
+/**
+ * Whether UTI_AMT can be given: the D1 leg was read and one of its sides is USD. Without it (no leg, an
+ * option leg, no USD side) utilization and balance stay blank rather than showing a made-up 0.
+ */
+export const utilizationKnown = (deal: Deal): boolean => {
+  const d1 = d1Leg(deal)
+  return !!d1 && (d1.curr1 === 'USD' || d1.curr2 === 'USD')
+}
+
+/** The D1 leg's absolute USD amount (AMT1 when CURR1 is USD plus AMT2 when CURR2 is USD) — what the FX Deal utilized of the Master Contract. */
 export function fxUtilAmt(deal: Deal): number {
-  const d1 = deal.fx.find((f) => f.type === 'D1')
-  return d1 ? Math.abs(d1.amt1) : 0
+  const d1 = d1Leg(deal)
+  if (!d1) return 0
+  return Math.abs((d1.curr1 === 'USD' ? d1.amt1 : 0) + (d1.curr2 === 'USD' ? d1.amt2 : 0))
 }
 
 /** The MC's origin when the deal came from MySQL; the seed deals read it off the entity string. */

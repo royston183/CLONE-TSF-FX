@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { WAITING_FX_LEGS_OPTION, loadDealFxRows } from './dealLegs.ts'
 import { formatAmount, formatRate } from './format.ts'
 import { WAITING_VIEW_DEAL, buildViewDealData } from './logic.ts'
 import type { DealRow, FxRow, InvoiceRow } from './types.ts'
@@ -140,6 +142,25 @@ export function ViewDealModal({
 }) {
   const detail = buildViewDealData(row)
   const status = Number(row.status)
+  const [legs, setLegs] = useState<{ rows: FxRow[]; error: string; loading: boolean }>({ rows: [], error: '', loading: true })
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setLegs({ rows: [], error: '', loading: true })
+    loadDealFxRows(row.dealId, ctrl.signal).then(
+      (rows) => setLegs({ rows, error: '', loading: false }),
+      (e: unknown) => {
+        if (!ctrl.signal.aborted) setLegs({ rows: [], error: e instanceof Error ? e.message : String(e), loading: false })
+      },
+    )
+    return () => ctrl.abort()
+  }, [row.dealId])
+  const fxMeta = legs.loading
+    ? 'Loading…'
+    : legs.error
+      ? `WAITING FOR API — ZSGTSFTR_APP_STR / FxTransaction could not be read: ${legs.error}`
+      : legs.rows.length
+        ? `${legs.rows.length} transaction(s) — ${WAITING_FX_LEGS_OPTION}`
+        : `No FX transaction in ZSGTSFTR_APP_STR carries this Deal ID — ${WAITING_FX_LEGS_OPTION}`
 
   return (
     <div className="modal-overlay show" role="dialog" aria-modal="true" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -204,9 +225,9 @@ export function ViewDealModal({
             <section className="deal-section">
               <div className="deal-section-head">
                 <span>FX Deals</span>
-                <span className="deal-section-meta">{detail.fxRows.length ? `${detail.fxRows.length} transaction(s)` : WAITING_VIEW_DEAL}</span>
+                <span className="deal-section-meta">{fxMeta}</span>
               </div>
-              <FxDealsTable rows={detail.fxRows} onOpenTxn={onOpenTxn} />
+              <FxDealsTable rows={legs.rows} onOpenTxn={onOpenTxn} />
             </section>
 
             <section className="deal-section">

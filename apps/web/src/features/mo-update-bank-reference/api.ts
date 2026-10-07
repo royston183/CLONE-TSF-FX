@@ -5,7 +5,12 @@
  *   Company Code (S_BUKRS)   SELECT-OPTIONS FOR VTBFHA-BUKRS: T001 (API_COMPANYCODE_SRV / A_CompanyCode),
  *                            shown "<code> - <name>"
  *   Key Date (P_DATE)        DELFZ = p_date
- *   Report Type R_FX         FORM get_data: SELECT * FROM ZSGTSFV_FX WHERE bukrs IN s_bukrs AND delfz = p_date
+ *   Report Type R_FX         FORM get_data: SELECT * FROM ZSGTSFV_FX WHERE bukrs IN s_bukrs AND delfz = p_date.
+ *                            The middleware view "tsfvFx" serves every column that selection and the in-program
+ *                            deletes use (BUKRS, DELFZ, SAKTIV, NORDEXT, RFHA), so the rows come from it. It lacks the
+ *                            VTBFHA append columns, which are read from TrmFxApp (ZSGTSFTR_APP_STR, shared/fx/app-str.ts)
+ *                            by company code + transaction: TXN_STATUS, ZTSF_DEAL_ID, ZTSF_MC_REF_NO, ZOLAM_DEAL_NO.
+ *                            Still served by neither (shown blank, noted on screen): PRCTR, CPAIR, MAT_UNMAT.
  *   Report Type R_OP         FORM get_data: SELECT * FROM ZSGTSFV_OP ...   (no middleware resource -> WAITING FOR API)
  *   in-program deletes       saktiv = '3' removed; P_RB1 keeps NORDEXT <> space, P_RB2 keeps NORDEXT = space;
  *                            SORT BY rfha
@@ -18,6 +23,7 @@ import { apiFetch, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxColumns, fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { attachTrmFxApp, type TrmFxApp } from '../../shared/fx/app-str.ts'
 import type { Company, Deal, DealType } from './types.ts'
 
 const companyApi = service('companycode')
@@ -32,44 +38,30 @@ export const FX_VIEW = 'tsfvFx'
 export const SAKTIV_REVERSED = '3'
 
 /**
- * ZSGTSFV_FX fields GET_DATA filters/sorts on (BUKRS, DELFZ, SAKTIV, NORDEXT, RFHA), the row key
- * (REFNR) and every field the screen's Forex columns show. The screen's Spot / Swap / All-in
+ * ZSGTSFV_FX fields GET_DATA filters/sorts on (BUKRS, DELFZ, SAKTIV, NORDEXT, RFHA) and the row key
+ * (REFNR). Without them the selection cannot be reproduced, so the list waits.
+ */
+export const SELECTION_COLUMNS = ['BUKRS', 'RFHA', 'REFNR', 'DELFZ', 'SAKTIV', 'NORDEXT'] as const
+
+/**
+ * Every other field the screen's Forex columns show that the view serves. The Spot / Swap / All-in
  * columns are the view's OSPOT / OSWAP / OTOT_RATE (the ALV's 'Spot Rate' / 'Swap Rate' /
  * 'Rate of Foreign Exchange Transaction').
  */
-export const VIEW_REQUIRED_COLUMNS = [
-  'BUKRS',
-  'RFHA',
-  'REFNR',
-  'DELFZ',
-  'SAKTIV',
-  'NORDEXT',
-  'BUTXT',
-  'SFHAART',
-  'XTEXT',
-  'CPAIR',
-  'BS_1',
-  'CURR1',
-  'AMT1',
-  'BS_2',
-  'CURR2',
-  'AMT2',
-  'DBLFZ',
-  'OSPOT',
-  'OSWAP',
-  'OTOT_RATE',
-  'RDEALER',
-  'BP_NAME',
-  'KONTRH',
-  'RBUSA',
-  'RPORTB',
-  'PRCTR',
-  'TXN_STATUS',
-  'MAT_UNMAT',
-  'ZTSF_DEAL_ID',
-  'ZMC_REF_NO',
-  'ZOLAM_DEAL_NO',
+// prettier-ignore
+export const DISPLAY_COLUMNS = [
+  'BUTXT', 'SFHAART', 'XTEXT', 'BS_1', 'CURR1', 'AMT1', 'BS_2', 'CURR2', 'AMT2', 'DBLFZ', 'OSPOT', 'OSWAP', 'OTOT_RATE',
+  'RDEALER', 'BP_NAME', 'KONTRH', 'RBUSA', 'RPORTB',
 ] as const
+
+/** Columns neither the view nor TrmFxApp serve: PRCTR, CPAIR and MAT_UNMAT stay blank. */
+export const UNSERVED_COLUMNS = ['PRCTR', 'CPAIR', 'MAT_UNMAT'] as const
+
+/** What the grid shows blank, in the screen's words. */
+export const BLANK_COLUMNS_NOTE = `${WAITING} — Profit Center (PRCTR), Currency Pair (CPAIR) and Match/Unmatch (MAT_UNMAT) are not served by ZSGTSFV_FX (middleware "${FX_VIEW}") or TrmFxApp, so those columns are blank.`
+
+/** Deal ID, Master Contract reference, TXN_STATUS and Int Ref are read from TrmFxApp, not from the view. */
+export const APP_COLUMNS = ['TXN_STATUS', 'ZTSF_DEAL_ID', 'ZMC_REF_NO', 'ZOLAM_DEAL_NO'] as const
 
 export const OPTION_VIEW_WAITING = `${WAITING} — ZSGTSFV_OP (Option deal view) is not served by the SLC middleware.`
 
@@ -115,8 +107,11 @@ export function eligible(rows: readonly FxRow[], withRef: boolean): FxRow[] {
     .sort((a, b) => byText(txt(a, 'RFHA'), txt(b, 'RFHA')))
 }
 
-/** One ZSGTSFV_FX row as a grid row. BUKRS+RFHA+REFNR is the view's row key. */
-export function dealFromView(r: FxRow): Deal {
+/**
+ * One ZSGTSFV_FX row as a grid row. BUKRS+RFHA+REFNR is the view's row key. `app` is the row's TrmFxApp record
+ * (company code + transaction), if it has one; without it the application columns are blank.
+ */
+export function dealFromView(r: FxRow, app?: TrmFxApp): Deal {
   return {
     _id: `${txt(r, 'BUKRS')}-${txt(r, 'RFHA')}-${txt(r, 'REFNR')}`,
     RFHA: alphaOut(txt(r, 'RFHA')),
@@ -124,7 +119,7 @@ export function dealFromView(r: FxRow): Deal {
     BUTXT: txt(r, 'BUTXT'),
     SFHAART: txt(r, 'SFHAART'),
     XTEXT: txt(r, 'XTEXT'),
-    CPAIR: txt(r, 'CPAIR'),
+    CPAIR: '',
     BS_1: txt(r, 'BS_1'),
     CURR1: txt(r, 'CURR1'),
     AMT1: num(r['AMT1']),
@@ -141,13 +136,13 @@ export function dealFromView(r: FxRow): Deal {
     KONTRH: txt(r, 'KONTRH'),
     RBUSA: txt(r, 'RBUSA'),
     RPORTB: txt(r, 'RPORTB'),
-    PRCTR: txt(r, 'PRCTR'),
-    TXN_STATUS: txt(r, 'TXN_STATUS'),
-    MAT_UNMAT: txt(r, 'MAT_UNMAT'),
-    ZTSF_DEAL_ID: txt(r, 'ZTSF_DEAL_ID'),
-    ZMC_REF_NO: txt(r, 'ZMC_REF_NO'),
+    PRCTR: '',
+    TXN_STATUS: app?.TxnStatus ?? '',
+    MAT_UNMAT: '',
+    ZTSF_DEAL_ID: app?.ZtsfDealID ?? '',
+    ZMC_REF_NO: app?.ZtsfMcRefNo ?? '',
     NORDEXT: txt(r, 'NORDEXT'),
-    ZOLAM_DEAL_NO: txt(r, 'ZOLAM_DEAL_NO'),
+    ZOLAM_DEAL_NO: app?.ZolamDealNo ?? '',
     _checked: false,
   }
 }
@@ -192,22 +187,30 @@ export async function loadCompanies(signal?: AbortSignal): Promise<Avail<Company
   }
 }
 
+export type DealsResult = { state: 'ok'; value: Deal[]; note: string } | { state: 'waiting' | 'error'; reason: string }
+
 /**
- * GET_DATA for the selection. Forex checks the view's columns first: without them the list
- * cannot be shown as the ALV shows it, so it says WAITING FOR API instead of a partial list.
+ * GET_DATA for the selection. The rows come from ZSGTSFV_FX, which serves every column the selection uses;
+ * TrmFxApp adds the VTBFHA append columns. If the view lacks a selection column the list says WAITING FOR API
+ * instead of a partial list. `note` names the columns that stay blank.
  */
 export async function loadDeals(
   sel: { dealType: DealType; coFrom: string; coTo: string; keyDateIso: string; withRef: boolean },
   signal?: AbortSignal,
-): Promise<Avail<Deal[]>> {
+): Promise<DealsResult> {
   if (sel.dealType === 'OP') return { state: 'waiting', reason: OPTION_VIEW_WAITING }
   try {
-    const missing = missingColumns(await fxColumns(FX_VIEW, signal), VIEW_REQUIRED_COLUMNS)
+    const missing = missingColumns(await fxColumns(FX_VIEW, signal), [...SELECTION_COLUMNS, ...DISPLAY_COLUMNS])
     if (missing.length)
       return { state: 'waiting', reason: `${WAITING} — ZSGTSFV_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}.` }
-    const rows = await fxList(FX_VIEW, { ...companyFilter(sel.coFrom, sel.coTo), DELFZ: sel.keyDateIso }, { signal })
-    return { state: 'ok', value: eligible(rows, sel.withRef).map(dealFromView) }
+    const rows = eligible(await fxList(FX_VIEW, { ...companyFilter(sel.coFrom, sel.coTo), DELFZ: sel.keyDateIso }, { signal }), sel.withRef)
+    const joined = await attachTrmFxApp(
+      rows.map((r) => ({ CompanyCode: txt(r, 'BUKRS'), FinancialTransaction: txt(r, 'RFHA'), row: r })),
+      signal,
+    )
+    return { state: 'ok', value: joined.map(({ fx, app }) => dealFromView(fx.row, app)), note: BLANK_COLUMNS_NOTE }
   } catch (error) {
-    return failure('ZSGTSFV_FX', error)
+    const failed = failure<never>('ZSGTSFV_FX', error)
+    return failed.state === 'ok' ? { state: 'error', reason: 'ZSGTSFV_FX could not be read.' } : failed
   }
 }

@@ -21,6 +21,7 @@ import type { Deal, Leg } from './types.ts'
 
 const leg = (over: Partial<Leg> = {}): Leg => ({
   rfha: '3000000000015',
+  bukrs: '1000',
   dealType: 'D1',
   bpName: 'DBS BANK LTD',
   bpCode: '400000002',
@@ -87,8 +88,7 @@ describe('status and actions', () => {
 
   it('words every disabled control with the blocker found in the ABAP, not a placeholder', () => {
     for (const [key, text] of Object.entries(GAPS)) ok(text.length > 40, key)
-    ok(GAPS.confirm.includes('ZSGTRMNR14') && GAPS.confirm.includes('BAPI_EXCHANGERATE_GETDETAIL'))
-    ok(GAPS.reverse.includes('ZSGTSFTR_INV_REF'))
+    ok(GAPS.premium.includes('RBI'))
   })
 })
 
@@ -202,7 +202,7 @@ describe('SAP calls', () => {
     ZDEAL_ID: '7000000007', ZDEAL_TYPE: 'FX', ZSUB_TYPE: 'FX1', ZDEAL_STAT: '01', ZMC_REF: '2000000028', ZTSF_MODEL: 'M033', ZTRD_CODE: 'C',
     ZS_DATE: '2026-09-28', ZE_DATE: '2026-11-05', ZBUKRS1: 'SG03', ZRFHA1: '3000000000015', ZCONFIRM: '',
   }
-  const install = (calls: Call[], opts: { patchFails?: boolean; noDeal?: boolean; invFails?: boolean } = {}) => {
+  const install = (calls: Call[], opts: { patchFails?: boolean; noDeal?: boolean; invFails?: boolean; noApp?: boolean } = {}) => {
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = decodeURIComponent(String(input).replaceAll('+', ' '))
       const method = init?.method ?? 'GET'
@@ -219,6 +219,7 @@ describe('SAP calls', () => {
       if (url.includes('/data/fxModel')) return json(200, { ok: true, rows: [{ ZMOD_ID: 'M033', ZSUB_TYPE: 'FX1', ZNO_INV: '', ZSS: '', ZMOD_DESC: 'INR-INR-INR Forward' }] })
       if (url.includes('/data/tsfvFx')) return json(200, { ok: true, rows: [] })
       if (url.includes('/data/comp')) return json(200, { ok: true, rows: [{ ZBUKRS: 'SG03', ZCOM_ID: 'OSIPL', ZBUTXT: 'Olam' }] })
+      if (url.includes('/trmfxapp/')) return json(200, { value: opts.noApp ? [] : [{ CompanyCode: 'SG03', FinancialTransaction: '3000000000015', TxnStatus: '07' }] })
       if (url.includes('/FxTransaction'))
         return json(200, { value: [{ CompanyCode: 'SG03', FinancialTransaction: '3000000000015', ProductType: '12D', TransactionType: '631', Partner: '400000002', ContractDate: '2026-09-30', ValueDate: '2026-10-30', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 1000, SellAmount: 83000, ForwardRate: 83, ActivityCategory: '30', ActiveStatus: '0' }] })
       return json(200, { value: [], d: { results: [] } })
@@ -242,10 +243,17 @@ describe('SAP calls', () => {
     strictEqual(d.legs.length, 1)
     strictEqual(d.legs[0]?.rfha, '3000000000015')
     strictEqual(d.legs[0]?.dealType, 'D1')
-    strictEqual(d.legs[0]?.txnStatus, '03')
+    // The leg's status is ZSGTSFTR_APP_STR.TXN_STATUS (BUKRS + RFHA), not the FX service's settled / open stand-in (which would say 03).
+    strictEqual(d.legs[0]?.txnStatus, '07')
+    strictEqual(d.legs[0]?.bukrs, 'SG03')
     strictEqual(d.invoices[0]?.tradeRef, '55')
     strictEqual(statusMeta('01').desc, 'FO: FX Deals Created')
     ok(calls.some((c) => c.url.includes('/data/tsfDealId') && c.url.includes('ZDEAL_ID=7000000007')))
+  })
+
+  it('shows no transaction status for a leg APP_STR has no record of, instead of guessing one', async () => {
+    install([], { noApp: true })
+    strictEqual((await loadDeal('7000000007'))?.deal.legs[0]?.txnStatus, '')
   })
 
   it('answers null for a Deal ID SAP does not have', async () => {

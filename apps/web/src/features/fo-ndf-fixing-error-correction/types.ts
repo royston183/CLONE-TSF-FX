@@ -1,4 +1,4 @@
-/** One ZSGTSFV_FX row of the error-correction queue (TXN_STATUS 11). */
+/** One transaction of the error-correction queue (TXN_STATUS 11). */
 export type NdfRow = {
   rfha: string
   bukrs: string
@@ -14,7 +14,8 @@ export type NdfRow = {
   fixDate: string
   fixRef: string
   fixRefName: string
-  oldRate: number
+  /** NDF_RATE; null while no service serves it (shown as WAITING FOR API). */
+  oldRate: number | null
   trader: string
   partner: string
   /** Custom TSF TXN_STATUS: 11 = waiting for correction, 12 = corrected. */

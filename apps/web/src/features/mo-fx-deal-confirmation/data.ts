@@ -8,6 +8,7 @@
  * fixed Deal IDs then 38 random ones, ~22% Options, 80% Unmatched / 20% Correction Required)
  * but the rows are stable across loads and testable.
  */
+import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
 import { addDays } from './format.ts'
 import type { Column, CompanyInfo, Deal, DealStatus, DealType, Partner, Trader, TxnType } from './types.ts'
 
@@ -72,10 +73,19 @@ export const CCY_PAIRS: Array<[string, string]> = [
 export const STATUS = {
   UNMATCHED: 'FO->MO: Unmatched',
   CORRECTION: 'MO->FO: Correction Required',
+  CORRECTED: 'FO: Error Correction - Corrected',
   MATCHED: 'Matched & Released',
 } as const satisfies Record<string, DealStatus>
 
-export const STATUSES: DealStatus[] = [STATUS.UNMATCHED, STATUS.CORRECTION, STATUS.MATCHED]
+/** The wording of a workflow status (TXN_STATUS) on this screen. */
+export function dealStatusOf(txnStatus: string): DealStatus {
+  if (txnStatus === FX_TXN_STATUS.MO_TO_FO_CORRECTION) return STATUS.CORRECTION
+  if (txnStatus === FX_TXN_STATUS.CORRECTED) return STATUS.CORRECTED
+  if (txnStatus === FX_TXN_STATUS.MO_MATCH_RELEASE || txnStatus === FX_TXN_STATUS.OFFSET_TRANSACTION) return STATUS.MATCHED
+  return STATUS.UNMATCHED
+}
+
+export const STATUSES: DealStatus[] = [STATUS.UNMATCHED, STATUS.CORRECTION, STATUS.CORRECTED, STATUS.MATCHED]
 
 /** Verbatim from the page — note 1100000916 appears twice, as it did there. */
 export const FIXED_DEAL_IDS = [
@@ -211,6 +221,7 @@ function buildDeal(rng: Rng, dealType: DealType, seq: number, idOverride?: strin
     valueDate,
     allInRate: rate,
     status,
+    txnStatus: status === STATUS.CORRECTION ? FX_TXN_STATUS.MO_TO_FO_CORRECTION : FX_TXN_STATUS.FO_TO_MO_UNMATCHED,
     traderCode: trader.code,
     traderName: `${trader.code} - ${trader.name}`,
     traderShort: trader.shortName,

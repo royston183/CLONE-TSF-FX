@@ -23,9 +23,9 @@ type OpenModal = 'ndfFix' | 'match' | 'correction' | 'viewTxn' | 'refresh' | nul
  * UA1: TSF NDF Fixing (ZSGTSFR050), converted from legacy/tsf-ndf-fixing.html.
  *
  * Reads SAP only (api.ts): Company Code from T001, Trader from ZSGTRMTR_TRD_GRP, the worklist
- * from ZSGTSFV_FX exactly as GET_DATA selects it (TXN_STATUS 07, SAKTIV <> 3, V_DATE = the Fixing
- * Date, NDF product types, trader). The view does not serve those fields yet, so the worklist
- * says WAITING FOR API rather than listing unrelated FX deals. Save Fixing needs
+ * as GET_DATA selects it (TXN_STATUS 07, SAKTIV <> 3, V_DATE = the Fixing Date, NDF product
+ * types, trader), from TrmFxApp joined with FxTransaction (the legacy view ZSGTSFV_FX lacks the
+ * TXN_STATUS / trader fields). Save Fixing needs
  * BAPI_FTR_FXT_NDF_FIXING + TX02 behind an API (WAITING FOR ACTION API) and posts nothing.
  */
 const ACTION_WAITING =

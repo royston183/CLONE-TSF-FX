@@ -6,6 +6,8 @@ export type StatusMeta = { desc: string; cls: string }
 /** One FX transaction (RFHA) assigned to the Deal ID — a row of the FX Deals table. */
 export type Leg = {
   rfha: string
+  /** Company code (BUKRS); with RFHA it is the transaction's key. */
+  bukrs: string
   /** The Deal ID slot the transaction sits in: D1 D2 D3 D4 DS1 DS2 DSS1 DSS2. */
   dealType: string
   bpName: string
@@ -22,6 +24,7 @@ export type Leg = {
   /** null: SAP has no all-in rate for this leg (an option, or one the FX service does not return). */
   rateVal: number | null
   rateLabel: string
+  /** ZSGTSFTR_APP_STR.TXN_STATUS — the transaction's lifecycle, not the Deal ID's status. Blank when APP_STR has none. */
   txnStatus: string
   /** null: the NDF fixing profit is not in the FX service. */
   fxPl: number | null
@@ -112,4 +115,4 @@ export type PlRow = { type: string; value: string }
 export type ToastType = 'success' | 'error' | 'info'
 export type Toast = { id: number; msg: string; type: ToastType }
 
-export type ModalId = 'cancelDeal'
+export type ModalId = 'cancelDeal' | 'reverse' | 'editPair' | 'confirm'

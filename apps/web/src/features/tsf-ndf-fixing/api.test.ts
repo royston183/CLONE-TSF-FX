@@ -1,6 +1,8 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { VIEW_REQUIRED_COLUMNS, companyOptions, dealFromView, eligible, invertedDate, missingColumns, traderOptions } from './api.ts'
+import type { TrmFxApp } from '../../shared/fx/app-str.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import { companyOptions, dealFromApp, eligible, invertedDate, loadWorklist, traderOptions } from './api.ts'
 import { applyFilters, calcCashSettlement, checkRate, leadCurr } from './logic.ts'
 import type { NdfDeal } from './types.ts'
 
@@ -32,36 +34,64 @@ describe('screen 1000 value helps', () => {
   })
 })
 
+const fx = (o: Partial<FxTransaction> = {}): FxTransaction => ({
+  CompanyCode: 'SG03', FinancialTransaction: '2000000000020', ProductType: '12D', TransactionType: '100', Partner: '1',
+  BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 1000000, SellAmount: 96200000,
+  ValueDate: '2026-10-14', SpotRate: 96.1, SwapRate: 0.1, ForwardRate: 96.2, ActiveStatus: '0', ActivityCategory: '20', ...o,
+})
+const app = (o: Partial<TrmFxApp> = {}): TrmFxApp => ({ CompanyCode: 'SG03', FinancialTransaction: '2000000000020', TxnStatus: '07', Ztrcode: 'C14', ...o })
+
 describe('GET_DATA', () => {
-  it('names the ZSGTSFV_FX fields the middleware view does not serve (as registered on 2026-10-01)', () => {
-    // prettier-ignore
-    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
-    deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS), ['TXN_STATUS', 'V_DATE', 'ZTRCODE', 'TRD_NAME', 'CPAIR', 'CASH_CURR', 'ZCASH_AMT', 'EXT_STAT_DESC'])
-  })
-
-  it('keeps TXN_STATUS 07, SAKTIV <> 3, NDF product types (sgsart+2(1) = D) and the trader', () => {
+  it('keeps TXN_STATUS 07, SAKTIV <> 3, NDF product types (sgsart+2(1) = D), V_DATE and the trader', () => {
     const rows = [
-      { RFHA: '1', TXN_STATUS: '07', SAKTIV: '1', SGSART: '12D', ZTRCODE: 'C14' },
-      { RFHA: '2', TXN_STATUS: '10', SAKTIV: '1', SGSART: '12D', ZTRCODE: 'C14' }, // already fixed
-      { RFHA: '3', TXN_STATUS: '07', SAKTIV: '3', SGSART: '12D', ZTRCODE: 'C14' }, // reversed
-      { RFHA: '4', TXN_STATUS: '07', SAKTIV: '1', SGSART: '12B', ZTRCODE: 'C14' }, // forward, not NDF
-      { RFHA: '5', TXN_STATUS: '07', SAKTIV: '1', SGSART: '12D', ZTRCODE: 'C20' },
+      { fx: fx({ FinancialTransaction: '1' }), app: app() },
+      { fx: fx({ FinancialTransaction: '2' }), app: app({ TxnStatus: '10' }) }, // already fixed
+      { fx: fx({ FinancialTransaction: '3', ActiveStatus: '3' }), app: app() }, // reversed
+      { fx: fx({ FinancialTransaction: '4', ProductType: '12B' }), app: app() }, // forward, not NDF
+      { fx: fx({ FinancialTransaction: '5' }), app: app({ Ztrcode: 'C20' }) },
+      { fx: fx({ FinancialTransaction: '6', ValueDate: '2026-10-15' }), app: app() }, // other Fixing Date
     ]
-    deepStrictEqual(eligible(rows, '').map((r) => r.RFHA), ['1', '5'])
-    deepStrictEqual(eligible(rows, 'C14').map((r) => r.RFHA), ['1'])
+    deepStrictEqual(eligible(rows, '2026-10-14').map((r) => r.fx.FinancialTransaction), ['1', '5'])
+    deepStrictEqual(eligible(rows, '2026-10-14', 'C14').map((r) => r.fx.FinancialTransaction), ['1'])
   })
 
-  it('maps a view row, keeping RFHA leading zeros and showing NDF_DATE / filtering on V_DATE', () => {
-    const d = dealFromView({
-      BUKRS: 'IN11', RFHA: '0000005000000', ZTRCODE: 'C14', TRD_NAME: 'Ashon V', BS_1: 'Buy', CURR1: 'USD', CURR2: 'INR',
-      AMT1: '1000000.00', AMT2: '-96200000.00', OSPOT: '96.1', OSWAP: '0.1', OTOT_RATE: '96.2', NDF_DATE: '2026-10-12',
-      V_DATE: '2026-10-14', ZCASH_AMT: '0.00', CASH_CURR: 'USD', CPAIR: 'USD:INR', NDF_REF: 'RBI', EXT_STAT_DESC: 'Validated', TXN_STATUS: '07',
-    })
-    deepStrictEqual([d.id, d.traderCode, d.date, d.vDate, d.fwd, d.cpair, d.txnStatus], ['0000005000000', 'C14', '12-10-2026', '14-10-2026', 96.2, 'USD:INR', '07'])
+  it('maps a transaction + TrmFxApp row, signing the legs and leaving unserved NDF fields blank', () => {
+    const d = dealFromApp(fx(), app({ NdfFoRem: 'fo', NdfMoRem: 'mo' }), { C14: 'Ashon V' })
+    deepStrictEqual(
+      [d.id, d.company, d.traderCode, d.trader, d.side, d.pair, d.amt1, d.amt2, d.fwd, d.vDate, d.cpair, d.txnStatus, d.status, d.foRemarks, d.moRemarks],
+      ['2000000000020', 'SG03', 'C14', 'Ashon V', 'Buy', 'USD/INR', 1000000, -96200000, 96.2, '14-10-2026', 'USD:INR', '07', 'MO: Match & Release for Settlement', 'fo', 'mo'],
+    )
+    deepStrictEqual([d.date, d.ref, d.ndf, d.cashCurr], ['', '', 0, ''])
+    // selling the lead currency: leg 1 is negative
+    const s = dealFromApp(fx({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 96200000, SellAmount: 1000000 }), app())
+    deepStrictEqual([s.side, s.amt1, s.amt2], ['Sell', -1000000, 96200000])
   })
 
   it('reads TCURR by inverted date', () => {
     strictEqual(invertedDate('2026-10-01'), '79738998') // 99999999 - 20261001
+  })
+})
+
+describe('loadWorklist (TrmFxApp + FxTransaction, no network)', () => {
+  it('queries status 07, joins on company code + transaction and applies the Fixing Date', async () => {
+    const urls: string[] = []
+    const real = globalThis.fetch
+    globalThis.fetch = (async (input: unknown) => {
+      const url = String(input)
+      urls.push(url)
+      const json = (b: unknown) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
+      if (url.includes('trmfxapp')) return json({ value: [app(), app({ FinancialTransaction: '9' })] })
+      if (url.includes('/fx/')) return json({ value: [fx(), fx({ FinancialTransaction: '9', ValueDate: '2026-10-20' })] })
+      return json({ rows: [] })
+    }) as typeof fetch
+    try {
+      const res = await loadWorklist('14-10-2026')
+      strictEqual(res.state, 'ok')
+      if (res.state === 'ok') deepStrictEqual(res.value.map((d) => d.id), ['2000000000020'])
+      ok(urls.some((u) => u.includes('trmfxapp') && decodeURIComponent(u.replaceAll('+', ' ')).includes("TxnStatus eq '07'")))
+    } finally {
+      globalThis.fetch = real
+    }
   })
 })
 

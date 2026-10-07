@@ -65,6 +65,8 @@ export function masters(over: Partial<Masters> = {}): Masters {
     unwind: [],
     user: 'DEMO',
     fxColumns: TSFV_FX_COLUMNS,
+    legs: new Map(),
+    legsError: null,
     ...over,
   }
 }

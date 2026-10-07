@@ -1,10 +1,12 @@
 /**
- * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. The page never called an API — Match & Release and Correction
- * Required only changed its in-memory deal list — so deals live in component state.
+ * The page's business rules as pure functions so the component only holds state. The queue is
+ * rebuilt from the backend on every load (APP_STR + FxTransaction); the in-memory list only mirrors
+ * what the backend has just accepted.
  */
-import { COMPANY_CODES, COMPANY_INFO, PARTNERS, STATUS, STATUSES, TRADERS, TXN_TYPES } from './data.ts'
+import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
+import { COMPANY_CODES, dealStatusOf, COMPANY_INFO, PARTNERS, STATUS, STATUSES, TRADERS, TXN_TYPES } from './data.ts'
 import { parseDDMMYYYY } from './format.ts'
+import type { MoDone } from './workflow.ts'
 import type {
   AppliedSelection,
   CalendarCell,
@@ -38,6 +40,7 @@ export const EMPTY_SELECTION: SelectionForm = {
 export const isBlotterDateValid = (s: string) => !!s && parseDDMMYYYY(s) !== null
 
 export const applySelection = (form: SelectionForm): AppliedSelection => ({
+  upTo: parseDDMMYYYY(form.blotterDate),
   companyCode: form.companyCode,
   companyCodeTo: form.companyCodeTo,
   trader: form.trader,
@@ -67,6 +70,12 @@ export function filterComboOptions(options: readonly ComboOption[], text: string
  * follows code order, not list order). From after To selects nothing, as on the page.
  */
 export const companyCodesInRange = (from: string, to: string) => COMPANY_CODES.filter((c) => c >= from && c <= to)
+
+/** The company codes a selection reads from SAP: the range, the one code, or every code of the screen. */
+export function selectedCompanyCodes(s: Pick<AppliedSelection, 'companyCode' | 'companyCodeTo'>): string[] {
+  if (!s.companyCode) return [...COMPANY_CODES]
+  return s.companyCodeTo ? companyCodesInRange(s.companyCode, s.companyCodeTo) : [s.companyCode]
+}
 
 // ---------------------------------------------------------------- filter panel
 
@@ -144,9 +153,9 @@ export function filterDeals(
       list = list.filter((d) => d.coCode === selection.companyCode)
     }
   }
-  // A deal read from SAP carries no trader (the service has none), so the trader choice cannot apply
-  // to it: it stays listed rather than vanishing, and only the dummy Options rows are narrowed.
-  if (selection.trader) list = list.filter((d) => d.live || d.traderCode === selection.trader)
+  // A SAP deal whose APP_STR record carries no trader cannot be told apart by trader, so it stays listed
+  // rather than vanishing; a deal with a trader, and every sample Options row, is narrowed.
+  if (selection.trader) list = list.filter((d) => d.traderCode === selection.trader || (d.live && !d.traderCode))
 
   const f = filters
   if (f.coCode) list = list.filter((d) => d.coCode === f.coCode)
@@ -170,6 +179,7 @@ export const dealCountLabel = (total: number) => `${total}${total === 1 ? ' deal
 export function statusClass(status: DealStatus): string {
   if (status === STATUS.CORRECTION) return 'status-correction'
   if (status === STATUS.MATCHED) return 'status-matched'
+  if (status === STATUS.CORRECTED) return 'status-corrected'
   return 'status-unmatched'
 }
 
@@ -249,17 +259,11 @@ export const selectedDeals = (deals: readonly Deal[], selected: ReadonlySet<stri
 // ---------------------------------------------------------------- deals from SAP
 
 /**
- * The queue after (re)reading the FX deals from SAP: the SAP deals replace every FX row, the Options rows
- * (dummy data) are kept, and a deal this session sent back for correction stays in Correction Required
- * while SAP still has it unmatched — SAP has no field for that status, so it lives only here.
+ * The queue after (re)reading the FX deals from the backend: they replace every FX row, the Options rows (dummy
+ * data) are kept. The status is whatever APP_STR holds; nothing is carried over from the session.
  */
 export function mergeLiveDeals(current: readonly Deal[], live: readonly Deal[]): Deal[] {
-  const corrected = new Map(current.filter((d) => d.live && d.status === STATUS.CORRECTION).map((d) => [d.id, d]))
-  const fx = live.map((d) => {
-    const c = corrected.get(d.id)
-    return c && d.status === STATUS.UNMATCHED ? { ...d, status: STATUS.CORRECTION, moRemark: c.moRemark } : d
-  })
-  return [...fx, ...current.filter((d) => d.dealType !== 'FX')]
+  return [...live, ...current.filter((d) => d.dealType !== 'FX')]
 }
 
 /** The Options rows alone: the starting queue before the FX deals have been read from SAP. */
@@ -270,34 +274,43 @@ export const withoutFxDeals = (deals: readonly Deal[]): Deal[] => deals.filter((
 /** The modals' info strip and Cover No for one deal, or a summary for several. */
 export function dealSummary(deals: readonly Deal[]): DealSummary {
   const [first] = deals
-  if (deals.length === 1 && first) return { dealId: first.dealId || '–', partner: first.partnerName, coverNo: first.transaction }
-  return {
-    dealId: `${deals.length} deals selected`,
-    partner: deals.map(dealLabel).join(', '),
-    coverNo: `${deals.length} deals selected`,
-  }
-}
-
-function updateDeals(deals: readonly Deal[], ids: ReadonlySet<string>, updates: Partial<Deal>): Deal[] {
-  return deals.map((d) => (ids.has(d.id) ? { ...d, ...updates } : d))
+  const over = deals.filter((d) => d.overUtilised)
+  const warning = over.length
+    ? `Limit management: Deal ID ${[...new Set(over.map((d) => d.dealId))].join(', ')} is over its utilisation limit. This is a warning only; you can still continue.`
+    : undefined
+  const base: DealSummary =
+    deals.length === 1 && first
+      ? { dealId: first.dealId || '–', partner: first.partnerName, coverNo: first.transaction }
+      : { dealId: `${deals.length} deals selected`, partner: deals.map(dealLabel).join(', '), coverNo: `${deals.length} deals selected` }
+  return warning ? { ...base, warning } : base
 }
 
 /**
- * Match & Release: the deals leave the queue with the MO remark recorded. The External and
- * Internal Ref fields are collected but, as on the page, not stored anywhere yet.
+ * Mirrors what the backend accepted into the queue: each finished deal takes its new status and remark. A deal now
+ * Matched & Released (07 / 59) is filtered out of the queue by filterDeals; one sent to FO (04) stays, as Correction Required.
  */
+export function applyDone(deals: readonly Deal[], done: readonly MoDone[]): Deal[] {
+  const byId = new Map(done.map((d) => [d.id, d]))
+  return deals.map((d) => {
+    const r = byId.get(d.id)
+    if (!r) return d
+    return { ...d, txnStatus: r.txnStatus, status: dealStatusOf(r.txnStatus), moRemark: r.moRemark || d.moRemark }
+  })
+}
+
+/** The sample Options rows have no backend: their Match & Release only changes the in-memory list. */
 export function matchReleaseDeals(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
-  // Future: POST the match & release to the ZSGTSFR024 service.
-  return updateDeals(deals, ids, { status: STATUS.MATCHED, moRemark: remarks || '' })
+  return deals.map((d) => (ids.has(d.id) ? { ...d, status: STATUS.MATCHED, txnStatus: FX_TXN_STATUS.MO_MATCH_RELEASE, moRemark: remarks || '' } : d))
 }
 
 /** A correction must give a reason: it becomes the MO remark FO sees. */
 export const isCorrectionValid = (remarks: string) => remarks.trim() !== ''
 
-/** Correction Required: back to FO with the (trimmed) remark. */
+/** The sample Options rows' Correction Required, in memory only. */
 export function markCorrectionRequired(deals: readonly Deal[], ids: ReadonlySet<string>, remarks: string): Deal[] {
-  // Future: POST the correction request to the ZSGTSFR024 service.
-  return updateDeals(deals, ids, { status: STATUS.CORRECTION, moRemark: remarks.trim() })
+  return deals.map((d) =>
+    ids.has(d.id) ? { ...d, status: STATUS.CORRECTION, txnStatus: FX_TXN_STATUS.MO_TO_FO_CORRECTION, moRemark: remarks.trim() } : d,
+  )
 }
 
 export function matchReleaseMessage(deals: readonly Deal[]): string {

@@ -18,8 +18,16 @@
  *   Deal ID picker    ZSGTSFTR_DEALID, unrestricted (as mo-confirm-fx-deal-id does): the P_DEAL
  *                     search help is not exported.
  *
+ * FX Deal Settlement grid    the FX legs are the transactions carrying this Deal ID: TrmFxApp rows with
+ *                            ZtsfDealID = P_DEAL (ZSGTSFTR_APP_STR, service "trmfxapp"), each joined on
+ *                            CompanyCode + FinancialTransaction with its FxTransaction (service "fx");
+ *                            reversed deals (ActiveStatus 3) are left out. Seq, Deal Type and MC Ref are
+ *                            APP_STR's; counterparty, dates, currencies, amounts and rates are SAP's.
+ *
  * Gated:
- *   FX Deal Settlement grid  ZSGTSFCDS_FX / ZSGTSFCDS_OPTION -> column gate on "tsfvFx".
+ *   FX leg columns with no source: Entity (ZSGTSFTR_COMP name), Doc No 1/2 (BKPF documents) stay blank;
+ *   Status is TXN_STATUS, and the settled flag (ZSGTSFTR_TRD_POS ZSET_CHECK) is not served, so no leg
+ *   shows as settled. ZSGTSFCDS_OPTION (option legs) has no service -> WAITING FOR API.
  *   Trade Invoice grid       ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is
  *                            ZSGSLCTR_TRD_POS, the SLC table) and its default rows come from
  *                            ZSGTSFTR_SET_TYP by a selection that is not exported.
@@ -32,42 +40,78 @@
 import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { odataString } from '@slc/api-client'
+import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso } from '../../shared/fx/sap.ts'
+import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { statusClass } from './logic.ts'
-import type { Deal, StatusMeta } from './types.ts'
+import type { Deal, FxDeal, StatusMeta } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
 const PROGRAM = 'ZSGTSF_RDEAL_TRD_INV'
 const NOT_EXPORTED = `${PROGRAM} source not exported (only dependency notes)`
 
-const FX_VIEW = 'tsfvFx'
+export const OPTION_LEGS_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (option legs) has no service; only the FX legs are shown.`
 
-/** Columns the dependency note lists for ZSGTSFCDS_FX (the CDS over ZSGTSFV_FX). */
-// prettier-ignore
-export const LEG_VIEW_COLUMNS = [
-  'BUKRS', 'RFHA', 'RFHAZUL', 'DBLFZ', 'DELFZ', 'XTEXT', 'SGSART', 'SFHAART', 'PRCTR', 'RBUSA', 'KONTRH',
-  'BP_NAME', 'ZCOM_ID', 'ZTSF_EXE_CO', 'BS_1', 'BS_2', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP',
-  'OTOT_RATE', 'ZTSF_MC_REF_NO', 'ZTSF_DEAL_TYPE', 'TXN_STATUS', 'ZTSF_DEAL_SQ', 'EXT_STAT_DESC',
-  'ZTSF_DEAL_ID', 'SAKTIV',
-] as const
-
-export const missingColumns = (have: readonly string[], need: readonly string[]): string[] => {
-  const served = new Set(have)
-  return need.filter((c) => !served.has(c))
+/** What sits under the FX Deal Settlement grid (and the P&L / difference popups) once the FX legs were read. */
+export function legsWaitingReason(rows: number): string {
+  return rows ? OPTION_LEGS_WAITING : `No FX transaction carries this Deal ID in ZSGTSFTR_APP_STR / FxTransaction. ${OPTION_LEGS_WAITING}`
 }
 
-/** The FX Deal Settlement gate: ZSGTSFCDS_OPTION has no resource, so the legs are never complete. */
-export function legsWaitingReason(viewColumns: readonly string[] | null): string {
-  const fx =
-    viewColumns === null
-      ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") could not be read`
-      : (() => {
-          const missing = missingColumns(viewColumns, LEG_VIEW_COLUMNS)
-          return missing.length ? `ZSGTSFCDS_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}` : ''
-        })()
-  return `${WAITING} — ${fx ? `${fx}; ` : ''}ZSGTSFCDS_OPTION (option legs) has no middleware resource.`
+export const legsUnavailable = (why: string): string =>
+  `${WAITING} — ZSGTSFTR_APP_STR (service "trmfxapp") or FxTransaction (service "fx") could not be read: ${why}. ZSGTSFCDS_OPTION (option legs) has no service.`
+
+const num = (v: unknown): number => {
+  const x = Number(v)
+  return Number.isFinite(x) ? x : 0
+}
+const rate = (v: unknown): string => (v === undefined || v === null || v === '' ? '' : num(v).toFixed(4))
+
+/**
+ * An FX leg as a grid row. Leg 1 is the lead currency (FxTransaction's LeadCurrency), B/S is from the
+ * transaction's own buy side, amounts are absolute. Entity and the FI document numbers have no source.
+ */
+export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
+  const type = (app.ZtsfDealType ?? '').trim()
+  const lead = fx.LeadCurrency || fx.BuyCurrency || ''
+  const follow = fx.FollowCurrency || fx.SellCurrency || ''
+  const buysLead = fx.BuyCurrency === lead
+  const status = (app.TxnStatus ?? '').trim()
+  return {
+    seq: (app.ZtsfDealSq ?? '').trim(),
+    dealType: type,
+    dealTypeChip: type === 'D1' ? 'chip-d1' : type === 'D2' ? 'chip-d2' : 'chip-t',
+    rfha: fx.FinancialTransaction,
+    bukrs: fx.CompanyCode,
+    bp: fx.Partner,
+    txnDate: dmyFromIso(fx.ContractDate),
+    valDate: dmyFromIso(fx.ValueDate),
+    entity: '',
+    bs1: buysLead ? 'Buy' : 'Sell',
+    curr1: lead,
+    amt1: Math.abs(num(buysLead ? fx.BuyAmount : fx.SellAmount)),
+    bs2: buysLead ? 'Sell' : 'Buy',
+    curr2: follow,
+    amt2: Math.abs(num(buysLead ? fx.SellAmount : fx.BuyAmount)),
+    spot: rate(fx.SpotRate),
+    rate: rate(fx.ForwardRate),
+    mcRefNo: (app.ZtsfMcRefNo ?? '').trim(),
+    status: status ? fxTxnStatusLabel(status) : '',
+    // ZSET_CHECK (ZSGTSFTR_TRD_POS) is not served: no leg is shown as settled.
+    statusChip: 'chip-open',
+    doc1: '',
+    doc2: '',
+  }
+}
+
+const bySeq = (a: FxDeal, b: FxDeal) => (a.seq + a.dealType + a.rfha < b.seq + b.dealType + b.rfha ? -1 : 1)
+
+/** The Deal ID's FX legs, reversed deals dropped, ordered by Seq / Deal Type / transaction. */
+export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<FxDeal[]> {
+  const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
+  return joined.filter(({ fx }) => fx.ActiveStatus !== '3').map(toFxDeal).sort(bySeq)
 }
 
 export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is ZSGSLCTR_TRD_POS, the SLC table), and ${NOT_EXPORTED}: the default legs from ZSGTSFTR_SET_TYP / ZSGTSFTR_BIL_ADJ / ZSGTSFTR_INV_REF cannot be reproduced.`
@@ -167,15 +211,18 @@ export function toDeal(input: { deal: FxRow; mc: FxRow | undefined; model: FxRow
 export type DealScreen = {
   deal: Deal
   statuses: StatusMeta[]
+  fxDeals: FxDeal[]
   legsWaiting: string
 }
 
-async function columnsOrNull(resource: string, signal?: AbortSignal): Promise<string[] | null> {
+/** The FX legs; unreadable APP_STR / FxTransaction leaves the grid empty with the reason, never a guess. */
+async function legsOrWaiting(dealId: string, signal?: AbortSignal): Promise<{ fxDeals: FxDeal[]; legsWaiting: string }> {
   try {
-    return await fxColumns(resource, signal)
+    const fxDeals = await loadFxLegs(dealId, signal)
+    return { fxDeals, legsWaiting: legsWaitingReason(fxDeals.length) }
   } catch (error) {
     if (isAbort(error)) throw error
-    return null
+    return { fxDeals: [], legsWaiting: legsUnavailable(messageOf(error)) }
   }
 }
 
@@ -190,11 +237,11 @@ export async function loadDealScreen(dealId: string, signal?: AbortSignal): Prom
   const trdCode = txt(deal, 'ZTRD_CODE')
   const dealType = txt(deal, 'ZDEAL_TYPE')
   const subType = txt(deal, 'ZSUB_TYPE')
-  const [mcs, traders, statuses, viewColumns] = await Promise.all([
+  const [mcs, traders, statuses, legs] = await Promise.all([
     mcRef ? fxList('masterContract', { ZMC_REF_NO: mcRef }, { signal }) : none,
     trdCode ? fxList('trmTrader', { ZTCODE: trdCode }, { signal }) : none,
     dealType && subType ? fxList('tsfDealStatus', { ZDEAL_TYPE: dealType, ZSUB_TYPE: subType }, { signal }) : none,
-    columnsOrNull(FX_VIEW, signal),
+    legsOrWaiting(dealId, signal),
   ])
   const mc = mcs[0]
   const modelId = mc ? txt(mc, 'ZMOD_ID') : ''
@@ -202,6 +249,7 @@ export async function loadDealScreen(dealId: string, signal?: AbortSignal): Prom
   return {
     deal: toDeal({ deal, mc, model: models[0], trader: traders[0] }),
     statuses: statusList(statuses, dealType, subType),
-    legsWaiting: legsWaitingReason(viewColumns),
+    fxDeals: legs.fxDeals,
+    legsWaiting: legs.legsWaiting,
   }
 }

@@ -1,11 +1,13 @@
 import { txt } from '../../shared/fx/masters.ts'
-import { DEAL_TYPE, FORWARD_SUB_TYPE, listDealIds, setDealStatus } from '../../shared/fx/deal-id.ts'
+import { DEAL_TYPE, FORWARD_SUB_TYPE, listDealIds } from '../../shared/fx/deal-id.ts'
 import { listMasterContracts, type DealRow } from '../../shared/fx/master-contract.ts'
 import { fxList, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { SLOT_NAMES, inChunks, liveLegs, toDeal as toChangeDeal, type Related } from '../fo-change-deal-id/api.ts'
 import type { Deal as ChangeDeal, TopRow } from '../fo-change-deal-id/types.ts'
-import { CANCELLED_STATUS, STATUS_META } from './data.ts'
+import { loadAppStrRecords, type AppStrRecord } from '../fx-blotter/appStr.ts'
+import { cancelDealId } from './analysis.ts'
+import { STATUS_META } from './data.ts'
 import type { Deal, Invoice, Leg, StoredPl } from './types.ts'
 
 /**
@@ -63,6 +65,7 @@ function modelRow(models: readonly FxRow[], modelId: string): FxRow | undefined 
 export function toLeg(t: TopRow): Leg {
   return {
     rfha: t.rfha,
+    bukrs: t.bukrs,
     dealType: t.dealType,
     bpName: t.bpName,
     bpCode: t.kontrh,
@@ -171,10 +174,23 @@ export async function loadDeal(dealId: string, signal?: AbortSignal): Promise<Lo
     plans,
     ...(live ? { live: live.live, names: live.names, entities: live.entities } : {}),
   }
-  return { deal: toScreenDeal(row, toChangeDeal(row, rel), model), row }
+  const screenDeal = toScreenDeal(row, toChangeDeal(row, rel), model)
+  const records = await loadAppStrRecords(screenDeal.legs.map((l) => ({ CompanyCode: l.bukrs, FinancialTransaction: l.rfha })), signal)
+  return { deal: withPersistedStatus(screenDeal, records), row }
 }
 
-/** Cancel Deal ID: ZDEAL_STAT = 30 and the changed-by stamp, as DEASSIGN_DATA does. Throws SAP's reason. */
+/** Cancel Deal ID: ZDEAL_STAT = 30 and nothing else. Throws the reason it could not be saved. */
 export async function cancelDeal(row: DealRow): Promise<void> {
-  await setDealStatus([row], CANCELLED_STATUS)
+  const result = await cancelDealId(row)
+  if (!result.ok) throw new Error(result.error)
+}
+
+/**
+ * The legs with their persisted transaction status: ZSGTSFTR_APP_STR.TXN_STATUS, matched on BUKRS + RFHA.
+ * A leg with no APP_STR status shows none (blank) rather than the FX service's stand-in, because the
+ * confirmation check reads this status and must not be told a transaction is further along than it is.
+ */
+export function withPersistedStatus(deal: Deal, records: readonly AppStrRecord[]): Deal {
+  const byKey = new Map(records.map((r) => [`${r.CompanyCode}|${r.FinancialTransaction}`, r]))
+  return { ...deal, legs: deal.legs.map((l) => ({ ...l, txnStatus: byKey.get(`${l.bukrs}|${l.rfha}`)?.TxnStatus ?? '' })) }
 }

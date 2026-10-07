@@ -30,18 +30,24 @@ export function enrichRow(row: Omit<DealRow, 'status' | 'statusDesc' | 'modelDes
 const DATE_KEYS = new Set(['dealStart', 'dealEnd', 'earliestStart', 'shipStart', 'shipEnd'])
 const NUM_KEYS = new Set(['amount', 'daysShip', 'daysEnd', 'daysStart'])
 
-export function filterRows(rows: readonly DealRow[], search: string, dateFrom: Date | null, dateTo: Date | null, origin: string, region: string, model: string): DealRow[] {
+/**
+ * The screen's live filters. `useDateRange` is P_MARK's `zship_start >= low AND zship_end >= high`; the
+ * automatic mode passes false, since its date rule (ship start <= today) was applied when it loaded.
+ */
+export function filterRows(rows: readonly DealRow[], search: string, dateFrom: Date | null, dateTo: Date | null, origin: string, region: string, model: string, useDateRange = true): DealRow[] {
   const q = search.trim().toLowerCase()
   return rows.filter((row) => {
     if (row.status !== '02') return false
     if (origin && row.origin !== origin) return false
     if (region && row.region !== region) return false
     if (model && row.model !== model) return false
-    const shipStart = parseDate(row.shipStart)
-    const shipEnd = parseDate(row.shipEnd)
-    if (!shipStart || !shipEnd) return false
-    if (dateFrom && shipStart.getTime() < dateFrom.getTime()) return false
-    if (dateTo && shipEnd.getTime() < dateTo.getTime()) return false
+    if (useDateRange) {
+      const shipStart = parseDate(row.shipStart)
+      const shipEnd = parseDate(row.shipEnd)
+      if (!shipStart || !shipEnd) return false
+      if (dateFrom && shipStart.getTime() < dateFrom.getTime()) return false
+      if (dateTo && shipEnd.getTime() < dateTo.getTime()) return false
+    }
     if (q && !searchableText(row).includes(q)) return false
     return true
   })
@@ -111,11 +117,12 @@ export function buildCsv(rows: readonly DealRow[]): string {
 
 /**
  * The Deal ID hotspot SUBMITs ZSGTSF_RVIEW_DEAL, which is not in this export. Its header shows
- * what the Deal ID and its MC already hold; its FX legs, planned / adjusted invoices, BLs,
+ * what the Deal ID and its MC already hold; its FX legs come from TrmFxApp + FxTransaction
+ * (dealLegs.ts, forward / swap only); its planned / adjusted invoices, BLs,
  * settlement lines and planned P&L are that program's own reads (VTBFHA, ZSGTSFCDS_FX,
  * ZSGTSFTR_INV_REF, ZSGTSFTR_BIL_ADJ, ZSGTSFTR_BL ...) and stay empty: WAITING FOR API.
  */
-export const WAITING_VIEW_DEAL = 'WAITING FOR API — View Deal ID (ZSGTSF_RVIEW_DEAL) is not in this export; its FX, invoice, BL, settlement and P&L reads have no API yet'
+export const WAITING_VIEW_DEAL = 'WAITING FOR API — View Deal ID (ZSGTSF_RVIEW_DEAL) is not in this export; its invoice, BL, settlement and P&L reads have no API yet'
 
 /** Its actions (confirm, save, re-calculate, settle, amend end date) are the same program's. */
 export const waitingAction = (what: string): string => `WAITING FOR ACTION API — ${what} (ZSGTSF_RVIEW_DEAL, not in this export) has no API yet. Nothing was posted to SAP.`

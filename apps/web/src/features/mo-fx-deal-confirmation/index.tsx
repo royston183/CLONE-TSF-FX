@@ -5,7 +5,7 @@ import { BlotterDateField } from './BlotterDateField.tsx'
 import { ComboBox } from './ComboBox.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { loadFxDeals, sapMessage, settleFxDeals } from './api.ts'
+import { loadFxDeals, sapMessage } from './api.ts'
 import { generateDeals } from './data.ts'
 import { DealsTable } from './DealsTable.tsx'
 import {
@@ -13,6 +13,7 @@ import {
   EMPTY_FILTERS,
   EMPTY_SELECTION,
   TRADER_OPTIONS,
+  applyDone,
   applyDragRange,
   applySelection,
   correctionMessage,
@@ -30,6 +31,7 @@ import {
   nextSort,
   pageOf,
   rowClickSelection,
+  selectedCompanyCodes,
   selectedDeals,
   withoutFxDeals,
 } from './logic.ts'
@@ -38,6 +40,14 @@ import { useModal } from './modal.tsx'
 import { Pagination } from './Pagination.tsx'
 import { StatusModal } from './StatusModal.tsx'
 import { Toasts } from './Toasts.tsx'
+import {
+  matchAndReleaseDeals,
+  requestCorrectionDeals,
+  retryWorkflowSave,
+  selectionBlockMessage,
+  type MoBatch,
+  type PendingSave,
+} from './workflow.ts'
 import './mo-fx-deal-confirmation.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -73,13 +83,10 @@ const FILTER_FIELDS: Array<{ key: keyof Filters; id: string; label: string }> = 
 ]
 
 /**
- * TSF MO Deal Confirmation - FX & Options (ZSGTSFR024), converted from
- * legacy/fx-deal-confirmation.html.
- *
- * The original never called an API, so this is the same UI-only screen: the deal queue lives
- * in component state for the session, seeded from data.ts. MO picks a Company Code range,
- * Upto Blotter Date and Display Type, then Matches & Releases deals (they leave the queue) or
- * sends them back to FO as Correction Required.
+ * TSF MO Deal Check - FX & Options (ZSGTSF_ROPTION_MO_EXT). MO picks a Company Code range, Upto Blotter Date,
+ * Trader and Display Type; the FX worklist is the APP_STR records in status 03 / 04 / 06 joined to their SAP
+ * transactions. Match & Release settles in SAP and then writes 07 (59 for a cancellation deal); Correction
+ * Required writes 04 with the MO remark. The Options rows are still sample data: no Options service is configured.
  */
 export default function MoFxDealConfirmation() {
   // Options rows are dummy data; the FX rows are read from SAP (see loadFx) and are not shown until they are.
@@ -101,6 +108,8 @@ export default function MoFxDealConfirmation() {
   const [pageSize, setPageSize] = useState(20)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [refreshing, setRefreshing] = useState(false)
+  /** Settled in SAP, workflow save failed: kept so the save can be retried without settling again. */
+  const [pending, setPending] = useState<PendingSave[]>([])
 
   // Checkbox-column drag
   const drag = useRef<{ anchor: number; mode: DragMode } | null>(null)
@@ -175,6 +184,11 @@ export default function MoFxDealConfirmation() {
     setSelected(new Set())
     setShowResults(true)
     setCollapsed(true)
+    setRefreshing(true)
+    void loadFx(applySelection(form)).then((message) => {
+      setRefreshing(false)
+      if (message) showToast('error', 'FX deals not loaded', message)
+    })
   }
 
   const resetSelection = () => {
@@ -208,12 +222,13 @@ export default function MoFxDealConfirmation() {
   }
 
   /**
-   * Reads the FX deals from SAP into the queue. A failure leaves the queue as it was and says so:
+   * Reads the FX worklist from the backend into the queue. A failure leaves the queue as it was and says so:
    * no stand-in FX rows are ever shown.
    */
-  const loadFx = useCallback(async (signal?: AbortSignal): Promise<string | null> => {
+  const loadFx = useCallback(async (sel: AppliedSelection, signal?: AbortSignal): Promise<string | null> => {
+    if (!sel.upTo) return null
     try {
-      const live = await loadFxDeals(signal)
+      const live = await loadFxDeals(sel.upTo, selectedCompanyCodes(sel), signal)
       if (signal?.aborted) return null
       setDeals((current) => mergeLiveDeals(current, live))
       return null
@@ -223,31 +238,18 @@ export default function MoFxDealConfirmation() {
     }
   }, [])
 
-  // Once, on opening. The toast is the only signal a failed read gets, so it names the reason.
-  useEffect(() => {
-    const ctl = new AbortController()
-    setRefreshing(true)
-    void loadFx(ctl.signal).then((message) => {
-      if (ctl.signal.aborted) return
-      setRefreshing(false)
-      if (message) showToast('error', 'FX deals not loaded', message)
-    })
-    return () => ctl.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- showToast only reaches refs and setState
-  }, [loadFx])
-
   const refresh = async () => {
     setRefreshing(true)
-    const message = await loadFx()
+    const message = await loadFx(applied)
     setRefreshing(false)
     setStatus(
       message
-        ? { type: 'error', title: 'Refresh Failed', heading: 'Could not read the FX deals from SAP', message }
+        ? { type: 'error', title: 'Refresh Failed', heading: 'Could not read the FX deals', message }
         : {
             type: 'success',
             title: 'Deals Refreshed',
             heading: 'Deals Refreshed',
-            message: 'The FX deals were read from SAP again; the Options rows are sample data.',
+            message: 'The FX deals were read again from SAP and the application data; the Options rows are sample data.',
           },
     )
     statusModal.open()
@@ -255,78 +257,117 @@ export default function MoFxDealConfirmation() {
 
   // ------------------------------------------------------------------ match & release / correction
 
+  const blocked = (list: readonly Deal[]): boolean => {
+    const message = selectionBlockMessage(list)
+    if (!message) return false
+    setStatus({ type: 'error', title: 'Not allowed', heading: 'This deal cannot be processed', message })
+    statusModal.open()
+    return true
+  }
+
   const openMatchRelease = () => {
     const list = selectedDeals(deals, selected)
-    if (list.length === 0) return
+    if (list.length === 0 || blocked(list)) return
     setMrSummary(dealSummary(list))
     setMrValues(EMPTY_MR)
     mrModal.open()
   }
 
-  /** True while Settle calls are running: the modal closes at once, so a second click must not start another run. */
-  const settling = useRef(false)
+  /** True while a run is in progress: the modal closes at once, so a second click must not start another. */
+  const busy = useRef(false)
+
+  /** Shows a batch's failure, and keeps the retry data when SAP settled but the workflow save did not. */
+  const reportFailure = (outcome: MoBatch, title: string) => {
+    const f = outcome.failed
+    if (!f) return
+    const p = f.pending
+    if (p) setPending((all) => [...all.filter((x) => x.id !== p.id), p])
+    setStatus({
+      type: 'error',
+      title,
+      heading: f.stage === 'settle' ? `SAP did not settle ${f.id}` : f.stage === 'workflow' ? 'Workflow data not saved' : 'Not processed',
+      message: (outcome.done.length ? `${outcome.done.length} deal(s) were completed before it. ` : '') + f.reason,
+    })
+    statusModal.open()
+  }
 
   /**
-   * FX deals are settled in SAP (BAPI_FTR_FXT_SETTLE), one at a time, stopping at the first
-   * refusal; only the ones SAP settled leave the queue. The Options rows have no BAPI here and
-   * keep their on-screen behaviour. The External / Internal Ref fields and the remark are not
-   * stored for an FX deal — the service has no field for them — and the message says so.
+   * FX deals: SAP settles first, then the status is written (07, or 59 for a cancellation deal). The batch stops at
+   * the first failure. The Options rows have no service and keep their on-screen behaviour.
    */
   const confirmMatchRelease = async () => {
     const list = selectedDeals(deals, selected)
-    if (list.length === 0 || settling.current) return
-    settling.current = true
+    if (list.length === 0 || busy.current) return
+    busy.current = true
     mrModal.close()
     try {
       const fx = list.filter((d) => d.live)
-      const outcome = await settleFxDeals(fx)
-      const done = new Set([...outcome.settled, ...list.filter((d) => !d.live).map((d) => d.id)])
-      if (done.size) setDeals((all) => matchReleaseDeals(all, done, mrValues.remarks))
+      const sample = new Set(list.filter((d) => !d.live).map((d) => d.id))
+      const outcome = await matchAndReleaseDeals(fx, { externalRef: mrValues.externalRef, internalRef: mrValues.internalRef, moRemark: mrValues.remarks })
+      const done = new Set([...outcome.done.map((d) => d.id), ...sample])
+      setDeals((all) => matchReleaseDeals(applyDone(all, outcome.done), sample, mrValues.remarks))
       setSelected((s) => new Set([...s].filter((id) => !done.has(id))))
-
-      if (outcome.failed) {
-        setStatus({
-          type: 'error',
-          title: 'Match & Release stopped',
-          heading: 'SAP did not settle ' + outcome.failed.id,
-          message:
-            (outcome.settled.length ? outcome.settled.length + ' deal(s) were settled before it. ' : 'Nothing was settled. ') +
-            outcome.failed.reason,
-        })
-        statusModal.open()
-        return
-      }
-      const unsaved = fx.length > 0 && (mrValues.externalRef.trim() || mrValues.internalRef.trim() || mrValues.remarks.trim())
+      if (outcome.failed) return reportFailure(outcome, 'Match & Release stopped')
       showToast(
         'success',
         'Matched & Released',
-        matchReleaseMessage(list) + (unsaved ? ' The references and remark were not saved: SAP has no field for them in this service.' : ''),
+        matchReleaseMessage(list) + (outcome.notStored.length ? ` Not saved: ${outcome.notStored.join('; ')}.` : ''),
       )
     } finally {
-      settling.current = false
+      busy.current = false
+    }
+  }
+
+  const retrySaves = async () => {
+    if (busy.current || pending.length === 0) return
+    busy.current = true
+    try {
+      const results = await Promise.all(pending.map((p) => retryWorkflowSave(p)))
+      const ok = results.flatMap((r) => (r.ok ? [r.done] : []))
+      setDeals((all) => applyDone(all, ok))
+      setPending((all) => all.filter((_, i) => !results[i]?.ok))
+      const failed = results.find((r) => !r.ok)
+      if (failed && !failed.ok) {
+        setStatus({ type: 'error', title: 'Retry failed', heading: 'Workflow data still not saved', message: failed.reason })
+        statusModal.open()
+      } else {
+        showToast('success', 'Workflow data saved', `${ok.length} deal(s) saved; SAP was not asked to settle them again.`)
+      }
+    } finally {
+      busy.current = false
     }
   }
 
   const openCorrection = () => {
     const list = selectedDeals(deals, selected)
-    if (list.length === 0) return
+    if (list.length === 0 || blocked(list)) return
     setCrSummary(dealSummary(list))
     setCrRemarks('')
     setCrError(false)
     crModal.open()
   }
 
-  const confirmCorrection = () => {
+  const confirmCorrection = async () => {
     const list = selectedDeals(deals, selected)
-    if (list.length === 0) return
+    if (list.length === 0 || busy.current) return
     if (!isCorrectionValid(crRemarks)) {
       setCrError(true)
       return
     }
-    setDeals((all) => markCorrectionRequired(all, selected, crRemarks))
-    setSelected(new Set())
+    busy.current = true
     crModal.close()
-    showToast('error', 'Correction Requested', correctionMessage(list))
+    try {
+      const fx = list.filter((d) => d.live)
+      const sample = new Set(list.filter((d) => !d.live).map((d) => d.id))
+      const outcome = await requestCorrectionDeals(fx, crRemarks)
+      const done = new Set([...outcome.done.map((d) => d.id), ...sample])
+      setDeals((all) => markCorrectionRequired(applyDone(all, outcome.done), sample, crRemarks))
+      setSelected((s) => new Set([...s].filter((id) => !done.has(id))))
+      if (outcome.failed) return reportFailure(outcome, 'Correction Required stopped')
+      showToast('error', 'Correction Requested', correctionMessage(list) + (outcome.notStored.length ? ` Not saved: ${outcome.notStored.join('; ')}.` : ''))
+    } finally {
+      busy.current = false
+    }
   }
 
   // ------------------------------------------------------------------ render
@@ -536,6 +577,11 @@ export default function MoFxDealConfirmation() {
                 <button className="btn btn-danger" id="correctionBtn" type="button" disabled={!hasSelection} onClick={openCorrection}>
                   &#9888; Correction Required
                 </button>
+                {pending.length > 0 && (
+                  <button className="btn btn-primary" id="retrySaveBtn" type="button" onClick={retrySaves}>
+                    Retry workflow save ({pending.length})
+                  </button>
+                )}
                 <span className="spacer" />
                 <button className="btn btn-secondary" id="refreshBtn" type="button" disabled={refreshing} onClick={refresh}>
                   <span id="refreshIcon" className={refreshing ? 'spin' : undefined}>

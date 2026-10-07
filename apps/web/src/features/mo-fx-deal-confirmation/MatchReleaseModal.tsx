@@ -32,6 +32,11 @@ export function MatchReleaseModal({
               <span id="mrPartner">{summary.partner}</span>
             </div>
           </div>
+          {summary.warning && (
+            <div className="field" role="alert" id="mrLimitWarning">
+              {summary.warning}
+            </div>
+          )}
           <div className="field">
             <label htmlFor="mrCoverNo">Cover No</label>
             <input className="input" id="mrCoverNo" readOnly value={summary.coverNo} />

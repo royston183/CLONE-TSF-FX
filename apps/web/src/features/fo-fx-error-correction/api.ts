@@ -1,6 +1,8 @@
 import { apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { FX_TXN_STATUS, blotterStageOf } from '../../shared/fx/txn-status.ts'
+import { appKey, listTrmFxApp } from '../../shared/fx/app-str.ts'
 import { dealKey, dealIdsByTransaction, sapMessage, type FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import { STATUS } from './data.ts'
 import { parseAmountShorthand, parseRate, safeParseDate } from './format.ts'
@@ -16,7 +18,7 @@ import type { CorrectionForm, Txn } from './types.ts'
  *             SAP works Amount 2 out itself (Buy Amount x Forward Rate), so it is never sent.
  *
  * What the service has no field for, and the screen therefore shows blank and read-only instead of inventing:
- * Correction Required / Released to MO (a row is only "Open" or, once SAP reversed it, "Reversed"), the MO remark,
+ * the MO remark,
  * trader, mode of trade, account category, business area and profit center of the transaction, blotter date, and
  * who changed it. The Deal ID and Master Contract come from ZSGTSFTR_DEALID; the names from the TRM and
  * business-partner masters. Options are not part of this service and stay out.
@@ -84,6 +86,23 @@ export function dealInfoByTransaction(dealRows: readonly FxRow[]): Map<string, {
 }
 
 /**
+ * The status a row shows, from TXN_STATUS in ZSGTSFTR_APP_STR. 04 (MO sent it back, as the MO deal confirmation
+ * screen writes it) is Correction Required, the one this screen exists for; 02 / 05 are Reversed; 06 and the
+ * statuses past the FO desk are Released to MO. A blank, 00, 01 or 08 status, or no record at all (rows from
+ * before the table was filled), stays Open. SAP reporting the transaction reversed always wins.
+ */
+export function statusOf(activeStatus: string | undefined, txnStatus: string | null | undefined) {
+  if (activeStatus === ACTIVE_REVERSED) return STATUS.REVERSED
+  const code = (txnStatus ?? '').trim()
+  if (code === FX_TXN_STATUS.MO_TO_FO_CORRECTION) return STATUS.ERRCORR
+  if (code === FX_TXN_STATUS.CORRECTED) return STATUS.RESUB
+  const stage = blotterStageOf(code)
+  if (stage === 'REVERSED') return STATUS.REVERSED
+  if (stage === 'RELEASED') return STATUS.RESUB
+  return STATUS.OPEN
+}
+
+/**
  * An FxTransaction as a queue row. A reversed one stays (read-only, "Reversed"); anything without dates is dropped.
  * Leg 1 is the lead currency; Amount 1 and 2 are shown unsigned.
  */
@@ -91,6 +110,7 @@ export function toTxn(
   d: FxTransaction,
   deals: ReadonlyMap<string, { dealId: string; desc: string; mc: string }>,
   names: Names,
+  txnStatuses: ReadonlyMap<string, string> = new Map(),
 ): Txn | null {
   const tradeDate = parseDay(d.ContractDate)
   const valueDate = parseDay(d.ValueDate)
@@ -138,7 +158,7 @@ export function toTxn(
     traderName: '',
     modeOfTrade: '',
     acctCat: '',
-    status: d.ActiveStatus === ACTIVE_REVERSED ? STATUS.REVERSED : STATUS.OPEN,
+    status: statusOf(d.ActiveStatus, txnStatuses.get(appKey(d.CompanyCode, d.FinancialTransaction))),
     moRemark: '',
     changedBy: '',
     changedOn: null,
@@ -195,6 +215,19 @@ export async function loadNames(rows: readonly FxTransaction[], companies: Map<s
   return { companies, productTypes, transactionTypes, partners }
 }
 
+/** TXN_STATUS of each transaction that has an APP_STR record. Never stops the queue: without it every row is Open. */
+export async function loadTxnStatuses(companyCodes: readonly string[], signal?: AbortSignal): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  try {
+    const filter = companyCodes.map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
+    for (const r of await listTrmFxApp(filter, signal)) if (r.TxnStatus?.trim()) out.set(appKey(r.CompanyCode, r.FinancialTransaction), r.TxnStatus.trim())
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[ec2] transaction status unavailable', error)
+  }
+  return out
+}
+
 /** Every FX transaction of the TSF entities, reversed ones included, with its Deal ID, Master Contract and names. */
 export async function loadQueue(signal?: AbortSignal): Promise<Txn[]> {
   const opts = signal ? { signal } : undefined
@@ -203,9 +236,9 @@ export async function loadQueue(signal?: AbortSignal): Promise<Txn[]> {
   if (!companies.size) throw new Error('No TSF company code (ZSGTSFTR_COMP) was returned, so there is nothing to list.')
   const filter = [...companies.keys()].map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
   const rows = await list<FxTransaction>(FX, { filter, top: 1000 }, opts)
-  const names = await loadNames(rows, companies, signal)
+  const [names, txnStatuses] = await Promise.all([loadNames(rows, companies, signal), loadTxnStatuses([...companies.keys()], signal)])
   const deals = dealInfoByTransaction(dealRows)
-  return rows.map((d) => toTxn(d, deals, names)).filter((t): t is Txn => t !== null)
+  return rows.map((d) => toTxn(d, deals, names, txnStatuses)).filter((t): t is Txn => t !== null)
 }
 
 /**

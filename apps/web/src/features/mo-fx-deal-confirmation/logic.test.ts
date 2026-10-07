@@ -64,6 +64,7 @@ function deal(patch: Partial<Deal>): Deal {
     valueDate: new Date(2025, 3, 2),
     allInRate: 80,
     status: STATUS.UNMATCHED,
+    txnStatus: '03',
     traderCode: 'C27',
     traderName: 'C27 - Akshay Mohnot',
     traderShort: 'Akshay M',
@@ -244,7 +245,7 @@ describe('filterDeals', () => {
     )
     deepStrictEqual(
       opts.status.map((o) => o.value),
-      [STATUS.UNMATCHED, STATUS.CORRECTION],
+      [STATUS.UNMATCHED, STATUS.CORRECTION, STATUS.CORRECTED],
     )
     strictEqual(opts.txnType[0]?.label, '619 - Forward-TSF')
     strictEqual(opts.partner[0]?.label, '0660000645 - DBS BANK LTD')

@@ -6,7 +6,7 @@ import { isAbort } from '../../shared/fx/mw.ts'
 import { loadCompanies, loadFixingReferences, loadWorklist, type Avail, type Option } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
-import { formatDate, money, rate } from './format.ts'
+import { formatDate, money, oldRateText, rate } from './format.ts'
 import { buildCsv, filterRows, nextSort, sortRows } from './logic.ts'
 import './fo-ndf-fixing-error-correction.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -41,9 +41,9 @@ const NUM_COLS = new Set<SortKey>(['amt1', 'amt2', 'oldRate'])
  * FO: NDF Fixing Error Correction (ZSGTSFR025), converted from
  * legacy/ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html.
  *
- * Reads SAP only (api.ts): the status-11 queue from ZSGTSFV_FX for the NDF Fixing Date, the
- * company codes from T001 and the fixing-reference texts from FTRT_FIX_DEF_T. The view does not
- * serve TXN_STATUS and the NDF fields yet, so the grid says WAITING FOR API. The correction
+ * Reads SAP only (api.ts): the status-11 queue (TrmFxApp + FxTransaction + the view's NDF_DATE for
+ * the NDF Fixing Date), the company codes from T001 and the fixing-reference texts from
+ * FTRT_FIX_DEF_T. Old Fixing Rate (NDF_RATE) has no source: WAITING FOR API. The correction
  * (TXN_STATUS 11 -> 12 + TX02 settle rate) has no API: Update reports it and changes nothing.
  */
 const CORRECTION_WAITING =
@@ -356,7 +356,7 @@ export default function FoNdfFixingErrorCorrection() {
                       <td>{r.curr2}</td>
                       <td>{r.fixDate}</td>
                       <td title={r.fixRefName}>{r.fixRef}</td>
-                      <td className="num">{rate(r.oldRate)}</td>
+                      <td className="num">{oldRateText(r.oldRate)}</td>
                       <td>{r.trader}</td>
                       <td>{r.partner}</td>
                       <td>

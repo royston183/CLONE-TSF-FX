@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { rate } from './format.ts'
+import { oldRateText, rate } from './format.ts'
 import { settlementDisplay } from './logic.ts'
 import type { NdfRow } from './types.ts'
 
@@ -52,7 +52,7 @@ export function CorrectionModal({ row, onClose, onUpdate }: { row: NdfRow; onClo
             <div className="form-row">
               <div className="field">
                 <label>Old Fixing Rate</label>
-                <input className="field-control readonly num" type="text" readOnly value={rate(row.oldRate)} />
+                <input className="field-control readonly num" type="text" readOnly value={oldRateText(row.oldRate)} />
               </div>
               <div className="field">
                 <label>New Fixing Rate</label>

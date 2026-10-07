@@ -12,25 +12,28 @@
  *   ZSGTSFTR_RULE_BT  fxModel         CO-area model lookup; send_email's sub type
  *   ZSGTSFTR_SET_TYP  setTyp          WHERE zhead_fx <> space OR zhead_opt <> space
  *   ZSGTSFTR_IN_SPOT  inSpot          FOR ALL ENTRIES on zdeal_id: the "Save Spot Data" flag
- *   ZSGTSFCDS_FX      tsfvFx          column-gated: the view as served lacks the TSF link columns
- *   ZSGTSFCDS_OPTION  (none)          not served at all
+ *   ZSGTSFCDS_FX      -               the view ("tsfvFx") lacks the TSF link columns, so the FX legs are the
+ *                                     ZSGTSFTR_APP_STR rows (TrmFxApp WHERE ZtsfMcRefNo IN the listed MC refs)
+ *                                     joined by CompanyCode + FinancialTransaction to FxTransaction. Deal ID /
+ *                                     type / MC ref come from APP_STR, currencies, amounts and product type from
+ *                                     the transaction, the bank (BP_NAME) is the partner's name. Fixing Day
+ *                                     (NDF_DATE) is in neither service, so it stays blank.
+ *   ZSGTSFCDS_OPTION  (none)          not served at all: the FX Utilisation Amount stays WAITING FOR API
  *
  * Read-only, like the report. No sample data: if a table cannot be read the screen says which
  * and stays empty.
  */
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
+import { odataString } from '@slc/api-client'
+import { allOf, loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
+import { loadNames, NO_NAMES, type Names } from '../mo-confirm-ndf-fixing/api.ts'
 import { ABAP } from './data.ts'
 import type { Deal, DealStatus, Entity, FxLeg, HeadsUpIndicator, Leg, MasterContract, RuleBt, ScreenData } from './types.ts'
 
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
-
-/** The columns FORM sub_get_data selects from ZSGTSFCDS_FX (plus its WHERE column). */
-export const FX_LEG_COLUMNS = [
-  'BUKRS', 'RFHA', 'ZTSF_DEAL_ID', 'ZTSF_DEAL_TYPE', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'SGSART', 'BP_NAME', 'NDF_DATE', 'ZTSF_MC_REF_NO',
-] as const
 
 /** ZSGTSFCDS_OPTION has no middleware resource; the report needs it for the option utilization. */
 export const OPTION_NOT_SERVED = 'ZSGTSFCDS_OPTION is not served by the middleware'
@@ -150,24 +153,35 @@ export function toLeg(r: FxRow): Leg {
   }
 }
 
-export function toFxLeg(r: FxRow): FxLeg {
-  return { ...toLeg(r), sgsart: txt(r, 'SGSART'), bp: txt(r, 'BP_NAME'), ndfDate: isoDay(r['NDF_DATE']) }
+/**
+ * One TrmFxApp row joined to its FxTransaction as a ZSGTSFCDS_FX leg. Leg 1 is the lead currency; the
+ * utilisation only reads the absolute USD side. NDF_DATE has no source, so the fixing day stays blank.
+ */
+export function toFxLeg({ fx, app }: FxWithApp, names: Names = NO_NAMES): FxLeg {
+  const lead = fx.LeadCurrency || fx.BuyCurrency || ''
+  const follow = fx.FollowCurrency || fx.SellCurrency || ''
+  const buysLead = fx.BuyCurrency === lead
+  return {
+    dealId: (app.ZtsfDealID ?? '').trim(),
+    type: (app.ZtsfDealType ?? '').trim(),
+    mcRef: (app.ZtsfMcRefNo ?? '').trim(),
+    curr1: lead,
+    curr2: follow,
+    amt1: Math.abs(num(buysLead ? fx.BuyAmount : fx.SellAmount)),
+    amt2: Math.abs(num(buysLead ? fx.SellAmount : fx.BuyAmount)),
+    sgsart: fx.ProductType ?? '',
+    bp: names.partners.get(fx.Partner) || fx.Partner,
+    ndfDate: '',
+  }
 }
 
-/** The FX columns the served view lacks. */
-export function missingFxColumns(served: readonly string[]): string[] {
-  const have = new Set(served)
-  return FX_LEG_COLUMNS.filter((c) => !have.has(c))
-}
+/** The WHERE of the FX legs: ZtsfMcRefNo IN the listed Master Contract references (one chunk of them). */
+export const mcRefFilter = (refs: readonly string[]): string => allOf(refs.map((r) => `ZtsfMcRefNo eq ${odataString(r)}`).join(' or '))
 
-/** The banner text while the legs cannot be read; null once both views are served. */
-export function legsNotice(missingFx: readonly string[], optionServed: boolean): string | null {
-  const parts: string[] = []
-  if (missingFx.length) parts.push(`ZSGTSFCDS_FX (middleware "tsfvFx") does not serve ${missingFx.join(', ')}`)
-  if (!optionServed) parts.push(OPTION_NOT_SERVED)
-  if (!parts.length) return null
-  const blank = missingFx.length ? 'FX Utilisation Amount, Fixing Day and Bank name stay blank' : 'FX Utilisation Amount stays blank'
-  return `WAITING FOR API — ${parts.join('; ')}. ${blank}.`
+/** The banner text while the option legs cannot be read (the FX legs are read); null once they are. */
+export function legsNotice(optionServed: boolean): string | null {
+  if (optionServed) return null
+  return `WAITING FOR API — ${OPTION_NOT_SERVED}. FX Utilisation Amount stays blank; Fixing Day (NDF_DATE) has no source in ZSGTSFTR_APP_STR / FxTransaction.`
 }
 
 /* ---------- loading ---------- */
@@ -187,6 +201,18 @@ async function listIn(resource: string, column: string, values: readonly string[
   return pages.flat()
 }
 
+/** The FX legs of the listed Master Contracts, with the partner names for the bank column. */
+export async function loadFxLegs(mcRefs: readonly string[], signal?: AbortSignal): Promise<FxLeg[]> {
+  const distinct = [...new Set(mcRefs.filter(Boolean))]
+  const pages = await Promise.all(chunk(distinct, 25).map((part) => loadFxWithApp(mcRefFilter(part), signal)))
+  const joined = pages.flat()
+  const names = await loadNames(joined.map((j) => j.fx), signal).catch((error: unknown) => {
+    if (isAbort(error)) throw error
+    return NO_NAMES
+  })
+  return joined.map((j) => toFxLeg(j, names))
+}
+
 class ReadError extends Error {}
 
 async function read<T>(table: string, resource: string, load: Promise<T>): Promise<T> {
@@ -201,27 +227,23 @@ async function read<T>(table: string, resource: string, load: Promise<T>): Promi
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
     const opts = { signal }
-    const [dealRows, mcRows, compRows, statusRows, ruleBt, setTyp, fxCols] = await Promise.all([
+    const [dealRows, mcRows, compRows, statusRows, ruleBt, setTyp] = await Promise.all([
       read('ZSGTSFTR_DEALID', 'tsfDealId', fxList('tsfDealId', {}, { sort: 'ZDEAL_ID', signal })),
       read('ZSGTSFTR_MAS_CON', 'masterContract', fxList('masterContract', {}, opts)),
       read('ZSGTSFTR_COMP', 'comp', fxList('comp', {}, opts)),
       read('ZSGTSFTR_DEAL_ST', 'tsfDealStatus', fxList('tsfDealStatus', { ZSUB_TYPE: ABAP.SUB_FX1 }, opts)),
       read('ZSGTSFTR_RULE_BT', 'fxModel', fxList('fxModel', {}, opts)),
       read('ZSGTSFTR_SET_TYP', 'setTyp', fxList('setTyp', {}, opts)),
-      read('ZSGTSFCDS_FX', 'tsfvFx', fxColumns('tsfvFx', signal)),
     ])
     const deals = dealRows.map(toDeal)
     const listed = deals.filter((d) => d.mcRef !== '')
-    const missingFx = missingFxColumns(fxCols)
     const [spotRows, fxRows] = await Promise.all([
       read('ZSGTSFTR_IN_SPOT', 'inSpot', listIn('inSpot', 'ZDEAL_ID', listed.map((d) => d.dealId), signal)),
-      missingFx.length
-        ? Promise.resolve(null)
-        : read('ZSGTSFCDS_FX', 'tsfvFx', listIn('tsfvFx', 'ZTSF_MC_REF_NO', listed.map((d) => d.mcRef), signal)),
+      read('ZSGTSFCDS_FX (ZSGTSFTR_APP_STR + FxTransaction)', 'trmfxapp', loadFxLegs(listed.map((d) => d.mcRef), signal)),
     ])
     return {
       source: 'sap',
-      notice: legsNotice(missingFx, false),
+      notice: legsNotice(false),
       data: {
         deals,
         masterContracts: mcRows.map(toMasterContract),
@@ -230,7 +252,7 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
         rules: ruleRows(ruleBt),
         indicators: indicatorRows(setTyp),
         spotDealIds: spotFlags(spotRows),
-        fxLegs: fxRows ? fxRows.map(toFxLeg) : null,
+        fxLegs: fxRows,
         // ZSGTSFCDS_OPTION has no resource, so the option legs (and the utilization) stay unavailable.
         optLegs: null,
       },

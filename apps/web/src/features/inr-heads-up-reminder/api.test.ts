@@ -1,24 +1,18 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
+import { afterEach, describe, it } from 'node:test'
 import {
-  FX_LEG_COLUMNS,
   entityHelp,
   indicatorRows,
   isoDay,
   legsNotice,
-  missingFxColumns,
+  loadFxLegs,
+  mcRefFilter,
   statusHelp,
   toDeal,
   toFxLeg,
   toMasterContract,
 } from './api.ts'
 import { COMP_ROWS, DEAL_ROWS, MC_ROWS, SET_TYP_ROWS, STATUS_ROWS } from './fixtures.ts'
-
-// ZSGTSFV_FX columns as the middleware served them on 2026-10-06 (no TSF link columns).
-const SERVED_FX = [
-  'MANDT', 'BUKRS', 'RFHA', 'SAKTIV', 'SGSART', 'BUTXT', 'LTX', 'SFHAART', 'XTEXT', 'BP_NAME', 'NDF_DATE', 'NDF_REF',
-  'CURR1', 'CURR2', 'AMT1', 'AMT2', 'ZCOM_ID',
-]
 
 describe('value helps', () => {
   it("Status: ZSGTSFTR_DEAL_ST WHERE zsub_type = 'FX1' (the <= '02' limit is commented out)", () => {
@@ -59,24 +53,54 @@ describe('row mappings', () => {
     deepStrictEqual([mc.ref, mc.origin, mc.modelId, mc.amt], ['2000000005', 'OSIPL', 'M032', 100000])
   })
 
-  it('maps a ZSGTSFCDS_FX row', () => {
-    const l = toFxLeg({ ZTSF_DEAL_ID: '7', ZTSF_DEAL_TYPE: 'D1', ZTSF_MC_REF_NO: '2', CURR1: 'USD', CURR2: 'INR', AMT1: '-5.00', AMT2: '9', SGSART: '12D', BP_NAME: 'HSBC', NDF_DATE: '2026-10-03' })
-    deepStrictEqual(l, { dealId: '7', type: 'D1', mcRef: '2', curr1: 'USD', curr2: 'INR', amt1: -5, amt2: 9, sgsart: '12D', bp: 'HSBC', ndfDate: '2026-10-03' })
+  it('maps a TrmFxApp row joined to its FxTransaction as an FX leg (bank = partner name, fixing day has no source)', () => {
+    const fx = { CompanyCode: 'SG03', FinancialTransaction: '3', ProductType: '12D', TransactionType: '619', Partner: '400000002', BuyCurrency: 'INR', SellCurrency: 'USD', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 830, SellAmount: -10 }
+    const app = { CompanyCode: 'SG03', FinancialTransaction: '3', ZtsfDealID: '7', ZtsfDealType: 'D1', ZtsfMcRefNo: '2' }
+    deepStrictEqual(toFxLeg({ fx, app }, { partners: new Map([['400000002', 'HSBC']]), txnTypes: new Map() }), {
+      dealId: '7', type: 'D1', mcRef: '2', curr1: 'USD', curr2: 'INR', amt1: 10, amt2: 830, sgsart: '12D', bp: 'HSBC', ndfDate: '',
+    })
+    strictEqual(toFxLeg({ fx, app }).bp, '400000002', 'without a name the partner number is shown')
   })
 })
 
-describe('FX / option leg gate', () => {
-  it('names the ZSGTSFCDS_FX columns the served view lacks', () => {
-    deepStrictEqual(missingFxColumns(SERVED_FX), ['ZTSF_DEAL_ID', 'ZTSF_DEAL_TYPE', 'ZTSF_MC_REF_NO'])
-    deepStrictEqual(missingFxColumns([...FX_LEG_COLUMNS]), [])
+describe('FX legs from ZSGTSFTR_APP_STR', () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
   })
+  it('filters by Master Contract reference', () => {
+    strictEqual(mcRefFilter(['2', '3']), "(ZtsfMcRefNo eq '2' or ZtsfMcRefNo eq '3')")
+  })
+  it('reads the APP_STR rows of the MC refs and joins them to the transactions', async () => {
+    const urls: string[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input).replaceAll('+', ' '))
+      urls.push(u)
+      const body = u.includes('/api/trmfxapp/')
+        ? { value: [{ CompanyCode: 'SG03', FinancialTransaction: '3', ZtsfDealID: '7', ZtsfDealType: 'D1', ZtsfMcRefNo: '2' }] }
+        : u.includes('/api/fx/')
+          ? { value: [{ CompanyCode: 'SG03', FinancialTransaction: '3', ProductType: '12D', TransactionType: '619', Partner: '4', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 10, SellAmount: 830 }] }
+          : { value: [], d: { results: [] } }
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+    }) as typeof fetch
+    const legs = await loadFxLegs(['2', '2', ''])
+    deepStrictEqual(legs.map((l) => [l.dealId, l.type, l.mcRef, l.curr1, l.amt1, l.sgsart]), [['7', 'D1', '2', 'USD', 10, '12D']])
+    ok(urls.some((u) => u.includes('/api/trmfxapp/') && u.includes("ZtsfMcRefNo eq '2'")))
+  })
+  it('reads nothing without Master Contract references', async () => {
+    globalThis.fetch = (async () => {
+      throw new Error('no request expected')
+    }) as typeof fetch
+    deepStrictEqual(await loadFxLegs([]), [])
+  })
+})
 
-  it('says WAITING FOR API while either view is missing', () => {
+describe('option leg gate', () => {
+  it('says WAITING FOR API for the option legs (utilisation) and the fixing day while ZSGTSFCDS_OPTION is not served', () => {
     strictEqual(
-      legsNotice(['ZTSF_DEAL_ID'], false),
-      'WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve ZTSF_DEAL_ID; ZSGTSFCDS_OPTION is not served by the middleware. FX Utilisation Amount, Fixing Day and Bank name stay blank.',
+      legsNotice(false),
+      'WAITING FOR API — ZSGTSFCDS_OPTION is not served by the middleware. FX Utilisation Amount stays blank; Fixing Day (NDF_DATE) has no source in ZSGTSFTR_APP_STR / FxTransaction.',
     )
-    strictEqual(legsNotice([], false), 'WAITING FOR API — ZSGTSFCDS_OPTION is not served by the middleware. FX Utilisation Amount stays blank.')
-    strictEqual(legsNotice([], true), null)
+    strictEqual(legsNotice(true), null)
   })
 })

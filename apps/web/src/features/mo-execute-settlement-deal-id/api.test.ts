@@ -1,13 +1,15 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { afterEach, describe, it } from 'node:test'
 import {
   ACTION_WAITING,
   INVOICE_WAITING,
-  LEG_VIEW_COLUMNS,
+  OPTION_LEGS_WAITING,
+  legsUnavailable,
   legsWaitingReason,
-  missingColumns,
+  loadFxLegs,
   statusList,
   toDeal,
+  toFxDeal,
   toPick,
 } from './api.ts'
 
@@ -81,20 +83,58 @@ describe('status list box', () => {
   })
 })
 
-describe('gates', () => {
-  it('names the ZSGTSFCDS_FX columns tsfvFx lacks, and always the missing option view', () => {
-    // tsfvFx's columns as served on 2026-10-05 (the ones the note names).
-    const served = ['BUKRS', 'RFHA', 'RFHAZUL', 'DBLFZ', 'DELFZ', 'XTEXT', 'SGSART', 'SFHAART', 'RBUSA', 'KONTRH', 'BP_NAME', 'ZCOM_ID', 'BS_1', 'BS_2', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP', 'OTOT_RATE', 'SAKTIV']
-    deepStrictEqual(missingColumns(served, LEG_VIEW_COLUMNS), [
-      'PRCTR', 'ZTSF_EXE_CO', 'ZTSF_MC_REF_NO', 'ZTSF_DEAL_TYPE', 'TXN_STATUS', 'ZTSF_DEAL_SQ', 'EXT_STAT_DESC', 'ZTSF_DEAL_ID',
-    ])
-    const reason = legsWaitingReason(served)
-    ok(reason.startsWith('WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve PRCTR'))
-    ok(reason.endsWith('ZSGTSFCDS_OPTION (option legs) has no middleware resource.'))
-    ok(legsWaitingReason(null).includes('could not be read'))
-    strictEqual(legsWaitingReason([...LEG_VIEW_COLUMNS]), 'WAITING FOR API — ZSGTSFCDS_OPTION (option legs) has no middleware resource.')
+describe('FX legs from TrmFxApp + FxTransaction', () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+  const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+  const fx = (txn: string, over: Record<string, unknown> = {}) => ({
+    CompanyCode: 'SG03', FinancialTransaction: txn, TransactionType: '600', Partner: '400000002', ContractDate: '2026-09-30', ValueDate: '2026-10-30',
+    BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 1000, SellAmount: 83000,
+    SpotRate: 82.5, ForwardRate: 83, ActiveStatus: '0', ...over,
+  })
+  const app = (txn: string, over: Record<string, unknown> = {}) => ({
+    CompanyCode: 'SG03', FinancialTransaction: txn, ZtsfDealID: '7000000006', ZtsfDealType: 'D1', ZtsfDealSq: '01', ZtsfMcRefNo: '2000000005', TxnStatus: '07', ...over,
   })
 
+  it('maps a leg: lead currency first, B/S from the buy side, APP_STR seq / type / MC, status text, no settled flag', () => {
+    const r = toFxDeal({ fx: fx('1'), app: app('1') })
+    deepStrictEqual(r, {
+      seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', bp: '400000002', txnDate: '30-09-2026',
+      valDate: '30-10-2026', entity: '', bs1: 'Buy', curr1: 'USD', amt1: 1000, bs2: 'Sell', curr2: 'INR', amt2: 83000,
+      spot: '82.5000', rate: '83.0000', mcRefNo: '2000000005', status: 'MO: Match & Release for Settlement',
+      statusChip: 'chip-open', doc1: '', doc2: '',
+    })
+    const sell = toFxDeal({ fx: fx('2', { BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 83000, SellAmount: 1000 }), app: app('2', { ZtsfDealType: 'D2' }) })
+    strictEqual(sell.bs1, 'Sell')
+    strictEqual(sell.amt1, 1000)
+    strictEqual(sell.dealTypeChip, 'chip-d2')
+  })
+
+  it('filters TrmFxApp by Deal ID, joins on company code + number, drops reversed deals and orders by seq', async () => {
+    const urls: string[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input).replaceAll('+', ' '))
+      urls.push(u)
+      if (u.includes('/api/trmfxapp/TrmFxApp'))
+        return json({ value: [app('2', { ZtsfDealType: 'D2', ZtsfDealSq: '02' }), app('1'), app('3', { ZtsfDealSq: '03' })] })
+      return json({ value: [fx('1'), fx('2'), fx('3', { ActiveStatus: '3' })] })
+    }) as typeof fetch
+    const legs = await loadFxLegs('7000000006')
+    deepStrictEqual(legs.map((l) => l.rfha), ['1', '2'])
+    ok(urls[0]?.includes("ZtsfDealID eq '7000000006'"))
+  })
+
+  it('narrows the waiting text to the option legs, or names the unreadable service', () => {
+    strictEqual(legsWaitingReason(2), OPTION_LEGS_WAITING)
+    ok(legsWaitingReason(0).startsWith('No FX transaction carries this Deal ID'))
+    ok(legsWaitingReason(0).endsWith(OPTION_LEGS_WAITING))
+    ok(legsUnavailable('down').includes('could not be read: down'))
+  })
+})
+
+describe('gates', () => {
   it('says why the trade invoice legs wait, and that no action posts', () => {
     ok(INVOICE_WAITING.includes('ZSGTSFTR_TRD_POS has no middleware resource'))
     for (const text of Object.values(ACTION_WAITING)) {
