@@ -3,10 +3,11 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { NDF_FIXING_API_MISSING, correctNdfFixing, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { loadCompanies, loadFixingReferences, loadWorklist, type Avail, type Option } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
-import { formatDate, money, oldRateText, rate } from './format.ts'
+import { money, rate } from './format.ts'
 import { buildCsv, filterRows, nextSort, sortRows } from './logic.ts'
 import './fo-ndf-fixing-error-correction.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -38,21 +39,19 @@ const COLUMNS: Column[] = [
 const NUM_COLS = new Set<SortKey>(['amt1', 'amt2', 'oldRate'])
 
 /**
- * FO: NDF Fixing Error Correction (ZSGTSFR025), converted from
+ * AE1: TSF FO Error Correction - NDF Fixing (ZSGTSFR025), converted from
  * legacy/ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html.
  *
- * Reads SAP only (api.ts): the status-11 queue (TrmFxApp + FxTransaction + the view's NDF_DATE for
- * the NDF Fixing Date), the company codes from T001 and the fixing-reference texts from
- * FTRT_FIX_DEF_T. Old Fixing Rate (NDF_RATE) has no source: WAITING FOR API. The correction
- * (TXN_STATUS 11 -> 12 + TX02 settle rate) has no API: Update reports it and changes nothing.
+ * Reads SAP only (api.ts): the status-11 queue from the TSF append (TrmFxApp) joined to the FTR deal
+ * (FxTransaction), company codes from T001 and fixing-reference texts from FTRT_FIX_DEF_T. The
+ * correction (TXN_STATUS 12 + the TX02 settle rate) needs a fixing-rate API that no service offers,
+ * so Update is disabled and says why.
  */
-const CORRECTION_WAITING =
-  'WAITING FOR CORRECTION ACTION API \u2014 the NDF rate correction (TXN_STATUS 11 \u2192 12, TX02 TTMS_FX_SETTLEMENT_DATA-SETTLE_RATE, status-12 e-mail) has no API yet. Nothing was posted to SAP.'
 export default function FoNdfFixingErrorCorrection() {
   const [rows, setRows] = useState<NdfRow[]>([])
   const [search, setSearch] = useState('')
   const [company, setCompany] = useState('')
-  const [fixDate, setFixDate] = useState(() => formatDate(new Date()))
+  const [fixDate, setFixDate] = useState('')
   const [companyHelp, setCompanyHelp] = useState<Avail<Option[]> | null>(null)
   const [refTexts, setRefTexts] = useState<Record<string, string>>({})
   const [worklistNote, setWorklistNote] = useState('')
@@ -62,6 +61,9 @@ export default function FoNdfFixingErrorCorrection() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const [correctionOpen, setCorrectionOpen] = useState(false)
+  /** null while SAP's metadata is being checked for NdfFixing. */
+  const [fixAvailable, setFixAvailable] = useState<boolean | null>(null)
+  const [saving, setSaving] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [dragReady, setDragReady] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -80,6 +82,7 @@ export default function FoNdfFixingErrorCorrection() {
     loadCompanies(ctrl.signal).then(setCompanyHelp, (e: unknown) => {
       if (!isAbort(e)) console.warn(e)
     })
+    void fixNdfAvailable().then(setFixAvailable)
     loadFixingReferences(ctrl.signal).then(setRefTexts, (e: unknown) => {
       if (!isAbort(e)) console.warn(e)
     })
@@ -90,13 +93,13 @@ export default function FoNdfFixingErrorCorrection() {
   /* GET_DATA for the NDF Fixing Date (P_DATE); Refresh — and a real correction — run it again. */
   const worklistAbort = useRef<AbortController | null>(null)
   const loadRows = useCallback(
-    async (date: string) => {
+    async () => {
       worklistAbort.current?.abort()
       const ctrl = new AbortController()
       worklistAbort.current = ctrl
       setLoading(true)
       try {
-        const res = await loadWorklist(date, refTexts, ctrl.signal)
+        const res = await loadWorklist(refTexts, ctrl.signal)
         setRows(res.state === 'ok' ? res.value : [])
         setWorklistNote(res.state === 'ok' ? '' : res.reason)
       } catch (error) {
@@ -108,9 +111,9 @@ export default function FoNdfFixingErrorCorrection() {
     [refTexts],
   )
   useEffect(() => {
-    void loadRows(fixDate)
+    void loadRows()
     return () => worklistAbort.current?.abort()
-  }, [fixDate, loadRows])
+  }, [loadRows])
 
   const findById = (id: string | null): NdfRow | null => (id ? (rows.find((r) => r.rfha === id && r.status === '11') ?? null) : null)
   const selectedRow = findById(selectedId)
@@ -128,7 +131,7 @@ export default function FoNdfFixingErrorCorrection() {
   const resetWorkbench = () => {
     setSearch('')
     setCompany('')
-    setFixDate(formatDate(new Date()))
+    setFixDate('')
     setSelectedId(null)
     setPage(1)
     setSort({ key: 'rfha', dir: -1 })
@@ -136,10 +139,10 @@ export default function FoNdfFixingErrorCorrection() {
 
   const refreshWorkbench = () => {
     resetWorkbench()
-    void loadRows(formatDate(new Date()))
+    void loadRows()
     setCorrectionOpen(false)
     setDetailId(null)
-    pushToast('Workbench refreshed.', true)
+    pushToast('NDF transactions read again from SAP.', true)
   }
 
   const openCorrection = () => {
@@ -151,13 +154,28 @@ export default function FoNdfFixingErrorCorrection() {
   }
 
   /**
-   * FORM save_data sets TXN_STATUS 12 and posts the new settle rate through TX02. No API does that
-   * yet, so nothing changes: the popup stays open and the row keeps status 11. Once the action
-   * exists, success closes the popup and reloads the queue (the row then drops out at 12).
+   * FORM save_data sets TXN_STATUS 12 and posts the new settle rate through TX02. The status alone
+   * would send MO a "corrected" fixing with no corrected rate, so nothing is written until the rate
+   * has an API (Update is disabled; this is its fallback).
    */
-  const updateFixing = (_newRate: number) => {
-    if (!selectedId) return
-    pushToast(CORRECTION_WAITING, false)
+  const updateFixing = (newRate: number) => {
+    const row = selectedRow
+    if (!row || saving) return
+    if (!fixAvailable) {
+      pushToast(NDF_FIXING_API_MISSING, false)
+      return
+    }
+    setSaving(true)
+    void correctNdfFixing({ bukrs: row.bukrs, rfha: row.rfha, etag: row.etag }, newRate)
+      .then((res) => {
+        pushToast(res.message, res.ok)
+        if (res.ok) {
+          setCorrectionOpen(false)
+          setSelectedId(null)
+          void loadRows()
+        }
+      })
+      .finally(() => setSaving(false))
   }
 
   const downloadCsv = () => {
@@ -183,7 +201,7 @@ export default function FoNdfFixingErrorCorrection() {
             <span className="l3" />
             <span className="l4" />
           </div>
-          <div className="page-title">NDF Fixing Error Correction</div>
+          <div className="page-title">AE1: TSF FO Error Correction - NDF Fixing</div>
           <div className="page-tag">FO</div>
         </div>
         <div className="header-right">
@@ -356,7 +374,7 @@ export default function FoNdfFixingErrorCorrection() {
                       <td>{r.curr2}</td>
                       <td>{r.fixDate}</td>
                       <td title={r.fixRefName}>{r.fixRef}</td>
-                      <td className="num">{oldRateText(r.oldRate)}</td>
+                      <td className="num">{rate(r.oldRate)}</td>
                       <td>{r.trader}</td>
                       <td>{r.partner}</td>
                       <td>
@@ -369,7 +387,7 @@ export default function FoNdfFixingErrorCorrection() {
               </tbody>
             </table>
             <div className="empty-state" style={{ display: pageRows.length ? 'none' : 'block' }}>
-              {loading ? 'Loading NDF transactions from SAP…' : worklistNote || 'No transactions match the current filters.'}
+              {loading ? 'Loading NDF transactions from SAP…' : worklistNote || 'No NDF transactions in status 11 (MO: NDF Fixing Correction Req) match the current filters.'}
             </div>
           </div>
 
@@ -396,7 +414,13 @@ export default function FoNdfFixingErrorCorrection() {
         ))}
       </div>
 
-      {correctionOpen && selectedRow ? <CorrectionModal row={selectedRow} onClose={() => setCorrectionOpen(false)} onUpdate={updateFixing} /> : null}
+      {correctionOpen && selectedRow ? <CorrectionModal
+          row={selectedRow}
+          blockedReason={fixAvailable === null ? 'Checking SAP for the NDF fixing action…' : fixAvailable ? '' : NDF_FIXING_API_MISSING}
+          busy={saving}
+          onClose={() => setCorrectionOpen(false)}
+          onUpdate={updateFixing}
+        /> : null}
       {detailRow ? <DetailModal row={detailRow} onClose={() => setDetailId(null)} /> : null}
     </div>
   )

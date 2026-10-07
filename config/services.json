@@ -10,6 +10,8 @@
     "          so a new app needs a registry row rather than an ABAP transport.",
     "  rest  - a non-SAP JSON/REST API. 'middleware' is the first instance; see docs/ARCHITECTURE.md",
     "          for what the gateway does and does not do for one.",
+    "  sqlite - a local SQLite file answered in-process (no 'base'; 'file' is relative to the repo",
+    "          root). Schemaless JSON records in named collections, OData-shaped responses.",
     "",
     "No secret belongs in this file. 'passwordEnv' names an environment variable; the gateway",
     "refuses to start if a referenced variable is unset."
@@ -62,6 +64,14 @@
       "tlsVerify": false,
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfx_o4_api/srvd_a2x/sap/zfs_sd_trmfx/0001",
       "description": "ZFS_SB_TRMFX_O4_API — TrmFx (FTR FX deal CRUD + Settle over BAPI_FTR_FXT_*)"
+    },
+    "trmfxapp": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfxapp_o4_api/srvd_a2x/sap/zfs_sd_trmfxapp/0001",
+      "description": "ZFS_SB_TRMFXAPP_O4_API — TrmFxApp: the TSF append data of an FX deal (ZSGTSFTR_APP_STR: TxnStatus, Ztrcode, NDF FO/MO remarks, Deal ID). Managed CRUD, ETag on LocalLastChangedAt"
     },
     "trmmaster": {
       "kind": "odata",
@@ -123,6 +133,11 @@
       "tlsVerify": false,
       "base": "https://vhnlqds4ap01.sap.niififl.in:44300/sap/opu/odata4/sap/zfs_sb_dyngw_o4_api/srvd_a2x/sap/zfs_sd_dyngw/0001",
       "description": "ZFS_SB_DYNGW_O4_API — Registry, CallLog. Brokered access; no per-object ABAP service."
+    },
+    "local": {
+      "kind": "sqlite",
+      "file": "data/slc.db",
+      "description": "Local SQLite store — persistence for apps with no SAP contract yet. /api/local/<collection>[/<id>]"
     }
   },
   "examples": {

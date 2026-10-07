@@ -1,4 +1,4 @@
-/** One transaction of the error-correction queue (TXN_STATUS 11). */
+/** One deal of the error-correction queue (TXN_STATUS 11); see api.ts rowFromRecord. */
 export type NdfRow = {
   rfha: string
   bukrs: string
@@ -14,8 +14,7 @@ export type NdfRow = {
   fixDate: string
   fixRef: string
   fixRefName: string
-  /** NDF_RATE; null while no service serves it (shown as WAITING FOR API). */
-  oldRate: number | null
+  oldRate: number
   trader: string
   partner: string
   /** Custom TSF TXN_STATUS: 11 = waiting for correction, 12 = corrected. */
@@ -24,6 +23,12 @@ export type NdfRow = {
   /** Whether amt1/curr1 is the foreign leg the settlement formula divides by the new rate. */
   foreignFirst: boolean
   settleCurr: string
+  /** NDF_MO_REM: why MO sent the fixing back. */
+  moRemark: string
+  /** NDF_FO_REM */
+  foRemark: string
+  /** TrmFxApp's ETag: Update sends it back as If-Match. */
+  etag: string
 }
 
 export type SortKey = 'rfha' | 'bukrs' | 'company' | 'product' | 'pair' | 'side' | 'amt1' | 'curr1' | 'amt2' | 'curr2' | 'fixDate' | 'fixRef' | 'oldRate' | 'trader' | 'partner' | 'statusText'

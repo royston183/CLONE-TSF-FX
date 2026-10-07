@@ -29,7 +29,7 @@ import { odataString } from '@slc/api-client'
 import { allOf, loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
-import { loadNames, NO_NAMES, type Names } from '../mo-confirm-ndf-fixing/api.ts'
+import { loadNames, NO_NAMES, type Names } from '../../shared/fx/names.ts'
 import { ABAP } from './data.ts'
 import type { Deal, DealStatus, Entity, FxLeg, HeadsUpIndicator, Leg, MasterContract, RuleBt, ScreenData } from './types.ts'
 

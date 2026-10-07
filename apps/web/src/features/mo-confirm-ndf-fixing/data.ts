@@ -1,21 +1,17 @@
 /**
- * Constants of the screen. The page's demo deals, partners, traders and company codes are gone:
- * every list now comes from SAP (see api.ts), and a value SAP does not provide stays blank
- * rather than being invented.
+ * The screen's constants, from SAP's own status master (ZSGTSFTR_TXNSTAT type 01). No sample data:
+ * company codes, traders and the deal queue are all read from SAP (api.ts).
  */
-import type { NdfStatus } from './types.ts'
+import { TXN } from '../../shared/fx/ndf.ts'
 
-export const STATUS = {
-  UNMATCHED: 'FO->MO: Unmatched',
-  CORRECTION: 'MO->FO: Correction Required',
-  RELEASED: 'Matched & Released',
-} as const satisfies Record<string, NdfStatus>
+/** The MO queue: "10 FO: NDF Fixing - pending MO confirmation" and "12 FO: NDF Fixing Corrected". */
+export const MO_QUEUE = [TXN.FIXED, TXN.CORRECTED] as const
 
-export const STATUSES: NdfStatus[] = [STATUS.UNMATCHED, STATUS.CORRECTION, STATUS.RELEASED]
+/** Match & Release -> "13 MO: Confirm NDF Fixing" (SAP action "Fixing Settlement"). */
+export const STATUS_CONFIRMED = TXN.CONFIRMED
 
-/** Why Correction Required cannot run: the one place the wording lives. */
-export const CORRECTION_GAP =
-  'SAP gap: FxTransaction exposes no transaction status (11) or MO remark to write, and has no change action for them (ZSGTRMFM_VTBFHA_EXPORT / BAPI_FTR_FXT_CHANGE).'
+/** Correction Required -> "11 MO: NDF Fixing Correction Req" (SAP action "Change Fixing"). */
+export const STATUS_CORRECTION = TXN.CORRECTION_REQUIRED
 
-/** What View Deals could not apply, as the dialog words it. */
-export const SELECTION_GAP = 'SAP gap: the FxTransaction service does not expose it, so it was not applied to the list.'
+/** NDF_MO_REM's length in ZSGTSFTR_APP_STR. */
+export const MO_REMARK_MAX = 80

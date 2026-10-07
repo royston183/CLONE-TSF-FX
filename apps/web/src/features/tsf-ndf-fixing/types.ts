@@ -1,6 +1,6 @@
 export type Side = 'Buy' | 'Sell'
 
-/** One ZSGTSFV_FX row of the worklist (GET_DATA), with the screen's field names. */
+/** One NDF deal of the worklist (GET_DATA), with the screen's field names; see api.ts dealFromRecord. */
 export type NdfDeal = {
   /** RFHA, as SAP holds it (leading zeros kept). */
   id: string
@@ -27,15 +27,19 @@ export type NdfDeal = {
   cashCurr: string
   /** CPAIR, e.g. USD:INR — the RBI default rate applies to USD:INR only. */
   cpair: string
-  /** TXN_STATUS (custom TSF status: 07 waiting for fixing, 10 fixed). */
+  /** TXN_STATUS (ZSGTSFTR_TXNSTAT: 07 released for fixing, 10 fixed and pending MO confirmation). */
   txnStatus: string
   ref: string
+  /** "<TXN_STATUS> - <ZSGTSFTR_TXNSTAT text>" (EXT_STAT_DESC). */
   status: string
-  remarks: string
-  moRemarks: string
-  fixRate?: number
-  cashSettlement?: number
-  foRemarks?: string
+  /** BP_NAME */
+  partner: string
+  /** DELFZ, DD-MM-YYYY */
+  valueDate: string
+  /** NDF_FO_REM, from the TSF append. */
+  foRemarks: string
+  /** TrmFxApp's ETag: Save Fixing sends it back as If-Match. */
+  etag: string
 }
 
 export type Filters = {

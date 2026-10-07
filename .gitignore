@@ -16,3 +16,6 @@ data/*.sqlite3
 
 # Playwright MCP session artefacts
 .playwright-mcp/
+
+# Local SQLite store (config/services.json "local")
+data/

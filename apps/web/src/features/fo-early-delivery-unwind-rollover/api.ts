@@ -20,7 +20,7 @@ import { inrInvoiceAmount, invoiceAmountRows } from './calc.ts'
 import { odataString } from '@slc/api-client'
 import { loadFxFor, joinFxWithApp, listTrmFxApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
-import { loadNames, NO_NAMES, type Names } from '../mo-confirm-ndf-fixing/api.ts'
+import { loadNames, NO_NAMES, type Names } from '../../shared/fx/names.ts'
 import type { Avail, DdOption, Leg } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'

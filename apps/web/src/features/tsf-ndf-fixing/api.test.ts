@@ -1,8 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import type { TrmFxApp } from '../../shared/fx/app-str.ts'
-import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
-import { companyOptions, dealFromApp, eligible, invertedDate, loadWorklist, traderOptions } from './api.ts'
+import { ndfRecord } from '../../shared/fx/ndf.ts'
+import { companyOptions, dealFromRecord, invertedDate, traderNames, traderOptions } from './api.ts'
 import { applyFilters, calcCashSettlement, checkRate, leadCurr } from './logic.ts'
 import type { NdfDeal } from './types.ts'
 
@@ -34,37 +33,21 @@ describe('screen 1000 value helps', () => {
   })
 })
 
-const fx = (o: Partial<FxTransaction> = {}): FxTransaction => ({
-  CompanyCode: 'SG03', FinancialTransaction: '2000000000020', ProductType: '12D', TransactionType: '100', Partner: '1',
-  BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 1000000, SellAmount: 96200000,
-  ValueDate: '2026-10-14', SpotRate: 96.1, SwapRate: 0.1, ForwardRate: 96.2, ActiveStatus: '0', ActivityCategory: '20', ...o,
-})
-const app = (o: Partial<TrmFxApp> = {}): TrmFxApp => ({ CompanyCode: 'SG03', FinancialTransaction: '2000000000020', TxnStatus: '07', Ztrcode: 'C14', ...o })
-
 describe('GET_DATA', () => {
-  it('keeps TXN_STATUS 07, SAKTIV <> 3, NDF product types (sgsart+2(1) = D), V_DATE and the trader', () => {
-    const rows = [
-      { fx: fx({ FinancialTransaction: '1' }), app: app() },
-      { fx: fx({ FinancialTransaction: '2' }), app: app({ TxnStatus: '10' }) }, // already fixed
-      { fx: fx({ FinancialTransaction: '3', ActiveStatus: '3' }), app: app() }, // reversed
-      { fx: fx({ FinancialTransaction: '4', ProductType: '12B' }), app: app() }, // forward, not NDF
-      { fx: fx({ FinancialTransaction: '5' }), app: app({ Ztrcode: 'C20' }) },
-      { fx: fx({ FinancialTransaction: '6', ValueDate: '2026-10-15' }), app: app() }, // other Fixing Date
-    ]
-    deepStrictEqual(eligible(rows, '2026-10-14').map((r) => r.fx.FinancialTransaction), ['1', '5'])
-    deepStrictEqual(eligible(rows, '2026-10-14', 'C14').map((r) => r.fx.FinancialTransaction), ['1'])
-  })
-
-  it('maps a transaction + TrmFxApp row, signing the legs and leaving unserved NDF fields blank', () => {
-    const d = dealFromApp(fx(), app({ NdfFoRem: 'fo', NdfMoRem: 'mo' }), { C14: 'Ashon V' })
-    deepStrictEqual(
-      [d.id, d.company, d.traderCode, d.trader, d.side, d.pair, d.amt1, d.amt2, d.fwd, d.vDate, d.cpair, d.txnStatus, d.status, d.foRemarks, d.moRemarks],
-      ['2000000000020', 'SG03', 'C14', 'Ashon V', 'Buy', 'USD/INR', 1000000, -96200000, 96.2, '14-10-2026', 'USD:INR', '07', 'MO: Match & Release for Settlement', 'fo', 'mo'],
+  it('names the trader from the value help and labels the status from ZSGTSFTR_TXNSTAT', () => {
+    const rec = ndfRecord(
+      {
+        CompanyCode: 'SG03', FinancialTransaction: '2000000000011', ProductType: '12D', BuyCurrency: 'USD', SellCurrency: 'INR',
+        LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 10000, SellAmount: 900000, ValueDate: '2026-10-08', ForwardRate: 90, ActiveStatus: '0',
+      },
+      { CompanyCode: 'SG03', FinancialTransaction: '2000000000011', TxnStatus: '07', Ztrcode: 'C14', NdfFoRem: 'rbi' },
     )
-    deepStrictEqual([d.date, d.ref, d.ndf, d.cashCurr], ['', '', 0, ''])
-    // selling the lead currency: leg 1 is negative
-    const s = dealFromApp(fx({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 96200000, SellAmount: 1000000 }), app())
-    deepStrictEqual([s.side, s.amt1, s.amt2], ['Sell', -1000000, 96200000])
+    const names = traderNames([{ value: 'C14', label: 'C14 - Ashon V' }])
+    const d = dealFromRecord(rec, names, { '07': 'MO: Match & Release for Settlement' })
+    deepStrictEqual(
+      [d.id, d.trader, d.side, d.amt1, d.amt2, d.cpair, d.date, d.vDate, d.status, d.foRemarks],
+      ['2000000000011', 'Ashon V', 'Buy', 10000, -900000, 'USD:INR', '08-10-2026', '08-10-2026', '07 - MO: Match & Release for Settlement', 'rbi'],
+    )
   })
 
   it('reads TCURR by inverted date', () => {
@@ -72,47 +55,25 @@ describe('GET_DATA', () => {
   })
 })
 
-describe('loadWorklist (TrmFxApp + FxTransaction, no network)', () => {
-  it('queries status 07, joins on company code + transaction and applies the Fixing Date', async () => {
-    const urls: string[] = []
-    const real = globalThis.fetch
-    globalThis.fetch = (async (input: unknown) => {
-      const url = String(input)
-      urls.push(url)
-      const json = (b: unknown) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } })
-      if (url.includes('trmfxapp')) return json({ value: [app(), app({ FinancialTransaction: '9' })] })
-      if (url.includes('/fx/')) return json({ value: [fx(), fx({ FinancialTransaction: '9', ValueDate: '2026-10-20' })] })
-      return json({ rows: [] })
-    }) as typeof fetch
-    try {
-      const res = await loadWorklist('14-10-2026')
-      strictEqual(res.state, 'ok')
-      if (res.state === 'ok') deepStrictEqual(res.value.map((d) => d.id), ['2000000000020'])
-      ok(urls.some((u) => u.includes('trmfxapp') && decodeURIComponent(u.replaceAll('+', ' ')).includes("TxnStatus eq '07'")))
-    } finally {
-      globalThis.fetch = real
-    }
-  })
-})
-
 const deal = (o: Partial<NdfDeal>): NdfDeal => ({
   id: '1', company: 'IN11', trader: '', traderCode: '', side: 'Buy', pair: 'USD/INR', amt1: 0, c1: 'USD', amt2: 0, c2: 'INR',
-  spot: 0, swap: 0, fwd: 0, date: '', vDate: '', ndf: 0, cashCurr: '', cpair: '', ref: '', status: '', txnStatus: '07', remarks: '', moRemarks: '', ...o,
+  spot: 0, swap: 0, fwd: 0, date: '', vDate: '', ndf: 0, cashCurr: '', cpair: '', ref: '', status: '', txnStatus: '07',
+  partner: '', valueDate: '', foRemarks: '', etag: '', ...o,
 })
 
 describe('FORM cash_settelment (screen 9001)', () => {
   it('settles the following-currency leg at the fixing rate against the other leg', () => {
     // USD/INR: INR follows, curr1 (USD) is not the follow -> amt1 + amt2 / rate
     near(calcCashSettlement(deal({ amt1: 1_000_000, amt2: -96_200_000 }), 95.8425), 1_000_000 + -96_200_000 / 95.8425)
-    // VND/USD: VND follows and is curr1, quoted per 100 -> amt2 + amt1 * 100 / rate
-    near(calcCashSettlement(deal({ c1: 'VND', c2: 'USD', amt1: 2_500_000_000, amt2: -100_000 }), 25_000), -100_000 + (2_500_000_000 * 100) / 25_000)
+    // USD/VND: VND follows (CURR2), quoted per 100 -> amt1 + amt2 * 100 / rate
+    near(calcCashSettlement(deal({ c1: 'USD', c2: 'VND', amt1: -100_000, amt2: 2_500_000_000 }), 25_000), -100_000 + (2_500_000_000 * 100) / 25_000)
     strictEqual(calcCashSettlement(deal({ amt1: 1, amt2: 1 }), 0), 0)
   })
 
   it('scales the rate with TCURF kurst MTM when the factors differ (CHECK_RATE)', () => {
     strictEqual(checkRate({ c1: 'VND', c2: 'USD' }, 250, { 'VND>USD': { ffact: 100, tfact: 1 } }), 25000)
     strictEqual(checkRate({ c1: 'USD', c2: 'INR' }, 95, {}), 95)
-    deepStrictEqual(leadCurr('INR', 'USD'), { lead: 'USD', follow: 'INR' })
+    deepStrictEqual(leadCurr('USD', 'INR'), { lead: 'USD', follow: 'INR' })
   })
 })
 

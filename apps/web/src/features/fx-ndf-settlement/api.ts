@@ -5,44 +5,39 @@
  *   Company Code (S_BUKRS)  F4 of VTBFHA-BUKRS = T001 (API_COMPANYCODE_SRV / A_CompanyCode), "code - name"
  *   Value Date (S_DATE)     typed / calendar, no value help
  *   Transaction No (S_RFHA) the RFHAs of the deals GET_DATA lists for the current company / dates
- *   Worklist                FORM get_data: ZSGTSFV_FX WHERE bukrs IN s_bukrs AND sgsart = '12D'
- *                           AND rfha IN s_rfha AND delfz IN s_date AND saktiv <> 3; then
- *                           DELETE txn_status < '07', = '08', and (sgsart+2(1) = 'D' AND
- *                           txn_status <> '13')  -> middleware "tsfvFx", column-gated (WAITING FOR API)
- *   FI_DOC                  BKPF blart 'TR', xref2_hd 'TSF', budat IN s_date, waers = cash_curr,
- *                           xblnr = rfha, not reversed  -> no API serves BKPF (WAITING FOR API)
+ *   Worklist                FORM get_data: sgsart = '12D', saktiv <> 3, delfz IN s_date, and of the TSF
+ *                           statuses only 13 ("MO: Confirm NDF Fixing") survives the report's DELETEs.
+ *                           Read as the TSF append (TrmFxApp OData) in status 13 joined to the FTR deal
+ *                           (FxTransaction OData) — shared/fx/ndf.ts; logic.getData applies the WHERE.
+ *   NDF_RATE / ZCASH_AMT /  FxTransaction NdfFixingRate / CashSettlementAmount / CashSettlementCurrency /
+ *   CASH_CURR / FI_DOC      AccountingDocument — proposed in docs/abap/ZFS_SD_TRMFX-NdfSettlement.md; used as
+ *                           soon as the service declares them, blank until then.
+ *   Letter address          ZSGTSFCL_GET_BANK_SETTLE->GET_ADDR: the partner's address of usage Z002
+ *                           (BUT021_FS adr_kind 'Z002' -> ADRC) — API_BUSINESS_PARTNER A_BuPaAddressUsage /
+ *                           A_BusinessPartnerAddress. No Z002 address: the block stays empty, as in the ABAP.
+ *   Letter account lines    ->GET_DATA: VTBSTC1 standing instructions FX / FX1 / NFX + T012 / T012K / BNKA /
+ *                           TBCHAIN21 — no service serves VTBSTC1 or the house banks (API_HOUSEBANKACCOUNT_SRV
+ *                           answers 403 for FS_DEV), so these lines say WAITING FOR API.
  *   PDF form name           ZSGTSFTR_BS_PDF WHERE zlet_code = 'L003' (middleware "bsPdf")
- *   Actions                 PRINT/PDF: ZSGTSFCL_GET_BANK_SETTLE + Adobe form (FP_*), TEST/TBB1/
- *                           Execute: SUBMIT RFTBBB00 (+ UPDATE vtbfha txn_status = '50')
- *                           -> WAITING FOR ACTION API (see logic.ts)
+ *   TEST / TBB1 / Execute   SUBMIT RFTBBB00 (+ UPDATE vtbfha txn_status = '50') -> FxTransaction PostSettlement
+ *                           (proposed) and TrmFxApp TxnStatus 50; disabled until the service declares it.
  */
 import { apiFetch, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
-import { num } from '../../shared/fx/sap.ts'
-import { GET_DATA, LETTER_CODE, WAITING_API } from './data.ts'
-import type { CompanyOption, Criteria, Deal, Loaded } from './types.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadNdfQueue, type NdfRecord } from '../../shared/fx/ndf.ts'
+import { GET_DATA, LETTER_CODE } from './data.ts'
+import { isoToDmy } from './format.ts'
+import type { BankAddress, CompanyOption, Criteria, Deal, Loaded } from './types.ts'
 
 const companyApi = service('companycode')
+const partnerApi = service('businesspartner')
 
-/** The middleware resource behind ZSGTSFV_FX (CDS ZSGTSFCDS_FX). */
-export const FX_VIEW = 'tsfvFx'
 /** The middleware resource behind ZSGTSFTR_BS_PDF. */
 export const BS_PDF = 'bsPdf'
 
-/** GET_DATA's select list, as far as the screen uses it (FI_DOC comes from BKPF). */
-export const VIEW_REQUIRED_COLUMNS = [
-  'BUKRS', 'RFHA', 'SAKTIV', 'SGSART', 'BUTXT', 'LTX', 'SFHAART', 'XTEXT', 'BP_NAME', 'RFHAZUL',
-  'KONTRH', 'BLOTTER_DATE', 'PRCTR', 'PC_NAME', 'RBUSA', 'BA_NAME', 'RPORTB', 'XPORTB', 'REFER',
-  'REFNR', 'DBLFZ', 'DELFZ', 'ZCOM_ID', 'RDEALER', 'GSPPART', 'NORDEXT', 'TXN_STATUS', 'NDF_DATE',
-  'NDF_REF', 'FO_REMARK', 'MO_REMARK', 'ZTSF_DEAL_ID', 'ZTSF_MC_REF_NO', 'NDF_FO_REM', 'NDF_MO_REM',
-  'BS', 'BS_1', 'BS_2', 'CURR1', 'CURR2', 'AMT1', 'AMT2', 'OSPOT', 'OSWAP', 'OTOT_RATE', 'T_RATE',
-  'SPOT', 'SWAP', 'TOT_RATE', 'NDF_RATE', 'CPAIR', 'ZWAERS', 'CASH_CURR', 'ZCASH_AMT', 'DCRDAT',
-  'CRUSER', 'DUPDAT', 'UPUSER',
-] as const
-
-/** Why FI_DOC stays empty: GET_DATA's BKPF read has no API. */
-export const BKPF_WAITING = `${WAITING_API} — BKPF (FI document header) is not served by any API; FI Document stays empty.`
+/** GET_ADDR: SELECT SINGLE addrnumber FROM but021_fs WHERE partner = … AND adr_kind = 'Z002'. */
+export const SETTLEMENT_ADDRESS_USAGE = 'Z002'
 
 const sortBy = <T,>(key: (x: T) => string) => (a: T, b: T) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0)
 
@@ -56,94 +51,110 @@ export function companyOptions(rows: readonly { CompanyCode?: string; CompanyCod
     .sort(sortBy((o) => o.code))
 }
 
-export const missingColumns = (have: readonly string[], need: readonly string[]) => {
-  const present = new Set(have.map((c) => c.toUpperCase()))
-  return need.filter((c) => !present.has(c))
-}
-
-/** The part of GET_DATA's WHERE the middleware applies (S_RFHA and the deletes run in logic.getData). */
-export function viewFilter(c: Pick<Criteria, 'bukrs' | 'dateFrom' | 'dateTo'>): FxFilter {
-  const filter: FxFilter = {
-    'BUKRS[in]': c.bukrs.join(','),
-    SGSART: GET_DATA.sgsart,
-    'SAKTIV[ne]': GET_DATA.saktivExcluded,
-  }
-  if (c.dateTo) {
-    filter['DELFZ[gte]'] = c.dateFrom
-    filter['DELFZ[lte]'] = c.dateTo
-  } else filter['DELFZ'] = c.dateFrom // S_DATE without HIGH is EQ
-  return filter
-}
-
-/** One ZSGTSFV_FX row as a deal. */
-export function dealFromView(r: FxRow): Deal {
+/** One queued deal as a GET_DATA row. */
+export function dealFromRecord(r: NdfRecord): Deal {
   return {
-    bukrs: txt(r, 'BUKRS'),
-    rfha: txt(r, 'RFHA'),
-    refnr: txt(r, 'REFNR'),
-    saktiv: txt(r, 'SAKTIV'),
-    sgsart: txt(r, 'SGSART'),
-    rfhazul: txt(r, 'RFHAZUL'),
-    butxt: txt(r, 'BUTXT'),
-    ltx: txt(r, 'LTX'),
-    sfhaart: txt(r, 'SFHAART'),
-    xtext: txt(r, 'XTEXT'),
-    kontrh: txt(r, 'KONTRH'),
-    bp_name: txt(r, 'BP_NAME'),
-    gsppart: txt(r, 'GSPPART'),
-    blotter_date: txt(r, 'BLOTTER_DATE'),
-    prctr: txt(r, 'PRCTR'),
-    pc_name: txt(r, 'PC_NAME'),
-    rbusa: txt(r, 'RBUSA'),
-    ba_name: txt(r, 'BA_NAME'),
-    rportb: txt(r, 'RPORTB'),
-    xportb: txt(r, 'XPORTB'),
-    refer: txt(r, 'REFER'),
-    nordext: txt(r, 'NORDEXT'),
-    dblfz: txt(r, 'DBLFZ'),
-    delfz: txt(r, 'DELFZ'),
-    zcom_id: txt(r, 'ZCOM_ID'),
-    rdealer: txt(r, 'RDEALER'),
-    txn_status: txt(r, 'TXN_STATUS'),
-    ztsf_deal_id: txt(r, 'ZTSF_DEAL_ID'),
-    ztsf_mc_ref_no: txt(r, 'ZTSF_MC_REF_NO'),
-    ndf_date: txt(r, 'NDF_DATE'),
-    ndf_ref: txt(r, 'NDF_REF'),
-    ndf_rate: num(r['NDF_RATE']),
-    fo_remark: txt(r, 'FO_REMARK'),
-    mo_remark: txt(r, 'MO_REMARK'),
-    ndf_fo_rem: txt(r, 'NDF_FO_REM'),
-    ndf_mo_rem: txt(r, 'NDF_MO_REM'),
-    bs: txt(r, 'BS'),
-    bs_1: txt(r, 'BS_1'),
-    bs_2: txt(r, 'BS_2'),
-    curr1: txt(r, 'CURR1'),
-    amt1: num(r['AMT1']),
-    curr2: txt(r, 'CURR2'),
-    amt2: num(r['AMT2']),
-    ospot: num(r['OSPOT']),
-    oswap: num(r['OSWAP']),
-    otot_rate: num(r['OTOT_RATE']),
-    spot: num(r['SPOT']),
-    swap: num(r['SWAP']),
-    tot_rate: num(r['TOT_RATE']),
-    t_rate: num(r['T_RATE']),
-    cpair: txt(r, 'CPAIR'),
-    zwaers: txt(r, 'ZWAERS'),
-    cash_curr: txt(r, 'CASH_CURR'),
-    zcash_amt: num(r['ZCASH_AMT']),
-    cruser: txt(r, 'CRUSER'),
-    dcrdat: txt(r, 'DCRDAT'),
-    upuser: txt(r, 'UPUSER'),
-    dupdat: txt(r, 'DUPDAT'),
-    fi_doc: '',
-    fi_gjahr: '',
+    bukrs: r.bukrs,
+    rfha: r.rfha,
+    refnr: '',
+    saktiv: r.activeStatus,
+    sgsart: r.productType,
+    rfhazul: r.activityCategory,
+    butxt: r.companyName,
+    ltx: r.productType,
+    sfhaart: r.transactionType,
+    xtext: r.txnTypeDesc,
+    kontrh: r.partner,
+    bp_name: r.partnerName,
+    gsppart: '',
+    blotter_date: '',
+    prctr: '',
+    pc_name: '',
+    rbusa: r.businessArea.split(' - ')[0] ?? '',
+    ba_name: r.businessArea.split(' - ').slice(1).join(' - '),
+    rportb: '',
+    xportb: '',
+    refer: r.internalRef,
+    nordext: r.externalRef,
+    dblfz: r.contractDate,
+    delfz: r.valueDate,
+    zcom_id: r.tsfEntity,
+    rdealer: r.traderCode,
+    txn_status: r.txnStatus,
+    ztsf_deal_id: r.dealId,
+    ztsf_mc_ref_no: r.mcReference,
+    ndf_date: r.fixingDate,
+    ndf_ref: r.ndfRef,
+    ndf_rate: r.fixingRate ?? 0,
+    fo_remark: '',
+    mo_remark: '',
+    ndf_fo_rem: r.foRemark,
+    ndf_mo_rem: r.moRemark,
+    bs: r.side === 'Buy' ? '1' : '2',
+    bs_1: r.side,
+    bs_2: r.side === 'Buy' ? 'Sell' : 'Buy',
+    curr1: r.c1,
+    amt1: r.amt1,
+    curr2: r.c2,
+    amt2: r.amt2,
+    ospot: r.spot,
+    oswap: r.swap,
+    otot_rate: r.fwd,
+    spot: r.spot,
+    swap: r.swap,
+    tot_rate: r.fwd,
+    t_rate: r.fwd,
+    cpair: `${r.c1}/${r.c2}`,
+    zwaers: '',
+    cash_curr: r.cashCurrency,
+    zcash_amt: r.cashAmount ?? 0,
+    cruser: '',
+    dcrdat: '',
+    upuser: '',
+    dupdat: '',
+    fi_doc: r.fiDoc,
+    fi_gjahr: r.fiYear,
+    settlement_known: r.cashAmount !== null,
+    fi_known: r.fiKnown,
+    etag: r.etag,
   }
 }
 
 /** SELECT SINGLE zform_name FROM zsgtsftr_bs_pdf WHERE zlet_code = 'L003' (first row wins). */
 export function letterFormName(rows: readonly FxRow[]): string {
   return txt(rows.find((r) => txt(r, 'ZLET_CODE') === LETTER_CODE) ?? {}, 'ZFORM_NAME')
+}
+
+/** The API_BUSINESS_PARTNER address fields GET_ADDR reads from ADRC. */
+export type PartnerAddress = {
+  FullName?: string
+  StreetName?: string
+  StreetPrefixName?: string
+  CityName?: string
+  PostalCode?: string
+  CareOfName?: string
+  to_FaxNumber?: { results?: { FaxNumber?: string }[] }
+}
+
+/**
+ * GET_ADDR on one ADRC address: zbank = name1 name2, zaddr1 street, zaddr2 str_suppl1, zaddr3
+ * "CITY - postcode" (mc_city1 is the upper-case city), zattn "Attn : c/o , Fax : number",
+ * zvdate "Value Date - <date>", zdate today.
+ */
+export function bankAddress(a: PartnerAddress | null, valueDateIso: string, todayIso: string): BankAddress {
+  const city = String(a?.CityName ?? '').trim().toUpperCase()
+  const post = String(a?.PostalCode ?? '').trim()
+  const co = String(a?.CareOfName ?? '').trim()
+  const fax = String(a?.to_FaxNumber?.results?.[0]?.FaxNumber ?? '').trim()
+  return {
+    zdate: isoToDmy(todayIso),
+    zbank: String(a?.FullName ?? '').trim(),
+    zaddr1: String(a?.StreetName ?? '').trim(),
+    zaddr2: String(a?.StreetPrefixName ?? '').trim(),
+    zaddr3: city && post ? `${city} - ${post}` : city || post,
+    zattn: co && fax ? `Attn : ${co} , Fax : ${fax}` : co ? `Attn : ${co}` : fax ? `Fax : ${fax}` : '',
+    zvdate: `Value Date - ${isoToDmy(valueDateIso)}`,
+  }
 }
 
 /* ---------------- reads ---------------- */
@@ -167,24 +178,49 @@ export async function loadCompanies(signal?: AbortSignal): Promise<Loaded<Compan
   }
 }
 
-/**
- * GET_DATA's database part for the company codes and value dates. The view's columns are checked
- * first: without TXN_STATUS the report's deletes cannot be reproduced, so the list says WAITING FOR
- * API instead of showing deals the report would not list. FI_DOC stays empty (BKPF_WAITING).
- */
-export async function loadDeals(
-  c: Pick<Criteria, 'bukrs' | 'dateFrom' | 'dateTo'>,
-  signal?: AbortSignal,
-): Promise<Loaded<Deal[]>> {
+/** GET_DATA's database part: the status-13 NDF deals of the selected company codes (dates in logic.getData). */
+export async function loadDeals(c: Pick<Criteria, 'bukrs' | 'dateFrom' | 'dateTo'>, signal?: AbortSignal): Promise<Loaded<Deal[]>> {
   try {
-    const missing = missingColumns(await fxColumns(FX_VIEW, signal), VIEW_REQUIRED_COLUMNS)
-    if (missing.length)
-      return { state: 'waiting', reason: `${WAITING_API} — ZSGTSFV_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}.` }
     if (!c.bukrs.length || !c.dateFrom) return { state: 'ok', value: [] }
-    const rows = await fxList(FX_VIEW, viewFilter(c), { signal })
-    return { state: 'ok', value: rows.map(dealFromView) }
+    const records = await loadNdfQueue([GET_DATA.ndfStatus], signal)
+    return { state: 'ok', value: records.filter((r) => c.bukrs.includes(r.bukrs)).map(dealFromRecord) }
   } catch (error) {
-    return failure('ZSGTSFV_FX', error)
+    return failure('NDF deals (TrmFxApp / FxTransaction)', error)
+  }
+}
+
+/** The letter's address block and, when it is empty, why. */
+export type LetterAddress = { addr: BankAddress; note: string }
+
+/** GET_ADDR: the partner's Z002 address (no other address is used, as in the ABAP). */
+export async function loadBankAddress(kontrh: string, valueDateIso: string, todayIso: string): Promise<LetterAddress> {
+  const bp = kontrh.replace(/^0+/, '')
+  try {
+    const usage = await apiFetch<{ d?: { results?: { AddressID?: string }[] } }>(
+      `${partnerApi('A_BuPaAddressUsage')}?${new URLSearchParams({
+        $filter: `BusinessPartner eq '${bp}' and AddressUsage eq '${SETTLEMENT_ADDRESS_USAGE}'`,
+        $select: 'AddressID',
+        $format: 'json',
+      }).toString()}`,
+    )
+    const addressId = usage?.d?.results?.[0]?.AddressID
+    if (!addressId) {
+      return {
+        addr: bankAddress(null, valueDateIso, todayIso),
+        note: `No settlement address (usage ${SETTLEMENT_ADDRESS_USAGE}) is maintained for business partner ${bp}; the address block is left empty, as in SAP.`,
+      }
+    }
+    const one = await apiFetch<{ d?: PartnerAddress }>(
+      `${partnerApi(`A_BusinessPartnerAddress(BusinessPartner='${bp}',AddressID='${addressId}')`)}?${new URLSearchParams({
+        $expand: 'to_FaxNumber',
+        $format: 'json',
+      }).toString()}`,
+    )
+    return { addr: bankAddress(one?.d ?? null, valueDateIso, todayIso), note: '' }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[ndf-settlement] partner address unavailable', error)
+    return { addr: bankAddress(null, valueDateIso, todayIso), note: `The address of business partner ${bp} could not be read from SAP.` }
   }
 }
 

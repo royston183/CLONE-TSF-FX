@@ -1,66 +1,72 @@
+import { MO_REMARK_MAX } from './data.ts'
 import { DealSummary, Overlay } from './modal.tsx'
 import type { InfoMessage, NdfDeal } from './types.ts'
 
-const NOT_SAVED = 'SAP gap: the FxTransaction service has no field for this, so it cannot be saved.'
+export type MatchReleaseValues = { remarks: string }
 
 /**
- * Match & Release. Confirming settles the deal in SAP (BAPI_FTR_FXT_SETTLE through the Settle
- * action). The External Ref, Internal Ref and MO Remarks boxes are kept as the screen has
- * them but are read-only: nothing in SAP can hold them yet, and typing into a box that is
- * silently discarded would mislead.
+ * Match & Release: the deal, its Deal / Cover No and references (as SAP holds them — no service can
+ * change them), and the optional MO remark.
  */
 export function MatchReleaseModal({
   open,
   deal,
+  values,
   busy,
+  onChange,
   onClose,
   onConfirm,
 }: {
   open: boolean
   /** The deal as it was when the dialog opened. */
   deal: NdfDeal | null
-  /** True while the Settle call is running. */
+  values: MatchReleaseValues
+  /** While the action posts: the buttons are disabled. */
   busy: boolean
+  onChange: (patch: Partial<MatchReleaseValues>) => void
   onClose: () => void
   onConfirm: () => void
 }) {
   return (
-    <Overlay id="matchReleaseOverlay" open={open} onClose={busy ? () => {} : onClose}>
+    <Overlay id="matchReleaseOverlay" open={open} onClose={onClose}>
       <div className="modal">
         <div className="modal-header">
           <h3>Match &amp; Release</h3>
-          <button className="modal-close" type="button" disabled={busy} onClick={onClose}>
+          <button className="modal-close" type="button" onClick={onClose}>
             &times;
           </button>
         </div>
         <div className="modal-body">
           <DealSummary id="mrDealSummary" deal={deal} />
-          <div className="validation-msg" id="mrSettleNote">
-            This settles the deal in SAP (BAPI_FTR_FXT_SETTLE) and commits immediately; it cannot be undone from this screen.
-          </div>
           <div className="field">
             <label>Deal / Cover No</label>
-            <input type="text" id="mrDealCover" className="input" readOnly value={deal?.dealId ?? ''} placeholder="—" />
+            <input type="text" id="mrDealCover" className="input" readOnly value={deal?.dealId ?? ''} />
           </div>
           <div className="field">
             <label>External Ref</label>
-            <input type="text" id="mrExternalRef" className="input" readOnly title={NOT_SAVED} placeholder="Not saved — SAP gap" />
+            <input type="text" id="mrExternalRef" className="input" readOnly value={deal?.externalRef ?? ''} />
           </div>
           <div className="field">
             <label>Internal Ref</label>
-            <input type="text" id="mrInternalRef" className="input" readOnly title={NOT_SAVED} placeholder="Not saved — SAP gap" />
+            <input type="text" id="mrInternalRef" className="input" readOnly value={deal?.internalRef ?? ''} />
           </div>
           <div className="field">
             <label>MO Remarks</label>
-            <textarea id="mrRemarks" readOnly title={NOT_SAVED} placeholder="Not saved — SAP gap" />
+            <textarea
+              id="mrRemarks"
+              placeholder="Enter remarks (optional)"
+              maxLength={MO_REMARK_MAX}
+              value={values.remarks}
+              onChange={(e) => onChange({ remarks: e.target.value })}
+            />
           </div>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-secondary" type="button" disabled={busy} onClick={onClose}>
+          <button className="btn btn-secondary" type="button" onClick={onClose}>
             Cancel
           </button>
           <button className="btn btn-primary" id="mrConfirmBtn" type="button" disabled={busy} onClick={onConfirm}>
-            {busy ? 'Settling…' : 'Match & Release'}
+            {busy ? 'Posting to SAP…' : 'Match & Release'}
           </button>
         </div>
       </div>
@@ -68,7 +74,73 @@ export function MatchReleaseModal({
   )
 }
 
-/** The success / warning notice shown after an action, a refresh or a SAP error. */
+/** Correction Required: sends the deal back to FO; the MO remark is mandatory. */
+export function CorrectionModal({
+  open,
+  deal,
+  remarks,
+  remarksError,
+  busy,
+  onRemarksChange,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  deal: NdfDeal | null
+  busy: boolean
+  remarks: string
+  /** Stays on until the dialog is reopened, as in the original — typing does not clear it. */
+  remarksError: boolean
+  onRemarksChange: (remarks: string) => void
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <Overlay id="correctionOverlay" open={open} onClose={onClose}>
+      <div className="modal modal-sm">
+        <div className="modal-header">
+          <h3>Correction Required</h3>
+          <button className="modal-close" type="button" onClick={onClose}>
+            &times;
+          </button>
+        </div>
+        <div className="modal-body">
+          <DealSummary id="crDealSummary" deal={deal} />
+          <div className="field">
+            <label>Deal / Cover No</label>
+            <input type="text" id="crDealCover" className="input" readOnly value={deal?.dealId ?? ''} />
+          </div>
+          <div className="field">
+            <label>
+              MO Remarks<span className="req">*</span>
+            </label>
+            <textarea
+              id="crRemarks"
+              className={remarksError ? 'error' : ''}
+              placeholder="e.g. Incorrect fixing rate"
+              maxLength={MO_REMARK_MAX}
+              value={remarks}
+              onChange={(e) => onRemarksChange(e.target.value)}
+            />
+            <div id="crRemarksError" className={`validation-msg${remarksError ? '' : ' hidden'}`}>
+              MO Remarks is required.
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" type="button" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn btn-danger" id="crConfirmBtn" type="button" disabled={busy} onClick={onConfirm}>
+            {busy ? 'Posting to SAP…' : 'Correction Required'}
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+/** The success / warning notice shown after an action or a refresh. */
 export function InfoModal({ open, info, onClose }: { open: boolean; info: InfoMessage; onClose: () => void }) {
   const warn = info.variant === 'warn'
   return (
