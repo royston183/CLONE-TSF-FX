@@ -58,6 +58,10 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'mo-view-deal-id-settlement-list': lazy(() => import('./mo-view-deal-id-settlement-list/index.tsx')),
   'mo-execute-settlement-deal-id': lazy(() => import('./mo-execute-settlement-deal-id/index.tsx')),
   'mo-bank-settlement-fx-non-flow': lazy(() => import('./mo-bank-settlement-fx-non-flow/index.tsx')),
+  // BO: Bank Settlement: FX Non-Flow Deals (ZSGTSFR103) is the same screen as the MO one (ZSGTSFR104):
+  // same import, so both tiles open the same files and share one chunk.
+  'bo-bank-settlement-fx-non-flow': lazy(() => import('./mo-bank-settlement-fx-non-flow/index.tsx')),
+  'tbb1-post-flows': lazy(() => import('./tbb1-post-flows/index.tsx')),
   'bo-post-accounting-settlement': lazy(() => import('./bo-post-accounting-settlement/index.tsx')),
   'view-spot-forward-settlement': lazy(() => import('./view-spot-forward-settlement/index.tsx')),
   'bo-reverse-fx-mtm-oil-dmcc': lazy(() => import('./bo-reverse-fx-mtm-oil-dmcc/index.tsx')),

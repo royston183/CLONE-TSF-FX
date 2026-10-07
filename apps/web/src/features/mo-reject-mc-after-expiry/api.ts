@@ -17,6 +17,7 @@
 import { distinctBy, loadMaster, replaceInPlace, txt, type MasterSource } from '../../shared/fx/masters.ts'
 import { listMasterContracts, setMcStatus, type McRow } from '../../shared/fx/master-contract.ts'
 import { isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions } from '../../shared/fx/regions.ts'
 import { dmyFromIso, isoFromDate, num } from '../../shared/fx/sap.ts'
 import { loadMcStatuses, statusText, type McStatusRow } from '../../shared/fx/status.ts'
 import {
@@ -25,6 +26,7 @@ import {
   ENTITY_MASTER,
   FX_MODEL_MASTER,
   REGION_MASTER,
+  REGION_NAMES,
   SEED_CO_AREA_MASTER,
   SEED_ENTITY_MASTER,
   SEED_FX_MODEL_MASTER,
@@ -75,10 +77,14 @@ export type MasterSources = Record<'entities' | 'fxModels' | 'statuses', MasterS
 
 /** Loads the value helps and swaps them into data.ts in place. */
 export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> {
-  const [comp, rules, statuses] = await Promise.all([
+  const [comp, rules, statuses, sapRegions] = await Promise.all([
     loadMaster('comp', (rows) => rows.map(toEntity), [], { signal }),
     loadMaster('fxModel', (rows) => rows, [], { signal }),
     loadMcStatuses(signal),
+    loadRegions(signal).catch((error: unknown) => {
+      if (isAbort(error)) throw error
+      return null
+    }),
   ])
 
   if (comp.source === 'mysql') {
@@ -91,6 +97,12 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
   } else {
     replaceInPlace(ENTITY_MASTER, SEED_ENTITY_MASTER)
     replaceInPlace(REGION_MASTER, SEED_REGION_MASTER)
+  }
+  // ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts), named where BPEXT names them.
+  for (const k of Object.keys(REGION_NAMES)) delete REGION_NAMES[k]
+  if (sapRegions?.length) {
+    replaceInPlace(REGION_MASTER, sapRegions.map((r) => r.id))
+    for (const r of sapRegions) if (r.name) REGION_NAMES[r.id] = r.name
   }
 
   if (rules.source === 'mysql') {

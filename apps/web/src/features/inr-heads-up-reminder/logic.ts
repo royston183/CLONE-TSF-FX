@@ -47,7 +47,9 @@ export const statusTone = (code: string): StatusTone => STATUS_TONE[code] ?? 'dr
 const byText = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
 
 /** ZSGTSFSH_REGION: the distinct region codes of ZSGTSFTR_COMP (no region text table is served). */
-export function regionOptions(entities: readonly Entity[]): Region[] {
+export function regionOptions(entities: readonly Entity[], sap: readonly { id: string; name: string }[] | null = null): Region[] {
+  // The SAP region list (shared/fx/regions.ts) when it loaded; else the entities' COMP codes.
+  if (sap?.length) return sap.map((r) => ({ id: r.id, name: r.name }))
   return [...new Set(entities.map((e) => e.regionId).filter(Boolean))].sort(byText).map((id) => ({ id, name: '' }))
 }
 

@@ -43,6 +43,7 @@ import { txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { dealJoin, FORWARD_SUB_TYPE, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions, regionLabel, type RegionOption } from '../../shared/fx/regions.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
 import { loadFxLegsByDeal } from './dealFx.ts'
 import { ENTITIES, FX_MODELS, REGIONS, STATUS_META, STATUS_OPTIONS, TRADERS } from './data.ts'
@@ -97,13 +98,17 @@ export function totalInvoicedT1(t1: readonly FxRow[]): number {
 
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-    const [ctx, params, commodities, traders] = await Promise.all([
+    const [ctx, params, commodities, traders, regions] = await Promise.all([
       loadDealContext(signal),
       fxList('catrParam', { PROGNAM: PARAM_PROGRAM }, { signal }),
       fxList('commodity', {}, { signal }),
       fxList('trmTrader', {}, { signal }).catch((error: unknown) => {
         if (isAbort(error)) throw error
         return [] as FxRow[]
+      }),
+      loadRegions(signal).catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return null
       }),
     ])
     // SELECT SINGLE ... WHERE prognam = ...: the first row.
@@ -112,7 +117,7 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
       clearMasters()
       return { deals: [], source: 'unavailable', notes: [`WAITING FOR API — ZGTCATR_PARAM (middleware "catrParam") has no usable PARAM4/5/6 row for PROGNAM ${PARAM_PROGRAM}, so the status range cannot be set`] }
     }
-    applyMasters(ctx, traders, th)
+    applyMasters(ctx, traders, th, regions)
     const deals = await listDealIds({ 'ZDEAL_STAT[lte]': th.deal }, signal)
     const comodit = new Map(commodities.map((r) => [txt(r, 'ZCOM_ID'), r]))
     const joined = deals.filter((d) => joins(d, ctx, comodit))
@@ -187,7 +192,7 @@ export function statusHelp(statuses: readonly FxRow[], th: Thresholds): Array<[s
 }
 
 /** The lookups the table and popups index with `!`, so every code a row can carry is in them. */
-function applyMasters(ctx: DealContext, traders: readonly FxRow[], th: Thresholds): void {
+function applyMasters(ctx: DealContext, traders: readonly FxRow[], th: Thresholds, regions: readonly RegionOption[] | null = null): void {
   clearMasters()
   for (const r of ctx.comp.values()) {
     const code = txt(r, 'ZCOM_ID')
@@ -195,6 +200,8 @@ function applyMasters(ctx: DealContext, traders: readonly FxRow[], th: Threshold
     const region = txt(r, 'ZREG_ID')
     if (region) REGIONS[region] = region
   }
+  // P_REG: the SAP region list (shared/fx/regions.ts), named where BPEXT names a code consistently.
+  for (const r of regions ?? []) REGIONS[r.id] = regionLabel(r)
   for (const r of ctx.models.values()) {
     const code = txt(r, 'ZMOD_ID')
     FX_MODELS[code] = {

@@ -23,9 +23,10 @@ import {
   updateMasterContract,
   type McRow,
 } from '../../shared/fx/master-contract.ts'
-import type { FxRow } from '../../shared/fx/mw.ts'
+import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions } from '../../shared/fx/regions.ts'
 import { clip, dateFromIso, dec, num, sapUser } from '../../shared/fx/sap.ts'
-import { COMMODITIES, ENTITIES, FX_MODELS, PAYMENT_TERMS, STATUS, STATUS_KEY, commodityOf, seedContracts } from './data.ts'
+import { COMMODITIES, ENTITIES, FX_MODELS, PAYMENT_TERMS, REGIONS, STATUS, STATUS_KEY, commodityOf, seedContracts } from './data.ts'
 import { addDays } from './format.ts'
 import type { Commodity, Entity, FxModel, MasterContract, McAction, PaymentTerm, StatusValue } from './types.ts'
 
@@ -55,8 +56,8 @@ export function statusFromCode(code: string): StatusValue | undefined {
 export type MasterSources = Record<'entities' | 'fxModels' | 'commodities' | 'paymentTerms', MasterSource>
 
 /**
- * Loads every value help and swaps it into data.ts in place. REGIONS and PORT_PAIRS stay the
- * dummy lists: no region or port-pair master is migrated.
+ * Loads every value help and swaps it into data.ts in place. REGIONS comes from the SAP region
+ * codes (shared/fx/regions.ts); PORT_PAIRS stays the dummy list: no port-pair master is migrated.
  */
 export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> {
   const [entities, models, commodities, terms] = await Promise.all([
@@ -69,12 +70,19 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
   replaceInPlace(FX_MODELS, models.rows)
   replaceInPlace(COMMODITIES, commodities.rows)
   replaceInPlace(PAYMENT_TERMS, terms.rows)
+
+  // ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts). The seed list stays only if SAP cannot be read.
+  const regions = await loadRegions(signal).catch((error: unknown) => {
+    if (isAbort(error)) throw error
+    return null
+  })
+  if (regions?.length) replaceInPlace(REGIONS, regions.map((r) => ({ id: r.id, name: r.name })))
   return { entities: entities.source, fxModels: models.source, commodities: commodities.source, paymentTerms: terms.source }
 }
 
 /**
  * ZSGTSFTR_COMP: every entity, as the region filter looks up any origin. ZREG_ID is taken as
- * is; the region names beside it are still the dummy REGIONS list.
+ * is; REGIONS names it from the SAP region list.
  */
 export function toEntities(rows: readonly FxRow[]): Entity[] {
   return rows.map((r) => ({

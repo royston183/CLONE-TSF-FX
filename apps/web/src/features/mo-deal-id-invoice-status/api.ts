@@ -11,7 +11,7 @@
  *   in logic.ts filterRows. ZORIGIN / ZMOD_ID / ZMOD_DESC are the MC's (b~), ZREG_ID is COMP's.
  *
  * Selection-screen helps: P_ORG ZSGTSFSH_ENTITY (ZSGTSFTR_COMP), P_REG ZSGTSFSH_REGION (the
- * COMP region codes; no region text master is migrated, so no invented names), P_MOD
+ * SAP region codes of COMP and BPEXT, named only where BPEXT agrees), P_MOD
  * ZSGTSFSH_MODEL (ZSGTSFTR_RULE_BT).
  *
  * Read-only, like the report. What stays empty, and why:
@@ -29,7 +29,8 @@
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
-import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { fxColumns, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
 import { loadUsdAmounts } from '../mo-deal-id-invoice-mark/amount.ts'
 import { MODELS, ORIGIN_OPTIONS, REGION_OPTIONS, STATUS_MAP } from './data.ts'
 import type { CodeDesc, DealRow } from './types.ts'
@@ -50,8 +51,15 @@ const iso = (value: string | null | undefined): string => (value ? String(value)
 
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-    const [ctx, deals] = await Promise.all([loadDealContext(signal), listDealIds({}, signal)])
-    applyMasters(ctx)
+    const [ctx, deals, regions] = await Promise.all([
+      loadDealContext(signal),
+      listDealIds({}, signal),
+      loadRegions(signal).catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return null
+      }),
+    ])
+    applyMasters(ctx, regions)
     const usd = await loadUsdAmounts(new Map(deals.map((d) => [txt(d, 'ZDEAL_ID'), txt(d, 'ZMC_REF')])), signal)
     return { rows: deals.map((d) => toRow(d, ctx, usd.amounts?.get(txt(d, 'ZDEAL_ID')) ?? null)), source: 'sap', notes: [usd.note] }
   } catch (error) {
@@ -79,8 +87,12 @@ export function originHelp(comp: readonly FxRow[]): CodeDesc[] {
     .sort(byId)
 }
 
-/** ZSGTSFSH_REGION: the region codes the TSF entities carry (COMP-ZREG_ID); no text master exists. */
-export function regionHelp(comp: readonly FxRow[]): CodeDesc[] {
+/**
+ * ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts: COMP and BPEXT, named from BPEXT).
+ * Without that list, the codes the TSF entities carry (COMP-ZREG_ID).
+ */
+export function regionHelp(comp: readonly FxRow[], regions: readonly RegionOption[] | null = null): CodeDesc[] {
+  if (regions) return regions.map((r) => ({ id: r.id, desc: r.name }))
   return [...new Set(comp.map((r) => txt(r, 'ZREG_ID')).filter(Boolean))].map((id) => ({ id, desc: '' })).sort(byId)
 }
 
@@ -101,10 +113,10 @@ export function fx1Statuses(statuses: readonly FxRow[]): Record<string, string> 
   return map
 }
 
-function applyMasters(ctx: DealContext): void {
+function applyMasters(ctx: DealContext, regions: readonly RegionOption[] | null): void {
   const comp = [...ctx.comp.values()]
   replaceInPlace(ORIGIN_OPTIONS, originHelp(comp))
-  replaceInPlace(REGION_OPTIONS, regionHelp(comp))
+  replaceInPlace(REGION_OPTIONS, regionHelp(comp, regions))
   replaceInPlace(MODELS, modelHelp([...ctx.models.values()]))
   for (const code of Object.keys(STATUS_MAP)) delete STATUS_MAP[code]
   Object.assign(STATUS_MAP, fx1Statuses(ctx.statuses))

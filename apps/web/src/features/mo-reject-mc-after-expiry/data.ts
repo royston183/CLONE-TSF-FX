@@ -145,6 +145,8 @@ export const CO_AREA_MASTER: string[] = ['CA01', 'CA02', 'CA03']
  */
 export const MC_STATUS_MASTER: readonly string[] = ['Expired', 'In Use', 'Confirmed by MO', 'Correction after Deal', 'Rejected']
 export const REGION_MASTER: string[] = ['South Asia', 'South East Asia']
+/** The SAP region names by code (shared/fx/regions.ts), where BPEXT names a code consistently. */
+export const REGION_NAMES: Record<string, string> = {}
 
 // Snapshots of the dummy masters above, taken before api.ts swaps the live lists for
 // MySQL's rows, so a second load (or a remount) still has the dummy to fall back to.

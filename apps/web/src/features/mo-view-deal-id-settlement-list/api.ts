@@ -12,11 +12,12 @@
  *                         The utilisation column alone is no longer a blocker: its D1 legs are
  *                         TrmFxApp (Deal ID / Deal Type / MC ref) + FxTransaction, see
  *                         mo-deal-id-invoice-mark/amount.ts loadUsdAmounts. The selection is.
- *   Status / Region / Origin Entity / CO Area lists
+ *   Region list           the SAP region codes, shared/fx/regions.ts (COMP and BPEXT) -> live.
+ *   Status / Origin Entity / CO Area lists
  *                         none is a standard master with an unambiguous key (the status list
- *                         needs a sub type / code range, the region and entity lists come from
- *                         Z masters with an unknown restriction, CO Area is a controlling area,
- *                         not T001) -> WAITING FOR API.
+ *                         needs a sub type / code range, the entity list comes from a Z master
+ *                         with an unknown restriction, CO Area is a controlling area, not T001)
+ *                         -> WAITING FOR API.
  *   Trade Invoice drill-down (SUBMIT ZSGTSF_RDEAL_TRD_INV) -> WAITING FOR API.
  *   No action writes anything (the screen has none besides display / filters).
  *

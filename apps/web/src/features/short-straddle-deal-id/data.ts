@@ -6,7 +6,7 @@
  *
  * api.ts now swaps ENTITIES, FX_MODELS, COMMODITIES and PAYMENT_TERMS in place for their
  * MySQL rows (each list stays as below when MySQL has none) and overwrites STATUS_MASTER's
- * texts where ZSGTSFTR_MC_STAT has them. REGIONS and PORT_PAIRS stay dummy. The MC and Deal
+ * texts where ZSGTSFTR_MC_STAT has them. REGIONS is replaced by the SAP region codes (shared/fx/regions.ts); PORT_PAIRS stays dummy. The MC and Deal
  * ID seeds below only appear when the middleware cannot be reached.
  */
 import type { Commodity, DealStatus, Entity, FxModel, McSeed, McStatus, PaymentTerm, PortPair, Region } from './types.ts'

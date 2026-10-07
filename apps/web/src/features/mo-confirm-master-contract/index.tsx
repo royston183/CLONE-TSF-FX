@@ -499,7 +499,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
                     <option value="ALL">All regions</option>
                     {REGIONS.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.id} - {r.name}
+                        {r.name ? `${r.id} - ${r.name}` : r.id}
                       </option>
                     ))}
                   </select>

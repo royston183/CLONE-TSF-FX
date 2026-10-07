@@ -6,7 +6,7 @@ import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { loadContracts, loadMasters, rejectContracts, rejectKeys } from './api.ts'
 import { ContractsTable, isInteractiveTarget } from './ContractsTable.tsx'
-import { CO_AREA_MASTER, ENTITY_MASTER, FX_MODEL_MASTER, MC_STATUS_MASTER, REGION_MASTER, seedContracts } from './data.ts'
+import { CO_AREA_MASTER, ENTITY_MASTER, FX_MODEL_MASTER, MC_STATUS_MASTER, REGION_MASTER, REGION_NAMES, seedContracts } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DetailsModal } from './DetailsModal.tsx'
 import {
@@ -436,6 +436,7 @@ export default function MoRejectMcAfterExpiry() {
                   label="Region"
                   value={form.region}
                   options={REGION_MASTER}
+                  labels={REGION_NAMES}
                   onChange={(v) => setField('region', v)}
                 />
                 <SearchSelect
@@ -725,12 +726,15 @@ function PlainSelect({
   label,
   value,
   options,
+  labels = {},
   onChange,
 }: {
   id: string
   label: string
   value: string
   options: readonly string[]
+  /** Text shown beside a value, "<value> - <text>". */
+  labels?: Readonly<Record<string, string>>
   onChange: (value: string) => void
 }) {
   return (
@@ -740,7 +744,7 @@ function PlainSelect({
         <option value="">Select ...</option>
         {options.map((v) => (
           <option key={v} value={v}>
-            {v}
+            {labels[v] ? `${v} - ${labels[v]}` : v}
           </option>
         ))}
       </select>
