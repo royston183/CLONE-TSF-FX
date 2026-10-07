@@ -15,7 +15,7 @@
  * range and the optional filters stay in logic.ts filterRows, as the screen filters live.
  *
  * Selection-screen helps: P_ORG ZSGTSFSH_ENTITY (ZSGTSFTR_COMP), P_REG ZSGTSFSH_REGION (the
- * COMP region codes), P_MOD ZSGTSFSH_MODEL (ZSGTSFTR_RULE_BT).
+ * SAP region codes of COMP and BPEXT, shared/fx/regions.ts), P_MOD ZSGTSFSH_MODEL (ZSGTSFTR_RULE_BT).
  *
  * Mark for Invoicing (fcode UPD) reproduces the report's own write exactly:
  *   UPDATE zsgtsftr_dealid SET zdeal_stat = '03' zchanged_by = sy-uname
@@ -37,8 +37,9 @@ import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatus, type DealContext } from '../../shared/fx/deal-id.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
 import { dmyFromIso } from '../../shared/fx/sap.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
 import { enrichRow } from './logic.ts'
 import type { DealRow } from './types.ts'
 
@@ -64,14 +65,18 @@ export type Loaded = {
 
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-    const [ctx, deals, ruleBt, utilization] = await Promise.all([
+    const [ctx, deals, ruleBt, utilization, regions] = await Promise.all([
       loadDealContext(signal),
       listDealIds({ ZDEAL_STAT: ELIGIBLE_STATUS }, signal),
       // Every RULE_BT row: a model may carry several, and the join takes any with ZNO_INV = ''.
       fxList('fxModel', {}, { signal }),
       utilizationGate(signal),
+      loadRegions(signal).catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return null
+      }),
     ])
-    applyMasters(ctx, ruleBt)
+    applyMasters(ctx, ruleBt, regions)
     const eligible = eligibleDeals(deals, ctx, ruleBt)
     const keys = new Map<string, DealIdRow>()
     for (const d of eligible) keys.set(txt(d, 'ZDEAL_ID'), d)
@@ -131,10 +136,13 @@ export function selectionHelps(comp: readonly FxRow[], ruleBt: readonly FxRow[])
   }
 }
 
-function applyMasters(ctx: DealContext, ruleBt: readonly FxRow[]): void {
+/** P_REG from the SAP region list (shared/fx/regions.ts) when it loads, else the COMP codes. */
+function applyMasters(ctx: DealContext, ruleBt: readonly FxRow[], regions: readonly RegionOption[] | null): void {
   const helps = selectionHelps([...ctx.comp.values()], ruleBt)
   replaceInPlace(ORIGIN_OPTIONS, helps.origins)
-  replaceInPlace(REGION_OPTIONS, helps.regions)
+  replaceInPlace(REGION_OPTIONS, regions ? regions.map((r) => r.id) : helps.regions)
+  for (const k of Object.keys(REGION_NAMES)) delete REGION_NAMES[k]
+  for (const r of regions ?? []) if (r.name) REGION_NAMES[r.id] = r.name
   replaceInPlace(MODEL_OPTIONS, helps.models)
 }
 

@@ -6,7 +6,9 @@
 
 /** P_ORG, MATCHCODE OBJECT ZSGTSFSH_ENTITY: ZSGTSFTR_COMP-ZCOM_ID. */
 export const ORIGIN_OPTIONS: string[] = []
-/** P_REG, MATCHCODE OBJECT ZSGTSFSH_REGION: the COMP-ZREG_ID codes. */
+/** P_REG, MATCHCODE OBJECT ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts). */
 export const REGION_OPTIONS: string[] = []
+/** The region names BPEXT gives consistently, by code. */
+export const REGION_NAMES: Record<string, string> = {}
 /** P_MOD, MATCHCODE OBJECT ZSGTSFSH_MODEL: ZSGTSFTR_RULE_BT-ZMOD_ID. */
 export const MODEL_OPTIONS: string[] = []

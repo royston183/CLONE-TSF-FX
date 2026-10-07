@@ -61,7 +61,9 @@ export function cellText(row: ErrorRow, key: ColumnKey): string {
     case 'mcBalAmt':
       return formatAmount(row.mcBalAmt)
     case 'regionId':
-      return row.regionId ? `${row.regionId} - ${findBizRegion(row.regionId)?.label ?? ''}` : ''
+      if (!row.regionId) return ''
+      const name = findBizRegion(row.regionId)?.label
+      return name ? `${row.regionId} - ${name}` : row.regionId
     case 'mcAmt':
       return formatAmount(row.mcAmt)
     case 'exRate':

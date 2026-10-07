@@ -4,7 +4,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { ELIGIBLE_STATUS, loadScreen, markForInvoicing, WAITING_DEAL_ID_API, type DataSource } from './api.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { parseDate } from './format.ts'
@@ -322,7 +322,7 @@ export default function MoDealIdInvoiceMark() {
                   <option value="">All</option>
                   {regionOptions.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {REGION_NAMES[r] ? `${r} \u00B7 ${REGION_NAMES[r]}` : r}
                     </option>
                   ))}
                 </select>

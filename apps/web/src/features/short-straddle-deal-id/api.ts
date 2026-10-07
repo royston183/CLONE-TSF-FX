@@ -26,6 +26,7 @@ import {
   type McRow,
 } from '../../shared/fx/master-contract.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions } from '../../shared/fx/regions.ts'
 import { clip, dateFromIso, dec, isoFromDate, num, sapUser } from '../../shared/fx/sap.ts'
 import { loadMcStatuses } from '../../shared/fx/status.ts'
 import {
@@ -36,6 +37,7 @@ import {
   INITIAL_DEAL_SEQ,
   MC_SEED,
   PAYMENT_TERMS,
+  REGIONS,
   STATUS_CODES,
   STATUS_MASTER,
 } from './data.ts'
@@ -82,6 +84,13 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
   replaceInPlace(FX_MODELS, models.rows)
   replaceInPlace(COMMODITIES, commodities.rows)
   replaceInPlace(PAYMENT_TERMS, terms.rows)
+
+  // ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts). The seed list stays only if SAP cannot be read.
+  const regions = await loadRegions(signal).catch((error: unknown) => {
+    if (isAbort(error)) throw error
+    return null
+  })
+  if (regions?.length) replaceInPlace(REGIONS, regions.map((r) => ({ id: r.id, name: r.name })))
   // MC_STAT's texts where MySQL has them. Its dummy is shared by every FX screen and words
   // some codes differently (04 In Use), so this screen's own texts stay until MC_STAT is migrated.
   if (statuses.source === 'mysql') {

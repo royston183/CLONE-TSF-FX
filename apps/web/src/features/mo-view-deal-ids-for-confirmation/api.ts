@@ -8,8 +8,8 @@
  * date, or the MC's shipment end for a Short Straddle deal — stays in logic.ts, as before.
  *
  * Read-only, like the report. Utilization (ZSGTSFCDS_FX / _OPTION) is 0: the FX view has no
- * deals in MySQL yet. Regions carry no text: no region master (the table behind ZSGTSFSH_REGION)
- * is migrated, so the codes stand alone rather than wear invented names.
+ * deals in MySQL yet. Regions come from shared/fx/regions.ts: the SAP codes of COMP and BPEXT,
+ * named only where BPEXT names a code consistently (no region master is migrated).
  *
  * Nothing falls back to sample data: when ZSGTSFTR_DEALID cannot be read the table stays empty
  * and says WAITING FOR DEAL ID API.
@@ -17,6 +17,7 @@
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow } from '../../shared/fx/master-contract.ts'
 import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
 import { FORWARD_SUB_TYPE, OPTION_SUB_TYPE, dealJoin, dealStatusText, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
 import { dateFromIso, num } from '../../shared/fx/sap.ts'
 import { ENTITIES, MODELS, REGIONS, STATUSES } from './data.ts'
@@ -44,8 +45,15 @@ const flag = (value: string): Flag => (value === 'X' ? 'X' : '')
  */
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-    const [ctx, deals] = await Promise.all([loadDealContext(signal), listDealIds(STATUS_FILTER, signal)])
-    applyMasters(ctx)
+    const [ctx, deals, regions] = await Promise.all([
+      loadDealContext(signal),
+      listDealIds(STATUS_FILTER, signal),
+      loadRegions(signal).catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return null
+      }),
+    ])
+    applyMasters(ctx, regions)
     return { deals: deals.map((d) => toDeal(d, ctx)), source: 'sap' }
   } catch (error) {
     if (isAbort(error)) throw error
@@ -68,8 +76,12 @@ export function entityHelp(comp: readonly FxRow[]): Entity[] {
     .sort(byId)
 }
 
-/** ZSGTSFSH_REGION: the region codes the TSF entities carry (COMP-ZREG_ID); no text master exists. */
-export function regionHelp(comp: readonly FxRow[]): Region[] {
+/**
+ * ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts: COMP and BPEXT, named from BPEXT).
+ * Without that list, the codes the TSF entities carry (COMP-ZREG_ID).
+ */
+export function regionHelp(comp: readonly FxRow[], regions: readonly RegionOption[] | null = null): Region[] {
+  if (regions) return regions.map((r) => ({ id: r.id, desc: r.name }))
   return [...new Set(comp.map((r) => txt(r, 'ZREG_ID')).filter(Boolean))].map((id) => ({ id, desc: '' })).sort(byId)
 }
 
@@ -94,10 +106,10 @@ export function statusHelp(statuses: readonly FxRow[]): Status[] {
 }
 
 /** The masters are swapped in place, so every list and lookup the screen imported sees SAP's rows. */
-function applyMasters(ctx: DealContext): void {
+function applyMasters(ctx: DealContext, regions: readonly RegionOption[] | null): void {
   const comp = [...ctx.comp.values()]
   replaceInPlace(ENTITIES, entityHelp(comp))
-  replaceInPlace(REGIONS, regionHelp(comp))
+  replaceInPlace(REGIONS, regionHelp(comp, regions))
   replaceInPlace(MODELS, modelHelp([...ctx.models.values()]))
   replaceInPlace(STATUSES, statusHelp(ctx.statuses))
 }

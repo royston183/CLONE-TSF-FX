@@ -9,11 +9,12 @@
  * So, per the no-source rule:
  *   Deal ID worklist      which Deal IDs are "for settlement" (status range, dates, CO area,
  *                         utilisation from ZSGTSFCDS_FX) is a guessed selection -> WAITING FOR API.
- *   Status / Region / Origin Entity / CO Area lists
+ *   Region list           the SAP region codes, shared/fx/regions.ts (COMP and BPEXT) -> live.
+ *   Status / Origin Entity / CO Area lists
  *                         none is a standard master with an unambiguous key (the status list
- *                         needs a sub type / code range, the region and entity lists come from
- *                         Z masters with an unknown restriction, CO Area is a controlling area,
- *                         not T001) -> WAITING FOR API.
+ *                         needs a sub type / code range, the entity list comes from a Z master
+ *                         with an unknown restriction, CO Area is a controlling area, not T001)
+ *                         -> WAITING FOR API.
  *   Trade Invoice drill-down (SUBMIT ZSGTSF_RDEAL_TRD_INV) -> WAITING FOR API.
  *   No action writes anything (the screen has none besides display / filters).
  *

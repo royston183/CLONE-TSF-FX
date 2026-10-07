@@ -73,6 +73,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfxapp_o4_api/srvd_a2x/sap/zfs_sd_trmfxapp/0001",
       "description": "ZFS_SB_TRMFXAPP_O4_API — TrmFxApp: the TSF append data of an FX deal (ZSGTSFTR_APP_STR: TxnStatus, Ztrcode, NDF FO/MO remarks, Deal ID). Managed CRUD, ETag on LocalLastChangedAt"
     },
+    "trmposting": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmposting_o4_api/srvd_a2x/sap/zfs_sd_trmposting/0001",
+      "description": "PROPOSED (docs/abap/ZFS_SD_TRMPOSTING.md), not yet in SAP — TBB1 posting run: PostingRun (SUBMIT RFTBBB00) and its PostingLog. TBB1 probes its $metadata and stays read-only until it answers"
+    },
     "trmmaster": {
       "kind": "odata",
       "auth": "sap-ds4",
