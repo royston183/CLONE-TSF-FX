@@ -51,7 +51,7 @@ type Msel = { key: MultiFilterKey; label: string; wide: boolean; options: MselOp
 /** Built per load: REGIONS / ENTITIES / MODELS are swapped for MySQL's rows once they arrive. */
 function buildMsels(): Msel[] {
   return [
-    { key: 'region', label: 'Region', wide: false, options: REGIONS.map((r) => ({ id: r.id, label: r.desc || r.id })), placeholder: 'Select region...' },
+    { key: 'region', label: 'Region', wide: false, options: REGIONS.map((r) => ({ id: r.id, label: r.desc ? `${r.id} · ${r.desc}` : r.id })), placeholder: 'Select region...' },
     { key: 'entity', label: 'Origin Entity', wide: true, options: ENTITIES.map((e) => ({ id: e.id, label: e.name, sub: e.region })), placeholder: 'Select entity...' },
     { key: 'model', label: 'FX Model', wide: true, options: MODELS.map((m) => ({ id: m.id, label: m.desc })), placeholder: 'Select FX model...' },
   ]

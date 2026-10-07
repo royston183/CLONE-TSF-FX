@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO } from '../../shared/fx/logo.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+import { loadRegions, regionLabel, type RegionOption } from '../../shared/fx/regions.ts'
 import { INVOICES_WAITING, LIST_WAITING, MASTER_WAITING, loadSettlementList } from './api.ts'
 import { DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES } from './data.ts'
 import { DateBox } from './DateRangeField.tsx'
@@ -91,6 +93,16 @@ export default function MoViewDealIdSettlementList() {
   useEffect(() => {
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, show: false })), TOAST_MS)
     return () => clearTimeout(toastTimer.current)
+  }, [])
+
+  // Region list: the SAP region codes (shared/fx/regions.ts), independent of the waiting worklist.
+  const [regions, setRegions] = useState<RegionOption[] | null>(null)
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadRegions(ctl.signal).then(setRegions, (error: unknown) => {
+      if (!isAbort(error)) setRegions([])
+    })
+    return () => ctl.abort()
   }, [])
 
   // Any filter change goes back to page 1, as the original's applyFilters did.
@@ -281,9 +293,21 @@ export default function MoViewDealIdSettlementList() {
                   <label htmlFor="f-region">Region</label>
                   <select id="f-region" value={filters.region} onChange={(e) => patchFilters({ region: e.target.value })}>
                     <option value="ALL">All regions</option>
-                    <option value="" disabled>
-                      {MASTER_WAITING}
-                    </option>
+                    {regions === null ? (
+                      <option value="" disabled>
+                        Loading regions from SAP …
+                      </option>
+                    ) : regions.length ? (
+                      regions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {regionLabel(r)}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        Regions could not be read from SAP
+                      </option>
+                    )}
                   </select>
                 </div>
                 <div className="filter-field entity-filter">

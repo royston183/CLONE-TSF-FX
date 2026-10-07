@@ -1,0 +1,179 @@
+/* Night mode for tbb1-post-flows, derived from tbb1-post-flows.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .tbb1 {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .tbb1 input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .tbb1 select,
+:root[data-theme='dark'] .tbb1 textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 ::-webkit-scrollbar-thumb {
+  background: #1e4368;
+}
+:root[data-theme='dark'] .tbb1 .page-header {
+  background: #17304a;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .tbb1 .page-header .logo-placeholder {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .dd-input {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%235C7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 12px center;
+}
+:root[data-theme='dark'] .tbb1 .dd-panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .date-popup {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .btn-danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .tbb1 .success-banner {
+  border: 1px solid #26543a;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 .status-in-use {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tbb1 .status-pending {
+  color: #ffb45c;
+}
+:root[data-theme='dark'] .tbb1 .status-rejected {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tbb1 .status-settled {
+  color: #6bf0ed;
+}
+:root[data-theme='dark'] .tbb1 .status-matured {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tbb1 .pagination button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .child-parent-summary {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .tbb1 table.popup-table thead th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 .icon-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 .control:hover,
+:root[data-theme='dark'] .tbb1 .dd-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 .status-text-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tbb1 .status-pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tbb1 .success-banner {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .tbb1 .child-parent-summary {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table thead th {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody td {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody tr.selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tbb1 table.mc-table tbody tr.selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tbb1 .run-hint .pill.test {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tbb1 .ms-panel {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .cal-head select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 .run-chip.test {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tbb1 .msg-W {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tbb1 select.control {
+  background: #14212f url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23475E75'/></svg>") no-repeat right 11px center;
+}
+:root[data-theme='dark'] .tbb1 table.log-table .pin {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tbb1 table.log-table tbody tr:hover .pin {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tbb1 table.log-table tbody tr.selected .pin {
+  background: #17304a;
+}

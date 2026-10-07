@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
 import { loadScreen } from './api.ts'
 import { CSV_FILE_NAME, DEFAULT_PAGE_SIZE, EMPTY_TEXT, LAYOUTS, LOADING_TEXT, PAGE_SIZES, TOAST_MS, WAITING_MAIL } from './data.ts'
 import { DateField } from './DateField.tsx'
@@ -119,7 +120,13 @@ export default function InrHeadsUpReminder() {
 
   // The SAP selection re-run on every filter change.
   const rows = useMemo(() => selectRows(tables, filters), [tables, filters])
-  const regions = useMemo(() => regionOptions(tables.entities), [tables])
+  const [sapRegions, setSapRegions] = useState<RegionOption[] | null>(null)
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadRegions(ctl.signal).then(setSapRegions, () => undefined)
+    return () => ctl.abort()
+  }, [])
+  const regions = useMemo(() => regionOptions(tables.entities, sapRegions), [tables, sapRegions])
   const coAreas = useMemo(() => coAreaOptions(tables.rules), [tables])
   const cols = useMemo(() => visibleColumns(layout), [layout])
   const list = useMemo(() => filterSortRows(rows, layout, search, sort), [rows, layout, search, sort])

@@ -6,8 +6,9 @@
  * They are now the fallback: api.ts replaces the master lists in place with MySQL's rows once
  * the middleware answers (ENTITIES, FX_MODELS, COMMODITIES, PAYMENT_TERMS), and
  * seedContracts() is only shown when it cannot be reached. A master that is registered but
- * still empty in MySQL keeps these values; REGIONS and PORT_PAIRS have no migrated master and
- * always stay as they are.
+ * still empty in MySQL keeps these values. REGIONS is replaced by the SAP region codes
+ * (shared/fx/regions.ts) and is only this fallback when SAP cannot be read; PORT_PAIRS has no
+ * migrated master and always stays as it is.
  */
 import { addDays, parseSeedDate } from './format.ts'
 import type {

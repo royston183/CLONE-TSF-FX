@@ -541,6 +541,16 @@
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
     },
     {
+      "code": "ZSGTSFR103",
+      "id": "bo-bank-settlement-fx-non-flow",
+      "route": "/apps/bo-bank-settlement-fx-non-flow",
+      "title": "BO: Bank Settlement: FX Non-Flow Deals",
+      "status": "scaffold",
+      "services": [],
+      "legacy": "legacy/mo-bank-settlement-fx-non-flow.html",
+      "note": "Same screen and the same files as ZSGTSFR104 (apps/web/src/features/mo-bank-settlement-fx-non-flow): registry.ts maps this id to that component, so a change to the MO screen is a change to the BO screen."
+    },
+    {
       "code": "ZSGTSFR081",
       "id": "bo-post-accounting-settlement",
       "route": "/apps/bo-post-accounting-settlement",
@@ -619,6 +629,16 @@
       "services": [],
       "legacy": "legacy/post-fx-mtm-oil-dmcc.html",
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "TBB1",
+      "id": "tbb1-post-flows",
+      "route": "/apps/tbb1-post-flows",
+      "title": "TBB1 Posting - SAP Standard",
+      "status": "scaffold",
+      "services": ["companycode", "trmmaster", "trmfx", "middleware", "trmposting"],
+      "legacy": "legacy/post-flows-tbb1.html",
+      "note": "Treasury: Post Flows (RFTBBB00). Live, no sample data. Value helps from T001 (A_CompanyCode) and FTR customizing (trmmaster ProductType / TransactionType / FlowType). Execute reads VTBFHAPO (SBEWEBE 1, due date, company codes) with the FX deal header from FxTransaction and applies the remaining select-options. The posting run needs the proposed service in docs/abap/ZFS_SD_TRMPOSTING.md (PostingRun / PostingLog); it switches on when its $metadata answers, until then Execute lists the due flows read-only."
     },
     {
       "code": "ZSGTSFR028",

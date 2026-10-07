@@ -410,7 +410,7 @@ export default function FoMcErrorCorrection() {
               title="Region"
               all="All regions"
               value={filters.region}
-              options={REGION_CATALOG.map((r) => [r.code, `${r.code} - ${r.label}`])}
+              options={REGION_CATALOG.map((r) => [r.code, r.label ? `${r.code} - ${r.label}` : r.code])}
               onChange={(v) => setFilter('region', v)}
             />
             <FilterSelect

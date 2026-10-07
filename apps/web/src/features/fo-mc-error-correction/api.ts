@@ -17,7 +17,8 @@
  */
 import { distinctBy, loadMaster, replaceInPlace, txt, type MasterSource } from '../../shared/fx/masters.ts'
 import { listMasterContracts, loadTransactions, setMcStatus, updateMasterContract, type McRow } from '../../shared/fx/master-contract.ts'
-import type { FxRow } from '../../shared/fx/mw.ts'
+import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { loadRegions } from '../../shared/fx/regions.ts'
 import { clip, dec, dmyFromIso, isoFromDmy, num } from '../../shared/fx/sap.ts'
 import {
   CURRENCY_CODE_BY_STRING,
@@ -26,6 +27,7 @@ import {
   ORIGIN_ENTITIES,
   PAYMENT_TERMS,
   PORT_REGION_GROUPS,
+  REGION_CATALOG,
   buildFreshDataset,
   findPaymentTerm,
   findRegion,
@@ -79,6 +81,12 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
   replaceInPlace(FX_MODELS, models.rows)
   replaceInPlace(PAYMENT_TERMS, terms.rows)
   replaceInPlace(PORT_REGION_GROUPS, ports.rows)
+  // ZSGTSFSH_REGION: the SAP region codes (shared/fx/regions.ts). The seed stays only if SAP cannot be read.
+  const regions = await loadRegions(signal).catch((error: unknown) => {
+    if (isAbort(error)) throw error
+    return null
+  })
+  if (regions?.length) replaceInPlace(REGION_CATALOG, regions.map((r) => ({ code: r.id, label: r.name })))
 
   return { entities: entities.source, fxModels: models.source, paymentTerms: terms.source, portGroups: ports.source }
 }
