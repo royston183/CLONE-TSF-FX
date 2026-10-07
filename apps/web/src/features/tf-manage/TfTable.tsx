@@ -1,5 +1,9 @@
+import { useState } from 'react'
 import { fmtDate, fmtNum } from '@slc/api-client'
-import { distinctValues, filterRows, rowKey, subtotal } from './fields.ts'
+import { DateField } from './DateField.tsx'
+import { distinctValues, filterRows, rowKey, sortRows, subtotal } from './fields.ts'
+import type { SortDirection } from './fields.ts'
+import type { SelectOption } from './masters.ts'
 import type { TfFilters, TrdFlowRow } from './types.ts'
 
 /**
@@ -27,8 +31,10 @@ const COLUMNS: ReadonlyArray<{ label: string; field: keyof TrdFlowRow; kind?: 'd
   { label: 'OGA Title From - Date', field: 'Zotfd', kind: 'date' },
   { label: 'OGA Title Till - Date', field: 'Zottd', kind: 'date' },
   { label: 'Quantity', field: 'Zquantity', kind: 'num' },
-  { label: 'Contract Price', field: 'Zcprice', kind: 'num' },
-  { label: 'CMP (MT)', field: 'Zunit', kind: 'num' },
+  // ZUNIT is SE11's "Contract Price" and ZCPRICE the CMP — the names mislead; the upload maps
+  // them the same way, and Contract Amt = Quantity x ZUNIT.
+  { label: 'Contract Price (USD)', field: 'Zunit', kind: 'num' },
+  { label: 'CMP (MT)', field: 'Zcprice', kind: 'num' },
   { label: 'Contract Amt(USD)', field: 'Zttv', kind: 'num' },
   { label: 'Port of Loading', field: 'Zpol' },
   { label: 'Port of Destination', field: 'Zpod' },
@@ -38,12 +44,13 @@ const COLUMNS: ReadonlyArray<{ label: string; field: keyof TrdFlowRow; kind?: 'd
   { label: 'ETA at Discharge Port', field: 'ZetaDsPort', kind: 'date' },
 ]
 
-/** The legacy filter dropdowns that have a TrdFlow field behind them. */
+/** The legacy filter dropdowns, each with the TrdFlow field it filters. */
 const FILTERS: ReadonlyArray<{ id: string; key: keyof TfFilters; all: string }> = [
   { id: 'filterBu', key: 'Zbu', all: 'All BU' },
   { id: 'filterCommodity', key: 'Zcmmd', all: 'All Commodities' },
-  { id: 'filterTfStatus', key: 'ZflwSts', all: 'All TF Status' },
+  { id: 'filterTfStatus', key: 'ZflwCod1', all: 'All TF Status' },
   { id: 'filterOgbsStatus', key: 'ZogbsStatId', all: 'All OGBS Status' },
+  { id: 'filterBlockedStatus', key: 'ZflwCod2', all: 'All Blocked Status' },
 ]
 
 function cell(row: TrdFlowRow, col: (typeof COLUMNS)[number]): string {
@@ -65,6 +72,11 @@ export type TfTableProps = {
   onKeyDateChange: (value: string) => void
   selected: TrdFlowRow | null
   onSelect: (row: TrdFlowRow) => void
+  /**
+   * The choices of the status filters, from ZSGTSFTR_TF_STAT (masters.ts). A filter without an
+   * entry here lists the values the loaded rows carry.
+   */
+  filterOptions: Partial<Record<keyof TfFilters, readonly SelectOption[]>>
 }
 
 export function TfTable({
@@ -78,30 +90,67 @@ export function TfTable({
   onKeyDateChange,
   selected,
   onSelect,
+  filterOptions,
 }: TfTableProps) {
-  const visible = filterRows(rows, filters)
+  const [sort, setSort] = useState<{ field: keyof TrdFlowRow; dir: SortDirection } | null>(null)
+  const filtered = filterRows(rows, filters)
+  const sortColumn = sort ? COLUMNS.find((col) => col.field === sort.field) : undefined
+  const visible = sort
+    ? sortRows(filtered, sort.field, sort.dir, sortColumn?.kind === 'num' ? 'num' : undefined)
+    : filtered
   const selectedKey = selected ? rowKey(selected) : null
+
+  function toggleSort(field: keyof TrdFlowRow) {
+    setSort((current) =>
+      current && current.field === field
+        ? { field, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+        : { field, dir: 'asc' },
+    )
+  }
 
   return (
     <section className="ds-panel">
       <div className="panel-title">List of Trade Flows</div>
 
-      <div className="toolstrip">
-        <div className="ws-field">
-          <label htmlFor="mainKeyDate">Key Date</label>
-          <div className="date-field-wrap">
-            <input
-              type="text"
-              id="mainKeyDate"
-              placeholder="DD-MM-YYYY"
-              value={keyDate}
-              onChange={(event) => onKeyDateChange(event.target.value)}
-            />
+      <div className="toolstrip filters-bar" id="mainFiltersRow">
+        <div className={showFilters ? 'filters-controls' : 'filters-controls hidden'}>
+          <span className="field-hint filter-by-label">Filter by</span>
+          <div className="ws-field">
+            <DateField id="mainKeyDate" iso={keyDate} title="Key Date" onChange={onKeyDateChange} />
           </div>
+          {FILTERS.map((filter) => (
+            <select
+              key={filter.id}
+              id={filter.id}
+              value={filters[filter.key]}
+              onChange={(event) =>
+                onFiltersChange({ ...filters, [filter.key]: event.target.value })
+              }
+            >
+              <option value="">{filter.all}</option>
+              {(filterOptions[filter.key] ?? distinctValues(rows, filter.key as keyof TrdFlowRow).map((value) => ({ value, label: value }))).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ))}
+          {/* No TrdFlow field behind these two, so they stay visible but inert. */}
+          <label className="field-check main-filter-check">
+            <input type="checkbox" id="filterIncludeExpired" style={{ width: 'auto' }} disabled />
+            Include Expired TFs
+          </label>
+          <label className="field-check main-filter-check">
+            <input type="checkbox" id="filterIncludeDeleted" style={{ width: 'auto' }} disabled />
+            Include Deleted TFs
+          </label>
+          <button type="button" className="hdr-btn" id="btnClearMainFilters" onClick={onClearFilters}>
+            Clear filters
+          </button>
         </div>
         <button
           type="button"
-          className="hdr-btn icon-btn"
+          className="hdr-btn icon-btn filter-toggle-btn"
           id="btnToggleMainFilters"
           title="Filters"
           onClick={onToggleFilters}
@@ -109,42 +158,6 @@ export function TfTable({
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.3">
             <path d="M2 3h12l-4.5 5.2v3.6l-3 1.4V8.2z" strokeLinejoin="round" strokeLinecap="round" />
           </svg>
-        </button>
-      </div>
-
-      <div className={showFilters ? 'toolstrip' : 'toolstrip hidden'} id="mainFiltersRow">
-        <span className="field-hint filter-by-label">Filter by</span>
-        {FILTERS.map((filter) => (
-          <select
-            key={filter.id}
-            id={filter.id}
-            value={filters[filter.key]}
-            onChange={(event) =>
-              onFiltersChange({ ...filters, [filter.key]: event.target.value })
-            }
-          >
-            <option value="">{filter.all}</option>
-            {distinctValues(rows, filter.key as keyof TrdFlowRow).map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        ))}
-        {/* No TrdFlow field behind these three, so they stay visible but inert. */}
-        <select id="filterBlockedStatus" disabled title="No SAP source for this filter yet">
-          <option value="">All Blocked Status</option>
-        </select>
-        <label className="field-check main-filter-check">
-          <input type="checkbox" id="filterIncludeExpired" style={{ width: 'auto' }} disabled />
-          Include Expired TFs
-        </label>
-        <label className="field-check main-filter-check">
-          <input type="checkbox" id="filterIncludeDeleted" style={{ width: 'auto' }} disabled />
-          Include Deleted TFs
-        </label>
-        <button type="button" className="hdr-btn" id="btnClearMainFilters" onClick={onClearFilters}>
-          Clear filters
         </button>
       </div>
 
@@ -156,9 +169,21 @@ export function TfTable({
         <table className="data-table" id="tfTable">
           <thead>
             <tr>
-              {COLUMNS.map((col) => (
-                <th key={col.field}>{col.label}</th>
-              ))}
+              {COLUMNS.map((col) => {
+                const active = sort?.field === col.field
+                return (
+                  <th
+                    key={col.field}
+                    className={col.kind === 'num' ? 'num' : undefined}
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort"
+                    onClick={() => toggleSort(col.field)}
+                  >
+                    {col.label}
+                    {active ? (sort!.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody id="tfTableBody">
@@ -177,7 +202,9 @@ export function TfTable({
                   onClick={() => onSelect(row)}
                 >
                   {COLUMNS.map((col) => (
-                    <td key={col.field}>{cell(row, col)}</td>
+                    <td key={col.field} className={col.kind === 'num' ? 'num' : undefined}>
+                      {cell(row, col)}
+                    </td>
                   ))}
                 </tr>
               )

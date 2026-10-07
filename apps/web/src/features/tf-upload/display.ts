@@ -1,4 +1,5 @@
 import type { CellValue } from './xlsx.ts'
+import { datsToIso } from './fields.ts'
 import type { FieldType } from './fields.ts'
 
 export type TemplateColumn = { index: number; name: string; type: FieldType }
@@ -32,7 +33,7 @@ export function isNumberColumn(columns: readonly TemplateColumn[], index: number
 
 /**
  * How a cell is shown in the preview. Dates become DD-MM-YYYY whether the workbook stored a
- * serial or ISO text; numbers get en-IN grouping, which is what the original used.
+ * serial, SAP DATS (20241218) or ISO text; numbers get en-IN grouping, which is what the original used.
  */
 export function displayCell(
   value: CellValue | null | undefined,
@@ -41,6 +42,8 @@ export function displayCell(
 ): string {
   if (value === null || value === undefined || value === '') return ''
   if (isDateColumn(columns, index)) {
+    const dats = datsToIso(value)
+    if (dats) return isoToDisplay(dats)
     return typeof value === 'number' ? excelSerialToDisplay(value) : isoToDisplay(value)
   }
   if (isNumberColumn(columns, index) && typeof value === 'number') {

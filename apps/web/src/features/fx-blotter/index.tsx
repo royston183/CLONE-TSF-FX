@@ -595,7 +595,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       dealId: assignDeal.dealId,
       mcRef: attached.mcRef || assignDeal.mcNumber,
       dealDesc: attached.dealDesc,
-      dealType: attached.dealType,
     })
     if (failed) showToast(failed, 'warn')
     else showToast(`Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`, 'success')
@@ -631,7 +630,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       dealId: pair.dealId,
       mcRef: mcSelected.mcNumber,
       dealDesc: pair.dealDesc,
-      dealType: pair.dealType,
     })
     if (failed) showToast(failed, 'warn')
     else showToast(`Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`, 'success')
@@ -734,7 +732,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     modals.close('auto')
     commit(applyCreated(out.blotter, new Map(ids.map((id, i) => [id, created[i]!]))))
     // The legs now have a Deal ID: save it with their application data. Their status stays 01 until they are released to MO.
-    const outs = await saveDealLink(rowsNow(ids), { dealId: pair.dealId, mcRef: autoMc.mcNumber, dealDesc: pair.dealDesc, dealType: pair.dealType }, latest.current.ctx.date)
+    const outs = await saveDealLink(rowsNow(ids), { dealId: pair.dealId, mcRef: autoMc.mcNumber, dealDesc: pair.dealDesc }, latest.current.ctx.date)
     const unsaved = settleSaves(outs, 'create', (r) => r.txnStatus ?? '01') || created.find((c) => c.appDataError)?.appDataError || ''
     showToast(
       unsaved ||

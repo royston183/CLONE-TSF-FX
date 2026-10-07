@@ -2,8 +2,9 @@
  * The page's business rules, lifted out of the legacy script as pure functions so the
  * component only holds state.
  */
-import { fmtAmount, parseAmountInput, parseDate } from './format.ts'
-import type { CodeLabel, CreateFormErrors, CreateFormValues, Filters, Side, Sort, SortKey, SpotRow, TxnTypeOption } from './types.ts'
+import { fmtAmount, formatDate, parseAmountInput, parseDate } from './format.ts'
+import { SPOT_PRODUCT_TYPE, calculateSpotAmounts, isEligible, type SpotContext } from './spotCreate.ts'
+import type { CodeLabel, CreateFormErrors, CreateFormValues, Filters, Side, Sort, SortKey, SpotRow } from './types.ts'
 
 // ---------------------------------------------------------------- filtering / sorting
 
@@ -80,87 +81,49 @@ export const nextSort = (sort: Sort, key: SortKey): Sort => (sort.key === key ? 
 // ---------------------------------------------------------------- create spot
 
 /** A row is eligible for Create Spot Txn once it has no spot yet and a non-zero difference. */
-export function canCreate(r: SpotRow | null | undefined): boolean {
-  return !!r && !r.spotTxn && Number(r.diffAmt) !== 0
-}
+export const canCreate = (r: SpotRow | null | undefined): boolean => !!r && isEligible(r)
 
 /** A code is kept only while SAP's drop-down offers it ('' otherwise). */
 export const offered = (options: readonly CodeLabel[], code: string): string => (options.some((o) => o.key === code) ? code : '')
 
-/**
- * The seed rows still carry legacy codes SAP refuses, so only a code SAP's drop-downs offer is
- * kept. Partners depend on the company code and load after the popup opens, so they are
- * matched then (see partnerAfterLoad).
- */
-export function blankCreateForm(r: SpotRow, companies: readonly CodeLabel[], txnTypes: readonly CodeLabel[]): CreateFormValues {
-  return {
-    companyCode: offered(companies, r.companyCode),
-    txnType: offered(txnTypes, r.defaultTxnType),
-    partner: '',
-    tradeDate: r.tradeDate,
-    valueDate: r.valueDate,
-    rate: '',
-  }
-}
+/** The popup opens with the legacy default Trade Date (original Value Date - 2 days) and no rate or partner. */
+export const blankCreateForm = (ctx: Pick<SpotContext, 'defaultTradeDate'>): CreateFormValues => ({
+  partner: '',
+  tradeDate: formatDate(ctx.defaultTradeDate),
+  rate: '',
+})
 
-/**
- * Buy/sell currency and amount for the modal's Currency Amounts panel: the difference amount
- * split at the entered spot rate, in whichever leg the row's side puts on which side.
- * `base * rate` when the deal currency is USD, `base / rate` otherwise — the legacy recalcAmounts.
- */
-export function recalcAmounts(
-  r: SpotRow,
+/** The Currency Amounts panel: buy and sell currency/amount for the entered rate (blank amounts until it is valid). */
+export function amountsView(
+  r: Pick<SpotRow, 'diffAmt' | 'currency'>,
+  ctx: Pick<SpotContext, 'direction' | 'otherCurrency'>,
   rate: number,
 ): { buyCurr: string; sellCurr: string; buyAmt: string; sellAmt: string } {
-  const base = Math.abs(Number(r.diffAmt))
-  const other = rate > 0 ? (r.currency === 'USD' ? base * rate : base / rate) : 0
-  const [buyCurr, sellCurr, buyAmt, sellAmt]: [string, string, number, number] =
-    r.side === 'Buy' ? [r.currency, r.otherCurrency, base, other] : [r.otherCurrency, r.currency, other, base]
-  return { buyCurr, sellCurr, buyAmt: fmtAmount(buyAmt), sellAmt: fmtAmount(sellAmt) }
+  const amounts = calculateSpotAmounts({ diffAmt: r.diffAmt, diffCurrency: r.currency, direction: ctx.direction, otherCurrency: ctx.otherCurrency, rate })
+  if (amounts) {
+    return { buyCurr: amounts.buyCurrency, sellCurr: amounts.sellCurrency, buyAmt: fmtAmount(amounts.buyAmount), sellAmt: fmtAmount(amounts.sellAmount) }
+  }
+  const [buyCurr, sellCurr] = ctx.direction === 'Buy' ? [r.currency, ctx.otherCurrency] : [ctx.otherCurrency, r.currency]
+  const base = fmtAmount(Math.abs(r.diffAmt))
+  return { buyCurr, sellCurr, buyAmt: ctx.direction === 'Buy' ? base : '', sellAmt: ctx.direction === 'Sell' ? base : '' }
 }
 
 export function validateCreateForm(values: CreateFormValues): { valid: boolean; errors: CreateFormErrors } {
   const errors: CreateFormErrors = {}
-  if (!values.companyCode) errors.company = 'Required'
-  if (!values.txnType) errors.txnType = 'Required'
   if (!values.partner) errors.partner = 'Required'
   if (!parseDate(values.tradeDate)) errors.tradeDate = 'Enter dd-mm-yyyy'
-  if (!parseDate(values.valueDate)) errors.valueDate = 'Enter dd-mm-yyyy'
   const rate = parseAmountInput(values.rate)
   if (!(rate > 0)) errors.rate = 'Enter a valid rate'
   return { valid: Object.keys(errors).length === 0, errors }
 }
 
-/** Once a company code's partners arrive: keep the pick if offered, else the row's own partner if offered, else none. */
+/** Once the partners arrive: keep the pick if offered, else the row's own partner if offered, else none. */
 export const partnerAfterLoad = (current: string, rowPartner: string, partners: readonly CodeLabel[]): string =>
   offered(partners, current) || offered(partners, rowPartner)
 
-/** The product type a transaction type books under in SAP's list; '' when it is not offered. */
-export const productTypeOf = (txnTypes: readonly TxnTypeOption[], txnType: string): string =>
-  txnTypes.find((o) => o.key === txnType)?.productType ?? ''
-
-/** The row as Create Spot leaves it: the picked company/partner/dates, and a fresh spot number. */
-export function applyCreate(
-  r: SpotRow,
-  values: CreateFormValues,
-  spotTxn: string,
-  createdBy: string,
-  createdDate: string,
-  companyName: string,
-  productType: string,
-): SpotRow {
-  return {
-    ...r,
-    companyCode: values.companyCode,
-    companyName,
-    partner: values.partner,
-    tradeDate: values.tradeDate,
-    valueDate: values.valueDate,
-    spotTxn,
-    spotProductType: productType,
-    createdBy,
-    createdDate,
-  }
+/** The row as Create Spot leaves it: a fresh spot number booked in the spot's own company code. The original deal's fields stay. */
+export function applyCreate(r: SpotRow, spotTxn: string, spotCompanyCode: string, createdBy: string, createdDate: string): SpotRow {
+  return { ...r, spotTxn, spotProductType: SPOT_PRODUCT_TYPE, spotCompanyCode, createdBy, createdDate }
 }
 
 // ---------------------------------------------------------------- transaction detail
@@ -172,7 +135,7 @@ export function detailItems(r: SpotRow, kind: 'original' | 'spot'): Array<[strin
   return [
     ['Transaction', txn],
     ['View', status],
-    ['Company Code', r.companyCode],
+    ['Company Code', kind === 'spot' ? (r.spotCompanyCode ?? r.companyCode) : r.companyCode],
     ['Deal ID', r.dealId],
     ['Product Type', kind === 'spot' ? (r.spotProductType ?? '') : r.dealType],
     ['Trade Type', r.tradeType],

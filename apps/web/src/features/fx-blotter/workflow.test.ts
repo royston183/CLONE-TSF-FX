@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import { fromFxTransaction, type FxTransaction } from './api.ts'
-import { applyAppStr, cleanFields, fieldsOfRow, resolveStatus, type AppStrRecord } from './appStr.ts'
+import { applyAppStr, cleanFields, fieldsOfRow, legTypeOf, resolveStatus, type AppStrRecord } from './appStr.ts'
 import { BUSINESS_PARTNERS } from './data.ts'
 import { installFixtures } from './fixtures.ts'
 import { applyCreated, initialBlotter, mergeLiveRows, setAppDataPending, viewRowPairs } from './logic.ts'
@@ -62,12 +62,15 @@ describe('application data fields', () => {
   })
 
   it('maps the Deal ID fields once the row has them, and the remarks only on NDF rows', () => {
+    // No D1 / D2 label on the row: the Deal ID goes, a deal type does not (and never the Deal ID's own 'FX').
     deepStrictEqual(fieldsOfRow(inSap({ dealId: '7000000007', mcRef: '2000000028', dealDescription: 'Nidhi S_OSIPL_2026' })), {
-      ZtsfDealType: 'FX',
       ZtsfDealID: '7000000007',
       ZtsfMcRefNo: '2000000028',
       ZtsfDealDesc: 'Nidhi S_OSIPL_2026',
     })
+    deepStrictEqual(fieldsOfRow(inSap({ dealId: '7000000007', dealType: 'D2 (Paired Model)' })), { ZtsfDealID: '7000000007', ZtsfDealType: 'D2' })
+    // A leg label without a Deal ID is not a link: nothing is written.
+    deepStrictEqual(fieldsOfRow(inSap({ dealType: 'D1 (Paired Model)' })), {})
     deepStrictEqual(fieldsOfRow(inSap({ foRemark: 'fo', moRemark: 'mo' })), {})
     deepStrictEqual(fieldsOfRow(inSap({ txnType: 'NDF', foRemark: 'fo', moRemark: 'mo' })), { NdfFoRem: 'fo', NdfMoRem: 'mo' })
   })
@@ -257,16 +260,48 @@ describe('workflow against the services', () => {
     const calls: Call[] = []
     install(calls, { stored: rec() })
     const row = inSap({ status: 'RELEASED', dealId: '7000000007', mcRef: '2000000028' })
-    const outs = await releaseBlotterRows([row], { dealId: '7000000007', mcRef: '2000000028', dealDesc: 'D', dealType: 'FX' }, day)
+    const outs = await releaseBlotterRows([row], { dealId: '7000000007', mcRef: '2000000028', dealDesc: 'D' }, day)
     ok(outs[0]!.ok)
     const [w] = appWrites(calls)
     strictEqual(w!.method, 'PATCH')
     strictEqual(w!.body!['TxnStatus'], '03')
     strictEqual(w!.body!['ZtsfDealID'], '7000000007')
-    strictEqual(w!.body!['ZtsfDealType'], 'FX')
+    // This row carries no D1 / D2 label, so no deal type is written: never the Deal ID's own 'FX'.
+    ok(!('ZtsfDealType' in w!.body!))
     strictEqual(w!.body!['ZtsfMcRefNo'], '2000000028')
     strictEqual(w!.body!['ZtsfDealDesc'], 'D')
     ok(calls.every((c) => c.url.includes('/api/trmfxapp/')))
+  })
+
+  it('release: writes each row own leg, D1 or D2, as ZTSF_DEAL_TYPE, never the Deal ID type', async () => {
+    const calls: Call[] = []
+    install(calls, { stored: rec() })
+    const link = { dealId: '7000000007', mcRef: '2000000028' }
+    const d1 = inSap({ status: 'RELEASED', dealId: '7000000007', dealType: 'D1 (Paired Model)' })
+    const d2 = inSap({ id: 'R2', status: 'RELEASED', dealId: '7000000007', dealType: 'Deal 2 (Auto Deal)', transactionNumber: '100025' })
+    await releaseBlotterRows([d1, d2], link, day)
+    const writes = appWrites(calls)
+    deepStrictEqual(writes.map((w) => w.body!['ZtsfDealType']), ['D1', 'D2'])
+  })
+
+  it('release: a settlement leg, a short straddle or a plain attach gets no deal type at all', async () => {
+    const calls: Call[] = []
+    install(calls, { stored: rec() })
+    const link = { dealId: '7000000007', mcRef: '2000000028' }
+    const rows = ['Settlement', 'Short Straddle (No-Invoice)', 'PAIR', ''].map((dealType, i) =>
+      inSap({ id: 'S' + i, status: 'RELEASED', dealId: '7000000007', dealType, transactionNumber: '20000' + i }),
+    )
+    await releaseBlotterRows(rows, link, day)
+    ok(appWrites(calls).every((w) => !('ZtsfDealType' in w.body!)))
+  })
+
+  it('legTypeOf reads D1 / D2 from every label the blotter gives a leg, and nothing else', () => {
+    deepStrictEqual(
+      ['D1', 'D1 (Paired Model)', 'Deal 1', 'Deal 1 (Auto Deal)'].map(legTypeOf),
+      ['D1', 'D1', 'D1', 'D1'],
+    )
+    deepStrictEqual(['D2', 'D2 (Paired Model)', 'Deal 2', 'Deal 2 (Auto Deal)'].map(legTypeOf), ['D2', 'D2', 'D2', 'D2'])
+    deepStrictEqual(['', undefined, 'Settlement', 'PAIR', 'FX', 'D10', 'DS1', 'Short Straddle'].map(legTypeOf), Array(8).fill(undefined))
   })
 
   it('release: a transaction MO already matched (07) keeps 07', async () => {

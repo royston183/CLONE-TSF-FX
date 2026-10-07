@@ -12,7 +12,7 @@ const PAGE_LIMIT = 1000
  * `ok: false` never reaches here — the gateway turns a non-2xx into a thrown ApiError.
  */
 type ListBody = { rows?: Array<Record<string, unknown>> }
-type WriteBody = { key?: Record<string, string>; affectedRows?: number }
+type WriteBody = { key?: Record<string, string>; affectedRows?: number; assignedNumber?: string }
 
 /**
  * ZOTTK_NO -> ZottkNo. The middleware serves SAP's raw column names while every form, grid
@@ -78,30 +78,73 @@ export async function mwList<T>(
   return (body?.rows ?? []).map((raw) => toRow<T>(raw))
 }
 
+/**
+ * Creates a row and returns both the key the middleware wrote and, when the resource has a
+ * number range configured, the number it allocated.
+ *
+ * Leaving the key out of `payload` is the supported way to ask for one: the writer treats a
+ * missing *or blank* key field as "allocate", draws the next value from the range that
+ * mirrors SAP's SNRO object, and reports it as `assignedNumber`.
+ */
 export async function mwCreate(
   resource: MiddlewareResource,
   payload: Record<string, unknown>,
-): Promise<Record<string, string>> {
+): Promise<{ key: Record<string, string>; assignedNumber: string | undefined }> {
   const response = await apiRequest<WriteBody>(middlewareApi(`data/${resource}`), {
     method: 'POST',
     body: toColumns(resource, payload),
   })
-  return response.data?.key ?? {}
+  return { key: response.data?.key ?? {}, assignedNumber: response.data?.assignedNumber }
 }
 
+/**
+ * Updates a row.
+ *
+ * The key travels in the body as `key`, alongside `changes` — not as query parameters. The
+ * writer reads those two properties and nothing else, so a flat body with the key in the
+ * query string reaches it as an empty key and fails with MISSING_PRIMARY_KEY before it ever
+ * looks at a row.
+ */
 export async function mwUpdate(
   resource: MiddlewareResource,
   key: Record<string, string>,
   payload: Record<string, unknown>,
+  /** Key fields to send in `changes` anyway, to move a row to a new key value. */
+  changeKeyFields: readonly string[] = [],
+  /**
+   * Optimistic concurrency (BUILD_PLAN.md L9): the row's ZCHANGED_DATE / ZCHANGED_TIME as read. If the
+   * row was written since, the middleware answers STALE_WRITE (409) instead of overwriting it.
+   */
+  ifMatch?: { changedDate: unknown; changedTime: unknown },
 ): Promise<void> {
-  const params = new URLSearchParams()
-  for (const [column, value] of Object.entries(toColumns(resource, key))) {
-    params.set(column, String(value))
-  }
-  await apiFetch(`${middlewareApi(`data/${resource}`)}?${params.toString()}`, {
+  const columns = toColumns(resource, payload)
+  const keyColumns = toColumns(resource, key)
+  const moved = toColumns(resource, Object.fromEntries(changeKeyFields.map((field) => [field, payload[field]])))
+  await apiFetch(middlewareApi(`data/${resource}`), {
     method: 'PATCH',
-    body: toColumns(resource, payload),
+    body: {
+      key: keyColumns,
+      // A key column cannot be changed, and the consoles post the whole form back, so the
+      // key is removed from the changes rather than rejected as KEY_FIELD_IMMUTABLE —
+      // except the fields the caller deliberately changes.
+      changes: { ...withoutKeys(columns, keyColumns), ...moved },
+      // The middleware refuses any key column in changes (KEY_FIELD_IMMUTABLE) unless it is
+      // named here; it then moves the row to the new key in the same UPDATE.
+      ...(Object.keys(moved).length ? { rekey: Object.keys(moved) } : {}),
+      ...(ifMatch ? { ifMatch: { ZCHANGED_DATE: ifMatch.changedDate ?? '', ZCHANGED_TIME: ifMatch.changedTime ?? '' } } : {}),
+    },
   })
+}
+
+function withoutKeys(
+  changes: Record<string, unknown>,
+  key: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [column, value] of Object.entries(changes)) {
+    if (!(column in key)) out[column] = value
+  }
+  return out
 }
 
 /**

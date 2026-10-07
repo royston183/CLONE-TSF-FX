@@ -7,7 +7,11 @@ import {
   legsUnavailable,
   legsWaitingReason,
   loadFxLegs,
+  pickInSpotRow,
+  saveSpotData,
+  spotQuotePair,
   statusList,
+  tcurrSpotRates,
   toDeal,
   toFxDeal,
   toPick,
@@ -142,5 +146,47 @@ describe('gates', () => {
       ok(text.endsWith('Nothing was posted to SAP.'))
     }
     ok(ACTION_WAITING.fxUpdate.includes('BAPI_FTR_FXT_CHANGE'))
+  })
+})
+
+// ---------------------------------------------------------------- FX-Invoice Difference
+
+const LEG = { dealType: 'D1', rfha: '6205000000288', bukrs: 'IN11', bp: '0400000002', valDate: '20-11-2026', curr1: 'USD', curr2: 'INR', spot: '83.2000' }
+const INSPOT_OPEN = { ZMOD_ID: 'M032', ZDEAL_ID: '1100000981', ZDEAL_TYPE: 'D1', ZDSS_TYPE: 'DSS1', ZBUKRS: 'IN11', ZRFHA: '6205000000288', ZD_AMT: '-3998.00', ZCURR: 'USD', ZSPOT_TXN: '' }
+
+describe('spot rate default (TCURR)', () => {
+  it('quotes a pair containing USD as the other currency per USD', () => {
+    deepStrictEqual(spotQuotePair('USD', 'INR'), { from: 'USD', to: 'INR' })
+    deepStrictEqual(spotQuotePair('INR', 'USD'), { from: 'USD', to: 'INR' })
+    deepStrictEqual(spotQuotePair('EUR', 'INR'), { from: 'EUR', to: 'INR' })
+  })
+
+  it('uses the TCURR rate (type M, today) and falls back to the transaction spot', async () => {
+    const seen: string[] = []
+    const rates = await tcurrSpotRates([LEG as never, { ...LEG, curr2: 'EUR' } as never], new Date(2026, 9, 7), async (from, to, date, type) => {
+      seen.push(`${from}>${to}@${date}/${type}`)
+      return to === 'INR' ? 84.5 : null
+    })
+    deepStrictEqual(rates, ['84.5000', '83.2000'])
+    strictEqual(seen[0], 'USD>INR@2026-10-07/M')
+  })
+})
+
+describe('Save Spot Data', () => {
+  it('picks the open IN_SPOT row of the leg, and none once a Spot exists', () => {
+    strictEqual(pickInSpotRow([INSPOT_OPEN], LEG), INSPOT_OPEN)
+    strictEqual(pickInSpotRow([{ ...INSPOT_OPEN, ZSPOT_TXN: '6005000000281' }], LEG), undefined)
+    strictEqual(pickInSpotRow([{ ...INSPOT_OPEN, ZDSS_TYPE: '' }], LEG), undefined)
+    strictEqual(pickInSpotRow([{ ...INSPOT_OPEN, ZRFHA: 'other' }], LEG), undefined)
+  })
+
+  it('skips a leg with no rate or no open difference, and sends nothing to SAP', async () => {
+    const out = await saveSpotData('1100000981', [LEG as never, { ...LEG, dealType: 'D2' } as never], ['', '83'], {
+      listInSpot: async () => [INSPOT_OPEN],
+      ports: new Proxy({}, { get: () => () => { throw new Error('SAP must not be called') } }) as never,
+    })
+    deepStrictEqual(out.map((r) => r.ok), [false, false])
+    ok(out[0]!.message.includes('valid spot rate'))
+    ok(out[1]!.message.includes('no open difference'))
   })
 })

@@ -78,8 +78,25 @@ const LENGTH: Partial<Record<keyof AppStrFields, number>> = {
   BlotterDate: 10,
 }
 
-/** The SAP deal type of every Deal ID the blotter writes (ZSGTSFTR_DEALID.ZDEAL_TYPE). */
-export const DEAL_TYPE = 'FX'
+/**
+ * Which leg of its Deal ID a transaction is, as ZTSF_DEAL_TYPE holds it: 'D1' or 'D2'.
+ *
+ * It is not the Deal ID's own type (ZSGTSFTR_DEALID.ZDEAL_TYPE, 'FX'): the legacy PFX Blotter (ZSGTSF_PFX_BLOTTER_MC)
+ * sets it from the leg it identified, c_d1 / c_d2, and passes it on through ZSGTRMFM_VTBFHA_EXPORT. Every
+ * reader of APP_STR that sums a Deal ID's amount asks for ZTSF_DEAL_TYPE = 'D1', so a row written with
+ * 'FX' is never found by them.
+ *
+ * The blotter already labels each row's leg - 'D1 (Paired Model)', 'Deal 1 (Auto Deal)', 'Deal 1' /
+ * 'Deal 2' once SAP's own slots are read back - so the type is read from that label. A row with no D1 / D2
+ * label (a settlement leg, a short straddle, a single transaction attached to an open Deal ID) gets
+ * none: nothing is guessed, and the field is left as it is.
+ */
+export function legTypeOf(dealType: string | undefined): 'D1' | 'D2' | undefined {
+  const label = (dealType ?? '').trim()
+  if (/^(?:D|Deal )1(?![0-9])/i.test(label)) return 'D1'
+  if (/^(?:D|Deal )2(?![0-9])/i.test(label)) return 'D2'
+  return undefined
+}
 
 /** BUKRS + RFHA as one map key. */
 export const transactionKey = (companyCode: string, transaction: string): string => `${companyCode}::${transaction}`
@@ -112,8 +129,10 @@ const NDF_TYPES = new Set(['NDF', 'DNDF'])
  */
 export function fieldsOfRow(r: BlotterRow): AppStrFields {
   const hasDeal = !!r.dealId
+  const legType = hasDeal ? legTypeOf(r.dealType) : undefined
   return cleanFields({
-    ...(hasDeal ? { ZtsfDealType: DEAL_TYPE, ZtsfDealID: r.dealId } : {}),
+    ...(hasDeal ? { ZtsfDealID: r.dealId } : {}),
+    ...(legType ? { ZtsfDealType: legType } : {}),
     ZtsfMcRefNo: r.mcRef,
     ZtsfDealDesc: r.dealDescription ?? '',
     ZtsfDealSq: r.dealSequence ?? '',

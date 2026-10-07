@@ -347,7 +347,7 @@
   display:flex; align-items:center; justify-content:center; flex:none;
 }
 .tfmanage #screenWorkspace .ws-modal-box {
-  width:min(1180px,calc(100vw - 36px)); max-height:min(800px,calc(100vh - 36px)); background:var(--surface);
+  width:min(1180px,calc(100vw - 36px)); height:min(800px,calc(100vh - 36px)); background:var(--surface);
   border:1px solid #cbd9e6; border-radius:10px; box-shadow:0 18px 60px rgba(28,50,72,.28);
   display:flex; flex-direction:column; overflow:hidden;
 }
@@ -478,3 +478,68 @@
   background: none; box-shadow: none; border-radius: 0;
   object-fit: contain;
 }
+/* ============================================================================
+   Trade Flow filters + detail popup
+   The Key Date field now lives in the filter row, unlabelled (its placeholder
+   carries the name), and the Filter icon sits on the same line as the filter
+   controls, pinned to the row's right edge. Filters wrap onto a second line
+   rather than scrolling. The row-click detail view is wired into the
+   #screenWorkspace/.ws-modal-box shell above (already sized and sub-titled to
+   match OTTK's own modal) instead of the old inline panel below the table,
+   and its sections/fields are recoloured to OTTK's own card treatment.
+   Presentation only.
+   ========================================================================= */
+.tfmanage .filters-controls {
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px; flex:1 1 auto; min-width:0;
+}
+.tfmanage .filters-controls.hidden { display:none; }
+.tfmanage .filter-toggle-btn { margin-left:auto; flex:none; align-self:flex-start; }
+/* The toggle button must stay put when the panel opens: stack the row into two
+   lines (button, then the filter controls beneath it) instead of laying them
+   out side by side, where a wrapping filters-controls could push or resize
+   the button. The button keeps its own line via `order` so it never moves. */
+.tfmanage .toolstrip.filters-bar { flex-direction:column; align-items:stretch; }
+.tfmanage .filters-bar .filter-toggle-btn { order:-1; align-self:flex-end; margin-left:0; }
+.tfmanage .filters-bar .filters-controls { width:100%; }
+.tfmanage .ds-panel > .toolstrip#mainFiltersRow select { min-width:140px; }
+.tfmanage .modal-footer { justify-content:space-between; }
+.tfmanage .modal-actions { display:flex; align-items:center; gap:8px; }
+.tfmanage .modal-close-btn {
+  width:30px; height:30px; border-radius:4px; background:rgba(255,255,255,.72);
+  display:inline-flex; align-items:center; justify-content:center; line-height:1;
+}
+.tfmanage .modal-close-btn:hover { background:#fff; color:#12324d; }
+.tfmanage .modal-heading { display:flex; flex-direction:column; gap:2px; }
+.tfmanage #screenWorkspace .modal-heading .ws-modal-sub { margin:0; }
+.tfmanage #screenWorkspace .ws-modal-box {
+  width:min(1220px,calc(100vw - 36px));
+}
+/* Section/field card treatment ported from OTTK's own modal (white card,
+   blue dot-bullet uppercase title, underlined fields) so the popup content
+   reads as one design language, without touching field grouping or the
+   per-section column count. Each .field wrapper stacks its label directly
+   above its own control — the grid's columns are whole fields, matching
+   OTTK's own field layout instead of pairing raw label/control cells. */
+.tfmanage .field-grid > .field {
+  display:flex; flex-direction:column; align-items:stretch; gap:3px; min-width:0;
+}
+.tfmanage #screenWorkspace .section-box {
+  border:1px solid #dbe3e9; border-radius:7px; background:#fff; padding:9px 13px;
+}
+.tfmanage #screenWorkspace .section-head {
+  display:flex; align-items:center; height:auto; padding:3px 0 6px; margin:0 0 2px;
+  border:0; border-bottom:1px solid #cbd3da; border-radius:0; background:transparent;
+  color:#6a727a; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.11em;
+}
+.tfmanage #screenWorkspace .section-head::before {
+  content:""; width:4px; height:4px; border-radius:50%; background:#37a4de; margin-right:6px; flex:none;
+}
+.tfmanage #screenWorkspace .section-body.field-grid { padding:8px 2px 2px; column-gap:14px; row-gap:10px; align-items:start; }
+.tfmanage #screenWorkspace .field-grid label { font-size:12px; font-weight:600; color:#5f6f7f; }
+.tfmanage #screenWorkspace .field-grid select,
+.tfmanage #screenWorkspace .field-grid input:not([type="checkbox"]) {
+  height:28px; font-size:13px; font-weight:600; color:#20364b; width:100%;
+}
+.tfmanage #screenWorkspace .field-grid input.amt-input { width:100%; }
+.tfmanage #screenWorkspace .field-grid .date-field-wrap { width:100%; }
+.tfmanage #screenWorkspace .field-grid .date-field-wrap input[type="text"] { width:100%; }

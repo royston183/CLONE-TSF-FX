@@ -15,6 +15,8 @@ import {
   loadDealList,
   loadDealScreen,
   pnlWaiting,
+  saveSpotData as bookSpots,
+  tcurrSpotRates,
   type DealList,
 } from './api.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
@@ -278,10 +280,33 @@ export default function MoExecuteSettlementDealId() {
 
   // FX-Invoice Difference (9006)
   const openDiff = () => {
-    setSpots(fxDeals.map((r) => r.spot))
+    const initial = fxDeals.map((r) => r.spot)
+    setSpots(initial)
     modals.open('diff')
+    // The default Spot Rate is TCURR's (type M, today); a rate the user already typed is left alone.
+    void tcurrSpotRates(fxDeals).then((rates) =>
+      setSpots((list) => list.map((v, i) => (v === initial[i] ? (rates[i] ?? v) : v))),
+    )
   }
-  const saveSpotData = () => showToast(ACTION_WAITING.spot, 'error')
+  const [savingSpot, setSavingSpot] = useState(false)
+  const saveSpotData = async () => {
+    if (savingSpot) return
+    setSavingSpot(true)
+    try {
+      const results = await bookSpots(deal.dealId, fxDeals, fxDeals.map((r, i) => spots[i] ?? r.spot))
+      const booked = results.filter((r) => r.ok)
+      const lines = results.map((r) => `${r.dealType} ${r.rfha}: ${r.message}`)
+      showToast(lines.join(' | '), booked.length === results.length ? 'success' : 'error')
+      if (booked.length) {
+        modals.close('diff')
+        refreshScreen()
+      }
+    } catch (error) {
+      showToast(`Save Spot Data failed: ${messageOf(error)}`, 'error')
+    } finally {
+      setSavingSpot(false)
+    }
+  }
 
   // DMS viewer + Edit DMS (9007)
   const openEditDms = () => {
@@ -548,7 +573,8 @@ export default function MoExecuteSettlementDealId() {
         rows={fxDeals}
         spots={spots}
         onSpot={(idx, v) => setSpots((list) => list.map((s, i) => (i === idx ? v : s)))}
-        onSave={saveSpotData}
+        onSave={() => void saveSpotData()}
+        saving={savingSpot}
         emptyText={diffWaiting(legsWaiting)}
       />
       <DmsModal

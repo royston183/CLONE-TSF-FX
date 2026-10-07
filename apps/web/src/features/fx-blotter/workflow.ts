@@ -10,7 +10,6 @@ import {
   type FxTransaction,
 } from './api.ts'
 import {
-  DEAL_TYPE,
   fieldsOfRow,
   loadAppStrRecords,
   saveAppStr,
@@ -101,14 +100,14 @@ export async function createBlotterSpot(form: AutoSpotForm, blotterDate: Date): 
 // ---------------------------------------------------------------- deal id / release
 
 /** The Deal ID a transaction was given; what Assign / Create Deal ID persists. */
-export type DealLink = { dealId: string; mcRef: string; dealDesc?: string; dealType?: string }
+export type DealLink = { dealId: string; mcRef: string; dealDesc?: string }
 
 export type SaveOutcome = { row: BlotterRow; ok: boolean; error?: string }
 
 const dealFields = (link: DealLink | undefined): AppStrFields =>
   link
     ? {
-        ZtsfDealType: link.dealType || DEAL_TYPE,
+        // ZTSF_DEAL_TYPE (D1 / D2) is the row's own leg, written by fieldsOfRow; it is never the Deal ID's type.
         ZtsfDealID: link.dealId,
         ZtsfMcRefNo: link.mcRef,
         ...(link.dealDesc ? { ZtsfDealDesc: link.dealDesc } : {}),
