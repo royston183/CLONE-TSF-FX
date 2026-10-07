@@ -1,7 +1,7 @@
 /** One T001 company code of the S_BUKRS value help (API_COMPANYCODE_SRV / A_CompanyCode). */
 export type CompanyOption = { code: string; name: string }
 
-/** A ZSGTSFV_FX row (GET_DATA's select list). Field names keep the SAP names the report uses. */
+/** One deal of GET_DATA's list (see api.ts dealFromRecord). Field names keep the SAP names the report uses. */
 export type Deal = {
   bukrs: string
   rfha: string
@@ -63,10 +63,16 @@ export type Deal = {
   dcrdat: string
   upuser: string
   dupdat: string
-  /** BKPF-BELNR found by GET_DATA (empty while BKPF has no API — see api.ts). */
+  /** BKPF-BELNR of the settlement (FxTransaction.AccountingDocument; empty when not posted). */
   fi_doc: string
   /** Fiscal year of the matched FI document (empty when none). */
   fi_gjahr?: string
+  /** Whether SAP serves NDF_RATE / ZCASH_AMT / CASH_CURR (FxTransaction settlement fields); if not, they show blank. */
+  settlement_known: boolean
+  /** Whether SAP serves the FI document (FxTransaction.AccountingDocument). */
+  fi_known: boolean
+  /** TrmFxApp's ETag: the status-50 write sends it back as If-Match. */
+  etag: string
 }
 
 /** The report's select-options. Dates are ISO yyyy-mm-dd, empty when not set. */
@@ -137,7 +143,7 @@ export type ActionName = 'preview' | 'pdf' | 'test' | 'post'
 /** Status text and CSS class of a txn_status code. */
 export type StatusMeta = { text: string; cls: string }
 
-export type RunResultText = 'Posted' | 'Already posted' | 'Would be posted'
+export type RunResultText = 'Posted' | 'Already posted' | 'Would be posted' | 'Refused'
 export type RunResultClass = 'res-ok' | 'res-info' | 'res-warn'
 export type RunResult = {
   bukrs: string
@@ -171,6 +177,8 @@ export type LetterModel = {
   row: Deal
   company: string
   addr: BankAddress
+  /** Why the address block is empty (no Z002 address, or the read failed); '' when it is filled. */
+  addrNote: string
   reg: string
   lines: string[]
 }

@@ -4,13 +4,11 @@ import { AS_OF, DEFAULTS, LAYOUT_VARIANTS, monthOf } from './data.ts'
 import { formatAmount, formatRate, isoToDmy, parseDateInput } from './format.ts'
 import {
   ACCOUNT_WAITING,
-  ADDRESS_WAITING,
   NO_SORT,
-  POST_ALL_WAITING,
-  POST_WAITING,
-  TEST_RUN_WAITING,
+  POSTING_WAITING,
   alphaRfha,
   buildLetterModel,
+  buildPdf,
   calendarCells,
   cellValue,
   commitTypedDate,
@@ -23,26 +21,29 @@ import {
   keyDateOf,
   layoutItems,
   letterDealTable,
+  letterPdfItems,
+  letterPdfName,
   nextSort,
   pageSlice,
-  pdfView,
-  postAllView,
+  postAllParams,
+  postingResultView,
+  postingWaitingView,
   rfhaItems,
   rfhaMatches,
   rowId,
   runSummary,
   shiftMonth,
-  singlePostView,
-  singleTestView,
+  singleRunParams,
   sortMark,
   statusClass,
   toggleCompany,
   validateCriteria,
   viewForDate,
+  type PostingLine,
 } from './logic.ts'
 import type { CompanyOption, Criteria, Deal } from './types.ts'
 
-/* Test fixtures only: ZSGTSFV_FX-shaped rows (no sample data reaches the runtime). */
+/* Test fixtures only: GET_DATA-shaped rows (no sample data reaches the runtime). */
 function deal(over: Partial<Deal>): Deal {
   return {
     bukrs: 'IN11', rfha: '5000004101', refnr: '', saktiv: '1', sgsart: '12D', rfhazul: '00001',
@@ -54,6 +55,7 @@ function deal(over: Partial<Deal>): Deal {
     bs_2: 'Sell', curr1: 'USD', amt1: 2500000, curr2: 'INR', amt2: -225537500, ospot: 90, oswap: 0.215, otot_rate: 90.215,
     spot: 90, swap: 0.215, tot_rate: 90.215, t_rate: 90.215, cpair: 'USD:INR', zwaers: 'INR', cash_curr: 'USD',
     zcash_amt: 18293.35, cruser: 'FS_DEV', dcrdat: '2026-07-03', upuser: '', dupdat: '', fi_doc: '', fi_gjahr: '',
+    settlement_known: true, fi_known: true, etag: '',
     ...over,
   }
 }
@@ -225,56 +227,71 @@ describe('calendar', () => {
   })
 })
 
-describe('actions: WAITING FOR ACTION API, nothing posted', () => {
+describe('actions: TBB1 posting run', () => {
   const row = listed[0]!
-  it('TBB1 Test Run names RFTBBB00 and lists no results', () => {
-    const v = singleTestView(row)
-    strictEqual(v.notes, TEST_RUN_WAITING)
+  it('without PostSettlement in SAP: parameters only, no results, nothing posted', () => {
+    const v = postingWaitingView('TBB1 Test Run', singleRunParams(row, true))
     deepStrictEqual(v.results, [])
     deepStrictEqual(v.params[2], ['Key Date (Value Date)', '05-10-2026'])
-    strictEqual(TEST_RUN_WAITING.startsWith('WAITING FOR ACTION API — '), true)
-    strictEqual(TEST_RUN_WAITING.endsWith('Nothing was posted to SAP.'), true)
+    deepStrictEqual(v.params[3], ['Run mode', 'Test run – no update'])
+    strictEqual(POSTING_WAITING.startsWith('WAITING FOR ACTION API — '), true)
+    strictEqual(POSTING_WAITING.endsWith('Nothing was posted to SAP.'), true)
   })
-  it('TBB1 Post names the posting and the VTBFHA status update', () => {
-    const v = singlePostView(row)
-    strictEqual(v.notes, POST_WAITING)
-    strictEqual(POST_WAITING.includes("txn_status = '50'"), true)
-    deepStrictEqual(runSummary(v.results), { would: 0, posted: 0, already: 0 })
+  it('a test run lists "Would be posted"; an update run "Posted" with the FI document; a refusal "Refused"', () => {
+    const ok: PostingLine = { row, keyDate: '2026-10-05', ok: true, fiDoc: '1400004300', message: 'posted' }
+    const bad: PostingLine = { row: listed[1]!, keyDate: '2026-10-12', ok: false, fiDoc: '', message: 'Period closed' }
+    const test = postingResultView('TBB1 Test Run', [], [{ ...ok, fiDoc: '' }], true)
+    deepStrictEqual(runSummary(test.results), { would: 1, posted: 0, already: 0 })
+    const post = postingResultView('Execute with Posting', [], [ok, bad], false)
+    deepStrictEqual(
+      post.results.map((r) => [r.rfha, r.result, r.fiDoc]),
+      [
+        ['5000004101', 'Posted', '1400004300'],
+        ['5000004102', 'Refused', ''],
+      ],
+    )
+    strictEqual(post.notes, '5000004101: posted\n5000004102: Period closed')
   })
   it('Execute with Posting covers the listed deals with s_date-high as key date', () => {
     strictEqual(keyDateOf(crit), '2026-10-31')
     strictEqual(keyDateOf({ ...crit, dateTo: '' }), '')
-    const v = postAllView(listed, crit, keyDateOf(crit))
-    strictEqual(v.notes, POST_ALL_WAITING)
-    deepStrictEqual(v.params, [
+    deepStrictEqual(postAllParams(listed, crit, keyDateOf(crit)), [
       ['Company Code', 'IN11, SG03'],
       ['Value Date', '01-10-2026 to 31-10-2026'],
       ['Key Date', '31-10-2026'],
       ['Run mode', 'Update run – 2 deal(s) in selection'],
     ])
   })
-  it('PDF shows the L003 form name and generates nothing', () => {
-    const v = pdfView(row, 'ZSGTSFAF_NDF_BANK')
-    deepStrictEqual(v.params[2], ['Form (ZSGTSFTR_BS_PDF L003)', 'ZSGTSFAF_NDF_BANK'])
-    strictEqual(v.notes.includes('ZSGTSFAF_NDF_BANK'), true)
-    strictEqual(pdfView(row, '').notes.includes('L003 not found'), true)
-  })
 })
 
 describe('bank settlement letter (screen 9001)', () => {
-  it('signs with butxt+7(31) and waits for the bank address / account lines', () => {
-    const m = buildLetterModel(listed[0]!)
+  const addr = { zdate: '06-10-2026', zbank: 'FMC Corporation', zaddr1: '242 Pitt St', zaddr2: '', zaddr3: 'SYDNEY - 2000', zattn: '', zvdate: 'Value Date - 05-10-2026' }
+  it('signs with butxt+7(31), uses GET_ADDR\'s address and waits for the account lines', () => {
+    const m = buildLetterModel(listed[0]!, addr)
     strictEqual(m.company, 'OLAM Agri India Pvt Ltd')
     strictEqual(m.reg, 'NDF Bank Settlement')
-    strictEqual(m.addr.zbank, ADDRESS_WAITING)
+    strictEqual(m.addr.zbank, 'FMC Corporation')
+    strictEqual(m.addrNote, '')
     deepStrictEqual(m.lines, [ACCOUNT_WAITING])
   })
-  it('lays out the deal table with the amount and rate columns right-aligned', () => {
+  it('lays out the deal table; rate and amount stay blank while SAP does not serve them', () => {
     const t = letterDealTable(buildLetterModel(listed[0]!))
     strictEqual(t.vals.length, 11)
     deepStrictEqual(t.numIdx, [8, 10])
     strictEqual(t.vals[8], '90.880000')
     strictEqual(t.vals[10], '18,293.35')
+    const unknown = letterDealTable(buildLetterModel({ ...listed[0]!, settlement_known: false }))
+    deepStrictEqual([unknown.vals[8], unknown.vals[10]], ['', ''])
+    strictEqual(cellValue('zcash_amt', { ...listed[0]!, settlement_known: false }), '')
+  })
+  it('builds a one-page PDF of the letter', () => {
+    const m = buildLetterModel(listed[0]!, addr)
+    const pdf = new TextDecoder().decode(buildPdf(letterPdfItems(m)))
+    strictEqual(pdf.startsWith('%PDF-1.4'), true)
+    strictEqual(pdf.trimEnd().endsWith('%%EOF'), true)
+    strictEqual(pdf.includes('(FMC Corporation)'), true)
+    strictEqual(pdf.includes('(RE: NDF Bank Settlement)'), true)
+    strictEqual(letterPdfName(listed[0]!), 'NDF_Bank_Settlement_5000004101.pdf')
   })
 })
 

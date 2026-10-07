@@ -2,10 +2,14 @@ export type BusinessArea = { code: string; name: string }
 export type Partner = { code: string; name: string }
 export type Trader = { code: string; name: string }
 
-/** The three transaction statuses an NDF fixing deal moves between, as the page shows them. */
-export type NdfStatus = 'FO->MO: Unmatched' | 'MO->FO: Correction Required' | 'Matched & Released'
+import type { NdfRecord } from '../../shared/fx/ndf.ts'
 
+/** "<TXN_STATUS> - <ZSGTSFTR_TXNSTAT text>", e.g. "10 - FO: NDF Fixing - pending MO confirmation". */
+export type NdfStatus = string
+
+/** One deal of the MO queue (see api.ts dealFromRecord). */
 export type NdfDeal = {
+  /** "<bukrs>|<rfha>" */
   id: string
   transaction: string
   coCode: string
@@ -23,6 +27,8 @@ export type NdfDeal = {
   amount1: number
   allInRate: number
   txnStatus: NdfStatus
+  /** TXN_STATUS alone: 10 fixed, 12 corrected. */
+  statusCode: string
   fixingDate: string
   ndfValue: number
   valueDate: string
@@ -37,6 +43,8 @@ export type NdfDeal = {
   internalRef: string
   foRemark: string
   moRemark: string
+  /** The SAP record behind the row; the actions write with its key and ETag. */
+  record: NdfRecord
 }
 
 /**

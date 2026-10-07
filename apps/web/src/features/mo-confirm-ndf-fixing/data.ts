@@ -1,16 +1,17 @@
 /**
- * The screen's own constants: the transaction status texts it shows.
- *
- * No runtime sample data: the legacy page's dummy deals and value-help lists moved to fixtures.ts
- * (tests only). Company codes and traders come from SAP (api.ts); the NDF deal list is WAITING FOR
- * API because ZSGTSFR026's ABAP source is not exported.
+ * The screen's constants, from SAP's own status master (ZSGTSFTR_TXNSTAT type 01). No sample data:
+ * company codes, traders and the deal queue are all read from SAP (api.ts).
  */
-import type { NdfStatus } from './types.ts'
+import { TXN } from '../../shared/fx/ndf.ts'
 
-export const STATUS = {
-  UNMATCHED: 'FO->MO: Unmatched',
-  CORRECTION: 'MO->FO: Correction Required',
-  RELEASED: 'Matched & Released',
-} as const satisfies Record<string, NdfStatus>
+/** The MO queue: "10 FO: NDF Fixing - pending MO confirmation" and "12 FO: NDF Fixing Corrected". */
+export const MO_QUEUE = [TXN.FIXED, TXN.CORRECTED] as const
 
-export const STATUSES: NdfStatus[] = [STATUS.UNMATCHED, STATUS.CORRECTION, STATUS.RELEASED]
+/** Match & Release -> "13 MO: Confirm NDF Fixing" (SAP action "Fixing Settlement"). */
+export const STATUS_CONFIRMED = TXN.CONFIRMED
+
+/** Correction Required -> "11 MO: NDF Fixing Correction Req" (SAP action "Change Fixing"). */
+export const STATUS_CORRECTION = TXN.CORRECTION_REQUIRED
+
+/** NDF_MO_REM's length in ZSGTSFTR_APP_STR. */
+export const MO_REMARK_MAX = 80

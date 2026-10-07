@@ -1,6 +1,6 @@
-import { deepStrictEqual, ok } from 'node:assert/strict'
+import { deepStrictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { LIST_UNAVAILABLE, actionUnavailable, companyItems, traderItems } from './api.ts'
+import { companyItems, traderItems } from './api.ts'
 import { filterDropdownItems } from './logic.ts'
 
 describe('Company Code value help (T001 / A_CompanyCode)', () => {
@@ -36,14 +36,5 @@ describe('Trader value help (ZSGTRMTR_TRADER)', () => {
       { primary: 'C14 - Ashon Vallado', code: 'C14' },
       { primary: 'C15 - Karthik Ramaswamy', code: 'C15' },
     ])
-  })
-})
-
-describe('gated without the ZSGTSFR026 source', () => {
-  it('says why the list is empty and that actions post nothing', () => {
-    ok(LIST_UNAVAILABLE.startsWith('WAITING FOR API — ABAP source for ZSGTSFR026 not exported'))
-    const msg = actionUnavailable('Correction Required')
-    ok(msg.startsWith('WAITING FOR ACTION API — Correction Required ('))
-    ok(msg.endsWith('Nothing was posted to SAP.'))
   })
 })

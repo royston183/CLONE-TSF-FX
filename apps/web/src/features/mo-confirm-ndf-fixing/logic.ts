@@ -1,11 +1,10 @@
 /**
  * The page's business rules, lifted out of the legacy script as pure functions so the
- * component only holds state. ZSGTSFR026's ABAP source is not exported, so there is no deal
- * list and no action API yet (see api.ts); these rules run on whatever deals the screen holds.
+ * component only holds state. They run on the deals read from SAP (api.ts).
  */
-import { STATUS, STATUSES } from './data.ts'
+import { TXN } from '../../shared/fx/ndf.ts'
 import { parseDMY } from './format.ts'
-import type { DropdownItem, Filters, NdfDeal, NdfStatus, Selection, SelectionErrors, Sort, SortField } from './types.ts'
+import type { DropdownItem, Filters, NdfDeal, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
 // ---------------------------------------------------------------- inputs
 
@@ -115,17 +114,12 @@ const FILTER_FIELD: Record<keyof Filters, keyof NdfDeal> = {
   fixingDate: 'fixingDate',
 }
 
-/**
- * The filter panel's options. The page filled them from its dummy lists; with no sample data they
- * are the distinct values of the deals the screen holds (none until the list has an API), sorted.
- * Transaction Status keeps the screen's three status texts.
- */
+/** The filter panel's options: the distinct values of the deals read from SAP, sorted. */
 export function filterPanelOptions(deals: readonly NdfDeal[]): Record<keyof Filters, string[]> {
   const out = {} as Record<keyof Filters, string[]>
   for (const k of Object.keys(FILTER_FIELD) as Array<keyof Filters>) {
     out[k] = [...new Set(deals.map((d) => String(d[FILTER_FIELD[k]])).filter(Boolean))].sort()
   }
-  out.status = [...STATUSES]
   return out
 }
 
@@ -230,8 +224,9 @@ export function resultsMeta(total: number, paged: Paged | null): string {
 
 // ---------------------------------------------------------------- actions
 
-export function statusClass(status: NdfStatus): string {
-  if (status === STATUS.RELEASED) return 'status-released'
-  if (status === STATUS.CORRECTION) return 'status-correction'
+/** Colour by TXN_STATUS: 13 confirmed, 11 sent back, 12 corrected (back from FO), else pending. */
+export function statusClass(statusCode: string): string {
+  if (statusCode === TXN.CONFIRMED) return 'status-released'
+  if (statusCode === TXN.CORRECTION_REQUIRED || statusCode === TXN.CORRECTED) return 'status-correction'
   return 'status-unmatched'
 }

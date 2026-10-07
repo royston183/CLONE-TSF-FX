@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { formatAmount, formatRate, isoToDmy } from './format.ts'
-import { buildLetterModel, letterDealTable, runSummary, statusText } from './logic.ts'
+import { letterDealTable, runSummary, statusText } from './logic.ts'
 import { ModalFrame, type Modal } from './modal.tsx'
-import type { ConfirmRequest, Deal, RunView } from './types.ts'
+import type { ConfirmRequest, Deal, LetterModel, RunView } from './types.ts'
 
 /** One label / value pair of a detail grid; an empty value shows a dash. */
 function DetailItem({ label, value, full }: { label: string; value: string | number | null | undefined; full?: boolean }) {
@@ -122,8 +122,8 @@ export function FiDocumentModal({ modal, row }: { modal: Modal; row: Deal | null
 }
 
 /** Bank Settlement: the letter preview (screen 9001). */
-export function LetterModal({ modal, row }: { modal: Modal; row: Deal | null }) {
-  const m = row ? buildLetterModel(row) : null
+export function LetterModal({ modal, model }: { modal: Modal; model: LetterModel | null }) {
+  const m = model
   const table = m ? letterDealTable(m) : null
   const isNum = (i: number) => !!table && table.numIdx.includes(i)
   return (
@@ -131,6 +131,7 @@ export function LetterModal({ modal, row }: { modal: Modal; row: Deal | null }) 
       <div className="modal-body-scroll" id="letterBody">
         {m && table ? (
           <div className="letter">
+            {m.addrNote ? <div className="run-note">{m.addrNote}</div> : null}
             <div className="l-date">{m.addr.zdate}</div>
             <div className="l-bank">{m.addr.zbank}</div>
             <div>{m.addr.zaddr1}</div>

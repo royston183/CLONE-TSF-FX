@@ -4,8 +4,21 @@ import { settlementDisplay } from './logic.ts'
 import type { NdfRow } from './types.ts'
 
 /** "NDF Rate Correction": the legacy #ndfOverlay, opened on the selected pending fixing. */
-export function CorrectionModal({ row, onClose, onUpdate }: { row: NdfRow; onClose: () => void; onUpdate: (newRate: number) => void }) {
-  const [newRate, setNewRate] = useState(() => rate(row.oldRate))
+export function CorrectionModal({
+  row,
+  blockedReason,
+  busy,
+  onClose,
+  onUpdate,
+}: {
+  row: NdfRow
+  /** Why Update cannot post (no NdfFixing action); '' when it can. */
+  blockedReason: string
+  busy: boolean
+  onClose: () => void
+  onUpdate: (newRate: number) => void
+}) {
+  const [newRate, setNewRate] = useState(() => (row.oldRate ? rate(row.oldRate) : ''))
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -82,12 +95,16 @@ export function CorrectionModal({ row, onClose, onUpdate }: { row: NdfRow; onClo
             </div>
           </div>
         </div>
+        <div className="modal-body" role="note" style={{ paddingTop: 0, fontSize: 12, color: '#6a501a' }}>
+          {row.moRemark ? <div style={{ marginBottom: 6 }}><b>MO remark:</b> {row.moRemark}</div> : null}
+          {blockedReason}
+        </div>
         <div className="modal-foot">
           <button className="secondary-btn" type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="primary-btn" type="button" onClick={submit}>
-            Update
+          <button className="primary-btn" type="button" onClick={submit} disabled={!!blockedReason || busy} title={blockedReason || undefined}>
+            {busy ? 'Posting to SAP…' : 'Update'}
           </button>
         </div>
       </div>

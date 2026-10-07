@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
-import { STATUS } from './data.ts'
+import { TXN } from '../../shared/fx/ndf.ts'
 import { formatAmount } from './format.ts'
 import { statusClass } from './logic.ts'
 import type { NdfDeal, Sort, SortField } from './types.ts'
 
-type DataKey = Exclude<keyof NdfDeal, 'id' | 'partnerCode' | 'traderCode' | 'internalRef'>
+type DataKey = Exclude<keyof NdfDeal, 'id' | 'partnerCode' | 'traderCode' | 'internalRef' | 'statusCode' | 'record'>
 type Column = { key: DataKey; label: string; sortable: boolean; num?: boolean }
 
 /** The page's COLUMNS, after the leading selection column. */
@@ -41,18 +41,22 @@ const DASH = <span className="remark-text">&mdash;</span>
 function cellValue(d: NdfDeal, col: Column): ReactNode {
   switch (col.key) {
     case 'txnStatus':
-      return <span className={`status-text ${statusClass(d.txnStatus)}`}>{d.txnStatus}</span>
+      return <span className={`status-text ${statusClass(d.statusCode)}`}>{d.txnStatus}</span>
     case 'moRemark':
       return d.moRemark ? (
-        <span className={`remark-text${d.txnStatus === STATUS.CORRECTION ? ' correction' : ''}`}>{d.moRemark}</span>
+        <span className={`remark-text${d.statusCode === TXN.CORRECTED ? ' correction' : ''}`}>{d.moRemark}</span>
       ) : (
         DASH
       )
     case 'foRemark':
     case 'externalRef':
       return d[col.key] || DASH
+    case 'ndfValue':
+      // ZCASH_AMT has no service yet (see api.ts): a dash, not a zero that reads like a real amount.
+      return d.ndfValue ? formatAmount(d.ndfValue) : DASH
     default: {
       const v = d[col.key]
+      if (v === '') return DASH
       return col.num && typeof v === 'number' ? formatAmount(v) : v
     }
   }
@@ -71,7 +75,7 @@ export function NdfTable({
   onSort,
   onSelect,
   emptyTitle = 'No NDF Fixing Deals Found',
-  emptyDesc = 'No deals match the selected Company Code, Fixing Date and optional filters.',
+  emptyDesc = 'No deals in TSF status 10 / 12 match the selected Company Code, Fixing Date and optional filters.',
 }: {
   loaded: boolean
   /** The current page's rows. */
@@ -81,8 +85,8 @@ export function NdfTable({
   onSort: (field: SortField) => void
   onSelect: (id: string) => void
   /** The no-rows notice: why nothing is listed (e.g. WAITING FOR API). */
-  emptyTitle?: string
-  emptyDesc?: string
+  emptyTitle?: string | undefined
+  emptyDesc?: string | undefined
 }) {
   if (!loaded) {
     return (

@@ -1,10 +1,12 @@
-import { LEAD_RANK, PER_100_CURRENCIES } from './data.ts'
+import { PER_100_CURRENCIES } from './data.ts'
 import { isoFromDisplay } from './format.ts'
 import type { Filters, NdfDeal } from './types.ts'
 
+/** Colour of a "<TXN_STATUS> - <text>" status: 13 confirmed, 11 sent back, anything else pending. */
 export function statusClass(status: string): string {
-  if (status === 'Released' || status === 'Rate Fixed') return 'released'
-  if (status === 'Correction Required') return 'correction'
+  const code = status.slice(0, 2)
+  if (code === '13') return 'released'
+  if (code === '11') return 'correction'
   return 'pending'
 }
 
@@ -29,13 +31,9 @@ export function applyFilters(deals: NdfDeal[], filters: Filters, sortAsc: boolea
   return visible
 }
 
-/** ZSGTRMFM_LEAD_CURR stand-in (see LEAD_RANK): the lead and following currency of a pair. */
+/** ZSGTRMFM_LEAD_CURR: CURR1 is SAP's lead currency and CURR2 the following one (FxTransaction). */
 export function leadCurr(c1: string, c2: string): { lead: string; follow: string } {
-  const rank = (c: string) => {
-    const i = (LEAD_RANK as readonly string[]).indexOf(c)
-    return i < 0 ? 99 : i
-  }
-  return rank(c1) <= rank(c2) ? { lead: c1, follow: c2 } : { lead: c2, follow: c1 }
+  return { lead: c1, follow: c2 }
 }
 
 export type Tcurf = Readonly<Record<string, { ffact: number; tfact: number }>>

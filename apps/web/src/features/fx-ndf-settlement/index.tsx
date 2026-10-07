@@ -2,19 +2,27 @@
  * FX NDF Settlement — SAP program ZSGTSFR028 (bank settlement of TSF NDF deals: view the deals,
  * preview / print the bank settlement letter, and run the TBB1 posting run in test or update mode).
  *
- * Real SAP data (see ./api.ts): company codes from T001 (A_CompanyCode), the deals from ZSGTSFV_FX
- * (middleware "tsfvFx", column-gated -> WAITING FOR API while the view lacks TXN_STATUS and the NDF
- * fields), the letter form name from ZSGTSFTR_BS_PDF. Posting (RFTBBB00 / TBB1), the status update
- * to 50, the bank letter class and the Adobe form have no API: those actions validate as before and
- * then show WAITING FOR ACTION API without changing anything. No sample data at runtime.
+ * Real SAP data only (see ./api.ts): company codes from T001, the status-13 NDF deals from the TSF
+ * append (TrmFxApp) joined to the FTR deal (FxTransaction), the letter address from the partner's Z002
+ * address (API_BUSINESS_PARTNER). Preview and PDF build the letter in the browser. TBB1 Test / Post and
+ * Execute run FxTransaction's PostSettlement action (RFTBBB00) and then set TXN_STATUS 50; the
+ * settlement fields (fixing rate, cash amount, FI document) and the action are used as soon as
+ * ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md) and stay blank / disabled until then.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { CompanySelect, DateField, SearchDropdown } from './controls.tsx'
-import { loadCompanies, loadDeals, loadLetterFormName } from './api.ts'
-import { CONFIRM_DELAY_MS, DEFAULTS, PAGE_SIZES, TOAST_MS } from './data.ts'
+import {
+  POST_SETTLEMENT_ACTION_NAME,
+  TXN_BANK_SETTLED,
+  postSettlement,
+  trmfxCapabilities,
+  updateTsfAppend,
+} from '../../shared/fx/ndf.ts'
+import { loadBankAddress, loadCompanies, loadDeals } from './api.ts'
+import { AS_OF, CONFIRM_DELAY_MS, DEFAULTS, PAGE_SIZES, TOAST_MS } from './data.ts'
 import { DealTable } from './DealTable.tsx'
 import { isoToDmy } from './format.ts'
 import './fx-ndf-settlement.legacy.css'
@@ -35,13 +43,18 @@ import {
   layoutItems,
   nextSort,
   pageSlice,
-  pdfView,
-  postAllView,
+  buildLetterModel,
+  buildPdf,
+  letterPdfItems,
+  letterPdfName,
+  postAllParams,
+  postingResultView,
+  postingWaitingView,
   rfhaItems,
   rowId,
-  singlePostView,
-  singleTestView,
+  singleRunParams,
   validateCriteria,
+  type PostingLine,
 } from './logic.ts'
 import { useModal } from './modal.tsx'
 import { ConfirmModal, FiDocumentModal, LetterModal, RunModal, TransactionModal } from './Modals.tsx'
@@ -52,6 +65,7 @@ import type {
   ConfirmRequest,
   CriteriaKey,
   Deal,
+  LetterModel,
   Loaded,
   PostingType,
   RunView,
@@ -96,8 +110,12 @@ export default function FxNdfSettlement() {
   const confirmModal = useModal()
   const [txnRow, setTxnRow] = useState<Deal | null>(null)
   const [fiRow, setFiRow] = useState<Deal | null>(null)
-  const [letterRow, setLetterRow] = useState<Deal | null>(null)
+  const [letter, setLetter] = useState<LetterModel | null>(null)
   const [runView, setRunView] = useState<RunView | null>(null)
+  /** Whether ZFS_SD_TRMFX declares PostSettlement (TBB1); null while its metadata is read. */
+  const [canPost, setCanPost] = useState<boolean | null>(null)
+  /** A posting run or letter read is in flight: the action buttons wait for it. */
+  const [busy, setBusy] = useState(false)
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null)
 
   // Drag and drop
@@ -125,6 +143,7 @@ export default function FxNdfSettlement() {
   useEffect(() => {
     const ac = new AbortController()
     loadCompanies(ac.signal).then(setCompanies, () => undefined)
+    void trmfxCapabilities().then((c) => setCanPost(c.actions.has(POST_SETTLEMENT_ACTION_NAME)))
     return () => ac.abort()
   }, [])
 
@@ -256,21 +275,77 @@ export default function FxNdfSettlement() {
   }
 
   // ------------------------------------------------------------------ actions
-  /** PDF1: reads the form name (ZSGTSFTR_BS_PDF L003); the Adobe form itself has no API. */
+  /** PRINT / PDF1: the letter with GET_ADDR's address (the partner's Z002 address). */
+  const readLetter = async (row: Deal): Promise<LetterModel> => {
+    const { addr, note } = await loadBankAddress(row.kontrh, row.delfz, AS_OF)
+    return buildLetterModel(row, addr, note)
+  }
+  const previewLetter = (row: Deal) => {
+    setBusy(true)
+    void readLetter(row)
+      .then((m) => {
+        setLetter(m)
+        letterModal.open()
+      })
+      .finally(() => setBusy(false))
+  }
+  /** PDF1: the same letter as a PDF file, built in the browser (the Adobe form has no API). */
   const generatePdf = (row: Deal) => {
-    loadLetterFormName().then(
-      (form) => {
-        setRunView(pdfView(row, form))
-        runModal.open()
-      },
-      () => undefined,
-    )
+    setBusy(true)
+    void readLetter(row)
+      .then((m) => {
+        const blob = new Blob([buildPdf(letterPdfItems(m))], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = letterPdfName(row)
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        setTimeout(() => URL.revokeObjectURL(url), 500)
+        showToast(`PDF generated: ${letterPdfName(row)}${m.addrNote ? ' (no settlement address)' : ''}`)
+      })
+      .finally(() => setBusy(false))
   }
-  /** TEST: RFTBBB00 test run has no API. */
-  const runSingleTest = (row: Deal) => {
-    setRunView(singleTestView(row))
-    runModal.open()
+
+  /**
+   * One deal through RFTBBB00 (PostSettlement). After an update run the report sets TXN_STATUS 50
+   * where VTBFHAPO shows a posted flow; here that is the FI document the run reports (or, while the
+   * service does not serve AccountingDocument, the run's own success).
+   */
+  const postOne = async (row: Deal, keyDate: string, testRun: boolean): Promise<PostingLine> => {
+    const res = await postSettlement(row, keyDate, testRun)
+    if (!res.ok || testRun) return { row, keyDate, ok: res.ok, fiDoc: res.fiDoc, message: res.message }
+    if (row.fi_known && !res.fiDoc) {
+      return { row, keyDate, ok: true, fiDoc: '', message: `${res.message} No FI document was reported, so the status stays 13.` }
+    }
+    try {
+      await updateTsfAppend(row, { TxnStatus: TXN_BANK_SETTLED })
+      return { row, keyDate, ok: true, fiDoc: res.fiDoc, message: `${res.message} Status set to ${TXN_BANK_SETTLED} (Bank Settlement Completed).` }
+    } catch {
+      return { row, keyDate, ok: true, fiDoc: res.fiDoc, message: `${res.message} The status could not be set to ${TXN_BANK_SETTLED}; set it again before the next run.` }
+    }
   }
+
+  /** Runs deals one by one, shows the results and re-reads the list (FORM all_posting ends with GET_DATA). */
+  const runPosting = (title: string, params: [string, string][], list: Deal[], keyDate: (d: Deal) => string, testRun: boolean) => {
+    if (!canPost) {
+      setRunView(postingWaitingView(title, params))
+      runModal.open()
+      return
+    }
+    setBusy(true)
+    void (async () => {
+      const lines: PostingLine[] = []
+      for (const d of list) lines.push(await postOne(d, keyDate(d), testRun))
+      setRunView(postingResultView(title, params, lines, testRun))
+      runModal.open()
+      if (!testRun) setReloadKey((k) => k + 1)
+    })().finally(() => setBusy(false))
+  }
+
+  /** TEST: SUBMIT RFTBBB00 … p_dzterm = delfz, p_test = 'X'. */
+  const runSingleTest = (row: Deal) => runPosting('TBB1 Test Run', singleRunParams(row, true), [row], (d) => d.delfz, true)
   const askSinglePost = (row: Deal) => {
     setConfirmReq({ kind: 'post', row })
     confirmModal.open()
@@ -281,10 +356,10 @@ export default function FxNdfSettlement() {
     setConfirmReq({ kind: 'postAll', keyDate: keyDateOf(criteria), count: rows.length })
     confirmModal.open()
   }
-  /** TBB1 / Execute: nothing is posted and the list is left as it is (WAITING FOR ACTION API). */
+  /** TBB1 (p_dzterm = delfz) for one deal, or Execute (p_dzterm = s_date-high) for every listed deal. */
   const runConfirmed = (req: ConfirmRequest) => {
-    setRunView(req.kind === 'post' ? singlePostView(req.row) : postAllView(rows, criteria, req.keyDate))
-    runModal.open()
+    if (req.kind === 'post') runPosting('TBB1 Post', singleRunParams(req.row, false), [req.row], (d) => d.delfz, false)
+    else runPosting('Execute with Posting', postAllParams(rows, criteria, req.keyDate), rows, () => req.keyDate, false)
   }
   const onConfirm = () => {
     const req = confirmReq
@@ -301,10 +376,9 @@ export default function FxNdfSettlement() {
       showToast('Select a transaction first.', true)
       return
     }
-    if (name === 'preview') {
-      setLetterRow(row)
-      letterModal.open()
-    } else if (name === 'pdf') generatePdf(row)
+    if (busy) return
+    if (name === 'preview') previewLetter(row)
+    else if (name === 'pdf') generatePdf(row)
     else if (name === 'test') runSingleTest(row)
     else askSinglePost(row)
   }
@@ -525,8 +599,8 @@ export default function FxNdfSettlement() {
                     className={`btn ${a.primary ? 'btn-primary' : 'btn-secondary'}${draggingId !== null ? ' drop-ready' : ''}${dragOver === a.name ? ' drag-over' : ''}`}
                     id={a.id}
                     data-action={a.name}
-                    disabled={!selectedRow}
-                    title={a.title}
+                    disabled={!selectedRow || busy}
+                    title={(a.name === 'test' || a.name === 'post') && canPost === false ? `${a.title} — waiting for the PostSettlement action in SAP` : a.title}
                     onClick={() => invokeAction(a.name)}
                     {...dropProps(a.name)}
                   >
@@ -620,7 +694,7 @@ export default function FxNdfSettlement() {
 
       <TransactionModal modal={dealModal} row={txnRow} />
       <FiDocumentModal modal={fiModal} row={fiRow} />
-      <LetterModal modal={letterModal} row={letterRow} />
+      <LetterModal modal={letterModal} model={letter} />
       <RunModal modal={runModal} view={runView} />
       <ConfirmModal modal={confirmModal} request={confirmReq} onConfirm={onConfirm} />
 

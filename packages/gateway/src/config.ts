@@ -2,11 +2,12 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { Agent } from 'undici'
+import { SqliteStore } from './sqlite/store.ts'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 export const REPO_ROOT = resolve(HERE, '../../..')
 
-export type ServiceKind = 'odata' | 'dyngw' | 'rest'
+export type ServiceKind = 'odata' | 'dyngw' | 'rest' | 'sqlite'
 
 type RawAuth = {
   kind: 'basic' | 'bearer'
@@ -18,7 +19,9 @@ type RawAuth = {
 
 type RawService = {
   kind: ServiceKind
-  base: string
+  base?: string
+  /** sqlite only: the database file, relative to the repo root, or ":memory:". */
+  file?: string
   auth?: string
   client?: string
   tlsVerify?: boolean
@@ -38,11 +41,13 @@ export type Service = {
   authHeader: string | undefined
   agent: Agent
   description: string | undefined
+  /** The open database of a `sqlite` service; undefined for every HTTP backend. */
+  store: SqliteStore | undefined
   /** Set when the service cannot be called; the reason is returned to the caller verbatim. */
   unavailable: string | undefined
 }
 
-const KINDS = new Set<ServiceKind>(['odata', 'dyngw', 'rest'])
+const KINDS = new Set<ServiceKind>(['odata', 'dyngw', 'rest', 'sqlite'])
 
 class MissingSecretError extends Error {}
 
@@ -97,6 +102,25 @@ export function loadServices(configPath = resolve(REPO_ROOT, 'config/services.js
     if (!KINDS.has(def.kind)) {
       throw new Error(`service "${key}": kind must be one of ${[...KINDS].join(', ')} (got "${def.kind}").`)
     }
+    if (def.kind === 'sqlite') {
+      // A local file, not a URL: no auth, no TLS, no dispatcher. A path the process cannot
+      // open throws here, at startup, like any other registry mistake.
+      if (!def.file) throw new Error(`service "${key}": a sqlite service needs "file" (a path or ":memory:").`)
+      const file = def.file === ':memory:' ? def.file : resolve(REPO_ROOT, def.file)
+      services.set(key, {
+        key,
+        kind: def.kind,
+        base: file,
+        client: undefined,
+        authHeader: undefined,
+        agent: new Agent(),
+        description: def.description,
+        store: new SqliteStore(file),
+        unavailable: undefined,
+      })
+      continue
+    }
+
     if (!def.base || !/^https?:\/\//.test(def.base)) {
       throw new Error(`service "${key}": "base" must be an absolute http(s) URL.`)
     }
@@ -128,6 +152,7 @@ export function loadServices(configPath = resolve(REPO_ROOT, 'config/services.js
       authHeader,
       agent: new Agent({ connect: { rejectUnauthorized: verify }, keepAliveTimeout: 30_000 }),
       description: def.description,
+      store: undefined,
       unavailable,
     })
   }

@@ -20,6 +20,8 @@ export function DetailModal({ row, onClose }: { row: NdfRow; onClose: () => void
     ['Business Partner', row.partner],
     ['Transaction Status', row.status],
     ['Status Description', row.statusText],
+    ['MO Remark', row.moRemark],
+    ['FO Remark', row.foRemark],
   ]
   return (
     <div className="overlay open" role="dialog" aria-modal="true" onClick={(e) => e.target === e.currentTarget && onClose()}>

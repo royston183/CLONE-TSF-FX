@@ -1,7 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { Service } from '../config.ts'
 import { proxyRequest } from '../sap/proxy.ts'
+import { handleSqlite } from '../sqlite/routes.ts'
 import { requireSession } from './auth.ts'
+
+const firstValue = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value
 
 const METHODS = ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'] as const
 
@@ -50,7 +54,8 @@ export async function apiRoutes(app: FastifyInstance, services: Map<string, Serv
   }
 
   async function handle(req: FastifyRequest, reply: FastifyReply, path: string): Promise<void> {
-    if (!requireSession(req, reply)) return
+    const session = requireSession(req, reply)
+    if (!session) return
 
     const key = (req.params as Record<string, string>)['service'] ?? ''
     if (key.startsWith('_')) return // reserved: handled by its own route above
@@ -72,6 +77,13 @@ export async function apiRoutes(app: FastifyInstance, services: Map<string, Serv
       return
     }
 
+    // Answered in-process: there is no backend to proxy to. Writes are stamped with the
+    // signed-in user, which an SAP call cannot do (it runs as the technical user).
+    if (service.store) {
+      handleSqlite(service.store, key, req, reply, path, session.username)
+      return
+    }
+
     const body = Buffer.isBuffer(req.body) ? req.body : undefined
     const result = await proxyRequest(
       service,
@@ -80,6 +92,8 @@ export async function apiRoutes(app: FastifyInstance, services: Map<string, Serv
       rawQuery(req.raw.url ?? ''),
       body,
       req.headers['content-type'],
+      firstValue(req.headers['if-match']),
+      firstValue(req.headers['accept']),
     )
 
     reply.code(result.status)
