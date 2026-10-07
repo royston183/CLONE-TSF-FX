@@ -42,19 +42,12 @@
  */
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
-<<<<<<< HEAD
-import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatus, type DealContext } from '../../shared/fx/deal-id.ts'
+import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatusEach, type DealContext, type DealUpdateOutcome } from '../../shared/fx/deal-id.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
-import { dmyFromIso } from '../../shared/fx/sap.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
-=======
-import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, setDealStatusEach, type DealContext, type DealUpdateOutcome } from '../../shared/fx/deal-id.ts'
-import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, isoFromDate } from '../../shared/fx/sap.ts'
 import { loadUsdAmounts } from './amount.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
->>>>>>> origin/sp_tsfx
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
 import { enrichRow } from './logic.ts'
 import type { DealRow } from './types.ts'
 
@@ -79,32 +72,21 @@ export type Loaded = {
 
 export async function loadScreen(mode: Mode = 'manual', signal?: AbortSignal, today: Date = new Date()): Promise<Loaded> {
   try {
-<<<<<<< HEAD
-    const [ctx, deals, ruleBt, utilization, regions] = await Promise.all([
-=======
-    const [ctx, deals, ruleBt] = await Promise.all([
->>>>>>> origin/sp_tsfx
+    const [ctx, deals, ruleBt, regions] = await Promise.all([
       loadDealContext(signal),
       listDealIds({ ZDEAL_STAT: ELIGIBLE_STATUS }, signal),
       // Every RULE_BT row: a model may carry several, and the join takes any with ZNO_INV = ''.
       fxList('fxModel', {}, { signal }),
-<<<<<<< HEAD
-      utilizationGate(signal),
       loadRegions(signal).catch((error: unknown) => {
         if (isAbort(error)) throw error
         return null
       }),
     ])
     applyMasters(ctx, ruleBt, regions)
-    const eligible = eligibleDeals(deals, ctx, ruleBt)
-=======
-    ])
-    applyMasters(ctx, ruleBt)
     const base = eligibleDeals(deals, ctx, ruleBt)
     const eligible = mode === 'auto' ? autoCandidates(base, ctx, today) : base
     const wanted = new Map(eligible.map((d) => [txt(d, 'ZDEAL_ID'), txt(d, 'ZMC_REF')]))
     const usd = await loadUsdAmounts(wanted, signal)
->>>>>>> origin/sp_tsfx
     const keys = new Map<string, DealIdRow>()
     for (const d of eligible) keys.set(txt(d, 'ZDEAL_ID'), d)
     return { rows: eligible.map((d) => toRow(d, ctx, usd.amounts?.get(txt(d, 'ZDEAL_ID')) ?? null)), keys, source: 'sap', notes: [usd.note, WAITING_AUTH] }

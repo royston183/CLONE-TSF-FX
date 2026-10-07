@@ -3,13 +3,8 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-<<<<<<< HEAD
-import { ELIGIBLE_STATUS, loadScreen, markForInvoicing, WAITING_DEAL_ID_API, type DataSource } from './api.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
-=======
 import { describeOutcome, ELIGIBLE_STATUS, loadScreen, markDealsForInvoicing, WAITING_DEAL_ID_API, type DataSource, type Mode } from './api.ts'
-import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_OPTIONS } from './data.ts'
->>>>>>> origin/sp_tsfx
+import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { parseDate } from './format.ts'

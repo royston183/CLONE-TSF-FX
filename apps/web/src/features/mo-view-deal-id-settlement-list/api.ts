@@ -9,15 +9,11 @@
  * So, per the no-source rule:
  *   Deal ID worklist      which Deal IDs are "for settlement" (status range, dates, CO area,
  *                         utilisation from ZSGTSFCDS_FX) is a guessed selection -> WAITING FOR API.
-<<<<<<< HEAD
- *   Region list           the SAP region codes, shared/fx/regions.ts (COMP and BPEXT) -> live.
- *   Status / Origin Entity / CO Area lists
-=======
  *                         The utilisation column alone is no longer a blocker: its D1 legs are
  *                         TrmFxApp (Deal ID / Deal Type / MC ref) + FxTransaction, see
  *                         mo-deal-id-invoice-mark/amount.ts loadUsdAmounts. The selection is.
- *   Status / Region / Origin Entity / CO Area lists
->>>>>>> origin/sp_tsfx
+ *   Region list           the SAP region codes, shared/fx/regions.ts (COMP and BPEXT) -> live.
+ *   Status / Origin Entity / CO Area lists
  *                         none is a standard master with an unambiguous key (the status list
  *                         needs a sub type / code range, the entity list comes from a Z master
  *                         with an unknown restriction, CO Area is a controlling area, not T001)

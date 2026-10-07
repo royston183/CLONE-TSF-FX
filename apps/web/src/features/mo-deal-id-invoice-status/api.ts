@@ -29,13 +29,9 @@
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import type { DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { FORWARD_SUB_TYPE, dealJoin, listDealIds, loadDealContext, type DealContext } from '../../shared/fx/deal-id.ts'
-<<<<<<< HEAD
 import { fxColumns, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadRegions, type RegionOption } from '../../shared/fx/regions.ts'
-=======
-import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadUsdAmounts } from '../mo-deal-id-invoice-mark/amount.ts'
->>>>>>> origin/sp_tsfx
 import { MODELS, ORIGIN_OPTIONS, REGION_OPTIONS, STATUS_MAP } from './data.ts'
 import type { CodeDesc, DealRow } from './types.ts'
 
@@ -55,24 +51,17 @@ const iso = (value: string | null | undefined): string => (value ? String(value)
 
 export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
   try {
-<<<<<<< HEAD
-    const [ctx, deals, utilization, regions] = await Promise.all([
+    const [ctx, deals, regions] = await Promise.all([
       loadDealContext(signal),
       listDealIds({}, signal),
-      utilizationGate(signal),
       loadRegions(signal).catch((error: unknown) => {
         if (isAbort(error)) throw error
         return null
       }),
     ])
     applyMasters(ctx, regions)
-    return { rows: deals.map((d) => toRow(d, ctx)), source: 'sap', notes: [utilization] }
-=======
-    const [ctx, deals] = await Promise.all([loadDealContext(signal), listDealIds({}, signal)])
-    applyMasters(ctx)
     const usd = await loadUsdAmounts(new Map(deals.map((d) => [txt(d, 'ZDEAL_ID'), txt(d, 'ZMC_REF')])), signal)
     return { rows: deals.map((d) => toRow(d, ctx, usd.amounts?.get(txt(d, 'ZDEAL_ID')) ?? null)), source: 'sap', notes: [usd.note] }
->>>>>>> origin/sp_tsfx
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[fx] Deal ID invoice status: ZSGTSFTR_DEALID unavailable', error)
