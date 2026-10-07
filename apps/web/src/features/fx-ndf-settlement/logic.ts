@@ -161,6 +161,8 @@ export function cellValue(key: ColumnKey, row: Deal): string {
   const v = row[key]
   if (key === 'txn_status') return statusText(String(v))
   if (key === 'fi_doc') return String(v || '')
+  // Not served by SAP yet (FxTransaction settlement fields): blank, not a zero that reads like an amount.
+  if ((key === 'ndf_rate' || key === 'zcash_amt' || key === 'cash_curr') && !row.settlement_known) return ''
   if (col.type === 'date') return isoToDmy(String(v))
   if (col.type === 'amount') return formatAmount(Number(v))
   if (col.type === 'rate') return formatRate(Number(v))
@@ -321,21 +323,11 @@ export function calendarCells(view: CalendarView, selectedIso: string, todayIso:
   return cells
 }
 
-/* ------------------------------------------------------------------ actions (WAITING FOR ACTION API) */
-/** Text of the posting actions: RFTBBB00 (TBB1) has no API, so nothing is posted and nothing changes. */
-export const TEST_RUN_WAITING = `${WAITING_ACTION} — TBB1 test run (SUBMIT RFTBBB00 with p_test = 'X') has no API yet. ${NOTHING_POSTED}`
-export const POST_WAITING =
-  `${WAITING_ACTION} — TBB1 posting (SUBMIT RFTBBB00, then UPDATE VTBFHA SET txn_status = '50' where VTBFHAPO ` +
-  `sbewebe = '2') has no API yet. ${NOTHING_POSTED}`
-export const POST_ALL_WAITING =
-  `${WAITING_ACTION} — View With Posting (FORM all_posting: SUBMIT RFTBBB00 for every listed deal) has no API yet. ` +
-  NOTHING_POSTED
-export function pdfWaiting(formName: string): string {
-  return (
-    `${WAITING_ACTION} — Bank settlement letter as PDF (Adobe form ${formName || '(ZSGTSFTR_BS_PDF L003 not found)'} via ` +
-    `FP_FUNCTION_MODULE_NAME / FP_JOB_OPEN / FP_JOB_CLOSE, data from ZSGTSFCL_GET_BANK_SETTLE) has no API yet. ${NOTHING_POSTED}`
-  )
-}
+/* ------------------------------------------------------------------ actions */
+/** Why the posting buttons are disabled: RFTBBB00 (TBB1) is not exposed until the service declares PostSettlement. */
+export const POSTING_WAITING =
+  `${WAITING_ACTION} — the TBB1 posting run (SUBMIT RFTBBB00, then TXN_STATUS 50) needs the PostSettlement action on ` +
+  `ZFS_SD_TRMFX (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md). ${NOTHING_POSTED}`
 
 export function runSummary(results: RunResult[]): { would: number; posted: number; already: number } {
   return {
@@ -352,42 +344,42 @@ const singleParams = (row: Deal, mode: string): [string, string][] => [
   ['Run mode', mode],
 ]
 
-/** TEST: SUBMIT RFTBBB00 … p_dzterm = delfz, p_test = 'X'. */
-export function singleTestView(row: Deal): RunView {
-  return { title: 'TBB1 Test Run', params: singleParams(row, 'Test run – no update'), results: [], notes: TEST_RUN_WAITING }
+/** The parameters of a single-deal run (TEST p_test = 'X', TBB1 p_test = ''). */
+export function singleRunParams(row: Deal, testRun: boolean): [string, string][] {
+  return singleParams(row, testRun ? 'Test run – no update' : 'Update run')
 }
 
-/** TBB1: SUBMIT RFTBBB00 … p_test = '' and the status update. */
-export function singlePostView(row: Deal): RunView {
-  return { title: 'TBB1 Post', params: singleParams(row, 'Update run'), results: [], notes: POST_WAITING }
+/** FORM all_posting: every deal in the selection, key date s_date-high. */
+export function postAllParams(deals: readonly Deal[], criteria: Criteria, keyDate: string): [string, string][] {
+  return [
+    ['Company Code', [...new Set(deals.map((d) => d.bukrs))].join(', ') || criteria.bukrs.join(', ')],
+    ['Value Date', isoToDmy(criteria.dateFrom) + (criteria.dateTo ? ` to ${isoToDmy(criteria.dateTo)}` : '')],
+    ['Key Date', isoToDmy(keyDate)],
+    ['Run mode', `Update run – ${deals.length} deal(s) in selection`],
+  ]
 }
 
-/** View With Posting + Execute: FORM all_posting for every deal in the selection. */
-export function postAllView(deals: readonly Deal[], criteria: Criteria, keyDate: string): RunView {
+/** A run modal while PostSettlement is missing: the parameters and why nothing was posted. */
+export function postingWaitingView(title: string, params: [string, string][]): RunView {
+  return { title, params, results: [], notes: POSTING_WAITING }
+}
+
+/** One deal's outcome of a posting run. */
+export type PostingLine = { row: Deal; keyDate: string; ok: boolean; fiDoc: string; message: string }
+
+export function runResult(line: PostingLine, testRun: boolean): RunResult {
+  const base = { bukrs: line.row.bukrs, rfha: line.row.rfha, keyDate: line.keyDate }
+  if (!line.ok) return { ...base, result: 'Refused', cls: 'res-warn', fiDoc: '' }
+  return testRun ? { ...base, result: 'Would be posted', cls: 'res-info', fiDoc: '' } : { ...base, result: 'Posted', cls: 'res-ok', fiDoc: line.fiDoc }
+}
+
+/** The run modal for real results: one line per deal, SAP's messages in the notes. */
+export function postingResultView(title: string, params: [string, string][], lines: PostingLine[], testRun: boolean): RunView {
   return {
-    title: 'Execute with Posting',
-    params: [
-      ['Company Code', [...new Set(deals.map((d) => d.bukrs))].join(', ') || criteria.bukrs.join(', ')],
-      ['Value Date', isoToDmy(criteria.dateFrom) + (criteria.dateTo ? ` to ${isoToDmy(criteria.dateTo)}` : '')],
-      ['Key Date', isoToDmy(keyDate)],
-      ['Run mode', `Update run – ${deals.length} deal(s) in selection`],
-    ],
-    results: [],
-    notes: POST_ALL_WAITING,
-  }
-}
-
-/** PDF1: the form name the ABAP would call, and why nothing is generated. */
-export function pdfView(row: Deal, formName: string): RunView {
-  return {
-    title: 'PDF',
-    params: [
-      ['Company Code', row.bukrs],
-      ['Transaction No', row.rfha],
-      ['Form (ZSGTSFTR_BS_PDF L003)', formName || '—'],
-    ],
-    results: [],
-    notes: pdfWaiting(formName),
+    title,
+    params,
+    results: lines.map((l) => runResult(l, testRun)),
+    notes: lines.map((l) => `${l.row.rfha}: ${l.message}`).join('\n'),
   }
 }
 
@@ -401,19 +393,22 @@ export function actionLabel(name: ActionName): string {
 }
 
 /* ------------------------------------------------------------------ bank settlement letter (screen 9001) */
-/** go_obj_data->get_addr (ZSGTSFCL_GET_BANK_SETTLE, not exported, no API). */
-export const ADDRESS_WAITING = `${WAITING_API} — bank address (ZSGTSFCL_GET_BANK_SETTLE->GET_ADDR) has no API.`
-/** go_obj_data->get_data (ZSGTSFCL_GET_BANK_SETTLE, not exported, no API). */
-export const ACCOUNT_WAITING = `${WAITING_API} — settlement account lines (ZSGTSFCL_GET_BANK_SETTLE->GET_DATA) have no API.`
+/**
+ * go_obj_data->get_data: the account lines come from the deal's standing instructions (VTBSTC1, payment
+ * types FX / FX1 / NFX) with T012 / T012K / BNKA / TBCHAIN21. No service serves VTBSTC1 or the house banks.
+ */
+export const ACCOUNT_WAITING =
+  `${WAITING_API} — settlement account lines (standing instructions VTBSTC1 with house bank T012K / BNKA) have no API.`
 
-export function waitingAddress(): BankAddress {
-  return { zdate: '', zbank: ADDRESS_WAITING, zaddr1: '', zaddr2: '', zaddr3: '', zattn: '', zvdate: '' }
+/** An address block with nothing in it (no Z002 address, or not read yet). */
+export function emptyAddress(): BankAddress {
+  return { zdate: '', zbank: '', zaddr1: '', zaddr2: '', zaddr3: '', zattn: '', zvdate: '' }
 }
 
-/** PRINT: gs_data-butxt+7(31) as the signing company, gv_reg, the deal row; address and accounts are waiting. */
-export function buildLetterModel(row: Deal): LetterModel {
+/** PRINT: gs_data-butxt+7(31) as the signing company, gv_reg, the deal row, GET_ADDR's address. */
+export function buildLetterModel(row: Deal, addr: BankAddress = emptyAddress(), addrNote = ''): LetterModel {
   const company = row.butxt.slice(7, 38) // gs_data-butxt+7(31)
-  return { row, company, addr: waitingAddress(), reg: LETTER_REG, lines: [ACCOUNT_WAITING] }
+  return { row, company, addr, addrNote, reg: LETTER_REG, lines: [ACCOUNT_WAITING] }
 }
 
 /** Heads and values of the letter's deal table; numIdx marks the right-aligned columns. */
@@ -442,10 +437,91 @@ export function letterDealTable(m: LetterModel): { heads: string[]; vals: string
       isoToDmy(r.dblfz),
       isoToDmy(r.delfz),
       isoToDmy(r.ndf_date),
-      formatRate(r.ndf_rate),
+      r.settlement_known ? formatRate(r.ndf_rate) : '',
       r.cash_curr,
-      formatAmount(r.zcash_amt),
+      r.settlement_known ? formatAmount(r.zcash_amt) : '',
     ],
     numIdx: [8, 10],
   }
 }
+
+/* ------------------------------------------------------------------ PDF1: the letter as a PDF, built in the browser */
+/** One text line (or a rule) of the letter page, in PDF points from the bottom-left. */
+export type PdfItem = { t?: string; x?: number; y: number; bold?: boolean; size?: number; rule?: boolean }
+
+/** PDF string literal: ASCII only, with \ ( ) escaped. */
+export const pdfEscape = (v: string) => v.replace(/[^\x20-\x7E]/g, '-').replace(/([\\()])/g, '\\$1')
+
+/** A one-page A4 PDF (Helvetica, ASCII) of the given items. Pure: returns the file's bytes. */
+export function buildPdf(items: readonly PdfItem[]): Uint8Array<ArrayBuffer> {
+  let ops = ''
+  for (const it of items) {
+    if (it.rule) ops += `0.8 G 50 ${it.y} m 545 ${it.y} l S\n`
+    else ops += `BT /${it.bold ? 'F2' : 'F1'} ${it.size ?? 10} Tf ${it.x ?? 50} ${it.y} Td (${pdfEscape(it.t ?? '')}) Tj ET\n`
+  }
+  const objs = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>',
+    `<< /Length ${ops.length} >>\nstream\n${ops}endstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
+  ]
+  let out = '%PDF-1.4\n'
+  const offsets: number[] = []
+  objs.forEach((o, i) => {
+    offsets.push(out.length)
+    out += `${i + 1} 0 obj\n${o}\nendobj\n`
+  })
+  const xref = out.length
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`
+  for (const o of offsets) out += `${padLeft(o, 10, '0')} 00000 n \n`
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`
+  const bytes = new Uint8Array(new ArrayBuffer(out.length))
+  for (let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 255
+  return bytes
+}
+
+/** The letter (screen 9001's content) laid out for buildPdf. */
+export function letterPdfItems(m: LetterModel): PdfItem[] {
+  const a = m.addr
+  const items: PdfItem[] = []
+  let y = 790
+  const line = (t: string, o: { bold?: boolean; size?: number; x?: number } = {}) => {
+    if (t) items.push({ t, y, bold: !!o.bold, size: o.size ?? 10, x: o.x ?? 50 })
+    y -= 15
+  }
+  line(a.zdate, { x: 480 })
+  y -= 6
+  line(a.zbank, { bold: true, size: 11 })
+  line(a.zaddr1)
+  line(a.zaddr2)
+  line(a.zaddr3)
+  y -= 4
+  line(a.zattn, { bold: true })
+  y -= 8
+  line(`RE: ${m.reg}`, { bold: true, size: 11 })
+  line(a.zvdate, { bold: true })
+  y -= 4
+  items.push({ rule: true, y })
+  y -= 18
+  const t = letterDealTable(m)
+  t.heads.forEach((h, i) => {
+    items.push({ t: `${h}:`, y, bold: true, x: 50 })
+    items.push({ t: t.vals[i] || '-', y, x: 190 })
+    y -= 16
+  })
+  y -= 2
+  items.push({ rule: true, y })
+  y -= 18
+  for (const l of m.lines) line(l)
+  y -= 30
+  line('Authorized Signatories', { bold: true })
+  y -= 34
+  line('Yours Faithfully')
+  line(m.company, { bold: true })
+  return items
+}
+
+/** PDF1's file name. */
+export const letterPdfName = (r: Deal) => `NDF_Bank_Settlement_${r.rfha}.pdf`

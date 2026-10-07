@@ -81,7 +81,18 @@ collapse to `:8080`.
 **Backend kind is configuration, not architecture.** `config/services.json` declares each
 entry's `kind`: `odata` (a dedicated `ZFS_SB_*_O4_API`), `dyngw` (Registry-brokered through
 `ZFS_SB_DYNGW_O4_API`, so a new app needs a registry row rather than an ABAP transport), or
-`rest` (a non-SAP JSON API). Apps call `/api/<key>/…` and never learn which kind answered.
+`rest` (a non-SAP JSON API), or `sqlite` (a local file answered in-process). Apps call
+`/api/<key>/…` and never learn which kind answered.
+
+**`sqlite` is persistence for apps with no SAP contract yet.** The `local` service
+(`data/slc.db`, gitignored) stores schemaless JSON records in named collections:
+`/api/local/<collection>[/<id>]` with GET, POST, PUT (replace), PATCH (merge) and DELETE.
+Lists come back as `{ value: [...] }` and accept `$filter` (`field eq value` joined by
+`and`), `$orderby`, `$top` and `$skip`, so the api-client's `list()` works unchanged; any
+other query option is a `400`, never silently ignored. Each record carries `id` and a
+`_meta` block stamped with the signed-in user. It uses Node's built-in `node:sqlite`, so
+there is no native module to build. Schema changes are appended to `MIGRATIONS` in
+`packages/gateway/src/sqlite/store.ts` and applied at startup via `PRAGMA user_version`.
 
 **The `rest` seam is built, not populated.** No non-SAP API exists yet, so the code path and
 its tests exist and `config/services.json` carries a commented example — but no instance is

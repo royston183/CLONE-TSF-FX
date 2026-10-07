@@ -421,9 +421,9 @@
       "route": "/apps/fo-ndf-fixing-error-correction",
       "title": "AE1: TSF FO Error Correction - NDF Fixing",
       "status": "scaffold",
-      "services": [],
+      "services": ["trmfx", "trmfxapp", "companycode", "middleware"],
       "legacy": "legacy/ZSGTSF_RFX_NDF_FIX_FO_FINAL (1).html",
-      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; the NDF Rate Correction drag-and-drop workflow recalculates the settlement amount client-side and marks the row Fixing Rate Updated. SAP wiring (the NDF transaction table this reads/writes) is a follow-up once that entity is defined."
+      "note": "Live, no sample data. Worklist = TrmFxApp TXN_STATUS 11 joined to FxTransaction; settlement currency from FxTransaction FollowCurrency. Update is disabled: TXN_STATUS 12 must go with the TX02 settle rate, and no service records a fixing rate yet."
     },
     {
       "code": "ZSGTSFR079",
@@ -476,9 +476,9 @@
       "route": "/apps/mo-confirm-ndf-fixing",
       "title": "TSF MO - Confirm NDF Fixing",
       "status": "scaffold",
-      "services": [],
+      "services": ["trmfx", "trmfxapp", "companycode", "middleware"],
       "legacy": "legacy/confirm-ndf-fixing.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. The FX transaction tables it needs (ZSGTSFV_FX and the FX deal tables) are not in MySQL yet, so no middleware wiring."
+      "note": "Live, no sample data. Queue = TrmFxApp TXN_STATUS 10 / 12 joined to FxTransaction (statuses from ZSGTSFTR_TXNSTAT type 01). Match & Release runs FxTransaction Settle (BAPI_FTR_FXT_SETTLE) then sets TXN_STATUS 13 + NDF_MO_REM; Correction Required sets TXN_STATUS 11 + NDF_MO_REM; the queue is re-read after each. Accounting from VTBFHAPO. NDF Value (ZCASH_AMT) has no service and shows a dash."
     },
     {
       "code": "ZSGTSFR050",
@@ -486,9 +486,9 @@
       "route": "/apps/tsf-ndf-fixing",
       "title": "UA1: TSF NDF Fixing",
       "status": "scaffold",
-      "services": [],
+      "services": ["trmfx", "trmfxapp", "companycode", "middleware"],
       "legacy": "legacy/tsf-ndf-fixing.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. Distinct screen from ZSGTSFR026's Confirm NDF Fixing (no Basic Selection step; the table loads with the full dummy dataset). No middleware wiring yet."
+      "note": "Live, no sample data. Worklist = TSF append (TrmFxApp OData, ZSGTSFTR_APP_STR) in TXN_STATUS 07 joined to the FTR deal (FxTransaction OData) - NDF products only, reversed deals dropped; names / NDF date / ref from ZSGTSFV_FX (middleware tsfvFx), traders from ZSGTRMTR_TRD_GRP, status texts from ZSGTSFTR_TXNSTAT, RBI rate from TCURR, TCURF scaling. Save Fixing is disabled: it needs BAPI_FTR_FXT_NDF_FIXING + the TX02 settle rate, which no OData service exposes yet (a FixNdf action on ZFS_SD_TRMFX is proposed)."
     },
     {
       "code": "ZSGTSFR044",
@@ -626,9 +626,9 @@
       "route": "/apps/fx-ndf-settlement",
       "title": "FX NDF Settlement",
       "status": "scaffold",
-      "services": [],
+      "services": ["trmfx", "trmfxapp", "companycode", "businesspartner", "middleware"],
       "legacy": "legacy/fx-ndf-settlement.html",
-      "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+      "note": "Live, no sample data. Worklist = TrmFxApp TXN_STATUS 13 joined to FxTransaction (12D, not reversed, value-date range). Letter address from the partner's Z002 address (API_BUSINESS_PARTNER); Preview and PDF build the letter in the browser. TBB1 Test / Post / Execute call FxTransaction PostSettlement (RFTBBB00) then set TXN_STATUS 50; NDF rate, cash amount and FI document come from FxTransaction fields. The action and fields are proposed in docs/abap/ZFS_SD_TRMFX-NdfSettlement.md and switch on when the service declares them. Letter account lines (VTBSTC1 / house bank) have no API."
     },
     {
       "code": "ZSGTSFR092",

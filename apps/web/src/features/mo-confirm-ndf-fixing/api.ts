@@ -1,45 +1,45 @@
 /*
  * SAP data for TSF MO - Confirm NDF Fixing (ZSGTSFR026). Nothing falls back to sample data.
  *
- * The ABAP source for ZSGTSFR026 was not exported (no program, no dependency note), so only the standard
- * masters whose meaning the screen's labels make unambiguous are read. Nothing else is guessed.
+ * ZSGTSFR026's ABAP source was not exported. Its queue and actions are taken from SAP's status master
+ * ZSGTSFTR_TXNSTAT (type 01), which names exactly this step — no status is invented here:
+ *   10 FO: NDF Fixing - pending MO confirmation   } the MO queue
+ *   12 FO: NDF Fixing Corrected                   }
+ *   13 MO: Confirm NDF Fixing      SAP action "Fixing Settlement" -> Match & Release
+ *   11 MO: NDF Fixing Correction Req  SAP action "Change Fixing"  -> Correction Required
  *
- *   Company Code (from / to)  T001 (API_COMPANYCODE_SRV / A_CompanyCode): code as the value, name as the
- *                             second line, "<code> - <name>" when searching. Any AUTHORITY-CHECK is unknown
- *                             (WAITING FOR AUTH).
- *   Trader Name               ZSGTRMTR_TRADER (middleware "trmTrader"): the trader-code master, one row per
- *                             ZTCODE, "<ZTCODE> - <ZNAME>". Unrestricted: the program's search help is not exported.
- *   NDF deal list             WAITING FOR API. For context only: UA1 NDF Fixing (ZSGTSFR050, ZSGTSF_RFX_NDF_FIX)
- *                             fixes deals with TXN_STATUS '07' and, after BAPI_FTR_FXT_NDF_FIXING, sets the
- *                             VTBFHA custom field TXN_STATUS to '10' via ZSGTRMFM_VTBFHA_EXPORT
- *                             (INCLUDE ZSGTSF_RFX_NDF_FIX_STATUS_9O01, FORM around line 151). That program does not
- *                             say which statuses ZSGTSFR026 selects or sets, so no selection is built from it.
- *   Match & Release,          WAITING FOR ACTION API: the program's BAPIs / FMs / table updates are unknown.
- *   Correction Required
- *
- * Fixing reference text (FTRT_FIX_DEF_T) and partner names (A_BusinessPartner) would name fields of the deal
- * rows; with no rows to name they are not read.
+ *   Company Code (from / to)  T001 (API_COMPANYCODE_SRV / A_CompanyCode). Any AUTHORITY-CHECK the program does is
+ *                             unknown (WAITING FOR AUTH).
+ *   Trader Name               ZSGTRMTR_TRADER (middleware "trmTrader"), "<ZTCODE> - <ZNAME>".
+ *   NDF deal queue            TSF append (TrmFxApp OData) in 10 / 12, joined to the FTR deal (FxTransaction OData);
+ *                             names, NDF date / ref and references from ZSGTSFV_FX; Accounting from VTBFHAPO.
+ *                             See shared/fx/ndf.ts.
+ *   Match & Release           FxTransaction Settle (BAPI_FTR_FXT_SETTLE), then TrmFxApp TXN_STATUS 13 + NDF_MO_REM.
+ *   Correction Required       TrmFxApp TXN_STATUS 11 + NDF_MO_REM.
+ *   NDF Value                 ZCASH_AMT is written by BAPI_FTR_FXT_NDF_FIXING, which has no API (see UA1), so no
+ *                             service carries it and it shows 0.
  */
 import { apiFetch, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
-import type { DropdownItem } from './types.ts'
+import {
+  dealKey,
+  loadNdfQueue,
+  loadPostedDeals,
+  loadTxnStatusTexts,
+  sapMessage,
+  settleTransaction,
+  statusLabel,
+  updateTsfAppend,
+  type NdfRecord,
+} from '../../shared/fx/ndf.ts'
+import { dmyFromIso } from '../../shared/fx/sap.ts'
+import { MO_QUEUE, MO_REMARK_MAX, STATUS_CONFIRMED, STATUS_CORRECTION } from './data.ts'
+import type { DropdownItem, NdfDeal } from './types.ts'
 
 const companyApi = service('companycode')
 
 export const TCODE = 'ZSGTSFR026'
-export const WAITING = 'WAITING FOR API'
-export const WAITING_ACTION = 'WAITING FOR ACTION API'
-
-/** Why the deal list is empty: shown in the table's empty state and by Refresh. */
-export const LIST_UNAVAILABLE =
-  `${WAITING} — ABAP source for ${TCODE} not exported; the NDF fixing confirmation list ` +
-  '(which deals, statuses and tables it selects) cannot be reproduced.'
-
-/** What an action says instead of posting. */
-export const actionUnavailable = (what: string) =>
-  `${WAITING_ACTION} — ${what} (ABAP source for ${TCODE} not exported; its BAPIs / FMs / table updates are unknown) ` +
-  'has no API yet. Nothing was posted to SAP.'
 
 export type Avail<T> = { state: 'ok'; value: T } | { state: 'error'; reason: string }
 
@@ -76,6 +76,49 @@ export function traderItems(rows: readonly FxRow[]): DropdownItem[] {
   return out.sort(sortBy((o) => o.code ?? ''))
 }
 
+/** One queued deal as a grid row. */
+export function dealFromRecord(
+  r: NdfRecord,
+  traderNames: Readonly<Record<string, string>>,
+  statusTexts: Readonly<Record<string, string>>,
+  posted: ReadonlySet<string>,
+): NdfDeal {
+  return {
+    id: dealKey(r),
+    transaction: r.rfha,
+    coCode: r.bukrs,
+    busArea: r.businessArea,
+    tradeDate: dmyFromIso(r.contractDate),
+    tsfEntity: r.tsfEntity,
+    txnTypeDesc: r.txnTypeDesc,
+    partnerName: r.partnerName,
+    partnerCode: r.partner,
+    buySell2: r.side === 'Buy' ? 'Sell' : 'Buy',
+    currency2: r.c2,
+    amount2: r.amt2,
+    currency1: r.c1,
+    amount1: r.amt1,
+    allInRate: r.fwd,
+    txnStatus: statusLabel(r.txnStatus, statusTexts),
+    statusCode: r.txnStatus,
+    fixingDate: dmyFromIso(r.fixingDate),
+    // ZCASH_AMT: FxTransaction.CashSettlementAmount once the service serves it (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md).
+    ndfValue: r.cashAmount ?? 0,
+    valueDate: dmyFromIso(r.valueDate),
+    dealId: r.dealId,
+    mcReference: r.mcReference,
+    businessArea: r.businessArea,
+    trader: traderNames[r.traderCode] ?? r.traderCode,
+    traderCode: r.traderCode,
+    accounting: posted.has(dealKey(r)) ? 'Posted' : 'Not Posted',
+    externalRef: r.externalRef,
+    internalRef: r.internalRef,
+    foRemark: r.foRemark,
+    moRemark: r.moRemark,
+    record: r,
+  }
+}
+
 /* ---------------- reads ---------------- */
 
 const failure = <T,>(what: string, error: unknown): Avail<T> => {
@@ -102,5 +145,55 @@ export async function loadTraders(signal?: AbortSignal): Promise<Avail<DropdownI
     return { state: 'ok', value: traderItems(await fxList('trmTrader', {}, { sort: 'ZTCODE', signal })) }
   } catch (error) {
     return failure('Traders (ZSGTRMTR_TRADER)', error)
+  }
+}
+
+/** The MO queue (TXN_STATUS 10 / 12), as grid rows. */
+export async function loadQueue(traders: readonly DropdownItem[], signal?: AbortSignal): Promise<Avail<NdfDeal[]>> {
+  try {
+    const [records, statusTexts] = await Promise.all([loadNdfQueue(MO_QUEUE, signal), loadTxnStatusTexts(signal)])
+    const posted = await loadPostedDeals(records, signal)
+    const names = Object.fromEntries(traders.map((t) => [t.code ?? '', t.primary.replace(/^[^-]*-s*/, '')]))
+    return { state: 'ok', value: records.map((r) => dealFromRecord(r, names, statusTexts, posted)) }
+  } catch (error) {
+    return failure('NDF deals (TrmFxApp / FxTransaction)', error)
+  }
+}
+
+/* ---------------- actions ---------------- */
+
+export type ActionResult = { ok: true; message: string } | { ok: false; message: string }
+
+const remark = (text: string) => text.trim().slice(0, MO_REMARK_MAX)
+
+/**
+ * Match & Release: settle the deal in FTR first, then record the TSF status. A settlement SAP refuses
+ * changes nothing; a status write that fails after a successful settlement is reported as such, so the
+ * user knows FTR and the TSF status disagree.
+ */
+export async function matchAndRelease(deal: NdfDeal, remarks: string): Promise<ActionResult> {
+  try {
+    await settleTransaction(deal.record)
+  } catch (error) {
+    return { ok: false, message: `SAP did not settle transaction ${deal.transaction}: ${sapMessage(error)}` }
+  }
+  try {
+    await updateTsfAppend(deal.record, { TxnStatus: STATUS_CONFIRMED, NdfMoRem: remark(remarks) })
+  } catch (error) {
+    return {
+      ok: false,
+      message: `Transaction ${deal.transaction} was settled in SAP, but its TSF status could not be set to ${STATUS_CONFIRMED}: ${sapMessage(error)}`,
+    }
+  }
+  return { ok: true, message: `NDF fixing of transaction ${deal.transaction} confirmed and settled (status ${STATUS_CONFIRMED}).` }
+}
+
+/** Correction Required: back to FO (TXN_STATUS 11) with the MO remark. */
+export async function sendForCorrection(deal: NdfDeal, remarks: string): Promise<ActionResult> {
+  try {
+    await updateTsfAppend(deal.record, { TxnStatus: STATUS_CORRECTION, NdfMoRem: remark(remarks) })
+    return { ok: true, message: `Transaction ${deal.transaction} sent back to FO for correction (status ${STATUS_CORRECTION}).` }
+  } catch (error) {
+    return { ok: false, message: `Transaction ${deal.transaction} was not sent back: ${sapMessage(error)}` }
   }
 }

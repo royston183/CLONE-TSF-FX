@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal, InfoModal, MatchReleaseModal, type MatchReleaseValues } from './ActionModals.tsx'
-import { LIST_UNAVAILABLE, WAITING, WAITING_ACTION, actionUnavailable, loadCompanies, loadTraders } from './api.ts'
+import { loadCompanies, loadQueue, loadTraders, matchAndRelease, sendForCorrection, type ActionResult } from './api.ts'
 import { FilterPanel } from './FilterPanel.tsx'
 import { FixingDateField } from './FixingDateField.tsx'
 import { formatAmount } from './format.ts'
@@ -27,13 +27,11 @@ import './mo-confirm-ndf-fixing.legacy.css'
 import './mo-confirm-ndf-fixing.dark.css'
 import type { DropdownItem, Filters, InfoMessage, NdfDeal, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
-/** The NDF deal list: none until ZSGTSFR026's selection has an API (see api.ts). No sample rows. */
-const NO_DEALS: NdfDeal[] = []
-/** Nothing is actioned while the actions have no API. */
+/** Actioned deals leave the queue by being read again from SAP, so nothing is hidden locally. */
 const NONE_PROCESSED: ReadonlySet<string> = new Set()
 const EMPTY_SELECTION: Selection = { companyCode: '', companyCodeTo: '', fixingDate: '', ndfValue: '', trader: '' }
 const NO_ERRORS: SelectionErrors = { companyCode: null, fixingDate: null }
-const EMPTY_MR: MatchReleaseValues = { externalRef: '', internalRef: '', remarks: '' }
+const EMPTY_MR: MatchReleaseValues = { remarks: '' }
 /** How long the Refresh icon spins, and how long after it the "refreshed" notice appears. */
 const SPIN_MS = 620
 const REFRESH_NOTICE_MS = 300
@@ -43,13 +41,15 @@ type OpenModal = 'matchRelease' | 'correction' | null
 /**
  * MO: Confirm NDF Fixing (ZSGTSFR026), converted from legacy/confirm-ndf-fixing.html.
  *
- * ZSGTSFR026's ABAP source is not exported: the Company Code (T001) and Trader (ZSGTRMTR_TRADER)
- * value helps are read from SAP, the deal list shows WAITING FOR API, and Match & Release /
- * Correction Required show WAITING FOR ACTION API (nothing is posted, nothing changes on screen).
- * See api.ts.
+ * View Deals reads the MO queue from SAP (TXN_STATUS 10 / 12, see api.ts). Match & Release settles the
+ * deal (FxTransaction Settle) and sets TXN_STATUS 13; Correction Required sets 11. After either, the
+ * queue is read again, so an actioned deal leaves the list because SAP says so.
  */
 export default function MoConfirmNdfFixing() {
-  const deals = NO_DEALS
+  const [deals, setDeals] = useState<NdfDeal[]>([])
+  const [listError, setListError] = useState('')
+  const [listLoading, setListLoading] = useState(false)
+  const [busy, setBusy] = useState(false)
   const [companyItems, setCompanyItems] = useState<DropdownItem[]>([])
   const [traderItems, setTraderItems] = useState<DropdownItem[]>([])
 
@@ -113,6 +113,28 @@ export default function MoConfirmNdfFixing() {
     return () => ctl.abort()
   }, [])
 
+  /** The MO queue from SAP. Returns false when it could not be read (the reason is shown in the table). */
+  const queueAbort = useRef<AbortController | null>(null)
+  const readQueue = useCallback(async (): Promise<boolean> => {
+    queueAbort.current?.abort()
+    const ctl = new AbortController()
+    queueAbort.current = ctl
+    setListLoading(true)
+    try {
+      const res = await loadQueue(traderItems, ctl.signal)
+      if (ctl.signal.aborted) return false
+      setDeals(res.state === 'ok' ? res.value : [])
+      setListError(res.state === 'ok' ? '' : res.reason)
+      return res.state === 'ok'
+    } catch (error) {
+      if (!isAbort(error)) console.warn('[mo-confirm-ndf-fixing] queue', error)
+      return false
+    } finally {
+      if (queueAbort.current === ctl) setListLoading(false)
+    }
+  }, [traderItems])
+  useEffect(() => () => queueAbort.current?.abort(), [])
+
   const results = useMemo(
     () => (dealsLoaded ? computeResults(deals, applied, NONE_PROCESSED, filters, search, sort) : []),
     [dealsLoaded, deals, applied, filters, search, sort],
@@ -144,11 +166,11 @@ export default function MoConfirmNdfFixing() {
     const next = { ...selection, companyCode: cc }
     setSelection(next)
     setCcText(cc)
-    // No dummy top-up any more: the list itself is WAITING FOR API (see api.ts).
     setDealsLoaded(true)
     setPage(1)
     setSelectedId(null)
     setApplied(next)
+    void readQueue()
   }
 
   // ------------------------------------------------------------------ toolbar
@@ -184,9 +206,12 @@ export default function MoConfirmNdfFixing() {
   const refresh = () => {
     setSpinning(true)
     later(() => setSpinning(false), SPIN_MS)
-    if (dealsLoaded) reapply()
-    // Nothing to re-read: the list has no API yet, and Refresh says so instead of pretending.
-    later(() => showInfo({ variant: 'warn', title: WAITING, desc: LIST_UNAVAILABLE }), REFRESH_NOTICE_MS)
+    if (!dealsLoaded) return
+    reapply()
+    setSelectedId(null)
+    void readQueue().then((ok) => {
+      if (ok) later(() => showInfo({ variant: 'success', title: 'Refreshed', desc: 'The NDF fixing deals were read again from SAP.' }), REFRESH_NOTICE_MS)
+    })
   }
 
   // ------------------------------------------------------------------ actions
@@ -194,7 +219,7 @@ export default function MoConfirmNdfFixing() {
   const openMatchRelease = () => {
     if (!selectedDeal) return
     setModalDeal(selectedDeal)
-    setMrValues({ externalRef: selectedDeal.externalRef || '', internalRef: selectedDeal.internalRef || '', remarks: '' })
+    setMrValues({ remarks: '' })
     setOpenModal('matchRelease')
   }
 
@@ -206,27 +231,39 @@ export default function MoConfirmNdfFixing() {
     setOpenModal('correction')
   }
 
-  const closeModal = () => setOpenModal(null)
+  const closeModal = () => {
+    if (!busy) setOpenModal(null)
+  }
 
-  /** An action that has no API: the dialog closes, nothing is posted and the deal stays as it was. */
-  const actionWaiting = (what: string) => {
-    closeModal()
-    showInfo({ variant: 'warn', title: WAITING_ACTION, desc: actionUnavailable(what) })
+  /** Posts an action, then reads the queue again so the list shows what SAP now holds. */
+  const runAction = async (title: string, post: () => Promise<ActionResult>) => {
+    setBusy(true)
+    let result: ActionResult
+    try {
+      result = await post()
+    } finally {
+      setBusy(false)
+    }
+    setOpenModal(null)
+    setSelectedId(null)
+    showInfo({ variant: result.ok ? 'success' : 'warn', title: result.ok ? title : `${title} failed`, desc: result.message })
+    await readQueue()
   }
 
   const confirmMatchRelease = () => {
-    if (!selectedDeal) return
-    actionWaiting('Match & Release')
+    const deal = modalDeal
+    if (!deal || busy) return
+    void runAction('Match & Release', () => matchAndRelease(deal, mrValues.remarks))
   }
 
   const confirmCorrection = () => {
-    if (!selectedDeal) return
-    // The MO remark is still required, as before; then WAITING FOR ACTION API.
+    const deal = modalDeal
+    if (!deal || busy) return
     if (!crRemarks.trim()) {
       setCrError(true)
       return
     }
-    actionWaiting('Correction Required')
+    void runAction('Correction Required', () => sendForCorrection(deal, crRemarks))
   }
 
   // ------------------------------------------------------------------ render
@@ -249,7 +286,7 @@ export default function MoConfirmNdfFixing() {
             </svg>
           </div>
           <div>
-            <div className="app-title">Confirm NDF Fixing</div>
+            <div className="app-title">TSF MO - Confirm NDF Fixing</div>
             <div className="app-subtitle">Treasury &middot; MO Confirmation</div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
@@ -446,8 +483,8 @@ export default function MoConfirmNdfFixing() {
             selectedId={selectedId}
             onSort={onSort}
             onSelect={setSelectedId}
-            emptyTitle={WAITING}
-            emptyDesc={LIST_UNAVAILABLE}
+            emptyTitle={listLoading ? 'Loading NDF fixing deals from SAP…' : listError ? 'NDF deals not loaded' : undefined}
+            emptyDesc={listLoading ? 'Reading TSF status 10 / 12 deals.' : listError || undefined}
           />
 
           <div className={`pagination-bar${paged ? '' : ' hidden'}`} id="paginationBar">
@@ -498,6 +535,7 @@ export default function MoConfirmNdfFixing() {
         open={openModal === 'matchRelease'}
         deal={modalDeal}
         values={mrValues}
+        busy={busy}
         onChange={(patch) => setMrValues((v) => ({ ...v, ...patch }))}
         onClose={closeModal}
         onConfirm={confirmMatchRelease}
@@ -508,6 +546,7 @@ export default function MoConfirmNdfFixing() {
         deal={modalDeal}
         remarks={crRemarks}
         remarksError={crError}
+        busy={busy}
         onRemarksChange={setCrRemarks}
         onClose={closeModal}
         onConfirm={confirmCorrection}

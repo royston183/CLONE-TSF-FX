@@ -34,6 +34,10 @@ export async function proxyRequest(
   query: string,
   body: Buffer | undefined,
   contentType: string | undefined,
+  /** A managed RAP entity with an ETag refuses an update without If-Match (428), so it is forwarded. */
+  ifMatch?: string | undefined,
+  /** What the caller accepts. JSON unless it asks for XML: $metadata is only served as XML (406 otherwise). */
+  accept?: string | undefined,
 ): Promise<ProxyResult> {
   const session = sessionFor(service.key)
   const url = serviceUrl(service, path, query)
@@ -42,9 +46,10 @@ export async function proxyRequest(
   if (needsToken && !session.token) await fetchCsrfToken(service)
 
   const attempt = async (): Promise<ProxyResult> => {
-    const headers: Record<string, string> = { accept: 'application/json' }
+    const headers: Record<string, string> = { accept: accept && /xml/i.test(accept) ? accept : 'application/json' }
     if (service.authHeader) headers['authorization'] = service.authHeader
     if (contentType) headers['content-type'] = contentType
+    if (ifMatch) headers['if-match'] = ifMatch
     if (needsToken && session.token) headers['x-csrf-token'] = session.token
     const cookie = await cookieHeader(session, url)
     if (cookie) headers['cookie'] = cookie

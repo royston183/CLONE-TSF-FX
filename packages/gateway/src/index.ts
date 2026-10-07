@@ -44,6 +44,12 @@ export async function build() {
   app.removeAllContentTypeParsers()
   app.addContentTypeParser('*', { parseAs: 'buffer' }, (_req, body, done) => done(null, body))
 
+  // Close SQLite files on shutdown so the WAL is checkpointed and, on Windows, the file
+  // lock is released for the next run or a test's temp-directory cleanup.
+  app.addHook('onClose', async () => {
+    for (const service of services.values()) service.store?.close()
+  })
+
   await authRoutes(app)
   await apiRoutes(app, services)
 

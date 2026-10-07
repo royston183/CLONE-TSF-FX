@@ -1,54 +1,47 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { VIEW_REQUIRED_COLUMNS, eligible, missingColumns, rowFromView } from './api.ts'
+import { ndfRecord, type FxTransaction } from '../../shared/fx/ndf.ts'
+import { rowFromRecord } from './api.ts'
 import { calcSettlement, filterRows } from './logic.ts'
 
 const near = (a: number | null, b: number) => ok(a !== null && Math.abs(a - b) < 1e-6, `${a} != ${b}`)
 
-describe('GET_DATA (ZSGTSF_RFX_NDF_FIX_FO)', () => {
-  it('keeps TXN_STATUS 11 on the NDF date with an NDF product type — not 07, not V_DATE', () => {
-    const rows = [
-      { RFHA: '1', TXN_STATUS: '11', NDF_DATE: '2026-10-12', V_DATE: '2026-10-14', SGSART: '12D', SAKTIV: '3' }, // no SAKTIV rule here
-      { RFHA: '2', TXN_STATUS: '07', NDF_DATE: '2026-10-12', SGSART: '12D' }, // normal fixing queue
-      { RFHA: '3', TXN_STATUS: '12', NDF_DATE: '2026-10-12', SGSART: '12D' }, // already corrected
-      { RFHA: '4', TXN_STATUS: '11', NDF_DATE: '2026-10-14', SGSART: '12D' }, // other NDF date
-      { RFHA: '5', TXN_STATUS: '11', NDF_DATE: '2026-10-12', SGSART: '12B' }, // forward, not NDF
-    ]
-    deepStrictEqual(eligible(rows, '2026-10-12').map((r) => r.RFHA), ['1'])
+/* An SG03 NDF as FxTransaction serves it, sent back by MO (TrmFxApp TxnStatus 11). */
+const fx: FxTransaction = {
+  CompanyCode: 'SG03', FinancialTransaction: '2000000000001', ProductType: '12D', TransactionType: '631', Partner: '400000002',
+  BuyCurrency: 'INR', SellCurrency: 'USD', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyAmount: 3328000, SellAmount: 40000,
+  ValueDate: '2026-11-03', ForwardRate: 83.2, ActiveStatus: '0',
+}
+const rec = ndfRecord(
+  fx,
+  { CompanyCode: 'SG03', FinancialTransaction: '2000000000001', TxnStatus: '11', Ztrcode: 'C14', NdfMoRem: 'Incorrect fixing rate' },
+  { BUKRS: 'SG03', RFHA: '2000000000001', BUTXT: 'SG03 - OLAM GlobalAgri', NDF_DATE: '2026-10-30', NDF_REF: 'RBI', BP_NAME: 'FMC Corporation' },
+)
+const row = rowFromRecord(rec, { RBI: 'RBI USD/INR Reference Rate' }, { '11': 'MO: NDF Fixing Correction Req' }, { C14: 'Ashon V' })
+
+describe('rowFromRecord (GET_DATA of ZSGTSF_RFX_NDF_FIX_FO)', () => {
+  it('maps the queued deal: NDF date, reference text, status text, trader, MO remark', () => {
+    deepStrictEqual(
+      [row.rfha, row.company, row.fixDate, row.fixRef, row.fixRefName, row.status, row.statusText, row.trader, row.partner, row.moRemark],
+      ['2000000000001', 'SG03 - OLAM GlobalAgri', '30-10-2026', 'RBI', 'RBI USD/INR Reference Rate', '11', 'MO: NDF Fixing Correction Req', 'Ashon V', 'FMC Corporation', 'Incorrect fixing rate'],
+    )
   })
 
-  it('names the ZSGTSFV_FX fields the middleware view does not serve (as registered on 2026-10-01)', () => {
-    // prettier-ignore
-    const served = ['BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','KONTRH','NDF_DATE','NDF_REF','BS','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','OSPOT','OSWAP','OTOT_RATE']
-    deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS), ['TXN_STATUS', 'NDF_RATE', 'TRD_NAME', 'EXT_STAT_DESC'])
+  it('has no old fixing rate: BAPI_FTR_FXT_NDF_FIXING writes it and no service exposes it', () => {
+    strictEqual(row.oldRate, 0)
+  })
+
+  it('settles in SAP\'s following currency, CURR1 being the lead (amt1 + amt2 / rate)', () => {
+    deepStrictEqual([row.curr1, row.curr2, row.amt1, row.amt2, row.settleCurr, row.foreignFirst], ['USD', 'INR', -40000, 3328000, 'INR', false])
+    near(calcSettlement(row, 84.25), -40000 + 3328000 / 84.25)
   })
 })
 
-describe('row mapping and screen 9001', () => {
-  const row = rowFromView(
-    {
-      BUKRS: 'IN11', RFHA: '0000005100844', BUTXT: 'Olam Agri India', SGSART: '12D', BS_1: 'Sell', CURR1: 'USD', CURR2: 'INR',
-      AMT1: '-1200000.00', AMT2: '100200000.00', NDF_DATE: '2026-10-12', NDF_REF: 'RBI', NDF_RATE: '83.5000', TRD_NAME: 'Ashon V',
-      BP_NAME: 'DBS BANK INDIA', TXN_STATUS: '11', EXT_STAT_DESC: 'FO Correction Required',
-    },
-    { RBI: 'RBI USD/INR Reference Rate' },
-  )
-
-  it('Old Fixing Rate is the row NDF_RATE; reference text from FTRT_FIX_DEF_T; RFHA zeros kept', () => {
-    deepStrictEqual([row.rfha, row.fixDate, row.fixRef, row.fixRefName, row.oldRate, row.status], ['0000005100844', '12-10-2026', 'RBI', 'RBI USD/INR Reference Rate', 83.5, '11'])
-  })
-
-  it('settles in the following currency, the ABAP formula with the rate unscaled (no TCURF here)', () => {
-    deepStrictEqual([row.settleCurr, row.foreignFirst], ['INR', false])
-    // curr1 (USD) is not the follow -> amt1 + amt2 / rate
-    near(calcSettlement(row, 84.25), -1_200_000 + 100_200_000 / 84.25)
-    const vnd = rowFromView({ CURR1: 'VND', CURR2: 'USD', AMT1: '2500000000', AMT2: '-100000', TXN_STATUS: '11' }, {})
-    deepStrictEqual([vnd.settleCurr, vnd.foreignFirst], ['VND', true])
-    near(calcSettlement(vnd, 25000), -100_000 + (2_500_000_000 * 100) / 25000) // VND quoted per 100
-  })
-
-  it('the queue only ever shows status 11 rows for the chosen NDF date', () => {
-    deepStrictEqual(filterRows([row, { ...row, rfha: 'x', status: '12' }], '', '', '12-10-2026').map((r) => r.rfha), ['0000005100844'])
-    strictEqual(filterRows([row], '', '', '13-10-2026').length, 0)
+describe('worklist filters', () => {
+  it('blank NDF date shows the whole status-11 queue; a date narrows it', () => {
+    strictEqual(filterRows([row], '', '', '').length, 1)
+    strictEqual(filterRows([row], '', '', '30-10-2026').length, 1)
+    strictEqual(filterRows([row], '', '', '31-10-2026').length, 0)
+    strictEqual(filterRows([row, { ...row, rfha: 'x', status: '12' }], '', '', '').length, 1)
   })
 })

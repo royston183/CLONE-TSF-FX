@@ -1,6 +1,7 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { VIEW_REQUIRED_COLUMNS, companyOptions, dealFromView, letterFormName, missingColumns, viewFilter } from './api.ts'
+import { ndfRecord, type FxTransaction } from '../../shared/fx/ndf.ts'
+import { bankAddress, companyOptions, dealFromRecord, letterFormName } from './api.ts'
 
 describe('S_BUKRS value help', () => {
   it('T001 keys as SAP holds them (leading zeros), by code', () => {
@@ -18,37 +19,58 @@ describe('S_BUKRS value help', () => {
   })
 })
 
-describe('GET_DATA on ZSGTSFV_FX', () => {
-  it('names the fields the middleware view does not serve (as registered on 2026-10-05)', () => {
-    // prettier-ignore
-    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
-    deepStrictEqual(missingColumns(served, VIEW_REQUIRED_COLUMNS), [
-      'BLOTTER_DATE', 'PRCTR', 'PC_NAME', 'TXN_STATUS', 'FO_REMARK', 'MO_REMARK', 'ZTSF_DEAL_ID', 'ZTSF_MC_REF_NO',
-      'NDF_FO_REM', 'NDF_MO_REM', 'SPOT', 'SWAP', 'TOT_RATE', 'NDF_RATE', 'CPAIR', 'CASH_CURR', 'ZCASH_AMT',
-    ])
-  })
+/* SG03 / 2000000000015 as SAP served it on 2026-10-06: FxTransaction + TrmFxApp status 13. */
+const fx: FxTransaction = {
+  CompanyCode: 'SG03', FinancialTransaction: '2000000000015', ProductType: '12D', TransactionType: '631', Partner: '400000002',
+  ContractDate: '2026-10-06', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR',
+  BuyAmount: 10000, SellAmount: 902500, ValueDate: '2026-11-06', SpotRate: 90.25, SwapRate: 0, ForwardRate: 90.25,
+  ActiveStatus: '0', ActivityCategory: '55',
+}
+const app = { CompanyCode: 'SG03', FinancialTransaction: '2000000000015', TxnStatus: '13', Ztrcode: 'C14', '@odata.etag': 'W/"x"' }
 
-  it('pushes the WHERE clause the middleware can apply', () => {
-    deepStrictEqual(viewFilter({ bukrs: ['IN11', 'SG03'], dateFrom: '2026-10-01', dateTo: '2026-10-31' }), {
-      'BUKRS[in]': 'IN11,SG03',
-      SGSART: '12D',
-      'SAKTIV[ne]': '3',
-      'DELFZ[gte]': '2026-10-01',
-      'DELFZ[lte]': '2026-10-31',
-    })
-    deepStrictEqual(viewFilter({ bukrs: ['IN11'], dateFrom: '2026-10-01', dateTo: '' })['DELFZ'], '2026-10-01')
-  })
-
-  it('maps a view row (as served live), keeping RFHA and KONTRH leading zeros', () => {
-    const d = dealFromView({
-      BUKRS: 'IN11', RFHA: '2000000000000', REFNR: null, SAKTIV: '0', SGSART: '12D', BUTXT: 'IN11 - OLAM Agri Inida Pvt Ltd',
-      KONTRH: '0400000002', BP_NAME: '0400000002 - FMC Corporation', DELFZ: '2026-11-03', NDF_DATE: null, BS_1: 'Buy',
-      AMT1: '1000.00', AMT2: '-83000.00', OTOT_RATE: '83.000000000', TXN_STATUS: '13', ZCASH_AMT: '12.50', NDF_RATE: '84.1',
-    })
+describe('GET_DATA rows from the TSF append + FTR deal', () => {
+  it('maps the deal; settlement fields are unknown while FxTransaction does not serve them', () => {
+    const d = dealFromRecord(ndfRecord(fx, app))
     deepStrictEqual(
-      [d.rfha, d.refnr, d.kontrh, d.delfz, d.ndf_date, d.amt2, d.otot_rate, d.zcash_amt, d.ndf_rate, d.fi_doc],
-      ['2000000000000', '', '0400000002', '2026-11-03', '', -83000, 83, 12.5, 84.1, ''],
+      [d.bukrs, d.rfha, d.sgsart, d.saktiv, d.txn_status, d.delfz, d.bs_1, d.amt1, d.amt2, d.otot_rate, d.etag],
+      ['SG03', '2000000000015', '12D', '0', '13', '2026-11-06', 'Buy', 10000, -902500, 90.25, 'W/"x"'],
     )
+    deepStrictEqual([d.settlement_known, d.fi_known, d.zcash_amt, d.ndf_rate, d.fi_doc], [false, false, 0, 0, ''])
+  })
+
+  it('uses the proposed settlement fields as soon as the service serves them', () => {
+    const d = dealFromRecord(
+      ndfRecord(
+        { ...fx, NdfFixingRate: '91.000000000', CashSettlementAmount: '82.42', CashSettlementCurrency: 'USD', AccountingDocument: '' },
+        app,
+      ),
+    )
+    deepStrictEqual([d.settlement_known, d.fi_known, d.ndf_rate, d.zcash_amt, d.cash_curr, d.fi_doc], [true, true, 91, 82.42, 'USD', ''])
+  })
+})
+
+describe('GET_ADDR (the partner\'s Z002 address)', () => {
+  it('formats the block as the ABAP does', () => {
+    deepStrictEqual(
+      bankAddress(
+        { FullName: 'HSBC Bank', StreetName: '52/60 MG Road', StreetPrefixName: 'Fort', CityName: 'Mumbai', PostalCode: '400001', CareOfName: 'FX Desk', to_FaxNumber: { results: [{ FaxNumber: '22661234' }] } },
+        '2026-11-06',
+        '2026-10-06',
+      ),
+      {
+        zdate: '06-10-2026',
+        zbank: 'HSBC Bank',
+        zaddr1: '52/60 MG Road',
+        zaddr2: 'Fort',
+        zaddr3: 'MUMBAI - 400001',
+        zattn: 'Attn : FX Desk , Fax : 22661234',
+        zvdate: 'Value Date - 06-11-2026',
+      },
+    )
+  })
+  it('leaves the block empty without a Z002 address, keeping the dates', () => {
+    const a = bankAddress(null, '2026-11-06', '2026-10-06')
+    deepStrictEqual([a.zbank, a.zaddr3, a.zattn, a.zvdate], ['', '', '', 'Value Date - 06-11-2026'])
   })
 })
 

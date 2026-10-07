@@ -1,13 +1,18 @@
+import { MO_REMARK_MAX } from './data.ts'
 import { DealSummary, Overlay } from './modal.tsx'
 import type { InfoMessage, NdfDeal } from './types.ts'
 
-export type MatchReleaseValues = { externalRef: string; internalRef: string; remarks: string }
+export type MatchReleaseValues = { remarks: string }
 
-/** Match & Release: the deal, its Deal / Cover No, and the optional references and remark. */
+/**
+ * Match & Release: the deal, its Deal / Cover No and references (as SAP holds them — no service can
+ * change them), and the optional MO remark.
+ */
 export function MatchReleaseModal({
   open,
   deal,
   values,
+  busy,
   onChange,
   onClose,
   onConfirm,
@@ -16,6 +21,8 @@ export function MatchReleaseModal({
   /** The deal as it was when the dialog opened. */
   deal: NdfDeal | null
   values: MatchReleaseValues
+  /** While the action posts: the buttons are disabled. */
+  busy: boolean
   onChange: (patch: Partial<MatchReleaseValues>) => void
   onClose: () => void
   onConfirm: () => void
@@ -37,31 +44,18 @@ export function MatchReleaseModal({
           </div>
           <div className="field">
             <label>External Ref</label>
-            <input
-              type="text"
-              id="mrExternalRef"
-              className="input"
-              placeholder="Enter external reference"
-              value={values.externalRef}
-              onChange={(e) => onChange({ externalRef: e.target.value })}
-            />
+            <input type="text" id="mrExternalRef" className="input" readOnly value={deal?.externalRef ?? ''} />
           </div>
           <div className="field">
             <label>Internal Ref</label>
-            <input
-              type="text"
-              id="mrInternalRef"
-              className="input"
-              placeholder="Enter internal reference"
-              value={values.internalRef}
-              onChange={(e) => onChange({ internalRef: e.target.value })}
-            />
+            <input type="text" id="mrInternalRef" className="input" readOnly value={deal?.internalRef ?? ''} />
           </div>
           <div className="field">
             <label>MO Remarks</label>
             <textarea
               id="mrRemarks"
               placeholder="Enter remarks (optional)"
+              maxLength={MO_REMARK_MAX}
               value={values.remarks}
               onChange={(e) => onChange({ remarks: e.target.value })}
             />
@@ -71,8 +65,8 @@ export function MatchReleaseModal({
           <button className="btn btn-secondary" type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn btn-primary" id="mrConfirmBtn" type="button" onClick={onConfirm}>
-            Match &amp; Release
+          <button className="btn btn-primary" id="mrConfirmBtn" type="button" disabled={busy} onClick={onConfirm}>
+            {busy ? 'Posting to SAP…' : 'Match & Release'}
           </button>
         </div>
       </div>
@@ -86,12 +80,14 @@ export function CorrectionModal({
   deal,
   remarks,
   remarksError,
+  busy,
   onRemarksChange,
   onClose,
   onConfirm,
 }: {
   open: boolean
   deal: NdfDeal | null
+  busy: boolean
   remarks: string
   /** Stays on until the dialog is reopened, as in the original — typing does not clear it. */
   remarksError: boolean
@@ -122,6 +118,7 @@ export function CorrectionModal({
               id="crRemarks"
               className={remarksError ? 'error' : ''}
               placeholder="e.g. Incorrect fixing rate"
+              maxLength={MO_REMARK_MAX}
               value={remarks}
               onChange={(e) => onRemarksChange(e.target.value)}
             />
@@ -134,8 +131,8 @@ export function CorrectionModal({
           <button className="btn btn-secondary" type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn btn-danger" id="crConfirmBtn" type="button" onClick={onConfirm}>
-            Correction Required
+          <button className="btn btn-danger" id="crConfirmBtn" type="button" disabled={busy} onClick={onConfirm}>
+            {busy ? 'Posting to SAP…' : 'Correction Required'}
           </button>
         </div>
       </div>

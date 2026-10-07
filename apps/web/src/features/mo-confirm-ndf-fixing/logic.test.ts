@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { STATUS, STATUSES } from './data.ts'
-import { COMPANY_CODES, FIXING_DATE_POOL, createNdfDataset, createRng, ensureDataForCriteria } from './fixtures.ts'
+import { ndfRecord, type FxTransaction } from '../../shared/fx/ndf.ts'
+import { dealFromRecord } from './api.ts'
 import { formatAmount, formatDMY, parseDMY } from './format.ts'
 import {
   EMPTY_FILTERS,
@@ -31,6 +31,48 @@ const find = (list: NdfDeal[], id: string) => {
   if (!d) throw new Error(`no deal ${id}`)
   return d
 }
+
+/* Four NDF deals shaped as SAP serves them (FxTransaction + TrmFxApp + ZSGTSFV_FX), through the screen's mapping. */
+const fx = (rfha: string, o: Partial<FxTransaction> = {}): FxTransaction => ({
+  CompanyCode: 'SG03',
+  FinancialTransaction: rfha,
+  ProductType: '12D',
+  TransactionType: '631',
+  Partner: '400000002',
+  ContractDate: '2026-10-01',
+  BuyCurrency: 'USD',
+  SellCurrency: 'INR',
+  LeadCurrency: 'USD',
+  FollowCurrency: 'INR',
+  BuyAmount: 10000,
+  SellAmount: 900000,
+  ValueDate: '2027-09-28',
+  ForwardRate: 90,
+  ActiveStatus: '0',
+  ...o,
+})
+const TEXTS = { '10': 'FO: NDF Fixing - pending MO confirmation', '12': 'FO: NDF Fixing Corrected' }
+const mk = (f: FxTransaction, status: string, trader: string, view: Record<string, string> = {}) =>
+  dealFromRecord(
+    ndfRecord(
+      f,
+      { CompanyCode: f.CompanyCode, FinancialTransaction: f.FinancialTransaction, TxnStatus: status, Ztrcode: trader, ZtsfDealID: `D${f.FinancialTransaction}` },
+      { BUKRS: f.CompanyCode, RFHA: f.FinancialTransaction, ...view },
+    ),
+    { C27: 'Akshay Mohnot', C14: 'Ashon V' },
+    TEXTS,
+    new Set(['SG03|2000000000012']),
+  )
+const DEALS: NdfDeal[] = [
+  mk(fx('2000000000011'), '10', 'C27', { BP_NAME: 'HSBC' }),
+  mk(fx('2000000000012', { BuyAmount: 100000, SellAmount: 9000000, ContractDate: '2026-09-30' }), '12', 'C14', { BP_NAME: 'BARCLAYS BANK PLC' }),
+  mk(fx('2000000000013', { CompanyCode: 'AE13', ValueDate: '2027-10-15' }), '10', 'C27', { BP_NAME: 'DBS BANK LTD' }),
+  mk(fx('2000000000014', { CompanyCode: 'AE11', BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 450000, SellAmount: 5000 }), '10', 'C14'),
+]
+const A = 'SG03|2000000000011'
+const B = 'SG03|2000000000012'
+const C = 'AE13|2000000000013'
+const D = 'AE11|2000000000014'
 
 describe('format', () => {
   it('formats amounts and dates like the page', () => {
@@ -81,122 +123,54 @@ describe('inputs', () => {
   })
 })
 
-describe('dummy data', () => {
-  it('is deterministic and matches the legacy generator', () => {
-    const a = createNdfDataset().deals
-    const b = createNdfDataset().deals
-    deepStrictEqual(a, b)
-    strictEqual(a.length, COMPANY_CODES.length * FIXING_DATE_POOL.length * STATUSES.length + 15)
-    const first = find(a, 'd0')
-    strictEqual(first.transaction, '5000071657')
-    strictEqual(first.dealId, '1197648300')
-    strictEqual(first.amount1, 1108890)
-    strictEqual(first.allInRate, 84.9036)
-    strictEqual(first.tradeDate, '16-10-2026')
-    strictEqual(first.traderCode, 'C28')
-    strictEqual(find(a, 'd59').mcReference, '2000047942')
-  })
-
-  it('covers every company code, fixing date and status', () => {
-    const { deals } = createNdfDataset()
-    for (const cc of COMPANY_CODES)
-      for (const fd of FIXING_DATE_POOL)
-        for (const st of STATUSES) ok(deals.some((d) => d.coCode === cc && d.fixingDate === fd && d.txnStatus === st))
-    ok(deals.filter((d) => d.txnStatus === STATUS.RELEASED).every((d) => d.externalRef.startsWith('EXT-')))
-    ok(deals.filter((d) => d.txnStatus === STATUS.CORRECTION).every((d) => d.moRemark !== ''))
-  })
-
-  it('draws the xorshift sequence from a fresh seed per generator', () => {
-    const r1 = createRng()
-    const r2 = createRng()
-    deepStrictEqual([r1.rnd(), r1.rnd(), r1.rnd()], [0.91523, 0.67078, 0.09366])
-    strictEqual(r2.rnd(), 0.91523)
-  })
-})
-
-describe('ensureDataForCriteria', () => {
-  it('leaves the list alone when the combination already has deals', () => {
-    const { deals, rng } = createNdfDataset()
-    strictEqual(ensureDataForCriteria(deals, rng, 'sg03', '28-09-2027'), deals)
-  })
-
-  it('adds 3-5 deals cycling through the statuses for a new combination', () => {
-    const { deals, rng } = createNdfDataset()
-    const next = ensureDataForCriteria(deals, rng, ' in11 ', '01-01-2028')
-    const added = next.slice(deals.length)
-    ok(added.length >= 3 && added.length <= 5)
-    ok(added.every((d) => d.coCode === 'IN11' && d.fixingDate === '01-01-2028'))
+describe('dealFromRecord', () => {
+  it('maps a queued deal: status label, trader name, Accounting from VTBFHAPO, no NDF value without a fixing', () => {
+    const d = find(DEALS, B)
     deepStrictEqual(
-      added.slice(0, 3).map((d) => d.txnStatus),
-      STATUSES,
+      [d.transaction, d.txnStatus, d.statusCode, d.trader, d.accounting, d.ndfValue, d.tradeDate, d.fixingDate, d.dealId],
+      ['2000000000012', '12 - FO: NDF Fixing Corrected', '12', 'Ashon V', 'Posted', 0, '30-09-2026', '28-09-2027', 'D2000000000012'],
     )
-    strictEqual(new Set(ids(next)).size, next.length)
-    // Once topped up, the same combination is not topped up again.
-    strictEqual(ensureDataForCriteria(next, rng, 'IN11', '01-01-2028'), next)
-    // The same session produces the same top-up.
-    const again = createNdfDataset()
-    deepStrictEqual(ensureDataForCriteria(again.deals, again.rng, 'IN11', '01-01-2028'), next)
+    strictEqual(find(DEALS, A).accounting, 'Not Posted')
+    // CURR1 (USD) sold: amount 1 negative, and Buy/Sell 2 is the INR leg, bought.
+    deepStrictEqual([find(DEALS, D).amount1, find(DEALS, D).buySell2], [-5000, 'Buy'])
   })
 })
 
 describe('filterByCriteria', () => {
-  const { deals } = createNdfDataset()
-
   it('matches one company code (any case) and the fixing date', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: 'sg03' })
-    ok(rows.length >= 3)
-    ok(rows.every((d) => d.coCode === 'SG03' && d.fixingDate === '28-09-2027'))
+    deepStrictEqual(ids(filterByCriteria(DEALS, { ...SEL, companyCode: 'sg03' })), [A, B])
   })
 
   it('treats From / To as a text range', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: 'AE11', companyCodeTo: 'ae13', fixingDate: '' })
+    const rows = filterByCriteria(DEALS, { ...SEL, companyCode: 'AE11', companyCodeTo: 'ae13', fixingDate: '' })
     deepStrictEqual([...new Set(rows.map((d) => d.coCode))].sort(), ['AE11', 'AE13'])
   })
 
-  it('keeps NDF values within 15% of the entered amount', () => {
-    const target = find(deals, 'd0').ndfValue
-    const rows = filterByCriteria(deals, { ...SEL, fixingDate: '', ndfValue: formatAmount(target) })
-    ok(rows.some((d) => d.id === 'd0'))
-    ok(rows.every((d) => Math.abs(d.ndfValue - target) <= target * 0.15))
-    // Unreadable text does not filter.
-    strictEqual(filterByCriteria(deals, { ...SEL, ndfValue: 'abc' }).length, filterByCriteria(deals, SEL).length)
-  })
-
   it('filters by trader code', () => {
-    const rows = filterByCriteria(deals, { ...SEL, companyCode: '', fixingDate: '', trader: 'C27' })
-    ok(rows.length > 0)
-    ok(rows.every((d) => d.traderCode === 'C27'))
+    deepStrictEqual(ids(filterByCriteria(DEALS, { ...SEL, companyCode: '', fixingDate: '', trader: 'C14' })), [B, D])
   })
 })
 
 describe('filter panel, search and sort', () => {
-  const { deals } = createNdfDataset()
-
   it('applies every non-empty select and counts them', () => {
-    const f = { ...EMPTY_FILTERS, status: STATUS.RELEASED, currency1: 'USD' }
+    const f = { ...EMPTY_FILTERS, status: '10 - FO: NDF Fixing - pending MO confirmation', currency1: 'USD' }
     strictEqual(countActiveFilters(EMPTY_FILTERS), 0)
     strictEqual(countActiveFilters(f), 2)
-    const rows = applyFilterPanel(deals, f)
-    ok(rows.length > 0)
-    ok(rows.every((d) => d.txnStatus === STATUS.RELEASED))
-    strictEqual(applyFilterPanel(deals, EMPTY_FILTERS).length, deals.length)
+    deepStrictEqual(ids(applyFilterPanel(DEALS, f)), [A, C, D])
+    strictEqual(applyFilterPanel(DEALS, EMPTY_FILTERS).length, DEALS.length)
   })
 
   it('searches the listed fields, ignoring case', () => {
-    const d0 = find(deals, 'd0')
-    deepStrictEqual(ids(searchDeals(deals, d0.dealId)), ['d0'])
-    ok(searchDeals(deals, 'matched & RELEASED').every((d) => d.txnStatus === STATUS.RELEASED))
-    strictEqual(searchDeals(deals, '   ').length, deals.length)
+    deepStrictEqual(ids(searchDeals(DEALS, 'd2000000000013')), [C])
+    deepStrictEqual(ids(searchDeals(DEALS, 'fixing CORRECTED')), [B])
+    strictEqual(searchDeals(DEALS, '   ').length, DEALS.length)
   })
 
   it('sorts numbers, dates and text', () => {
-    const byAmt = sortDeals(deals, { field: 'amount1', dir: 'desc' })
-    ok(byAmt.every((d, i) => i === 0 || (byAmt[i - 1]?.amount1 ?? 0) >= d.amount1))
-    const byDate = sortDeals(deals, { field: 'tradeDate', dir: 'asc' })
-    ok(byDate.every((d, i) => i === 0 || parseDMY(byDate[i - 1]?.tradeDate ?? '').getTime() <= parseDMY(d.tradeDate).getTime()))
-    const byPartner = sortDeals(deals, { field: 'partnerName', dir: 'asc' })
-    strictEqual(byPartner[0]?.partnerName, 'BARCLAYS BANK PLC')
-    strictEqual(sortDeals(deals, { field: null, dir: 'asc' }), deals)
+    strictEqual(sortDeals(DEALS, { field: 'amount1', dir: 'desc' })[0]?.id, B)
+    strictEqual(sortDeals(DEALS, { field: 'tradeDate', dir: 'asc' })[0]?.id, B)
+    strictEqual(sortDeals(DEALS, { field: 'partnerName', dir: 'asc' })[0]?.partnerName, '400000002')
+    strictEqual(sortDeals(DEALS, { field: null, dir: 'asc' }), DEALS)
   })
 
   it('flips the same column and starts a new one ascending', () => {
@@ -207,15 +181,12 @@ describe('filter panel, search and sort', () => {
 })
 
 describe('paging', () => {
-  const rows = createNdfDataset().deals
-
   it('slices the page and pulls a page past the end back', () => {
-    const p = pageOf(rows, 2, 20)
-    deepStrictEqual(ids(p.rows), ids(rows.slice(20, 40)))
-    strictEqual(p.totalPages, 3)
-    strictEqual(pageOf(rows, 9, 50).page, 2)
-    strictEqual(resultsMeta(rows.length, p), 'Showing 21–40 of 60 deals')
-    strictEqual(resultsMeta(rows.length, pageOf(rows, 2, 50)), 'Showing 51–60 of 60 deals')
+    const p = pageOf(DEALS, 2, 3)
+    deepStrictEqual(ids(p.rows), [D])
+    strictEqual(p.totalPages, 2)
+    strictEqual(pageOf(DEALS, 9, 3).page, 2)
+    strictEqual(resultsMeta(DEALS.length, p), 'Showing 4–4 of 4 deals')
     strictEqual(resultsMeta(0, null), 'Showing 0 of 0 deals')
   })
 
@@ -227,29 +198,23 @@ describe('paging', () => {
   })
 })
 
-describe('actions', () => {
-  it('classes each status text', () => {
-    strictEqual(statusClass(STATUS.CORRECTION), 'status-correction')
-    strictEqual(statusClass(STATUS.RELEASED), 'status-released')
-    strictEqual(statusClass(STATUS.UNMATCHED), 'status-unmatched')
+describe('statuses', () => {
+  it('classes each TXN_STATUS', () => {
+    strictEqual(statusClass('11'), 'status-correction')
+    strictEqual(statusClass('12'), 'status-correction')
+    strictEqual(statusClass('13'), 'status-released')
+    strictEqual(statusClass('10'), 'status-unmatched')
   })
 
-  it('offers the filter panel the distinct values of the deals held, and the three statuses', () => {
-    const { deals } = createNdfDataset()
-    const opts = filterPanelOptions(deals)
-    deepStrictEqual(opts.companyCode, [...COMPANY_CODES].sort())
-    deepStrictEqual(opts.fixingDate, [...new Set(deals.map((d) => d.fixingDate))].sort())
-    deepStrictEqual(opts.status, STATUSES)
-    // No deals (the list is WAITING FOR API): every select but status offers only "All".
+  it('offers the filter panel the distinct values of the deals read from SAP', () => {
+    const opts = filterPanelOptions(DEALS)
+    deepStrictEqual(opts.companyCode, ['AE11', 'AE13', 'SG03'])
+    deepStrictEqual(opts.status, ['10 - FO: NDF Fixing - pending MO confirmation', '12 - FO: NDF Fixing Corrected'])
     const none = filterPanelOptions([])
-    deepStrictEqual([none.companyCode, none.partner, none.trader, none.fixingDate], [[], [], [], []])
+    deepStrictEqual([none.companyCode, none.status], [[], []])
   })
 
-  it('leaves actioned deals out of the results', () => {
-    const { deals } = createNdfDataset()
-    const all = computeResults(deals, SEL, new Set(), EMPTY_FILTERS, '', { field: null, dir: 'asc' })
-    ok(all.some((d) => d.id === 'd0'))
-    const without = computeResults(deals, SEL, new Set(['d0']), EMPTY_FILTERS, '', { field: null, dir: 'asc' })
-    deepStrictEqual(ids(without), ids(all).filter((id) => id !== 'd0'))
+  it('runs the whole selection, filter, search and sort', () => {
+    deepStrictEqual(ids(computeResults(DEALS, SEL, new Set(), EMPTY_FILTERS, '', { field: 'transaction', dir: 'desc' })), [B, A])
   })
 })

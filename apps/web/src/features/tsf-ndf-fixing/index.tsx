@@ -3,10 +3,21 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CalendarField } from './CalendarField.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { loadCompanies, loadFixingReferences, loadRbiRate, loadTcurf, loadTraders, loadWorklist, type Avail, type Option } from './api.ts'
-import { fmtDate, money, rate } from './format.ts'
+import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable, loadTxnStatusTexts } from '../../shared/fx/ndf.ts'
+import {
+  loadCompanies,
+  loadFixingReferences,
+  loadRbiRate,
+  loadTcurf,
+  loadTraders,
+  loadWorklist,
+  traderNames,
+  type Avail,
+  type Option,
+} from './api.ts'
+import { money, rate } from './format.ts'
 import { applyFilters, statusClass, toCsv, type Tcurf } from './logic.ts'
-import { CorrectionModal, MatchReleaseModal, NdfFixModal, RefreshModal, ViewTxnModal } from './Modals.tsx'
+import { NdfFixModal, RefreshModal, ViewTxnModal } from './Modals.tsx'
 import './tsf-ndf-fixing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -17,19 +28,17 @@ const EMPTY_FILTERS: Filters = { search: '', company: '', trader: '', fixingDate
 const PER_PAGE = 15
 let toastSeq = 0
 
-type OpenModal = 'ndfFix' | 'match' | 'correction' | 'viewTxn' | 'refresh' | null
+type OpenModal = 'ndfFix' | 'viewTxn' | 'refresh' | null
 
 /**
  * UA1: TSF NDF Fixing (ZSGTSFR050), converted from legacy/tsf-ndf-fixing.html.
  *
- * Reads SAP only (api.ts): Company Code from T001, Trader from ZSGTRMTR_TRD_GRP, the worklist
- * from ZSGTSFV_FX exactly as GET_DATA selects it (TXN_STATUS 07, SAKTIV <> 3, V_DATE = the Fixing
- * Date, NDF product types, trader). The view does not serve those fields yet, so the worklist
- * says WAITING FOR API rather than listing unrelated FX deals. Save Fixing needs
- * BAPI_FTR_FXT_NDF_FIXING + TX02 behind an API (WAITING FOR ACTION API) and posts nothing.
+ * Reads SAP only (api.ts): Company Code from T001, Trader from ZSGTRMTR_TRD_GRP, and the worklist
+ * as GET_DATA selects it \u2014 NDF deals in TXN_STATUS 07 that are not reversed \u2014 from the TSF append
+ * (TrmFxApp) joined to the FTR deal (FxTransaction). Company, Fixing Date and Trader then narrow it
+ * on screen. Save Fixing needs BAPI_FTR_FXT_NDF_FIXING + TX02, which no service exposes, so the
+ * popup shows that and posts nothing.
  */
-const ACTION_WAITING =
-  'WAITING FOR ACTION API \u2014 NDF Fixing (ZSGTRMFM_VTBFHA_EXPORT TXN_STATUS 10, BAPI_FTR_FXT_NDF_FIXING, BAPI_TRANSACTION_COMMIT, TX02 settle rate) has no API yet. Nothing was posted to SAP.'
 export default function TsfNdfFixing() {
   const [deals, setDeals] = useState<NdfDeal[]>([])
   const [companies, setCompanies] = useState<Avail<Option[]> | null>(null)
@@ -38,7 +47,7 @@ export default function TsfNdfFixing() {
   const [loading, setLoading] = useState(true)
   const [tcurf, setTcurf] = useState<Tcurf>({})
   const [fixRefTexts, setFixRefTexts] = useState<Record<string, string>>({})
-  const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, fixingDate: fmtDate(new Date()) })
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
   const [sortAsc, setSortAsc] = useState(false)
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
   const [page, setPage] = useState(1)
@@ -51,17 +60,13 @@ export default function TsfNdfFixing() {
   const [fixRefText, setFixRefText] = useState('')
   const [foRemarksText, setFoRemarksText] = useState('')
   const [invalidFixRate, setInvalidFixRate] = useState(false)
-  const [invalidFixRef, setInvalidFixRef] = useState(false)
-  const [matchRefText, setMatchRefText] = useState('')
-  const [matchRemarksText, setMatchRemarksText] = useState('')
-  const [invalidMatchRef, setInvalidMatchRef] = useState(false)
-  const [invalidMatchRemarks, setInvalidMatchRemarks] = useState(false)
-  const [correctionRemarksText, setCorrectionRemarksText] = useState('')
-  const [invalidCorrectionRemarks, setInvalidCorrectionRemarks] = useState(false)
+  /** null while SAP's metadata is being checked for NdfFixing. */
+  const [fixAvailable, setFixAvailable] = useState<boolean | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const draggingId = useRef<string | null>(null)
 
-  /* Screen 1000's value helps and 9001's lookups, once. */
+  /* 9001's lookups and the company value help, once. */
   useEffect(() => {
     const ctrl = new AbortController()
     const ok = <T,>(p: Promise<T>, set: (v: T) => void) =>
@@ -69,21 +74,24 @@ export default function TsfNdfFixing() {
         if (!isAbort(e)) console.warn(e)
       })
     ok(loadCompanies(ctrl.signal), setCompanies)
-    ok(loadTraders(ctrl.signal), setTraders)
     ok(loadTcurf(ctrl.signal), setTcurf)
     ok(loadFixingReferences(ctrl.signal), setFixRefTexts)
+    void fixNdfAvailable().then(setFixAvailable)
     return () => ctrl.abort()
   }, [])
 
-  /* GET_DATA for the selected Fixing Date (P_DATE); Refresh runs it again. */
+  /* GET_DATA; Refresh runs it again. Traders and status texts name the rows, so they load with it. */
   const worklistAbort = useRef<AbortController | null>(null)
-  const loadDeals = useCallback(async (fixingDate: string) => {
+  const loadDeals = useCallback(async () => {
     worklistAbort.current?.abort()
     const ctrl = new AbortController()
     worklistAbort.current = ctrl
     setLoading(true)
     try {
-      const res = await loadWorklist(fixingDate, ctrl.signal)
+      const [traderHelp, statusTexts] = await Promise.all([loadTraders(ctrl.signal), loadTxnStatusTexts(ctrl.signal)])
+      setTraders(traderHelp)
+      const names = traderHelp.state === 'ok' ? traderNames(traderHelp.value) : {}
+      const res = await loadWorklist(names, statusTexts, ctrl.signal)
       setDeals(res.state === 'ok' ? res.value : [])
       setWorklistNote(res.state === 'ok' ? '' : res.reason)
     } catch (error) {
@@ -100,9 +108,9 @@ export default function TsfNdfFixing() {
   }
 
   useEffect(() => {
-    void loadDeals(filters.fixingDate)
+    void loadDeals()
     return () => worklistAbort.current?.abort()
-  }, [filters.fixingDate, loadDeals])
+  }, [loadDeals])
 
   const visible = useMemo(() => applyFilters(deals, filters, sortAsc), [deals, filters, sortAsc])
   const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE))
@@ -148,49 +156,16 @@ export default function TsfNdfFixing() {
   const openNdfFix = (deal?: NdfDeal) => {
     const r = deal ?? selectedOne()
     if (!r) return
-    if (r.status === 'Released') {
-      showToast('info', 'This NDF deal has already been released.')
-      return
-    }
     setModalDealId(r.id)
     setFixRateText('')
     setFixRefText(r.ref || '')
     setFoRemarksText(r.foRemarks || '')
     setInvalidFixRate(false)
-    setInvalidFixRef(false)
     setOpenModal('ndfFix')
     // gv_ndf_rate: TCURR kurst RBI on the Fixing Date, for USD:INR only.
-    void loadRbiRate(r, filters.fixingDate).then((rbi) => {
+    void loadRbiRate(r, filters.fixingDate || r.date).then((rbi) => {
       if (rbi) setFixRateText((cur) => cur || String(rbi))
     })
-  }
-
-  const openMatch = () => {
-    const r = selectedOne()
-    if (!r) return
-    if (r.status === 'Released') {
-      showToast('info', 'This NDF deal has already been released.')
-      return
-    }
-    setModalDealId(r.id)
-    setMatchRefText(r.ref || '')
-    setMatchRemarksText(r.remarks || '')
-    setInvalidMatchRef(false)
-    setInvalidMatchRemarks(false)
-    setOpenModal('match')
-  }
-
-  const openCorrection = () => {
-    const r = selectedOne()
-    if (!r) return
-    if (r.status === 'Released') {
-      showToast('info', 'Released deals cannot be sent back for correction in this demo.')
-      return
-    }
-    setModalDealId(r.id)
-    setCorrectionRemarksText(r.moRemarks || '')
-    setInvalidCorrectionRemarks(false)
-    setOpenModal('correction')
   }
 
   const openViewTxn = (id: string) => {
@@ -205,48 +180,33 @@ export default function TsfNdfFixing() {
     const deal = modalDeal
     if (!deal) return
     const fix = parseFloat(fixRateText)
-    const ref = fixRefText.trim()
     const rateInvalid = !isFinite(fix) || fix <= 0
     setInvalidFixRate(rateInvalid)
-    setInvalidFixRef(!ref)
-    if (rateInvalid || !ref) return
-    // FORM save_data posts through BAPI_FTR_FXT_NDF_FIXING and TX02 (07 -> 10). Without that API
-    // nothing changes here: the row is reloaded from SAP once a fixing has really been posted.
-    showToast('error', ACTION_WAITING)
-  }
-
-  const confirmMatch = () => {
-    const deal = modalDeal
-    if (!deal) return
-    const ref = matchRefText.trim()
-    const remarks = matchRemarksText.trim()
-    setInvalidMatchRef(!ref)
-    setInvalidMatchRemarks(!remarks)
-    if (!ref || !remarks) return
-    setDeals((ds) => ds.map((d) => (d.id === deal.id ? { ...d, ref, remarks, status: 'Released' } : d)))
-    setSelected(new Set())
-    closeModal()
-    showToast('success', `NDF transaction ${deal.id} matched and released.`)
-  }
-
-  const confirmCorrection = () => {
-    const deal = modalDeal
-    if (!deal) return
-    const remarks = correctionRemarksText.trim()
-    setInvalidCorrectionRemarks(!remarks)
-    if (!remarks) return
-    setDeals((ds) => ds.map((d) => (d.id === deal.id ? { ...d, moRemarks: remarks, status: 'Correction Required' } : d)))
-    setSelected(new Set())
-    closeModal()
-    showToast('success', `Transaction ${deal.id} sent for correction.`)
+    if (rateInvalid) return
+    // FORM save_data: the rate through NdfFixing (BAPI_FTR_FXT_NDF_FIXING), then TXN_STATUS 10. Without the
+    // action the button is disabled; this is its fallback.
+    if (!fixAvailable) {
+      showToast('error', NDF_FIXING_API_MISSING)
+      return
+    }
+    setSaving(true)
+    void fixNdf({ bukrs: deal.company, rfha: deal.id, etag: deal.etag }, fix, TXN.FIXED, foRemarksText)
+      .then((res) => {
+        showToast(res.ok ? 'success' : 'error', res.message)
+        if (res.ok) {
+          setSelected(new Set())
+          closeModal()
+          void loadDeals()
+        }
+      })
+      .finally(() => setSaving(false))
   }
 
   const refreshAll = () => {
     setSelected(new Set())
     setPage(1)
-    const fixingDate = fmtDate(new Date())
-    setFilters({ ...EMPTY_FILTERS, fixingDate })
-    void loadDeals(fixingDate)
+    setFilters(EMPTY_FILTERS)
+    void loadDeals()
     setOpenModal('refresh')
   }
 
@@ -255,7 +215,7 @@ export default function TsfNdfFixing() {
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = 'confirm_ndf_fixing.csv'
+    a.download = 'tsf_ndf_fixing.csv'
     a.click()
     URL.revokeObjectURL(a.href)
     showToast('success', 'CSV downloaded.')
@@ -279,8 +239,8 @@ export default function TsfNdfFixing() {
             <i />
           </div>
           <div className="titlewrap">
-            <div className="title">Confirm NDF Fixing</div>
-            <div className="subtitle">NDF</div>
+            <div className="title">UA1: TSF NDF Fixing</div>
+            <div className="subtitle">NDF deals released for fixing (status 07)</div>
           </div>
           <div className="spacer" />
           <div className="actions">
@@ -445,7 +405,7 @@ export default function TsfNdfFixing() {
                         </span>
                       </td>
                       <td>{r.company}</td>
-                      <td>{r.trader}</td>
+                      <td>{r.trader || '—'}</td>
                       <td>{r.side}</td>
                       <td>{r.pair}</td>
                       <td className="num">{money(r.amt1)}</td>
@@ -510,43 +470,12 @@ export default function TsfNdfFixing() {
         tcurf={tcurf}
         foRemarks={foRemarksText}
         invalidRate={invalidFixRate}
-        invalidRef={invalidFixRef}
+        blockedReason={fixAvailable === null ? 'Checking SAP for the NDF fixing action…' : fixAvailable ? '' : NDF_FIXING_API_MISSING}
+        busy={saving}
         onFixRateChange={setFixRateText}
         onFoRemarksChange={setFoRemarksText}
         onClose={closeModal}
         onConfirm={confirmNdfFix}
-      />
-
-      <MatchReleaseModal
-        open={openModal === 'match'}
-        deal={modalDeal}
-        ref={matchRefText}
-        remarks={matchRemarksText}
-        invalidRef={invalidMatchRef}
-        invalidRemarks={invalidMatchRemarks}
-        onRefChange={(v) => {
-          setMatchRefText(v)
-          setInvalidMatchRef(false)
-        }}
-        onRemarksChange={(v) => {
-          setMatchRemarksText(v)
-          setInvalidMatchRemarks(false)
-        }}
-        onClose={closeModal}
-        onConfirm={confirmMatch}
-      />
-
-      <CorrectionModal
-        open={openModal === 'correction'}
-        deal={modalDeal}
-        remarks={correctionRemarksText}
-        invalidRemarks={invalidCorrectionRemarks}
-        onRemarksChange={(v) => {
-          setCorrectionRemarksText(v)
-          setInvalidCorrectionRemarks(false)
-        }}
-        onClose={closeModal}
-        onConfirm={confirmCorrection}
       />
 
       <ViewTxnModal open={openModal === 'viewTxn'} deal={modalDeal} onClose={closeModal} />
