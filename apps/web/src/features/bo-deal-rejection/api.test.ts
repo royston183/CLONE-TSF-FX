@@ -1,6 +1,6 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
-import { describe, it } from 'node:test'
-import { FX_SELECT_COLUMNS, companyOptions, dealFromRow, fxFilter, missingColumns, statusSelection } from './api.ts'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
+import { afterEach, describe, it } from 'node:test'
+import { appFilter, companyOptions, dealFromFxApp, dealFromRow, loadWorklist, statusSelection } from './api.ts'
 import { FX_FIELD_DEFS } from './data.ts'
 
 describe('selection screen', () => {
@@ -32,23 +32,62 @@ describe('GET_DATA status selection (ZGTCATR_PARAM)', () => {
   })
 })
 
-describe('ZSGTSFV_FX', () => {
-  it('names the fields the middleware view does not serve (as registered on 2026-10-05)', () => {
-    // prettier-ignore
-    const served = ['MANDT','BUKRS','RFHA','SAKTIV','SGSART','BUTXT','LTX','SFHAART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','BA_NAME','RPORTB','XPORTB','ZUONR','ZUOND','ASSIGN_DESC','REFER','INT_REF_DESC','OBJNR','REFNR','DBLFZ','DELFZ','SFGTYP','SANLF','ZWAERS','ZCOM_ID','RDEALER','GSPPART','NORDEXT','NDF_DATE','NDF_REF','BS','BS_O','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','CURR_ST1','ZAMT_ST1','CURR_ST2','ZAMT_ST2','OSPOT','OSWAP','OTOT_RATE','T_RATE','DCRDAT','CRUSER','TCRTIM','DUPDAT','UPUSER','TUPTIM']
-    // prettier-ignore
-    deepStrictEqual(missingColumns(served, FX_SELECT_COLUMNS), ['BLOTTER_DATE','PRCTR','PC_NAME','TXN_STATUS','ZTRCODE','TRD_NAME','ZGRP','GRP_DESC','TSF_CODE','BLO_DESC','MERKM','V_DATE','EXT_STAT_DESC','ZSUBJECT','MAT_UNMAT','FO_REMARK','MO_REMARK','ZTSF_DEAL_DESC','ZTSF_DEAL_ID','ZTSF_MC_REF_NO','ZTSF_DEAL_TYPE','ZOLAM_DEAL_NO','ZTSF_TRFTYPE','ZTSF_TRFTYPE2','ZPL','ZPL_CURR','ZPL_RATE','ZPL_LAMT','ZPL_LCURR','ZTSF_EXE_CO','NDF_FO_REM','NDF_MO_REM','SPOT','SWAP','TOT_RATE','NDF_RATE','CPAIR','ZSETT_PAIR','F_CURR1','T_CURR1','CASH_CURR','ZCASH_AMT','EMAIL_CODE'])
+describe('FX worklist from ZSGTSFTR_APP_STR + FxTransaction', () => {
+  const sel = { fx: ['59', '07', '13'], actvt: 2, found: true }
+  const fx = {
+    CompanyCode: 'SG03', FinancialTransaction: '3000000000005', ProductType: '12B', TransactionType: '619', Partner: '400000002',
+    ContractDate: '2026-09-30', ValueDate: '2026-10-30', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD', FollowCurrency: 'INR',
+    BuyAmount: 1000, SellAmount: 83000, ForwardRate: 83, ActiveStatus: '0', ActivityCategory: '20',
+  }
+  const app = { CompanyCode: 'SG03', FinancialTransaction: '3000000000005', TxnStatus: '07', BlotterDate: '2026-10-05', ZtsfDealID: '7000000014', ZtsfMcRefNo: 'MC1', ZtsfExeCo: true, NdfFoRem: 'fo note' }
+
+  it('builds the TrmFxApp filter: TxnStatus IN, BlotterDate <= p_date, CompanyCode when picked', () => {
+    strictEqual(
+      appFilter(['SG03'], false, '2026-10-05', sel),
+      "(TxnStatus eq '59' or TxnStatus eq '07' or TxnStatus eq '13') and (BlotterDate le 2026-10-05) and (CompanyCode eq 'SG03')",
+    )
+    ok(!appFilter(['SG03', 'IN11'], true, '2026-10-05', sel).includes('CompanyCode'))
   })
-  it('builds the WHERE: blotter_date <= p_date, txn_status IN, rfhazul >= actvt, bukrs IN when picked', () => {
-    const sel = { fx: ['59', '07', '13'], actvt: 2, found: true }
-    deepStrictEqual(fxFilter(['SG03'], false, '2026-10-05', sel), {
-      'BLOTTER_DATE[lte]': '2026-10-05',
-      'TXN_STATUS[in]': '59,07,13',
-      'RFHAZUL[gte]': '00002',
-      'BUKRS[in]': 'SG03',
-    })
-    strictEqual('BUKRS[in]' in fxFilter(['SG03', 'IN11'], true, '2026-10-05', sel), false)
+  it('maps FxTransaction + TrmFxApp onto the view fields (activity = RFHAZUL, sell leg negative), blank where no service has it', () => {
+    const d = dealFromFxApp({ fx, app })
+    deepStrictEqual(
+      [d.rfha, d.bukrs, d.txn_status, d.ext_stat_desc, d.blotter_date, d.dblfz, d.rfhazul, d.curr1, d.amt1, d.curr2, d.amt2, d.t_rate, d.ztsf_deal_id, d.ztsf_mc_ref_no, d.ztsf_exe_co, d.ndf_fo_rem],
+      ['3000000000005', 'SG03', '07', 'MO: Match & Release for Settlement', '05-10-2026', '30-09-2026', '00020', 'USD', 1000, 'INR', -83000, 83, '7000000014', 'MC1', 'X', 'fo note'],
+    )
+    deepStrictEqual([d.prctr, d.fo_remark, d.zpl, d.cruser], ['', '', 0, ''])
   })
+
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+  const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+  const param = { PROGNAM: 'ZSGTSF_RDEAL_TRD_INV', BUKRS: 'SG03', WERKS: '', MAPID: 'A', SNO: '001', PARAM1: 'M040', PARAM3: '9918307' }
+
+  it('lists the joined rows the selection reaches and drops those below the activity floor', async () => {
+    const urls: string[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input).replaceAll('+', ' '))
+      if (u.includes('/api/trmfxapp/')) {
+        urls.push(u)
+        return json({ value: [app, { ...app, FinancialTransaction: '3000000000006' }] })
+      }
+      if (u.includes('/api/fx/')) return json({ value: [fx, { ...fx, FinancialTransaction: '3000000000006', ActivityCategory: '1' }] })
+      if (u.includes('/api/trmmaster/') || u.includes('/api/businesspartner/')) return json({ value: [], d: { results: [] } })
+      return json({ ok: true, rows: [param] })
+    }) as typeof fetch
+    const r = await loadWorklist('FX', ['SG03'], false, '05-10-2026')
+    strictEqual(r.state, 'ok')
+    if (r.state === 'ok') deepStrictEqual(r.value.deals.map((d) => d.rfha), ['3000000000005'])
+    ok(urls[0]?.includes('BlotterDate le 2026-10-05'))
+  })
+  it('Options stay WAITING FOR API (no ZSGTSFV_OP source)', async () => {
+    const r = await loadWorklist('OP', ['SG03'], false, '05-10-2026')
+    strictEqual(r.state, 'waiting')
+  })
+})
+
+describe('view row mapping', () => {
   it('maps a view row by the field catalogue (dates dd-mm-yyyy, amounts/rates numeric, RFHA zeros kept)', () => {
     const d = dealFromRow(
       { BUKRS: 'SG03', RFHA: '3000000000005', RFHAZUL: '00002', DBLFZ: '2026-09-30', AMT2: '-83000.00', T_RATE: '83.000000000', TCRTIM: '23:21:23', REFNR: null },

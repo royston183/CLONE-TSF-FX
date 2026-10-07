@@ -53,7 +53,7 @@ export type Loaded = {
 export const EMPTY: Loaded = { store: {}, contracts: [], rows: new Map(), source: 'unavailable' }
 
 /** `col[in]` reads, 50 values at a time to keep the URLs short. */
-async function inChunks(resource: string, column: string, values: readonly string[], signal?: AbortSignal): Promise<FxRow[]> {
+export async function inChunks(resource: string, column: string, values: readonly string[], signal?: AbortSignal): Promise<FxRow[]> {
   const out: FxRow[] = []
   for (let i = 0; i < values.length; i += 50) {
     const chunk = values.slice(i, i + 50)
@@ -65,7 +65,7 @@ async function inChunks(resource: string, column: string, values: readonly strin
 const FX = service('fx')('FxTransaction')
 
 /** The live FxTransaction of every linked leg, with the names to show for them. A failure leaves the view rows to stand in. */
-async function liveLegs(
+export async function liveLegs(
   dealRows: readonly DealRow[],
   signal?: AbortSignal,
 ): Promise<{ live: Map<string, FxTransaction>; names: Names; entities: Map<string, string> } | null> {

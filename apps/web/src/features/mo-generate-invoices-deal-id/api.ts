@@ -9,8 +9,9 @@
  *                        ⋈ ZSGTRMTR_TRADER (ztcode = ztrd_code) — INNER JOINs: no row, no header
  *   Deal ID Status       FORM drop_down: ZSGTSFTR_DEAL_ST, FX1 / FX2 by ZTSF_MODEL (invoice.ts statusList)
  *   FX Deals (GV_CONT1)  FORM deal_detals: ZSGTSFCDS_FX + ZSGTSFCDS_OPTION WHERE ztsf_deal_id AND saktiv <> 3
- *                        -> middleware "tsfvFx" (ZSGTSFV_FX) lacks the Deal ID columns, no option view
- *                        at all: WAITING FOR API
+ *                        -> ZSGTSFTR_APP_STR (TrmFxApp, by ZTSF_DEAL_ID) joined to the standard FxTransaction
+ *                        on BUKRS + RFHA (transactions.ts), READ ONLY. No standard Option service exists:
+ *                        an FX2 model says WAITING FOR API (OPTION_SERVICE_MISSING).
  *   Adjusted Price/Qty   FORM invoice_plan (invoice.ts): ZSGTSFTR_BL / BL_RUSE, INV_REF, BIL_ADJ, ENT_STR,
  *                        CUR_STR, RULE_BT, COMP, ORG_PRO, TVARVC — priced from gt_top, so it waits with it
  *   Tolerance            ZSGTSFTR_TOLR ztol_id 'T02'
@@ -18,72 +19,34 @@
  *   Invoice Diff (9004)  FORM fetch_invoice_diff: INV_REF, BIL_ADJ, RULE_BT(gv_mod); deal amounts from gt_top
  *   House / Partner bank T012 / T012K / T012T ⋈ COMP, BUT0BK of the FX deal's partner -> not served: WAITING
  *
- * Writes kept (each reproduces the ABAP's own Z-table statement; all need the invoice grid):
+ * Writes (each reproduces the ABAP's own Z-table statement; none writes APP_STR or a Treasury transaction):
  *   SAVE      FORM save_initial_data  MODIFY zsgtsftr_bil_adj (unconfirmed rows, created stamp)
  *   AMDC      FORM save_alv2_data     MODIFY zsgtsftr_bil_adj (rows already saved; a new row needs
  *                                     NUMBER_GET_NEXT ZSGTSFNR08 -> WAITING FOR ACTION API)
  *   C_UPD     FORM calcuate_update_invoice  UPDATE zsgtsftr_bil_adj / zsgtsftr_inv_ref
  *   AMD_DEAL  FORM ammend_deal        UPDATE zsgtsftr_dealid (zdeal_stat) + UPDATE zsgtsftr_bil_adj FROM TABLE
- * Everything else posts through FMs / e-mail / forms or deletes rows: WAITING FOR ACTION API (index.tsx).
+ *   Confirm Invoice, Reverse Confirm, BL De-assign, Amend Deal Status: workflow.ts (step-by-step, resumable).
+ *   Still without a backend: letters (Adobe Form), e-mail, Premium Adjustment, Option transactions.
  */
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxCreate, fxList, fxUpdate, isAbort, type FxRow as MwRow } from '../../shared/fx/mw.ts'
+import { fxCreate, fxDelete, fxHasNumberRange, fxList, fxUpdate, isAbort, type FxRow as MwRow } from '../../shared/fx/mw.ts'
 import { dec, dmyFromIso, isoFromDmy, num, sapNow, sapUser } from '../../shared/fx/sap.ts'
 import { TCODE } from './data.ts'
 import {
   buildInvoiceRows,
   dats,
-  fxRowFromView,
   invoiceDifference,
   modelWithCurrency,
   rollDealTypes,
   statusList,
   type StatusOption,
 } from './invoice.ts'
+import { pcForStatus, toggledStatus } from './invoice-status.ts'
+import { OPTION_SERVICE_MISSING, loadDealTransactions } from './transactions.ts'
 import type { AdjRecord, BlRow, Deal, DealListRow, FxRow, InvRow } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_ACTION = 'WAITING FOR ACTION API'
-
-/** The middleware resource behind ZSGTSFV_FX (SQL view of ZSGTSFCDS_FX). */
-export const FX_VIEW = 'tsfvFx'
-
-/** ZSGTSFCDS_FX fields FORM deal_detals selects and filters on. */
-export const FX_REQUIRED_COLUMNS = [
-  'BUKRS',
-  'RFHA',
-  'BP_NAME',
-  'KONTRH',
-  'DBLFZ',
-  'DELFZ',
-  'XTEXT',
-  'ZCOM_ID',
-  'BS_1',
-  'BS_2',
-  'CURR1',
-  'CURR2',
-  'AMT1',
-  'AMT2',
-  'OSPOT',
-  'OSWAP',
-  'OTOT_RATE',
-  'ZTSF_MC_REF_NO',
-  'TXN_STATUS',
-  'ZTSF_DEAL_TYPE',
-  'ZTSF_DEAL_ID',
-  'SAKTIV',
-] as const
-
-export const missingColumns = (have: readonly string[], need: readonly string[]) => {
-  const present = new Set(have.map((c) => c.toUpperCase()))
-  return need.filter((c) => !present.has(c))
-}
-
-export const fxWaitingReason = (missing: readonly string[]) =>
-  `${WAITING} — ZSGTSFCDS_FX (middleware "${FX_VIEW}") does not serve ${missing.join(', ')}.`
-
-/** ZSGTSFCDS_OPTION has no middleware resource at all. */
-export const OPTION_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (the option deals of an FX2 model) has no middleware resource.`
 
 export const invWaitingReason = (fxReason: string) =>
   `${WAITING} — Adjusted Price / Qty is priced from the deal's FX transactions (FORM invoice_plan reads gt_top for rates, due date and business partner). ${fxReason.replace(`${WAITING} — `, '')}`
@@ -189,6 +152,12 @@ export type DealContext = {
   invRef: MwRow[]
   /** RULE_BT of the MC's model (invoice_plan's ls_zsgtsftr_rule_bt). */
   rule: MwRow | undefined
+  /** RULE_BT of the model with its currency suffix (fetch_invoice_diff's gv_mod). */
+  diffRule: MwRow | undefined
+  /** The raw BL rows behind Deal.bl, index for index (gt_data): ZSGTSFTR_BL, then unconfirmed ZSGTSFTR_BL_RUSE. */
+  bls: MwRow[]
+  /** The ZSGTSFTR_BL_RUSE rows read for the Deal ID (confirmed ones too), to tell a reuse BL from a normal one. */
+  blReuse: MwRow[]
 }
 
 export type LoadedDeal = { deal: Deal; statusOptions: StatusOption[]; ctx: DealContext; notice: string }
@@ -229,19 +198,16 @@ export async function loadDeal(dealId: string, signal?: AbortSignal): Promise<Lo
   const model = head ? modelWithCurrency(txt(head.mc, 'ZMOD_ID'), txt(head.deal, 'ZDEAL_CURR_ID')) : ''
   const statusOptions = statusList(statuses, d ? txt(d, 'ZTSF_MODEL') : '')
 
-  // FX deals: ZSGTSFCDS_FX (+ ZSGTSFCDS_OPTION for an option model).
+  // FX deals: APP_STR (ZTSF_DEAL_ID) + the standard FxTransaction on BUKRS + RFHA; an option model has no service.
+  const comp = await fxList('comp', {}, o)
+  const entityOf = (bukrs: string) => txt(first(comp, 'ZBUKRS', bukrs) ?? {}, 'ZCOM_ID')
   let fx: FxRow[] = []
   let fxReason = ''
   try {
-    const missing = missingColumns(await fxColumns(FX_VIEW, signal), FX_REQUIRED_COLUMNS)
-    if (missing.length) fxReason = fxWaitingReason(missing)
-    else if (head && txt(head.rule, 'ZSUB_TYPE') !== 'FX1') fxReason = OPTION_WAITING
-    else {
-      const rows = await fxList(FX_VIEW, { ZTSF_DEAL_ID: dealId, 'SAKTIV[ne]': '3' }, o)
-      fx = rollDealTypes(rows.filter((r) => txt(r, 'SAKTIV') !== '3').map(fxRowFromView))
-    }
+    if (head && txt(head.rule, 'ZSUB_TYPE') !== 'FX1') fxReason = OPTION_SERVICE_MISSING
+    else fx = rollDealTypes(await loadDealTransactions(dealId, entityOf, signal))
   } catch (error) {
-    fxReason = failure('ZSGTSFCDS_FX', error).reason
+    fxReason = failure('Treasury transactions (ZSGTSFTR_APP_STR / FxTransaction)', error).reason
   }
 
   const bls = blRows.ok && reuseRows.ok ? dealBls(blRows.v, reuseRows.v) : []
@@ -255,13 +221,12 @@ export async function loadDeal(dealId: string, signal?: AbortSignal): Promise<Lo
   const rule = rules[0]
   if (fxReason) invReason = invWaitingReason(fxReason)
   else if (head) {
-    const [entStr, curStr, orgPro, tvarvc, modelRules, comp] = await Promise.all([
+    const [entStr, curStr, orgPro, tvarvc, modelRules] = await Promise.all([
       txt(head.mc, 'ZENT_ID') ? fxList('entityString', { ZENT_ID: txt(head.mc, 'ZENT_ID') }, o) : Promise.resolve([]),
       txt(head.deal, 'ZDEAL_CURR_ID') ? fxList('curStr', { ZCURR_ID: txt(head.deal, 'ZDEAL_CURR_ID') }, o) : Promise.resolve([]),
       fxList('orgPro', { ZCOM_ID: txt(head.mc, 'ZORIGIN') }, o),
       fxList('tvarvc', { NAME: `${TCODE}_MOD` }, o),
       fxList('fxModel', { ZMOD_ID: model }, o),
-      fxList('comp', {}, o),
     ])
     const modelRule = modelRules[0]
     region = modelRule ? txt(first(comp, 'ZCOM_ID', txt(modelRule, 'ZORIGIN')) ?? {}, 'ZREG_ID') : ''
@@ -322,7 +287,7 @@ export async function loadDeal(dealId: string, signal?: AbortSignal): Promise<Lo
     region,
     profitMaintained,
   }
-  return { deal, statusOptions, ctx: { dealRows, bilAdj, invRef, rule }, notice: notices.join(' ') }
+  return { deal, statusOptions, ctx: { dealRows, bilAdj, invRef, rule, diffRule, bls, blReuse: reuseRows.ok ? reuseRows.v : [] }, notice: notices.join(' ') }
 }
 
 /* ------------------------------------------------------------------ writes */
@@ -332,7 +297,7 @@ const ADJ_SCALE: Readonly<Record<string, number>> = {
   ZQTY: 3, ZPRICE: 4, ZUSD_PRICE: 4, ZAMT_USD: 2, ZDIFF_AMT: 2, ZAMT: 2, ZRATE: 7, ZPRATE: 7,
   ZPRE_DISCOUNT: 4, ZNET_AMOUNT: 4, ZPROFIT_MARGIN: 4, ZRISK_AMT: 2,
 }
-const ADJ_KEY = ['ZDEAL_ID', 'ZINV_REF', 'ZINV_TYPE', 'ZPRE_T_REF'] as const
+export const ADJ_KEY = ['ZDEAL_ID', 'ZINV_REF', 'ZINV_TYPE', 'ZPRE_T_REF'] as const
 
 /** gs_inv -> the ZSGTSFTR_BIL_ADJ record (CORRESPONDING), with the grid's edited cells. */
 export function adjRecordOf(row: InvRow, dealId: string): AdjRecord {
@@ -395,7 +360,14 @@ export async function saveInitialData(deal: Deal, ctx: DealContext): Promise<num
  * stamp and ZAMDT_CHECK = 'X'. A row without a saved one draws ZINV_NO from NUMBER_GET_NEXT
  * ZSGTSFNR08 — returned as `needsNumber` so the caller refuses the whole MODIFY.
  */
-export function amendmentRecords(rows: readonly InvRow[], dealId: string, saved: readonly MwRow[], changed: AdjRecord): { recs: AdjRecord[]; needsNumber: boolean } {
+export function amendmentRecords(
+  rows: readonly InvRow[],
+  dealId: string,
+  saved: readonly MwRow[],
+  changed: AdjRecord,
+  /** Fields a row without a saved one gets besides the changed stamp: ZPC for the current Deal status, the created stamp. */
+  fresh: AdjRecord = {},
+): { recs: AdjRecord[]; needsNumber: boolean } {
   let needsNumber = false
   const recs = rows.map((r) => {
     const rec = adjRecordOf(r, dealId)
@@ -405,7 +377,7 @@ export function amendmentRecords(rows: readonly InvRow[], dealId: string, saved:
       ...rec,
       ...(s
         ? { ZINV_NO: txt(s, 'ZINV_NO'), ZPC: txt(s, 'ZPC'), ZCREATED_BY: txt(s, 'ZCREATED_BY'), ZCREATED_DATE: s['ZCREATED_DATE'] ?? null, ZCREATED_TIME: txt(s, 'ZCREATED_TIME') }
-        : {}),
+        : fresh),
       ...changed,
       ZAMDT_CHECK: 'X',
     }
@@ -413,10 +385,26 @@ export function amendmentRecords(rows: readonly InvRow[], dealId: string, saved:
   return { recs, needsNumber }
 }
 
+/**
+ * FORM save_alv2_data. A row with no saved ZSGTSFTR_BIL_ADJ row is new: it takes its ZINV_NO from the
+ * number range (ZSGTSFNR08/01) when the middleware has one bound to the table and ZPC from the current
+ * Deal ID status; with no number range nothing at all is written ('needsNumber').
+ */
 export async function confirmAmendment(deal: Deal, ctx: DealContext): Promise<'done' | 'needsNumber'> {
-  const { recs, needsNumber } = amendmentRecords(deal.inv, deal.dealId, ctx.bilAdj, await audit('ZCHANGED'))
-  if (needsNumber) return 'needsNumber'
-  for (const rec of recs) await modifyAdj(rec, ctx.bilAdj)
+  const stamp = await audit('ZCHANGED')
+  const created = await audit('ZCREATED')
+  const { recs, needsNumber } = amendmentRecords(deal.inv, deal.dealId, ctx.bilAdj, stamp, { ZPC: pcForStatus(deal.status), ...created })
+  if (needsNumber && !(await fxHasNumberRange('billAdjustment'))) return 'needsNumber'
+  for (const rec of recs) {
+    if (ctx.bilAdj.some((b) => sameKey(rec, b))) await fxUpdate('billAdjustment', adjKey(rec), toWire(rec))
+    else {
+      const made = await fxCreate('billAdjustment', toWire({ ...rec, ZINV_NO: '' }))
+      if (!made.assignedNumber) {
+        await fxDelete('billAdjustment', adjKey(rec))
+        throw new Error('The middleware drew no invoice number (ZSGTSFNR08), so the new invoice row was not kept.')
+      }
+    }
+  }
   return 'done'
 }
 
@@ -470,7 +458,7 @@ export async function recalculateAndUpdate(deal: Deal, ctx: DealContext): Promis
 }
 
 /** FORM ammend_deal: 05 <-> 07; anything else is refused (MESSAGE i052). */
-export const amendedStatus = (status: string): string | null => (status === '05' ? '07' : status === '07' ? '05' : null)
+export const amendedStatus = (status: string): string | null => toggledStatus(status)
 
 /**
  * FORM ammend_deal's UPDATE zsgtsftr_bil_adj FROM TABLE lt_update_zpc: each row rebuilt from
@@ -479,7 +467,7 @@ export const amendedStatus = (status: string): string | null => (status === '05'
  * them initial; only rows with a blank ZPRE_T_REF match its key.
  */
 export function amendDealWrites(newStatus: string, bilAdj: readonly MwRow[]): Array<{ key: Record<string, string>; changes: Record<string, string | null> }> {
-  const pc = newStatus === '05' ? 'C' : newStatus === '07' ? 'P' : ''
+  const pc = pcForStatus(newStatus)
   return bilAdj
     .filter((b) => txt(b, 'ZPRE_T_REF') === '')
     .map((b) => ({
@@ -495,17 +483,6 @@ export function amendDealWrites(newStatus: string, bilAdj: readonly MwRow[]): Ar
         ZCHANGED_TIME: '00:00:00',
       },
     }))
-}
-
-export async function amendDealStatus(deal: Deal, ctx: DealContext): Promise<string> {
-  const next = amendedStatus(deal.status)
-  if (!next) throw new Error('Deal ID status can be amended only from 05 or 07.')
-  // UPDATE zsgtsftr_dealid SET zdeal_stat WHERE zdeal_id: every row of the ID, no audit stamp.
-  for (const d of ctx.dealRows) {
-    await fxUpdate('tsfDealId', { ZDEAL_ID: txt(d, 'ZDEAL_ID'), ZDEAL_TYPE: txt(d, 'ZDEAL_TYPE'), ZSUB_TYPE: txt(d, 'ZSUB_TYPE') }, { ZDEAL_STAT: next })
-  }
-  for (const w of amendDealWrites(next, ctx.bilAdj)) await fxUpdate('billAdjustment', w.key, w.changes)
-  return next
 }
 
 /** A middleware error's message for a toast. */

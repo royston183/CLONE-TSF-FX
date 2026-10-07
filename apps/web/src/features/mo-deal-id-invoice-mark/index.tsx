@@ -3,7 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { ELIGIBLE_STATUS, loadScreen, markForInvoicing, WAITING_DEAL_ID_API, type DataSource } from './api.ts'
+import { describeOutcome, ELIGIBLE_STATUS, loadScreen, markDealsForInvoicing, WAITING_DEAL_ID_API, type DataSource, type Mode } from './api.ts'
 import { MODEL_OPTIONS, ORIGIN_OPTIONS, REGION_NAMES, REGION_OPTIONS } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
@@ -31,9 +31,12 @@ const DEFAULT_DATE_TO = '31-12-2026'
  * Mark for Invoicing writes 02 -> 03 there exactly as the report's UPDATE does. Nothing falls
  * back to sample data: when the middleware cannot be read the list is empty, says WAITING FOR
  * DEAL ID API, and nothing can be marked. The View Deal popups (ZSGTSF_RVIEW_DEAL, not in this
- * export) show the Deal ID / MC fields and say WAITING FOR API / ACTION API for the rest. Only
- * the "Manual Mark" invoicing-selection mode exists in the legacy page's HTML, so P_VIEW
- * (auto-mark) is not reached.
+ * export) show the Deal ID / MC fields and say WAITING FOR API / ACTION API for the rest.
+ *
+ * Two modes, as the legacy selection screen: "Manual Mark" (P_MARK, tick rows then Mark for
+ * Invoicing) and "Auto Mark" (P_VIEW): the candidates are ship start <= today, the Mark button is
+ * off, and "Run Automatic Marking" (after a confirmation) writes 02 -> 03 for all of them. Both
+ * report per Deal ID, reload, and leave failed deals at 02 to be retried.
  */
 export default function MoDealIdInvoiceMark() {
   const [rows, setRows] = useState<DealRow[]>([])
@@ -45,10 +48,11 @@ export default function MoDealIdInvoiceMark() {
   const [notes, setNotes] = useState<string[]>([])
   const [generation, setGeneration] = useState(0)
   const busy = useRef(false)
+  const [mode, setMode] = useState<Mode>('manual')
   useEffect(() => {
     const controller = new AbortController()
     setSource('loading')
-    loadScreen(controller.signal)
+    loadScreen(mode, controller.signal)
       .then((loaded) => {
         keys.current = loaded.keys
         setRows(loaded.rows)
@@ -59,7 +63,7 @@ export default function MoDealIdInvoiceMark() {
         if (!isAbort(error)) console.error('[fx] Deal IDs for invoice marking failed to load', error)
       })
     return () => controller.abort()
-  }, [generation])
+  }, [generation, mode])
 
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_FROM)
@@ -95,7 +99,10 @@ export default function MoDealIdInvoiceMark() {
   const toDate = parseDate(dateTo.trim())
   const datesValid = !!fromDate && !!toDate && fromDate.getTime() <= toDate.getTime()
 
-  const filtered = useMemo(() => (datesValid ? filterRows(rows, search, fromDate, toDate, origin, region, model) : []), [rows, search, fromDate, toDate, origin, region, model, datesValid])
+  const filtered = useMemo(
+    () => (datesValid || mode === 'auto' ? filterRows(rows, search, fromDate, toDate, origin, region, model, mode === 'manual') : []),
+    [rows, search, fromDate, toDate, origin, region, model, datesValid, mode],
+  )
   const sorted = useMemo(() => sortRows(filtered, sort), [filtered, sort])
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -142,34 +149,57 @@ export default function MoDealIdInvoiceMark() {
     })
   }
 
-  const markSelected = async (ids: ReadonlySet<string>) => {
-    const eligible = rows.filter((r) => ids.has(r.dealId) && r.status === ELIGIBLE_STATUS)
-    if (eligible.length === 0) {
-      pushToast('Select at least one eligible deal first.', 'warn')
-      return
-    }
+  /** Writes 02 -> 03 for the given rows, reports each Deal ID's result and reloads the backend state. */
+  const markRows = async (targetRows: readonly DealRow[]) => {
     if (busy.current) return
     if (source !== 'sap') {
       pushToast(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read, so nothing was marked.`, 'warn')
       return
     }
-    const targets = eligible.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
+    const targets = targetRows.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
     busy.current = true
     try {
-      await markForInvoicing(targets)
+      const outcome = await markDealsForInvoicing(targets)
+      // PERFORM get_data: the marked deals (now 03) drop out on re-read; failed ones stay 02, still ticked to retry.
+      setSelected(new Set(outcome.failed.map((f) => f.dealId)))
+      setPage(1)
+      setGeneration((g) => g + 1)
+      pushToast(describeOutcome(outcome), outcome.failed.length ? 'warn' : 'success')
     } catch (error) {
       pushToast(messageOf(error), 'warn')
-      // Whatever did move is re-read, so the list never shows a status MySQL lacks.
       setGeneration((g) => g + 1)
-      return
     } finally {
       busy.current = false
     }
-    // PERFORM get_data + rs_selfield-refresh: the marked deals (now 03) drop out on re-read.
+  }
+
+  const markSelected = async (ids: ReadonlySet<string>) => {
+    if (mode !== 'manual') return
+    const eligible = rows.filter((r) => ids.has(r.dealId) && r.status === ELIGIBLE_STATUS)
+    if (eligible.length === 0) {
+      pushToast('Select at least one eligible deal first.', 'warn')
+      return
+    }
+    await markRows(eligible)
+  }
+
+  /** P_VIEW: every candidate the filters leave; nothing is taken from the manual ticks. */
+  const runAutoMark = async () => {
+    if (mode !== 'auto') return
+    const candidates = sorted.filter((r) => r.status === ELIGIBLE_STATUS)
+    if (candidates.length === 0) {
+      pushToast('No deals are eligible for automatic marking.', 'info')
+      return
+    }
+    if (!window.confirm(`Mark ${candidates.length} deal(s) for invoicing (status 02 → 03)?`)) return
+    await markRows(candidates)
+  }
+
+  const switchMode = (next: Mode) => {
+    if (next === mode) return
     setSelected(new Set())
     setPage(1)
-    setGeneration((g) => g + 1)
-    pushToast(`Invoice Marking Updated Successfully — ${eligible.length} deal(s) updated.`, 'success')
+    setMode(next)
   }
 
   const downloadCsv = () => {
@@ -349,8 +379,11 @@ export default function MoDealIdInvoiceMark() {
               <div className="field-group">
                 <span className="field-label">Invoicing Selection</span>
                 <div className="mode-switch" role="group" aria-label="Invoicing selection">
-                  <button className="mode-btn active" type="button">
+                  <button className={`mode-btn${mode === 'manual' ? ' active' : ''}`} type="button" onClick={() => switchMode('manual')}>
                     Manual Mark
+                  </button>
+                  <button className={`mode-btn${mode === 'auto' ? ' active' : ''}`} type="button" onClick={() => switchMode('auto')}>
+                    Auto Mark
                   </button>
                 </div>
               </div>
@@ -361,8 +394,8 @@ export default function MoDealIdInvoiceMark() {
               <button
                 className={`primary-btn${dropReady ? ' drop-ready' : ''}${dropOver ? ' drop-over' : ''}`}
                 type="button"
-                disabled={selected.size === 0}
-                title={selected.size === 0 ? 'Select one or more deals first' : `Mark ${selected.size} selected deal(s) for invoicing`}
+                disabled={mode !== 'manual' || selected.size === 0}
+                title={mode !== 'manual' ? 'Not available in Auto Mark' : selected.size === 0 ? 'Select one or more deals first' : `Mark ${selected.size} selected deal(s) for invoicing`}
                 onClick={() => void markSelected(selected)}
                 onDragOver={(e) => {
                   e.preventDefault()
@@ -382,6 +415,11 @@ export default function MoDealIdInvoiceMark() {
                 </svg>
                 Mark for Invoicing
               </button>
+              {mode === 'auto' ? (
+                <button className="primary-btn" type="button" disabled={sorted.length === 0} title={`Mark all ${sorted.length} candidate deal(s) for invoicing`} onClick={() => void runAutoMark()}>
+                  Run Automatic Marking ({sorted.length})
+                </button>
+              ) : null}
             </div>
 
             <div className="legend" aria-label="Color coding">
@@ -413,6 +451,7 @@ export default function MoDealIdInvoiceMark() {
                 setDragId(id)
                 setDropReady(true)
               }}
+              selectable={mode === 'manual'}
               emptyReason={source === 'unavailable' ? notes.join(' · ') : ''}
               onDragEnd={() => {
                 setDragId(null)

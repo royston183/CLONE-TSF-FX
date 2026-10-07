@@ -120,3 +120,29 @@ export async function setDealStatus(deals: readonly DealRow[], status: string): 
     }
   }
 }
+
+export type DealUpdateResult = { dealId: string; ok: boolean; reason?: string }
+export type DealUpdateOutcome = { succeeded: string[]; failed: Array<{ dealId: string; reason: string }> }
+
+/**
+ * Like setDealStatus, but a failed deal does not stop the rest: every deal is tried and each
+ * one's result reported. Setting the same target status twice is harmless, so a retry of the
+ * failed ones (or of all) is idempotent. Only ZDEAL_STAT and the changed-by stamp are written.
+ */
+export async function setDealStatusEach(
+  deals: readonly DealRow[],
+  status: string,
+  write: (key: Record<string, string>, changes: Record<string, unknown>) => Promise<void> = (key, changes) => fxUpdate('tsfDealId', key, changes),
+): Promise<DealUpdateOutcome> {
+  const out: DealUpdateOutcome = { succeeded: [], failed: [] }
+  for (const deal of deals) {
+    const dealId = txt(deal, 'ZDEAL_ID')
+    try {
+      await write(dealKey(deal), { ZDEAL_STAT: status, ...(await changedStamp()) })
+      out.succeeded.push(dealId)
+    } catch (error) {
+      out.failed.push({ dealId, reason: messageOf(error) })
+    }
+  }
+  return out
+}

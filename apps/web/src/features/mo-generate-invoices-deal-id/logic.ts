@@ -1,3 +1,4 @@
+import { DEAL_INVOICE_STATUS, canPrintLetterAt, canReverseInvoice, type InvoiceFinalStatus } from './invoice-status.ts'
 import { d1UsdAmount } from './invoice.ts'
 import type { Deal, DealListRow, InvRow, Sort } from './types.ts'
 
@@ -64,7 +65,7 @@ export function invSearchText(r: InvRow, key: string): string {
   return String((r as unknown as Record<string, unknown>)[key] ?? '')
 }
 
-export type InvoiceConfirmation = { status: '05' | '07'; message: string }
+export type InvoiceConfirmation = { status: InvoiceFinalStatus; message: string }
 
 /**
  * PAI 'UPD': invoice total vs the D1 deal amount against tolerance T02. Above the deal amount, or
@@ -83,17 +84,17 @@ export function computeInvoiceConfirmation(d: Deal): InvoiceConfirmation {
 
   if (invAmt > dealAmt) {
     return {
-      status: '05',
+      status: DEAL_INVOICE_STATUS.INVOICE_CREATED,
       message: `Inv Amt exceeds FX Deal Amt by USD ${diffStr}${invAmt < upperLimit ? ` within tol limit (${tolStr}%). Do you want to confirm invoice?` : ` exceeds tol limit (${tolStr}%). Do you want to confirm invoice?`}`,
     }
   }
   if (Math.abs(rate) < 0.005) {
-    return { status: '05', message: `Inv Amt same as FX Deal Amt. Within tol limit (${tolStr}%). Do you want to generate invoice?` }
+    return { status: DEAL_INVOICE_STATUS.INVOICE_CREATED, message: `Inv Amt same as FX Deal Amt. Within tol limit (${tolStr}%). Do you want to generate invoice?` }
   }
   if (rate <= tol) {
-    return { status: '05', message: `Inv Amt less than FX Deal Amt by USD ${diffStr} within tol limit (${tolStr}%). Do you want to confirm invoice?` }
+    return { status: DEAL_INVOICE_STATUS.INVOICE_CREATED, message: `Inv Amt less than FX Deal Amt by USD ${diffStr} within tol limit (${tolStr}%). Do you want to confirm invoice?` }
   }
-  return { status: '07', message: `Inv Amt less than FX Deal Amt by USD ${diffStr} exceeds tol limit (${tolStr}%). Do you want to confirm partial Invoice?` }
+  return { status: DEAL_INVOICE_STATUS.PARTIAL_INVOICE_CREATED, message: `Inv Amt less than FX Deal Amt by USD ${diffStr} exceeds tol limit (${tolStr}%). Do you want to confirm partial Invoice?` }
 }
 
 /** PAI 'UPD' first check: outside region R01 a profit percent (ZSGTSFTR_ORG_PRO) must cover today. */
@@ -102,10 +103,10 @@ export function profitCheckError(d: Deal): string {
 }
 
 /** PAI 'CAN': only a Deal ID at 04, 05 or 07 can have its TRM invoice cancelled (TEXT-005 otherwise). */
-export const canCancelInvoice = (status: string): boolean => status === '04' || status === '05' || status === '07'
+export const canCancelInvoice = canReverseInvoice
 
 /** PAI 'IMPORT' / 'EXPORT': letters only above status 04. */
-export const canPrintLetters = (status: string): boolean => status !== '' && status > '04'
+export const canPrintLetters = canPrintLetterAt
 
 export function dealLookupText(d: DealListRow): string {
   return [d.dealId, d.dealRef, d.modelId, d.entityString, d.statusLabel, d.mcRef, d.trader].join(' ')

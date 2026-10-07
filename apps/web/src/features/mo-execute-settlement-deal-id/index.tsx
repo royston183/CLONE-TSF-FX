@@ -15,6 +15,8 @@ import {
   loadDealList,
   loadDealScreen,
   pnlWaiting,
+  saveSpotData as bookSpots,
+  tcurrSpotRates,
   type DealList,
 } from './api.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
@@ -109,7 +111,7 @@ const BLANK_DEAL: Deal = {
   noInvoiceFlag: false,
 }
 
-/** Never loaded: the FX legs, invoice legs, headsups and DMS documents have no API (see api.ts). */
+/** Never loaded: the invoice legs, headsups and DMS documents have no API (the FX legs are read in api.ts). */
 const NO_FX: FxDeal[] = []
 const NO_INVOICES: TradeInvoice[] = []
 const NO_HEADSUPS: Headsup[] = []
@@ -123,15 +125,15 @@ const BLANK_INV_FORM: InvPostForm = { date: '', bank: '', sender: '', receiver: 
  *
  * The selection screen takes P_DEAL; the header is read by that key from ZSGTSFTR_DEALID /
  * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). The ABAP source is not exported (only
- * its dependency note), so the FX legs, trade-invoice legs, Headsup, DMS, P&L and difference
- * views show WAITING FOR API, and every action validates as before and then says WAITING FOR
+ * its dependency note), so the FX legs come from TrmFxApp + FxTransaction by Deal ID (option legs, trade-invoice
+ * legs, Headsup and DMS show WAITING FOR API), and every action validates as before and then says WAITING FOR
  * ACTION API without changing anything. No sample data at runtime (fixtures.ts is for tests).
  */
 export default function MoExecuteSettlementDealId() {
   const [deal, setDeal] = useState<Deal>(BLANK_DEAL)
   const [statuses, setStatuses] = useState<StatusMeta[]>([])
-  const [legsWaiting, setLegsWaiting] = useState(() => legsWaitingReason(null))
-  const fxDeals = NO_FX
+  const [legsWaiting, setLegsWaiting] = useState(() => legsWaitingReason(0))
+  const [fxDeals, setFxDeals] = useState<FxDeal[]>(NO_FX)
   const invoices = NO_INVOICES
   const dms = NO_DOCS
 
@@ -217,6 +219,7 @@ export default function MoExecuteSettlementDealId() {
       setSelError(null)
       setDeal(screen.deal)
       setStatuses(screen.statuses)
+      setFxDeals(screen.fxDeals)
       setLegsWaiting(screen.legsWaiting)
       setMainShown(true)
       setSelFx(null)
@@ -277,10 +280,33 @@ export default function MoExecuteSettlementDealId() {
 
   // FX-Invoice Difference (9006)
   const openDiff = () => {
-    setSpots(fxDeals.map((r) => r.spot))
+    const initial = fxDeals.map((r) => r.spot)
+    setSpots(initial)
     modals.open('diff')
+    // The default Spot Rate is TCURR's (type M, today); a rate the user already typed is left alone.
+    void tcurrSpotRates(fxDeals).then((rates) =>
+      setSpots((list) => list.map((v, i) => (v === initial[i] ? (rates[i] ?? v) : v))),
+    )
   }
-  const saveSpotData = () => showToast(ACTION_WAITING.spot, 'error')
+  const [savingSpot, setSavingSpot] = useState(false)
+  const saveSpotData = async () => {
+    if (savingSpot) return
+    setSavingSpot(true)
+    try {
+      const results = await bookSpots(deal.dealId, fxDeals, fxDeals.map((r, i) => spots[i] ?? r.spot))
+      const booked = results.filter((r) => r.ok)
+      const lines = results.map((r) => `${r.dealType} ${r.rfha}: ${r.message}`)
+      showToast(lines.join(' | '), booked.length === results.length ? 'success' : 'error')
+      if (booked.length) {
+        modals.close('diff')
+        refreshScreen()
+      }
+    } catch (error) {
+      showToast(`Save Spot Data failed: ${messageOf(error)}`, 'error')
+    } finally {
+      setSavingSpot(false)
+    }
+  }
 
   // DMS viewer + Edit DMS (9007)
   const openEditDms = () => {
@@ -503,6 +529,7 @@ export default function MoExecuteSettlementDealId() {
             onViewDoc={(doc) => showToast(`In SAP, this hotspot opens document ${doc} in transaction FB03.`, 'info')}
             onToast={showToast}
             emptyText={fxDeals.length ? undefined : legsWaiting}
+            note={fxDeals.length ? legsWaiting : undefined}
           />
 
           <InvGrid
@@ -546,7 +573,8 @@ export default function MoExecuteSettlementDealId() {
         rows={fxDeals}
         spots={spots}
         onSpot={(idx, v) => setSpots((list) => list.map((s, i) => (i === idx ? v : s)))}
-        onSave={saveSpotData}
+        onSave={() => void saveSpotData()}
+        saving={savingSpot}
         emptyText={diffWaiting(legsWaiting)}
       />
       <DmsModal

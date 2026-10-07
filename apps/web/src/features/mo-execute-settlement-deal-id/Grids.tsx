@@ -67,6 +67,7 @@ export function FxGrid({
   onViewDoc,
   onToast,
   emptyText,
+  note,
 }: {
   rows: readonly Indexed<FxDeal>[]
   total: number
@@ -80,6 +81,8 @@ export function FxGrid({
   onToast: (message: string, kind: ToastKind) => void
   /** Shown when there are no rows, e.g. the WAITING FOR API reason. */
   emptyText?: string | undefined
+  /** What is still WAITING FOR API under rows that did load (the option legs). */
+  note?: string | undefined
 }) {
   const docCell = (doc: string) =>
     doc ? (
@@ -189,6 +192,7 @@ export function FxGrid({
           </tbody>
         </table>
       </div>
+      {note ? <div className="panel-sub" style={{ padding: '6px 14px' }}>{note}</div> : null}
       <Pager label={`Showing ${rows.length} of ${total}`} />
     </div>
   )

@@ -37,6 +37,7 @@ export function DealTable({
   onDragStart,
   onDragEnd,
   emptyReason,
+  selectable = true,
 }: {
   rows: DealRow[]
   selected: ReadonlySet<string>
@@ -50,6 +51,8 @@ export function DealTable({
   onDragEnd: () => void
   /** Why there are no rows when the list could not be read (WAITING FOR DEAL ID API). */
   emptyReason?: string
+  /** False in the automatic mode: the Check column is read-only and rows are not draggable. */
+  selectable?: boolean
 }) {
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.dealId))
 
@@ -59,7 +62,7 @@ export function DealTable({
         <thead>
           <tr>
             <th className="check-col">
-              <input id="checkAll" type="checkbox" checked={allChecked} disabled={rows.length === 0} onChange={(e) => onToggleAll(e.target.checked)} aria-label="Select all visible deals" />
+              <input id="checkAll" type="checkbox" checked={allChecked} disabled={rows.length === 0 || !selectable} onChange={(e) => onToggleAll(e.target.checked)} aria-label="Select all visible deals" />
             </th>
             {COLUMNS.map((col) => (
               <th key={col.key} className={`sortable ${col.hotspot === 'deal' ? 'deal-col' : ''}`} style={{ minWidth: col.width }} onClick={() => onSort(col.key)}>
@@ -71,9 +74,9 @@ export function DealTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.dealId} className={`deal-row${selected.has(row.dealId) ? ' row-selected' : ''}`} draggable onDragStart={() => onDragStart(row.dealId)} onDragEnd={onDragEnd} onClick={() => onToggleRow(row.dealId, !selected.has(row.dealId))}>
+            <tr key={row.dealId} className={`deal-row${selected.has(row.dealId) ? ' row-selected' : ''}`} draggable={selectable} onDragStart={() => onDragStart(row.dealId)} onDragEnd={onDragEnd} onClick={() => selectable && onToggleRow(row.dealId, !selected.has(row.dealId))}>
               <td className="check-col">
-                <input className="row-check" type="checkbox" checked={selected.has(row.dealId)} onChange={(e) => onToggleRow(row.dealId, e.target.checked)} onClick={(e) => e.stopPropagation()} aria-label={`Select ${row.dealId}`} />
+                <input className="row-check" type="checkbox" checked={selected.has(row.dealId)} disabled={!selectable} onChange={(e) => onToggleRow(row.dealId, e.target.checked)} onClick={(e) => e.stopPropagation()} aria-label={`Select ${row.dealId}`} />
               </td>
               {COLUMNS.map((col) => {
                 if (col.hotspot === 'deal') {

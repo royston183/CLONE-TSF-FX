@@ -6,64 +6,16 @@
  * refusal the BAPI return lines come back in error.details[] and every one is surfaced.
  */
 import { ApiError, apiRequest, service } from '@slc/api-client'
-import { isoFromDate } from '../../shared/fx/sap.ts'
-import { parseAmountInput, parseDate } from './format.ts'
-import type { CreateFormValues, SpotRow } from './types.ts'
+import type { SpotCreatePayload } from './spotCreate.ts'
 
 const trmfx = service('trmfx')
 
 export const FX_TRANSACTION_SET = 'FxTransaction'
 
-export type FxTransactionCreate = {
-  CompanyCode: string
-  ProductType: string
-  TransactionType: string
-  Partner: string
-  ContractDate: string
-  ValueDate: string
-  BuyCurrency: string
-  SellCurrency: string
-  LeadCurrency: string
-  FollowCurrency: string
-  TradedCurrency: string
-  SpotRate: number
-  BuyAmount?: number
-  SellAmount?: number
-}
-
-/**
- * The validated form as an FxTransaction create. Only the traded leg (the row's difference
- * amount, in the row's currency) is sent: DEALCREATE derives the other leg from the rate.
- * The quote is USD-led either way, matching recalcAmounts: USD/INR at 88.5, or EUR against
- * USD with the rate as EUR per USD.
- */
-export function toCreatePayload(row: SpotRow, values: CreateFormValues, productType: string): FxTransactionCreate {
-  const base = Math.abs(Number(row.diffAmt))
-  const [lead, follow] = row.currency === 'USD' ? [row.currency, row.otherCurrency] : [row.otherCurrency, row.currency]
-  const [buyCurr, sellCurr] = row.side === 'Buy' ? [row.currency, row.otherCurrency] : [row.otherCurrency, row.currency]
-  const payload: FxTransactionCreate = {
-    CompanyCode: values.companyCode,
-    ProductType: productType,
-    TransactionType: values.txnType,
-    Partner: values.partner,
-    ContractDate: isoFromDate(parseDate(values.tradeDate))!,
-    ValueDate: isoFromDate(parseDate(values.valueDate))!,
-    BuyCurrency: buyCurr,
-    SellCurrency: sellCurr,
-    LeadCurrency: lead,
-    FollowCurrency: follow,
-    TradedCurrency: row.currency,
-    SpotRate: parseAmountInput(values.rate),
-  }
-  if (row.side === 'Buy') payload.BuyAmount = base
-  else payload.SellAmount = base
-  return payload
-}
-
 export type CreateResult = { ok: true; companyCode: string; transaction: string } | { ok: false; messages: string[] }
 
 /** Books the spot deal. Never throws for a refused create; the SAP messages come back instead. */
-export async function createSpotTransaction(payload: FxTransactionCreate): Promise<CreateResult> {
+export async function createSpotTransaction(payload: SpotCreatePayload): Promise<CreateResult> {
   try {
     const res = await apiRequest<Record<string, unknown>>(trmfx(FX_TRANSACTION_SET), { method: 'POST', body: payload })
     const transaction = String(res.data?.['FinancialTransaction'] ?? keyFromHeader(res.headers) ?? '')

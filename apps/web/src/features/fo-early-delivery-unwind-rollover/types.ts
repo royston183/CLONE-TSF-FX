@@ -46,6 +46,8 @@ export type DdOption = { value: string; primary: string; secondary?: string | un
 
 /** One side (New Booking or Cancellation) of an Early Delivery / Rollover. */
 export type BookingForm = {
+  /** The amount the user typed last; a rate change recomputes the other one from it. */
+  anchor?: 'buy' | 'sell'
   type: string
   /** ISO dates; null when not picked. */
   tdate: string | null
@@ -61,6 +63,7 @@ export type PairForm = { remark: string; newTxn: BookingForm; cancel: BookingFor
 
 /** Unwinding (screen 9002). */
 export type UnwindForm = {
+  anchor?: 'buy' | 'sell'
   remark: string
   tdate: string | null
   vdate: string | null

@@ -54,7 +54,7 @@
       "auth": "sap-ds4",
       "client": "100",
       "tlsVerify": false,
-      "base": "https://vhnlqds4ap01.sap.niififl.in:44300/sap/opu/odata4/sap/zfs_sb_trdflow_o4_api/srvd_a2x/sap/zfs_sd_trdflow/0001",
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trdflow_o4_api/srvd_a2x/sap/zfs_sd_trdflow/0001",
       "description": "ZFS_SB_TRDFLOW_O4_API — TrdFlow, ChComm"
     },
     "trmfx": {
@@ -88,6 +88,14 @@
       "tlsVerify": false,
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmmaster_o4_api/srvd_a2x/sap/zfs_sd_trmmaster/0001",
       "description": "ZFS_SB_TRMMASTER_O4_API — FTR customizing: ContractType, ProductCategory, ProductType, TransactionType, FlowType"
+    },
+    "trmfxapp": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmfxapp_o4_api/srvd_a2x/sap/zfs_sd_trmfxapp/0001",
+      "description": "ZFS_SB_TRMFXAPP_O4_API — TrmFxApp (TSF fields missing from the FX views; key CompanyCode + FinancialTransaction)"
     },
     "slctsfbpbank": {
       "kind": "odata",

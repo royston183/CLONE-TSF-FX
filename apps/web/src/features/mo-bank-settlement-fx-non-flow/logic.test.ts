@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, worklistWaitingReason } from './api.ts'
+import { ACTION_WAITING, VIEW_REQUIRED_COLUMNS, companyOptions, missingColumns, unservedColumns, worklistWaitingReason } from './api.ts'
 import { HOUSE_BANKS, TRANSFER_TYPES, seedDeals } from './fixtures.ts'
 import { fmtDate, fmtNum, fmtRate, parseDMY } from './format.ts'
 import {
@@ -237,7 +237,11 @@ describe('api', () => {
     deepStrictEqual(missing.slice(0, 4), ['PRCTR', 'PC_NAME', 'BLOTTER_DATE', 'TXN_STATUS'])
     const reason = worklistWaitingReason(served)
     strictEqual(reason.startsWith('WAITING FOR API — ZSGTSF_RNFX_DEALFLOW source not exported (only dependency notes)'), true)
-    strictEqual(reason.includes('ZTSF_DEAL_ID'), true)
+    // TrmFxApp serves the VTBFHA append columns, so only what no service has is named.
+    strictEqual(reason.includes('ZTSF_DEAL_ID'), false)
+    strictEqual(reason.includes('TXN_STATUS'), false)
+    strictEqual(reason.includes('PRCTR'), true)
+    deepStrictEqual(unservedColumns(served, VIEW_REQUIRED_COLUMNS).slice(0, 4), ['PRCTR', 'PC_NAME', 'TRD_NAME', 'ZGRP'])
     strictEqual(worklistWaitingReason(VIEW_REQUIRED_COLUMNS).includes('does not serve'), false)
     strictEqual(worklistWaitingReason(null).includes('could not be read'), true)
   })

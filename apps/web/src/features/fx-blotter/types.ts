@@ -159,7 +159,14 @@ export type BlotterRow = {
   settled?: boolean
   /** True for a row that exists in SAP (created through, or read from, the FxTransaction service). */
   live?: boolean
+  /** TXN_STATUS from the application data (ZSGTSFTR_APP_STR): the SAP lifecycle status behind `status`. */
+  txnStatus?: string
+  /** Set when SAP did the work but the application data did not save; the next load retries just that save. */
+  appDataPending?: AppDataPending
 }
+
+/** The application-data save still owed for a row. `status` is the TXN_STATUS to write for a reverse. */
+export type AppDataPending = { intent: 'create' | 'release' | 'reverse'; status?: string }
 
 export type TextField =
   | 'entity'

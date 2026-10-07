@@ -1,22 +1,24 @@
-import { Fragment } from 'react'
 import { DateField } from './DateField.tsx'
 import type { Section } from './fields.ts'
+import type { SelectOption } from './masters.ts'
 import type { TrdFlowRow } from './types.ts'
 
 export type FieldGridProps = {
   section: Section
   draft: TrdFlowRow
-  /** Option values for a bound <select>, taken from the rows actually loaded. */
-  optionsFor: (field: keyof TrdFlowRow) => string[]
+  /** Options for a bound <select>: a master's codes where one exists, else the loaded values. */
+  optionsFor: (field: keyof TrdFlowRow) => readonly SelectOption[]
   onChange: (field: keyof TrdFlowRow, value: string) => void
+  /** The value shown by a `derived` descriptor, which has no column of its own. */
+  derivedValue?: (descriptorId: string) => string
 }
 
 /**
- * One `.section-box`. The legacy grid places the label and the control as siblings inside
- * `.section-body.field-grid.<gridN>` — no wrapper per field — so that is what this emits; a
- * wrapper element would break the column count the grid class sets.
+ * One `.section-box`. Each field is a `.field` wrapper (label stacked directly above its
+ * control) so the detail popup's grid columns are whole fields, not raw label/control cells —
+ * matching the OTTK modal's own field layout.
  */
-export function FieldGrid({ section, draft, optionsFor, onChange }: FieldGridProps) {
+export function FieldGrid({ section, draft, optionsFor, onChange, derivedValue }: FieldGridProps) {
   const bodyClass = section.grid
     ? `section-body field-grid ${section.grid}`
     : 'section-body field-grid'
@@ -27,12 +29,13 @@ export function FieldGrid({ section, draft, optionsFor, onChange }: FieldGridPro
       <div className={bodyClass}>
         {section.fields.map((descriptor) => {
           const bound = descriptor.field
-          const value = bound ? (draft[bound] ?? '') : ''
-          const unmapped = bound === undefined
+          const derived = descriptor.derived === true
+          const value = bound ? (draft[bound] ?? '') : derived ? (derivedValue?.(descriptor.id) ?? '') : ''
+          const unmapped = bound === undefined && !derived
           const title = unmapped ? 'No SAP source for this field yet' : undefined
 
           return (
-            <Fragment key={descriptor.id}>
+            <div className="field" key={descriptor.id}>
               <label htmlFor={descriptor.id}>{descriptor.label}</label>
               {descriptor.control === 'select' ? (
                 <select
@@ -45,11 +48,15 @@ export function FieldGrid({ section, draft, optionsFor, onChange }: FieldGridPro
                   <option value="" />
                   {bound
                     ? optionsFor(bound).map((option) => (
-                        <option key={option} value={option}>
-                          {option}
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))
                     : null}
+                  {/* A stored code the master does not list is still shown, not silently blanked. */}
+                  {bound && value !== '' && !optionsFor(bound).some((o) => o.value === String(value)) ? (
+                    <option value={String(value)}>{String(value)}</option>
+                  ) : null}
                 </select>
               ) : descriptor.type === 'date' ? (
                 <DateField
@@ -74,7 +81,7 @@ export function FieldGrid({ section, draft, optionsFor, onChange }: FieldGridPro
                   onChange={(event) => bound && onChange(bound, event.target.value)}
                 />
               )}
-            </Fragment>
+            </div>
           )
         })}
       </div>

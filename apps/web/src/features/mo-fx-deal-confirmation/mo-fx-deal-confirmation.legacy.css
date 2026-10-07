@@ -443,6 +443,7 @@
 .mo-fx-deal-confirmation .status-text {font-weight:600;}
 .mo-fx-deal-confirmation .status-unmatched {color:var(--sub);}
 .mo-fx-deal-confirmation .status-correction {color:var(--error);}
+.mo-fx-deal-confirmation .status-corrected {color:var(--sub);}
 .mo-fx-deal-confirmation .status-matched {color:var(--green);}
 .mo-fx-deal-confirmation .empty-row td {
   text-align:center;

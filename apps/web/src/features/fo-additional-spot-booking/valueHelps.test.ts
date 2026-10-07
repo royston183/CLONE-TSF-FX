@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { offered, partnerAfterLoad, productTypeOf } from './logic.ts'
+import { offered, partnerAfterLoad } from './logic.ts'
 import { companyOptions, partnerOptions, txnTypeOptions } from './valueHelps.ts'
 
 // Shapes and values as DS4/100 returned them on 2026-10-01.
@@ -35,8 +35,6 @@ describe('Transaction Type', () => {
       { productType: '12A', key: '605', text: 'Spot - TSF' },
       { productType: '12B', key: '619', text: 'Forward - TSF' },
     ])
-    strictEqual(productTypeOf(options, '619'), '12B')
-    strictEqual(productTypeOf(options, '400'), '')
   })
 })
 

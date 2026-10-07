@@ -3,17 +3,29 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { DealTable } from './DealTable.tsx'
-import { WAITING, loadBankPartners, loadDealLegs, loadTxnTypes } from './api.ts'
+import { WAITING, loadBankPartners, loadDealLegs, loadInrInvoiceAmount, loadTxnTypes } from './api.ts'
+import { realDeps } from './deps.ts'
 import {
-  ACTION_WAITING,
+  canResume,
+  describeFailure,
+  runPremature,
+  sendRolloverNotification,
+  shouldNotifyRollover,
+  type PrematureInput,
+  type PrematureResult,
+  type Progress,
+} from './premature.ts'
+import {
   DEFAULT_FILTERS,
   DEFAULT_PAGE_SIZE,
   DEFAULT_SORT,
   EMPTY_STATE_NO_DEAL,
   EMPTY_STATE_NO_MATCH,
   PAGE_SIZES,
+  MSG,
+  applyPairEdit,
+  applyUnwindEdit,
   dragGhostText,
-  earlyEvent,
   emptyPairForm,
   emptyUnwindForm,
   filterSort,
@@ -26,18 +38,17 @@ import {
   normalizeDealId,
   paginate,
   pairFormFor,
-  rolloverEvent,
   sapeventUrl,
   statusOptions,
   toggleSelection,
   txnCount,
   typeFilterOptions,
-  unwindEvent,
   unwindFormFor,
   validateEarly,
   validateRollover,
   validateUnwind,
   viewTxnEvent,
+  withInvoiceAmount,
 } from './logic.ts'
 import { useModal } from './modal.tsx'
 import { PairModal } from './PairModal.tsx'
@@ -49,6 +60,8 @@ import './fo-early-delivery-unwind-rollover.dark.css'
 import type { Avail, DdOption, Filters, Leg, PairForm, Sort, SortField, Toast, ToastKind, UnwindForm } from './types.ts'
 
 const TOAST_MS = 3200
+/** A failure names the stage and what is already created; it needs longer on screen. */
+const FAILURE_TOAST_MS = 12000
 const FLASH_MS = 1800
 
 type DropTarget = 'early' | 'unwind' | 'roll'
@@ -63,13 +76,15 @@ function fireSapevent(event: string) {
  * ZSGTSFP015: FO Create Early Delivery / Unwinding / Rollover ("Premature Settlement"),
  * converted from legacy/unwindroll.html.
  *
- * Reads SAP data only (see api.ts): the Deal ID's legs from ZSGTSFCDS_FX, the Txn Type help
- * from TVARVC and the Bank BP help from ZSGTRMTR_BP_GRP ⋈ ZSGTRMTR_BPEXT for the leg's trader
- * group. Whatever the middleware cannot serve yet shows as WAITING FOR API with the reason.
+ * Reads (see api.ts): the Deal ID's legs from TrmFxApp + FxTransaction, the Txn Type help from TVARVC and the
+ * Bank BP help from ZSGTRMTR_BP_GRP ⋈ ZSGTRMTR_BPEXT for the leg's trader group. Whatever the middleware cannot
+ * serve shows as WAITING FOR API with the reason.
  *
- * The three actions — Early Delivery (screen 9001), Unwinding (9002) and Rollover (9003) —
- * validate and build their sapevent as before, but have no backend action to post to, so
- * they say so and leave the deal untouched instead of reporting a success that never happened.
+ * The three actions — Early Delivery (screen 9001), Unwinding (9002) and Rollover (9003) — run through
+ * premature.ts: standard FX create for the new transactions, APP_STR for their status / flags / remark, the Deal ID
+ * slot for the replacement. They are separate flows with separate statuses, and a failure part-way keeps what was
+ * created so a second Submit continues instead of creating the transactions again. Afterwards the Deal ID is read
+ * back from SAP; nothing is rebuilt from local state.
  */
 export default function FoEarlyDeliveryUnwindRollover() {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -83,6 +98,10 @@ export default function FoEarlyDeliveryUnwindRollover() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [banner, setBanner] = useState<Banner | null>(null)
+  const loadedDeal = useRef('')
+  /** An action that stopped part-way: its progress, so Submit again continues rather than starting over. */
+  const resume = useRef<{ key: string; progress: Progress } | null>(null)
+  const submitting = useRef(false)
   const [bannerShown, setBannerShown] = useState(false)
 
   const [toast, setToast] = useState<Toast>({ msg: '', kind: undefined })
@@ -123,11 +142,11 @@ export default function FoEarlyDeliveryUnwindRollover() {
     }
   }, [])
 
-  const showToast = useCallback((msg: string, kind?: ToastKind) => {
+  const showToast = useCallback((msg: string, kind?: ToastKind, ms: number = TOAST_MS) => {
     setToast({ msg, kind })
     setToastShown(true)
     clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToastShown(false), TOAST_MS)
+    toastTimer.current = setTimeout(() => setToastShown(false), ms)
   }, [])
 
   const flashRow = (rfha: string) => {
@@ -144,11 +163,11 @@ export default function FoEarlyDeliveryUnwindRollover() {
 
   /* ---------- Basic Selection ---------- */
 
-  const doLoad = async (raw: string) => {
+  const doLoad = async (raw: string): Promise<Leg[] | null> => {
     const res = normalizeDealId(raw)
     if (!res.ok) {
       showToast(res.message, 'warn')
-      return
+      return null
     }
     loadAbort.current?.abort()
     const ctrl = new AbortController()
@@ -158,10 +177,11 @@ export default function FoEarlyDeliveryUnwindRollover() {
     try {
       read = await loadDealLegs(res.dealId, ctrl.signal)
     } catch {
-      return // aborted by a newer load or by leaving the screen
+      return null // aborted by a newer load or by leaving the screen
     } finally {
       if (loadAbort.current === ctrl) setLoading(false)
     }
+    loadedDeal.current = res.dealId
     setLegs(read.state === 'ok' ? read.value : [])
     setSelectedRfha(null)
     setPage(1)
@@ -176,6 +196,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
       setBannerShown(false)
       showToast(read.reason, 'error')
     }
+    return read.state === 'ok' ? read.value : null
   }
 
   /** FORM bp: the selected leg's trader group decides which banks are offered. */
@@ -185,6 +206,15 @@ export default function FoEarlyDeliveryUnwindRollover() {
     bpAbort.current = ctrl
     setBankPartners({ state: 'loading' })
     loadBankPartners(l.zgrp, ctrl.signal).then(setBankPartners, () => undefined)
+  }
+
+  /** fetch_data1: the INR side of the New Booking starts on the invoice plan's amount (the user can still change it). */
+  const prefillInvoice = (l: Leg, set: (update: (f: PairForm) => PairForm) => void) => {
+    if (!loadedDeal.current) return
+    loadInrInvoiceAmount(loadedDeal.current, l.dealType).then(
+      (inr) => set((f) => withInvoiceAmount(f, l, inr)),
+      () => undefined,
+    )
   }
 
   const clearValues = () => {
@@ -208,6 +238,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
     setModalLeg(l)
     setModalSeq((n) => n + 1)
     setEarlyForm(pairFormFor(l))
+    prefillInvoice(l, setEarlyForm)
     loadPartnersFor(l)
     earlyModal.open()
   }
@@ -236,42 +267,69 @@ export default function FoEarlyDeliveryUnwindRollover() {
     setModalLeg(l)
     setModalSeq((n) => n + 1)
     setRollForm(pairFormFor(l))
+    prefillInvoice(l, setRollForm)
     loadPartnersFor(l)
     rollModal.open()
   }
 
-  const submitEarly = () => {
-    const l = selectedLeg
+  /**
+   * Runs one action and reads the deal back. A failure keeps the dialog open with the progress made, so a
+   * second Submit continues from the failed stage (nothing already created is created again).
+   */
+  const execute = async (input: PrematureInput, modal: { close: () => void }) => {
+    if (submitting.current) return
+    const key = `${input.kind}:${input.original.companyCode}/${input.original.transaction}`
+    const previous = resume.current?.key === key ? resume.current.progress : undefined
+    submitting.current = true
+    let result: PrematureResult
+    try {
+      result = await runPremature(input, realDeps, previous)
+    } finally {
+      submitting.current = false
+    }
+    const made = result.progress
+    if (!result.ok) {
+      resume.current = canResume(result, input.original) ? { key, progress: made } : null
+      showToast(describeFailure(result) || result.error || 'The action failed.', 'error', FAILURE_TOAST_MS)
+      // Whatever was already created is shown, so the grid never hides a transaction SAP now holds.
+      if (made.cancellationTransaction || made.replacementTransaction) void doLoad(loadedDeal.current)
+      return
+    }
+    resume.current = null
+    modal.close()
+    const done = input.kind === 'early' ? MSG.earlyDone : input.kind === 'unwind' ? MSG.unwindDone : MSG.rollDone
+    const loaded = await doLoad(loadedDeal.current)
+    const extra = result.notes.length ? ` ${result.notes.join(' ')}` : ''
+    if (input.kind === 'rollover' && loaded && shouldNotifyRollover(loaded.length)) {
+      showToast(`${done} ${sendRolloverNotification().reason}${extra}`, 'warn', FAILURE_TOAST_MS)
+    } else {
+      showToast(`${done}${extra}`, result.notes.length ? 'warn' : undefined, result.notes.length ? FAILURE_TOAST_MS : TOAST_MS)
+    }
+    const flash = made.replacementTransaction ?? made.cancellationTransaction
+    if (flash) flashRow(flash.transaction)
+  }
+
+  const submitPair = (kind: 'early' | 'rollover', form: PairForm, validate: (f: PairForm) => string | null, modal: { close: () => void }) => {
+    const l = modalLeg
     if (!l) return
-    const err = validateEarly(earlyForm)
+    const err = validate(form)
     if (err) {
       showToast(err, 'error')
       return
     }
-    fireSapevent(earlyEvent(l, earlyForm))
-    showToast(ACTION_WAITING.early, 'warn')
+    void execute({ kind, original: { companyCode: l.bukrs, transaction: l.rfha }, dealId: loadedDeal.current, remark: form.remark, newTxn: form.newTxn, cancel: form.cancel }, modal)
   }
+  const submitEarly = () => submitPair('early', earlyForm, validateEarly, earlyModal)
+  const submitRollover = () => submitPair('rollover', rollForm, validateRollover, rollModal)
   const submitUnwind = () => {
-    const l = selectedLeg
+    const l = modalLeg
     if (!l) return
     const err = validateUnwind(unwindForm)
     if (err) {
       showToast(err, 'error')
       return
     }
-    fireSapevent(unwindEvent(l, unwindForm))
-    showToast(ACTION_WAITING.unwind, 'warn')
-  }
-  const submitRollover = () => {
-    const l = selectedLeg
-    if (!l) return
-    const err = validateRollover(rollForm)
-    if (err) {
-      showToast(err, 'error')
-      return
-    }
-    fireSapevent(rolloverEvent(l, rollForm))
-    showToast(ACTION_WAITING.roll, 'warn')
+    void execute({ kind: 'unwind', original: { companyCode: l.bukrs, transaction: l.rfha }, dealId: loadedDeal.current, remark: unwindForm.remark, form: unwindForm }, unwindModal)
   }
 
   /* ---------- Drag and drop ---------- */
@@ -368,7 +426,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
                 </button>
               </div>
               <div className="field" style={{ flex: '1 1 auto', alignSelf: 'flex-end' }}>
-                <span className="hint">ZSGTSFCDS_FX · SLC middleware</span>
+                <span className="hint">TrmFxApp · FxTransaction</span>
               </div>
             </div>
           </div>
@@ -553,7 +611,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
         bodyKey={modalSeq}
         typeOptions={txnTypes}
         bpOptions={bankPartners}
-        onChange={setEarlyForm}
+        onChange={(f) => setEarlyForm((prev) => applyPairEdit(prev, f, modalLeg))}
         onSubmit={submitEarly}
       />
       <UnwindModal
@@ -562,7 +620,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
         form={unwindForm}
         bodyKey={modalSeq}
         bpOptions={bankPartners}
-        onChange={setUnwindForm}
+        onChange={(f) => setUnwindForm((prev) => applyUnwindEdit(prev, f, modalLeg))}
         onSubmit={submitUnwind}
       />
       <PairModal
@@ -575,7 +633,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
         bodyKey={modalSeq}
         typeOptions={txnTypes}
         bpOptions={bankPartners}
-        onChange={setRollForm}
+        onChange={(f) => setRollForm((prev) => applyPairEdit(prev, f, modalLeg))}
         onSubmit={submitRollover}
       />
 

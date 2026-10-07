@@ -9,6 +9,9 @@
  * So, per the no-source rule:
  *   Deal ID worklist      which Deal IDs are "for settlement" (status range, dates, CO area,
  *                         utilisation from ZSGTSFCDS_FX) is a guessed selection -> WAITING FOR API.
+ *                         The utilisation column alone is no longer a blocker: its D1 legs are
+ *                         TrmFxApp (Deal ID / Deal Type / MC ref) + FxTransaction, see
+ *                         mo-deal-id-invoice-mark/amount.ts loadUsdAmounts. The selection is.
  *   Region list           the SAP region codes, shared/fx/regions.ts (COMP and BPEXT) -> live.
  *   Status / Origin Entity / CO Area lists
  *                         none is a standard master with an unambiguous key (the status list
@@ -24,7 +27,7 @@ import type { Deal, MasterContract } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 
-export const LIST_WAITING = `${WAITING} — ABAP source for ZSGTSFR106 not exported (its list program is in no dependency note); the selection of Deal IDs for settlement on ZSGTSFTR_DEALID / ZSGTSFTR_MAS_CON / ZSGTSFTR_DEAL_ST / ZSGTSFCDS_FX cannot be reproduced.`
+export const LIST_WAITING = `${WAITING} — ABAP source for ZSGTSFR106 not exported (its list program is in no dependency note); the selection of Deal IDs for settlement on ZSGTSFTR_DEALID / ZSGTSFTR_MAS_CON / ZSGTSFTR_DEAL_ST cannot be reproduced.`
 
 export const MASTER_WAITING = `${WAITING} — ZSGTSFR106 source not exported`
 

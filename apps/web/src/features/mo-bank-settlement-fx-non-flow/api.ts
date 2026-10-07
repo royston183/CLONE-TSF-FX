@@ -12,6 +12,8 @@
  *                                 ZSGTSFTR_MAS_CON / ZSGTSFTR_DEALID (No-Invoice models) + TVARVC
  *                                 (allowed transaction types) + BKPF (settlement documents)
  *                                 -> WAITING FOR API (source not exported; view also lacks columns)
+ *                                 TrmFxApp (shared/fx/app-str.ts) now supplies the view's missing VTBFHA append columns (Deal ID, MC ref,
+ *                                 TXN_STATUS, ...), but the selection itself is still not exported, so the list stays WAITING.
  *   House bank / account (9002)   T012 / T012K / T012T, ZSGTSFTR_COMP ZCOM_ID -> ZBUKRS
  *                                 -> WAITING FOR API: no middleware resource for T012 / T012K / T012T
  *   Transfer type                 VTBFHA-ZTSF_TRFTYPE / ZTSF_TRFTYPE2 -> not served (no VTBFHA resource)
@@ -48,14 +50,31 @@ export const missingColumns = (have: readonly string[], need: readonly string[])
 }
 
 /**
+ * ZSGTSFV_FX columns that are not in the view but ARE served by TrmFxApp (ZSGTSFTR_APP_STR, shared/fx/app-str.ts):
+ * Deal ID / description / type, MC reference, execution flag, TXN_STATUS, trader code, blotter date, NDF remarks and
+ * transfer types. They no longer count as missing.
+ */
+// prettier-ignore
+export const APP_SERVED_COLUMNS = [
+  'ZTSF_DEAL_ID', 'ZTSF_DEAL_DESC', 'ZTSF_MC_REF_NO', 'ZTSF_DEAL_TYPE', 'ZTSF_EXE_CO', 'TXN_STATUS', 'ZTRCODE', 'BLOTTER_DATE',
+  'NDF_FO_REM', 'NDF_MO_REM', 'ZTSF_TRFTYPE', 'ZTSF_TRFTYPE2',
+] as const
+
+/** View columns missing from the view and from TrmFxApp: the ones that genuinely have no source. */
+export const unservedColumns = (have: readonly string[], need: readonly string[]): string[] => {
+  const app = new Set<string>(APP_SERVED_COLUMNS)
+  return missingColumns(have, need).filter((c) => !app.has(c))
+}
+
+/**
  * Why the worklist cannot be listed. Always waiting: even a complete view would need the
  * program's selection (status / no-invoice / TVARVC conditions), which is not exported.
  */
 export function worklistWaitingReason(viewColumns: readonly string[] | null): string {
   const base = `${WAITING} — ${PROGRAM} source not exported (only dependency notes); the selection on ZSGTSFV_FX, ZSGTSFTR_RULE_BT, ZSGTSFTR_MAS_CON, ZSGTSFTR_DEALID, TVARVC and BKPF cannot be reproduced.`
   if (viewColumns === null) return `${base} ZSGTSFV_FX (middleware "${FX_VIEW}") could not be read.`
-  const missing = missingColumns(viewColumns, VIEW_REQUIRED_COLUMNS)
-  return missing.length ? `${base} ZSGTSFV_FX (middleware "${FX_VIEW}") also does not serve ${missing.join(', ')}.` : base
+  const missing = unservedColumns(viewColumns, VIEW_REQUIRED_COLUMNS)
+  return missing.length ? `${base} ZSGTSFV_FX (middleware "${FX_VIEW}") also does not serve ${missing.join(', ')}, and TrmFxApp does not have them either.` : base
 }
 
 export const HOUSE_BANK_WAITING = `${WAITING} — T012 / T012K / T012T (house banks and accounts) have no middleware resource; the account help cannot be listed.`

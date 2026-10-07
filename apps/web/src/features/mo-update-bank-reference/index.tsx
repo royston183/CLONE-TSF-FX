@@ -68,6 +68,8 @@ export default function MoUpdateBankReference() {
   const [results, setResults] = useState<Deal[]>([])
   /** Why the list is empty when it could not be read (WAITING FOR API / read error); '' otherwise. */
   const [resultNote, setResultNote] = useState('')
+  /** Columns that stay blank although the list loaded (served by neither ZSGTSFV_FX nor TrmFxApp). */
+  const [gapNote, setGapNote] = useState('')
   const [loading, setLoading] = useState(false)
   const loadCtl = useRef<AbortController | null>(null)
   const [showResults, setShowResults] = useState(false)
@@ -141,6 +143,7 @@ export default function MoUpdateBankReference() {
     }
     setResults(res.state === 'ok' ? res.value : [])
     setResultNote(res.state === 'ok' ? '' : res.reason)
+    setGapNote(res.state === 'ok' ? res.note : '')
     setExecuted({ dealType: sel.dealType, keyDateIso })
     setPage(1)
     setSort(DEFAULT_SORT)
@@ -520,6 +523,8 @@ export default function MoUpdateBankReference() {
               onDragEnd={onDragEnd}
             />
           </div>
+
+          {gapNote && total > 0 && <div className="helper-note">{gapNote}</div>}
 
           <div className={`empty-state${total === 0 ? '' : ' hidden'}`}>
             <div className="big">📋</div>

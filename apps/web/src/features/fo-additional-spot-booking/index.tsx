@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { createSpotTransaction, toCreatePayload } from './api.ts'
-import { CreateSpotModal } from './CreateSpotModal.tsx'
-import { findCompanyName } from './data.ts'
+import { CreateSpotModal, type ContextState, type PendingSpot } from './CreateSpotModal.tsx'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
-import { formatDate } from './format.ts'
+import { formatDate, parseAmountInput, parseDate } from './format.ts'
 import {
   applyCreate,
   blankCreateForm,
@@ -15,19 +14,19 @@ import {
   canCreate,
   filterSortRows,
   nextSort,
-  offered,
   partnerAfterLoad,
-  productTypeOf,
   validateCreateForm,
 } from './logic.ts'
-import { loadSpotRows, recordSpot } from './spotList.ts'
-import { loadCompanies, loadPartners, loadTxnTypes } from './valueHelps.ts'
+import { SpotError, createAdditionalSpot, persistSpotMetadata, prepareSpot, type CreatedSpot } from './spotCreate.ts'
+import { loadSpotRows } from './spotList.ts'
+import { spotPorts } from './spotPorts.ts'
+import { loadPartners } from './valueHelps.ts'
 import { SpotTable } from './SpotTable.tsx'
 import './fo-additional-spot-booking.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-additional-spot-booking.dark.css'
-import type { CodeLabel, CreateFormErrors, CreateFormValues, DetailKind, Filters, Sort, SpotRow, Toast, TxnTypeOption, ValueHelp } from './types.ts'
+import type { CodeLabel, CreateFormErrors, CreateFormValues, DetailKind, Filters, Sort, SpotRow, Toast, ValueHelp } from './types.ts'
 
 const PAGE_SIZE = 20
 
@@ -39,9 +38,13 @@ const DEFAULT_SORT: Sort = { key: 'dealId', dir: -1 }
  * legacy/ZSGTSFR_SPOT_CREATE_Modern_Workbench_v3 (1).html.
  *
  * Create Spot Txn books a real FTR deal through ZFS_SB_TRMFX (api.ts) and shows every BAPI
- * message when SAP refuses it; the new spot number then goes back on the ZSGTSFTR_IN_SPOT row
- * (spotList.ts). The list is ZSGTSFTR_IN_SPOT from MySQL, joined to ZSGTSFV_FX for dates and
- * partner. There is no seed fallback: a seed row could book a real deal.
+ * message when SAP refuses it. The rules and the create order (booking, then APP_STR with status
+ * 03, then the ZSGTSFTR_IN_SPOT write-back) live in spotCreate.ts; this component only holds state.
+ * The list is ZSGTSFTR_IN_SPOT from MySQL, joined to ZSGTSFV_FX for dates and partner. There is no
+ * seed fallback: a seed row could book a real deal.
+ *
+ * Route parameters (other programs opening this one for a Deal): ?dealId=&dealType= narrows the
+ * list; &directCreate=1 also opens Create Spot when exactly one row of that Deal is creatable.
  */
 export default function FoAdditionalSpotBooking() {
   const [rows, setRows] = useState<SpotRow[]>([])
@@ -67,7 +70,12 @@ export default function FoAdditionalSpotBooking() {
     return () => ctrl.abort()
   }, [generation])
 
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const [params] = useSearchParams()
+  const routeDealId = params.get('dealId') ?? ''
+  const routeDealType = params.get('dealType') ?? ''
+  const directCreate = params.get('directCreate') === '1' || params.get('directCreate') === 'true'
+
+  const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS, dealFilter: routeDealId })
   const [keyDate, setKeyDate] = useState('')
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT)
   const [page, setPage] = useState(1)
@@ -76,53 +84,30 @@ export default function FoAdditionalSpotBooking() {
   const [dragOver, setDragOver] = useState(false)
 
   const [createRow, setCreateRow] = useState<SpotRow | null>(null)
+  const [createCtx, setCreateCtx] = useState<ContextState>({ state: 'loading' })
   const [createValues, setCreateValues] = useState<CreateFormValues | null>(null)
   const [createErrors, setCreateErrors] = useState<CreateFormErrors>({})
   const [sapErrors, setSapErrors] = useState<string[]>([])
   const [creating, setCreating] = useState(false)
+  /** A Spot SAP booked whose APP_STR / IN_SPOT write failed: held so Retry repairs it instead of booking again. */
+  const [pending, setPending] = useState<{ created: CreatedSpot; row: SpotRow; view: PendingSpot } | null>(null)
   const [detail, setDetail] = useState<{ row: SpotRow; kind: DetailKind } | null>(null)
 
-  // The Create Spot drop-downs, read from SAP (valueHelps.ts).
-  const [companies, setCompanies] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
-  const [txnTypes, setTxnTypes] = useState<ValueHelp<TxnTypeOption>>({ state: 'loading' })
+  // Business partners belong to the Spot's company code, which is derived when the popup opens.
   const [partners, setPartners] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
-  const companyList = companies.state === 'ok' ? companies.options : []
-  const txnTypeList = txnTypes.state === 'ok' ? txnTypes.options : []
+  const spotCompany = createCtx.state === 'ok' ? createCtx.ctx.companyCode : ''
 
   useEffect(() => {
-    const ctrl = new AbortController()
-    loadCompanies(ctrl.signal).then(setCompanies, () => undefined)
-    loadTxnTypes(ctrl.signal).then(setTxnTypes, () => undefined)
-    return () => ctrl.abort()
-  }, [])
-
-  // A popup opened before the lists arrived gets the row's defaults once they do.
-  useEffect(() => {
-    if (!createRow) return
-    setCreateValues((v) =>
-      v
-        ? {
-            ...v,
-            companyCode: v.companyCode || offered(companyList, createRow.companyCode),
-            txnType: v.txnType || offered(txnTypeList, createRow.defaultTxnType),
-          }
-        : v,
-    )
-  }, [companies, txnTypes, createRow])
-
-  // Business partners belong to the picked company code: reload them whenever it changes.
-  const pickedCompany = createValues?.companyCode ?? ''
-  useEffect(() => {
-    if (!createRow) return
+    if (!createRow || !spotCompany) return
     const ctrl = new AbortController()
     setPartners({ state: 'loading' })
-    loadPartners(pickedCompany, ctrl.signal).then((help) => {
+    loadPartners(spotCompany, ctrl.signal).then((help) => {
       setPartners(help)
       const list = help.state === 'ok' ? help.options : []
       setCreateValues((v) => (v ? { ...v, partner: partnerAfterLoad(v.partner, createRow.partner, list) } : v))
     }, () => undefined)
     return () => ctrl.abort()
-  }, [pickedCompany, createRow])
+  }, [spotCompany, createRow])
 
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
@@ -181,8 +166,8 @@ export default function FoAdditionalSpotBooking() {
 
   // ------------------------------------------------------------------ create spot
 
-  const openCreate = () => {
-    const r = selectedRow
+  const openCreate = (target: SpotRow | null = selectedRow) => {
+    const r = target
     if (!r) {
       pushToast('Select a transaction first.', 'info')
       return
@@ -191,23 +176,67 @@ export default function FoAdditionalSpotBooking() {
       pushToast('Spot already created for the selected data.', 'info')
       return
     }
-    if (Number(r.diffAmt) === 0) {
+    if (!canCreate(r)) {
       pushToast('Spot cannot be created for the selected data.', 'error')
       return
     }
     setCreateRow(r)
-    setCreateValues(blankCreateForm(r, companyList, txnTypeList))
+    setCreateCtx({ state: 'loading' })
+    setCreateValues({ partner: '', tradeDate: '', rate: '' })
     setCreateErrors({})
+    setSapErrors([])
+    setPending(null)
+    setPartners({ state: 'loading' })
+    prepareSpot(spotPorts, r).then(
+      (ctx) => {
+        setCreateCtx({ state: 'ok', ctx })
+        setCreateValues(blankCreateForm(ctx))
+      },
+      (error: unknown) => setCreateCtx({ state: 'error', messages: error instanceof SpotError ? error.messages : [String(error instanceof Error ? error.message : error)] }),
+    )
   }
+
+  // Another program opening this one for a Deal: open Create Spot once when exactly one row of it is creatable.
+  const directOpened = useRef(false)
+  useEffect(() => {
+    if (!directCreate || directOpened.current || loadState !== 'ok') return
+    const matches = rows.filter((r) => r.dealId === routeDealId && (!routeDealType || r.dealType === routeDealType) && canCreate(r))
+    directOpened.current = true
+    if (matches.length === 1) {
+      setSelectedId(matches[0]!.id)
+      openCreate(matches[0]!)
+    } else pushToast(matches.length ? 'More than one Spot can be created for this deal; select one.' : 'No Spot can be created for this deal.', 'info')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directCreate, loadState, rows])
 
   const closeCreate = () => {
     setCreateRow(null)
     setCreateValues(null)
     setSapErrors([])
+    setPending(null)
+  }
+
+  /** The row once a Spot exists in SAP: it stops being offered, even if a follow-up write is still to be repaired. */
+  const markBooked = (row: SpotRow, created: CreatedSpot) => {
+    const updated = applyCreate(row, created.transaction, created.companyCode, 'DEMOUSER', formatDate(new Date()))
+    setRows((all) => all.map((r) => (r.id === updated.id ? updated : r)))
+    setSelectedId(updated.id)
+  }
+
+  const finishBooked = (row: SpotRow, created: CreatedSpot, persist: { appStr: string; inSpot: string }) => {
+    markBooked(row, created)
+    if (persist.appStr === 'done' && persist.inSpot === 'done') {
+      setPending(null)
+      closeCreate()
+      pushToast(`Spot ${created.transaction} created in company code ${created.companyCode}.`)
+      return
+    }
+    setPending({ created, row, view: { transaction: created.transaction, companyCode: created.companyCode, persist } })
+    pushToast(`Spot ${created.transaction} was booked in SAP, but it is not fully recorded. Retry from the popup; do not create it again.`, 'error')
   }
 
   const confirmCreate = async () => {
-    if (!createRow || !createValues || creating) return
+    if (!createRow || !createValues || createCtx.state !== 'ok' || creating || pending) return
     const { valid, errors } = validateCreateForm(createValues)
     if (!valid) {
       setCreateErrors(errors)
@@ -215,37 +244,27 @@ export default function FoAdditionalSpotBooking() {
     }
     setCreating(true)
     setSapErrors([])
-    const productType = productTypeOf(txnTypeList, createValues.txnType)
-    const out = await createSpotTransaction(toCreatePayload(createRow, createValues, productType))
+    const result = await createAdditionalSpot(spotPorts, createRow, {
+      partner: createValues.partner,
+      tradeDate: parseDate(createValues.tradeDate)!,
+      rate: parseAmountInput(createValues.rate),
+    })
     setCreating(false)
-    if (!out.ok) {
-      setSapErrors(out.messages)
-      pushToast('Spot was not created in SAP — see the messages in the popup.', 'error')
+    if (result.stage === 'refused') {
+      setSapErrors(result.messages)
+      pushToast('Spot was not created — see the messages in the popup.', 'error')
       return
     }
-    const values = { ...createValues, companyCode: out.companyCode }
-    const updated = applyCreate(
-      createRow,
-      values,
-      out.transaction,
-      'DEMOUSER',
-      formatDate(new Date()),
-      findCompanyName(out.companyCode, companyList),
-      productType,
-    )
-    setRows((all) => all.map((r) => (r.id === updated.id ? updated : r)))
-    setSelectedId(updated.id)
-    closeCreate()
-    // The deal now exists in SAP. IN_SPOT has to say so, or the next load offers the row again.
-    const writeBack = await recordSpot(createRow, out.transaction)
-    if (writeBack) {
-      pushToast(
-        `Spot ${out.transaction} was booked in SAP, but IN_SPOT was not updated (${writeBack}). Note the number: the row will show as New Spot until it is.`,
-        'error',
-      )
-      return
-    }
-    pushToast(`Spot ${out.transaction} created in company code ${out.companyCode}.`)
+    finishBooked(createRow, result.created, result.persist)
+  }
+
+  /** Repairs APP_STR and/or IN_SPOT for the Spot already booked. Never books a second deal. */
+  const retryPersist = async () => {
+    if (!pending || creating) return
+    setCreating(true)
+    const persist = await persistSpotMetadata(spotPorts, pending.row, pending.created)
+    setCreating(false)
+    finishBooked(pending.row, pending.created, persist)
   }
 
   // ------------------------------------------------------------------ drag onto Create Spot Txn
@@ -381,7 +400,7 @@ export default function FoAdditionalSpotBooking() {
                   onDrop()
                 }}
               >
-                <button className="btn btn-primary" type="button" disabled={!canCreate(selectedRow)} onClick={openCreate}>
+                <button className="btn btn-primary" type="button" disabled={!canCreate(selectedRow)} onClick={() => openCreate()}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 5v14" />
                     <path d="M5 12h14" />
@@ -435,17 +454,18 @@ export default function FoAdditionalSpotBooking() {
       {createRow && createValues ? (
         <CreateSpotModal
           row={createRow}
+          context={createCtx}
           values={createValues}
-          companies={companies}
-          txnTypes={txnTypes}
           partners={partners}
           errors={createErrors}
           onChange={(patch) => setCreateValues((v) => (v ? { ...v, ...patch } : v))}
           sapErrors={sapErrors}
+          pending={pending?.view ?? null}
           busy={creating}
           onClearErrors={() => setCreateErrors({})}
           onCancel={closeCreate}
           onConfirm={() => void confirmCreate()}
+          onRetry={() => void retryPersist()}
         />
       ) : null}
 

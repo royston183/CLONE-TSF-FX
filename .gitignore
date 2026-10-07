@@ -7,6 +7,13 @@ dist/
 *.tsbuildinfo
 coverage/
 
+# Local SQLite database files (the schema lives in database/migrations and IS committed)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite
+data/*.sqlite3
+
 # Playwright MCP session artefacts
 .playwright-mcp/
 

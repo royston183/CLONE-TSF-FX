@@ -1,7 +1,8 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { DealContext } from '../../shared/fx/deal-id.ts'
-import { fx1Statuses, modelHelp, originHelp, regionHelp, toRow, utilizationReason } from './api.ts'
+import { fx1Statuses, modelHelp, originHelp, regionHelp, toRow } from './api.ts'
+import { loadUsdAmounts } from '../mo-deal-id-invoice-mark/amount.ts'
 import { buildSampleData } from './fixtures.ts'
 import { filterRows } from './logic.ts'
 
@@ -66,7 +67,7 @@ describe('toRow (FORM get_data join)', () => {
     strictEqual(r.region, 'R02')
     strictEqual(r.dealStatusDesc, 'FO: FX Deals Created')
     strictEqual(r.startDate, '2026-09-30')
-    strictEqual(r.utiAmt, null) // ZSGTSFV_FX / _OP gated
+    strictEqual(r.utiAmt, null) // no amount supplied: blank, never a made-up 0
     strictEqual(r.invStatus, '') // BIL_ADJ assignment commented out in the report
     strictEqual(r.mcDesc, 'MC 5')
     strictEqual(r.entityString, 'OGA-DMCC-OSIPL')
@@ -102,9 +103,35 @@ describe('DELETE gt_data filters', () => {
   })
 })
 
-it('D1(USD) gate names the missing ZSGTSFV_FX columns and the unserved option view', () => {
-  strictEqual(
-    utilizationReason(['ZTSF_DEAL_ID', 'ZTSF_MC_REF_NO']),
-    'D1(USD): WAITING FOR API — ZSGTSFV_FX (middleware "tsfvFx") does not serve ZTSF_DEAL_ID, ZTSF_MC_REF_NO; ZSGTSFV_OP (option deals) has no middleware resource',
-  )
+describe('D1(USD) from TrmFxApp + FxTransaction', () => {
+  const ctx: DealContext = { comp: new Map(), models: new Map(), statuses: [], mcs: new Map(), source: 'mysql' }
+  it('puts the supplied Deal Amt (USD) on the row, zero included', () => {
+    strictEqual(toRow({ ZDEAL_ID: '7000000006', ZMC_REF: '2000000005' }, ctx, 125000).utiAmt, 125000)
+    strictEqual(toRow({ ZDEAL_ID: '7000000007', ZMC_REF: '' }, ctx, 0).utiAmt, 0)
+  })
+
+  it('sums the Deal ID D1 legs (USD side) from TrmFxApp joined with FxTransaction, FX only', async () => {
+    const realFetch = globalThis.fetch
+    const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input))
+      if (u.includes('/api/trmfxapp/TrmFxApp'))
+        return json({ value: [
+          { CompanyCode: 'SG03', FinancialTransaction: '1', ZtsfDealID: '7000000006', ZtsfDealType: 'D1', ZtsfMcRefNo: '2000000005' },
+          { CompanyCode: 'SG03', FinancialTransaction: '2', ZtsfDealID: '7000000006', ZtsfDealType: 'D2', ZtsfMcRefNo: '2000000005' },
+        ] })
+      return json({ value: [
+        { CompanyCode: 'SG03', FinancialTransaction: '1', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyCurrency: 'USD', SellCurrency: 'INR', BuyAmount: 1000, SellAmount: 83000, ActiveStatus: '0' },
+        { CompanyCode: 'SG03', FinancialTransaction: '2', LeadCurrency: 'USD', FollowCurrency: 'INR', BuyCurrency: 'USD', SellCurrency: 'INR', BuyAmount: 500, SellAmount: 41500, ActiveStatus: '0' },
+      ] })
+    }) as typeof fetch
+    try {
+      const out = await loadUsdAmounts(new Map([['7000000006', '2000000005']]))
+      strictEqual(out.amounts?.get('7000000006'), 1000)
+      ok(out.note.includes('WAITING FOR API'))
+      ok(out.note.includes('option'))
+    } finally {
+      globalThis.fetch = realFetch
+    }
+  })
 })

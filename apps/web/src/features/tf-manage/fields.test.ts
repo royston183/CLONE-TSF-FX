@@ -11,14 +11,17 @@ import {
   distinctValues,
   filterRows,
   rowKey,
+  sortRows,
   subtotal,
+  withCpmtAmount,
+  withDerivedFields,
 } from './fields.ts'
 import { EMPTY_FILTERS } from './types.ts'
 import type { TrdFlowRow } from './types.ts'
 
 const ROWS: TrdFlowRow[] = [
-  { ZtfNo: '0000000001', ZtfSplit: '01', Zbu: 'B01', Zcmmd: 'C106', ZflwSts: '01', Zttv: 1000 },
-  { ZtfNo: '0000000002', ZtfSplit: '01', Zbu: 'B02', Zcmmd: 'C108', ZflwSts: '02', Zttv: 250.5 },
+  { ZtfNo: '0000000001', ZtfSplit: '01', Zbu: 'B01', Zcmmd: 'C106', ZflwCod1: '01', Zttv: 1000 },
+  { ZtfNo: '0000000002', ZtfSplit: '01', Zbu: 'B02', Zcmmd: 'C108', ZflwCod1: '02', Zttv: 250.5 },
   { ZtfNo: '0000000003', ZtfSplit: '02', Zbu: 'B01', Zcmmd: 'C106' },
 ]
 
@@ -44,8 +47,13 @@ describe('filterRows', () => {
     strictEqual(out.length, 2)
   })
 
+  it('filters on Blocked Status (ZFLW_COD2)', () => {
+    const rows = [{ ...ROWS[0], ZflwCod2: '12' }, { ...ROWS[1], ZflwCod2: '' }] as typeof ROWS
+    deepStrictEqual(filterRows(rows, { ...EMPTY_FILTERS, ZflwCod2: '12' }).map((r) => r.ZtfNo), [ROWS[0]!.ZtfNo])
+  })
+
   it('treats a row missing the filtered field as not matching', () => {
-    const out = filterRows(ROWS, { ...EMPTY_FILTERS, ZflwSts: '02' })
+    const out = filterRows(ROWS, { ...EMPTY_FILTERS, ZflwCod1: '02' })
     deepStrictEqual(
       out.map((r) => r.ZtfNo),
       ['0000000002'],
@@ -60,7 +68,7 @@ describe('distinctValues', () => {
   })
 
   it('skips rows where the field is absent', () => {
-    deepStrictEqual(distinctValues(ROWS, 'ZflwSts'), ['01', '02'])
+    deepStrictEqual(distinctValues(ROWS, 'ZflwCod1'), ['01', '02'])
   })
 
   it('is empty when no row carries the field', () => {
@@ -75,6 +83,33 @@ describe('subtotal', () => {
 
   it('is zero for an empty list', () => {
     strictEqual(subtotal([]), 0)
+  })
+})
+
+describe('sortRows', () => {
+  it('sorts a numeric column ascending and descending', () => {
+    const asc = sortRows(ROWS, 'Zttv', 'asc', 'num')
+    deepStrictEqual(asc.map((r) => r.ZtfNo), ['0000000002', '0000000001', '0000000003'])
+    const desc = sortRows(ROWS, 'Zttv', 'desc', 'num')
+    deepStrictEqual(desc.map((r) => r.ZtfNo), ['0000000001', '0000000002', '0000000003'])
+  })
+
+  it('sorts a text column as text', () => {
+    const asc = sortRows(ROWS, 'Zbu', 'asc')
+    deepStrictEqual(asc.map((r) => r.ZtfNo), ['0000000001', '0000000003', '0000000002'])
+  })
+
+  it('always sorts rows missing the field last, in either direction', () => {
+    const asc = sortRows(ROWS, 'Zttv', 'asc', 'num')
+    strictEqual(asc[asc.length - 1]!.ZtfNo, '0000000003')
+    const desc = sortRows(ROWS, 'Zttv', 'desc', 'num')
+    strictEqual(desc[desc.length - 1]!.ZtfNo, '0000000003')
+  })
+
+  it('does not mutate the input array', () => {
+    const copy = [...ROWS]
+    sortRows(ROWS, 'Zttv', 'asc', 'num')
+    deepStrictEqual(ROWS, copy)
   })
 })
 
@@ -140,7 +175,7 @@ describe('section structure matches legacy/Manage TF.html', () => {
     strictEqual(new Set(ids).size, ids.length)
   })
 
-  it('marks the original selects as selects', () => {
+  it('marks the original selects as selects, plus OTTK No/DTTK No/Deal ID — deliberately turned into selects fed by their own live masters, unlike the legacy free-text fields', () => {
     const selects = [
       ...BASIC_SECTIONS,
       ...STATUS_SECTIONS,
@@ -153,9 +188,17 @@ describe('section structure matches legacy/Manage TF.html', () => {
       'bdGtCommod',
       'odTfType',
       'stBlockedStatus',
+      'stDealId',
+      'stDttkNo',
       'stOgbsStatus',
+      'stOttkNo',
       'stTfStatus',
     ])
+  })
+
+  it('leaves Deal ID editable — it is no longer read-only now that it is a select', () => {
+    const stDealId = STATUS_FIELDS.find((f) => f.id === 'stDealId')
+    strictEqual(stDealId?.readOnly, undefined)
   })
 })
 
@@ -169,20 +212,75 @@ describe('field descriptors', () => {
     strictEqual(byId.get('shLcDetails'), 'Zlc')
   })
 
-  it('leaves the fields with no SAP source unmapped', () => {
+  it('leaves the fields with no source unmapped', () => {
     const unmapped = [...BASIC_FIELDS, ...SHIPPING_FIELDS, ...STATUS_FIELDS]
-      .filter((f) => f.field === undefined)
+      .filter((f) => f.field === undefined && !f.derived)
       .map((f) => f.id)
-    // Enumerated in the spec's honesty note.
-    strictEqual(unmapped.includes('bdChild1'), true)
     strictEqual(unmapped.includes('shSustain'), true)
-    strictEqual(unmapped.includes('stBlockedAmount'), true)
-    strictEqual(unmapped.includes('stCreatedBy'), true)
   })
 
-  it('maps the two status fields that do exist', () => {
+  it('maps the fields ZSGTSFTR_TRDFLOW has columns for, which the OData service did not expose', () => {
+    const byId = new Map([...BASIC_FIELDS, ...STATUS_FIELDS].map((f) => [f.id, f.field]))
+    strictEqual(byId.get('bdChild1'), 'ZchName1')
+    strictEqual(byId.get('bdBuCode'), 'ZbuId')
+    strictEqual(byId.get('stOgbsRemarks'), 'Zremark')
+    strictEqual(byId.get('stBlockedAmount'), 'Zamt')
+    strictEqual(byId.get('stBlockedFrom'), 'ZblkFrom')
+    strictEqual(byId.get('stCreatedBy'), 'ZcreatedBy')
+  })
+
+  it('maps the three status selects to their SE11 columns', () => {
     const byId = new Map(STATUS_FIELDS.map((f) => [f.id, f.field]))
-    strictEqual(byId.get('stTfStatus'), 'ZflwSts')
+    strictEqual(byId.get('stTfStatus'), 'ZflwCod1')
+    strictEqual(byId.get('stBlockedStatus'), 'ZflwCod2')
     strictEqual(byId.get('stOgbsStatus'), 'ZogbsStatId')
+    strictEqual(byId.get('stTrader'), 'ZfoTrader')
+  })
+})
+
+describe('price fields', () => {
+  // The upload writes workbook column U "Contract Price" to ZUNIT and V "CMP (MT)" to ZCPRICE
+  // (TF_FIELD_MAP, by SE11 label). The popup must read them back the same way, or it shows the
+  // market price as the contract price and Qty x Contract Price no longer equals Contract Amount.
+  it('binds Contract Price to Zunit and Current Market Price to Zcprice', () => {
+    strictEqual(BASIC_FIELDS.find((f) => f.id === 'idContractPrice')?.field, 'Zunit')
+    strictEqual(BASIC_FIELDS.find((f) => f.id === 'idCmp')?.field, 'Zcprice')
+  })
+})
+
+describe('withDerivedFields', () => {
+  const tf = { Zquantity: 610, Zunit: 7185.5, Zcprice: 7168.25, Zttv: 4383155, ZcpmAmt: 0, Zsldate: '2026-09-20', ZetaDsPort: '2026-10-08', Zdays: '18' }
+
+  it('recomputes Contract Amount from Quantity x Contract Price', () => {
+    strictEqual(withDerivedFields({ ...tf, Zunit: '7200.5' as unknown as number }, 'Zunit').Zttv, 4392305)
+  })
+  it('recomputes CPMT Amount from Quantity x Current Market Price', () => {
+    strictEqual(withDerivedFields({ ...tf, Zcprice: '7150.25' as unknown as number }, 'Zcprice').ZcpmAmt, 4361652.5)
+  })
+  it('recomputes Transit time from the two dates, blank when ETA is before sailing', () => {
+    strictEqual(withDerivedFields({ ...tf, ZetaDsPort: '2026-10-10' }, 'ZetaDsPort').Zdays, '20')
+    strictEqual(withDerivedFields({ ...tf, ZetaDsPort: '2026-09-01' }, 'ZetaDsPort').Zdays, '')
+  })
+  it('leaves the amount alone while the price is not a number', () => {
+    strictEqual(withDerivedFields({ ...tf, Zunit: 'abc' as unknown as number }, 'Zunit').Zttv, 4383155)
+  })
+  it('touches nothing for an unrelated field', () => {
+    deepStrictEqual(withDerivedFields({ ...tf, ZchName1: 'X' }, 'ZchName1'), { ...tf, ZchName1: 'X' })
+  })
+})
+
+describe('withCpmtAmount', () => {
+  it('fills in CPMT Amount from Quantity x Current Market Price, e.g. a row stored with 0', () => {
+    strictEqual(withCpmtAmount({ Zquantity: 2000, Zcprice: 400, ZcpmAmt: 0 }).ZcpmAmt, 800000)
+  })
+
+  it('leaves Contract Amount and every other field exactly as stored', () => {
+    const row = { Zquantity: 2000, Zcprice: 400, Zunit: 999, Zttv: 111, ZcpmAmt: 0, Zbu: 'B01' }
+    deepStrictEqual(withCpmtAmount(row), { ...row, ZcpmAmt: 800000 })
+  })
+
+  it('leaves ZcpmAmt alone when Quantity or Current Market Price is missing', () => {
+    deepStrictEqual(withCpmtAmount({ Zcprice: 400, ZcpmAmt: 0 }), { Zcprice: 400, ZcpmAmt: 0 })
+    deepStrictEqual(withCpmtAmount({ Zquantity: 2000, ZcpmAmt: 0 }), { Zquantity: 2000, ZcpmAmt: 0 })
   })
 })

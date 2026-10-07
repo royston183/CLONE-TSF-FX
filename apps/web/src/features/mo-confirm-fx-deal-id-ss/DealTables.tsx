@@ -1,6 +1,6 @@
 import type { DragEvent } from 'react'
 import { fmtAmt, plClass } from './format.ts'
-import { PL_WAITING } from './api.ts'
+import { LEGS_PARTIAL_NOTE, PL_WAITING } from './api.ts'
 import { invoicesEditable, invoicesVisible } from './logic.ts'
 import { StatusBadge, TxnStatusBadge } from './parts.tsx'
 import type { Deal, Leg } from './types.ts'
@@ -66,7 +66,7 @@ export function LegTable({
   onDragEnd,
 }: {
   legs: readonly Leg[]
-  /** Why there are no legs (ZSGTSFCDS_FX / _OPTION not served). */
+  /** Why there are no legs (nothing carries the Deal ID, or the read failed). */
   waiting: string
   selectedRfha: string | null
   draggingRfha: string | null
@@ -165,10 +165,11 @@ export function LegTable({
                   <td>
                     <TxnStatusBadge code={l.txnStatus} />
                   </td>
-                  <td className={`num ${plClass(l.fxPl)}`}>{fmtAmt(l.fxPl)}</td>
-                  <td className={`num ${plClass(l.setPl)}`}>{fmtAmt(l.setPl)}</td>
-                  <td className={`num ${plClass(l.totPl)}`}>
-                    <b>{fmtAmt(l.totPl)}</b>
+                  {/* P&L needs ZSGTSFCDS_OPTION and the settlement figures: not served, so never a made-up 0. */}
+                  <td className="num">—</td>
+                  <td className="num">—</td>
+                  <td className="num">
+                    <b>—</b>
                   </td>
                 </tr>
               )
@@ -176,6 +177,7 @@ export function LegTable({
           </tbody>
         </table>
       </div>
+      {legs.length > 0 ? <div className="small text-faint" style={{ padding: '8px 12px' }}>{LEGS_PARTIAL_NOTE}</div> : null}
     </div>
   )
 }

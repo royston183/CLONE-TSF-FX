@@ -75,6 +75,14 @@ export async function fxUpdate(
 }
 
 /**
+ * Deletes one row by its key, which travels in the body as `fxUpdate`'s does. Only for the rows a
+ * legacy program also deleted (ZSGTSFTR_INV_REF on Reverse MO Confirmation).
+ */
+export async function fxDelete(resource: string, key: Record<string, string>): Promise<void> {
+  await apiFetch(middlewareApi(`data/${resource}`), { method: 'DELETE', body: { key } })
+}
+
+/**
  * An aborted request is the caller cancelling, never a backend verdict. `apiRequest` rethrows
  * fetch's AbortError as `ApiError(…, 0, cause)`, so the cause has to be checked too —
  * otherwise an unmount reads as an outage and the screen swaps in its dummy rows.

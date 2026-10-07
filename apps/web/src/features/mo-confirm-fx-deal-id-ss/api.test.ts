@@ -1,9 +1,14 @@
 import { deepStrictEqual, match, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { FxRow } from '../../shared/fx/mw.ts'
+import type { TrmFxApp } from '../../shared/fx/app-str.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import { loadFxWithApp } from '../../shared/fx/app-str.ts'
 import {
   FX_F4_COLUMNS,
-  FX_LEG_COLUMNS,
+  LEG_APP_FILTER,
+  legsByDeal,
+  toLeg,
   planInvoices,
   replacementsWaitingReason,
   legsWaitingReason,
@@ -23,23 +28,70 @@ describe('status list box (FORM drop_down)', () => {
   })
 })
 
+describe('FX legs (TrmFxApp + FxTransaction)', () => {
+  const fx = (o: Partial<FxTransaction> = {}): FxTransaction => ({
+    CompanyCode: 'SG03', FinancialTransaction: '5000456830', ProductType: '12D', TransactionType: '100', Partner: 'BARC',
+    ContractDate: '2026-09-15', ValueDate: '2027-09-18', BuyCurrency: 'USD', SellCurrency: 'INR', LeadCurrency: 'USD',
+    FollowCurrency: 'INR', BuyAmount: '1000', SellAmount: '90000', ForwardRate: '90', ActiveStatus: '0', ...o,
+  })
+  const app = (o: Partial<TrmFxApp> = {}): TrmFxApp => ({
+    CompanyCode: 'SG03', FinancialTransaction: '5000456830', ZtsfDealID: '7000000011', ZtsfDealType: 'D1',
+    ZtsfMcRefNo: '2000000008', TxnStatus: '07', ...o,
+  })
+
+  it('maps a leg: deal type / MC ref / status from APP_STR, signed amounts and rate from SAP, P&L left blank', () => {
+    const l = toLeg({ fx: fx(), app: app() })
+    strictEqual(l.dealType, 'D1')
+    strictEqual(l.mcRef, '2000000008')
+    strictEqual(l.txnStatus, '07')
+    strictEqual(l.bs1, 'Buy')
+    strictEqual(l.amt1, 1000)
+    strictEqual(l.amt2, -90000)
+    strictEqual(l.allInRate, 90)
+    strictEqual(l.tradeDate, '15-09-2026')
+    strictEqual(l.strike, 0)
+  })
+  it('a sold lead currency is negative; a missing APP_STR status stays blank', () => {
+    const l = toLeg({ fx: fx({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: '90000', SellAmount: '1000' }), app: app({ TxnStatus: null }) })
+    strictEqual(l.bs1, 'Sell')
+    strictEqual(l.amt1, -1000)
+    strictEqual(l.txnStatus, '')
+  })
+  it('groups by Deal ID and leaves out reversed transactions', () => {
+    const m = legsByDeal([
+      { fx: fx(), app: app() },
+      { fx: fx({ FinancialTransaction: '2' }), app: app({ FinancialTransaction: '2', ZtsfDealType: 'D2' }) },
+      { fx: fx({ FinancialTransaction: '3', ActiveStatus: '3' }), app: app({ FinancialTransaction: '3' }) },
+      { fx: fx({ FinancialTransaction: '4' }), app: app({ FinancialTransaction: '4', ZtsfDealID: '' }) },
+    ])
+    deepStrictEqual(m.get('7000000011')?.map((l) => l.dealType), ['D1', 'D2'])
+    strictEqual(m.size, 1)
+  })
+  it('loadFxWithApp filters TrmFxApp by Deal ID and joins FxTransaction by company + transaction', async () => {
+    const urls: string[] = []
+    const real = globalThis.fetch
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input)
+      urls.push(decodeURIComponent(url.replaceAll('+', ' ')))
+      const value = url.includes('trmfxapp') ? [app()] : [fx()]
+      return new Response(JSON.stringify({ value }), { status: 200, headers: { 'content-type': 'application/json' } })
+    }) as typeof fetch
+    try {
+      const rows = await loadFxWithApp(LEG_APP_FILTER)
+      strictEqual(rows.length, 1)
+      ok(urls.some((u) => u.includes("ZtsfDealID ne ''")))
+    } finally {
+      globalThis.fetch = real
+    }
+  })
+  it('says why the grid is empty: nothing carries the Deal ID, or the read failed', () => {
+    strictEqual(legsWaitingReason('FX1', null), 'No FX transaction in ZSGTSFTR_APP_STR carries this Deal ID.')
+    match(legsWaitingReason('FX2', null), /option legs \(ZSGTSFCDS_OPTION\) are not served/)
+    match(legsWaitingReason('FX1', 'boom'), /^WAITING FOR API .* could not be read: boom/)
+  })
+})
+
 describe('WAITING FOR API gates', () => {
-  it('names exactly the ZSGTSFCDS_FX columns "tsfvFx" lacks, plus the unserved option view and VTBFHA', () => {
-    const reason = legsWaitingReason(TSFV_FX_COLUMNS)
-    strictEqual(
-      reason,
-      'WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve F_CURR1, T_CURR1, ZTSF_MC_REF_NO, ' +
-        'TXN_STATUS, ZCASH_AMT, ZTSF_DEAL_TYPE, ZTSF_DEAL_SQ, ZTSF_DEAL_ID; ZSGTSFCDS_OPTION and VTBFHA ' +
-        '(ZTSF_EX_OPT_NO) are not served by the middleware.',
-    )
-  })
-  it('still waits on the option view once the FX view is complete, and says when meta is unreadable', () => {
-    strictEqual(
-      legsWaitingReason([...FX_LEG_COLUMNS]),
-      'WAITING FOR API — ZSGTSFCDS_OPTION and VTBFHA (ZTSF_EX_OPT_NO) are not served by the middleware.',
-    )
-    match(legsWaitingReason(null), /could not be read/)
-  })
   it('New Transaction F4 (ZSGTSFV_FX) waits for TXN_STATUS', () => {
     strictEqual(replacementsWaitingReason(TSFV_FX_COLUMNS), 'WAITING FOR API — ZSGTSFV_FX (middleware "tsfvFx") does not serve TXN_STATUS.')
     strictEqual(replacementsWaitingReason([...FX_F4_COLUMNS]), '')
@@ -80,7 +132,7 @@ describe('toDeal (FORM screen_desc_fields)', () => {
     strictEqual(d.noInvoiceModel, false)
     strictEqual(d.reversalAuthorized, false)
     deepStrictEqual(d.legs, [])
-    match(d.legsWaiting, /^WAITING FOR API/)
+    match(d.legsWaiting, /^No FX transaction/)
     // M035 has two RULE_BT rows: the rule row depends on a D3 leg.
     deepStrictEqual(d.invoices, [])
     match(d.invoicesWaiting, /two ZSGTSFTR_RULE_BT rows/)

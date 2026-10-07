@@ -5,6 +5,7 @@ import type { Deal, DragKind, DragState, DocPreview } from './types.ts'
 
 const DASH = <span className="muted-dash">{'–'}</span>
 const PENDING = <span className="doc-link-pending">not posted</span>
+const DOC_WAITING = <span className="doc-link-pending">WAITING FOR API</span>
 
 export function StatusBadge({ deal }: { deal: Deal }) {
   const si = statusInfo(deal.status, deal.statusCode, deal.statusText)
@@ -192,16 +193,21 @@ export function FxTable({
                   <td className="num">{fmtRate(r.rate)}</td>
                   <td className="left">{r.status}</td>
                   <td className="left">
-                    {r.doc1 ? <DocLink docNo={r.doc1} entity={r.entity} onPreview={onPreview} /> : PENDING}
+                    {r.doc1 ? <DocLink docNo={r.doc1} entity={r.entity} onPreview={onPreview} /> : deal.fxWaiting ? DOC_WAITING : PENDING}
                   </td>
                   <td className="left">
-                    {r.doc2 ? <DocLink docNo={r.doc2} entity={r.entity} onPreview={onPreview} /> : PENDING}
+                    {r.doc2 ? <DocLink docNo={r.doc2} entity={r.entity} onPreview={onPreview} /> : deal.fxWaiting ? DOC_WAITING : PENDING}
                   </td>
                   <td className="left">{r.dssDeal || DASH}</td>
                 </tr>
               )
             })
           )}
+          {deal.top.length > 0 && deal.fxWaiting ? (
+            <tr className="empty-row">
+              <td colSpan={10}>{deal.fxWaiting}</td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </div>

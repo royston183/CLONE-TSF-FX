@@ -1,6 +1,6 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { ACTION_WAITING, INVOICE_WAITING, LEG_VIEW_COLUMNS, gateOutcome, legsWaitingReason, missingColumns, normalizeDealId, toDeal } from './api.ts'
+import { ACTION_WAITING, INVOICE_WAITING, LEGS_STILL_WAITING, gateOutcome, legsWaitingReason, loadLegs, normalizeDealId, toDeal, toLeg } from './api.ts'
 import { DEAL_LIBRARY, INITIAL_DOC_COUNTER } from './fixtures.ts'
 import { fiscalYear, fmtAmt, fmtMoney, fmtRate } from './format.ts'
 import {
@@ -295,12 +295,39 @@ describe('api (SAP header by key, legs and actions waiting)', () => {
     deepStrictEqual([d.fxModelId, d.modelDesc, d.mcDesc, d.status, d.statusText], ['M021', '', '', 20, ''])
   })
   it('normalises the typed Deal ID', () => strictEqual(normalizeDealId('  tsf-9081 '), 'TSF-9081'))
-  it('gates the FX legs on tsfvFx columns (as registered on 2026-10-06) and on ZSGTSFCDS_OPTION', () => {
-    // prettier-ignore
-    const served = ['BUKRS','RFHA','SAKTIV','SGSART','XTEXT','BP_NAME','RFHAZUL','KONTRH','RBUSA','DBLFZ','DELFZ','ZCOM_ID','BS_1','BS_2','CURR1','CURR2','AMT1','AMT2','OSPOT','OSWAP','OTOT_RATE']
-    deepStrictEqual(missingColumns(served, LEG_VIEW_COLUMNS), ['PRCTR', 'ZTSF_EXE_CO', 'ZTSF_MC_REF_NO', 'TXN_STATUS', 'ZTSF_DEAL_TYPE', 'EXT_STAT_DESC', 'ZTSF_DEAL_ID'])
-    strictEqual(legsWaitingReason(served).startsWith('WAITING FOR API — ZSGTSFCDS_FX (middleware "tsfvFx") does not serve PRCTR'), true)
-    strictEqual(legsWaitingReason(LEG_VIEW_COLUMNS), 'WAITING FOR API — ZSGTSFCDS_OPTION (option legs) has no middleware resource.')
+  it('maps a TrmFxApp row joined to its FxTransaction as an FX leg; documents and DSS deal have no source', () => {
+    const fx = { CompanyCode: 'SG03', FinancialTransaction: '3000000000005', ProductType: '12B', TransactionType: '619', Partner: '4', BuyCurrency: 'USD', SellCurrency: 'INR', BuyAmount: '1000', SellAmount: '-83000', ForwardRate: '83' }
+    const app = { CompanyCode: 'SG03', FinancialTransaction: '3000000000005', ZtsfDealType: 'D1' }
+    deepStrictEqual(toLeg({ fx, app }), {
+      entity: 'SG03', dealType: 'D1', rfha: '3000000000005', buyCurr: 'USD', buyAmt: 1000, sellCurr: 'INR', sellAmt: 83000, rate: 83,
+      status: 'Confirmed', doc1: '', doc2: '', dssDeal: '', sgsart: '12B',
+    })
+  })
+  it('reads the legs by ZtsfDealID and joins them on company code + transaction', async () => {
+    const realFetch = globalThis.fetch
+    const urls: string[] = []
+    const fx = (n: string) => ({ CompanyCode: 'SG03', FinancialTransaction: n, ProductType: '12B', TransactionType: '619', Partner: '4', BuyCurrency: 'USD', SellCurrency: 'INR', BuyAmount: 1, SellAmount: 83, ForwardRate: 83 })
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input).replaceAll('+', ' '))
+      urls.push(u)
+      const body = u.includes('/api/trmfxapp/')
+        ? { value: [{ CompanyCode: 'SG03', FinancialTransaction: '2', ZtsfDealType: 'D2' }, { CompanyCode: 'SG03', FinancialTransaction: '1', ZtsfDealType: 'D1' }] }
+        : { value: [fx('1'), fx('2')] }
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
+    }) as typeof fetch
+    try {
+      const legs = await loadLegs('7000000014')
+      deepStrictEqual(legs.map((l) => [l.dealType, l.rfha]), [['D1', '1'], ['D2', '2']])
+      ok(urls[0]?.includes("ZtsfDealID eq '7000000014'"))
+    } finally {
+      globalThis.fetch = realFetch
+    }
+  })
+  it('narrows the waiting note to the option legs and the FI documents', () => {
+    strictEqual(legsWaitingReason(), LEGS_STILL_WAITING)
+    ok(LEGS_STILL_WAITING.includes('ZSGTSFCDS_OPTION') && LEGS_STILL_WAITING.includes('BKPF') && !LEGS_STILL_WAITING.includes('tsfvFx'))
+    ok(legsWaitingReason('', 0).startsWith('No FX deal legs for this Deal ID in ZSGTSFTR_APP_STR.'))
+    ok(legsWaitingReason('boom', 0).includes('could not be read: boom'))
   })
   it('an action that would change the deal waits; a refusal keeps its message', () => {
     const d = fresh()
