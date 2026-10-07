@@ -32,6 +32,29 @@ export type AppStrFields = {
   TxnStatus?: string
   /** An OData date, yyyy-mm-dd. */
   BlotterDate?: string
+  /** ZTSF_PRE_MATURE / ZTSF_UNWIND: written by Premature Settlement. */
+  ZtsfPreMature?: boolean
+  ZtsfUnwind?: boolean
+  ZtsfExOptNo?: string
+  ZtsfExSpotNo?: string
+  ZtsfBhbkID?: string
+  ZtsfBhktID?: string
+  ZtsfShbkID?: string
+  ZtsfShktID?: string
+  ZtsfExeCo?: boolean
+  ZtsfAccCo?: boolean
+  ZtsfBpayID?: string
+  ZtsfSpayID?: string
+  ZtsfRbukrs?: string
+  ZtsfRpayID?: string
+  ZtsfPbukrs?: string
+  ZtsfPpayID?: string
+  ZtsfTrftype?: string
+  ZtsfTrftype2?: string
+  ZtsfBnktype?: string
+  ZtsfBnktype2?: string
+  ZolamDealNo?: string
+  Ztrcode?: string
 }
 
 export type AppStrRecord = AppStrFields & {
@@ -41,7 +64,7 @@ export type AppStrRecord = AppStrFields & {
 }
 
 /** Maximum lengths of the string fields, from the service's $metadata. */
-const LENGTH: Record<keyof AppStrFields, number> = {
+const LENGTH: Partial<Record<keyof AppStrFields, number>> = {
   ZtsfDealType: 4,
   ZtsfDealID: 15,
   ZtsfDealDesc: 80,
@@ -63,10 +86,17 @@ export const transactionKey = (companyCode: string, transaction: string): string
 
 const clip = (v: string, n: number): string => v.trim().slice(0, n)
 
-/** Drops blank values and cuts each to the length the service stores, so a long remark cannot fail the whole save. */
+/**
+ * Drops blank values and cuts each to the length the service stores, so a long remark cannot fail the whole save.
+ * A flag (boolean) is kept as given, false included: clearing a flag is a write like any other.
+ */
 export function cleanFields(fields: AppStrFields): AppStrFields {
-  const out: Record<string, string> = {}
+  const out: Record<string, string | boolean> = {}
   for (const [name, value] of Object.entries(fields)) {
+    if (typeof value === 'boolean') {
+      out[name] = value
+      continue
+    }
     if (typeof value !== 'string' || !value.trim()) continue
     out[name] = clip(value, LENGTH[name as keyof AppStrFields] ?? 255)
   }
@@ -152,6 +182,30 @@ export async function updateAppStrRecord(companyCode: string, transaction: strin
     method: 'PATCH',
     headers: { 'If-Match': '*' },
     body: cleanFields(fields),
+  })
+}
+
+/** The Deal ID linkage fields: what a transaction carries once it belongs to a Deal ID. */
+export const DEAL_LINK_FIELDS = ['ZtsfDealDesc', 'ZtsfDealType', 'ZtsfDealID', 'ZtsfMcRefNo'] as const
+
+/**
+ * The PATCH body that removes a transaction's Deal ID linkage. Every field is sent as an explicit null:
+ * `updateAppStrRecord` runs `cleanFields`, which drops blank values, so it could never clear anything.
+ * TxnStatus is deliberately absent — unlinking a transaction never changes its lifecycle status.
+ */
+export const clearDealLinkBody = (): Record<(typeof DEAL_LINK_FIELDS)[number], null> => ({
+  ZtsfDealDesc: null,
+  ZtsfDealType: null,
+  ZtsfDealID: null,
+  ZtsfMcRefNo: null,
+})
+
+/** PATCH by composite key that really sends the nulls of `clearDealLinkBody`. */
+export async function clearDealLink(companyCode: string, transaction: string): Promise<void> {
+  await apiFetch(pathOf(companyCode, transaction), {
+    method: 'PATCH',
+    headers: { 'If-Match': '*' },
+    body: clearDealLinkBody(),
   })
 }
 
