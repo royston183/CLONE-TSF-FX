@@ -1,0 +1,129 @@
+/*
+ * OTTK visual theme (the "Create Master Contract" design system) - CSS-ONLY deviations from the
+ * generated legacy stylesheet (tools/scope-css.mjs; must not be hand-edited). Mirrors the
+ * "OTTK visual theme" block at the end of fo-create-master-contract.legacy.css, mapped onto this
+ * screen's own class names (only rules whose selectors exist here), scoped under .modinvstat.
+ *
+ * Imported after legacy.css AND dark.css. dark.css restates colours under
+ * ":root[data-theme='dark'] .modinvstat" at higher specificity, so every light-only colour below is
+ * written under ":root:not([data-theme='dark']) .modinvstat" and can never override night mode.
+ * Non-colour changes (size, radius, spacing, transform, shadow) apply in both themes.
+ */
+
+/* 1. Tokens. Surfaces/text/lines are light-only (dark.css owns the night palette);
+   brand and status colours keep their identity in both themes. */
+:root:not([data-theme='dark']) .modinvstat {
+  --bg: #F5F7F9;
+  --surface: #FFFFFF;
+  --line: #D5DADD;
+  --line-soft: #E6E9EB;
+  --text: #1D2D3E;
+  --muted: #475E75;
+  --head: #475E75;
+  --primary-soft: #EAF3FC;
+  --row-select: #EAF3FC;
+  --shadow: 0 1px 3px rgba(34, 53, 72, 0.13);
+}
+.modinvstat {
+  --primary: #0A6ED1;
+  --primary-dark: #085CAF;
+  --success: #107E3E;
+  --warning: #E9730C;
+  --danger: #BB0000;
+  font-family: "72", "Segoe UI", Arial, Helvetica, sans-serif;
+}
+.modinvstat button, .modinvstat input, .modinvstat select { font-family: inherit; }
+
+/* 2. Type scale */
+.modinvstat .title-wrap h1 { font-size: 16px; }
+.modinvstat .card-title { font-size: 14px; }
+.modinvstat .modal-head h2 { font-size: 14px; }
+
+/* 3. Header: transparent, flush on the page background */
+.modinvstat .topbar { background: transparent; border-bottom: none; padding-top: 4px; padding-bottom: 4px; }
+
+/* 4. Buttons: SAP-compact radius + hover feedback */
+.modinvstat .back-btn, .modinvstat .header-btn, .modinvstat .icon-btn, .modinvstat .reset-btn,
+.modinvstat .primary-btn, .modinvstat .deal-action-btn { border-radius: 4px; }
+.modinvstat .back-btn:hover, .modinvstat .header-btn:hover, .modinvstat .icon-btn:hover,
+.modinvstat .reset-btn:hover, .modinvstat .deal-action-btn:hover { box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1); }
+.modinvstat .primary-btn:hover, .modinvstat .deal-action-btn.primary:hover { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+
+/* 5. Panels */
+.modinvstat .card, .modinvstat .analysis-card { border-radius: 8px; box-shadow: var(--shadow); }
+
+/* 6/7. Inputs 36px (popup forms); search + filter controls 32px */
+.modinvstat .sap-popup-form input, .modinvstat .sap-popup-form select, .modinvstat .analysis-select { height: 36px; border-radius: 4px; }
+.modinvstat .readonly-field { min-height: 36px; border-radius: 4px; }
+.modinvstat .control, .modinvstat .search-input, .modinvstat .reset-btn { height: 32px; min-height: 32px; font-size: 13px; }
+.modinvstat .icon-btn { height: 32px; min-height: 32px; }
+.modinvstat .calendar-trigger { width: 30px; height: 30px; }
+.modinvstat .search-wrap svg { top: 8px; }
+.modinvstat .select-wrap:after { top: 13px; }
+.modinvstat .control:focus, .modinvstat .search-input:focus { box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.14); }
+:root:not([data-theme='dark']) .modinvstat .control:hover,
+:root:not([data-theme='dark']) .modinvstat .search-input:hover { border-color: #A6B0B9; }
+
+/* 8. Tables: #F2F4F5 sticky header 13px uppercase, 14px data, hover lift, selected #EAF3FC */
+.modinvstat thead th, .modinvstat .analysis-table th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
+.modinvstat tbody td, .modinvstat .analysis-table td { font-size: 14px; }
+:root:not([data-theme='dark']) .modinvstat thead th,
+:root:not([data-theme='dark']) .modinvstat thead th.sel-col,
+:root:not([data-theme='dark']) .modinvstat thead th.deal-sticky,
+:root:not([data-theme='dark']) .modinvstat .analysis-table th { background: #F2F4F5; }
+:root:not([data-theme='dark']) .modinvstat thead th.sortable:hover { background: #E8ECEE; }
+:root:not([data-theme='dark']) .modinvstat thead th { border-bottom-color: #E6E9EB; }
+:root:not([data-theme='dark']) .modinvstat tbody td { border-bottom-color: #E6E9EB; }
+:root:not([data-theme='dark']) .modinvstat tbody tr:hover td,
+:root:not([data-theme='dark']) .modinvstat tbody tr:hover td.sel-col,
+:root:not([data-theme='dark']) .modinvstat tbody tr:hover td.deal-sticky,
+:root:not([data-theme='dark']) .modinvstat .analysis-table tbody tr:hover { background: #F7FBFF; }
+:root:not([data-theme='dark']) .modinvstat tbody tr.selected td,
+:root:not([data-theme='dark']) .modinvstat tbody tr.selected td.sel-col,
+:root:not([data-theme='dark']) .modinvstat tbody tr.selected td.deal-sticky,
+:root:not([data-theme='dark']) .modinvstat tbody tr.selected:hover td { background: #EAF3FC; }
+.modinvstat .table-wrap tbody tr { position: relative; transition: transform .15s ease, box-shadow .15s ease; }
+.modinvstat .table-wrap tbody tr:hover { transform: translateY(-1px); box-shadow: 0 3px 9px rgba(34, 53, 72, 0.1); z-index: 2; }
+.modinvstat .table-wrap tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(10, 110, 209, 0.14); }
+/* precision: amounts right-aligned, tabular figures */
+.modinvstat .amount, .modinvstat .analysis-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.modinvstat .code { font-variant-numeric: tabular-nums; }
+
+/* 9. Status colours + links */
+:root:not([data-theme='dark']) .modinvstat .status-created { color: #6B3FA0; }
+:root:not([data-theme='dark']) .modinvstat .status-confirmed { color: #0A6ED1; }
+:root:not([data-theme='dark']) .modinvstat .status-active { color: #107E3E; }
+:root:not([data-theme='dark']) .modinvstat .status-closed { color: #475E75; }
+:root:not([data-theme='dark']) .modinvstat .link-cell { color: #0A6ED1; }
+:root:not([data-theme='dark']) .modinvstat .link-cell:hover { color: #085CAF; }
+
+/* 10. Pagination 28px */
+.modinvstat .page-btn { width: 28px; height: 28px; border-radius: 4px; }
+:root:not([data-theme='dark']) .modinvstat .page-btn.active { background: #EAF3FC; border-color: #0A6ED1; color: #0A6ED1; }
+
+/* 11. Modals: 12px radius + OTTK shadow */
+.modinvstat .modal { border-radius: 12px; box-shadow: 0 22px 70px rgba(16, 38, 58, 0.3); }
+.modinvstat .modal-close, .modinvstat .calendar-pop { border-radius: 4px; }
+:root:not([data-theme='dark']) .modinvstat .modal { border-color: #B9C2C9; }
+:root:not([data-theme='dark']) .modinvstat .modal-close:hover { background: #F2F4F5; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .modinvstat ::-webkit-scrollbar-thumb { background: #B7C2CB; }
+
+@media (prefers-reduced-motion: reduce) {
+  .modinvstat .table-wrap tbody tr { transition: none; }
+  .modinvstat .table-wrap tbody tr:hover { transform: none; }
+}
+
+/* Table grid lines removed: no vertical cell borders / boxed table, one faint hairline between rows.
+   Double :not() lifts specificity above the dark.css vertical-border rules; border-bottom is untouched there
+   (light #E6E9EB above, dark line colour from dark.css). */
+:root:not(.nogrid):not(.nogrid2) .modinvstat table,
+:root:not(.nogrid):not(.nogrid2) .modinvstat table th,
+:root:not(.nogrid):not(.nogrid2) .modinvstat table td,
+:root:not(.nogrid):not(.nogrid2) .modinvstat thead th,
+:root:not(.nogrid):not(.nogrid2) .modinvstat tbody td,
+:root:not(.nogrid):not(.nogrid2) .modinvstat .sel-col,
+:root:not(.nogrid):not(.nogrid2) .modinvstat .deal-sticky { border-left: none; border-right: none; }
+:root:not(.nogrid):not(.nogrid2) .modinvstat table { border: none; }
+:root:not([data-theme='dark']) .modinvstat .analysis-table td { border-bottom-color: #E6E9EB; }

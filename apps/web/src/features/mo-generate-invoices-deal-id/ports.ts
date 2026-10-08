@@ -4,7 +4,7 @@
  * and nothing else — no APP_STR (trmfxapp) and no FxTransaction (fx).
  */
 import { txt } from '../../shared/fx/masters.ts'
-import { fxColumns, fxCreate, fxDelete, fxHasNumberRange, fxList, fxUpdate } from '../../shared/fx/mw.ts'
+import { fxAllocate, fxColumns, fxCreate, fxDelete, fxHasFieldRange, fxList, fxUpdate } from '../../shared/fx/mw.ts'
 import { sapNow, sapUser } from '../../shared/fx/sap.ts'
 import { TCODE } from './data.ts'
 import type { Ports } from './workflow.ts'
@@ -15,7 +15,8 @@ export const middlewarePorts: Ports = {
   update: (resource, key, changes) => fxUpdate(resource, key, changes),
   remove: (resource, key) => fxDelete(resource, key),
   columns: (resource) => fxColumns(resource),
-  hasNumberRange: (resource) => fxHasNumberRange(resource),
+  hasFieldRange: (resource, field) => fxHasFieldRange(resource, field),
+  allocate: (resource, key, field) => fxAllocate(resource, key, field),
   now: async () => ({ user: await sapUser(), ...sapNow() }),
 }
 

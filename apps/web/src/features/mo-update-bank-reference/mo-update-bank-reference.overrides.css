@@ -1,0 +1,12 @@
+/* Visual overrides for mo-update-bank-reference, imported after the generated legacy and dark sheets. CSS only. */
+
+/*
+ * Table grid lines: no vertical cell borders and no boxed table (sticky / selection columns
+ * included); only a single faint horizontal hairline between rows. Light line colour sits behind
+ * the light-only guard so the dark sheet's own line colour is never overridden.
+ */
+.mo-update-bank-reference table.grid { border: none; }
+.mo-update-bank-reference table.grid th,
+.mo-update-bank-reference table.grid td { border-left: none; border-right: none; }
+:root:not([data-theme='dark']) .mo-update-bank-reference table.grid thead th,
+:root:not([data-theme='dark']) .mo-update-bank-reference table.grid tbody td { border-bottom-color: #e6e9eb; }

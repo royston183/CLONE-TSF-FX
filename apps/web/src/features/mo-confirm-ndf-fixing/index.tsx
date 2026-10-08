@@ -25,6 +25,7 @@ import './mo-confirm-ndf-fixing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-ndf-fixing.dark.css'
+import './mo-confirm-ndf-fixing.overrides.css'
 import type { DropdownItem, Filters, InfoMessage, NdfDeal, Selection, SelectionErrors, Sort, SortField } from './types.ts'
 
 /** Actioned deals leave the queue by being read again from SAP, so nothing is hidden locally. */

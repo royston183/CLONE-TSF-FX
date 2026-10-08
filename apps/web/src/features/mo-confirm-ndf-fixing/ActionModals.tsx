@@ -1,4 +1,5 @@
 import { MO_REMARK_MAX } from './data.ts'
+import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { DealSummary, Overlay } from './modal.tsx'
 import type { InfoMessage, NdfDeal } from './types.ts'
 
@@ -142,27 +143,13 @@ export function CorrectionModal({
 
 /** The success / warning notice shown after an action or a refresh. */
 export function InfoModal({ open, info, onClose }: { open: boolean; info: InfoMessage; onClose: () => void }) {
-  const warn = info.variant === 'warn'
+  if (!open) return null
   return (
-    <Overlay id="infoOverlay" open={open} onClose={onClose}>
-      <div className={`modal modal-sm info-modal ${warn ? 'warn' : 'success'}`} id="infoModal">
-        <div className="modal-body">
-          <div className="info-icon" id="infoIcon">
-            {warn ? '!' : '✓'}
-          </div>
-          <div className="info-title" id="infoTitle">
-            {info.title}
-          </div>
-          <div className="info-desc" id="infoDesc">
-            {info.desc}
-          </div>
-        </div>
-        <div className="modal-footer">
-          <button className="btn btn-primary" id="infoOkBtn" type="button" onClick={onClose}>
-            OK
-          </button>
-        </div>
-      </div>
-    </Overlay>
+    <ResultDialog
+      tone={info.variant === 'warn' ? 'warning' : 'success'}
+      title={info.title}
+      message={info.desc}
+      actions={[{ label: 'OK', kind: 'primary', onClick: onClose }]}
+    />
   )
 }

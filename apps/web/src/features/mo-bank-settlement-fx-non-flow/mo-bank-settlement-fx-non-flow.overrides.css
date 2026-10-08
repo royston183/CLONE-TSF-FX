@@ -26,3 +26,162 @@
   white-space: nowrap;
   z-index: 80;
 }
+
+/*
+ * OTTK visual theme (CSS-ONLY): the "Create Master Contract" OTTK override block mapped onto this
+ * screen's own class names. Colour-bearing rules carry the light guard
+ * ":root:not([data-theme='dark'])" so night mode keeps the generated dark.css palette untouched;
+ * structural rules (sizes, radii, shadows, transitions) apply in both themes.
+ */
+
+/* 1. Tokens (light only; the aliases in the legacy sheet re-resolve from these) */
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow {
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --purple:#6B3FA0;
+  --gray-tint:#F2F4F5;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+}
+.mo-bank-settlement-fx-non-flow {
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+
+/* 2. Type scale */
+.mo-bank-settlement-fx-non-flow { font-size:13px; }
+.mo-bank-settlement-fx-non-flow .page-title { font-size:16px; }
+.mo-bank-settlement-fx-non-flow .page-subtitle { font-size:13px; }
+.mo-bank-settlement-fx-non-flow .panel-title h2 { font-size:14px; }
+.mo-bank-settlement-fx-non-flow .modal-title { font-size:14px; }
+.mo-bank-settlement-fx-non-flow .metric-lbl { font-size:12px; }
+.mo-bank-settlement-fx-non-flow .filter-field label, .mo-bank-settlement-fx-non-flow .assign-field label { font-size:13px; }
+
+/* 3. Header: transparent, flush on the page background */
+.mo-bank-settlement-fx-non-flow .page-head {
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+  min-height:0;
+}
+
+/* 4. Buttons: compact SAP padding, 4px radius, hover feedback */
+.mo-bank-settlement-fx-non-flow .common-btn, .mo-bank-settlement-fx-non-flow .btn-cancel, .mo-bank-settlement-fx-non-flow .btn-confirm, .mo-bank-settlement-fx-non-flow .filter-reset,
+.mo-bank-settlement-fx-non-flow .rowaction-btn, .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .common-btn { border-radius:4px !important; }
+.mo-bank-settlement-fx-non-flow .btn-cancel, .mo-bank-settlement-fx-non-flow .btn-confirm { padding:0 12px; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .btn-cancel:hover, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-reset:hover, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .rowaction-btn:hover { box-shadow:0 1px 4px rgba(34,53,72,.1); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .btn-confirm:hover:not(:disabled), :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .common-btn.approve:hover:not(:disabled) { box-shadow:0 2px 6px rgba(10,110,209,.22); }
+
+/* 5. KPI cards: 30px value, 12px label, 4px left accent, hover lift */
+.mo-bank-settlement-fx-non-flow .metric-val { font-size:30px; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .metric-val { color:var(--text); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .metric-lbl { color:var(--text-muted); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .metric-card { border-color:var(--border); border-left:4px solid var(--primary) !important; box-shadow:var(--shadow-card); }
+.mo-bank-settlement-fx-non-flow .metric-card { transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.mo-bank-settlement-fx-non-flow .metric-card:hover { transform:translateY(-2px); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .metric-card:hover { border-color:var(--border); box-shadow:0 4px 10px rgba(34,53,72,.1), 0 10px 22px rgba(34,53,72,.1); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .metric-card.active { border-color:var(--border); border-left-color:var(--primary) !important; box-shadow:0 0 0 2px var(--primary-tint); }
+
+/* 6/7. Inputs 36px; toolbar search + filter controls 32px */
+.mo-bank-settlement-fx-non-flow .filter-field input, .mo-bank-settlement-fx-non-flow .filter-field select, .mo-bank-settlement-fx-non-flow .assign-field input, .mo-bank-settlement-fx-non-flow .assign-field select { height:36px; }
+.mo-bank-settlement-fx-non-flow .master-toolbar .search-box input,
+.mo-bank-settlement-fx-non-flow .master-toolbar .filter-field select,
+.mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field select,
+.mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field.entity-filter select,
+.mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .dp input { height:32px !important; border-radius:4px !important; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field input, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field select, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .search-box input, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .assign-field input, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .assign-field select,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .seg-group, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .chip-group, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .pager-size select, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .pager-btn, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .btn-cancel, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-reset { border-color:var(--border-strong); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar .search-box input,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar .filter-field select,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field select,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-field.entity-filter select,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .dp input,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .master-toolbar #filter-panel-body .filter-reset { border-color:var(--border-strong) !important; color:var(--text) !important; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field input:hover, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field select:hover, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .search-box input:hover { border-color:#A6B0B9; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field input:focus, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .filter-field select:focus, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .search-box input:focus {
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-tint);
+}
+
+/* 8. Table: #F2F4F5 13px uppercase sticky header, 14px data, row lift, #EAF3FC selection */
+.mo-bank-settlement-fx-non-flow .list-table thead th { font-size:13px; text-transform:uppercase; letter-spacing:.02em; position:sticky; top:0; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table thead th { background:#F2F4F5; color:var(--text-muted); border-bottom-color:#E6E9EB; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table thead th.sticky-col, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table thead th.sticky-col { background:#F2F4F5 !important; }
+.mo-bank-settlement-fx-non-flow .list-table tbody td { font-size:14px; font-variant-numeric:tabular-nums; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table tbody td { border-bottom-color:#E6E9EB; }
+.mo-bank-settlement-fx-non-flow .list-table tbody tr { transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.mo-bank-settlement-fx-non-flow .list-table tbody tr:hover { transform:translateY(-1px) scale(1.002); position:relative; z-index:2; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover { box-shadow:0 3px 9px rgba(34,53,72,.10); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr:hover .sticky-col { background:#F7FBFF !important; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked td, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked .sticky-col,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked:hover td, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked:hover .sticky-col { background:#EAF3FC !important; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked:hover { box-shadow:0 3px 9px rgba(10,110,209,.14); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #mc-table tbody tr.row-checked td:first-child { box-shadow:inset 3px 0 0 var(--primary); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .tbl-link { color:var(--primary); }
+
+/* 9. Status colours */
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .st-pending, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .status-unmatured, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .bank-not-assigned { color:#9B6B00; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .st-confirmed, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .status-matured { color:var(--primary); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .st-inuse, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .status-settled, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .bank-assigned, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .deal-id, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .leg-buy { color:var(--success); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .st-rejected, :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .leg-sell { color:var(--error); }
+
+/* 10. Pagination: 28px compact square buttons */
+.mo-bank-settlement-fx-non-flow .pager-btn { min-width:28px; height:28px; border-radius:4px; }
+.mo-bank-settlement-fx-non-flow .pager-size select { height:28px; border-radius:4px; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .pager-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+/* 11. Modals: 12px radius, OTTK shadow, 1px border */
+.mo-bank-settlement-fx-non-flow .modal-card { border-radius:12px; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .modal-card { border:1px solid #B9C2C9; box-shadow:var(--shadow-pop); }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .modal-close:hover { background:var(--gray-tint); }
+
+/* 12. Toast: dark OTTK toast */
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .zfac-toast { background:#243B53; border-color:#243B53; color:#fff; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .zfac-toast.error { background:#4A211D; border-color:#4A211D; color:#fff; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .zfac-toast.success { background:#0E4F2A; border-color:#0E4F2A; color:#fff; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow ::-webkit-scrollbar-thumb { background:#B7C2CB; }
+
+/* 17. Drag and drop: dragged row at .5, blue drop-target highlight (also on the red "post" target) */
+.mo-bank-settlement-fx-non-flow #mc-table tbody tr.dragging-row { opacity:.5; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .drag-target.drag-over:not(:disabled),
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow #btn-reject-sel.drag-over:not(:disabled) {
+  border-color:var(--primary) !important;
+  background:var(--primary-tint) !important;
+  color:var(--primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-bank-settlement-fx-non-flow *, .mo-bank-settlement-fx-non-flow *::before, .mo-bank-settlement-fx-non-flow *::after { transition:none !important; animation-duration:.01ms !important; }
+  .mo-bank-settlement-fx-non-flow .metric-card:hover, .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover, .mo-bank-settlement-fx-non-flow .drag-target.drag-over { transform:none !important; }
+}
+
+/*
+ * Table grid lines removed (reference look: Create Master Contract). No vertical cell borders;
+ * only a faint horizontal hairline between rows and under the header. The light colour carries the
+ * light guard so the generated dark sheet keeps its own line colour.
+ */
+.mo-bank-settlement-fx-non-flow table th,
+.mo-bank-settlement-fx-non-flow table td { border-left: 0; border-right: 0; }
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table thead th,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .mini-table th,
+:root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .mini-table td { border-bottom-color: #E6E9EB; }

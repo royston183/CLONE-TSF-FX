@@ -806,7 +806,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // The popup stays open when SAP refuses, so the partner, type or amounts can be changed and retried.
   const createSpot = guarded(async () => {
     try {
-      const booked = await createBlotterSpot(spot, latest.current.ctx.date)
+      const booked = await createBlotterSpot(spot, latest.current.ctx.date, latest.current.ctx.trader)
       modals.close('autospot')
       status.show({
         tone: booked.appDataError ? 'warning' : 'success',

@@ -6,6 +6,7 @@ import { DateField } from './DateField.tsx'
 import { DealTable } from './DealTable.tsx'
 import { DealModal, McModal } from './DetailModals.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { WAITING_DEAL_ID_API, loadScreen, type DataSource } from './api.ts'
 import { ENTITIES, MODELS, REGIONS, STATUSES } from './data.ts'
 import { fmtDate, parseDMY } from './format.ts'
@@ -30,9 +31,9 @@ import './mo-view-deal-ids-for-confirmation.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-view-deal-ids-for-confirmation.dark.css'
+import './mo-view-deal-ids-for-confirmation.overrides.css'
 import type { ColumnKey, Deal, Filters, Layout, MselOption, MultiFilterKey, QuickFilters, Sort, StatusCode } from './types.ts'
 
-const TOAST_MS = 3200
 
 /** The Key Date defaults to today; the seed data keeps its own 28-09-2026 anchor (data.ts). */
 function today(): Date {
@@ -123,13 +124,12 @@ export default function MoViewDealIdsForConfirmation() {
   const [layout, setLayout] = useState<Layout>('essential')
   const [openMsel, setOpenMsel] = useState<MultiFilterKey | null>(null)
 
-  const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
+  // Outcomes show as the standard ResultDialog queue; each stays until OK.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
+  const resultSeq = useRef(0)
   const showToast = (message: string) => {
-    setToast({ message, show: true })
-    clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, show: false })), TOAST_MS)
+    const id = ++resultSeq.current
+    setOutcomes((r) => [...r, { id, tone: 'success', title: 'Success', message }])
   }
 
   const dealModal = useModal()
@@ -451,7 +451,7 @@ export default function MoViewDealIdsForConfirmation() {
       <DealModal modal={dealModal} deal={dealForModal} onClose={closeModals} />
       <McModal modal={mcModal} deal={mcForModal} onClose={closeModals} />
 
-      <div className={`toast${toast.show ? ' show' : ''}`}>{toast.message}</div>
+      <ResultQueue items={outcomes} onDismiss={(id) => setOutcomes((r) => r.filter((x) => x.id !== id))} />
     </div>
   )
 }

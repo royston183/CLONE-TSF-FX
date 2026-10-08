@@ -1,0 +1,118 @@
+/*
+ * OTTK visual theme (the "Create Master Contract" design system) - CSS-ONLY deviations from the
+ * generated legacy stylesheet (tools/scope-css.mjs; must not be hand-edited). Mirrors the
+ * "OTTK visual theme" block at the end of fo-create-master-contract.legacy.css, mapped onto this
+ * screen's own class names (only rules whose selectors exist here), scoped under .modiv.
+ *
+ * Imported after legacy.css AND dark.css. dark.css restates colours under
+ * ":root[data-theme='dark'] .modiv" at higher specificity, so every light-only colour below is
+ * written under ":root:not([data-theme='dark']) .modiv" and can never override night mode.
+ * Non-colour changes (size, radius, spacing, transform, shadow) apply in both themes.
+ */
+
+/* 1. Tokens: surfaces/text/borders light-only; brand + status colours theme-neutral. */
+:root:not([data-theme='dark']) .modiv {
+  --bg: #F5F7F9;
+  --surface: #FFFFFF;
+  --border: #D5DADD;
+  --border-soft: #E6E9EB;
+  --ink: #1D2D3E;
+  --ink-soft: #1D2D3E;
+  --muted: #475E75;
+  --muted-2: #687B8D;
+  --blue-pale: #EAF3FC;
+  --green-pale: #E4F5E9;
+  --amber-pale: #FFF4CC;
+  --red-pale: #FCEAEA;
+  --purple-pale: #F1EAF8;
+  --shadow: 0 1px 3px rgba(34, 53, 72, 0.13);
+}
+.modiv {
+  --blue: #0A6ED1;
+  --blue-dark: #085CAF;
+  --green: #107E3E;
+  --amber: #E9730C;
+  --red: #BB0000;
+  --purple: #6B3FA0;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+  --shadow-md: 0 22px 70px rgba(16, 38, 58, 0.3);
+}
+.modiv *, .modiv { font-family: "72", "Segoe UI", Arial, Helvetica, sans-serif; }
+
+/* 2. Type scale */
+.modiv .page-title { font-size: 16px; }
+.modiv .panel-title h2 { font-size: 14px; }
+.modiv .modal-title { font-size: 14px; }
+
+/* 3. Header: transparent, flush on the page background */
+.modiv .page-head { background: transparent; border-bottom: none; padding-top: 4px; padding-bottom: 4px; }
+
+/* 4. Buttons */
+.modiv .btn-icon, .modiv .btn-outline-hd, .modiv .filter-reset, .modiv .btn-cancel, .modiv .btn-confirm,
+.modiv .tbtn, .modiv .modal-close { border-radius: 4px; }
+.modiv .btn-icon:hover, .modiv .btn-outline-hd:hover, .modiv .filter-reset:hover, .modiv .btn-cancel:hover,
+.modiv .tbtn:hover:not(:disabled) { box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1); }
+.modiv .btn-confirm:hover, .modiv .tbtn.primary:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+
+/* 5. Panels */
+.modiv .panel { border-radius: 8px; box-shadow: var(--shadow); }
+
+/* 6/7. Inputs 36px (modal/mini inputs); search + filter controls 32px */
+.modiv .mini-input { height: 36px; border-radius: 4px; }
+.modiv textarea.remark-box { border-radius: 4px; }
+.modiv .search-box input, .modiv .panel-title-right .search-box input,
+.modiv .filter-field input, .modiv .filter-field select, .modiv .filter-reset { height: 32px; font-size: 13px; border-radius: 4px; }
+.modiv .calendar-btn { width: 30px; height: 30px; }
+:root:not([data-theme='dark']) .modiv .search-box input:hover,
+:root:not([data-theme='dark']) .modiv .filter-field input:hover,
+:root:not([data-theme='dark']) .modiv .filter-field select:hover { border-color: #A6B0B9; }
+
+/* 8. Tables: #F2F4F5 sticky header 13px uppercase, 14px data, hover lift */
+.modiv .list-table thead th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
+.modiv .list-table tbody td { font-size: 14px; }
+:root:not([data-theme='dark']) .modiv .list-table thead th { background: #F2F4F5; border-bottom-color: #E6E9EB; }
+:root:not([data-theme='dark']) .modiv .list-table tbody td { border-bottom-color: #E6E9EB; }
+:root:not([data-theme='dark']) .modiv .list-table tbody tr:hover td { background: #F7FBFF; }
+.modiv .list-table tbody tr { position: relative; transition: transform .15s ease, box-shadow .15s ease; }
+.modiv .list-table tbody tr:hover { transform: translateY(-1px); box-shadow: 0 3px 9px rgba(34, 53, 72, 0.1); z-index: 2; }
+/* precision: numeric cells are already right-aligned (.list-table td); keep tabular figures */
+.modiv .list-table td, .modiv .list-table .num { font-variant-numeric: tabular-nums; }
+
+/* 9. Status colours */
+:root:not([data-theme='dark']) .modiv .st-booked { color: #9B6B00; }
+:root:not([data-theme='dark']) .modiv .st-partial { color: #0A6ED1; }
+:root:not([data-theme='dark']) .modiv .st-confirmed { color: #107E3E; }
+
+/* 10. Pagination 28px */
+.modiv .pager-btn { min-width: 28px; height: 28px; border-radius: 4px; }
+:root:not([data-theme='dark']) .modiv .pager-btn.active { background: #EAF3FC; border-color: #0A6ED1; color: #0A6ED1; }
+
+/* 11. Modals: 12px radius + OTTK shadow */
+.modiv .modal-card { border-radius: 12px; box-shadow: 0 22px 70px rgba(16, 38, 58, 0.3); }
+.modiv .modal-header { border-radius: 12px 12px 0 0; }
+:root:not([data-theme='dark']) .modiv .modal-card { border: 1px solid #B9C2C9; }
+:root:not([data-theme='dark']) .modiv .modal-close:hover { background: #F2F4F5; }
+
+/* 12. Toast */
+:root:not([data-theme='dark']) .modiv .toast { background: #243B53; }
+:root:not([data-theme='dark']) .modiv .toast.error { background: #4A211D; }
+:root:not([data-theme='dark']) .modiv .toast.success { background: #107E3E; }
+:root:not([data-theme='dark']) .modiv .toast.warn { background: #8A5300; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .modiv ::-webkit-scrollbar-thumb { background: #B7C2CB; }
+
+@media (prefers-reduced-motion: reduce) {
+  .modiv .list-table tbody tr, .modiv .toast, .modiv .modal-card { transition: none; }
+  .modiv .list-table tbody tr:hover { transform: none; }
+}
+
+/* Table grid lines removed: no vertical cell borders / boxed table, one faint hairline between rows.
+   Double :not() lifts specificity over any generated rule; border-bottom colours stay with the sheets above
+   (light #E6E9EB, dark line colour from dark.css). The .table-wrap card keeps its outer border. */
+:root:not(.nogrid):not(.nogrid2) .modiv table,
+:root:not(.nogrid):not(.nogrid2) .modiv table th,
+:root:not(.nogrid):not(.nogrid2) .modiv table td { border-left: none; border-right: none; }
+:root:not(.nogrid):not(.nogrid2) .modiv table { border: none; }

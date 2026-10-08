@@ -1,6 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { getDb } from '../sqlite/db.ts'
 import { dealMetadataRepository } from '../sqlite/repositories/deal-metadata.ts'
+import { DdicInputError, ddicRepository } from '../sqlite/repositories/ddic-table.ts'
+import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from '../sqlite/repositories/trd-acc-columns.ts'
+import { trdPosRepository } from '../sqlite/repositories/trd-pos.ts'
 import type { DealMetadataFields } from '../sqlite/schema.ts'
 import { requireSession } from './auth.ts'
 
@@ -14,7 +17,7 @@ import { requireSession } from './auth.ts'
  * bodies are decoded here, for these routes only.
  */
 
-const LIMITS = { companyCode: 10, transactionId: 20, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
+const LIMITS = { companyCode: 10, transactionId: 20, dealId: 15, seq: 2, fiType: 2, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
 const EDITABLE = ['productType', 'strategy', 'internalReference', 'remark'] as const
 
 class BadRequest extends Error {}
@@ -80,7 +83,7 @@ function keyOf(req: FastifyRequest): Params {
  * the SQLite message, SQL text and file paths go to the server log, never to the browser.
  */
 function dbFailure(req: FastifyRequest, reply: FastifyReply, err: unknown): FastifyReply {
-  if (err instanceof BadRequest) return fail(reply, 400, err.message)
+  if (err instanceof BadRequest || err instanceof DdicInputError) return fail(reply, 400, err.message)
 
   const code = (err as { code?: string } | null)?.code ?? ''
   if (code.startsWith('SQLITE_CONSTRAINT')) {
@@ -153,6 +156,103 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
       const { companyCode, transactionId } = keyOf(req)
       return repo().deleteDealMetadata(companyCode, transactionId) ? reply.code(204).send() : notFound(reply)
     }),
+  )
+
+  // ZSGTSFTR_TRD_POS — Trade Invoice Posting Details, the source of the Execute Settlement for Deal ID
+  // screen's settled / posted flags and invoice legs. Rows use SAP's field names (ZDEAL_ID, ZSEQ, ...).
+  const trdPos = () => trdPosRepository(getDb())
+  const trdKey = (req: FastifyRequest) => {
+    const p = req.params as { dealId: string; seq: string }
+    return { dealId: requiredText(p.dealId, 'dealId'), seq: requiredText(p.seq, 'seq') }
+  }
+  const trdNotFound = (reply: FastifyReply) => fail(reply, 404, 'No trade position for this Deal ID and sequence.')
+  const sapStamp = () => {
+    const now = new Date()
+    const p = (n: number) => String(n).padStart(2, '0')
+    return {
+      date: `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`,
+      time: `${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`,
+    }
+  }
+
+  app.get(
+    '/api/localdb/tsf-trade-position',
+    guarded((req) => {
+      const dealId = (req.query as { ZDEAL_ID?: unknown }).ZDEAL_ID
+      if (dealId !== undefined && typeof dealId !== 'string') throw new BadRequest('ZDEAL_ID must be a single value.')
+      return { value: trdPos().list(dealId || undefined) }
+    }),
+  )
+
+  app.get(
+    '/api/localdb/tsf-trade-position/:dealId/:seq',
+    guarded((req, reply) => {
+      const { dealId, seq } = trdKey(req)
+      return trdPos().get(dealId, seq) ?? trdNotFound(reply)
+    }),
+  )
+
+  // Create the row, or update just the fields sent. The created / changed stamps are the gateway's.
+  app.put(
+    '/api/localdb/tsf-trade-position/:dealId/:seq',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const { dealId, seq } = trdKey(req)
+      const body = jsonObject(req.body)
+      const { date, time } = sapStamp()
+      const existing = trdPos().get(dealId, seq)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = trdPos().upsert(dealId, seq, { ...body, ...stamps })
+      return reply.code(existing ? 200 : 201).send(row)
+    }),
+  )
+
+  app.delete(
+    '/api/localdb/tsf-trade-position/:dealId/:seq',
+    guarded((req, reply) => {
+      const { dealId, seq } = trdKey(req)
+      return trdPos().remove(dealId, seq) ? reply.code(204).send() : trdNotFound(reply)
+    }),
+  )
+
+  // ZSGTSFTR_TRD_ACC — Trade Invoice posting configuration, keyed by posting type (ZFI_TYPE). Read by the
+  // Execute Settlement for Deal ID screen for each SET_TYP row's document type, reference and Dr / Cr line texts.
+  const trdAcc = () => ddicRepository(getDb(), { table: 'zsgtsftr_trd_acc', client: TRD_ACC_CLIENT, columns: TRD_ACC_COLUMNS })
+  const accKey = (req: FastifyRequest) => ({ ZFI_TYPE: requiredText((req.params as { fiType: string }).fiType, 'fiType') })
+
+  app.get('/api/localdb/tsf-posting-type', guarded(() => ({ value: trdAcc().list() })))
+
+  app.get(
+    '/api/localdb/tsf-posting-type/:fiType',
+    guarded((req, reply) => trdAcc().get(accKey(req)) ?? fail(reply, 404, 'No posting type with this code.')),
+  )
+
+  app.put(
+    '/api/localdb/tsf-posting-type/:fiType',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const key = accKey(req)
+      const { date, time } = sapStamp()
+      const existing = trdAcc().get(key)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = trdAcc().upsert(key, { ...jsonObject(req.body), ...stamps })
+      return reply.code(existing ? 200 : 201).send(row)
+    }),
+  )
+
+  app.delete(
+    '/api/localdb/tsf-posting-type/:fiType',
+    guarded((req, reply) => (trdAcc().remove(accKey(req)) ? reply.code(204).send() : fail(reply, 404, 'No posting type with this code.'))),
   )
 
   // Anything else under /api/localdb is a 404 in this group's own words, rather than falling

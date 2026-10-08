@@ -193,6 +193,7 @@ describe('workflow against the services', () => {
       const method = init?.method ?? 'GET'
       const headers = new Headers(init?.headers)
       calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : null, ifMatch: headers.get('if-match') })
+      if (url.includes('/data/trmTrader')) return json(200, { rows: [{ ZTCODE: 'TRY', ZTRADER: 'TERRY TAY' }] })
       if (url.includes('/api/trmfxapp/')) {
         if (method !== 'GET' && opts.appFails) return json(500, { error: { message: { value: 'service down' } } })
         if (method === 'GET' && url.includes('TrmFxApp(')) return opts.stored ? json(200, opts.stored) : json(404, { error: { message: { value: 'not found' } } })
@@ -223,6 +224,7 @@ describe('workflow against the services', () => {
     strictEqual(body['BlotterDate'], '2026-09-30')
     strictEqual(body['ZtsfBcurr'], 'USD')
     strictEqual(body['ZtsfScurr'], 'INR')
+    strictEqual(body['Ztrcode'], 'TRY') // the SAP code of the blotter's trader (TER = TERRY TAY), not the dropdown key
     ok(!('LocalCreatedBy' in body) && !('LastChangedAt' in body))
   })
 
@@ -270,7 +272,8 @@ describe('workflow against the services', () => {
     ok(!('ZtsfDealType' in w!.body!))
     strictEqual(w!.body!['ZtsfMcRefNo'], '2000000028')
     strictEqual(w!.body!['ZtsfDealDesc'], 'D')
-    ok(calls.every((c) => c.url.includes('/api/trmfxapp/')))
+    strictEqual(w!.body!['Ztrcode'], 'TRY')
+    ok(!calls.some((c) => c.url.includes('/api/fx/'))) // no SAP Treasury operation is repeated
   })
 
   it('release: writes each row own leg, D1 or D2, as ZTSF_DEAL_TYPE, never the Deal ID type', async () => {

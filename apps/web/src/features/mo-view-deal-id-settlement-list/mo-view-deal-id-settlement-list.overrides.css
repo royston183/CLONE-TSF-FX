@@ -10,3 +10,194 @@
   gap: 7px;
   white-space: nowrap;
 }
+
+/*
+ * OTTK visual theme (same look as fo-create-master-contract's "OTTK visual theme" block),
+ * mapped onto this screen's class names. CSS only.
+ *
+ * Dark mode: mo-view-deal-id-settlement-list.dark.css remaps the screen's variables and restates
+ * the literal colours under ':root[data-theme="dark"] .mo-view-deal-id-settlement-list', which
+ * out-ranks a plain scoped rule. Everything below that sets a palette token or a literal colour is
+ * therefore behind :root:not([data-theme='dark']), so night mode is exactly what it was before;
+ * only colour-neutral rules (size, shape, motion) are unguarded.
+ */
+
+/* 1. Tokens -> OTTK palette. The sheet's aliases (--ink, --blue, --muted, ...) resolve through
+   these, so this re-themes buttons, inputs, links, cards, borders and focus rings at once. */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list {
+  --bg: #f5f7f9;
+  --card: #ffffff;
+  --text: #1d2d3e;
+  --text-muted: #475e75;
+  --text-faint: #687b8d;
+  --border: #d5dadd;
+  --border-strong: #8996a1;
+  --primary: #0a6ed1;
+  --primary-dark: #085caf;
+  --primary-light: #4fa3e8;
+  --primary-tint: #eaf3fc;
+  --success: #107e3e;
+  --success-tint: #e4f5e9;
+  --warning: #e9730c;
+  --warning-tint: #fff4cc;
+  --error: #bb0000;
+  --error-tint: #fceaea;
+  --purple: #6b3fa0;
+  --gray-tint: #f2f4f5;
+  --shadow-card: 0 1px 3px rgba(34, 53, 72, 0.13);
+  --shadow-pop: 0 22px 70px rgba(16, 38, 58, 0.3);
+}
+.mo-view-deal-id-settlement-list {
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+}
+
+/* 2-3. Header: transparent, sits on the page background */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .page-head {
+  background: transparent;
+  border: none;
+  padding: 4px 2px;
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .page-title { color: var(--text); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .page-subtitle { color: var(--text-muted); }
+.mo-view-deal-id-settlement-list .page-title { font-size: 16px; }
+.mo-view-deal-id-settlement-list .page-subtitle { font-size: 13px; }
+
+/* 4. Buttons: SAP-compact padding, hover feedback */
+.mo-view-deal-id-settlement-list .btn-cancel,
+.mo-view-deal-id-settlement-list .btn-confirm { padding: 0 12px; }
+.mo-view-deal-id-settlement-list .btn-cancel:hover { box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1); }
+.mo-view-deal-id-settlement-list .btn-confirm:hover { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+
+/* 5. KPI cards: 30px value, 12px label, description bottom-right, 4px left accent, hover lift */
+.mo-view-deal-id-settlement-list .metric-card {
+  border-left-width: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.mo-view-deal-id-settlement-list .metric-card:hover { transform: translateY(-2px); }
+.mo-view-deal-id-settlement-list .metric-val { font-size: 30px; }
+.mo-view-deal-id-settlement-list .metric-lbl { font-size: 12px; }
+.mo-view-deal-id-settlement-list .metric-help { font-size: 13px; right: 16px; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-card {
+  border-color: var(--border);
+  border-left-color: var(--primary) !important;
+  box-shadow: var(--shadow-card);
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-card:hover {
+  border-color: var(--border);
+  box-shadow: 0 4px 10px rgba(34, 53, 72, 0.1), 0 10px 22px rgba(34, 53, 72, 0.1);
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-tint);
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-val { color: var(--text); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-lbl { color: var(--text-muted); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .metric-help { color: var(--text-faint); }
+
+/* 6-7. Inputs / search / filters: the screen already pins the toolbar controls to 32px and the
+   edit-modal fields to 36px; only the OTTK border tones and text size are applied. */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .panel,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .panel-title,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar { border-color: var(--border); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar .search-box input,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar .filter-field select,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar #filter-panel-body .filter-field select,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar #filter-panel-body .dp input,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .master-toolbar #filter-panel-body .filter-reset {
+  border-color: var(--border-strong) !important;
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .filter-field input:hover,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .filter-field select:hover { border-color: #a6b0b9; }
+.mo-view-deal-id-settlement-list .search-box input,
+.mo-view-deal-id-settlement-list .filter-field select { font-size: 13px; }
+.mo-view-deal-id-settlement-list .panel-title h2 { font-size: 13px; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .panel-title h2 { color: var(--primary-dark); }
+
+/* 8. Table: #F2F4F5 13px uppercase sticky header, 14px data, tabular amounts, hover lift */
+.mo-view-deal-id-settlement-list .list-table thead th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+}
+.mo-view-deal-id-settlement-list .list-table tbody td { font-size: 14px; }
+.mo-view-deal-id-settlement-list .list-table tbody td[style*='text-align: right'] {
+  font-variant-numeric: tabular-nums;
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .list-table thead th {
+  background: var(--gray-tint);
+  color: var(--text-muted);
+  border-bottom-color: #e6e9eb;
+}
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .list-table tbody td { border-bottom-color: #e6e9eb; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .list-table tbody tr:hover td { background: #f7fbff; }
+.mo-view-deal-id-settlement-list .list-table tbody tr {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.mo-view-deal-id-settlement-list .list-table tbody tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 9px rgba(34, 53, 72, 0.1);
+  position: relative;
+  z-index: 2;
+}
+/* Selected rows (#mc-table is the master-contract grid, if rendered) */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .list-table tbody tr.row-checked td,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list #mc-table tbody tr.row-checked td { background: #eaf3fc !important; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list #mc-table thead th.sticky-col { background: var(--gray-tint) !important; }
+.mo-view-deal-id-settlement-list #mc-table tbody tr.dragging-row { opacity: 0.5; }
+
+/* 9. Status colours */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .st-pending { color: #9b6b00; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .st-errcorr { color: var(--purple); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .st-confirmed,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .tbl-link { color: var(--primary); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .st-inuse,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .deal-id { color: var(--success); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .st-rejected { color: var(--error); }
+.mo-view-deal-id-settlement-list .status-cell,
+.mo-view-deal-id-settlement-list .tbl-link { font-size: 14px; }
+
+/* 10. Pagination: 28px compact square buttons */
+.mo-view-deal-id-settlement-list .pager-btn { min-width: 28px; height: 28px; padding: 0 6px; border-radius: var(--radius-sm); }
+.mo-view-deal-id-settlement-list .pager-size select { height: 28px; border-radius: var(--radius-sm); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .pager-btn,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .pager-size select { border-color: var(--border-strong); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .pager-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* 11. Modals: 12px radius + OTTK shadow (tokens above), 14px title */
+.mo-view-deal-id-settlement-list .modal-title { font-size: 14px; }
+.mo-view-deal-id-settlement-list .modal-card { border-radius: var(--radius-lg); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .modal-card { border-color: #b9c2c9; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .modal-close:hover { background: var(--gray-tint); }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list .zfac-toast.success { border-color: #c5e0cd; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list ::-webkit-scrollbar-thumb { background: #b7c2cb; }
+
+/* Motion: honour the user's preference */
+@media (prefers-reduced-motion: reduce) {
+  .mo-view-deal-id-settlement-list *,
+  .mo-view-deal-id-settlement-list *::before,
+  .mo-view-deal-id-settlement-list *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .mo-view-deal-id-settlement-list .list-table tbody tr:hover,
+  .mo-view-deal-id-settlement-list .metric-card:hover { transform: none; }
+}
+
+/*
+ * Table grid lines: no vertical cell borders and no boxed table (sticky / selection columns
+ * included); only a single faint horizontal hairline between rows. Light line colour sits behind
+ * the light-only guard so the dark sheet's own line colour is never overridden.
+ */
+.mo-view-deal-id-settlement-list table { border: none; }
+.mo-view-deal-id-settlement-list table th,
+.mo-view-deal-id-settlement-list table td { border-left: none; border-right: none; }
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list table thead th,
+:root:not([data-theme='dark']) .mo-view-deal-id-settlement-list table tbody td { border-bottom-color: #e6e9eb; }

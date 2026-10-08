@@ -1,0 +1,144 @@
+/*
+ * OTTK visual theme (the "Create Master Contract" design system) - CSS-ONLY deviations from the
+ * generated legacy stylesheet (tools/scope-css.mjs; must not be hand-edited). Mirrors the
+ * "OTTK visual theme" block at the end of fo-create-master-contract.legacy.css, mapped onto this
+ * screen's own class names (only rules whose selectors exist here), scoped under
+ * .mo-execute-settlement-deal-id (a screen-specific root, so nothing leaks to other .mo screens).
+ *
+ * Imported after legacy.css AND dark.css. dark.css restates colours under
+ * ":root[data-theme='dark'] .mo-execute-settlement-deal-id" at higher specificity, so every
+ * light-only colour below is written under ":root:not([data-theme='dark'])" and can never
+ * override night mode. Non-colour changes (size, radius, transform, shadow) apply in both themes.
+ * The legacy sheet ends with its own "OTTK MASTER UI PROFILE OVERRIDES" block; this file comes
+ * later and aligns it with the Create Master Contract values.
+ */
+
+/* 1. Tokens: surfaces/text/borders light-only; brand + status colours theme-neutral. */
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id {
+  --bg: #F5F7F9;
+  --surface: #FFFFFF;
+  --border: #D5DADD;
+  --border-soft: #E6E9EB;
+  --ink: #1D2D3E;
+  --ink-soft: #1D2D3E;
+  --muted: #475E75;
+  --muted-2: #687B8D;
+  --blue-pale: #EAF3FC;
+  --green-pale: #E4F5E9;
+  --amber-pale: #FFF4CC;
+  --red-pale: #FCEAEA;
+  --purple-pale: #F1EAF8;
+  --shadow: 0 1px 3px rgba(34, 53, 72, 0.13);
+  background: #F5F7F9;
+}
+.mo-execute-settlement-deal-id {
+  --blue: #0A6ED1;
+  --blue-dark: #085CAF;
+  --green: #107E3E;
+  --amber: #E9730C;
+  --red: #BB0000;
+  --purple: #6B3FA0;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+  --shadow-md: 0 22px 70px rgba(16, 38, 58, 0.3);
+  font-size: 13px;
+}
+.mo-execute-settlement-deal-id *, .mo-execute-settlement-deal-id { font-family: "72", "Segoe UI", Arial, Helvetica, sans-serif; }
+
+/* 2. Type scale */
+.mo-execute-settlement-deal-id .page-title { font-size: 16px; }
+.mo-execute-settlement-deal-id .panel-title h2 { font-size: 14px; }
+.mo-execute-settlement-deal-id .modal-title { font-size: 14px; }
+.mo-execute-settlement-deal-id .ffield label { font-size: 13px; }
+
+/* 3. Header: transparent, flush on the page background */
+.mo-execute-settlement-deal-id .page-head { background: transparent; border-bottom: none; padding-top: 4px; padding-bottom: 4px; }
+
+/* 4. Buttons */
+.mo-execute-settlement-deal-id .btn-outline, .mo-execute-settlement-deal-id .btn-primary,
+.mo-execute-settlement-deal-id .btn-icon, .mo-execute-settlement-deal-id .action-btn,
+.mo-execute-settlement-deal-id .btn-cancel, .mo-execute-settlement-deal-id .btn-confirm,
+.mo-execute-settlement-deal-id .btn-primary-inline, .mo-execute-settlement-deal-id .sample-chip { border-radius: 4px; }
+.mo-execute-settlement-deal-id .btn-outline, .mo-execute-settlement-deal-id .btn-primary { height: 36px; padding: 0 12px; font-size: 13px; }
+.mo-execute-settlement-deal-id .action-btn { font-size: 13px; }
+.mo-execute-settlement-deal-id .btn-outline:hover:not(:disabled), .mo-execute-settlement-deal-id .btn-icon:hover,
+.mo-execute-settlement-deal-id .action-btn:hover:not(:disabled), .mo-execute-settlement-deal-id .btn-cancel:hover { box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1); }
+.mo-execute-settlement-deal-id .btn-primary:hover:not(:disabled), .mo-execute-settlement-deal-id .btn-confirm:hover,
+.mo-execute-settlement-deal-id .action-btn.primary:hover:not(:disabled), .mo-execute-settlement-deal-id .btn-primary-inline:hover { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .btn-primary,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .action-btn.primary { background: #0A6ED1; border-color: #0A6ED1; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .btn-primary:hover:not(:disabled),
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .action-btn.primary:hover:not(:disabled) { background: #085CAF; border-color: #085CAF; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .action-btn.success { background: #E4F5E9; border-color: #C5E0CD; color: #107E3E; }
+
+/* 5. Panels */
+.mo-execute-settlement-deal-id .panel, .mo-execute-settlement-deal-id .select-card { border-radius: 8px; box-shadow: var(--shadow); }
+
+/* 6/7. Inputs 36px (forms); search 32px */
+.mo-execute-settlement-deal-id .ffield input, .mo-execute-settlement-deal-id .ffield select { height: 36px; border-radius: 4px; font-size: 13px; }
+.mo-execute-settlement-deal-id .ffield textarea { border-radius: 4px; font-size: 13px; }
+.mo-execute-settlement-deal-id .select-field input { height: 36px; border-radius: 4px; font-size: 13px; }
+.mo-execute-settlement-deal-id .mini-search input { height: 32px; border-radius: 4px; font-size: 13px; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .ffield input:hover,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .ffield select:hover,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .select-field input:hover,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .mini-search input:hover { border-color: #A6B0B9; }
+
+/* 8. Tables: #F2F4F5 sticky header 13px uppercase, 14px data, hover lift, selected #EAF3FC */
+.mo-execute-settlement-deal-id table { font-size: 14px; }
+.mo-execute-settlement-deal-id .data-table thead th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; position: sticky; top: 0; }
+.mo-execute-settlement-deal-id .data-table tbody td { font-size: 14px; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .data-table thead th { background: #F2F4F5; border-bottom-color: #E6E9EB; color: #475E75; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .data-table tbody td { border-bottom-color: #E6E9EB; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .data-table tbody tr:hover td { background: #F7FBFF; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .data-table tbody tr.row-sel td,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .data-table tbody tr.row-sel:hover td { background: #EAF3FC !important; }
+.mo-execute-settlement-deal-id .data-table tbody tr { position: relative; transition: transform .15s ease, box-shadow .15s ease; }
+.mo-execute-settlement-deal-id .data-table tbody tr:hover { transform: translateY(-1px); box-shadow: 0 3px 9px rgba(34, 53, 72, 0.1); z-index: 2; }
+.mo-execute-settlement-deal-id .data-table tbody tr.row-sel:hover { box-shadow: 0 3px 9px rgba(10, 110, 209, 0.14); }
+/* precision: cells are right-aligned by default (.left opts out); tabular figures throughout */
+.mo-execute-settlement-deal-id .data-table td, .mo-execute-settlement-deal-id .num { font-variant-numeric: tabular-nums; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .hotspot { color: #0A6ED1; }
+
+/* 9. Status colours (dot/text and pill/chip variants) */
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .st-progress { color: #6B3FA0; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .st-due { color: #9B6B00; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .st-init { color: #0A6ED1; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .st-done { color: #107E3E; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .pill-progress { color: #6B3FA0; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .pill-due { color: #9B6B00; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .pill-init { color: #0A6ED1; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .pill-done,
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .chip-done { background: #E4F5E9; color: #107E3E; }
+
+/* 10. Pagination 28px */
+.mo-execute-settlement-deal-id .pager-ctrl button { min-width: 28px; height: 28px; border-radius: 4px; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .pager-ctrl button.active { background: #EAF3FC; border-color: #0A6ED1; color: #0A6ED1; }
+
+/* 11. Modals: 12px radius + OTTK shadow */
+.mo-execute-settlement-deal-id .modal-card { border-radius: 12px; box-shadow: 0 22px 70px rgba(16, 38, 58, 0.3); }
+.mo-execute-settlement-deal-id .modal-close { border-radius: 4px; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .modal-card { border-color: #B9C2C9; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .modal-close:hover { background: #F2F4F5; }
+
+/* 12. Toast: dark neutral, dark-red error (success/info keep their tinted variants) */
+.mo-execute-settlement-deal-id .zfac-toast { border-radius: 4px; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .zfac-toast { background: #243B53; border-color: #243B53; color: #fff; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .zfac-toast.error { background: #4A211D; border-color: #4A211D; color: #fff; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .zfac-toast.success { background: #E4F5E9; border-color: #C5E0CD; color: #107E3E; }
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id .zfac-toast.info { background: #EAF3FC; border-color: #BEE0F7; color: #085CAF; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .mo-execute-settlement-deal-id ::-webkit-scrollbar-thumb { background: #B7C2CB; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-execute-settlement-deal-id .data-table tbody tr, .mo-execute-settlement-deal-id .modal-card,
+  .mo-execute-settlement-deal-id .zfac-toast { transition: none; }
+  .mo-execute-settlement-deal-id .data-table tbody tr:hover { transform: none; }
+}
+
+/* ---- Table grid lines: no vertical cell borders, no boxed table; only the row hairline ---- */
+.mo-execute-settlement-deal-id table { border: none; }
+.mo-execute-settlement-deal-id table th,
+.mo-execute-settlement-deal-id table td { border-left: none; border-right: none; }

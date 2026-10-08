@@ -36,6 +36,8 @@ import './mo-bank-settlement-fx-non-flow.legacy.css'
 import './mo-bank-settlement-fx-non-flow.dark.css'
 // Hand-written deviation from the generated sheet (the drag hint's body class) — see inside.
 import './mo-bank-settlement-fx-non-flow.overrides.css'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
+import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type {
   BankFilter,
   BankForm,
@@ -95,10 +97,21 @@ export default function MoBankSettlementFxNonFlow() {
   // Toast — the page opens with the load state.
   const [toast, setToast] = useState<Toast>(() => ({ message: 'Loading from SAP…', kind: '', show: true }))
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const showToast = useCallback((message: string, kind: ToastKind) => {
-    clearTimeout(toastTimer.current)
-    setToast({ message, kind, show: true })
-    toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, kind: '', show: false })), TOAST_MS)
+  // Outcomes (SAP success / error / validation / waiting messages) show as the standard ResultDialog queue;
+  // only the load-state hint and the plain "Refreshed" chatter stay on the small non-modal toast.
+  const [results, setResults] = useState<ResultItem[]>([])
+  const resultSeq = useRef(0)
+  const dismissResult = useCallback((id: number) => setResults((r) => r.filter((x) => x.id !== id)), [])
+  const showToast = useCallback((message: string, kind: ToastKind, quiet = false) => {
+    if (quiet || kind === '') {
+      clearTimeout(toastTimer.current)
+      setToast({ message, kind, show: true })
+      toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, kind: '', show: false })), TOAST_MS)
+      return
+    }
+    const tone: ResultTone = kind === 'success' ? 'success' : kind === 'error' ? 'error' : 'info'
+    const title = tone === 'success' ? 'Success' : tone === 'error' ? 'Error' : 'Information'
+    setResults((r) => [...r, { id: ++resultSeq.current, tone, title, message }])
   }, [])
   useEffect(() => {
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, kind: '', show: false })), TOAST_MS)
@@ -164,7 +177,7 @@ export default function MoBankSettlementFxNonFlow() {
     setCheckedId(null)
     setPage(1)
     load()
-      .then((reason) => showToast(deals.length ? `Refreshed. ${filtered.length} deal(s) loaded.` : reason, 'info'))
+      .then((reason) => showToast(deals.length ? `Refreshed. ${filtered.length} deal(s) loaded.` : reason, 'info', deals.length > 0))
       .catch(() => showToast('Refresh failed — SAP could not be read.', 'error'))
   }
 
@@ -552,6 +565,8 @@ export default function MoBankSettlementFxNonFlow() {
         onClosed={() => commit(filters)}
       />
       <PostDialog modal={postModal} deal={dealById(postId)} onConfirm={onPostConfirm} />
+
+      <ResultQueue items={results} onDismiss={dismissResult} />
 
       <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
         {toast.message}

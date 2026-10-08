@@ -5,6 +5,8 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { expireOnMysql, loadContracts } from './api.ts'
 import { ConfirmExpiryModal } from './ConfirmExpiryModal.tsx'
 import { ContractDetailModal } from './ContractDetailModal.tsx'
@@ -33,6 +35,10 @@ import './mo-update-mc-expiry.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-update-mc-expiry.dark.css'
+<<<<<<< HEAD
+=======
+import './mo-update-mc-expiry.overrides.css'
+>>>>>>> origin/main
 import type { ExpiryConfirm, MasterContract, PostingMode, Sort, SortField } from './types.ts'
 
 const BRAND_LOGO =
@@ -92,10 +98,24 @@ export default function MoUpdateMcExpiry() {
   const [confirm, setConfirm] = useState<ExpiryConfirm | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
 
+<<<<<<< HEAD
   const feedback = useMasterContractFeedback()
   const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     feedback.show(message, tone)
   }, [feedback.show])
+=======
+  // Outcomes show as the standard ResultDialog queue; each stays until OK.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
+  const toastSeq = useRef(0)
+  const dismissToast = useCallback((id: number) => {
+    setOutcomes((list) => list.filter((t) => t.id !== id))
+  }, [])
+  const showToast = useCallback((message: string, tone: ResultTone = 'success') => {
+    const id = ++toastSeq.current
+    const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'info' ? 'Information' : 'Success'
+    setOutcomes((list) => [...list, { id, tone, title, message }])
+  }, [])
+>>>>>>> origin/main
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const loaded = await loadContracts(signal)
@@ -142,7 +162,7 @@ export default function MoUpdateMcExpiry() {
   const loadScreenData = async (text: string, mode: PostingMode) => {
     if (busy.current) return
     if (source === 'loading') {
-      showToast('Master Contracts are still loading. Try again in a moment.')
+      showToast('Master Contracts are still loading. Try again in a moment.', 'info')
       return
     }
     const check = validateKeyDate(text)
@@ -192,7 +212,7 @@ export default function MoUpdateMcExpiry() {
     if (mode === 'post' && postingMode !== 'post' && keyDate) {
       const ids = eligibleIds(contracts, keyDate)
       if (ids.length === 0) {
-        showToast('No Master Contracts are eligible for expiry for the selected Key Date.')
+        showToast('No Master Contracts are eligible for expiry for the selected Key Date.', 'warning')
         return
       }
       setConfirm(batchConfirm(ids))
@@ -586,7 +606,11 @@ export default function MoUpdateMcExpiry() {
         keyDate={keyDate}
       />
 
+<<<<<<< HEAD
       <div id="toastWrap">{feedback.element}</div>
+=======
+      <ResultQueue items={outcomes} onDismiss={dismissToast} />
+>>>>>>> origin/main
     </div>
   )
 }

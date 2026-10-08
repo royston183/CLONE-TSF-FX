@@ -120,3 +120,19 @@ describe('deal metadata repository', () => {
     strictEqual(repo.listDealMetadata().length, 1)
   })
 })
+
+describe('seedTrdAcc', () => {
+  it('loads the exported posting types, once and again, by ZFI_TYPE', async () => {
+    const { seedTrdAcc } = await import('./seed.ts')
+    const { ddicRepository } = await import('./repositories/ddic-table.ts')
+    const { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } = await import('./repositories/trd-acc-columns.ts')
+    const db = fresh()
+    const n = seedTrdAcc(db)
+    ok(n >= 6)
+    strictEqual(seedTrdAcc(db), n)
+    const repo = ddicRepository(db, { table: 'zsgtsftr_trd_acc', client: TRD_ACC_CLIENT, columns: TRD_ACC_COLUMNS })
+    strictEqual(repo.list().length, n)
+    const one = repo.get({ ZFI_TYPE: '01' })!
+    deepStrictEqual([one['ZDOC_TYPE'], one['ZDEBIT'], one['ZCREDIT'], one['ZDR_TEXT']], ['TR', '40', '15', 'Sales Invoice Settlement'])
+  })
+})

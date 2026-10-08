@@ -13,6 +13,7 @@ import './mo-deal-id-invoice-status.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-deal-id-invoice-status.dark.css'
+import './mo-deal-id-invoice-status.overrides.css'
 import type { DealRow, DmsDocState, ModalState, Sort, SortKey } from './types.ts'
 
 const PAGE_SIZE = 20
