@@ -63,13 +63,16 @@ export type Stamp = { user: string; date: string; time: string }
 /** Everything the operations may do. Deliberately small: there is no APP_STR or transaction method. */
 export type Ports = {
   list(resource: string, filter?: Record<string, string>): Promise<MwRow[]>
-  /** Inserts; a blank number-ranged key comes back as `assignedNumber`. */
-  create(resource: string, data: Record<string, unknown>): Promise<{ assignedNumber?: string | undefined }>
+  /** Inserts a row. A field range (ZINV_NO) is NOT filled by an insert — see `allocate`. */
+  create(resource: string, data: Record<string, unknown>): Promise<unknown>
   update(resource: string, key: Record<string, string>, changes: Record<string, unknown>): Promise<void>
   remove(resource: string, key: Record<string, string>): Promise<void>
   /** The column names a resource serves; rejects when the resource is not registered. */
   columns(resource: string): Promise<string[]>
-  hasNumberRange(resource: string): Promise<boolean>
+  /** Whether a non-key column has a field number range bound (ZINV_NO of BIL_ADJ: ZSGTSFNR08/01). */
+  hasFieldRange(resource: string, field: string): Promise<boolean>
+  /** Draws the next number of that field range into one existing row; undefined if none came back. */
+  allocate(resource: string, key: Record<string, string>, field: string): Promise<string | undefined>
   now(): Promise<Stamp>
 }
 
@@ -194,7 +197,7 @@ export async function confirmInvoiceGeneration(input: ConfirmInput, ports: Ports
         await requireResource(ports, RESOURCE.ifInv)
         const saved = await ports.list(RESOURCE.billAdj, { ZDEAL_ID: dealId })
         const needNumber = rows.some((r) => !r.invNo && !txt(savedRow(saved, adjRecordOf(r, dealId)) ?? {}, 'ZINV_NO'))
-        if (needNumber && !(await ports.hasNumberRange(RESOURCE.billAdj))) throw new Error(NUMBER_RANGE_GAP)
+        if (needNumber && !(await ports.hasFieldRange(RESOURCE.billAdj, 'ZINV_NO'))) throw new Error(NUMBER_RANGE_GAP)
       },
     },
     {
@@ -214,9 +217,18 @@ export async function confirmInvoiceGeneration(input: ConfirmInput, ports: Ports
           } else if (rec['ZINV_NO']) {
             await ports.create(RESOURCE.billAdj, toWire(rec))
           } else {
-            const created = await ports.create(RESOURCE.billAdj, toWire({ ...rec, ZINV_NO: '' }))
-            if (!created.assignedNumber) {
-              await ports.remove(RESOURCE.billAdj, Object.fromEntries(ADJ_KEY.map((k) => [k, String(rec[k] ?? '')])))
+            // ZINV_NO is a field range, so the row goes in first and the number is drawn into it.
+            const key = Object.fromEntries(ADJ_KEY.map((k) => [k, String(rec[k] ?? '')]))
+            await ports.create(RESOURCE.billAdj, toWire({ ...rec, ZINV_NO: '' }))
+            let drawn: string | undefined
+            try {
+              drawn = await ports.allocate(RESOURCE.billAdj, key, 'ZINV_NO')
+            } catch (error) {
+              await ports.remove(RESOURCE.billAdj, key)
+              throw error
+            }
+            if (!drawn) {
+              await ports.remove(RESOURCE.billAdj, key)
               throw new Error(NUMBER_RANGE_GAP)
             }
           }

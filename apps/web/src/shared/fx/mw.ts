@@ -109,3 +109,33 @@ export async function fxHasNumberRange(resource: string, signal?: AbortSignal): 
   )
   return !!meta?.numberRange?.initialised
 }
+
+/**
+ * Whether `field` of a resource has a *field* number range bound and initialised. A field range
+ * numbers a non-key column (ZSGTSFTR_BIL_ADJ-ZINV_NO from ZSGTSFNR08/01), so it is reported under
+ * `fieldRanges`, never `numberRange` — `fxHasNumberRange` is blind to it.
+ */
+export async function fxHasFieldRange(resource: string, field: string, signal?: AbortSignal): Promise<boolean> {
+  const meta = await apiFetch<{ fieldRanges?: { field?: string; initialised?: boolean }[] | null }>(
+    middlewareApi(`meta/resources/${resource}`),
+    signal ? { signal } : undefined,
+  )
+  return (meta?.fieldRanges ?? []).some((r) => String(r.field ?? '').toUpperCase() === field.toUpperCase() && !!r.initialised)
+}
+
+/**
+ * Draws the next number of a field range into one existing row (POST /data/:resource/allocate).
+ * A plain insert never fills a field range, so the row has to exist first. Repeat-safe: a row
+ * whose field is already filled keeps its number and no new one is consumed.
+ */
+export async function fxAllocate(
+  resource: string,
+  key: Record<string, string>,
+  field: string,
+): Promise<string | undefined> {
+  const response = await apiRequest<{ assignedNumber?: string }>(middlewareApi(`data/${resource}/allocate`), {
+    method: 'POST',
+    body: { key, field },
+  })
+  return response.data?.assignedNumber
+}
