@@ -1,0 +1,8 @@
+/*
+ * Table grid lines removed (reference look: Create Master Contract). No vertical cell borders;
+ * only a faint horizontal hairline (#E6E9EB, set by the generated sheet; the generated dark sheet
+ * restates its own dark line) between rows and under the header. This sheet is imported after the
+ * generated light and dark sheets and sets no colours.
+ */
+.mo-confirm-fx-deal-id table th,
+.mo-confirm-fx-deal-id table td { border-left: 0; border-right: 0; }

@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO } from '../../shared/fx/logo.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { loadRegions, regionLabel, type RegionOption } from '../../shared/fx/regions.ts'
 import { INVOICES_WAITING, LIST_WAITING, MASTER_WAITING, loadSettlementList } from './api.ts'
 import { DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES } from './data.ts'
@@ -83,17 +84,24 @@ export default function MoViewDealIdSettlementList() {
   const note = keyDateNote(filters.dateFrom, filters.dateTo)
 
   // Toast
-  const [toast, setToast] = useState(() => ({ message: list.reason, show: true }))
+  // The "list not available / waiting" reason is an outcome -> standard ResultDialog (stays until OK).
+  // Filter / layout / refresh hints are cosmetic chatter and stay a small self-dismissing toast.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>(() =>
+    list.reason ? [{ id: 1, tone: 'warning', title: 'Warning', message: list.reason }] : [],
+  )
+  const resultSeq = useRef(1)
+  const showReason = useCallback((message: string) => {
+    const id = ++resultSeq.current
+    setOutcomes((r) => [...r, { id, tone: 'warning', title: 'Warning', message }])
+  }, [])
+  const [toast, setToast] = useState({ message: '', show: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true })
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, show: false })), TOAST_MS)
   }, [])
-  useEffect(() => {
-    toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, show: false })), TOAST_MS)
-    return () => clearTimeout(toastTimer.current)
-  }, [])
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
 
   // Region list: the SAP region codes (shared/fx/regions.ts), independent of the waiting worklist.
   const [regions, setRegions] = useState<RegionOption[] | null>(null)
@@ -160,7 +168,8 @@ export default function MoViewDealIdSettlementList() {
   }
   const refresh = () => {
     setPage(1)
-    showToast(deals.length ? loadedMessage(filtered.length, 'Refreshed') : list.reason)
+    if (deals.length) showToast(loadedMessage(filtered.length, 'Refreshed'))
+    else showReason(list.reason)
   }
   const changeLayout = (value: string) => {
     setFilters((f) => ({ ...f, layout: value }))
@@ -449,6 +458,7 @@ export default function MoViewDealIdSettlementList() {
       </main>
 
       <div className={toast.show ? 'zfac-toast show' : 'zfac-toast'}>{toast.message}</div>
+      <ResultQueue items={outcomes} onDismiss={(id) => setOutcomes((r) => r.filter((x) => x.id !== id))} />
 
       <DealModal modal={dealModal} deal={modalDeal} mc={masterContracts.find((m) => m.mcRef === modalDeal?.mcRef)} onOpenMc={openMc} onOpenInvoices={openInvoices} />
       <McModal modal={mcModal} mc={modalMc} deals={deals} onOpenDeal={openDeal} onFilterByMc={filterByMc} />

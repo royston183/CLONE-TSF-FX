@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { BlotterDateField } from './BlotterDateField.tsx'
 import { ComboBox } from './ComboBox.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
@@ -39,7 +40,6 @@ import { MatchReleaseModal, type MatchReleaseValues } from './MatchReleaseModal.
 import { useModal } from './modal.tsx'
 import { Pagination } from './Pagination.tsx'
 import { StatusModal } from './StatusModal.tsx'
-import { Toasts } from './Toasts.tsx'
 import {
   matchAndReleaseDeals,
   requestCorrectionDeals,
@@ -52,6 +52,7 @@ import './mo-fx-deal-confirmation.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-fx-deal-confirmation.dark.css'
+import './mo-fx-deal-confirmation.overrides.css'
 import type {
   AppliedSelection,
   Deal,
@@ -63,12 +64,9 @@ import type {
   Sort,
   SortKey,
   StatusModalState,
-  Toast,
   ToastType,
 } from './types.ts'
 
-const TOAST_MS = 3800
-const TOAST_FADE_MS = 260
 const EMPTY_SUMMARY: DealSummary = { dealId: '-', partner: '-', coverNo: '' }
 const EMPTY_MR: MatchReleaseValues = { externalRef: '', internalRef: '', remarks: '' }
 
@@ -126,32 +124,11 @@ export default function MoFxDealConfirmation() {
   const [crError, setCrError] = useState(false)
   const [status, setStatus] = useState<StatusModalState>({ type: 'success', title: ' ', heading: 'Success', message: '' })
 
-  // Toasts
-  const [toasts, setToasts] = useState<Toast[]>([])
+  // Outcomes queue as the standard ResultDialog and stay until OK.
+  const [results, setResults] = useState<ResultItem[]>([])
   const toastSeq = useRef(0)
-  const timers = useRef(new Set<ReturnType<typeof setTimeout>>())
-  const later = useCallback((fn: () => void, ms: number) => {
-    const t = setTimeout(() => {
-      timers.current.delete(t)
-      fn()
-    }, ms)
-    timers.current.add(t)
-  }, [])
-  useEffect(() => {
-    const pending = timers.current
-    return () => {
-      for (const t of pending) clearTimeout(t)
-      pending.clear()
-    }
-  }, [])
-
   const showToast = (type: ToastType, title: string, message: string) => {
-    const id = ++toastSeq.current
-    setToasts((ts) => [...ts, { id, type, title, message, fading: false }])
-    later(() => {
-      setToasts((ts) => ts.map((t) => (t.id === id ? { ...t, fading: true } : t)))
-      later(() => setToasts((ts) => ts.filter((t) => t.id !== id)), TOAST_FADE_MS)
-    }, TOAST_MS)
+    setResults((r) => [...r, { id: ++toastSeq.current, tone: type === 'error' ? 'error' : 'success', title, message }])
   }
 
   const rows = useMemo(() => filterDeals(deals, applied, filters, search, sort), [deals, applied, filters, search, sort])
@@ -644,7 +621,7 @@ export default function MoFxDealConfirmation() {
 
       <StatusModal modal={statusModal} status={status} />
 
-      <Toasts toasts={toasts} />
+      <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
     </div>
   )
 }

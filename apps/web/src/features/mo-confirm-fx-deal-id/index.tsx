@@ -16,6 +16,9 @@ import './mo-confirm-fx-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id.dark.css'
+import './mo-confirm-fx-deal-id.overrides.css'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
+import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type { ModalId, Sort, SortKey, Toast, ToastType } from './types.ts'
 
 const TOAST_MS = 3200
@@ -75,9 +78,21 @@ export default function MoConfirmFxDealId() {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  /** One toast at a time: a new one replaces the old, and each clears itself after 3.2 s. */
+  const [results, setResults] = useState<ResultItem[]>([])
+  const dismissResult = (id: number) => setResults((r) => r.filter((x) => x.id !== id))
+
+  /**
+   * Success / error outcomes open the standard ResultDialog (queued, dismissed with OK). Only the plain
+   * "Data refreshed from SAP" chatter stays on the small non-modal toast (replaced by the next, clears after 3.2 s).
+   */
   const showToast = (msg: string, type: ToastType) => {
     const id = ++toastSeq.current
+    if (msg !== 'Data refreshed from SAP') {
+      const tone: ResultTone = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info'
+      const title = tone === 'success' ? 'Success' : tone === 'error' ? 'Error' : 'Information'
+      setResults((r) => [...r, { id, tone, title, message: msg }])
+      return
+    }
     setToast({ id, msg, type })
     const timer = setTimeout(() => {
       toastTimers.current.delete(timer)
@@ -456,19 +471,6 @@ export default function MoConfirmFxDealId() {
             onClose={closeModals}
           />
         )}
-        {deal && modal === 'reverse' && (
-          <PromptModal
-            title="Reverse MO Confirmation"
-            icon="warn"
-            message={`The Deal ID goes back to Created and its saved invoice references are deleted. Treasury transactions are not reversed.${deal.dealId === reverseResume ? ' A previous attempt stopped part-way; this finishes it.' : ''}`}
-            noLabel="No"
-            yesLabel="Yes, Reverse"
-            yesClass="btn-danger"
-            busy={busy}
-            onYes={() => void confirmReverse()}
-            onClose={closeModals}
-          />
-        )}
         {deal && selectedLeg && modal === 'editPair' && (
           <EditPairModal
             slot={selectedLeg.dealType}
@@ -482,20 +484,37 @@ export default function MoConfirmFxDealId() {
             onClose={closeModals}
           />
         )}
-        {deal && modal === 'cancelDeal' && (
-          <PromptModal
-            title="Cancel Deal ID"
-            icon="warn"
-            message="FX Deal ID will be deassigned completely. Do you want to confirm?"
-            noLabel="No"
-            yesLabel="Yes, Cancel Deal ID"
-            yesClass="btn-danger"
-            busy={busy}
-            onYes={() => void confirmCancelDeal()}
-            onClose={closeModals}
-          />
-        )}
       </div>
+
+      {/* Outcome / confirmation popups carry their own overlay (shared ResultDialog). */}
+      {deal && modal === 'reverse' && (
+        <PromptModal
+          title="Reverse MO Confirmation"
+          icon="warn"
+          message={`The Deal ID goes back to Created and its saved invoice references are deleted. Treasury transactions are not reversed.${deal.dealId === reverseResume ? ' A previous attempt stopped part-way; this finishes it.' : ''}`}
+          noLabel="No"
+          yesLabel="Yes, Reverse"
+          yesClass="btn-danger"
+          busy={busy}
+          onYes={() => void confirmReverse()}
+          onClose={closeModals}
+        />
+      )}
+      {deal && modal === 'cancelDeal' && (
+        <PromptModal
+          title="Cancel Deal ID"
+          icon="warn"
+          message="FX Deal ID will be deassigned completely. Do you want to confirm?"
+          noLabel="No"
+          yesLabel="Yes, Cancel Deal ID"
+          yesClass="btn-danger"
+          busy={busy}
+          onYes={() => void confirmCancelDeal()}
+          onClose={closeModals}
+        />
+      )}
+
+      <ResultQueue items={results} onDismiss={dismissResult} />
 
       {toast && (
         <div key={toast.id} id="toast" className={toast.type === 'error' ? 'toast toast-error' : 'toast'}>

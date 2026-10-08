@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { fmtAmt, fmtRate } from './format.ts'
 
 /** One .modal card: header with its × close, then the popup's own body and footer. */
@@ -40,22 +41,15 @@ export function PromptModal({
   onClose: () => void
 }) {
   return (
-    <ModalCard title={title} onClose={onClose}>
-      <div className="modal-body">
-        <div className="modal-icon-row">
-          <div className={`modal-icon icon-${icon}`}>{icon === 'warn' ? '⚠' : 'ℹ'}</div>
-          <p className="modal-msg">{message}</p>
-        </div>
-      </div>
-      <div className="modal-foot">
-        <button type="button" className="btn btn-secondary" disabled={busy} onClick={onClose}>
-          {noLabel}
-        </button>
-        <button type="button" className={`btn ${yesClass}`} disabled={busy} onClick={onYes}>
-          {busy ? 'Working…' : yesLabel}
-        </button>
-      </div>
-    </ModalCard>
+    <ResultDialog
+      tone={icon === 'warn' ? 'warning' : 'info'}
+      title={title}
+      message={message}
+      actions={[
+        { label: noLabel, kind: 'secondary', disabled: busy, onClick: onClose },
+        { label: busy ? 'Working…' : yesLabel, kind: yesClass === 'btn-danger' ? 'danger' : 'primary', disabled: busy, onClick: onYes },
+      ]}
+    />
   )
 }
 

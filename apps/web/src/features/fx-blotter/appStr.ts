@@ -76,6 +76,7 @@ const LENGTH: Partial<Record<keyof AppStrFields, number>> = {
   NdfMoRem: 80,
   TxnStatus: 2,
   BlotterDate: 10,
+  Ztrcode: 3,
 }
 
 /**

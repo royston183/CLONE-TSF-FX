@@ -5,7 +5,9 @@ import './mo-generate-invoices-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-generate-invoices-deal-id.dark.css'
+import './mo-generate-invoices-deal-id.overrides.css'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   BANK_WAITING,
   actionWaiting,
@@ -151,10 +153,20 @@ export default function MoGenerateInvoicesDealId() {
   const [diffOpen, setDiffOpen] = useState(false)
   const [bankRow, setBankRow] = useState(-1)
 
+  // Outcomes show as the standard ResultDialog queue (stay until OK).
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
+  const resultSeq = useRef(0)
   const toast = (message: string, kind: Toast['kind'] = 'success') => {
+    const tone = kind === 'error' ? 'error' : kind === 'warn' ? 'warning' : kind === 'success' ? 'success' : 'info'
+    const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'success' ? 'Success' : 'Information'
+    const id = ++resultSeq.current
+    setOutcomes((r) => [...r, { id, tone, title, message }])
+  }
+  // Pure chatter (refresh / recalculation hints) stays a small self-dismissing note, not a modal.
+  const note = (message: string) => {
     const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, message, kind }])
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'warn' || kind === 'error' ? 7000 : 3200)
+    setToasts((t) => [...t, { id, message, kind: 'info' }])
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200)
   }
 
   // The Deal IDs P_DEAL offers (matchcode ZSGTSFSH_DEAL_ID -> ZSGTSFTR_DEALID).
@@ -237,7 +249,7 @@ export default function MoGenerateInvoicesDealId() {
       toast('Select a Deal ID to load invoice data.', 'info')
       return
     }
-    void fetchDeal(deal.dealId, true).then(() => toast('Workbench refreshed from SAP.', 'info'))
+    void fetchDeal(deal.dealId, true).then(() => note('Workbench refreshed from SAP.'))
   }
 
   const fxRows = useMemo(() => (deal ? sortRows(searchRows(deal.fx, fxSearch, FX_COLS.map((c) => c.key)), fxSort) : []), [deal, fxSearch, fxSort])
@@ -292,7 +304,7 @@ export default function MoGenerateInvoicesDealId() {
     if (!deal) return
     if (showMessage && invoiceGridMissing()) return
     updateDeal((d) => ({ ...d, inv: d.inv.map(recalcInvoiceRow) }))
-    if (showMessage) toast('Adjusted Price / Qty recalculated.', 'info')
+    if (showMessage) note('Adjusted Price / Qty recalculated.')
   }
 
   const initiateInvoiceConfirmation = () => {
@@ -932,6 +944,8 @@ export default function MoGenerateInvoicesDealId() {
           </div>
         ))}
       </div>
+
+      <ResultQueue items={outcomes} onDismiss={(id) => setOutcomes((r) => r.filter((x) => x.id !== id))} />
 
       {dealLookupOpen ? (
         <DealLookupModal

@@ -1,0 +1,117 @@
+/*
+ * OTTK visual theme (CSS-ONLY): the "Create Master Contract" OTTK override block mapped onto this
+ * screen's own class names.
+ *
+ * mo-confirm-ndf-fixing.legacy.css is produced by tools/scope-css.mjs from the legacy HTML and cannot be
+ * hand-edited; this sheet is imported after it (and after the generated dark.css) so it wins on
+ * order. Colour-bearing rules carry the light guard ":root:not([data-theme='dark'])" so night mode
+ * keeps the generated dark.css palette untouched; structural rules (sizes, radii, shadows,
+ * transitions) apply in both themes.
+ */
+
+/* 1. Tokens: the screen is variable-driven, so remapping them re-themes most of it (light only) */
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing {
+  --bg:#F5F7F9;
+  --surface:#FFFFFF;
+  --surface-2:#F2F4F5;
+  --text:#1D2D3E;
+  --sub:#475E75;
+  --muted:#687B8D;
+  --blue:#0A6ED1;
+  --blue-hover:#085CAF;
+  --blue-soft:#EAF3FC;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --green:#107E3E;
+  --green-soft:#E4F5E9;
+  --warning:#E9730C;
+  --warning-soft:#FFF4CC;
+  --error:#BB0000;
+  --error-soft:#FCEAEA;
+}
+.mo-confirm-ndf-fixing { --font:"72","Segoe UI",Arial,Helvetica,sans-serif; font-family:var(--font); }
+
+/* 2. Type scale */
+.mo-confirm-ndf-fixing { font-size:13px; }
+.mo-confirm-ndf-fixing .app-title { font-size:16px; }
+.mo-confirm-ndf-fixing .app-subtitle { font-size:13px; }
+.mo-confirm-ndf-fixing .field label { font-size:13px; }
+.mo-confirm-ndf-fixing .modal-header h3 { font-size:14px; }
+.mo-confirm-ndf-fixing .btn, .mo-confirm-ndf-fixing .input, .mo-confirm-ndf-fixing .text-input, .mo-confirm-ndf-fixing .search-box input, .mo-confirm-ndf-fixing .filter-panel select { font-size:13px; }
+
+/* 3. Header: transparent, flush on the page background */
+.mo-confirm-ndf-fixing .app-header { background:transparent; border:none; padding:4px 2px; }
+
+/* 4. Buttons: compact SAP padding, 4px radius, hover feedback */
+.mo-confirm-ndf-fixing .btn { padding:0 12px; border-radius:4px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .btn-secondary:hover:not(:disabled) { box-shadow:0 1px 4px rgba(34,53,72,.1); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .btn-primary { box-shadow:none; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .btn-primary:hover:not(:disabled) { box-shadow:0 2px 6px rgba(10,110,209,.22); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .btn-danger:hover:not(:disabled) { box-shadow:0 1px 4px rgba(187,0,0,.14); }
+
+/* 5. Cards / panels: white surface, thin border, compact shadow, 8px radius */
+.mo-confirm-ndf-fixing .card { border-radius:8px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .card { box-shadow:0 1px 3px rgba(34,53,72,.13); }
+
+/* 6. Inputs 36px; search + filter controls 32px; OTTK hover/focus tone */
+.mo-confirm-ndf-fixing .input, .mo-confirm-ndf-fixing .text-input { height:36px; border-radius:4px; }
+.mo-confirm-ndf-fixing .search-box input, .mo-confirm-ndf-fixing .filter-panel select { height:32px; border-radius:4px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .input, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .text-input, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .search-box input, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .filter-panel select,
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .rows-per-page select, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .modal-body textarea { border-color:var(--border-strong); }
+.mo-confirm-ndf-fixing .modal-body textarea { border-radius:4px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .input:hover, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .text-input:hover, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .search-box input:hover, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .filter-panel select:hover { border-color:#A6B0B9; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .input:focus, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .text-input:focus, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .search-box input:focus, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .filter-panel select:focus, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .modal-body textarea:focus {
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px var(--blue-soft);
+}
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .input.error, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .modal-body textarea.error { border-color:var(--error); box-shadow:0 0 0 3px var(--error-soft); }
+.mo-confirm-ndf-fixing .filter-panel { border-radius:8px; }
+.mo-confirm-ndf-fixing .dropdown-panel, .mo-confirm-ndf-fixing .calendar-popup { border-radius:8px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .dropdown-panel, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .calendar-popup { box-shadow:0 8px 22px rgba(34,53,72,.18); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .dropdown-item:hover, :root:not([data-theme='dark']) .mo-confirm-ndf-fixing .dropdown-item.active { background:var(--blue-soft); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .cal-day:hover { background:var(--blue-soft); }
+
+/* 7. Table: #F2F4F5 13px uppercase sticky header, 14px data, row lift, #EAF3FC selection */
+.mo-confirm-ndf-fixing .table-wrap { border-radius:8px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .table-wrap { border-color:var(--border); }
+.mo-confirm-ndf-fixing table.ndf-table thead th { font-size:13px; text-transform:uppercase; position:sticky; top:0; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table thead th { background:#F2F4F5; color:var(--sub); border-bottom-color:#E6E9EB; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table thead th:hover { background:#E8EBED; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table thead th.no-sort:hover { background:#F2F4F5; }
+.mo-confirm-ndf-fixing table.ndf-table tbody td { font-size:14px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table tbody td { border-bottom-color:#E6E9EB; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table tbody tr:hover { background:#F7FBFF; box-shadow:0 3px 9px rgba(34,53,72,.10); }
+.mo-confirm-ndf-fixing table.ndf-table tbody tr:hover { transform:translateY(-1px) scale(1.002); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table tbody tr.selected { background:#EAF3FC; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table tbody tr.selected:hover { background:#EAF3FC; box-shadow:0 3px 9px rgba(10,110,209,.14); }
+.mo-confirm-ndf-fixing table.ndf-table tbody td.num { font-variant-numeric:tabular-nums; }
+
+/* 8. Status colours */
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .status-unmatched { color:#9B6B00; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .status-correction { color:var(--error); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .status-released { color:var(--green); }
+
+/* 9. Pagination: 28px compact square buttons */
+.mo-confirm-ndf-fixing .pg-btn { min-width:28px; height:28px; border-radius:4px; }
+.mo-confirm-ndf-fixing .rows-per-page select { height:28px; border-radius:4px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .pg-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .pg-btn:hover:not(:disabled):not(.active) { border-color:var(--border-strong); }
+
+/* 10. Modals: 12px radius, OTTK shadow, 1px border */
+.mo-confirm-ndf-fixing .modal { border-radius:12px; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .modal { border:1px solid #B9C2C9; box-shadow:0 22px 70px rgba(16,38,58,.3); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .modal-close:hover { background:var(--surface-2); }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .info-modal.success .info-icon { background:var(--green-soft); color:var(--green); }
+
+/* 11. Scrollbar */
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing .table-wrap::-webkit-scrollbar-thumb { background:#B7C2CB; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-confirm-ndf-fixing *, .mo-confirm-ndf-fixing *::before, .mo-confirm-ndf-fixing *::after { transition:none !important; animation-duration:.01ms !important; }
+  .mo-confirm-ndf-fixing table.ndf-table tbody tr:hover { transform:none !important; }
+}
+
+/* 12. Table grid lines removed: no vertical cell borders / boxed table, one faint hairline between rows */
+.mo-confirm-ndf-fixing table.ndf-table, .mo-confirm-ndf-fixing table.ndf-table th, .mo-confirm-ndf-fixing table.ndf-table td { border-left:none; border-right:none; }
+.mo-confirm-ndf-fixing table.ndf-table { border:none; }
+:root:not([data-theme='dark']) .mo-confirm-ndf-fixing table.ndf-table tbody td { border-bottom:1px solid #E6E9EB; }

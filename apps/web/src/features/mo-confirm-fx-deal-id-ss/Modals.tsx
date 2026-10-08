@@ -1,3 +1,4 @@
+import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { TXN_STATUS_META } from './data.ts'
 import { fmtAmt } from './format.ts'
 import { invoicesEditable, legForInvoice } from './logic.ts'
@@ -263,25 +264,17 @@ export function ConfirmModal({
   message: string
   onYes: () => void
 }) {
+  if (!modal.isOpen) return null
   return (
-    <Overlay modal={modal}>
-      <div className="modal" style={{ maxWidth: 420 }}>
-        <ModalHeader title={title} onClose={modal.close} />
-        <div className="modal-body">
-          <div className="small" style={{ fontSize: 13 }}>
-            {message}
-          </div>
-        </div>
-        <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={modal.close}>
-            No
-          </button>
-          <button type="button" className="btn btn-primary" onClick={onYes}>
-            Yes
-          </button>
-        </div>
-      </div>
-    </Overlay>
+    <ResultDialog
+      tone="info"
+      title={title}
+      message={message}
+      actions={[
+        { label: 'No', kind: 'secondary', onClick: modal.close },
+        { label: 'Yes', kind: 'primary', onClick: onYes },
+      ]}
+    />
   )
 }
 

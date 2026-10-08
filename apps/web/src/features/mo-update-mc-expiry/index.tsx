@@ -4,6 +4,8 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { expireOnMysql, loadContracts } from './api.ts'
 import { ConfirmExpiryModal } from './ConfirmExpiryModal.tsx'
 import { ContractDetailModal } from './ContractDetailModal.tsx'
@@ -32,7 +34,8 @@ import './mo-update-mc-expiry.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-update-mc-expiry.dark.css'
-import type { ExpiryConfirm, MasterContract, PostingMode, Sort, SortField, Toast } from './types.ts'
+import './mo-update-mc-expiry.overrides.css'
+import type { ExpiryConfirm, MasterContract, PostingMode, Sort, SortField } from './types.ts'
 
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
@@ -91,31 +94,16 @@ export default function MoUpdateMcExpiry() {
   const [confirm, setConfirm] = useState<ExpiryConfirm | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
 
-  // Toasts
-  const [toasts, setToasts] = useState<Toast[]>([])
+  // Outcomes show as the standard ResultDialog queue; each stays until OK.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
   const toastSeq = useRef(0)
-  const toastTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>())
   const dismissToast = useCallback((id: number) => {
-    clearTimeout(toastTimers.current.get(id))
-    toastTimers.current.delete(id)
-    setToasts((list) => list.filter((t) => t.id !== id))
+    setOutcomes((list) => list.filter((t) => t.id !== id))
   }, [])
-  const showToast = useCallback(
-    (message: string) => {
-      const id = ++toastSeq.current
-      setToasts((list) => [...list, { id, message }])
-      toastTimers.current.set(
-        id,
-        setTimeout(() => dismissToast(id), 5000),
-      )
-    },
-    [dismissToast],
-  )
-  useEffect(() => {
-    const timers = toastTimers.current
-    return () => {
-      for (const t of timers.values()) clearTimeout(t)
-    }
+  const showToast = useCallback((message: string, tone: ResultTone = 'success') => {
+    const id = ++toastSeq.current
+    const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'info' ? 'Information' : 'Success'
+    setOutcomes((list) => [...list, { id, tone, title, message }])
   }, [])
 
   const reload = useCallback(async (signal?: AbortSignal) => {
@@ -127,7 +115,7 @@ export default function MoUpdateMcExpiry() {
   useEffect(() => {
     const controller = new AbortController()
     reload(controller.signal).catch((error: unknown) => {
-      if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`)
+      if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, 'error')
     })
     return () => controller.abort()
   }, [reload, showToast])
@@ -144,7 +132,7 @@ export default function MoUpdateMcExpiry() {
       void reload().catch(() => undefined)
       return true
     } catch (error) {
-      showToast(messageOf(error))
+      showToast(messageOf(error), 'error')
       await reload().catch(() => undefined)
       return false
     }
@@ -163,7 +151,7 @@ export default function MoUpdateMcExpiry() {
   const loadScreenData = async (text: string, mode: PostingMode) => {
     if (busy.current) return
     if (source === 'loading') {
-      showToast('Master Contracts are still loading. Try again in a moment.')
+      showToast('Master Contracts are still loading. Try again in a moment.', 'info')
       return
     }
     const check = validateKeyDate(text)
@@ -213,7 +201,7 @@ export default function MoUpdateMcExpiry() {
     if (mode === 'post' && postingMode !== 'post' && keyDate) {
       const ids = eligibleIds(contracts, keyDate)
       if (ids.length === 0) {
-        showToast('No Master Contracts are eligible for expiry for the selected Key Date.')
+        showToast('No Master Contracts are eligible for expiry for the selected Key Date.', 'warning')
         return
       }
       setConfirm(batchConfirm(ids))
@@ -603,20 +591,7 @@ export default function MoUpdateMcExpiry() {
         keyDate={keyDate}
       />
 
-      <div className="toast-wrap" id="toastWrap">
-        {toasts.map((t) => (
-          <div key={t.id} className="toast">
-            <svg className="toast-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M8 12.5L10.7 15L16 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>{t.message}</span>
-            <button className="toast-close" type="button" aria-label="Dismiss" onClick={() => dismissToast(t.id)}>
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
+      <ResultQueue items={outcomes} onDismiss={dismissToast} />
     </div>
   )
 }

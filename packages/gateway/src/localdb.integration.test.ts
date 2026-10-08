@@ -82,6 +82,75 @@ describe('/api/localdb before the database is set up', () => {
   })
 })
 
+describe('/api/localdb/tsf-trade-position', () => {
+  before(() => {
+    runMigrations(getDb())
+  })
+
+  const path = (dealId: string, seq: string) => `tsf-trade-position/${dealId}/${seq}`
+  const put = (dealId: string, seq: string, body: unknown) => call(path(dealId, seq), { method: 'PUT', body: json(body) })
+
+  it('requires a signed-in session', async () => {
+    strictEqual((await call('tsf-trade-position', {}, false)).status, 401)
+    strictEqual((await call(path('D1', '01'), { method: 'PUT', body: json({}) }, false)).status, 401)
+  })
+
+  it('creates a row (201), updates only the fields sent (200), lists by Deal ID and deletes it', async () => {
+    const created = await put('7000000034', '01', { ZBUKRS: 'SG03', ZAMT: 100, ZSET_CHECK: '' })
+    strictEqual(created.status, 201)
+    const first = (await created.json()) as Record<string, unknown>
+    strictEqual(first['ZCREATED_BY'], 'demo')
+    ok(/^[0-9]{8}$/.test(String(first['ZCREATED_DATE'])))
+
+    const updated = await put('7000000034', '01', { ZSET_CHECK: 'X' })
+    strictEqual(updated.status, 200)
+    const row = (await updated.json()) as Record<string, unknown>
+    deepStrictEqual([row['ZBUKRS'], row['ZAMT'], row['ZSET_CHECK'], row['ZCREATED_BY']], ['SG03', 100, 'X', 'demo'])
+
+    const list = (await (await call('tsf-trade-position?ZDEAL_ID=7000000034')).json()) as { value: unknown[] }
+    strictEqual(list.value.length, 1)
+    strictEqual(((await (await call('tsf-trade-position?ZDEAL_ID=other')).json()) as { value: unknown[] }).value.length, 0)
+
+    strictEqual((await call(path('7000000034', '01'), { method: 'DELETE' })).status, 204)
+    strictEqual((await call(path('7000000034', '01'))).status, 404)
+  })
+
+  it('rejects bad input with 400 and never touches the table', async () => {
+    strictEqual((await put('D1', '01', { NOPE: 'x' })).status, 400)
+    strictEqual((await put('D1', '01', { ZDEAL_ID: 'other' })).status, 400)
+    strictEqual((await put('D1', '01', { ZAMT: 'abc' })).status, 400)
+    strictEqual((await put('D1', '001', {})).status, 400) // sequence is 2 characters
+    strictEqual(((await (await call('tsf-trade-position?ZDEAL_ID=D1')).json()) as { value: unknown[] }).value.length, 0)
+  })
+})
+
+describe('/api/localdb/tsf-posting-type', () => {
+  before(() => {
+    runMigrations(getDb())
+  })
+
+  const put = (fiType: string, body: unknown) => call(`tsf-posting-type/${fiType}`, { method: 'PUT', body: json(body) })
+
+  it('requires a signed-in session', async () => {
+    strictEqual((await call('tsf-posting-type', {}, false)).status, 401)
+  })
+
+  it('stores a posting type by ZFI_TYPE, updates it in place, and rejects bad input', async () => {
+    const created = await put('01', { ZPOST_DESC: 'Trade invoice', ZDOC_TYPE: 'RV', ZDR_TEXT: 'Dr Trade A/R' })
+    strictEqual(created.status, 201)
+    const updated = await put('01', { ZCR_TEXT: 'Cr Revenue' })
+    strictEqual(updated.status, 200)
+    const row = (await updated.json()) as Record<string, unknown>
+    deepStrictEqual([row['ZPOST_DESC'], row['ZDR_TEXT'], row['ZCR_TEXT'], row['ZDOC_TYPE']], ['Trade invoice', 'Dr Trade A/R', 'Cr Revenue', 'RV'])
+    strictEqual(((await (await call('tsf-posting-type')).json()) as { value: unknown[] }).value.length, 1)
+    strictEqual((await put('01', { NOPE: 'x' })).status, 400)
+    strictEqual((await put('01', { ZFI_TYPE: '02' })).status, 400)
+    strictEqual((await put('001', {})).status, 400)
+    strictEqual((await call('tsf-posting-type/01', { method: 'DELETE' })).status, 204)
+    strictEqual((await call('tsf-posting-type/01')).status, 404)
+  })
+})
+
 describe('/api/localdb/deal-metadata', () => {
   before(() => {
     runMigrations(getDb())

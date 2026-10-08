@@ -8,6 +8,7 @@ import {
   legsWaitingReason,
   loadFxLegs,
   pickInSpotRow,
+  buildTradeInvoices,
   saveSpotData,
   spotQuotePair,
   statusList,
@@ -140,7 +141,7 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
 
 describe('gates', () => {
   it('says why the trade invoice legs wait, and that no action posts', () => {
-    ok(INVOICE_WAITING.includes('ZSGTSFTR_TRD_POS has no middleware resource'))
+    ok(INVOICE_WAITING.includes('no leg for this Deal ID'))
     for (const text of Object.values(ACTION_WAITING)) {
       ok(text.startsWith('WAITING FOR ACTION API — '))
       ok(text.endsWith('Nothing was posted to SAP.'))
@@ -188,5 +189,51 @@ describe('Save Spot Data', () => {
     deepStrictEqual(out.map((r) => r.ok), [false, false])
     ok(out[0]!.message.includes('valid spot rate'))
     ok(out[1]!.message.includes('no open difference'))
+  })
+})
+describe('buildTradeInvoices (R060 invoice_settlement_data)', () => {
+  const setTyp = [
+    { ZMOD_ID: 'M033', ZT_TYP_NO: '2', ZT_TYPE: '02XP', ZSET_DESC: 'DMCC pays OAIPL', ZCURR: 'USD', ZSET_CURR: 'USD', ZTRF_TYPE: 'TT' },
+    { ZMOD_ID: 'M033', ZT_TYP_NO: '1', ZT_TYPE: '01XS', ZSET_DESC: 'OIL sells to DMCC', ZCURR: 'USD', ZSET_CURR: 'INR', ZTRF_TYPE: 'LT' },
+  ]
+  // ZINV_REF+11(2) is the leg's two-character type.
+  const billAdj = [
+    { ZINV_REF: '7000000034002', ZAMT: '100', ZDUE_DATE: '2026-11-10' },
+    { ZINV_REF: '7000000034002', ZAMT: '250.5', ZDUE_DATE: '2026-11-10' },
+    { ZINV_REF: '7000000034001', ZAMT: '7', ZDUE_DATE: '2026-11-09' },
+  ]
+
+  it('builds the default legs from SET_TYP when TRD_POS has no row, in ZT_TYP_NO order', () => {
+    const rows = buildTradeInvoices(setTyp, billAdj, [], [], '')
+    deepStrictEqual(rows.map((r) => r.leg), ['01XS', '02XP'])
+    deepStrictEqual(rows.map((r) => [r.recPay, r.trfType, r.setCo, r.fiDoc]), [['Receipt', 'LT', false, ''], ['Payment', 'TT', false, '']])
+  })
+
+  it('sums BIL_ADJ amounts by ZINV_REF+11(2) = ZT_TYPE+0(2), and falls back to its due date', () => {
+    const [first, second] = buildTradeInvoices(setTyp, billAdj, [], [], '')
+    strictEqual(first!.invAmt, 7)
+    strictEqual(first!.dueDate, '09-11-2026')
+    strictEqual(second!.invAmt, 350.5)
+    strictEqual(second!.dueDate, '10-11-2026')
+  })
+
+  it('uses the D1 maturity as the due date, and the invoice amount as payment only in the same currency', () => {
+    const [first, second] = buildTradeInvoices(setTyp, billAdj, [], [], '20-11-2026')
+    deepStrictEqual([first!.dueDate, second!.dueDate], ['20-11-2026', '20-11-2026'])
+    strictEqual(first!.payAmt, 0) // USD invoice, INR settlement: needs the mapped rate, not guessed
+    strictEqual(second!.payAmt, 350.5)
+  })
+
+  it('joins TRD_ACC on ZFI_TYPE for the document type, reference and Dr / Cr texts, blank when no row is loaded', () => {
+    const withFi = setTyp.map((t, i) => ({ ...t, ZFI_TYPE: i === 0 ? '02' : '01' }))
+    const rows = buildTradeInvoices(withFi, billAdj, [], [{ ZFI_TYPE: '01', ZDOC_TYPE: 'RV', ZXBLNR1: 'INV-REF', ZDR_TEXT: 'Dr DMCC Trade A/R', ZCR_TEXT: 'Cr OIL Revenue' }], '')
+    deepStrictEqual([rows[0]!.docType, rows[0]!.xblnr, rows[0]!.drPost, rows[0]!.crPost], ['RV', 'INV-REF', 'Dr DMCC Trade A/R', 'Cr OIL Revenue'])
+    deepStrictEqual([rows[1]!.docType, rows[1]!.drPost, rows[1]!.crPost], ['', '', ''])
+  })
+
+  it('lays the saved TRD_POS state over the leg with the same ZT_TYPE', () => {
+    const rows = buildTradeInvoices(setTyp, billAdj, [{ ZT_TYPE: '02XP', ZSET_CHECK: 'X', ZBELNR: '1900000001', ZP_DATE: '20261121' }], [], '')
+    deepStrictEqual([rows[1]!.setCo, rows[1]!.fiDoc, rows[1]!.postDate], [true, '1900000001', '21-11-2026'])
+    deepStrictEqual([rows[0]!.setCo, rows[0]!.fiDoc, rows[0]!.postDate], [false, '', ''])
   })
 })

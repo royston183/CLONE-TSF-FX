@@ -12,12 +12,13 @@ import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
 import { addDays } from './format.ts'
 import type { Column, CompanyInfo, Deal, DealStatus, DealType, Partner, Trader, TxnType } from './types.ts'
 
-export const COMPANY_CODES = ['SG03', 'AE13', 'AE11']
+export const COMPANY_CODES = ['SG03', 'AE13', 'AE11', 'IN11']
 
 export const COMPANY_INFO: Record<string, CompanyInfo> = {
   SG03: { companyName: 'SG03 - Olam Global Agri Pte. Ltd.', group: 'G03 - TSF - SEA', profitCenter: 'SG032003 - TSF-FX', businessArea: '0254 - OLAM (THAILAND) LIMITED' },
   AE13: { companyName: 'AE13 - Olam Agri Gulf FZE', group: 'G05 - TSF - MEA', profitCenter: 'AE132001 - TSF-FX', businessArea: '0512 - OLAM AGRI UAE LIMITED' },
   AE11: { companyName: 'AE11 - Olam Agri India Pvt Ltd', group: 'G02 - TSF - India', profitCenter: 'AE112004 - TSF-FX', businessArea: '0330 - OLAM AGRI INDIA LIMITED' },
+  IN11: { companyName: 'IN11 - Olam Agri India Pvt Ltd', group: 'G02 - TSF - India', profitCenter: 'IN112004 - TSF-FX', businessArea: '0330 - OLAM AGRI INDIA LIMITED' },
 }
 
 export const PARTNERS: Partner[] = [

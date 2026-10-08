@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { loadScreen, type DataSource } from './api.ts'
 import { BlListModal } from './BlListModal.tsx'
@@ -30,6 +31,7 @@ import './mo-deal-id-invoicing.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-deal-id-invoicing.dark.css'
+import './mo-deal-id-invoicing.overrides.css'
 import type { Deal, Filters, Sort, SortKey, SubModal, Toast } from './types.ts'
 
 const PAGE_SIZE = 15
@@ -90,9 +92,18 @@ export default function MoDealIdInvoicing() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
 
+  // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
+  const [results, setResults] = useState<ResultItem[]>([])
   const pushToast = (message: string, kind: Toast['kind'] = '') => {
     const id = ++toastId.current
-    setToasts((t) => [...t, { id, message, kind }])
+    const tone = kind === 'error' ? 'error' : kind === 'warn' ? 'warning' : kind === 'success' ? 'success' : 'info'
+    const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'success' ? 'Success' : 'Information'
+    setResults((r) => [...r, { id, tone, title, message }])
+  }
+  // Non-outcome chatter (reload / refresh / mode hints) stays a small auto-fading toast, not a modal.
+  const pushNote = (message: string) => {
+    const id = ++toastId.current
+    setToasts((t) => [...t, { id, message, kind: '' }])
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200)
   }
 
@@ -123,7 +134,7 @@ export default function MoDealIdInvoicing() {
   const refreshList = () => {
     setGeneration((g) => g + 1)
     resetFilters()
-    pushToast('List reloaded from MySQL.')
+    pushNote('List reloaded from MySQL.')
   }
 
   const exportCsv = () => {
@@ -158,7 +169,7 @@ export default function MoDealIdInvoicing() {
     const orig = seedRef.current.find((d) => d.dealId === openDealId)
     if (orig) setDeals((all) => all.map((d) => (d.dealId === openDealId ? { ...orig } : d)))
     setAmending(false)
-    pushToast(`Deal ${openDealId} refreshed.`)
+    pushNote(`Deal ${openDealId} refreshed.`)
   }
 
   const saveDeal = () => pushToast(waitingAction('Save'), 'warn')
@@ -394,6 +405,7 @@ export default function MoDealIdInvoicing() {
         </div>
       </main>
 
+      <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
       <div className="toast-wrap">
         {toasts.map((t) => (
           <div key={t.id} className={`toast show${t.kind ? ` ${t.kind}` : ''}`}>
@@ -418,7 +430,7 @@ export default function MoDealIdInvoicing() {
           onSave={saveDeal}
           onToggleAmendment={(on) => {
             setAmending(on)
-            if (on) pushToast('Amendment mode: Unit Price and Invoice Date are now editable on lines not yet invoiced.')
+            if (on) pushNote('Amendment mode: Unit Price and Invoice Date are now editable on lines not yet invoiced.')
           }}
           onConfirmAmendment={() => {
             setAmending(false)

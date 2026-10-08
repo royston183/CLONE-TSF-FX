@@ -1,6 +1,6 @@
 import { closeDb, getDb, sqlitePath } from './db.ts'
 import { runMigrations } from './migrate.ts'
-import { runSeeds } from './seed.ts'
+import { runSeeds, seedTrdAcc } from './seed.ts'
 
 // Entry point for `npm run db:migrate | db:seed | db:setup`.
 const command = process.argv[2]
@@ -12,6 +12,7 @@ function migrate(): void {
 
 function seed(): void {
   console.log(`Seeded ${runSeeds(getDb())} lookup values.`)
+  console.log(`Seeded ${seedTrdAcc(getDb())} ZSGTSFTR_TRD_ACC posting types.`)
 }
 
 try {

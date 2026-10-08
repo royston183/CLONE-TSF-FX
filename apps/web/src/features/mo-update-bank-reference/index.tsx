@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { LAYOUT_WAITING, distinctOptions, loadCompanies, loadDeals, updateBlockedText } from './api.ts'
 import { DEFAULT_PAGE_SIZE, LAYOUTS, PAGE_SIZES } from './data.ts'
 import { DateField } from './DateField.tsx'
@@ -32,6 +33,7 @@ import './mo-update-bank-reference.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-update-bank-reference.dark.css'
+import './mo-update-bank-reference.overrides.css'
 import type { ColFilters, ColumnKey, Company, Deal, DealType, EditKey, Selection, SortState, Toast } from './types.ts'
 
 const NO_ERRORS: SelectionErrors = { coFrom: false, keyDate: false }
@@ -90,7 +92,16 @@ export default function MoUpdateBankReference() {
   // Toast
   const [toast, setToast] = useState<Toast | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Errors/blocked outcomes show as the standard ResultDialog (stay until OK); the "Screen refreshed"
+  // hint is cosmetic chatter and stays a small self-dismissing toast.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
+  const resultSeq = useRef(0)
   const showToast = useCallback((message: string, error = false) => {
+    if (error) {
+      const id = ++resultSeq.current
+      setOutcomes((r) => [...r, { id, tone: 'error', title: 'Error', message }])
+      return
+    }
     clearTimeout(toastTimer.current)
     setToast({ message, error, id: Date.now() })
     toastTimer.current = setTimeout(() => setToast(null), TOAST_MS)
@@ -568,6 +579,7 @@ export default function MoUpdateBankReference() {
       <ViewTxnModal modal={viewModal} row={viewRow} isFx={executed.dealType === 'FX'} onClose={viewModal.close} />
 
       <div className={`toast${toast ? ' show' : ''}${toast?.error ? ' error' : ''}`}>{toast?.message}</div>
+      <ResultQueue items={outcomes} onDismiss={(id) => setOutcomes((r) => r.filter((x) => x.id !== id))} />
 
       <div ref={ghostRef} className="drag-ghost">
         {ghostText}

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(apps/web/src/**)",
+      "Read(config/**)",
+      "Read(packages/**)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.local)",
+      "Bash(git push:*)",
+      "Bash(git checkout main:*)",
+      "Bash(git switch main:*)"
+    ]
+  }
+}

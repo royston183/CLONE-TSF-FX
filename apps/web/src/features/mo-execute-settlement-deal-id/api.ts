@@ -42,7 +42,7 @@
 import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
-import { odataString } from '@slc/api-client'
+import { apiFetch, odataString, service } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
@@ -52,7 +52,7 @@ import { spotPorts } from '../fo-additional-spot-booking/spotPorts.ts'
 import { toSpotRow } from '../fo-additional-spot-booking/spotList.ts'
 import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { statusClass } from './logic.ts'
-import type { Deal, FxDeal, StatusMeta } from './types.ts'
+import type { Deal, FxDeal, StatusMeta, TradeInvoice } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
@@ -120,7 +120,95 @@ export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<
   return joined.filter(({ fx }) => fx.ActiveStatus !== '3').map(toFxDeal).sort(bySeq)
 }
 
-export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is ZSGSLCTR_TRD_POS, the SLC table), and ${NOT_EXPORTED}: the default legs from ZSGTSFTR_SET_TYP / ZSGTSFTR_BIL_ADJ / ZSGTSFTR_INV_REF cannot be reproduced.`
+/**
+ * Trade Invoice grid, as ZSGTSF_RDEAL_TRD_INV (invoice_settlement_data) builds it:
+ *
+ *  - the rows are ZSGTSFTR_SET_TYP WHERE zmod_id = the Deal's model (middleware "setTyp"), so a Deal ID with no
+ *    ZSGTSFTR_TRD_POS row still shows its default legs;
+ *  - Invoice Amount is the sum of ZSGTSFTR_BIL_ADJ.ZAMT whose ZINV_REF+11(2) equals the row's ZT_TYPE+0(2);
+ *  - Due Date is the D1 transaction's maturity (the 2025 change), else BIL_ADJ's ZDUE_DATE;
+ *  - Receipt / Payment is ZT_TYPE+3(1): S = Receipt, P = Payment;
+ *  - ZSGTSFTR_TRD_POS (the gateway's local SQLite, migration 003, /api/localdb/tsf-trade-position) is a LEFT
+ *    join on ZT_TYPE: it only overlays what was saved before (settled flag, FI document, posting date).
+ *
+ * ZSGTSFTR_TRD_ACC (the gateway's local SQLite, migration 004, /api/localdb/tsf-posting-type) is joined on
+ * SET_TYP.ZFI_TYPE for the document type, the reference (ZXBLNR1) and the Dr / Cr line texts. The legacy join is an
+ * INNER JOIN; here a leg with no TRD_ACC row is still shown (blank), with a note, so an unloaded configuration
+ * table does not empty the grid.
+ *
+ * Not reproduced (stated on the screen, never guessed): the Payment Amount of a row whose settlement currency differs from its invoice currency
+ * (invoice amount / the mapped transaction's total rate, minus the premium adjustment), and the final model
+ * (GV_MOD) adjustments for the FX invoice model: the Deal's MC model is used as it is.
+ */
+const tradePositionApi = service('localdb')('tsf-trade-position')
+const postingTypeApi = service('localdb')('tsf-posting-type')
+
+export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_SET_TYP has no leg for this Deal ID's model. ${NOT_EXPORTED} for anything beyond the SET_TYP selection.`
+export const invoicesUnavailable = (why: string): string => `${WAITING} — the Trade Invoice legs could not be read (ZSGTSFTR_SET_TYP / ZSGTSFTR_BIL_ADJ): ${why}`
+export const INVOICE_GAPS = `${WAITING} — Payment Amount of a leg whose settlement currency differs needs the mapped transaction's total rate and the premium adjustment.`
+export const noPostingType = (types: readonly string[]): string => ` No ZSGTSFTR_TRD_ACC row is loaded for posting type ${types.join(', ')}: its document type, reference and Dr / Cr texts are blank.`
+
+/** A SAP DATS value (YYYYMMDD, or 00000000 / blank for none) as DD-MM-YYYY. */
+const dmyFromSap = (v: string): string => (/^[0-9]{8}$/.test(v) && v !== '00000000' ? `${v.slice(6, 8)}-${v.slice(4, 6)}-${v.slice(0, 4)}` : '')
+
+const text = (r: Record<string, unknown>, k: string): string => String(r[k] ?? '').trim()
+
+/**
+ * The grid rows: one per ZSGTSFTR_SET_TYP row of the model, amounts from BIL_ADJ, the saved TRD_POS state laid
+ * over them by ZT_TYPE. `d1Due` is the D1 leg's maturity as DD-MM-YYYY ('' when there is none).
+ */
+export function buildTradeInvoices(
+  setTyp: readonly Record<string, unknown>[],
+  billAdj: readonly Record<string, unknown>[],
+  positions: readonly Record<string, unknown>[],
+  accounting: readonly Record<string, unknown>[],
+  d1Due: string,
+): TradeInvoice[] {
+  const saved = new Map(positions.map((p) => [text(p, 'ZT_TYPE'), p]))
+  const acc = new Map(accounting.map((a) => [text(a, 'ZFI_TYPE'), a]))
+  return [...setTyp]
+    .sort((a, b) => text(a, 'ZT_TYP_NO').localeCompare(text(b, 'ZT_TYP_NO')) || text(a, 'ZT_TYPE').localeCompare(text(b, 'ZT_TYPE')))
+    .map((t) => {
+      const type = text(t, 'ZT_TYPE')
+      const matches = billAdj.filter((b) => text(b, 'ZINV_REF').slice(11, 13) === type.slice(0, 2))
+      const invAmt = matches.reduce((sum, b) => sum + num(b['ZAMT']), 0)
+      const pos = saved.get(type)
+      const post = acc.get(text(t, 'ZFI_TYPE'))
+      const curr = text(t, 'ZCURR')
+      const recPay = type.charAt(3) === 'P' ? 'Payment' : type.charAt(3) === 'S' ? 'Receipt' : ''
+      return {
+        leg: type,
+        trfDesc: text(t, 'ZSET_DESC'),
+        docType: post ? text(post, 'ZDOC_TYPE') : '',
+        xblnr: post ? text(post, 'ZXBLNR1') : '',
+        drPost: post ? text(post, 'ZDR_TEXT') : '',
+        crPost: post ? text(post, 'ZCR_TEXT') : '',
+        dueDate: d1Due || dmyFromIso(text(matches[0] ?? {}, 'ZDUE_DATE')),
+        postDate: pos ? dmyFromSap(text(pos, 'ZP_DATE')) : '',
+        invAmt,
+        curr,
+        // Same currency: the invoice amount. A different settlement currency needs the mapped total rate: not guessed.
+        payAmt: curr === text(t, 'ZSET_CURR') ? invAmt : 0,
+        recPay,
+        trfType: text(t, 'ZTRF_TYPE'),
+        fiDoc: pos ? text(pos, 'ZBELNR') : '',
+        setCo: pos ? text(pos, 'ZSET_CHECK') === 'X' : text(t, 'ZSET_CHECK') === 'X',
+      }
+    })
+}
+
+/** Every posting type of ZSGTSFTR_TRD_ACC (local SQLite). */
+export async function loadPostingTypes(signal?: AbortSignal): Promise<Record<string, unknown>[]> {
+  const body = await apiFetch<{ value?: Record<string, unknown>[] }>(postingTypeApi, signal ? { signal } : undefined)
+  return body?.value ?? []
+}
+
+/** The Deal ID's stored trade positions (local SQLite), in sequence order. */
+export async function loadTradePositions(dealId: string, signal?: AbortSignal): Promise<Record<string, unknown>[]> {
+  const body = await apiFetch<{ value?: Record<string, unknown>[] }>(`${tradePositionApi}?ZDEAL_ID=${encodeURIComponent(dealId)}`, signal ? { signal } : undefined)
+  return body?.value ?? []
+}
+
 export const HEADSUP_WAITING = `${WAITING} — ${NOT_EXPORTED}; the Headsup reminders (ZSGTSFTR_EMLBD / READ_TEXT) cannot be reproduced.`
 export const DMS_LIST_WAITING = `${WAITING} — the Deal ID documents are kept by FM ZSGTSFFM_DMS / ZSGTSFTR_DEALDMS, which have no API.`
 export const VIEW_INVOICE_WAITING = `${WAITING} — View Trade Invoice submits ZSGTSF_RDEAL_ID_INV (ZSGTSFTR_BIL_ADJ / ZSGTSFTR_BL / ZSGTSFTR_BL_RUSE); ${NOT_EXPORTED}.`
@@ -323,6 +411,9 @@ export type DealScreen = {
   statuses: StatusMeta[]
   fxDeals: FxDeal[]
   legsWaiting: string
+  invoices: TradeInvoice[]
+  /** Why the Trade Invoice grid is empty: nothing stored, or the table could not be read. */
+  invoicesWaiting: string
 }
 
 /** The FX legs; unreadable APP_STR / FxTransaction leaves the grid empty with the reason, never a guess. */
@@ -333,6 +424,41 @@ async function legsOrWaiting(dealId: string, signal?: AbortSignal): Promise<{ fx
   } catch (error) {
     if (isAbort(error)) throw error
     return { fxDeals: [], legsWaiting: legsUnavailable(messageOf(error)) }
+  }
+}
+
+/**
+ * The Trade Invoice legs. SET_TYP and BIL_ADJ failing leaves the grid empty with the reason; the saved TRD_POS
+ * state failing only leaves the defaults un-overlaid, and says so.
+ */
+async function invoicesOrWaiting(
+  dealId: string,
+  modelId: string,
+  fxDeals: readonly FxDeal[],
+  signal?: AbortSignal,
+): Promise<{ invoices: TradeInvoice[]; invoicesWaiting: string }> {
+  try {
+    const [setTyp, billAdj] = await Promise.all([
+      modelId ? fxList('setTyp', { ZMOD_ID: modelId }, { signal }) : none,
+      fxList('billAdjustment', { ZDEAL_ID: dealId }, { signal }),
+    ])
+    let positions: Record<string, unknown>[] = []
+    let accounting: Record<string, unknown>[] = []
+    let note = ''
+    try {
+      ;[positions, accounting] = await Promise.all([loadTradePositions(dealId, signal), loadPostingTypes(signal)])
+    } catch (error) {
+      if (isAbort(error)) throw error
+      note = ` The saved settlement state / posting types (local ZSGTSFTR_TRD_POS / ZSGTSFTR_TRD_ACC) could not be read: ${messageOf(error)}`
+    }
+    const d1 = fxDeals.find((f) => f.dealType === 'D1')
+    const invoices = buildTradeInvoices(setTyp, billAdj, positions, accounting, d1?.valDate ?? '')
+    const known = new Set(accounting.map((a) => String(a['ZFI_TYPE'] ?? '').trim()))
+    const missing = [...new Set(setTyp.map((t) => String(t['ZFI_TYPE'] ?? '').trim()).filter((f) => f && !known.has(f)))].sort()
+    return { invoices, invoicesWaiting: invoices.length ? `${INVOICE_GAPS}${missing.length && !note ? noPostingType(missing) : ''}${note}` : INVOICE_WAITING }
+  } catch (error) {
+    if (isAbort(error)) throw error
+    return { invoices: [], invoicesWaiting: invoicesUnavailable(messageOf(error)) }
   }
 }
 
@@ -356,10 +482,13 @@ export async function loadDealScreen(dealId: string, signal?: AbortSignal): Prom
   const mc = mcs[0]
   const modelId = mc ? txt(mc, 'ZMOD_ID') : ''
   const models = modelId ? await fxList('fxModel', { ZMOD_ID: modelId }, { signal }) : []
+  const trade = await invoicesOrWaiting(dealId, modelId, legs.fxDeals, signal)
   return {
     deal: toDeal({ deal, mc, model: models[0], trader: traders[0] }),
     statuses: statusList(statuses, dealType, subType),
     fxDeals: legs.fxDeals,
     legsWaiting: legs.legsWaiting,
+    invoices: trade.invoices,
+    invoicesWaiting: trade.invoicesWaiting,
   }
 }

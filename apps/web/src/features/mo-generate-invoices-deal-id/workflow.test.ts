@@ -156,7 +156,7 @@ describe('Confirm Invoice Generation: 05 vs 07', () => {
 
 const finalisationTables = () => ({
   billAdjustment: [] as MwRow[],
-  ifInv: [{ ZDEAL_ID: DEAL_ID, ZINV_TYPE: 'I01', ZLEG_ID: '1', ZBP: '' }] as MwRow[],
+  ifInv: [{ ZINT_INV_NO: 'INT1', ZBUKRS: '1000', ZDEAL_ID: DEAL_ID, ZINV_TYPE: 'I01', ZLEG_ID: '1', ZBP: '' }] as MwRow[],
   tsfDealId: [dealRow('04')],
   billOfLading: [bl({}), bl({ ZBL_NO: 'BL2', ZINV_DATE: '2027-01-01' })],
   blReuse: [bl({ ZBL_NO: 'BL3', ZBL_REUSE: 'R1', ZREUSE_CONF: '' })],
@@ -184,6 +184,26 @@ describe('confirmInvoiceGeneration', () => {
     deepStrictEqual([tables.blReuse[0]!['ZBL_STAT_ID'], tables.blReuse[0]!['ZINV_TYPE']], ['05', 'I01'])
     strictEqual(tables.billAdjustment[0]!['ZDIFF_AMT'] !== undefined, true)
     deepStrictEqual([...touched(writes(calls))].sort(), ['billAdjustment', 'billOfLading', 'blReuse', 'ifInv', 'tsfDealId'])
+  })
+
+  it('IF_INV: updates every existing row of the deal / type / leg by its full key, and never inserts', async () => {
+    const tables = finalisationTables()
+    tables.ifInv.push({ ZINT_INV_NO: 'INT2', ZBUKRS: '2000', ZDEAL_ID: DEAL_ID, ZINV_TYPE: 'I01', ZLEG_ID: '1', ZBP: '' })
+    const { result, calls } = await run('05', tables)
+    ok(result.ok, result.message)
+    deepStrictEqual(tables.ifInv.map((r) => r['ZHOUSEBKID']), ['HB1', 'HB1'])
+    deepStrictEqual(calls.filter((c) => c.op === 'update' && c.resource === 'ifInv').map((c) => c.key!['ZINT_INV_NO']), ['INT1', 'INT2'])
+    strictEqual(calls.some((c) => c.op === 'create' && c.resource === 'ifInv'), false)
+  })
+
+  it('IF_INV: no row for the deal is skipped, not an error, and the invoice carries on', async () => {
+    const tables = finalisationTables()
+    tables.ifInv.length = 0
+    const { result, calls } = await run('05', tables)
+    ok(result.ok, result.message)
+    strictEqual(result.steps.find((s) => s.step === 'invoice interface (IF_INV)')!.status, 'skipped')
+    strictEqual(tables.tsfDealId[0]!['ZDEAL_STAT'], '05')
+    deepStrictEqual(writes(calls).filter((c) => c.resource === 'ifInv'), [])
   })
 
   it('a partial invoice (07) writes ZPC = P', async () => {

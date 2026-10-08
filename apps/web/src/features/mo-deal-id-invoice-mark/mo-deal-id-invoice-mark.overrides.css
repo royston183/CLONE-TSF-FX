@@ -1,0 +1,170 @@
+/*
+ * OTTK visual theme (CSS-ONLY): the "Create Master Contract" OTTK override block mapped onto this
+ * screen's own class names.
+ *
+ * mo-deal-id-invoice-mark.legacy.css is produced by tools/scope-css.mjs from the legacy HTML and
+ * cannot be hand-edited. It uses literal colours (no CSS variables), so the OTTK palette is
+ * restated here directly. This sheet is imported after the generated legacy and dark sheets;
+ * every colour-bearing rule carries the light guard ":root:not([data-theme='dark'])" so night
+ * mode keeps the generated dark.css palette untouched. Structural rules (sizes, radii, shadows,
+ * transitions) apply in both themes.
+ */
+
+/* 1. Tokens: only used by the rules below (light only) */
+:root:not([data-theme='dark']) .modinvmark {
+  --ottk-text:#1D2D3E;
+  --ottk-muted:#475E75;
+  --ottk-faint:#687B8D;
+  --ottk-border:#D5DADD;
+  --ottk-border-strong:#8996A1;
+  --ottk-primary:#0A6ED1;
+  --ottk-primary-dark:#085CAF;
+  --ottk-primary-tint:#EAF3FC;
+  --ottk-success:#107E3E;
+  --ottk-warning:#9B6B00;
+  --ottk-error:#BB0000;
+  --ottk-gray-tint:#F2F4F5;
+}
+
+/* 2. Type scale */
+.modinvmark { font-size:13px; font-family:"72","Segoe UI",Arial,Helvetica,sans-serif; }
+.modinvmark .brand-title { font-size:16px; }
+.modinvmark .brand-code { font-size:13px; }
+.modinvmark .modal-title { font-size:14px; }
+.modinvmark .sub-modal-title { font-size:14px; }
+.modinvmark .field-label { font-size:13px; }
+.modinvmark .table-heading { font-size:14px; }
+
+/* 3. Header: transparent, flush on the page background */
+.modinvmark .topbar { height:auto; min-height:48px; padding-top:4px; padding-bottom:4px; box-shadow:none; }
+:root:not([data-theme='dark']) .modinvmark .topbar { background:transparent; border-bottom:none; }
+
+/* 4. Buttons: compact SAP padding, 4px radius, hover feedback */
+.modinvmark .back-btn, .modinvmark .header-btn, .modinvmark .icon-btn, .modinvmark .secondary-btn, .modinvmark .primary-btn,
+.modinvmark .reset-btn, .modinvmark .deal-action-btn { border-radius:4px; }
+:root:not([data-theme='dark']) .modinvmark .back-btn, :root:not([data-theme='dark']) .modinvmark .header-btn, :root:not([data-theme='dark']) .modinvmark .icon-btn, :root:not([data-theme='dark']) .modinvmark .secondary-btn, :root:not([data-theme='dark']) .modinvmark .reset-btn, :root:not([data-theme='dark']) .modinvmark .deal-action-btn {
+  border-color:var(--ottk-border-strong);
+  color:var(--ottk-text);
+}
+:root:not([data-theme='dark']) .modinvmark .back-btn:hover, :root:not([data-theme='dark']) .modinvmark .header-btn:hover, :root:not([data-theme='dark']) .modinvmark .icon-btn:hover, :root:not([data-theme='dark']) .modinvmark .secondary-btn:hover,
+:root:not([data-theme='dark']) .modinvmark .reset-btn:hover, :root:not([data-theme='dark']) .modinvmark .deal-action-btn:hover { background:#F7FBFF; border-color:var(--ottk-border-strong); box-shadow:0 1px 4px rgba(34,53,72,.1); }
+:root:not([data-theme='dark']) .modinvmark .primary-btn, :root:not([data-theme='dark']) .modinvmark .deal-action-btn.primary-action { background:var(--ottk-primary); border-color:var(--ottk-primary); color:#fff; box-shadow:none; }
+:root:not([data-theme='dark']) .modinvmark .primary-btn:hover:not(:disabled), :root:not([data-theme='dark']) .modinvmark .deal-action-btn.primary-action:hover { background:var(--ottk-primary-dark); border-color:var(--ottk-primary-dark); box-shadow:0 2px 6px rgba(10,110,209,.22); }
+:root:not([data-theme='dark']) .modinvmark .primary-btn:disabled { background:#C8D7E5; border-color:#C0CFDD; color:#F7FBFF; box-shadow:none; }
+
+/* 5. Panels: white surface, thin border, compact shadow, 12px radius */
+.modinvmark .workbench { border-radius:12px; }
+:root:not([data-theme='dark']) .modinvmark .workbench { border-color:var(--ottk-border); box-shadow:0 1px 3px rgba(34,53,72,.13); }
+:root:not([data-theme='dark']) .modinvmark .table-title-row, :root:not([data-theme='dark']) .modinvmark .filter-toolbar, :root:not([data-theme='dark']) .modinvmark .legend, :root:not([data-theme='dark']) .modinvmark .table-footer { border-color:#E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark .filter-toolbar { background:#fff; }
+:root:not([data-theme='dark']) .modinvmark .record-count, :root:not([data-theme='dark']) .modinvmark .footer-copy { color:var(--ottk-faint); }
+:root:not([data-theme='dark']) .modinvmark .field-label { color:var(--ottk-muted); }
+
+/* 6/7. Inputs 36px; search + filter controls 32px */
+.modinvmark .filter-input, .modinvmark .filter-select, .modinvmark .mode-switch, .modinvmark .reset-btn, .modinvmark .primary-btn { height:32px; line-height:30px; }
+.modinvmark .search-input { height:32px; }
+.modinvmark .mode-btn { height:30px; }
+.modinvmark .icon-btn { height:32px; }
+.modinvmark .workflow-input { height:36px; }
+.modinvmark .search-input, .modinvmark .filter-input, .modinvmark .filter-select, .modinvmark .workflow-input { border-radius:4px; }
+.modinvmark .search-wrap svg { top:8px; }
+.modinvmark .calendar-trigger { height:28px; }
+:root:not([data-theme='dark']) .modinvmark .search-input, :root:not([data-theme='dark']) .modinvmark .filter-input, :root:not([data-theme='dark']) .modinvmark .filter-select, :root:not([data-theme='dark']) .modinvmark .mode-switch, :root:not([data-theme='dark']) .modinvmark .reset-btn, :root:not([data-theme='dark']) .modinvmark .workflow-input { border-color:var(--ottk-border-strong); }
+:root:not([data-theme='dark']) .modinvmark .search-input:hover, :root:not([data-theme='dark']) .modinvmark .filter-input:hover, :root:not([data-theme='dark']) .modinvmark .filter-select:hover, :root:not([data-theme='dark']) .modinvmark .workflow-input:hover { border-color:#A6B0B9; }
+:root:not([data-theme='dark']) .modinvmark .search-input:focus, :root:not([data-theme='dark']) .modinvmark .filter-input:focus, :root:not([data-theme='dark']) .modinvmark .filter-select:focus, :root:not([data-theme='dark']) .modinvmark .workflow-input:focus {
+  border-color:var(--ottk-primary);
+  box-shadow:0 0 0 3px var(--ottk-primary-tint);
+  outline:none;
+}
+:root:not([data-theme='dark']) .modinvmark .mode-btn.active { background:var(--ottk-primary-tint); color:var(--ottk-primary); box-shadow:inset 0 -2px 0 var(--ottk-primary); }
+:root:not([data-theme='dark']) .modinvmark .calendar-trigger:hover { color:var(--ottk-primary); }
+:root:not([data-theme='dark']) .modinvmark .row-check, :root:not([data-theme='dark']) .modinvmark #checkAll, :root:not([data-theme='dark']) .modinvmark .workflow-check { accent-color:var(--ottk-primary); }
+
+/* 8. Table: #F2F4F5 13px uppercase sticky header, 14px data, row lift, #EAF3FC selection */
+.modinvmark thead th { font-size:13px; text-transform:uppercase; letter-spacing:.02em; position:sticky; top:0; }
+:root:not([data-theme='dark']) .modinvmark thead th, :root:not([data-theme='dark']) .modinvmark thead .check-col, :root:not([data-theme='dark']) .modinvmark thead .deal-col { background:var(--ottk-gray-tint); color:var(--ottk-muted); border-bottom-color:#E6E9EB; border-right-color:#E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark thead th.sortable:hover { background:#E8EBED; }
+.modinvmark tbody td { font-size:14px; }
+:root:not([data-theme='dark']) .modinvmark tbody td { border-bottom-color:#E6E9EB; border-right-color:#EEF0F2; color:var(--ottk-text); }
+.modinvmark tbody tr { transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.modinvmark tbody tr:hover { transform:translateY(-1px) scale(1.002); position:relative; z-index:2; }
+:root:not([data-theme='dark']) .modinvmark tbody tr:hover { box-shadow:0 3px 9px rgba(34,53,72,.10); }
+:root:not([data-theme='dark']) .modinvmark tbody tr:hover td, :root:not([data-theme='dark']) .modinvmark tbody tr:hover .check-col, :root:not([data-theme='dark']) .modinvmark tbody tr:hover .deal-col { background:#F7FBFF; }
+:root:not([data-theme='dark']) .modinvmark tbody tr.row-selected td, :root:not([data-theme='dark']) .modinvmark tbody tr.row-selected .check-col, :root:not([data-theme='dark']) .modinvmark tbody tr.row-selected .deal-col,
+:root:not([data-theme='dark']) .modinvmark tbody tr.row-selected:hover td, :root:not([data-theme='dark']) .modinvmark tbody tr.row-selected:hover .check-col, :root:not([data-theme='dark']) .modinvmark tbody tr.row-selected:hover .deal-col { background:#EAF3FC; }
+:root:not([data-theme='dark']) .modinvmark tbody tr.row-selected:hover { box-shadow:0 3px 9px rgba(10,110,209,.14); }
+.modinvmark tbody tr.dragging { opacity:.5; }
+:root:not([data-theme='dark']) .modinvmark tbody tr.dragging td { background:#EAF3FC; }
+.modinvmark .amount, .modinvmark .num { text-align:right; font-variant-numeric:tabular-nums; }
+:root:not([data-theme='dark']) .modinvmark .amount { color:var(--ottk-text); }
+:root:not([data-theme='dark']) .modinvmark .hotspot-deal { color:var(--ottk-success); }
+:root:not([data-theme='dark']) .modinvmark .hotspot-mc { color:var(--ottk-primary); }
+.modinvmark .deal-table th { font-size:13px; text-transform:uppercase; }
+.modinvmark .deal-table td { font-size:14px; }
+:root:not([data-theme='dark']) .modinvmark .deal-table th { background:var(--ottk-gray-tint); color:var(--ottk-muted); border-bottom-color:#E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark .deal-table td { border-bottom-color:#E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark .deal-table tbody tr:hover td { background:#F7FBFF; }
+:root:not([data-theme='dark']) .modinvmark .deal-table .hotspot-link, :root:not([data-theme='dark']) .modinvmark .deal-type-cell, :root:not([data-theme='dark']) .modinvmark .invoice-type-cell { color:var(--ottk-primary); }
+
+/* 9. Status colours */
+:root:not([data-theme='dark']) .modinvmark .status-ready { color:var(--ottk-warning); }
+:root:not([data-theme='dark']) .modinvmark .status-marked { color:var(--ottk-success); }
+:root:not([data-theme='dark']) .modinvmark .days-negative, :root:not([data-theme='dark']) .modinvmark .workflow-negative { color:var(--ottk-error); }
+:root:not([data-theme='dark']) .modinvmark .workflow-positive { color:var(--ottk-success); }
+:root:not([data-theme='dark']) .modinvmark .deal-status-box { color:var(--ottk-success); }
+:root:not([data-theme='dark']) .modinvmark .legend-blue { background:var(--ottk-primary); }
+:root:not([data-theme='dark']) .modinvmark .legend-green { background:var(--ottk-success); }
+
+/* 10. Pagination: 28px compact square buttons */
+.modinvmark .page-btn { min-width:28px; height:28px; border-radius:4px; }
+:root:not([data-theme='dark']) .modinvmark .page-btn { border-color:var(--ottk-border-strong); color:var(--ottk-text); }
+:root:not([data-theme='dark']) .modinvmark .page-btn.active { background:var(--ottk-primary); border-color:var(--ottk-primary); color:#fff; }
+:root:not([data-theme='dark']) .modinvmark .page-btn:disabled { color:#B7C2CB; border-color:var(--ottk-border); }
+
+/* 11. Modals: 12px radius, OTTK shadow, 1px border */
+.modinvmark .modal, .modinvmark .sub-modal { border-radius:12px; }
+:root:not([data-theme='dark']) .modinvmark .modal, :root:not([data-theme='dark']) .modinvmark .sub-modal { border:1px solid #B9C2C9; box-shadow:0 22px 70px rgba(16,38,58,.3); }
+:root:not([data-theme='dark']) .modinvmark .modal-close:hover, :root:not([data-theme='dark']) .modinvmark .sub-modal-close:hover { background:var(--ottk-gray-tint); }
+:root:not([data-theme='dark']) .modinvmark .calendar-popover { border-color:var(--ottk-border); box-shadow:0 8px 22px rgba(34,53,72,.18); }
+:root:not([data-theme='dark']) .modinvmark .cal-day.selected { background:var(--ottk-primary); }
+:root:not([data-theme='dark']) .modinvmark .cal-day:hover { background:var(--ottk-primary-tint); color:var(--ottk-primary); }
+:root:not([data-theme='dark']) .modinvmark .deal-section, :root:not([data-theme='dark']) .modinvmark .workflow-section { border-color:var(--ottk-border); }
+:root:not([data-theme='dark']) .modinvmark .workflow-status { background:var(--ottk-primary-tint); color:var(--ottk-primary); }
+
+/* 12. Toast: dark OTTK toast */
+.modinvmark .toast { border-radius:8px; }
+:root:not([data-theme='dark']) .modinvmark .toast { background:#243B53; border-color:#243B53; color:#fff; }
+:root:not([data-theme='dark']) .modinvmark .toast.info { background:#243B53; border-color:#243B53; color:#fff; }
+:root:not([data-theme='dark']) .modinvmark .toast.warn { background:#4A211D; border-color:#4A211D; color:#fff; }
+
+/* 13. Scrollbar */
+:root:not([data-theme='dark']) .modinvmark ::-webkit-scrollbar-thumb { background:#B7C2CB; }
+
+/* 17. Drag and drop: the Mark button is the drop target; blue highlight while ready/over */
+:root:not([data-theme='dark']) .modinvmark .primary-btn.drop-ready { outline:2px dashed var(--ottk-primary); outline-offset:2px; }
+:root:not([data-theme='dark']) .modinvmark .primary-btn.drop-over {
+  border-color:var(--ottk-primary) !important;
+  background:var(--ottk-primary-tint) !important;
+  color:var(--ottk-primary) !important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modinvmark *, .modinvmark *::before, .modinvmark *::after { transition:none !important; animation-duration:.01ms !important; }
+  .modinvmark tbody tr:hover, .modinvmark .drop-over { transform:none !important; }
+}
+
+/* 18. Table grid lines removed: no vertical cell borders / boxed table, one faint hairline between rows.
+   The :not(.nogrid) pairs lift specificity above the generated dark.css vertical-border rules; border-bottom is left to
+   those sheets (light #E6E9EB above, dark #2a3d52 from dark.css). */
+:root:not(.nogrid):not(.nogrid2) .modinvmark table,
+:root:not(.nogrid):not(.nogrid2) .modinvmark table th,
+:root:not(.nogrid):not(.nogrid2) .modinvmark table td,
+:root:not(.nogrid):not(.nogrid2) .modinvmark thead th,
+:root:not(.nogrid):not(.nogrid2) .modinvmark tbody td,
+:root:not(.nogrid):not(.nogrid2) .modinvmark .check-col,
+:root:not(.nogrid):not(.nogrid2) .modinvmark .deal-col,
+:root:not(.nogrid):not(.nogrid2) .modinvmark .deal-table th,
+:root:not(.nogrid):not(.nogrid2) .modinvmark .deal-table td { border-left:none; border-right:none; }
+:root:not(.nogrid):not(.nogrid2) .modinvmark table { border:none; }
+:root:not([data-theme='dark']) .modinvmark .deal-table td { border-bottom:1px solid #E6E9EB; }

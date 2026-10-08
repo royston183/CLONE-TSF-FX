@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { messageOf, type DealRow as DealIdRow } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { describeOutcome, ELIGIBLE_STATUS, loadScreen, markDealsForInvoicing, WAITING_DEAL_ID_API, type DataSource, type Mode } from './api.ts'
@@ -17,6 +18,7 @@ import './mo-deal-id-invoice-mark.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-deal-id-invoice-mark.dark.css'
+import './mo-deal-id-invoice-mark.overrides.css'
 import type { DealRow, DetailModalState, FxRow, Sort, SortKey, SubModalState, Toast, WorkflowKind } from './types.ts'
 
 const PAGE_SIZE = 20
@@ -84,9 +86,18 @@ export default function MoDealIdInvoiceMark() {
 
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
+  // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
+  const [results, setResults] = useState<ResultItem[]>([])
   const pushToast = (message: string, kind: Toast['kind'] = 'success') => {
     const id = ++toastId.current
-    setToasts((t) => [...t, { id, message, kind }])
+    const tone = kind === 'error' ? 'error' : kind === 'warn' ? 'warning' : kind === 'success' ? 'success' : 'info'
+    const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'success' ? 'Success' : 'Information'
+    setResults((r) => [...r, { id, tone, title, message }])
+  }
+  // Non-outcome chatter (reload / refresh confirmations) stays a small auto-fading toast, not a modal.
+  const pushNote = (message: string) => {
+    const id = ++toastId.current
+    setToasts((t) => [...t, { id, message, kind: 'info' }])
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3600)
   }
 
@@ -126,7 +137,7 @@ export default function MoDealIdInvoiceMark() {
   const refreshWorkbench = () => {
     setGeneration((g) => g + 1)
     resetFilters()
-    pushToast('Workbench reloaded from MySQL.', 'info')
+    pushNote('Workbench reloaded from MySQL.')
   }
 
   const toggleRow = (id: string, checked: boolean) => {
@@ -480,6 +491,7 @@ export default function MoDealIdInvoiceMark() {
         </main>
       </div>
 
+      <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
       <div className="toast-stack">
         {toasts.map((t) => (
           <div key={t.id} className={`toast${t.kind && t.kind !== 'success' ? ` ${t.kind}` : ''}`}>
@@ -503,7 +515,7 @@ export default function MoDealIdInvoiceMark() {
                 onOpenInvoicing={() => setWorkflow({ kind: 'invoicing', row: liveRow })}
                 onOpenSettlement={() => setWorkflow({ kind: 'settlement', row: liveRow })}
                 onOpenTxn={(fx) => onOpenTxn(liveRow, fx)}
-                onRefresh={() => pushToast('Deal details refreshed.', 'info')}
+                onRefresh={() => pushNote('Deal details refreshed.')}
               />
             )
           })()
