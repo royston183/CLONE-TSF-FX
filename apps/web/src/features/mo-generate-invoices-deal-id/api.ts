@@ -29,7 +29,7 @@
  *   Still without a backend: letters (Adobe Form), e-mail, Premium Adjustment, Option transactions.
  */
 import { txt } from '../../shared/fx/masters.ts'
-import { fxCreate, fxDelete, fxHasNumberRange, fxList, fxUpdate, isAbort, type FxRow as MwRow } from '../../shared/fx/mw.ts'
+import { fxAllocate, fxCreate, fxDelete, fxHasFieldRange, fxList, fxUpdate, isAbort, type FxRow as MwRow } from '../../shared/fx/mw.ts'
 import { dec, dmyFromIso, isoFromDmy, num, sapNow, sapUser } from '../../shared/fx/sap.ts'
 import { TCODE } from './data.ts'
 import {
@@ -387,19 +387,28 @@ export function amendmentRecords(
 
 /**
  * FORM save_alv2_data. A row with no saved ZSGTSFTR_BIL_ADJ row is new: it takes its ZINV_NO from the
- * number range (ZSGTSFNR08/01) when the middleware has one bound to the table and ZPC from the current
+ * field number range (ZSGTSFNR08/01) when the middleware has one bound to that column and ZPC from the current
  * Deal ID status; with no number range nothing at all is written ('needsNumber').
  */
 export async function confirmAmendment(deal: Deal, ctx: DealContext): Promise<'done' | 'needsNumber'> {
   const stamp = await audit('ZCHANGED')
   const created = await audit('ZCREATED')
   const { recs, needsNumber } = amendmentRecords(deal.inv, deal.dealId, ctx.bilAdj, stamp, { ZPC: pcForStatus(deal.status), ...created })
-  if (needsNumber && !(await fxHasNumberRange('billAdjustment'))) return 'needsNumber'
+  if (needsNumber && !(await fxHasFieldRange('billAdjustment', 'ZINV_NO'))) return 'needsNumber'
   for (const rec of recs) {
     if (ctx.bilAdj.some((b) => sameKey(rec, b))) await fxUpdate('billAdjustment', adjKey(rec), toWire(rec))
     else {
-      const made = await fxCreate('billAdjustment', toWire({ ...rec, ZINV_NO: '' }))
-      if (!made.assignedNumber) {
+      // ZINV_NO is a field range (ZSGTSFNR08/01): an insert leaves it blank, so the row goes in
+      // first and the number is drawn into it. A failed draw removes the row again.
+      await fxCreate('billAdjustment', toWire({ ...rec, ZINV_NO: '' }))
+      let drawn: string | undefined
+      try {
+        drawn = await fxAllocate('billAdjustment', adjKey(rec), 'ZINV_NO')
+      } catch (error) {
+        await fxDelete('billAdjustment', adjKey(rec))
+        throw error
+      }
+      if (!drawn) {
         await fxDelete('billAdjustment', adjKey(rec))
         throw new Error('The middleware drew no invoice number (ZSGTSFNR08), so the new invoice row was not kept.')
       }

@@ -22,7 +22,7 @@ import type { Deal, InvRow } from './types.ts'
 
 /* ------------------------------------------------------------------ an in-memory middleware */
 
-type Call = { op: 'list' | 'create' | 'update' | 'remove'; resource: string; key?: Record<string, string>; data?: Record<string, unknown> }
+type Call = { op: 'list' | 'create' | 'update' | 'remove' | 'allocate'; resource: string; key?: Record<string, string>; data?: Record<string, unknown> }
 
 function fakePorts<T extends Record<string, MwRow[]>>(tables: T, opts: { registered?: string[]; numberRange?: boolean; failOn?: (c: Call) => boolean } = {}) {
   const calls: Call[] = []
@@ -41,9 +41,18 @@ function fakePorts<T extends Record<string, MwRow[]>>(tables: T, opts: { registe
     create: async (resource, data) => {
       guard({ op: 'create', resource, data })
       const row = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === null ? null : String(v)])) as MwRow
-      if (opts.numberRange && !row['ZINV_NO']) row['ZINV_NO'] = String(next++)
+      // Like the middleware: an insert never fills a field range, so ZINV_NO stays as sent.
       ;((tables as Record<string, MwRow[]>)[resource] ??= []).push(row)
-      return { assignedNumber: opts.numberRange ? row['ZINV_NO'] ?? undefined : undefined }
+      return {}
+    },
+    allocate: async (resource, key, field) => {
+      guard({ op: 'allocate', resource, key })
+      const target = (tables[resource] ?? []).find((x) => match(x, key))
+      if (!target) throw new Error('ROW_NOT_FOUND')
+      if (target[field]) return target[field] ?? undefined
+      if (!opts.numberRange) return undefined
+      target[field] = String(next++)
+      return target[field] ?? undefined
     },
     update: async (resource, key, changes) => {
       guard({ op: 'update', resource, key, data: changes })
@@ -57,7 +66,7 @@ function fakePorts<T extends Record<string, MwRow[]>>(tables: T, opts: { registe
       if (!registered.has(resource)) throw new Error('not registered')
       return Object.keys((tables[resource] ?? [])[0] ?? {}).concat('ZREMARK', 'ZCHANGED_BY', 'ZCHANGED_DATE', 'ZCHANGED_TIME')
     },
-    hasNumberRange: async () => !!opts.numberRange,
+    hasFieldRange: async (_resource, field) => !!opts.numberRange && field === 'ZINV_NO',
     now: async () => ({ user: 'TESTER', date: '2026-10-06', time: '10:00:00' }),
   }
   return { ports, calls, tables }
@@ -198,6 +207,25 @@ describe('confirmInvoiceGeneration', () => {
     ok(result.message.includes('ZSGTSFNR08'))
     deepStrictEqual(writes(calls), [])
     deepStrictEqual(tables.billAdjustment, [])
+  })
+
+  it('draws ZINV_NO from the field range into the inserted row, after the insert', async () => {
+    const { result, calls, tables } = await run('05')
+    ok(result.ok, result.message)
+    const ops = calls.filter((c) => c.resource === 'billAdjustment' && (c.op === 'create' || c.op === 'allocate')).map((c) => c.op)
+    deepStrictEqual(ops, ['create', 'allocate'])
+    const created = calls.find((c) => c.op === 'create' && c.resource === 'billAdjustment')!
+    strictEqual(created.data!['ZINV_NO'], '')
+    strictEqual(tables.billAdjustment[0]!['ZINV_NO'], '1000')
+  })
+
+  it('removes the inserted row again when the draw fails', async () => {
+    const t = finalisationTables()
+    const f = fakePorts(t, { numberRange: true, failOn: (c) => c.op === 'allocate' })
+    const result = await confirmInvoiceGeneration({ deal: deal('04'), dealRows: t.tsfDealId, diffRule: undefined, status: '05', sellers: ['OGA'] }, f.ports)
+    strictEqual(result.ok, false)
+    deepStrictEqual(t.billAdjustment, [])
+    strictEqual(t.tsfDealId[0]!['ZDEAL_STAT'], '04')
   })
 
   it('without the IF_INV resource it stops before the first write', async () => {
