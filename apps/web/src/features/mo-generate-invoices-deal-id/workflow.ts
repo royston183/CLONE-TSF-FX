@@ -44,11 +44,11 @@ export const RESOURCE_NOTE =
 /** Key columns of the rows these steps address, from the ABAP's own WHERE clauses. */
 export const KEY = {
   dealId: ['ZDEAL_ID', 'ZDEAL_TYPE', 'ZSUB_TYPE'],
-  bl: ['ZTF_NO', 'ZTF_SPLIT', 'ZBL_NO', 'ZBL_SPLIT'],
+  bl: ['ZTF_NO', 'ZTF_SPLIT', 'ZBL_NO', 'ZBL_SPLIT', 'ZBL_REUSE'],
   blReuse: ['ZTF_NO', 'ZTF_SPLIT', 'ZBL_NO', 'ZBL_SPLIT', 'ZBL_REUSE'],
   tradeFlow: ['ZTF_NO', 'ZTF_SPLIT'],
   preInv: ['ZDEAL_ID', 'ZTF_NO', 'ZTF_SPLIT', 'ZBL_LOT'],
-  ifInv: ['ZDEAL_ID', 'ZINV_TYPE', 'ZLEG_ID'],
+  ifInv: ['ZINT_INV_NO', 'ZBUKRS', 'ZINV_TYPE', 'ZLEG_ID', 'ZDEAL_ID'],
 } as const
 
 export const WAITING_ACTION = 'WAITING FOR ACTION API'
@@ -240,14 +240,18 @@ export async function confirmInvoiceGeneration(input: ConfirmInput, ports: Ports
     {
       name: 'invoice interface (IF_INV)',
       run: async () => {
+        // FORM save_data: UPDATE zsgtsftr_if_inv ... WHERE zdeal_id, zinv_type, zleg_id — a set-based
+        // update of the rows that already exist (ZINT_INV_NO / ZBUKRS are never given; an upstream
+        // process fills them). No INSERT, and no row is no error: the invoice carries on.
+        let n = 0
         for (const r of rows) {
-          await ports.update(
-            RESOURCE.ifInv,
-            { ZDEAL_ID: dealId, ZINV_TYPE: r.invType, ZLEG_ID: r.ttype.slice(1, 2) },
-            { ZPTNR_BKID: r.partnerBank, ZHOUSEBKID: r.houseBank, ZHOUSEKTID: r.accountId, ZBP: r.bp },
-          )
+          const found = await ports.list(RESOURCE.ifInv, { ZDEAL_ID: dealId, ZINV_TYPE: r.invType, ZLEG_ID: r.ttype.slice(1, 2) })
+          for (const f of found) {
+            await ports.update(RESOURCE.ifInv, keyOf(f, KEY.ifInv), { ZPTNR_BKID: r.partnerBank, ZHOUSEBKID: r.houseBank, ZHOUSEKTID: r.accountId, ZBP: r.bp })
+            n++
+          }
         }
-        return `${rows.length} row(s)`
+        return n ? `${n} row(s)` : { skipped: 'no IF_INV row exists for this Deal ID / invoice type / leg yet — nothing to update, as in the ABAP UPDATE' }
       },
     },
     { name: 'Deal ID status', run: async () => `ZDEAL_STAT ${status} on ${await setDealStatus(ports, input.dealRows, status)} row(s)` },

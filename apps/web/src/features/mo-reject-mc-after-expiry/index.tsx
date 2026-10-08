@@ -4,6 +4,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { loadContracts, loadMasters, rejectContracts, rejectKeys } from './api.ts'
 import { ContractsTable, isInteractiveTarget } from './ContractsTable.tsx'
 import { CO_AREA_MASTER, ENTITY_MASTER, FX_MODEL_MASTER, MC_STATUS_MASTER, REGION_MASTER, REGION_NAMES, seedContracts } from './data.ts'
@@ -35,6 +36,7 @@ import './mo-reject-mc-after-expiry.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-reject-mc-after-expiry.dark.css'
+import './mo-reject-mc-after-expiry.overrides.css'
 import type {
   Criteria,
   CriteriaError,
@@ -44,7 +46,6 @@ import type {
   Layout,
   MasterContract,
   Sort,
-  Toast,
 } from './types.ts'
 
 const BRAND_LOGO =
@@ -104,31 +105,15 @@ export default function MoRejectMcAfterExpiry() {
   const [pendingIds, setPendingIds] = useState<string[]>([])
   const [detailsMc, setDetailsMc] = useState<string | null>(null)
 
-  // Toasts stack, each dismissing itself after five seconds.
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const toastTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>())
+  // Outcomes show as the standard ResultDialog queue; each stays until OK.
+  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
   const nextToastId = useRef(1)
   const dismissToast = useCallback((id: number) => {
-    clearTimeout(toastTimers.current.get(id))
-    toastTimers.current.delete(id)
-    setToasts((list) => list.filter((t) => t.id !== id))
+    setOutcomes((list) => list.filter((t) => t.id !== id))
   }, [])
-  const showToast = useCallback(
-    (message: string, error = false) => {
-      const id = nextToastId.current++
-      setToasts((list) => [...list, { id, message, error }])
-      toastTimers.current.set(
-        id,
-        setTimeout(() => dismissToast(id), 5000),
-      )
-    },
-    [dismissToast],
-  )
-  useEffect(() => {
-    const timers = toastTimers.current
-    return () => {
-      for (const t of timers.values()) clearTimeout(t)
-    }
+  const showToast = useCallback((message: string, error = false) => {
+    const id = nextToastId.current++
+    setOutcomes((list) => [...list, { id, tone: error ? 'error' : 'success', title: error ? 'Error' : 'Success', message }])
   }, [])
 
   // The value helps load once; View Contracts waits for them, since the rows are mapped with them.
@@ -680,32 +665,7 @@ export default function MoRejectMcAfterExpiry() {
 
       <DetailsModal modal={detailsModal} contract={detailsMc === null ? undefined : byNumber.get(detailsMc)} onClose={detailsModal.close} />
 
-      {/* TOASTS */}
-      <div className="toast-wrap" id="toastWrap">
-        {toasts.map((t) => (
-          <div key={t.id} className="toast">
-            <svg
-              className="toast-icon"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              style={t.error ? { color: 'var(--error)' } : undefined}
-            >
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-              {t.error ? (
-                <path d="M12 7.5V13M12 16.5V16.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              ) : (
-                <path d="M8 12.5L10.7 15L16 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </svg>
-            <span>{t.message}</span>
-            <button className="toast-close" aria-label="Dismiss" onClick={() => dismissToast(t.id)}>
-              &times;
-            </button>
-          </div>
-        ))}
-      </div>
+      <ResultQueue items={outcomes} onDismiss={dismissToast} />
     </div>
   )
 }

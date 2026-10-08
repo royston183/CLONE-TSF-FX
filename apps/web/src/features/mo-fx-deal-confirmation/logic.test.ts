@@ -159,9 +159,9 @@ describe('selection screen', () => {
   it('filters combobox options on their code and name, case-insensitively', () => {
     deepStrictEqual(
       filterComboOptions(COMPANY_OPTIONS, 'india').map((o) => o.code),
-      ['AE11'],
+      ['AE11', 'IN11'],
     )
-    strictEqual(filterComboOptions(COMPANY_OPTIONS, '').length, 3)
+    strictEqual(filterComboOptions(COMPANY_OPTIONS, '').length, 4)
     deepStrictEqual(
       filterComboOptions(TRADER_OPTIONS, 'c2').map((o) => o.display),
       ['C27 - Akshay Mohnot', 'C28 - Nidhi Singh'],
@@ -171,7 +171,7 @@ describe('selection screen', () => {
 
   it('takes a company code range in code order', () => {
     deepStrictEqual(companyCodesInRange('AE11', 'AE13'), ['AE13', 'AE11'])
-    deepStrictEqual(companyCodesInRange('AE11', 'SG03'), ['SG03', 'AE13', 'AE11'])
+    deepStrictEqual(companyCodesInRange('AE11', 'SG03'), ['SG03', 'AE13', 'AE11', 'IN11'])
     deepStrictEqual(companyCodesInRange('SG03', 'AE11'), [])
   })
 })

@@ -9,7 +9,7 @@ import { loadDttk } from '../dttk/api.ts'
 import { loadOttk } from '../ottk/api.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
-import { assignBlDeal, loadTradeFlows, patchTradeFlow, reloadTradeFlow } from './api.ts'
+import { assignBlDeal, loadTradeFlows, markDealAssigned, patchTradeFlow, reloadTradeFlow } from './api.ts'
 import { dealAssignmentKey, isUnsavedBl } from './bl.ts'
 import {
   BASIC_FIELDS,
@@ -244,6 +244,9 @@ export default function TfManageApp() {
         for (const target of storedTargets) {
           await assignBlDeal(pending.tfKey, target.bl, pending.dealId, pending.details)
         }
+        // Every BL, stored and just inserted, now carries the Deal ID: only then does the Deal ID
+        // move to 04, as BL_UPDATE does after its BL writes.
+        await markDealAssigned(pending.dealId)
         setBlDealAssignments((current) => {
           const next = { ...current }
           for (const target of storedTargets) next[dealAssignmentKey(pending.tfKey, target.blId)] = pending.dealId
@@ -254,7 +257,8 @@ export default function TfManageApp() {
         setSaved(true)
       } catch (err) {
         // The unsaved targets were inserted with their Deal ID above, so only the stored ones
-        // stay pending, and Update can simply be pressed again.
+        // stay pending, and Update can simply be pressed again (the BL writes and the 04 update
+        // are both idempotent).
         setPendingBlAssignment({ ...pending, targets: storedTargets })
         setError(errorText(err))
         return

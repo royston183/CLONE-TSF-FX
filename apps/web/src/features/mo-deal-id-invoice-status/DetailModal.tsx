@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { DmsPanel } from './DmsPanel.tsx'
 import { formatAmount } from './format.ts'
 import type { DmsDocState, ModalState } from './types.ts'
@@ -48,6 +49,9 @@ export function DetailModal({
   onDmsComment: (docCode: string, value: string) => void
   onClose: () => void
 }) {
+  if (state.kind === 'info') {
+    return <ResultDialog tone="info" title={state.title} message={state.message} actions={[{ label: 'Close', kind: 'primary', onClick: onClose }]} />
+  }
   const [title, wide, body] = renderBody(state, dmsState, dmsFeedback, onDmsFile, onDmsClear, onDmsComment)
   return (
     <div className="modal-overlay open" role="dialog" aria-modal="true" onClick={(e) => e.target === e.currentTarget && onClose()}>

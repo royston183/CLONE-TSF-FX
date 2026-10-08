@@ -1,5 +1,6 @@
 import { apiFetch, createEntity, entityPath, list, odataString, service, toNum } from '@slc/api-client'
 import { isBackendUnreachable, readWithFallback, writeWithFallback } from '../../shared/fallback.ts'
+import { listDealIds, setDealStatus } from '../../shared/fx/deal-id.ts'
 import { mwCreate, mwList, mwUpdate } from '../../shared/middleware.ts'
 import { dealAssignedTotals, invoiceDetailChanges } from './bl.ts'
 import type { BlSavePlan } from './bl.ts'
@@ -172,6 +173,24 @@ export async function assignBlDeal(
     () => apiFetch(tfApi(entityPath(SAP_BL_ENTITY_SET, key)), { method: 'PATCH', body: changes }).then(() => undefined),
     'BL assign',
   )
+}
+
+/** ZSGTSFTR_DEALID.ZDEAL_STAT 04: the Deal ID has a BL assigned to it (legacy BL_UPDATE). */
+export const DEAL_ASSIGNED_STATUS = '04'
+
+/**
+ * Legacy BL_UPDATE's `UPDATE zsgtsftr_dealid SET zdeal_stat = '04' WHERE zdeal_id = ..`: once the
+ * BL assignment is saved, the Deal ID moves to 04 (03 -> 04 on the first assignment). Like the
+ * ABAP it is keyed on ZDEAL_ID alone, so every DEALID row of that Deal ID moves, and it does not
+ * test the current status. Writing 04 again is harmless, so a retry is idempotent.
+ *
+ * Call it only after the BL rows are written: the assignment itself is Update, never the popup's
+ * Assign button. Throws when the Deal ID cannot be found or a row cannot be written.
+ */
+export async function markDealAssigned(dealId: string, signal?: AbortSignal): Promise<void> {
+  const rows = await listDealIds({ ZDEAL_ID: dealId }, signal)
+  if (rows.length === 0) throw new Error(`Deal ID ${dealId} was not found in ZSGTSFTR_DEALID`)
+  await setDealStatus(rows, DEAL_ASSIGNED_STATUS)
 }
 
 /** One document attached to a BL, as BL Data 1's document list shows it. */

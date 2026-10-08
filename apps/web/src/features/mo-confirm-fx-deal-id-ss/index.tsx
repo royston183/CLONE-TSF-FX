@@ -35,6 +35,9 @@ import './mo-confirm-fx-deal-id-ss.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id-ss.dark.css'
+import './mo-confirm-fx-deal-id-ss.overrides.css'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
+import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type { Deal, DealDb, Leg, Toast, ToastKind, ToolbarCode } from './types.ts'
 
 const TOAST_MS = 3200
@@ -91,8 +94,20 @@ export default function MoConfirmFxDealIdSs() {
 
   const deal: Deal | null = dealId ? (db[dealId] ?? null) : null
 
-  const showToast = useCallback((message: string, kind: ToastKind = 'info') => {
+  const [results, setResults] = useState<ResultItem[]>([])
+  const dismissResult = useCallback((id: number) => setResults((r) => r.filter((x) => x.id !== id)), [])
+  /**
+   * Outcomes open the standard ResultDialog queue. Only the cosmetic confirmations ("Deal ID refreshed.",
+   * "Exchange rates recalculated.", "Nothing to refresh.") stay on the small non-modal toast.
+   */
+  const showToast = useCallback((message: string, kind: ToastKind = 'info', quiet = false) => {
     const id = ++toastSeq
+    if (!quiet) {
+      const tone: ResultTone = kind === 'success' ? 'success' : kind === 'error' ? 'error' : 'info'
+      const title = tone === 'success' ? 'Success' : tone === 'error' ? 'Error' : 'Information'
+      setResults((r) => [...r, { id, tone, title, message }])
+      return
+    }
     setToasts((t) => [...t, { id, kind, message, fading: false }])
     setTimeout(() => {
       setToasts((t) => t.map((x) => (x.id === id ? { ...x, fading: true } : x)))
@@ -156,13 +171,13 @@ export default function MoConfirmFxDealIdSs() {
 
   const refresh = () => {
     if (!deal) {
-      showToast('Nothing to refresh.')
+      showToast('Nothing to refresh.', 'info', true)
       return
     }
     // 'REF' clears the grids, so STATUS_9000 selects the deal again.
     reload()
       .then((loaded) =>
-        loaded.source === 'sap' ? showToast('Deal ID refreshed.') : showToast(loaded.reason, 'error'),
+        loaded.source === 'sap' ? showToast('Deal ID refreshed.', 'info', true) : showToast(loaded.reason, 'error'),
       )
       .catch((error: unknown) => showToast(messageOf(error), 'error'))
   }
@@ -440,7 +455,7 @@ export default function MoConfirmFxDealIdSs() {
         rateTexts={rateTexts}
         onRateChange={(i, v) => setRateTexts((r) => r.map((x, j) => (j === i ? v : x)))}
         unreadyRfha={unreadyRfha}
-        onRecalc={() => showToast('Exchange rates recalculated.')}
+        onRecalc={() => showToast('Exchange rates recalculated.', 'info', true)}
         onConfirm={invoicePlanConfirm}
       />
       <PremiumModal modal={preModal} deal={deal} waiting={PREMIUM_WAITING} />
@@ -492,6 +507,8 @@ export default function MoConfirmFxDealIdSs() {
           {ghostText}
         </div>
       ) : null}
+
+      <ResultQueue items={results} onDismiss={dismissResult} />
 
       <div className="toast-stack">
         {toasts.map((t) => (

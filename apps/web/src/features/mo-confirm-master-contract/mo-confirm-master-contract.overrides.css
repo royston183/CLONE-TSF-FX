@@ -36,3 +36,20 @@
   white-space: nowrap;
   z-index: 80;
 }
+
+/*
+ * Table grid lines removed (reference look: Create Master Contract). The legacy RMC/FO "ALV grid"
+ * pass draws a border-right on every th/td (!important, restated in dark.css); drop those so only
+ * the horizontal hairline between rows and under the header remains. Light colour is guarded so
+ * the dark line (#2a3d52 from dark.css) is not touched.
+ */
+.mocmc table th,
+.mocmc table td,
+.mocmc .list-table thead th,
+.mocmc .list-table tbody td,
+.mocmc #mc-table .sticky-col { border-left: 0 !important; border-right: 0 !important; }
+:root[data-theme='dark'] .mocmc .list-table thead th,
+:root[data-theme='dark'] .mocmc .list-table tbody td,
+:root[data-theme='dark'] .mocmc #mc-table .sticky-col { border-left: 0 !important; border-right: 0 !important; }
+:root:not([data-theme='dark']) .mocmc .list-table thead th,
+:root:not([data-theme='dark']) .mocmc .list-table tbody td { border-bottom: 1px solid #E6E9EB !important; }

@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
   DMS_LIST_WAITING,
@@ -54,6 +55,7 @@ import './mo-execute-settlement-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-execute-settlement-deal-id.dark.css'
+import './mo-execute-settlement-deal-id.overrides.css'
 import { ActionToolbar, HeaderGrid, StatusPill } from './Overview.tsx'
 import type {
   Deal,
@@ -134,7 +136,8 @@ export default function MoExecuteSettlementDealId() {
   const [statuses, setStatuses] = useState<StatusMeta[]>([])
   const [legsWaiting, setLegsWaiting] = useState(() => legsWaitingReason(0))
   const [fxDeals, setFxDeals] = useState<FxDeal[]>(NO_FX)
-  const invoices = NO_INVOICES
+  const [invoices, setInvoices] = useState<TradeInvoice[]>(NO_INVOICES)
+  const [invoicesWaiting, setInvoicesWaiting] = useState(INVOICE_WAITING)
   const dms = NO_DOCS
 
   // Selection screen
@@ -163,10 +166,19 @@ export default function MoExecuteSettlementDealId() {
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
 
-  // Toast (one at a time, like the original)
+  // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
+  const [results, setResults] = useState<ResultItem[]>([])
+  const resultId = useRef(0)
+  const showToast = useCallback((message: string, kind?: ToastKind) => {
+    const tone = kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info'
+    const title = tone === 'error' ? 'Error' : tone === 'success' ? 'Success' : 'Information'
+    setResults((r) => [...r, { id: ++resultId.current, tone, title, message }])
+  }, [])
+
+  // Non-outcome chatter (screen refreshed, filter / download hints) stays the small auto-fading toast.
   const [toast, setToast] = useState<Toast>({ message: '', kind: null, visible: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const showToast = useCallback((message: string, kind?: ToastKind) => {
+  const showNote = useCallback((message: string, kind?: ToastKind) => {
     setToast({ message, kind: kind ?? null, visible: true })
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, visible: false })), TOAST_MS)
@@ -221,6 +233,8 @@ export default function MoExecuteSettlementDealId() {
       setStatuses(screen.statuses)
       setFxDeals(screen.fxDeals)
       setLegsWaiting(screen.legsWaiting)
+      setInvoices(screen.invoices)
+      setInvoicesWaiting(screen.invoicesWaiting)
       setMainShown(true)
       setSelFx(null)
       setSelInv(null)
@@ -241,7 +255,7 @@ export default function MoExecuteSettlementDealId() {
 
   const refreshScreen = () => {
     if (!mainShown) return
-    void executeSelection(deal.dealId).then(() => showToast('Screen refreshed.', 'info'))
+    void executeSelection(deal.dealId).then(() => showNote('Screen refreshed.', 'info'))
   }
 
   // ------------------------------------------------------------------ toolbar-driven actions
@@ -527,7 +541,7 @@ export default function MoExecuteSettlementDealId() {
               )
             }
             onViewDoc={(doc) => showToast(`In SAP, this hotspot opens document ${doc} in transaction FB03.`, 'info')}
-            onToast={showToast}
+            onToast={showNote}
             emptyText={fxDeals.length ? undefined : legsWaiting}
             note={fxDeals.length ? legsWaiting : undefined}
           />
@@ -542,12 +556,13 @@ export default function MoExecuteSettlementDealId() {
             onSelect={(idx) => setSelInv((cur) => toggleRowSelection(cur, idx))}
             onOpen={openInvPost}
             onViewDoc={(doc) => showToast(`In SAP, this hotspot opens document ${doc} in transaction FB03.`, 'info')}
-            onToast={showToast}
-            emptyText={invoices.length ? undefined : INVOICE_WAITING}
+            onToast={showNote}
+            emptyText={invoices.length ? undefined : invoicesWaiting}
           />
         </div>
       </main>
 
+      <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
       <div className={`zfac-toast${toast.visible ? ' show' : ''}${toast.visible && toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
         {toast.message}
       </div>

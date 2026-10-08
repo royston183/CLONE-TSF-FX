@@ -1,3 +1,4 @@
+import { fxList, type FxRow } from '../../shared/fx/mw.ts'
 import { FX_TXN_STATUS, statusAfterReverse } from '../../shared/fx/txn-status.ts'
 import {
   companyCodeOf,
@@ -17,7 +18,8 @@ import {
   type AppStrIntent,
   type AppStrRecord,
 } from './appStr.ts'
-import { isInSap } from './dealIds.ts'
+import { TRADERS } from './data.ts'
+import { isInSap, traderCodeOf } from './dealIds.ts'
 import { toISO } from './format.ts'
 import type { AppDataPending, AutoSpotForm, BlotterRow } from './types.ts'
 
@@ -60,6 +62,30 @@ async function persist(
   }
 }
 
+// ---------------------------------------------------------------- trader
+
+let traderMaster: Promise<FxRow[]> | undefined
+
+/**
+ * The trader (ZTRD_CODE / Ztrcode) of a transaction as SAP's ZSGTRMTR_TRADER knows it. The blotter's own
+ * trader code is only a dropdown key, so the code is found by the trader's name, as the Deal ID does.
+ * Nothing is written when the trader is not in the master or the master cannot be read: the save goes on without it.
+ */
+async function traderField(blotterTrader: string | undefined): Promise<AppStrFields> {
+  const name = TRADERS.find((t) => t.code === blotterTrader)?.name ?? ''
+  if (!name) return {}
+  traderMaster ??= fxList('trmTrader', {}).catch((error: unknown) => {
+    traderMaster = undefined
+    throw error
+  })
+  try {
+    const code = traderCodeOf(await traderMaster, name)
+    return code ? { Ztrcode: code } : {}
+  } catch {
+    return {}
+  }
+}
+
 // ---------------------------------------------------------------- create
 
 /**
@@ -73,6 +99,7 @@ export async function createBlotterDeal(r: BlotterRow, blotterDate: Date): Promi
   const created = await createDeal(r)
   const fields: AppStrFields = {
     ...fieldsOfRow(r),
+    ...(await traderField(r.trader)),
     ZtsfBcurr: String(payload['BuyCurrency'] ?? ''),
     ZtsfScurr: String(payload['SellCurrency'] ?? ''),
     BlotterDate: toISO(blotterDate),
@@ -84,9 +111,10 @@ export async function createBlotterDeal(r: BlotterRow, blotterDate: Date): Promi
 }
 
 /** The Create Spot popup's version of the same: one SAP spot, then its application data. */
-export async function createBlotterSpot(form: AutoSpotForm, blotterDate: Date): Promise<Booked> {
+export async function createBlotterSpot(form: AutoSpotForm, blotterDate: Date, blotterTrader?: string): Promise<Booked> {
   const created = await createSpotDeal(form)
   const fields: AppStrFields = {
+    ...(await traderField(blotterTrader)),
     ZtsfBcurr: form.buyCurr,
     ZtsfScurr: form.sellCurr,
     BlotterDate: toISO(blotterDate),
@@ -128,7 +156,7 @@ export async function releaseBlotterRows(
   const outs: SaveOutcome[] = []
   for (const row of rows) {
     if (!isInSap(row)) continue // a demo row has no SAP transaction to attach data to
-    const fields: AppStrFields = { ...fieldsOfRow(row), ...dealFields(link), BlotterDate: toISO(blotterDate) }
+    const fields: AppStrFields = { ...fieldsOfRow(row), ...(await traderField(row.trader)), ...dealFields(link), BlotterDate: toISO(blotterDate) }
     const saved = await persist(
       { companyCode: row.companyCode ?? '', transaction: row.transactionNumber },
       fields,
@@ -145,7 +173,7 @@ export async function saveDealLink(rows: readonly BlotterRow[], link: DealLink, 
   const outs: SaveOutcome[] = []
   for (const row of rows) {
     if (!isInSap(row)) continue
-    const fields: AppStrFields = { ...fieldsOfRow(row), ...dealFields(link), BlotterDate: toISO(blotterDate) }
+    const fields: AppStrFields = { ...fieldsOfRow(row), ...(await traderField(row.trader)), ...dealFields(link), BlotterDate: toISO(blotterDate) }
     const saved = await persist(
       { companyCode: row.companyCode ?? '', transaction: row.transactionNumber },
       fields,
@@ -196,7 +224,7 @@ export async function retryPendingAppData(rows: readonly BlotterRow[], blotterDa
       pending.intent === 'reverse' ? (pending.status ?? FX_TXN_STATUS.FO_DELETE) : pending.intent === 'release' ? FX_TXN_STATUS.FO_TO_MO_UNMATCHED : FX_TXN_STATUS.FO_CREATE
     const saved = await persist(
       { companyCode: row.companyCode ?? '', transaction: row.transactionNumber },
-      { ...fieldsOfRow(row), BlotterDate: toISO(blotterDate) },
+      { ...fieldsOfRow(row), ...(pending.intent === 'reverse' ? {} : await traderField(row.trader)), BlotterDate: toISO(blotterDate) },
       pending.intent,
       wanted,
     )

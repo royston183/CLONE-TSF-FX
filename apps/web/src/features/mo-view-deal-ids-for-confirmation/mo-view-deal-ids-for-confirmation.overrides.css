@@ -1,0 +1,12 @@
+/* Visual overrides for mo-view-deal-ids-for-confirmation, imported after the generated legacy and dark sheets. CSS only. */
+
+/*
+ * Table grid lines: no vertical cell borders and no boxed table (sticky / selection columns
+ * included); only a single faint horizontal hairline between rows. Light line colour sits behind
+ * the light-only guard so the dark sheet's own line colour is never overridden.
+ */
+.mo-view-deal-ids-for-confirmation table.data-table { border: none; }
+.mo-view-deal-ids-for-confirmation table.data-table th,
+.mo-view-deal-ids-for-confirmation table.data-table td { border-left: none; border-right: none; }
+:root:not([data-theme='dark']) .mo-view-deal-ids-for-confirmation table.data-table thead th,
+:root:not([data-theme='dark']) .mo-view-deal-ids-for-confirmation table.data-table tbody td { border-bottom-color: #e6e9eb; }
