@@ -399,7 +399,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div className={`mocmc${draggingRow !== null ? ' row-dragging' : ''}`}>
       <div className="page-head">
-        <BackButton className="btn-outline btn-back" />
+        <BackButton className="fx-back-btn" />
         <img className="head-icon" src={BRAND_LOGO} alt="Fourth Signal" />
         <div className="title-wrap">
           <div className="page-title">MO: Confirm Master Contract</div>

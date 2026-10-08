@@ -156,7 +156,7 @@ export default function MoDealIdInvoiceStatus() {
   return (
     <div className="modinvstat">
       <header className="topbar">
-        <BackButton className="back-btn" />
+        <BackButton className="fx-back-btn" />
         <div className="brand-mark" aria-label="Fourth Signal">
           <span className="m1" />
           <span className="m2" />

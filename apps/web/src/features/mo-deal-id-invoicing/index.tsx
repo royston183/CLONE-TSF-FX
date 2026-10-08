@@ -251,7 +251,7 @@ export default function MoDealIdInvoicing() {
   return (
     <div className="modiv">
       <div className="page-head">
-        <BackButton className="btn-outline-hd" />
+        <BackButton className="fx-back-btn" />
         <div className="head-flex">
           <div className="title-wrap">
             <div className="page-title">View List of Deal IDs for Invoicing</div>

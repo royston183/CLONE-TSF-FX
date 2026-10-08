@@ -241,8 +241,8 @@ export default function MoViewDealIdsForConfirmation() {
     <div className="mo-view-deal-ids-for-confirmation">
       <header className="app-header">
         <div className="app-header-left">
+          <BackButton className="fx-back-btn" />
           <img className="header-logo" src={FS_SHORT_LOGO} alt="FourthSignal logo" />
-          <BackButton className="back-btn" />
           <div className="header-title-block">
             <div className="header-title-row">
               <span className="header-title">MO: View List of Deal IDs for Confirmation</span>

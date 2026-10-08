@@ -358,7 +358,7 @@ export default function FoMcErrorCorrection() {
     <div className="fomcec">
       <div className="app">
         <div className="page-header">
-          <BackButton className="btn-outline btn-back" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Error Correction</h1>

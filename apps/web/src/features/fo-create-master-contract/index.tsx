@@ -438,7 +438,7 @@ export default function FoCreateMasterContract() {
     <div className="fomc" ref={rootRef}>
       <div className="app">
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="Fourth Signal" />
           <div className="header-text">
             <h1>Create Master Contract</h1>

@@ -274,7 +274,7 @@ export default function MoConfirmNdfFixing() {
       <div className="app">
         {/* ============ HEADER ============ */}
         <div className="app-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <div className="fs-logo">
             <svg viewBox="0 0 88 132" xmlns="http://www.w3.org/2000/svg">
               <rect x="0" y="0" width="88" height="30" rx="15" fill="#C62127" />

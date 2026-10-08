@@ -433,7 +433,7 @@ export default function MoUpdateMcExpiry() {
     <div className="moume" ref={rootRef}>
       <div className="app-shell">
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="FS logo" />
           <div className="titles">
             <h1>Master Contract Expiry</h1>

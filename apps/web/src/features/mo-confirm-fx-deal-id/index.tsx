@@ -295,13 +295,13 @@ export default function MoConfirmFxDealId() {
       <div className="app">
         {/* ============ PAGE HEADER ============ */}
         <div className="page-header">
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Confirm FX Deal ID</h1>
             <p>Treasury &amp; Trade Finance &middot; Middle Office &middot; Single Deal ID</p>
           </div>
           <div className="header-actions">
-            <BackButton className="btn btn-secondary" />
             <button type="button" className="btn btn-secondary" disabled={loading} onClick={() => void refresh()}>
               &#8635; Refresh
             </button>

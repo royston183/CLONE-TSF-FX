@@ -1,0 +1,68 @@
+/* The uniform Back button: the look of FO: Create Master Contract's header Back, shared by every
+   screen that passes className="fx-back-btn". The !important flags win over each screen's scoped
+   button rules (.fomc .btn, .mocmc button, ...), so the control looks identical everywhere. */
+button.fx-back-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  flex: none !important;
+  height: 32px !important;
+  min-width: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid #8996a1 !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  color: #1d2d3e !important;
+  font-family: '72', 'Segoe UI', Arial, Helvetica, sans-serif !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+button.fx-back-btn:hover {
+  border-color: #0a6ed1 !important;
+  color: #0a6ed1 !important;
+  box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1) !important;
+}
+button.fx-back-btn:active {
+  transform: translateY(1px);
+}
+button.fx-back-btn:focus-visible {
+  outline: 2px solid #0a6ed1;
+  outline-offset: 1px;
+}
+button.fx-back-btn > svg {
+  display: block !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  flex: none !important;
+  fill: currentColor !important;
+}
+button.fx-back-btn > .label {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+
+:root[data-theme='dark'] button.fx-back-btn {
+  background: #14212f !important;
+  border-color: #3d5670 !important;
+  color: #e6eef8 !important;
+}
+:root[data-theme='dark'] button.fx-back-btn:hover {
+  border-color: #4c9aff !important;
+  color: #4c9aff !important;
+}

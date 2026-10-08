@@ -356,7 +356,7 @@ export default function MoRejectMcAfterExpiry() {
       <div className="app-shell">
         {/* PAGE HEADER */}
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="FS logo" />
           <div className="titles">
             <h1>Reject MC after Expiry</h1>

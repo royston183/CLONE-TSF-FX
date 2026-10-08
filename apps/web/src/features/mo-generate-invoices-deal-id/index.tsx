@@ -519,7 +519,7 @@ export default function MoGenerateInvoicesDealId() {
       <div className="app">
         <header className="topbar">
           <div className="top-left">
-            <BackButton className="back-btn" />
+            <BackButton className="fx-back-btn" />
             <div className="brand-mark" aria-label="FourthSignal">
               <span className="b1" />
               <span className="b2" />
