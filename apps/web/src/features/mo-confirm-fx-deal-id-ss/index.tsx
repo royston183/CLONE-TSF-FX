@@ -30,7 +30,7 @@ import {
   PremiumModal,
   TxnViewModal,
 } from './Modals.tsx'
-import { ICON_BACK, ICON_REFRESH, TOOLBAR } from './parts.tsx'
+import { ICON_REFRESH, TOOLBAR } from './parts.tsx'
 import './mo-confirm-fx-deal-id-ss.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -345,6 +345,8 @@ export default function MoConfirmFxDealIdSs() {
         {/* ============ TOP BAR ============ */}
         <div className="topbar">
           <div className="topbar-left">
+            {/* Inside a loaded deal, the original's Back: leaves the deal and returns to the Deal ID search. */}
+            <BackButton className="fx-back-btn" onClick={deal ? back : undefined} />
             <div className="brand">
               <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
               <div className="page-title-block">
@@ -357,15 +359,6 @@ export default function MoConfirmFxDealIdSs() {
             </div>
           </div>
           <div className="topbar-actions">
-            {deal ? (
-              // The original's Back: leaves the loaded deal and returns to the Deal ID search.
-              <button type="button" className="btn btn-secondary" onClick={back}>
-                {ICON_BACK}
-                Back
-              </button>
-            ) : (
-              <BackButton className="btn btn-secondary" />
-            )}
             <button type="button" className="btn btn-secondary" onClick={refresh}>
               {ICON_REFRESH}
               Refresh

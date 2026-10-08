@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type { Database, Statement } from '../db.ts'
 
 /** One column of a SAP table as the local SQLite copy has it. `key` marks a primary-key column other than CLIENT. */
 export type DdicColumn = { name: string; kind: 'text' | 'number'; max: number; key?: true }
@@ -21,7 +21,7 @@ export type DdicTable = {
  * Column names reach SQL only from the fixed `columns` list: request fields are checked against it and values
  * are bound parameters, so nothing from a request is ever part of SQL text.
  */
-export function createDdicRepository(db: Database.Database, spec: DdicTable) {
+export function createDdicRepository(db: Database, spec: DdicTable) {
   const { table, client, columns } = spec
   const keys = columns.filter((c) => c.key)
   const byName = new Map(columns.map((c) => [c.name, c]))
@@ -33,7 +33,7 @@ export function createDdicRepository(db: Database.Database, spec: DdicTable) {
   const list = db.prepare<[], DdicRow>(`${selectAll} ORDER BY ${order}`)
   const one = db.prepare<Record<string, string>, DdicRow>(`${selectAll} AND ${keyWhere}`)
   const remove = db.prepare(`DELETE FROM ${table} WHERE client = '${client}' AND ${keyWhere}`)
-  const listBy = new Map<string, Database.Statement<[{ value: string }], DdicRow>>()
+  const listBy = new Map<string, Statement<[{ value: string }], DdicRow>>()
 
   const upsertFor = (names: readonly string[]) =>
     db.prepare(
@@ -112,10 +112,10 @@ export function createDdicRepository(db: Database.Database, spec: DdicTable) {
 
 export type DdicRepository = ReturnType<typeof createDdicRepository>
 
-const repositories = new WeakMap<Database.Database, Map<string, DdicRepository>>()
+const repositories = new WeakMap<Database, Map<string, DdicRepository>>()
 
 /** One repository (and its prepared statements) per connection and table. */
-export function ddicRepository(db: Database.Database, spec: DdicTable): DdicRepository {
+export function ddicRepository(db: Database, spec: DdicTable): DdicRepository {
   let perDb = repositories.get(db)
   if (!perDb) repositories.set(db, (perDb = new Map()))
   let repo = perDb.get(spec.table)

@@ -394,13 +394,13 @@ export default function FoEarlyDeliveryUnwindRollover() {
     <div className="fo-early-delivery-unwind-rollover" ref={rootRef}>
       <div className="app">
         <div className="page-header">
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Premature Settlement</h1>
             <p>Original Deal — Early Delivery / Unwinding / Rollover</p>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <BackButton className="btn btn-secondary" />
             <SignOutButton className="btn btn-secondary" />
           </div>
         </div>

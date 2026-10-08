@@ -356,7 +356,7 @@ export default function MoFxDealConfirmation() {
     <div className="mo-fx-deal-confirmation">
       <div className="app">
         <header className="app-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <div className="fs-logo">
             <span className="bar bar1" />
             <span className="bar bar2" />

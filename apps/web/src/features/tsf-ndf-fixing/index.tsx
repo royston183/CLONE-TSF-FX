@@ -238,7 +238,7 @@ export default function TsfNdfFixing() {
     <div className="tsf-ndf-fixing">
       <div className="app">
         <header className="topbar">
-          <BackButton className="back" />
+          <BackButton className="fx-back-btn" />
           <div className="logo" aria-label="FS">
             <i />
             <i />

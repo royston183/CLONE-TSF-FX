@@ -276,7 +276,7 @@ function WorkbenchScreen({
   return (
     <div className="dealanal">
       <header className="topbar">
-        <BackButton className="btn ghost" />
+        <BackButton className="fx-back-btn" />
         <div className="brand-mark" aria-hidden="true">
           <i /><i /><i /><i />
         </div>
