@@ -39,8 +39,6 @@ import './mo-confirm-master-contract.legacy.css'
 import './mo-confirm-master-contract.dark.css'
 // Hand-written deviations from the generated sheet (the drag hint's body class) — see inside.
 import './mo-confirm-master-contract.overrides.css'
-import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
-import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type {
   ActionScope,
   Filters,
@@ -115,37 +113,10 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   const kpis = computeKpis(kpiScope)
   const paged = pageOf(rows, page, pageSize)
 
-<<<<<<< HEAD
   const feedback = useMasterContractFeedback()
   const showToast = useCallback((message: string, kind: ToastKind) => {
     feedback.show(message, kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info')
   }, [feedback.show])
-=======
-  // Toast — the page opened with a "Ready" message, shown here once the queue has loaded.
-  const [toast, setToast] = useState<Toast>({ message: 'Loading Master Contracts…', kind: '', show: true })
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const hideToast = useCallback(() => setToast((t) => ({ ...t, kind: '', show: false })), [])
-  // Outcomes show as the standard ResultDialog queue; the load-state hints ("Loading…"/"Ready…") and the F8
-  // "Selection executed" chatter stay on the small non-modal toast.
-  const [results, setResults] = useState<ResultItem[]>([])
-  const resultSeq = useRef(0)
-  const dismissResult = useCallback((id: number) => setResults((r) => r.filter((x) => x.id !== id)), [])
-  const showToast = useCallback(
-    (message: string, kind: ToastKind, opts?: { quiet?: boolean; tone?: ResultTone }) => {
-      if (opts?.quiet || kind === '') {
-        clearTimeout(toastTimer.current)
-        setToast({ message, kind, show: true })
-        toastTimer.current = setTimeout(hideToast, TOAST_MS)
-        return
-      }
-      const tone: ResultTone = opts?.tone ?? (kind === 'success' ? 'success' : kind === 'error' ? 'error' : 'info')
-      const title = tone === 'success' ? 'Success' : tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : 'Information'
-      setResults((r) => [...r, { id: ++resultSeq.current, tone, title, message }])
-    },
-    [hideToast],
-  )
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
->>>>>>> origin/main
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const loaded = await loadContracts(signal)
@@ -201,7 +172,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       // Execute (F8), as on the SAP selection screen.
       e.preventDefault()
       refilter()
-      showToast(`Selection executed. ${rows.length} Master Contract(s) found.`, 'info', { quiet: true })
+      showToast(`Selection executed. ${rows.length} Master Contract(s) found.`, 'info')
     }
     if (e.key === 'Escape') {
       endDrag()
@@ -281,12 +252,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       return next
     })
     const t = actionToast(action, mcs)
-<<<<<<< HEAD
     showToast(t.message, 'success')
-=======
-    // A successful Reject is worded as success but was styled as an error toast: show it as a warning, not a failure.
-    showToast(t.message, t.kind, action === 'reject' ? { tone: 'warning' } : undefined)
->>>>>>> origin/main
     actionModal.close()
     childModal.close()
     refilter()
@@ -655,15 +621,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
         </div>
       </main>
 
-<<<<<<< HEAD
       <div id="toast">{feedback.element}</div>
-=======
-      <ResultQueue items={results} onDismiss={dismissResult} />
-
-      <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
-        {toast.message}
-      </div>
->>>>>>> origin/main
 
       <ActionDialog
         modal={actionModal}
