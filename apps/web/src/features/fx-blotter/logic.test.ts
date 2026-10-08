@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { BUSINESS_PARTNERS } from './data.ts'
+import { BUSINESS_PARTNERS, FIXING_REFERENCES } from './data.ts'
 import { MC_SEED_FIXTURE as MC_SEED, installFixtures } from './fixtures.ts'
 import { fmtCompactUsd, fmtDate, fmtNum, parseGridDate, parseUiDate } from './format.ts'
 import {
@@ -156,6 +156,8 @@ describe('grid editing', () => {
   })
 
   it('turns the NDF fields on for NDF types only', () => {
+    // The fixing references come from the middleware (ftrtFixDef); the test supplies the one it needs.
+    FIXING_REFERENCES.splice(0, FIXING_REFERENCES.length, { code: 'FBIL', pair: 'USD/INR' })
     let b = fresh()
     const id = firstBlank(b).id
     b = editField(b, id, 'curr1', 'USD')

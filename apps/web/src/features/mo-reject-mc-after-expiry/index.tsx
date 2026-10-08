@@ -5,7 +5,6 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import { loadContracts, loadMasters, rejectContracts, rejectKeys } from './api.ts'
 import { ContractsTable, isInteractiveTarget } from './ContractsTable.tsx'
 import { CO_AREA_MASTER, ENTITY_MASTER, FX_MODEL_MASTER, MC_STATUS_MASTER, REGION_MASTER, REGION_NAMES, seedContracts } from './data.ts'
@@ -106,23 +105,10 @@ export default function MoRejectMcAfterExpiry() {
   const [pendingIds, setPendingIds] = useState<string[]>([])
   const [detailsMc, setDetailsMc] = useState<string | null>(null)
 
-<<<<<<< HEAD
   const feedback = useMasterContractFeedback()
   const showToast = useCallback((message: string, error = false) => {
     feedback.show(message, error ? 'error' : 'success')
   }, [feedback.show])
-=======
-  // Outcomes show as the standard ResultDialog queue; each stays until OK.
-  const [outcomes, setOutcomes] = useState<ResultItem[]>([])
-  const nextToastId = useRef(1)
-  const dismissToast = useCallback((id: number) => {
-    setOutcomes((list) => list.filter((t) => t.id !== id))
-  }, [])
-  const showToast = useCallback((message: string, error = false) => {
-    const id = nextToastId.current++
-    setOutcomes((list) => [...list, { id, tone: error ? 'error' : 'success', title: error ? 'Error' : 'Success', message }])
-  }, [])
->>>>>>> origin/main
 
   // The value helps load once; View Contracts waits for them, since the rows are mapped with them.
   useEffect(() => {
@@ -677,12 +663,8 @@ export default function MoRejectMcAfterExpiry() {
 
       <DetailsModal modal={detailsModal} contract={detailsMc === null ? undefined : byNumber.get(detailsMc)} onClose={detailsModal.close} />
 
-<<<<<<< HEAD
       {/* TOASTS */}
       <div id="toastWrap">{feedback.element}</div>
-=======
-      <ResultQueue items={outcomes} onDismiss={dismissToast} />
->>>>>>> origin/main
     </div>
   )
 }

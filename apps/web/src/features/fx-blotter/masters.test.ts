@@ -10,6 +10,7 @@ import {
   entityStringParts,
   installMasters,
   loadBlotterMasters,
+  sumContractUsage,
   toBusinessAreas,
   toCommodities,
   toEntities,
@@ -231,11 +232,12 @@ describe('loadBlotterMasters', () => {
 
   const bodies: Record<string, FxRow[]> = {
     comp: COMP_ROWS, fxModel: MODEL_ROWS, commodity: COMMODITY_ROWS, masterContract: MC_ROWS, tolerance: TOL_ROWS,
+    ftrtFixDef: [{ FIX_ID: 'FBIL', FCURR: 'USD', LCURR: 'INR' }, { FIX_ID: 'JISDOR', FCURR: 'USD', LCURR: 'IDR' }],
   }
   const json = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
-  it('reads the five masters through the gateway and filters the contracts by status', async () => {
+  it('reads the masters through the gateway and filters the contracts by status', async () => {
     const urls: string[] = []
     globalThis.fetch = (async (input: RequestInfo | URL) => {
       const url = String(input)
@@ -245,7 +247,8 @@ describe('loadBlotterMasters', () => {
     }) as typeof fetch
     const m = await loadBlotterMasters()
     strictEqual(m.entities.length, 4)
-    deepStrictEqual(urls.map((u) => /\/data\/([A-Za-z]+)/.exec(u)?.[1]).sort(), ['commodity', 'comp', 'fxModel', 'masterContract', 'tolerance'])
+    deepStrictEqual(m.fixingReferences, [{ code: 'FBIL', pair: 'USD/INR' }, { code: 'JISDOR', pair: 'USD/IDR' }])
+    deepStrictEqual(urls.map((u) => /\/data\/([A-Za-z]+)/.exec(u)?.[1]).filter(Boolean).sort(), ['commodity', 'comp', 'ftrtFixDef', 'fxModel', 'masterContract', 'tolerance'])
     const mcUrl = urls.find((u) => u.includes('/data/masterContract'))!
     ok(decodeURIComponent(mcUrl).includes('ZMC_STAT[in]=03,04'))
   })
@@ -400,5 +403,27 @@ describe('legs from the real ZSGTSFTR_RULE_BT (SE16): M032 and M033', () => {
       ['SG03', '12B', '619', 'USD', 'INR'],
       ['SG03', '12D', '631', 'INR', 'USD'],
     ])
+  })
+})
+
+describe('sumContractUsage', () => {
+  const leg = (mcRef: string, transaction: string, companyCode = 'SG03') => ({ mcRef, companyCode, transaction })
+  const deal = (transaction: string, curr1: string, amt1: string, curr2: string, amt2: string, bukrs = 'SG03'): FxRow =>
+    ({ BUKRS: bukrs, RFHA: transaction, CURR1: curr1, AMT1: amt1, CURR2: curr2, AMT2: amt2 })
+
+  it('adds the USD side of each Deal 1 leg, as an absolute amount, once per transaction', () => {
+    const used = sumContractUsage(
+      [leg('MC1', 'T1'), leg('MC1', 'T2'), leg('MC1', 'T2'), leg('MC2', 'T3')],
+      [deal('T1', 'USD', '100000.00', 'INR', '-8350000.00'), deal('T2', 'INR', '-500.00', 'USD', '6.00'), deal('T2', 'INR', '-500.00', 'USD', '6.00'), deal('T3', 'USD', '-40.00', 'INR', '3000.00')],
+    )
+    deepStrictEqual(used, { MC1: 100006, MC2: 40 })
+  })
+
+  it('matches on company code too, and ignores a leg with no deal row or no USD side', () => {
+    const used = sumContractUsage(
+      [leg('MC1', 'T1', 'AE13'), leg('MC1', 'T9'), leg('MC1', 'T5')],
+      [deal('T1', 'USD', '10.00', 'AED', '-95.00', 'SG03'), deal('T5', 'EUR', '5.00', 'INR', '-450.00')],
+    )
+    deepStrictEqual(used, {})
   })
 })

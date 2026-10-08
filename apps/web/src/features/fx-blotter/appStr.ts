@@ -177,6 +177,31 @@ export async function loadAppStrRecords(
   return pages.flat()
 }
 
+/** Master Contract references per request: the filter is one `ZtsfMcRefNo eq ..` per reference. */
+const MC_CHUNK = 20
+
+/**
+ * The Deal 1 legs booked against the given Master Contracts (ZTSF_MC_REF_NO, ZTSF_DEAL_TYPE = 'D1'),
+ * which is what the legacy program subtracts from a contract's amount to get its balance.
+ */
+export async function loadD1LegsOfContracts(mcRefs: readonly string[], signal?: AbortSignal): Promise<AppStrRecord[]> {
+  const chunks: string[][] = []
+  for (let i = 0; i < mcRefs.length; i += MC_CHUNK) chunks.push(mcRefs.slice(i, i + MC_CHUNK))
+  const pages = await Promise.all(
+    chunks.map((chunk) =>
+      list<AppStrRecord>(
+        APP,
+        {
+          filter: `ZtsfDealType eq 'D1' and (${chunk.map((m) => `ZtsfMcRefNo eq ${odataString(m)}`).join(' or ')})`,
+          top: 5000,
+        },
+        signal ? { signal } : undefined,
+      ),
+    ),
+  )
+  return pages.flat()
+}
+
 /** One transaction's record, or null when it has none yet. */
 export async function getAppStrRecord(companyCode: string, transaction: string): Promise<AppStrRecord | null> {
   try {
