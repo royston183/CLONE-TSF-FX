@@ -212,6 +212,9 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     cpair: lead && follow ? `${lead}/${follow}` : '',
     portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
     seq: Number(app.ZtsfDealSq) || 1,
+    // NdfFixingRate (ZFS_SD_TRMFX NdfFixing): the rate FTR holds once the deal is fixed.
+    ndfRate: num((fx as { NdfFixingRate?: number | string }).NdfFixingRate ?? 0),
+    etag: (app as { '@odata.etag'?: string })['@odata.etag'] ?? '',
   })
 }
 

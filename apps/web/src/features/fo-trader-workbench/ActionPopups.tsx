@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { Dropdown, DateField } from './controls.tsx'
 import { LOOKUPS } from './data.ts'
 import { bookSpot, findDeal, findTxn, runExercise, runExpire, type Wb } from './flows.ts'
@@ -320,7 +321,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       text: 'Spot – settlement',
     })
     frame.onClose()
-    wb.toast(`Spot Transaction created Successfully: ${rfha}`, 'success')
+    wb.outcome({ tone: 'success', title: 'Spot Created', message: `Spot Transaction created Successfully: ${rfha}` })
   }
 
   return (
@@ -452,7 +453,11 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
       )
     }
     frame.onClose()
-    wb.toast(`Spot Transaction created Successfully: ${made.join(', ')}`, 'success')
+    wb.outcome({
+      tone: 'success',
+      title: 'Spot Created',
+      message: `Spot Transaction created Successfully: ${made.join(', ')}`,
+    })
   }
 
   return (
@@ -591,7 +596,7 @@ export function FwdSsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: E
     /* the new spot covers the forward: the forward's action item turns green (COLOR_CODE_ACTION_ITEMS) */
     wb.set(setCoverTxn(wb.get(), rfha, txn.rfha))
     frame.onClose()
-    wb.toast(`Spot Transaction created Successfully: ${rfha}`, 'success')
+    wb.outcome({ tone: 'success', title: 'Spot Created', message: `Spot Transaction created Successfully: ${rfha}` })
   }
 
   return (
@@ -629,24 +634,51 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
   })
   const [rateError, setRateError] = useState('')
   const [msg, setMsg] = useState<Msg>(null)
+  const [busy, setBusy] = useState(false)
+  // ZFS_SD_TRMFX NdfFixing (BAPI_FTR_FXT_NDF_FIXING): null while the service's $metadata is read.
+  const [canFix, setCanFix] = useState<boolean | null>(null)
+  useEffect(() => {
+    let live = true
+    fixNdfAvailable().then((ok) => live && setCanFix(ok))
+    return () => {
+      live = false
+    }
+  }, [])
   if (!txn) return null
   const isDndf = txn.sfhaart === '632'
   const r = rateOf(rate)
   const res = calcNdfSettlement(txn, r)
   const amount = r ? numStr(isDndf ? res.dndf : res.ndf) : ''
 
-  const update = () => {
+  const update = async () => {
+    if (busy) return
     const rv = parseNum(rate)
     if (!rv || isNaN(rv) || rv <= 0) {
       setRateError('Fixing rate is required')
       setMsg({ text: 'Enter the fixing rate to update the transaction.', kind: 'error' })
       return
     }
-    if (!wb.post('ndfFixing')) return
+    if (!canFix) {
+      setMsg({ text: NDF_FIXING_API_MISSING, kind: 'error' })
+      return
+    }
+    if (!txn.etag) {
+      setMsg({ text: `Transaction ${txn.rfha} has no TSF record (TrmFxApp) to set its status on; reload the workbench.`, kind: 'error' })
+      return
+    }
+    // BAPI_FTR_FXT_NDF_FIXING through FxTransaction/NdfFixing, then TXN_STATUS 10 on the TSF append.
+    setBusy(true)
+    const result = await fixNdf({ bukrs: txn.bukrs, rfha: txn.rfha, etag: txn.etag }, rv, TXN.FIXED)
+    setBusy(false)
+    if (!result.ok) {
+      setMsg({ text: result.message, kind: 'error' })
+      return
+    }
     const out = calcNdfSettlement(txn, rv)
-    wb.set(updateTxnStatus(wb.get(), txn.rfha, '10', { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr }))
+    // The ETag changed with the update: a second change needs the row read again.
+    wb.set(updateTxnStatus(wb.get(), txn.rfha, TXN.FIXED, { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr, etag: '' }))
     frame.onClose()
-    wb.toast('Confirmation Sent', 'success') /* TEXT-003 */
+    wb.toast(`Confirmation Sent — ${result.message}`, 'success') /* TEXT-003 */
     wb.confirm({ title: 'Create Spot', message: 'Do you want to create the Spot?' }, () =>
       wb.open({ kind: 'spot', ctx: spec.ctx, variant: isDndf ? 'dndf' : 'ndf', sfhaart: '605', rate: 0 }),
     )
@@ -658,9 +690,9 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
       title="NDF Details"
       sub={`Transaction ${txn.rfha} · ${txnTypeText(txn.sfhaart)}`}
       cls="md-modal"
-      actions={<Buttons frame={frame} label="Update" onOk={update} />}
+      actions={<Buttons frame={frame} label={busy ? 'Updating …' : 'Update'} onOk={() => void update()} />}
     >
-      <InlineMsg msg={msg} />
+      <InlineMsg msg={msg ?? (canFix === false ? { text: NDF_FIXING_API_MISSING, kind: 'error' } : null)} />
       <div className="pf-row c2">
         <Fld label="Fixing Date">
           <input className="control mono" readOnly value={isoToDMY(txn.ndfDate)} />
@@ -750,7 +782,7 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
       text: 'Spot – invoice difference',
     })
     frame.onClose()
-    wb.toast(`Spot Transaction created Successfully: ${rfha}`, 'success')
+    wb.outcome({ tone: 'success', title: 'Spot Created', message: `Spot Transaction created Successfully: ${rfha}` })
   }
 
   return (

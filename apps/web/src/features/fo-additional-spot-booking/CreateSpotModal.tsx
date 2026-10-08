@@ -83,7 +83,7 @@ export function CreateSpotModal({
   const locked = !!pending
 
   return (
-    <div className="overlay" style={{ display: 'block' }} onClick={(e) => e.target === e.currentTarget && onCancel()}>
+    <div className="overlay" style={{ display: 'flex' }} onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal">
         <div className="modal-head">
           <div className="modal-title">Create Spot</div>

@@ -266,3 +266,80 @@
 .fo-early-delivery-unwind-rollover .actions-row {flex-direction:column-reverse;}
 .fo-early-delivery-unwind-rollover .actions-row .btn {width:100%;}
 }
+
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* The tokens and most components above are already ported from the reference; this block
+   only completes the remaining gaps. Every rule is presentational. */
+/* Header subtitle size */
+.fo-early-delivery-unwind-rollover .page-header h1 {color:var(--text);}
+.fo-early-delivery-unwind-rollover .page-header p {font-size:15px;}
+/* Dropdown option text */
+.fo-early-delivery-unwind-rollover .dd-item .primary-line {font-size:13px;}
+/* Search box + filter selects: reference sizing */
+.fo-early-delivery-unwind-rollover .search-box {flex:0 1 260px;min-width:200px;}
+.fo-early-delivery-unwind-rollover .search-box input {background:#fff;color:var(--text);}
+.fo-early-delivery-unwind-rollover .filter-select {min-width:88px;}
+/* Page-size select: compact square-ish corners like the other controls */
+.fo-early-delivery-unwind-rollover .page-size-select select {border-radius:var(--radius-sm);background:#fff;color:var(--text);}
+/* Detail summary grid inside popups */
+.fo-early-delivery-unwind-rollover .summary-box .label {font-weight:600;}
+.fo-early-delivery-unwind-rollover .summary-box .value {font-size:12.5px;font-weight:600;}
+/* Status pill */
+.fo-early-delivery-unwind-rollover .status-pill {line-height:1.3;}
+/* Responsive: wrap header actions and non-wrapping form rows on narrow screens,
+   never scroll the page horizontally */
+.fo-early-delivery-unwind-rollover .app {min-width:0;}
+.fo-early-delivery-unwind-rollover .card {min-width:0;}
+@media (max-width:1080px) {
+.fo-early-delivery-unwind-rollover .form-row.no-wrap {flex-wrap:wrap;}
+}
+@media (max-width:700px) {
+.fo-early-delivery-unwind-rollover .page-header {flex-wrap:wrap;}
+.fo-early-delivery-unwind-rollover .search-box {flex:1 1 100%;min-width:0;}
+}
+@media (max-width:460px) {
+.fo-early-delivery-unwind-rollover .kpi-card {flex:1 1 100%;min-width:0;}
+.fo-early-delivery-unwind-rollover .kpi-card .kpi-label {white-space:normal;}
+}
+/* Respect reduced motion: no hover lifts or pop animations */
+@media (prefers-reduced-motion:reduce) {
+.fo-early-delivery-unwind-rollover .kpi-card, .fo-early-delivery-unwind-rollover table.pm-table tbody tr, .fo-early-delivery-unwind-rollover .btn, .fo-early-delivery-unwind-rollover .pagination button {transition:none;}
+.fo-early-delivery-unwind-rollover .kpi-card:hover, .fo-early-delivery-unwind-rollover table.pm-table tbody tr:hover, .fo-early-delivery-unwind-rollover .btn:active:not(:disabled) {transform:none;}
+.fo-early-delivery-unwind-rollover .modal, .fo-early-delivery-unwind-rollover .modal-overlay.closing .modal, .fo-early-delivery-unwind-rollover table.pm-table tbody tr.row-flash {animation:none;}
+}
+
+/* ===== Standard popup frame + no table grid lines (FO popup standard) ===== */
+/* Presentational only. Frame: centred card, header and footer fixed with dividers, body scrolls. */
+.fo-early-delivery-unwind-rollover .modal-overlay {background:rgba(16,26,41,.5);align-items:center;justify-content:center;padding:20px;}
+.fo-early-delivery-unwind-rollover .modal {background:#fff;border:1px solid #B9C2C9;border-radius:12px;box-shadow:0 22px 70px rgba(16,38,58,.3);font-family:"72","Segoe UI",Arial,sans-serif;max-width:calc(100vw - 40px);}
+.fo-early-delivery-unwind-rollover .modal.modal-scrollable {padding:0;max-height:92vh;overflow:hidden;}
+.fo-early-delivery-unwind-rollover .modal.modal-scrollable .modal-head-row {margin:0;padding:14px 20px 12px;background:#fff;border-bottom:1px solid #E6E9EB;gap:12px;}
+.fo-early-delivery-unwind-rollover .modal-head-row h2 {font-size:14px;font-weight:700;color:#1D2D3E;}
+.fo-early-delivery-unwind-rollover .modal-close-btn {width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none;color:#687B8D;border-radius:4px;}
+.fo-early-delivery-unwind-rollover .modal-close-btn:hover {background:#F2F4F5;color:#1D2D3E;}
+.fo-early-delivery-unwind-rollover .modal.modal-scrollable .modal-body-scroll {padding:16px 20px;}
+.fo-early-delivery-unwind-rollover .modal.modal-scrollable .modal-actions {margin:0;padding:12px 20px;background:#fff;border-top:1px solid #E6E9EB;justify-content:flex-end;gap:10px;}
+/* Sizes: Early Delivery / Rollover = L (multi-section create form), Unwinding = M (edit form). */
+.fo-early-delivery-unwind-rollover .pm-modal-wide {width:880px;max-width:calc(100vw - 40px);}
+.fo-early-delivery-unwind-rollover .pm-modal-mid {width:640px;max-width:calc(100vw - 40px);}
+/* Body typography */
+.fo-early-delivery-unwind-rollover .modal .form-section .section-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.fo-early-delivery-unwind-rollover .modal .form-section:not(.cancel) .section-title {color:#085CAF;}
+.fo-early-delivery-unwind-rollover .modal .field label {font-size:13px;font-weight:600;color:#475E75;}
+.fo-early-delivery-unwind-rollover .modal .control {height:36px;font-size:13px;border-color:#8996A1;}
+.fo-early-delivery-unwind-rollover .modal textarea.control {height:auto;}
+.fo-early-delivery-unwind-rollover .modal .control:focus {border-color:#0A6ED1;box-shadow:0 0 0 3px #EAF3FC;}
+.fo-early-delivery-unwind-rollover .modal .field .error-msg {font-size:11px;color:#BB0000;}
+.fo-early-delivery-unwind-rollover .modal .summary-box .label {font-size:10.5px;font-weight:700;text-transform:uppercase;color:#475E75;}
+.fo-early-delivery-unwind-rollover .modal .summary-box .value {font-size:12.5px;font-weight:600;color:#1D2D3E;}
+/* Footer buttons */
+.fo-early-delivery-unwind-rollover .modal .modal-actions .btn {height:32px;font-size:13px;font-weight:600;border-radius:4px;}
+.fo-early-delivery-unwind-rollover .modal .modal-actions .btn-secondary {background:#fff;color:#1D2D3E;border-color:#8996A1;}
+.fo-early-delivery-unwind-rollover .modal .modal-actions .btn-primary {background:#0A6ED1;color:#fff;border-color:#0A6ED1;}
+.fo-early-delivery-unwind-rollover .modal .modal-actions .btn-danger {background:#fff;color:#BB0000;border-color:#F3C6C0;}
+.fo-early-delivery-unwind-rollover .modal .modal-actions .btn-danger:hover {background:#FCEAEA;}
+/* Tables: no grid lines — one 1px line under the header and under each row only */
+.fo-early-delivery-unwind-rollover table.pm-table {border-collapse:collapse;border:none;}
+.fo-early-delivery-unwind-rollover table.pm-table th, .fo-early-delivery-unwind-rollover table.pm-table td {border-left:none;border-right:none;border-top:none;}
+.fo-early-delivery-unwind-rollover table.pm-table thead th {border-bottom:1px solid #E6E9EB;}
+.fo-early-delivery-unwind-rollover table.pm-table tbody td {border-bottom:1px solid #E6E9EB;}

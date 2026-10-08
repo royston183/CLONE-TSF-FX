@@ -1,3 +1,4 @@
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -44,7 +45,6 @@ import type {
   Layout,
   MasterContract,
   Sort,
-  Toast,
 } from './types.ts'
 
 const BRAND_LOGO =
@@ -104,32 +104,10 @@ export default function MoRejectMcAfterExpiry() {
   const [pendingIds, setPendingIds] = useState<string[]>([])
   const [detailsMc, setDetailsMc] = useState<string | null>(null)
 
-  // Toasts stack, each dismissing itself after five seconds.
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const toastTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>())
-  const nextToastId = useRef(1)
-  const dismissToast = useCallback((id: number) => {
-    clearTimeout(toastTimers.current.get(id))
-    toastTimers.current.delete(id)
-    setToasts((list) => list.filter((t) => t.id !== id))
-  }, [])
-  const showToast = useCallback(
-    (message: string, error = false) => {
-      const id = nextToastId.current++
-      setToasts((list) => [...list, { id, message, error }])
-      toastTimers.current.set(
-        id,
-        setTimeout(() => dismissToast(id), 5000),
-      )
-    },
-    [dismissToast],
-  )
-  useEffect(() => {
-    const timers = toastTimers.current
-    return () => {
-      for (const t of timers.values()) clearTimeout(t)
-    }
-  }, [])
+  const feedback = useMasterContractFeedback()
+  const showToast = useCallback((message: string, error = false) => {
+    feedback.show(message, error ? 'error' : 'success')
+  }, [feedback.show])
 
   // The value helps load once; View Contracts waits for them, since the rows are mapped with them.
   useEffect(() => {
@@ -345,6 +323,10 @@ export default function MoRejectMcAfterExpiry() {
   escapeRef.current = () => {
     cancelConfirm()
     detailsModal.close()
+    dragState.current = null
+    setDraggingId(null)
+    setHoverId(null)
+    setRejectDragOver(false)
   }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -681,31 +663,7 @@ export default function MoRejectMcAfterExpiry() {
       <DetailsModal modal={detailsModal} contract={detailsMc === null ? undefined : byNumber.get(detailsMc)} onClose={detailsModal.close} />
 
       {/* TOASTS */}
-      <div className="toast-wrap" id="toastWrap">
-        {toasts.map((t) => (
-          <div key={t.id} className="toast">
-            <svg
-              className="toast-icon"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              style={t.error ? { color: 'var(--error)' } : undefined}
-            >
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-              {t.error ? (
-                <path d="M12 7.5V13M12 16.5V16.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              ) : (
-                <path d="M8 12.5L10.7 15L16 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </svg>
-            <span>{t.message}</span>
-            <button className="toast-close" aria-label="Dismiss" onClick={() => dismissToast(t.id)}>
-              &times;
-            </button>
-          </div>
-        ))}
-      </div>
+      <div id="toastWrap">{feedback.element}</div>
     </div>
   )
 }

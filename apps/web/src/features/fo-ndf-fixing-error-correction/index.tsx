@@ -4,6 +4,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { NDF_FIXING_API_MISSING, correctNdfFixing, fixNdfAvailable } from '../../shared/fx/ndf.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { loadCompanies, loadFixingReferences, loadWorklist, type Avail, type Option } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
@@ -68,6 +69,7 @@ export default function FoNdfFixingErrorCorrection() {
   const [dragReady, setDragReady] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
+  const status = useStatusPopup()
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
   const pushToast = (message: string, success: boolean) => {
@@ -168,7 +170,12 @@ export default function FoNdfFixingErrorCorrection() {
     setSaving(true)
     void correctNdfFixing({ bukrs: row.bukrs, rfha: row.rfha, etag: row.etag }, newRate)
       .then((res) => {
-        pushToast(res.message, res.ok)
+        // The SAP outcome as the standard popup (was a toast); same text, same follow-up as before.
+        status.show(
+          res.ok
+            ? { tone: 'success', title: 'NDF Fixing Corrected', message: res.message, refLabel: 'Transaction', refValue: row.rfha }
+            : { tone: 'error', title: 'NDF Fixing Correction Failed', message: res.message },
+        )
         if (res.ok) {
           setCorrectionOpen(false)
           setSelectedId(null)
@@ -422,6 +429,7 @@ export default function FoNdfFixingErrorCorrection() {
           onUpdate={updateFixing}
         /> : null}
       {detailRow ? <DetailModal row={detailRow} onClose={() => setDetailId(null)} /> : null}
+      {status.element}
     </div>
   )
 }

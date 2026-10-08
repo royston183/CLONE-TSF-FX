@@ -1,3 +1,5 @@
+import { masterContractDragImage } from '../../shared/master-contract/drag.ts'
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -45,14 +47,12 @@ import type {
   Sort,
   SortKey,
   StatusFilter,
-  Toast,
   ToastKind,
 } from './types.ts'
 
 const BRAND_LOGO =
   'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
 const DEFAULT_SORT: Sort = { key: 'mcNumber', dir: -1 } // descending, newest first
-const TOAST_MS = 3400
 const plural = (n: number) => (n === 1 ? '' : 's')
 
 /**
@@ -113,19 +113,10 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   const kpis = computeKpis(kpiScope)
   const paged = pageOf(rows, page, pageSize)
 
-  // Toast — the page opened with a "Ready" message, shown here once the queue has loaded.
-  const [toast, setToast] = useState<Toast>({ message: 'Loading Master Contracts…', kind: '', show: true })
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const hideToast = useCallback(() => setToast((t) => ({ ...t, kind: '', show: false })), [])
-  const showToast = useCallback(
-    (message: string, kind: ToastKind) => {
-      clearTimeout(toastTimer.current)
-      setToast({ message, kind, show: true })
-      toastTimer.current = setTimeout(hideToast, TOAST_MS)
-    },
-    [hideToast],
-  )
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
+  const feedback = useMasterContractFeedback()
+  const showToast = useCallback((message: string, kind: ToastKind) => {
+    feedback.show(message, kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info')
+  }, [feedback.show])
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const loaded = await loadContracts(signal)
@@ -138,10 +129,6 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     const controller = new AbortController()
     loadMasters(controller.signal)
       .then(() => reload(controller.signal))
-      .then((list) => {
-        const n = filterContracts(list, DEFAULT_FILTERS, 'ALL', DEFAULT_SORT).rows.length
-        showToast(`Ready. ${n} Master Contract(s) loaded.`, '')
-      })
       .catch((error: unknown) => {
         if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, 'error')
       })
@@ -188,6 +175,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       showToast(`Selection executed. ${rows.length} Master Contract(s) found.`, 'info')
     }
     if (e.key === 'Escape') {
+      endDrag()
       actionModal.close()
       childModal.close()
       editModal.close()
@@ -264,7 +252,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       return next
     })
     const t = actionToast(action, mcs)
-    showToast(t.message, t.kind)
+    showToast(t.message, 'success')
     actionModal.close()
     childModal.close()
     refilter()
@@ -287,6 +275,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     draggedNumbers.current = selected.map((m) => m.mcNumber)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', draggedNumbers.current.join(','))
+    masterContractDragImage(e.dataTransfer, selected.length > 1 ? `${selected.length} Master Contracts selected` : `MC ${mc.mcNumber}`)
     setDraggingRow(mc.mcNumber)
   }
 
@@ -403,6 +392,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
               key={c.key}
               className={`metric-card ${c.cls}${statusFilter === c.key ? ' active' : ''}`}
               onClick={() => setStatusFilter(c.key)}
+              role="button" tabIndex={0} aria-pressed={statusFilter === c.key}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setStatusFilter(c.key) } }}
             >
               <div className="metric-inner">
                 <div className="metric-val">{c.val}</div>
@@ -630,9 +621,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
         </div>
       </main>
 
-      <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
-        {toast.message}
-      </div>
+      <div id="toast">{feedback.element}</div>
 
       <ActionDialog
         modal={actionModal}

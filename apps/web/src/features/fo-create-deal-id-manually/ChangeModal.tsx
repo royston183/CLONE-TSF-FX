@@ -58,6 +58,9 @@ export function ChangeModal({
           <div className="help-note">Confirm is allowed when all linked transactions are at transaction status 07 or higher.</div>
         </div>
         <div className="modal-foot">
+          <button className="btn" type="button" onClick={onClose}>
+            Cancel
+          </button>
           <button className="btn" type="button" onClick={() => setLocked((v) => !v)}>
             {locked ? 'Change' : 'Lock'}
           </button>
@@ -70,9 +73,6 @@ export function ChangeModal({
             }}
           >
             Confirm
-          </button>
-          <button className="btn" type="button" onClick={onClose}>
-            Cancel
           </button>
         </div>
       </div>

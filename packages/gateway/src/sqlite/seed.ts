@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type { Database } from './db.ts'
 import type { LookupValue } from './schema.ts'
 
 /**
@@ -12,7 +12,7 @@ export const LOOKUP_SEED: readonly LookupValue[] = [
 ]
 
 /** Upserts the seed rows and returns how many it processed. */
-export function runSeeds(db: Database.Database, lookups: readonly LookupValue[] = LOOKUP_SEED): number {
+export function runSeeds(db: Database, lookups: readonly LookupValue[] = LOOKUP_SEED): number {
   const upsert = db.prepare(`
     INSERT INTO lookup_value (category, code, label, sort_order)
     VALUES (@category, @code, @label, @sortOrder)

@@ -4,12 +4,14 @@
  */
 import { buildNdoSpot, createSpotTransaction, fetchTransactions, isAuthorized, updateTxnStatus, type SpotRequest } from './logic.ts'
 import type { PopupSpec } from './modal.tsx'
+import type { StatusOptions } from '../../shared/popup/Popup.tsx'
 import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './types.ts'
 
 /**
- * The SAP postings each workbench action makes (ZSGTSFR_SET_WSPACE). None is exposed by a
- * service: FxTransaction offers create (one FX deal, no VTBFHA extension fields) and Settle
- * only, so every write is WAITING FOR API and nothing is posted.
+ * The SAP postings each workbench action makes (ZSGTSFR_SET_WSPACE). NDF fixing is live: the NDF
+ * Details popup calls FxTransaction/NdfFixing (BAPI_FTR_FXT_NDF_FIXING) and sets TXN_STATUS 10 on
+ * TrmFxApp (shared/fx/ndf.ts fixNdf), as UA1 does. No service exposes the others, so they are
+ * WAITING FOR API and nothing is posted.
  */
 export const WRITE_ACTIONS = {
   exercise: 'Option exercise — BAPI_FTR_EXERCISE_FXOPTIONS (TI86 for cash settlement, BAPI_FTR_SETTLE_FXOPTIONS)',
@@ -28,6 +30,8 @@ export type Wb = {
   get: () => AppData
   set: (next: AppData) => void
   toast: (msg: string, kind?: ToastKind) => void
+  /** The outcome popup (standard StatusPopup) that reports a finished SAP write; Close only closes. */
+  outcome: (opts: StatusOptions) => void
   open: (spec: PopupSpec) => void
   confirm: (opts: { title: string; message: string }, onYes: () => void) => void
   /** Today, ISO — the trade/value date of a spot booked here. */
@@ -164,5 +168,5 @@ function createAutoSpot(wb: Wb, ctx: ActionCtx, txn: Txn, sfhaart: string) {
     bp: txn.cpty,
     text: 'Spot – option exercise',
   })
-  wb.toast(`Spot Transaction created Successfully: ${rfha}`, 'success') /* TEXT-015 */
+  wb.outcome({ tone: 'success', title: 'Spot Created', message: `Spot Transaction created Successfully: ${rfha}` }) /* TEXT-015 */
 }

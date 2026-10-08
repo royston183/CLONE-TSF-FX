@@ -8,6 +8,8 @@ import { RequireAuth } from './auth/RequireAuth.tsx'
 import { MenuPage } from './menu/MenuPage.tsx'
 import { FEATURES } from './features/registry.ts'
 import './app.css'
+import './shared/front-office.css'
+import './shared/master-contract/design.css'
 
 /**
  * One SPA on one origin, replacing seven pages served by seven proxy.py processes on
@@ -72,7 +74,12 @@ function FeatureRoute() {
         </div>
       }
     >
-      <Feature />
+      <div className={[
+        appId?.startsWith('fo-') || ['fx-blotter', 'tsf-ndf-fixing', 'short-straddle-deal-id'].includes(appId ?? '') ? 'front-office-ui' : '',
+        ['mo-confirm-master-contract', 'mo-update-mc-expiry', 'fo-mc-error-correction', 'mo-reject-mc-after-expiry', 'short-straddle-deal-id'].includes(appId ?? '') ? 'fx-master-ui' : '',
+      ].filter(Boolean).join(' ') || undefined}>
+        <Feature />
+      </div>
     </Suspense>
   )
 }

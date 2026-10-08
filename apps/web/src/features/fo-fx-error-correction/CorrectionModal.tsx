@@ -75,7 +75,7 @@ export function CorrectionModal({
 
   return (
     <Overlay id="correct-overlay" modal={modal}>
-      <div className="modal-card" style={{ maxWidth: 820 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <div className="modal-header">
           <div className="modal-header-text">
             <div className="modal-title" id="correct-title">

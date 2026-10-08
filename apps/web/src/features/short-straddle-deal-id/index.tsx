@@ -1,3 +1,5 @@
+import { masterContractDragImage } from '../../shared/master-contract/drag.ts'
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -38,7 +40,6 @@ import type {
   MasterContract,
   ModalId,
   StatusFilter,
-  Toast,
   ToastKind,
 } from './types.ts'
 
@@ -92,19 +93,10 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
   const [reverseError, setReverseError] = useState(false)
   const closeModal = useCallback(() => setOpenModal(null), [])
 
-  // Toast — the page greets with how many contracts it loaded, once they have loaded.
-  const [toast, setToast] = useState<Toast>({ message: '', kind: '', show: false })
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const hideToast = useCallback(() => setToast((t) => ({ message: t.message, kind: '', show: false })), [])
-  const showToast = useCallback(
-    (message: string, kind: ToastKind) => {
-      clearTimeout(toastTimer.current)
-      setToast({ message, kind, show: true })
-      toastTimer.current = setTimeout(hideToast, 3600)
-    },
-    [hideToast],
-  )
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
+  const status = useMasterContractFeedback()
+  const showToast = useCallback((message: string, kind: ToastKind) => {
+    status.show(message, kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info')
+  }, [status.show])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -115,7 +107,6 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
         setDeals(loaded.deals)
         setLastDealSeq(loaded.lastSeq)
         setSource(loaded.source)
-        showToast(`Ready. ${applyFilters(loaded.contracts, noFilters()).filtered.length} Master Contract(s) loaded.`, '')
       })
       .catch((error: unknown) => {
         if (!isAbort(error)) showToast(`Could not load Master Contracts: ${messageOf(error)}`, 'error')
@@ -129,7 +120,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal()
+      if (e.key === 'Escape') { closeModal(); setDraggingRef(null); setDragOver(null) }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -324,7 +315,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     const next = contracts.map((c) => (c.mcRef === mc.mcRef ? reversed : c))
     setContracts(next)
     closeModal()
-    showToast(`Master Contract ${mc.mcRef} reversed successfully.`, 'error')
+    showToast(`Master Contract ${mc.mcRef} reversed successfully.`, 'success')
     refilter(next, filters, false)
   }
 
@@ -345,6 +336,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
     }
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', String(mcRef))
+    masterContractDragImage(e.dataTransfer, `MC ${mcRef}`)
     setDraggingRef(mcRef)
   }
 
@@ -404,6 +396,8 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
               key={c.key}
               className={`metric-card${statusFilter === c.key ? ' active' : ''}`}
               onClick={() => setFilter('status', c.key)}
+              role="button" tabIndex={0} aria-pressed={statusFilter === c.key}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setFilter('status', c.key) } }}
             >
               <div className="metric-inner">
                 <div className="metric-val">{c.val}</div>
@@ -634,7 +628,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
         </div>
       </main>
 
-      <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.kind ? ` ${toast.kind}` : ''}`}>{toast.message}</div>
+      {status.element}
 
       <McDetailModal open={openModal === 'mcdetail'} contract={findMc(detailRef)} deals={deals} onClose={closeModal} />
       <DealBreakdownModal open={openModal === 'dealbreak'} contract={findMc(breakRef)} deals={deals} onClose={closeModal} />

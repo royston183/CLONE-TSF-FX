@@ -58,7 +58,7 @@ export function TxnListModal({
 
   return (
     <Overlay id="list" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 1220 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(1200px, 96vw, calc(100vw - 40px))' }}>
         <ModalHeader
           title="FX Transaction List"
           subtitle="Standalone representation of ZSGTSF_RFX_LIST"

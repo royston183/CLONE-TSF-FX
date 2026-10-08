@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type Database from 'better-sqlite3'
+import type { Database } from './db.ts'
 import { REPO_ROOT } from '../config.ts'
 
 export const MIGRATIONS_DIR = resolve(REPO_ROOT, 'database/migrations')
@@ -15,7 +15,7 @@ const MIGRATION_FILE = /^\d+_.+\.sql$/
  * later run retries it. An applied migration is never re-run, and never edited: change the
  * schema with a new file.
  */
-export function runMigrations(db: Database.Database, dir = MIGRATIONS_DIR): string[] {
+export function runMigrations(db: Database, dir = MIGRATIONS_DIR): string[] {
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,

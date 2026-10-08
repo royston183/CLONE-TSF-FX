@@ -1,0 +1,177 @@
+/*
+ * The standard FX popup — the design of "Master Contract Created" in FO: Create Master Contract
+ * (fo-create-master-contract SuccessModal + the OTTK theme block). Rendered into document.body, so no
+ * screen's own stylesheet reaches it and it looks the same on every screen. Night mode is at the end.
+ */
+.std-pop-overlay {
+  --sp-card: #FFFFFF;
+  --sp-text: #1D2D3E;
+  --sp-muted: #475E75;
+  --sp-faint: #687B8D;
+  --sp-border: #D5DADD;
+  --sp-border-strong: #8996A1;
+  --sp-card-border: #B9C2C9;
+  --sp-box: #F5F7F9;
+  --sp-primary: #0A6ED1;
+  --sp-primary-dark: #085CAF;
+  --sp-primary-tint: #EAF3FC;
+  --sp-success: #107E3E;
+  --sp-success-tint: #E4F5E9;
+  --sp-error: #BB0000;
+  --sp-error-tint: #FCEAEA;
+  --sp-error-border: #F3C6C0;
+  --sp-warning: #9B6B00;
+  --sp-warning-tint: #FFF4CC;
+  --sp-shadow: 0 22px 70px rgba(16, 38, 58, .3);
+  --sp-font: "72", "Segoe UI", Arial, Helvetica, sans-serif;
+
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(16, 26, 41, .5);
+  font-family: var(--sp-font);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sp-text);
+  -webkit-font-smoothing: antialiased;
+}
+.std-pop-overlay *, .std-pop-overlay *::before, .std-pop-overlay *::after { box-sizing: border-box; }
+
+.std-pop {
+  width: 380px;
+  max-width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sp-card);
+  border: 1px solid var(--sp-card-border);
+  border-radius: 12px;
+  box-shadow: var(--sp-shadow);
+  padding: 26px 24px 22px;
+  text-align: center;
+  animation: std-pop-in .18s ease-out;
+}
+.std-pop.std-pop-wide { width: 460px; }
+@keyframes std-pop-in { from { transform: scale(.98); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.std-pop-icon {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.std-pop-icon.success { background: var(--sp-success-tint); color: var(--sp-success); }
+.std-pop-icon.error, .std-pop-icon.danger { background: var(--sp-error-tint); color: var(--sp-error); }
+.std-pop-icon.warning { background: var(--sp-warning-tint); color: var(--sp-warning); }
+.std-pop-icon.info, .std-pop-icon.primary { background: var(--sp-primary-tint); color: var(--sp-primary); }
+
+.std-pop-title { margin: 0 0 6px; font-size: 14px; font-weight: 700; color: var(--sp-text); }
+.std-pop-message { margin: 0 0 16px; font-size: 12.5px; color: var(--sp-muted); overflow-wrap: anywhere; }
+
+.std-pop-body { min-height: 0; overflow-y: auto; text-align: left; margin: 0 0 16px; font-size: 12.5px; color: var(--sp-text); }
+.std-pop-body:empty { display: none; }
+.std-pop-body ul { margin: 0; padding-left: 18px; }
+.std-pop-body li + li { margin-top: 3px; }
+.std-pop-body textarea, .std-pop-body input, .std-pop-body select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  color: var(--sp-text);
+  background: #FFFFFF;
+  border: 1px solid var(--sp-border-strong);
+  border-radius: 4px;
+  padding: 8px 11px;
+  outline: none;
+}
+.std-pop-body textarea:focus, .std-pop-body input:focus, .std-pop-body select:focus { border-color: var(--sp-primary); box-shadow: 0 0 0 3px var(--sp-primary-tint); }
+.std-pop-body label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--sp-muted); }
+
+/* The highlighted reference: "Deal ID / MC Number  2000000039". */
+.std-pop-ref {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: var(--sp-box);
+  border: 1px solid var(--sp-border);
+  border-radius: 8px;
+}
+.std-pop-ref-label { margin-bottom: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--sp-muted); }
+.std-pop-ref-value { font-size: 19px; font-weight: 700; letter-spacing: .4px; color: var(--sp-primary-dark); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.std-pop-actions { display: flex; gap: 10px; flex: none; }
+.std-pop-actions .std-pop-btn { flex: 1; }
+
+.std-pop-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-family: var(--sp-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .1s ease;
+}
+.std-pop-btn:active:not(:disabled) { transform: translateY(1px); }
+.std-pop-btn:disabled { opacity: .45; cursor: not-allowed; }
+.std-pop-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sp-primary-tint); border-color: var(--sp-primary); }
+.std-pop-btn.secondary { background: #FFFFFF; color: var(--sp-text); border-color: var(--sp-border-strong); }
+.std-pop-btn.secondary:hover:not(:disabled) { border-color: var(--sp-primary); color: var(--sp-primary); box-shadow: 0 1px 4px rgba(34, 53, 72, .1); }
+.std-pop-btn.primary { background: var(--sp-primary); color: #FFFFFF; }
+.std-pop-btn.primary:hover:not(:disabled) { background: var(--sp-primary-dark); box-shadow: 0 2px 6px rgba(10, 110, 209, .22); }
+.std-pop-btn.danger { background: #FFFFFF; color: var(--sp-error); border-color: var(--sp-error-border); }
+.std-pop-btn.danger:hover:not(:disabled) { background: var(--sp-error-tint); }
+
+@media (max-width: 460px) {
+  .std-pop { padding: 22px 18px 18px; }
+  .std-pop-actions { flex-direction: column-reverse; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .std-pop { animation: none; }
+  .std-pop-btn { transition: none; }
+}
+
+/* Night mode (html[data-theme='dark'], as every converted screen). */
+:root[data-theme='dark'] .std-pop-overlay {
+  --sp-card: #18222E;
+  --sp-text: #E6EDF3;
+  --sp-muted: #A9B7C6;
+  --sp-faint: #8394A6;
+  --sp-border: #2C3A4A;
+  --sp-border-strong: #4A5B6E;
+  --sp-card-border: #33445A;
+  --sp-box: #111A24;
+  --sp-primary: #3D95F0;
+  --sp-primary-dark: #7DB8F7;
+  --sp-primary-tint: #16304D;
+  --sp-success: #4CC27E;
+  --sp-success-tint: #12331F;
+  --sp-error: #FF6B6B;
+  --sp-error-tint: #3A1A1A;
+  --sp-error-border: #6B2C2C;
+  --sp-warning: #F0B13D;
+  --sp-warning-tint: #3A2E10;
+  --sp-shadow: 0 22px 70px rgba(0, 0, 0, .55);
+  background: rgba(0, 0, 0, .6);
+}
+:root[data-theme='dark'] .std-pop-btn.secondary,
+:root[data-theme='dark'] .std-pop-btn.danger,
+:root[data-theme='dark'] .std-pop-body textarea,
+:root[data-theme='dark'] .std-pop-body input,
+:root[data-theme='dark'] .std-pop-body select { background: var(--sp-card); }
+:root[data-theme='dark'] .std-pop-btn.primary { color: #0B1520; }

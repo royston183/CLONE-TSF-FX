@@ -191,3 +191,300 @@
   background: #1b2b3d;
   color: #a9c2dd;
 }
+:root[data-theme='dark'] .dealanal {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+  --blue-dark: #7cc0f8;
+  --line: #2a3d52;
+  --muted: #7f9bb8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .dealanal .page-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .page-sub {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .btn {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .btn:hover:not(:disabled) {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .btn.ghost {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .btn.danger {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .dealanal .btn.danger:hover:not(:disabled) {
+  background: #3a1b1e;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .dealanal .view-deals-btn {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .view-deals-btn:hover {
+  background: #14212f;
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .card-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .record-count {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .selection-note {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .input,
+:root[data-theme='dark'] .dealanal .select {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .input::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .input:hover,
+:root[data-theme='dark'] .dealanal .select:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .dealanal .input:focus,
+:root[data-theme='dark'] .dealanal .select:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .input[readonly],
+:root[data-theme='dark'] .dealanal .select:disabled {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-color: #2a3d52;
+}
+:root[data-theme='dark'] .dealanal .input[readonly]:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .validation {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .dealanal .toolbar-input,
+:root[data-theme='dark'] .dealanal .deal-picker-search {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .toolbar-input::placeholder,
+:root[data-theme='dark'] .dealanal .deal-picker-search::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .toolbar-input:hover,
+:root[data-theme='dark'] .dealanal .deal-picker-search:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .dealanal .toolbar-input:focus,
+:root[data-theme='dark'] .dealanal .deal-picker-search:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .compact-select {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .compact-select:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .dealanal .compact-select:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-count {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal th.sortable:hover {
+  background: #1b2b3d;
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal td {
+  color: #e6eef8;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal tbody tr.selected td,
+:root[data-theme='dark'] .dealanal tbody tr.selected:hover td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .dealanal .hotspot {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .hotspot:hover {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .deal-type-accent {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .calc-input {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .calc-input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .dealanal .calc-input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .empty-state {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .status-created {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .status-confirmed {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .status-closed {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .card-foot {
+  border-top: 1px solid #2a3d52;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .page-btn {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .page-btn:hover:not(:disabled) {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal-close {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .modal-close:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal-section-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .help-note {
+  background: #17304a;
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table th {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-id {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table tbody tr:hover .deal-picker-id {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div {
+  border-bottom: 1px solid #2a3d52;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div:nth-child(odd) {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .dealanal .modal-head {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .dealanal .modal-close:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal-section-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .dealanal .modal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .modal .input[readonly] {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal .input:focus,
+:root[data-theme='dark'] .dealanal .modal .select:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .dealanal .modal .validation {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .dealanal .modal .help-note {
+  background: #17304a;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .txn-kv div:nth-child(odd) {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal .modal-foot {
+  background: #14212f;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal .modal-foot .btn:not(.primary):not(.danger) {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .dealanal .modal-foot .btn.danger {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .dealanal .modal-foot .btn.danger:hover:not(:disabled) {
+  background: #3a1b1e;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .dealanal .deal-picker-table th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .dealanal th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .dealanal td {
+  border-bottom: 1px solid #2a3d52;
+}

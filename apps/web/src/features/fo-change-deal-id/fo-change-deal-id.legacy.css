@@ -304,3 +304,174 @@
 .fo-change-deal-id .field-grid {grid-template-columns:repeat(2,1fr);}
 .fo-change-deal-id .form-grid {grid-template-columns:1fr;}
 }
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* ---- 1. Tokens: reference names + this sheet's own names mapped to the same values ---- */
+.fo-change-deal-id {
+  --bg:#F5F7F9; --card:#FFFFFF; --text:#1D2D3E; --text-muted:#475E75; --text-faint:#687B8D;
+  --border:#D5DADD; --border-strong:#8996A1; --primary:#0A6ED1; --primary-dark:#085CAF;
+  --primary-light:#4FA3E8; --primary-tint:#EAF3FC; --success:#107E3E; --success-tint:#E4F5E9;
+  --warning:#E9730C; --warning-tint:#FFF4CC; --error:#BB0000; --error-tint:#FCEAEA;
+  --teal:#0F828C; --teal-tint:#E4F5F5; --purple:#6B3FA0; --purple-tint:#F1EAF8; --gray-tint:#F2F4F5;
+  --radius-lg:12px; --radius-md:8px; --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13); --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+  --th:#475E75; --blue:#0A6ED1; --blue-dark:#085CAF; --blue-light:#EAF3FC;
+  --green:#107E3E; --green-bg:#E4F5E9; --orange:#E9730C; --orange-bg:#FFF4CC;
+  --red:#BB0000; --red-bg:#FCEAEA; --gray:#475E75; --gray-bg:#F2F4F5;
+  --radius:12px; --shadow:0 1px 3px rgba(34,53,72,.13);
+  font-family:var(--font); font-size:13px; color:var(--text); background:var(--bg);
+}
+/* ---- 2. Page header ---- */
+.fo-change-deal-id .header { background:transparent; border:none; padding:4px 2px; gap:12px; margin-bottom:12px; }
+.fo-change-deal-id .header h1 { font-size:16px; font-weight:700; color:#1D2D3E; }
+.fo-change-deal-id .header p { font-size:15px; color:#475E75; }
+.fo-change-deal-id .logo-mark { height:40px; max-width:120px; }
+/* ---- 3. Buttons ---- */
+.fo-change-deal-id .btn { height:32px; padding:0 12px; border-radius:4px; font-size:13px; font-weight:600; gap:6px; }
+.fo-change-deal-id .btn-sm { height:28px; padding:0 10px; font-size:11.5px; }
+.fo-change-deal-id .btn-icon { padding:0; }
+.fo-change-deal-id .btn-danger { background:#fff; color:#BB0000; border-color:#F3C6C0; }
+.fo-change-deal-id .btn-danger:hover { background:#FCEAEA; color:#BB0000; border-color:#F3C6C0; box-shadow:none; }
+.fo-change-deal-id .btn-danger:disabled:hover { background:#fff; color:#BB0000; border-color:#F3C6C0; }
+/* ---- 4. Cards + section titles ---- */
+.fo-change-deal-id .card { border-color:var(--border); border-radius:12px; box-shadow:var(--shadow-card); }
+.fo-change-deal-id .card-head h2 { font-size:13px; font-weight:700; color:var(--primary-dark); }
+.fo-change-deal-id .card-head .count { font-size:12px; }
+.fo-change-deal-id .card > .table-scroll:last-child { border-radius:0 0 12px 12px; }
+/* ---- 5. Search box + typeahead dropdown ---- */
+.fo-change-deal-id .search-input-wrap { flex:0 1 260px; width:260px; min-width:200px; }
+.fo-change-deal-id .search-input-wrap input { height:32px; font-size:13px; border-radius:4px; border-color:#8996A1; background:#fff; }
+.fo-change-deal-id .search-input-wrap input::placeholder { color:#687B8D; }
+.fo-change-deal-id .search-input-wrap input:focus { border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }
+.fo-change-deal-id .typeahead { min-width:200px; max-height:240px; border-color:#D5DADD; border-radius:8px; box-shadow:var(--shadow-pop); padding:6px; }
+.fo-change-deal-id .typeahead-item { padding:8px 10px; }
+.fo-change-deal-id .typeahead-item .ti-id { font-size:13px; font-weight:600; }
+.fo-change-deal-id .typeahead-item .ti-meta { font-size:11px; color:var(--text-muted); }
+/* ---- 6. Fields / form inputs ---- */
+.fo-change-deal-id .field label, .fo-change-deal-id .form-field label { font-size:13px; font-weight:600; color:#475E75; }
+.fo-change-deal-id .field, .fo-change-deal-id .form-field { gap:6px; }
+.fo-change-deal-id .field .value { font-size:13px; }
+.fo-change-deal-id .form-field input[type=text], .fo-change-deal-id .form-field input[type=number] {
+  height:36px; font-size:13px; color:#1D2D3E; background:#fff; border:1px solid #8996A1; border-radius:4px; padding:0 11px;
+}
+.fo-change-deal-id .form-field input::placeholder { color:#687B8D; }
+.fo-change-deal-id .form-field input:hover { border-color:#A6B0B9; }
+.fo-change-deal-id .form-field input:focus { border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }
+.fo-change-deal-id .form-field input[readonly] { background:#F2F4F5; color:#475E75; }
+.fo-change-deal-id .form-field input:disabled { background:#F2F4F5; color:#687B8D; cursor:not-allowed; }
+.fo-change-deal-id .inline-err { font-size:11px; color:#BB0000; }
+.fo-change-deal-id .section-title { font-size:11px; font-weight:700; text-transform:uppercase; color:var(--primary-dark); }
+/* ---- 7. Tables (FX Deals / Invoice Plan / P&L) ---- */
+.fo-change-deal-id .table-scroll { overflow-x:auto; }
+.fo-change-deal-id table.grid th {
+  background:#F2F4F5; font-size:13px; font-weight:700; color:#475E75; text-transform:uppercase;
+  letter-spacing:.4px; padding:8px 10px; border-bottom:1px solid #E6E9EB; white-space:nowrap;
+}
+.fo-change-deal-id table.grid th.num { text-align:right; }
+.fo-change-deal-id table.grid th.center { text-align:center; }
+.fo-change-deal-id table.grid td { font-size:14px; font-weight:400; color:#1D2D3E; padding:8px 10px; border-bottom:1px solid #E6E9EB; white-space:nowrap; }
+.fo-change-deal-id table.grid td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.fo-change-deal-id table.grid tbody tr { transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.fo-change-deal-id table.grid tbody tr:hover {
+  transform:translateY(-1px) scale(1.002); box-shadow:0 3px 9px rgba(34,53,72,.10);
+  background:#F7FBFF; position:relative; z-index:2;
+}
+.fo-change-deal-id table.grid tbody tr.row-selected { background:#EAF3FC; }
+.fo-change-deal-id table.grid tbody tr.row-selected:hover { background:#EAF3FC; box-shadow:0 3px 9px rgba(10,110,209,.14); }
+.fo-change-deal-id table.grid td.hotspot { color:#085CAF; font-weight:700; cursor:pointer; }
+.fo-change-deal-id table.grid td.hotspot:hover { color:#0A6ED1; text-decoration:underline; }
+.fo-change-deal-id table.grid input.cell-input { font-size:13px; color:#1D2D3E; border-color:#8996A1; border-radius:4px; }
+.fo-change-deal-id table.grid input.cell-input:focus { border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }
+.fo-change-deal-id table.grid tfoot td { background:#F2F4F5; }
+.fo-change-deal-id .chk { accent-color:#0A6ED1; }
+/* ---- 8. Status pills (colour family of each existing class) ---- */
+.fo-change-deal-id .pill { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+.fo-change-deal-id .pill-blue { background:#EAF3FC; color:#085CAF; }
+.fo-change-deal-id .pill-green { background:#E4F5E9; color:#107E3E; }
+.fo-change-deal-id .pill-gray { background:#F2F4F5; color:#475E75; }
+.fo-change-deal-id .pill-red { background:#FCEAEA; color:#BB0000; }
+.fo-change-deal-id .pill-orange { background:#FFF4CC; color:#9B6B00; }
+.fo-change-deal-id .info-banner { border-radius:8px; font-size:12px; }
+.fo-change-deal-id .info-banner.warn { background:#FFF4CC; color:#9B6B00; }
+.fo-change-deal-id .info-banner.error { background:#FCEAEA; color:#BB0000; }
+/* ---- 9. Modals ---- */
+.fo-change-deal-id .modal-overlay { background:rgba(16,26,41,.5); }
+.fo-change-deal-id .modal { background:#fff; border:1px solid #B9C2C9; border-radius:12px; box-shadow:var(--shadow-pop); max-height:92vh; }
+.fo-change-deal-id .modal-head h3 { font-size:14px; font-weight:700; }
+.fo-change-deal-id .modal-close:hover { background:#F2F4F5; }
+.fo-change-deal-id .modal-foot .left-note { font-size:12px; color:#475E75; }
+.fo-change-deal-id .confirm-icon { width:52px; height:52px; }
+/* ---- 10. Toast + scrollbar ---- */
+.fo-change-deal-id .toast { background:#243B53; color:#fff; font-size:12.5px; padding:11px 18px; border-radius:8px; bottom:22px; left:50%; }
+.fo-change-deal-id .toast.err { background:#4A211D; }
+.fo-change-deal-id ::-webkit-scrollbar-thumb { background:#B7C2CB; }
+/* ---- 11. Responsive ---- */
+@media (max-width:1080px) {
+.fo-change-deal-id .field-grid { grid-template-columns:repeat(3,1fr); }
+}
+@media (max-width:900px) {
+.fo-change-deal-id .field-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:700px) {
+.fo-change-deal-id .header { flex-wrap:wrap; }
+.fo-change-deal-id .header-actions { margin-left:0; flex-wrap:wrap; }
+.fo-change-deal-id .toolbar .spacer { display:none; }
+}
+@media (max-width:600px) {
+.fo-change-deal-id .search-input-wrap { flex:1 1 100%; width:100%; max-width:none; }
+.fo-change-deal-id .modal-overlay { padding:10px; }
+}
+@media (max-width:460px) {
+.fo-change-deal-id .field-grid { grid-template-columns:1fr; }
+.fo-change-deal-id .header h1 { font-size:15px; }
+.fo-change-deal-id .header p { font-size:13px; }
+.fo-change-deal-id .logo-mark { height:32px; }
+}
+@media (prefers-reduced-motion:reduce) {
+.fo-change-deal-id table.grid tbody tr, .fo-change-deal-id .btn { transition:none; }
+.fo-change-deal-id table.grid tbody tr:hover { transform:none; }
+.fo-change-deal-id .btn:active:not(:disabled) { transform:none; }
+.fo-change-deal-id .modal, .fo-change-deal-id .modal-overlay.closing .modal { animation:none; }
+}
+/* ===== Standard popup frame + no table grid lines (FO popup standard) ===== */
+/* ---- Popup frame: overlay, card, sizes (M 640 / L 880) ---- */
+.fo-change-deal-id .modal-overlay { background:rgba(16,26,41,.5); align-items:center; justify-content:center; padding:20px; }
+.fo-change-deal-id .modal {
+  background:#fff; border:1px solid #B9C2C9; border-radius:12px; box-shadow:0 22px 70px rgba(16,38,58,.3);
+  max-height:92vh; max-width:calc(100vw - 40px); display:flex; flex-direction:column; overflow:hidden;
+  font-family:"72","Segoe UI",Arial,sans-serif;
+}
+.fo-change-deal-id .modal.modal-md { width:640px; max-width:calc(100vw - 40px); }
+.fo-change-deal-id .modal.modal-lg { width:880px; max-width:calc(100vw - 40px); }
+/* ---- Header ---- */
+.fo-change-deal-id .modal-head { flex:none; background:#fff; padding:14px 20px; border-bottom:1px solid #E6E9EB; }
+.fo-change-deal-id .modal-head h3 { font-size:14px; font-weight:700; color:#1D2D3E; }
+.fo-change-deal-id .modal-close { width:28px; height:28px; border-radius:4px; color:#687B8D; background:transparent; }
+.fo-change-deal-id .modal-close:hover { background:#F2F4F5; color:#1D2D3E; }
+/* ---- Body (scrolls between a fixed header and footer) ---- */
+.fo-change-deal-id .modal-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:20px; }
+.fo-change-deal-id .modal-body .section-title { font-size:11px; font-weight:700; text-transform:uppercase; color:#085CAF; }
+.fo-change-deal-id .modal .form-field label { font-size:13px; font-weight:600; color:#475E75; }
+.fo-change-deal-id .modal .form-field .static { font-size:12.5px; font-weight:600; color:#1D2D3E; }
+.fo-change-deal-id .modal .form-field input[type=text], .fo-change-deal-id .modal .form-field input[type=number] { height:36px; font-size:13px; border:1px solid #8996A1; border-radius:4px; }
+.fo-change-deal-id .modal .form-field input:focus { outline:none; border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }
+.fo-change-deal-id .modal .inline-err { font-size:11px; color:#BB0000; }
+.fo-change-deal-id .modal .info-banner { font-size:12px; border-radius:8px; background:#EAF3FC; }
+.fo-change-deal-id .modal .info-banner.warn { background:#FFF4CC; }
+.fo-change-deal-id .modal .info-banner.error { background:#FCEAEA; }
+/* ---- Footer: white, divider above, right-aligned; dismiss = secondary, main = primary/danger ---- */
+.fo-change-deal-id .modal-foot { flex:none; background:#fff; border-top:1px solid #E6E9EB; justify-content:flex-end; gap:10px; padding:12px 20px; }
+.fo-change-deal-id .modal-foot .btn { height:32px; font-size:13px; font-weight:600; border-radius:4px; }
+.fo-change-deal-id .modal-foot .btn:not(.btn-primary):not(.btn-danger) { background:#fff; color:#1D2D3E; border-color:#8996A1; }
+.fo-change-deal-id .modal-foot .btn-primary { background:#0A6ED1; border-color:#0A6ED1; color:#fff; }
+.fo-change-deal-id .modal-foot .btn-danger { background:#fff; color:#BB0000; border-color:#F3C6C0; }
+.fo-change-deal-id .modal-foot .btn-danger:hover { background:#FCEAEA; color:#BB0000; border-color:#F3C6C0; }
+/* ---- Tables inside popups ---- */
+.fo-change-deal-id .modal table.grid th { background:#F2F4F5; font-size:13px; font-weight:700; text-transform:uppercase; color:#475E75; padding:7px 10px; }
+.fo-change-deal-id .modal table.grid td { font-size:14px; padding:7px 10px; }
+/* ---- No grid lines: only one horizontal row line, under the header and under each row ---- */
+.fo-change-deal-id table.grid { border-collapse:collapse; border:none; }
+.fo-change-deal-id table.grid th, .fo-change-deal-id table.grid td { border-left:none; border-right:none; border-top:none; }
+.fo-change-deal-id table.grid th { border-bottom:1px solid #E6E9EB; }
+.fo-change-deal-id table.grid td { border-bottom:1px solid #E6E9EB; }
+.fo-change-deal-id table.grid tfoot td { border-top:1px solid #E6E9EB; }

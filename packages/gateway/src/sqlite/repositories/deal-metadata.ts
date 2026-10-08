@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type { Database } from '../db.ts'
 import type {
   CreateDealMetadataInput,
   DealMetadata,
@@ -38,7 +38,7 @@ function fieldParams(fields: DealMetadataFields) {
   }
 }
 
-function prepareStatements(db: Database.Database) {
+function prepareStatements(db: Database) {
   return {
     findAll: db.prepare<[], DealMetadata>(`${SELECT} ORDER BY updated_at DESC, id DESC`),
     findOne: db.prepare<{ companyCode: string; transactionId: string }, DealMetadata>(
@@ -82,7 +82,7 @@ export type DealMetadataRepository = ReturnType<typeof createDealMetadataReposit
  * CURRENT_TIMESTAMP: that has one-second resolution, so two edits inside a second would leave
  * updated_at unchanged. The column default still covers inserts that bypass this module.
  */
-export function createDealMetadataRepository(db: Database.Database) {
+export function createDealMetadataRepository(db: Database) {
   const sql = prepareStatements(db)
   const now = () => new Date().toISOString()
 
@@ -118,10 +118,10 @@ export function createDealMetadataRepository(db: Database.Database) {
   }
 }
 
-const repositories = new WeakMap<Database.Database, DealMetadataRepository>()
+const repositories = new WeakMap<Database, DealMetadataRepository>()
 
 /** One prepared-statement set per connection, built on first use. */
-export function dealMetadataRepository(db: Database.Database): DealMetadataRepository {
+export function dealMetadataRepository(db: Database): DealMetadataRepository {
   let repo = repositories.get(db)
   if (!repo) {
     repo = createDealMetadataRepository(db)

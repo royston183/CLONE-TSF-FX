@@ -76,6 +76,8 @@ export type Txn = {
   coverTxn: string
   portfolio: string
   seq: number
+  /** TrmFxApp ETag, sent as If-Match when the TSF status changes; '' for a row not read from SAP. */
+  etag: string
 }
 
 /** An invoice-difference / settlement-spot record (ZSGTSFTR_IN_SPOT). */

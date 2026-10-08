@@ -24,7 +24,7 @@ export function AutoSpotModal({
   const close = () => modals.close('autospot')
   return (
     <Overlay id="autospot" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 620 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(640px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Create Spot"
           subtitle="Additional Spot Booking - visual simulation of the external Auto Spot program"

@@ -20,7 +20,7 @@ export function NotesModal({
   const close = () => modals.close('notes')
   return (
     <Overlay id="notes" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 520 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(640px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Notes"
           subtitle={target ? `${target} - operational notes + selected row note` : 'FX Blotter operating notes'}

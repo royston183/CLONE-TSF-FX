@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { CreateSpotModal, type ContextState, type PendingSpot } from './CreateSpotModal.tsx'
 import { DateField } from './DateField.tsx'
 import { DetailModal } from './DetailModal.tsx'
@@ -111,6 +112,7 @@ export default function FoAdditionalSpotBooking() {
 
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastId = useRef(0)
+  const status = useStatusPopup()
 
   const pushToast = (message: string, kind: Toast['kind'] = '') => {
     const id = ++toastId.current
@@ -228,7 +230,13 @@ export default function FoAdditionalSpotBooking() {
     if (persist.appStr === 'done' && persist.inSpot === 'done') {
       setPending(null)
       closeCreate()
-      pushToast(`Spot ${created.transaction} created in company code ${created.companyCode}.`)
+      status.show({
+        tone: 'success',
+        title: 'Spot Created',
+        message: `Spot ${created.transaction} created in company code ${created.companyCode}.`,
+        refLabel: 'Spot Transaction',
+        refValue: created.transaction,
+      })
       return
     }
     setPending({ created, row, view: { transaction: created.transaction, companyCode: created.companyCode, persist } })
@@ -470,6 +478,7 @@ export default function FoAdditionalSpotBooking() {
       ) : null}
 
       {detail ? <DetailModal row={detail.row} kind={detail.kind} onClose={() => setDetail(null)} /> : null}
+      {status.element}
     </div>
   )
 }

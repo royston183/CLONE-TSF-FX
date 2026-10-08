@@ -11,6 +11,7 @@ import { EditPairModal } from './EditPairModal.tsx'
 import { PremiumModal } from './PremiumModal.tsx'
 import { TxnModal } from './TxnModal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup, type StatusOptions } from '../../shared/popup/Popup.tsx'
 import { createDealId, loadWorkbench, type Workbench } from './api.ts'
 import { dealStatusLabel, money } from './format.ts'
 import {
@@ -91,7 +92,18 @@ function Pager({ page, pages, kind, onPage }: { page: number; pages: number; kin
  * Confirm, Edit Deal Pair, the invoice rates) stay on the screen; Create Deal ID is real, and
  * reloads everything from the sources afterwards.
  */
-function WorkbenchScreen({ data, startDealId, onReload }: { data: Workbench; startDealId: string; onReload: (dealId: string) => void }) {
+function WorkbenchScreen({
+  data,
+  startDealId,
+  onReload,
+  showStatus,
+}: {
+  data: Workbench
+  startDealId: string
+  onReload: (dealId: string) => void
+  /** The outcome popup; owned by the page so it survives the reload that follows a create. */
+  showStatus: (opts: StatusOptions) => void
+}) {
   const [deals, setDeals] = useState<Record<string, Deal>>(data.deals)
   const [masterContracts] = useState<MasterContract[]>(data.masterContracts)
   const pool = data.pool
@@ -234,10 +246,10 @@ function WorkbenchScreen({ data, startDealId, onReload }: { data: Workbench; sta
     try {
       const { dealId } = await createDealId(mc, a, b)
       setCreateOpen(false)
-      toast(`Created Deal ID ${dealId}.`, 'success')
+      showStatus({ tone: 'success', title: 'Deal ID Created', message: `Created Deal ID ${dealId}.`, refLabel: 'Deal ID', refValue: dealId })
       onReload(dealId)
     } catch (error) {
-      toast(error instanceof Error ? error.message : String(error), 'error')
+      showStatus({ tone: 'error', title: 'Deal ID Not Created', message: error instanceof Error ? error.message : String(error) })
     } finally {
       setCreating(false)
     }
@@ -733,6 +745,7 @@ type State = { phase: 'loading' } | { phase: 'error'; message: string } | { phas
 export default function FoCreateDealIdManually() {
   const [load, setLoad] = useState({ attempt: 0, dealId: '' })
   const [state, setState] = useState<State>({ phase: 'loading' })
+  const status = useStatusPopup()
 
   useEffect(() => {
     const ctl = new AbortController()
@@ -749,10 +762,22 @@ export default function FoCreateDealIdManually() {
   }, [load])
 
   if (state.phase === 'ready') {
-    return <WorkbenchScreen key={load.attempt} data={state.data} startDealId={load.dealId} onReload={(dealId) => setLoad((l) => ({ attempt: l.attempt + 1, dealId }))} />
+    return (
+      <>
+        <WorkbenchScreen
+          key={load.attempt}
+          data={state.data}
+          startDealId={load.dealId}
+          onReload={(dealId) => setLoad((l) => ({ attempt: l.attempt + 1, dealId }))}
+          showStatus={status.show}
+        />
+        {status.element}
+      </>
+    )
   }
   return (
     <div className="dealanal" style={{ minHeight: '100vh', padding: 24 }}>
+      {status.element}
       {state.phase === 'loading' ? (
         <div role="status">Loading Master Contracts, Deal IDs and transactions…</div>
       ) : (

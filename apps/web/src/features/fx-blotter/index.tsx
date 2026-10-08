@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { installMasters, loadBlotterMasters } from './masters.ts'
 import { applyDealIds, assignmentsFromDealIds, attachLegToDealId, createPairDealId, loadDealRows, toDealRecord } from './dealIds.ts'
 import { applyAppStr } from './appStr.ts'
@@ -123,7 +124,7 @@ const STATUS_SEGS: StatusFilter[] = ['ALL', 'DRAFT', 'CREATED', 'RELEASED', 'REV
 const SEG_LABEL: Record<StatusFilter, string> = { ALL: 'All', ...STATUS_LABEL }
 
 type ToastState = { message: string; kind: ToastKind; show: boolean }
-type Confirm = { title: string; body: string; run: () => void }
+type Confirm = { title: string; body: string; run: () => void; tone?: 'danger' | 'primary' }
 type Drag = {
   ids: string[]
   rowId: string
@@ -205,6 +206,8 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // Toast
   const [toast, setToast] = useState<ToastState>({ message: '', kind: '', show: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  /** The outcome of a SAP write (create / reverse / release / assign / Deal ID / spot), in the standard popup. */
+  const status = useStatusPopup()
   const showToast = useCallback((message: string, kind: ToastKind = '') => {
     clearTimeout(toastTimer.current)
     setToast({ message, kind, show: true })
@@ -315,8 +318,8 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     }
   }
 
-  const askConfirm = (title: string, body: string, run: () => void) => {
-    setConfirm({ title, body, run })
+  const askConfirm = (title: string, body: string, run: () => void, tone: 'danger' | 'primary' = 'primary') => {
+    setConfirm({ title, body, run, tone })
     modals.open('action', true)
   }
 
@@ -433,7 +436,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
           try {
             saved = await reverseBlotterDeal(row, latest.current.ctx.date)
           } catch (e) {
-            showToast(`SAP did not reverse ${row.transactionNumber}: ${sapMessage(e)}`, 'error')
+            status.show({ tone: 'error', title: 'Reversal Failed', message: `SAP did not reverse ${row.transactionNumber}: ${sapMessage(e)}` })
             return
           }
         }
@@ -441,9 +444,15 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         if (saved) {
           commit(setAppDataPending(latest.current, new Map([[id, { ...(saved.pending ? { pending: saved.pending } : {}), txnStatus: saved.status }]])), false)
         }
-        if (saved?.error) showToast(saved.error, 'warn')
-        else showToast(`Transaction ${row.transactionNumber} reversed.`, 'error')
+        status.show({
+          tone: saved?.error ? 'warning' : 'success',
+          title: 'Transaction Reversed',
+          message: saved?.error || `Transaction ${row.transactionNumber} reversed.`,
+          refLabel: 'Transaction',
+          refValue: row.transactionNumber,
+        })
       }),
+      'danger',
     )
   }
 
@@ -474,16 +483,39 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         }
         if (created.size) commit(applyCreated(latest.current, created))
         const unsaved = [...created.values()].filter((c) => c.appDataError)
-        if (failure) {
-          showToast(created.size ? `${created.size} of ${drafts.length} created. Stopped: ${failure}` : failure, 'error')
-          return
-        }
         const numbers = [...created.values()].map((c) => c.transaction).join(', ')
-        if (unsaved.length) {
-          showToast(unsaved.length === 1 ? unsaved[0]!.appDataError! : `${drafts.length} transaction(s) created in SAP: ${numbers}. The application data of ${unsaved.length} of them could not be saved; it is saved again on the next Refresh.`, 'warn')
+        const refLabel = created.size === 1 ? 'Transaction' : 'Transactions'
+        if (failure) {
+          status.show(
+            created.size
+              ? {
+                  tone: 'warning',
+                  title: 'Transactions Partly Created',
+                  message: `${created.size} of ${drafts.length} created. Stopped: ${failure}`,
+                  refLabel,
+                  refValue: numbers,
+                }
+              : { tone: 'error', title: 'Transaction Not Created', message: failure },
+          )
           return
         }
-        showToast(`${drafts.length} transaction(s) created in SAP: ${numbers}.`, 'success')
+        if (unsaved.length) {
+          status.show({
+            tone: 'warning',
+            title: drafts.length === 1 ? 'Transaction Created' : 'Transactions Created',
+            message: unsaved.length === 1 ? unsaved[0]!.appDataError! : `${drafts.length} transaction(s) created in SAP: ${numbers}. The application data of ${unsaved.length} of them could not be saved; it is saved again on the next Refresh.`,
+            refLabel,
+            refValue: numbers,
+          })
+          return
+        }
+        status.show({
+          tone: 'success',
+          title: drafts.length === 1 ? 'Transaction Created' : 'Transactions Created',
+          message: `${drafts.length} transaction(s) created in SAP: ${numbers}.`,
+          refLabel,
+          refValue: numbers,
+        })
       }),
     )
   }
@@ -548,8 +580,11 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         guarded(async () => {
           commit(releaseRows(latest.current, ids))
           const failed = await saveRelease(ids)
-          if (failed) showToast(failed, 'warn')
-          else showToast(`${created.length} transaction(s) released to MO.`, 'success')
+          status.show({
+            tone: failed ? 'warning' : 'success',
+            title: 'Released to MO',
+            message: failed || `${created.length} transaction(s) released to MO.`,
+          })
         }),
       )
       return
@@ -585,7 +620,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     try {
       attached = await attachLegToDealId(assignDeal.dealId, assignRow)
     } catch (e) {
-      showToast(sapMessage(e), 'error')
+      status.show({ tone: 'error', title: 'Release Failed', message: sapMessage(e) })
       return
     }
     modals.close('assign')
@@ -596,8 +631,13 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       mcRef: attached.mcRef || assignDeal.mcNumber,
       dealDesc: attached.dealDesc,
     })
-    if (failed) showToast(failed, 'warn')
-    else showToast(`Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`, 'success')
+    status.show({
+      tone: failed ? 'warning' : 'success',
+      title: 'Transaction Released',
+      message: failed || `Transaction ${assignRow.transactionNumber} released and added to Deal ID ${assignDeal.dealId} in SAP.`,
+      refLabel: 'Deal ID',
+      refValue: assignDeal.dealId,
+    })
   })
 
   const mcLegs = (mcPick?.ids ?? []).map((id) => findRow(id)).filter((r): r is BlotterRow => !!r)
@@ -618,7 +658,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         year: latest.current.ctx.date.getFullYear(),
       })
     } catch (e) {
-      showToast(sapMessage(e), 'error')
+      status.show({ tone: 'error', title: 'Deal ID Not Created', message: sapMessage(e) })
       return
     }
     const out = assignMc(latest.current, legA.id, legB.id, mcSelected.mcNumber, pair.dealId)
@@ -631,8 +671,13 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       mcRef: mcSelected.mcNumber,
       dealDesc: pair.dealDesc,
     })
-    if (failed) showToast(failed, 'warn')
-    else showToast(`Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`, 'success')
+    status.show({
+      tone: failed ? 'warning' : 'success',
+      title: 'Deal ID Created',
+      message: failed || `Deal ID ${out.dealId} created in SAP and linked to ${mcSelected.mcNumber}. Both legs released to MO.`,
+      refLabel: 'Deal ID',
+      refValue: out.dealId,
+    })
   })
 
   const openShortStraddle = (rows: BlotterRow[]) => {
@@ -700,11 +745,16 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         created.push(await createBlotterDeal(r, latest.current.ctx.date))
       } catch (e) {
         const booked = created[0]
-        showToast(
+        status.show(
           booked
-            ? `Deal 1 was created in SAP as ${booked.transaction}, but Deal 2 failed: ${sapMessage(e)} Deal 1 stays booked — reverse it in the grid if you do not want it.`
-            : `Deal ${i + 1} failed: ${sapMessage(e)} Nothing was booked.`,
-          'error',
+            ? {
+                tone: 'warning',
+                title: 'Auto Deal Partly Created',
+                message: `Deal 1 was created in SAP as ${booked.transaction}, but Deal 2 failed: ${sapMessage(e)} Deal 1 stays booked — reverse it in the grid if you do not want it.`,
+                refLabel: 'Deal 1 Transaction',
+                refValue: booked.transaction,
+              }
+            : { tone: 'error', title: 'Auto Deal Not Created', message: `Deal ${i + 1} failed: ${sapMessage(e)} Nothing was booked.` },
         )
         if (booked) void loadLive()
         return
@@ -718,10 +768,11 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     } catch (e) {
       // The legs exist: close the popup so they cannot be booked twice, and show them.
       modals.close('auto')
-      showToast(
-        `Both legs were created in SAP (${created.map((c) => c.transaction).join(', ')}) but the Deal ID was not: ${sapMessage(e)} Select the two and Release to MO to create it.`,
-        'error',
-      )
+      status.show({
+        tone: 'warning',
+        title: 'Auto Deal Partly Created',
+        message: `Both legs were created in SAP (${created.map((c) => c.transaction).join(', ')}) but the Deal ID was not: ${sapMessage(e)} Select the two and Release to MO to create it.`,
+      })
       void loadLive()
       return
     }
@@ -734,11 +785,15 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     // The legs now have a Deal ID: save it with their application data. Their status stays 01 until they are released to MO.
     const outs = await saveDealLink(rowsNow(ids), { dealId: pair.dealId, mcRef: autoMc.mcNumber, dealDesc: pair.dealDesc }, latest.current.ctx.date)
     const unsaved = settleSaves(outs, 'create', (r) => r.txnStatus ?? '01') || created.find((c) => c.appDataError)?.appDataError || ''
-    showToast(
-      unsaved ||
+    status.show({
+      tone: unsaved ? 'warning' : 'success',
+      title: 'Auto Deal Created',
+      message:
+        unsaved ||
         `Auto Deal created in SAP: Deal 1 ${created[0]?.transaction}, Deal 2 ${created[1]?.transaction}, under Deal ID ${out.dealId}. Select the Created transaction(s) and use Release to MO when ready.`,
-      unsaved ? 'warn' : 'success',
-    )
+      refLabel: 'Deal ID',
+      refValue: out.dealId,
+    })
   })
 
   // ------------------------------------------------------------------ auto spot
@@ -753,8 +808,13 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     try {
       const booked = await createBlotterSpot(spot, latest.current.ctx.date)
       modals.close('autospot')
-      if (booked.appDataError) showToast(booked.appDataError, 'warn')
-      else showToast(`Spot created in SAP: ${booked.transaction}.`, 'success')
+      status.show({
+        tone: booked.appDataError ? 'warning' : 'success',
+        title: 'Spot Created',
+        message: booked.appDataError || `Spot created in SAP: ${booked.transaction}.`,
+        refLabel: 'Transaction',
+        refValue: booked.transaction,
+      })
       // The spot joins the grid from SAP; if its application data did not save, the row is flagged so Refresh saves it.
       void loadLive().then(() => {
         if (!booked.appDataPending) return
@@ -762,7 +822,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         if (row) commit(setAppDataPending(latest.current, new Map([[row.id, { pending: booked.appDataPending! }]])), false)
       })
     } catch (e) {
-      showToast(sapMessage(e), 'error')
+      status.show({ tone: 'error', title: 'Spot Not Created', message: sapMessage(e) })
     }
   })
 
@@ -1253,7 +1313,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         {toast.message}
       </div>
 
-      <ConfirmModal modals={modals} title={confirm.title} body={confirm.body} onConfirm={() => confirm.run()} />
+      <ConfirmModal modals={modals} title={confirm.title} body={confirm.body} tone={confirm.tone ?? 'primary'} onConfirm={() => confirm.run()} />
       <ViewModal modals={modals} content={view} />
       <NotesModal
         modals={modals}
@@ -1333,6 +1393,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         onProcess={runUpload}
         onViewRfha={viewUploadedRfha}
       />
+      {status.element}
     </div>
   )
 }

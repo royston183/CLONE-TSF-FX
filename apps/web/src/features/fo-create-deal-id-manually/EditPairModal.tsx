@@ -77,14 +77,14 @@ export function EditPairModal({
           </div>
         </div>
         <div className="modal-foot">
+          <button className="btn" type="button" onClick={onClose}>
+            Cancel
+          </button>
           <button className="btn" type="button" onClick={() => setEditing((v) => !v)}>
             {editing ? 'Lock' : 'Edit'}
           </button>
           <button className="btn primary" type="button" disabled={!editing} onClick={submit}>
             Deal Update
-          </button>
-          <button className="btn" type="button" onClick={onClose}>
-            Cancel
           </button>
         </div>
       </div>

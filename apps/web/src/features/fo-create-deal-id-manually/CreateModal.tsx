@@ -198,11 +198,11 @@ export function CreateModal({
           </div>
         </div>
         <div className="modal-foot">
-          <button className="btn primary" type="button" onClick={submit}>
-            Create
-          </button>
           <button className="btn" type="button" onClick={onClose}>
             Cancel
+          </button>
+          <button className="btn primary" type="button" onClick={submit}>
+            Create
           </button>
         </div>
       </div>

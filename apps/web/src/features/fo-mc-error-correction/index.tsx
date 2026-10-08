@@ -1,9 +1,11 @@
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { StatusPopup, type StatusOptions } from '../../shared/popup/Popup.tsx'
 import { loadMasters, loadQueue, reverseMc, submitCorrection } from './api.ts'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { FX_MODELS, ORIGIN_ENTITIES, REGION_CATALOG } from './data.ts'
@@ -37,7 +39,6 @@ import type {
   Picks,
   Sort,
   SortField,
-  Toast,
   ToastKind,
 } from './types.ts'
 
@@ -97,18 +98,17 @@ export default function FoMcErrorCorrection() {
   const reverseModal = useModal()
   const [pendingReverseRef, setPendingReverseRef] = useState<number | null>(null)
 
-  // Toast
-  const [toast, setToast] = useState<Toast | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const feedback = useMasterContractFeedback()
   const showToast = useCallback((message: string, kind: ToastKind = '') => {
-    clearTimeout(toastTimer.current)
-    setToast({ message, kind, id: Date.now() })
-    toastTimer.current = setTimeout(() => setToast(null), 3400)
-  }, [])
+    feedback.show(message, kind === 'error' ? 'error' : kind === 'warn' ? 'warning' : 'info')
+  }, [feedback.show])
+
+  // Outcome popup after an MAS_CON write (Update & Resubmit, Reverse). Close only closes.
+  const [outcome, setOutcome] = useState<StatusOptions | null>(null)
+  const closeOutcome = useCallback(() => setOutcome(null), [])
 
   useEffect(
     () => () => {
-      clearTimeout(toastTimer.current)
       clearTimeout(flashTimer.current)
     },
     [],
@@ -232,7 +232,11 @@ export default function FoMcErrorCorrection() {
       try {
         updated = { ...updated, abapStatus: await submitCorrection(updated) }
       } catch (error) {
-        showToast(`Master Contract ${updated.mcRef} was not updated: ${messageOf(error)}`, 'error')
+        setOutcome({
+          tone: 'error',
+          title: 'Master Contract Not Updated',
+          message: `Master Contract ${updated.mcRef} was not updated: ${messageOf(error)}`,
+        })
         return
       } finally {
         busy.current = false
@@ -240,7 +244,13 @@ export default function FoMcErrorCorrection() {
     }
     setDataset((list) => list.map((r) => (r.mcRef === updated.mcRef ? updated : r)))
     correctionModal.close()
-    showToast(`Master Contract ${updated.mcRef} updated and resubmitted to Mid-Office.`)
+    setOutcome({
+      tone: 'success',
+      title: 'Master Contract Resubmitted',
+      message: `Master Contract ${updated.mcRef} updated and resubmitted to Mid-Office.`,
+      refLabel: 'MC Reference No',
+      refValue: String(updated.mcRef),
+    })
     setSelectedRef(updated.mcRef)
     flash(updated.mcRef)
   }
@@ -267,14 +277,24 @@ export default function FoMcErrorCorrection() {
         try {
           await reverseMc(row)
         } catch (error) {
-          showToast(`Master Contract ${row.mcRef} was not reversed: ${messageOf(error)}`, 'error')
+          setOutcome({
+            tone: 'error',
+            title: 'Master Contract Not Reversed',
+            message: `Master Contract ${row.mcRef} was not reversed: ${messageOf(error)}`,
+          })
           return
         } finally {
           busy.current = false
         }
       }
       setDataset((list) => list.map((r) => (r.mcRef === row.mcRef ? { ...reverseRow(r), abapStatus: '12' } : r)))
-      showToast(`Master Contract ${row.mcRef} reversed successfully.`, 'warn')
+      setOutcome({
+        tone: 'success',
+        title: 'Master Contract Reversed',
+        message: `Master Contract ${row.mcRef} reversed successfully.`,
+        refLabel: 'MC Reference No',
+        refValue: String(row.mcRef),
+      })
       flash(row.mcRef)
     }
     reverseModal.hide()
@@ -294,6 +314,26 @@ export default function FoMcErrorCorrection() {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
+  }, [])
+  // The standard popups (portalled to body) take Escape in the capture phase. This runs before
+  // them so the order stays: an outcome popup first, then the correction form (also when the
+  // Reverse confirmation is stacked over it), then the Reverse confirmation on its own.
+  const stackEscapeRef = useRef<(e: KeyboardEvent) => void>(() => {})
+  stackEscapeRef.current = (e) => {
+    if (outcome) {
+      e.stopPropagation()
+      closeOutcome()
+    } else if (correctionModal.state === 'open' && reverseModal.state === 'open') {
+      e.stopPropagation()
+      correctionModal.close()
+    }
+  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stackEscapeRef.current(e)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [])
 
   // ------------------------------------------------------------------ table
@@ -529,7 +569,9 @@ export default function FoMcErrorCorrection() {
         onConfirm={confirmReverse}
       />
 
-      <div className={`toast${toast ? ' show' : ''}${toast?.kind ? ` ${toast.kind}` : ''}`}>{toast?.message}</div>
+      {outcome ? <StatusPopup {...outcome} open onClose={closeOutcome} /> : null}
+
+      {feedback.element}
     </div>
   )
 }
