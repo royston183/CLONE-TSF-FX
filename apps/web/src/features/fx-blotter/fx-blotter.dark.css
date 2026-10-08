@@ -732,3 +732,261 @@
   background: #14212f!important;
   color: #a9c2dd!important;
 }
+:root[data-theme='dark'] .fx-blotter {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+  --modern-primary-soft: #17304a;
+  --modern-line: #16243a;
+  --modern-bg: #1b2b3d;
+  --modern-card: #14212f;
+}
+:root[data-theme='dark'] .fx-blotter .nav-back,
+:root[data-theme='dark'] .fx-blotter .head-actions .tb-btn,
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn,
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn.warn,
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn.purple,
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn,
+:root[data-theme='dark'] .fx-blotter .tb-btn,
+:root[data-theme='dark'] .fx-blotter .btn-cancel {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter .nav-back:hover,
+:root[data-theme='dark'] .fx-blotter .head-actions .tb-btn:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn.warn:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .sap-actionbar .tb-btn.purple:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .tb-btn:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .btn-cancel:hover {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.danger,
+:root[data-theme='dark'] .fx-blotter .tb-btn.danger,
+:root[data-theme='dark'] .fx-blotter .sap-actionbar #btn-release,
+:root[data-theme='dark'] .fx-blotter .sap-actionbar #btn-ss,
+:root[data-theme='dark'] .fx-blotter .btn-confirm.is-reject {
+  background: #14212f!important;
+  border: 1px solid #5c2b30!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.danger:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .tb-btn.danger:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .sap-actionbar #btn-release:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .sap-actionbar #btn-ss:hover:not(:disabled),
+:root[data-theme='dark'] .fx-blotter .btn-confirm.is-reject:hover:not(:disabled) {
+  border-color: #5c2b30!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .context-row {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .context-field input,
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .context-field select,
+:root[data-theme='dark'] .fx-blotter .form-field input:not([type=checkbox]):not([type=radio]),
+:root[data-theme='dark'] .fx-blotter .form-field select,
+:root[data-theme='dark'] .fx-blotter .auto-control,
+:root[data-theme='dark'] .fx-blotter .upload-file-row input[type=file] {
+  background-color: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter .form-field textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .context-field input:hover,
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .context-field select:hover,
+:root[data-theme='dark'] .fx-blotter .form-field input:hover,
+:root[data-theme='dark'] .fx-blotter .form-field select:hover,
+:root[data-theme='dark'] .fx-blotter .form-field textarea:hover,
+:root[data-theme='dark'] .fx-blotter .auto-control:hover {
+  border-color: #3d5670!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .master-toolbar {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .toolbar-row2 {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .search-box input {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .seg-group {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .seg {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .table-wrap {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table thead th {
+  border-bottom: 1px solid #2a3d52!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table tbody td {
+  border-bottom: 1px solid #2a3d52!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table.list-table tbody tr:not(.empty-row):hover td,
+:root[data-theme='dark'] .fx-blotter #fx-table.list-table tbody tr:not(.empty-row):hover .sticky-col {
+  background: #1b2b3d!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table .cell-input,
+:root[data-theme='dark'] .fx-blotter #fx-table .cell-select {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table .cell-input:hover,
+:root[data-theme='dark'] .fx-blotter #fx-table .cell-select:hover {
+  border-color: #3d5670!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table .rowaction-btn {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table .rowaction-btn:hover:not(:disabled) {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter .status-cell.st-created {
+  color: #ffcc5c!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .pager {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-blotter-panel .pager-btn {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-header {
+  background: #14212f!important;
+}
+:root[data-theme='dark'] .fx-blotter .detail-cell {
+  border-color: #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter .mini-table th,
+:root[data-theme='dark'] .fx-blotter .aux-table th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter .mini-table td,
+:root[data-theme='dark'] .fx-blotter .aux-table td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter .mini-table tr.selectable:hover td,
+:root[data-theme='dark'] .fx-blotter .aux-table tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fx-blotter .validation-box.ok {
+  border-color: #26543a;
+}
+:root[data-theme='dark'] .fx-blotter .validation-box.warn {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .fx-blotter .validation-box.bad {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-header {
+  background: #14212f!important;
+  border-bottom: 1px solid #2a3d52!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-subtitle {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-close:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-body {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fx-blotter .modal-card .modal-footer {
+  background: #14212f;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter .modal-footer .btn-cancel {
+  background: #14212f!important;
+  color: #e6eef8!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-footer .btn-cancel:hover {
+  color: #63aef8!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-footer .btn-confirm.is-reject {
+  background: #14212f!important;
+  color: #ff5c5c!important;
+  border: 1px solid #5c2b30!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-footer .btn-confirm.is-reject:hover:not(:disabled) {
+  background: #3a1b1e!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .section-label,
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-deal-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field label,
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-field-label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .detail-lbl {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .detail-val {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .detail-val.accent {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field input:not([type=checkbox]):not([type=radio]):not([type=file]),
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field select,
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-control {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field textarea {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field input:focus,
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field select:focus,
+:root[data-theme='dark'] .fx-blotter .modal-body .form-field textarea:focus,
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-control:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-control[readonly]:not(:disabled):not(.auto-locked),
+:root[data-theme='dark'] .fx-blotter .modal-body .auto-readonly-value {
+  background: #1b2b3d!important;
+  color: #e6eef8!important;
+  border-color: #2a3d52!important;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .hint {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .validation-box.warn {
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .validation-box.bad {
+  background: #3a1b1e;
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .mini-table th,
+:root[data-theme='dark'] .fx-blotter .modal-body .aux-table th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter .modal-body .mini-table td,
+:root[data-theme='dark'] .fx-blotter .modal-body .aux-table td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table.list-table thead th {
+  border-bottom: 1px solid #2a3d52!important;
+}
+:root[data-theme='dark'] .fx-blotter #fx-table.list-table tbody td {
+  border-bottom: 1px solid #2a3d52!important;
+}

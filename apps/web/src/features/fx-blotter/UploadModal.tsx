@@ -89,7 +89,7 @@ export function UploadModal({
 
   return (
     <Overlay id="upload" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 1120 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(1200px, 96vw, calc(100vw - 40px))' }}>
         <ModalHeader
           title="FX Blotter Upload"
           subtitle="Order / Contract / Settlement upload flow from the supplied SAP program"

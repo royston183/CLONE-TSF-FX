@@ -1208,3 +1208,118 @@
 .fo-trader-workbench .kpi-bar-val.neg {color:var(--error);}
 .fo-trader-workbench .kpi-empty {padding:12px;color:var(--text-muted);font-size:12.5px;background:var(--gray-tint);border-radius:var(--radius-sm);}
 .fo-trader-workbench .kpi-note {margin-top:8px;font-size:12px;color:var(--text-muted);}
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* Completes the alignment of the Trader Workbench additions above with the reference.
+   Tokens, buttons, inputs, dropdowns, calendar, modals, status text, toast and drag ghost
+   are already aligned by the shared OTTK block; only the remaining deviations live here. */
+/* Header: reference spacing below the header */
+.fo-trader-workbench .page-header {margin-bottom:12px;}
+/* KPI cards: reference size/padding/type (value above label via flex order — markup untouched).
+   The description stays in flow under the label: six cards with long dynamic texts would
+   collide with the label if absolutely positioned bottom-right. */
+.fo-trader-workbench .kpi-row {gap:12px;margin-bottom:12px;}
+.fo-trader-workbench .kpi-card {flex:1 1 180px;min-width:170px;min-height:64px;padding:22px 20px;gap:7px;justify-content:center;}
+.fo-trader-workbench .kpi-card .kpi-value {order:1;font-size:30px;font-weight:700;line-height:1.15;}
+.fo-trader-workbench .kpi-card .kpi-label {order:2;font-size:12px;font-weight:600;color:var(--text-muted);}
+.fo-trader-workbench .kpi-card .kpi-description {order:3;font-size:13px;font-weight:500;line-height:1.3;color:var(--text-faint);}
+.fo-trader-workbench .table-col {max-height:calc(100vh - 220px);}
+/* Main table: the Deal ID columns are pinned (sticky), so hover is background-only —
+   a transform on the row would misalign the pinned cells. */
+.fo-trader-workbench table.mc-table tbody tr:hover, .fo-trader-workbench table.mc-table tbody tr.selected:hover {transform:none;box-shadow:none;position:static;z-index:auto;}
+.fo-trader-workbench table.mc-table tbody tr.selected:hover td.pin {background:#EAF3FC;}
+.fo-trader-workbench table.mc-table td.num, .fo-trader-workbench table.grid td.num {font-variant-numeric:tabular-nums;}
+/* Popup tables (deal transactions / action items / info grids) */
+.fo-trader-workbench .grid-wrap {background:#fff;}
+.fo-trader-workbench table.grid thead th {font-size:13px;letter-spacing:.4px;padding:8px 10px;}
+.fo-trader-workbench table.grid td {font-size:14px;color:var(--text);}
+.fo-trader-workbench .cell-type {background:var(--gray-tint);}
+.fo-trader-workbench .btn-create {height:28px;padding:0 10px;font-size:11.5px;}
+/* Toolbar search: reference width (height stays 36px to line up with the labelled filter fields) */
+.fo-trader-workbench .wb-toolbar .search-box {flex:1 1 260px;min-width:200px;}
+.fo-trader-workbench .page-size-select select {border-radius:var(--radius-sm);border-color:var(--border-strong);}
+/* Responsive: wrap without page-level horizontal scroll */
+@media (max-width:900px) {
+.fo-trader-workbench .wb-toolbar .search-box {max-width:none;flex:1 1 100%;}
+.fo-trader-workbench .section-title {flex-wrap:wrap;}
+.fo-trader-workbench .section-title .section-hint {margin-left:0;flex:1 1 100%;}
+}
+@media (max-width:600px) {
+.fo-trader-workbench .wb-toolbar .f-date, .fo-trader-workbench .wb-toolbar .f-dd, .fo-trader-workbench .wb-toolbar .f-dd.wide {flex:1 1 140px;width:auto;}
+.fo-trader-workbench .wb-toolbar .btn-divider {display:none;}
+.fo-trader-workbench .pf-row.c3 {grid-template-columns:1fr 1fr;}
+}
+@media (max-width:460px) {
+.fo-trader-workbench .kpi-card {flex:1 1 100%;}
+.fo-trader-workbench .pf-row.c2, .fo-trader-workbench .pf-row.c3, .fo-trader-workbench .pf-row.leg, .fo-trader-workbench .kv-grid {grid-template-columns:1fr;}
+}
+/* Reduced motion: drop hover lifts and open/close animations */
+@media (prefers-reduced-motion:reduce) {
+.fo-trader-workbench .kpi-card, .fo-trader-workbench table.mc-table tbody tr, .fo-trader-workbench table.grid tbody tr, .fo-trader-workbench .btn, .fo-trader-workbench .pagination button {transition:none;}
+.fo-trader-workbench .kpi-card:hover, .fo-trader-workbench .btn:active:not(:disabled), .fo-trader-workbench .pagination button:active:not(:disabled) {transform:none;}
+.fo-trader-workbench .modal, .fo-trader-workbench .modal-overlay.closing .modal, .fo-trader-workbench table.mc-table tbody tr.row-new {animation:none;}
+}
+/* ===== Standard popup frame (reference: "Master Contract Created", FO: Create Master Contract) =====
+   Form / detail / table popups drawn by ModalFrame. Confirmations and outcomes use the shared
+   ConfirmPopup / StatusPopup (shared/popup) and carry their own styles.
+   Sizes: Update Rate, Create Spot, NDF Details, Settlement Spot, Transaction details = M 640px;
+   Settlement Data, KPI detail = L 880px; Deal (wb-modal) = XL min(1200px, 96vw). */
+.fo-trader-workbench .modal-overlay {background:rgba(16,26,41,.5);align-items:center;justify-content:center;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable {
+  background:#fff;border:1px solid #B9C2C9;border-radius:12px;box-shadow:0 22px 70px rgba(16,38,58,.3);
+  padding:0;max-height:92vh;max-width:calc(100vw - 40px);text-align:left;
+  font-family:"72","Segoe UI",Arial,sans-serif;
+}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable.sm-modal,
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable.md-modal {width:640px;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable.lg-modal {width:880px;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable.wb-modal {width:min(1200px, 96vw);}
+/* header: white, title + optional sub line, divider under it (drawn as the body's top border) */
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-head-row {flex:0 0 auto;gap:12px;margin:0;padding:16px 20px 12px;background:#fff;border-radius:12px 12px 0 0;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-head-row h2 {margin:0;font-size:14px;font-weight:700;color:#1D2D3E;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-sub {flex:0 0 auto;margin:-6px 0 0;padding:0 20px 12px;font-size:12.5px;color:#475E75;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-close-btn {
+  flex:none;width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:4px;color:#687B8D;font-size:18px;
+}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-close-btn:hover {background:#F2F4F5;color:#1D2D3E;}
+/* body scrolls between the fixed header and footer */
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-body-scroll {border-top:1px solid #E6E9EB;padding:16px 20px;}
+/* footer: white, divider above, right-aligned, dismiss left of the main action */
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions {
+  flex:0 0 auto;margin:0;padding:12px 20px;border-top:1px solid #E6E9EB;background:#fff;border-radius:0 0 12px 12px;
+  display:flex;justify-content:flex-end;gap:10px;
+}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions .btn {flex:0 0 auto;min-width:96px;height:32px;padding:0 14px;font-size:13px;font-weight:600;border-radius:4px;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions .btn-secondary {background:#fff;color:#1D2D3E;border:1px solid #8996A1;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions .btn-primary {background:#0A6ED1;color:#fff;border:1px solid #0A6ED1;}
+.fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions .btn-primary:hover:not(:disabled) {background:#085CAF;border-color:#085CAF;}
+/* body content */
+.fo-trader-workbench .modal-overlay .modal .detail-section-title,
+.fo-trader-workbench .modal-overlay .modal .pf-block-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#085CAF;border-bottom-color:#E6E9EB;}
+.fo-trader-workbench .modal-overlay .modal .sub-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#085CAF;}
+.fo-trader-workbench .modal-overlay .modal .sub-title .dot {width:6px;height:6px;background:#0A6ED1;}
+.fo-trader-workbench .modal-overlay .modal .sub-title .count {text-transform:none;letter-spacing:0;font-weight:500;color:#475E75;}
+.fo-trader-workbench .modal-overlay .modal .field label {font-size:13px;font-weight:600;color:#475E75;}
+.fo-trader-workbench .modal-overlay .modal .detail-item .detail-label {font-size:13px;font-weight:600;color:#475E75;}
+.fo-trader-workbench .modal-overlay .modal .detail-item .detail-value,
+.fo-trader-workbench .modal-overlay .modal .deal-summary .ds-value {font-size:12.5px;font-weight:600;color:#1D2D3E;}
+.fo-trader-workbench .modal-overlay .modal .control,
+.fo-trader-workbench .modal-overlay .modal .dd-input {height:36px;font-size:13px;border-color:#8996A1;}
+.fo-trader-workbench .modal-overlay .modal .control:focus,
+.fo-trader-workbench .modal-overlay .modal .dd-input:focus {border-color:#0A6ED1;box-shadow:0 0 0 3px #EAF3FC;outline:none;}
+.fo-trader-workbench .modal-overlay .modal .field .error-msg {font-size:11px;color:#BB0000;}
+.fo-trader-workbench .modal-overlay .modal .inline-msg {font-size:12px;border-radius:8px;}
+.fo-trader-workbench .modal-overlay .modal .inline-msg.error {background:#FCEAEA;}
+.fo-trader-workbench .modal-overlay .modal .inline-msg.info {background:#EAF3FC;}
+.fo-trader-workbench .modal-overlay .modal .deal-summary {border-radius:8px;background:#EAF3FC;}
+/* tables inside popups: grey header, row line only */
+.fo-trader-workbench .modal-overlay .modal table.grid thead th,
+.fo-trader-workbench .modal-overlay .modal table.popup-table thead th {background:#F2F4F5;font-size:13px;font-weight:700;text-transform:uppercase;color:#475E75;padding:7px 10px;border:0;border-bottom:1px solid #E6E9EB;}
+.fo-trader-workbench .modal-overlay .modal table.grid td,
+.fo-trader-workbench .modal-overlay .modal table.popup-table td {font-size:14px;padding:7px 10px;border:0;border-bottom:1px solid #E6E9EB;}
+/* ===== No grid lines: one horizontal 1px line under the header and each row, no vertical dividers ===== */
+.fo-trader-workbench table.mc-table, .fo-trader-workbench table.grid, .fo-trader-workbench table.popup-table {border-collapse:collapse;}
+.fo-trader-workbench table.mc-table thead th, .fo-trader-workbench table.grid thead th, .fo-trader-workbench table.popup-table thead th {border-left:0;border-right:0;border-top:0;border-bottom:1px solid #E6E9EB;}
+.fo-trader-workbench table.mc-table tbody td, .fo-trader-workbench table.grid td, .fo-trader-workbench table.popup-table td {border-left:0;border-right:0;border-top:0;border-bottom:1px solid #E6E9EB;}
+/* pinned columns keep their background and stacking, without the vertical divider */
+.fo-trader-workbench table.mc-table td.pin-2, .fo-trader-workbench table.mc-table th.pin-2 {box-shadow:none;}

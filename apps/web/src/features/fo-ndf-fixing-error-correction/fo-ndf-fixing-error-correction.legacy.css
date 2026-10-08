@@ -366,3 +366,208 @@
 .fondfec .form-row { display: block; margin: 0; }
 .fondfec .field { padding: 0; margin-bottom: 12px; }
 }
+
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* Appended last so it wins by source order; no markup or behaviour is changed. */
+/* ---- 1. Tokens ---- */
+.fondfec {
+  --bg:#F5F7F9;--card:#FFFFFF;--text:#1D2D3E;--text-muted:#475E75;--text-faint:#687B8D;
+  --border:#D5DADD;--border-strong:#8996A1;--primary:#0A6ED1;--primary-dark:#085CAF;
+  --primary-light:#4FA3E8;--primary-tint:#EAF3FC;--success:#107E3E;--success-tint:#E4F5E9;
+  --warning:#E9730C;--warning-tint:#FFF4CC;--error:#BB0000;--error-tint:#FCEAEA;
+  --teal:#0F828C;--teal-tint:#E4F5F5;--purple:#6B3FA0;--purple-tint:#F1EAF8;--gray-tint:#F2F4F5;
+  --radius-lg:12px;--radius-md:8px;--radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);--shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+}
+.fondfec { font-family: var(--font); font-size: 13px; color: var(--text); background: var(--bg); }
+.fondfec ::-webkit-scrollbar-thumb { background: #B7C2CB; }
+/* ---- 2. Page header: flush on the page background ---- */
+.fondfec .app-header { height: auto; min-height: 52px; background: transparent; border-bottom: none; padding: 4px 18px; }
+.fondfec .header-left > * { margin-right: 12px; }
+.fondfec .page-title { font-size: 16px; font-weight: 700; color: #1D2D3E; line-height: 1.2; }
+.fondfec .page-tag { font-size: 15px; color: #475E75; }
+.fondfec .main { padding: 4px 16px 18px; }
+/* ---- 3. Buttons ---- */
+.fondfec .back-btn, .fondfec .header-btn, .fondfec .icon-btn, .fondfec .secondary-btn, .fondfec .primary-btn {
+  height: 32px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
+}
+.fondfec .back-btn, .fondfec .header-btn, .fondfec .icon-btn, .fondfec .secondary-btn {
+  border: 1px solid var(--border-strong); background: #fff; color: var(--text);
+}
+.fondfec .back-btn:hover:not(:disabled), .fondfec .header-btn:hover:not(:disabled), .fondfec .icon-btn:hover:not(:disabled), .fondfec .secondary-btn:hover:not(:disabled) {
+  background: #fff; border-color: var(--primary); color: var(--primary); box-shadow: 0 1px 4px rgba(34,53,72,.1);
+}
+.fondfec .primary-btn { border: 1px solid var(--primary); background: var(--primary); color: #fff; box-shadow: none; }
+.fondfec .primary-btn:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 2px 6px rgba(10,110,209,.22); }
+.fondfec .primary-btn:disabled { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: none; }
+.fondfec button:active:not(:disabled) { transform: translateY(1px); }
+.fondfec .back-btn:disabled, .fondfec .header-btn:disabled, .fondfec .icon-btn:disabled, .fondfec .secondary-btn:disabled, .fondfec .primary-btn:disabled { opacity: .45; cursor: not-allowed; }
+.fondfec .icon-btn { width: 32px; height: 32px; padding: 0; }
+.fondfec .reset-btn { height: 32px; padding: 0 12px; }
+/* existing drag-a-row-onto-"NDF Rate Correction" drop target: reference .drag-over look */
+.fondfec .drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(10,110,209,.16); }
+.fondfec .drop-target.drag-over {
+  transform: none;
+  border-color: var(--primary) !important;
+  background: var(--primary-tint) !important;
+  color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(10,110,209,.12);
+}
+/* ---- 4. Card + section title ---- */
+.fondfec .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+.fondfec .card-head { border-bottom-color: #E6E9EB; }
+.fondfec .card-title { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
+.fondfec .record-count { font-size: 12px; color: var(--text-faint); }
+/* ---- 5. Toolbar: search + filters ---- */
+.fondfec .work-toolbar { background: #fff; border-bottom-color: #E6E9EB; }
+.fondfec .search-wrap { width: 260px; min-width: 200px; }
+.fondfec .search-wrap svg { top: 8px; color: #687B8D; }
+.fondfec .control {
+  height: 32px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background-color: #fff; color: var(--text); transition: border-color .15s ease, box-shadow .15s ease;
+}
+.fondfec .control::placeholder { color: #687B8D; }
+.fondfec .control:hover { border-color: #A6B0B9; }
+.fondfec .control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
+.fondfec .filter-select { min-width: 88px; }
+.fondfec .date-btn { top: 1px; right: 1px; height: 30px; color: #687B8D; border-left-color: #E6E9EB; }
+.fondfec .date-btn:hover { color: var(--primary); }
+/* ---- 6. Table (vertical scroll container: header stays sticky) ---- */
+.fondfec .table-shell { overflow-x: auto; overflow-y: auto; background: #fff; }
+.fondfec thead th {
+  z-index: 3; height: auto; padding: 8px 10px; background: var(--gray-tint);
+  border-bottom: 1px solid #E6E9EB; border-right-color: #E6E9EB;
+  color: #475E75; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+  transition: color .15s ease;
+}
+.fondfec thead th.sortable:hover { background: var(--gray-tint); color: #085CAF; }
+.fondfec thead th.sortable:hover .sort-ind { color: #085CAF; }
+.fondfec .sort-ind { font-size: 9px; color: #687B8D; }
+.fondfec tbody td {
+  height: auto; padding: 8px 10px; font-size: 14px; font-weight: 400; color: #1D2D3E;
+  border-bottom: 1px solid #E6E9EB; border-right-color: #EEF0F2; white-space: nowrap;
+  transition: background .15s ease;
+}
+.fondfec tbody tr { transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.fondfec tbody tr:hover {
+  transform: translateY(-1px) scale(1.002);
+  box-shadow: 0 3px 9px rgba(34,53,72,.10);
+  position: relative;
+  z-index: 1;
+}
+.fondfec tbody tr:hover td { background: #F7FBFF; }
+.fondfec tbody tr.selected td, .fondfec tbody tr.selected:hover td { background: #EAF3FC; }
+.fondfec tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(10,110,209,.14); }
+.fondfec tbody tr.dragging { opacity: .5; }
+.fondfec .row-check, .fondfec .cell-check input[type="checkbox"] { accent-color: #0A6ED1; }
+.fondfec .link-btn { color: #085CAF; font-weight: 700; text-decoration: none; font-size: inherit; }
+.fondfec .link-btn:hover { color: #0A6ED1; text-decoration: underline; }
+.fondfec .num { font-variant-numeric: tabular-nums; }
+.fondfec .empty-state { color: var(--text-faint); }
+/* ---- 7. Status (pending correction meaning, class assignment untouched) ---- */
+.fondfec .status-text { color: #9B6B00; font-weight: 700; }
+.fondfec .status-code { color: var(--text-faint); }
+/* ---- 8. Pagination ---- */
+.fondfec .table-footer { color: var(--text-muted); border-top-color: #E6E9EB; }
+.fondfec .pager { gap: 4px; }
+.fondfec .pager button, .fondfec .page-current {
+  min-width: 28px; width: auto; height: 28px; margin-left: 0; font-size: 11.5px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0 6px;
+}
+.fondfec .pager button { background: #fff; color: var(--text); transition: border-color .15s ease, color .15s ease; }
+.fondfec .pager button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.fondfec .pager button:disabled { opacity: .4; color: var(--text); background: #fff; }
+.fondfec .page-current { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+/* ---- 9. Form fields (modals) ---- */
+.fondfec .field label { font-size: 13px; font-weight: 600; color: #475E75; margin-bottom: 6px; }
+.fondfec .field-control {
+  height: 36px; font-size: 13px; color: #1D2D3E; background: #fff; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 0 11px; outline: none; transition: border-color .15s ease, box-shadow .15s ease;
+}
+.fondfec .field-control::placeholder { color: #687B8D; }
+.fondfec .field-control:hover { border-color: #A6B0B9; }
+.fondfec .field-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
+.fondfec .field-control.readonly, .fondfec .field-control.readonly:hover { background: #F2F4F5; color: #475E75; border-color: var(--border-strong); }
+.fondfec .field-control.readonly:focus { box-shadow: none; }
+.fondfec .field-control.num { text-align: right; font-variant-numeric: tabular-nums; }
+.fondfec .field-error { color: #BB0000; font-size: 11px; }
+/* ---- 10. Modals ---- */
+.fondfec .overlay { background: rgba(16,26,41,.5); }
+.fondfec .modal {
+  max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
+  background: #fff; border: 1px solid #B9C2C9; border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
+  animation: fondfec-ottk-pop .18s ease-out;
+}
+@keyframes fondfec-ottk-pop { from { transform: scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.fondfec .modal-head { flex: 0 0 auto; border-bottom-color: #E6E9EB; }
+.fondfec .modal-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.fondfec .close-btn { width: 28px; height: 28px; font-size: 20px; color: var(--text-muted); transition: background .15s ease; }
+.fondfec .close-btn:hover { background: var(--gray-tint); }
+.fondfec .modal-body { flex: 0 1 auto; min-height: 0; overflow: auto; }
+.fondfec .modal-foot { flex: 0 0 auto; border-top-color: #E6E9EB; }
+.fondfec .section-box { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.fondfec .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--primary-dark); }
+.fondfec .detail-item .k { font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+.fondfec .detail-item .v { font-size: 12.5px; font-weight: 600; color: var(--text); }
+/* ---- 11. Toasts: OTTK dark toast, bottom centre (the non-success toast carries an inline
+   amber palette from index.tsx, matched by [style] and recoloured to the dark error toast) ---- */
+.fondfec .toast-wrap { top: auto; right: auto; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.fondfec .toast {
+  background: #243B53; color: #fff; border: none; border-radius: var(--radius-md);
+  padding: 11px 18px; font-size: 12.5px; box-shadow: 0 6px 22px rgba(16,38,58,.25);
+  animation: fondfec-ottk-toast .18s ease;
+}
+.fondfec .toast[style] { background: #4A211D; color: #fff !important; border-color: transparent !important; }
+@keyframes fondfec-ottk-toast { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* ---- 12. Calendar popup ---- */
+.fondfec .calendar-pop { width: 250px; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-pop); padding: 10px; }
+.fondfec .cal-head { margin-bottom: 6px; }
+.fondfec .cal-head button {
+  width: 24px; height: 24px; padding: 0; line-height: 1; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: #fff; color: var(--text-muted); transition: background .15s ease, color .15s ease;
+}
+.fondfec .cal-head button:hover { background: var(--primary-tint); color: var(--primary); }
+.fondfec .cal-select { height: 24px; font-size: 12px; font-weight: 700; color: var(--text); border-color: var(--border-strong); border-radius: var(--radius-sm); }
+.fondfec .cal-year { width: 66px; }
+.fondfec .cal-cell { height: 28px; font-size: 11.5px; color: var(--text); }
+.fondfec .cal-day-name { font-size: 10px; font-weight: 700; color: var(--text-faint); }
+.fondfec .cal-date:hover { background: var(--primary-tint); }
+.fondfec .cal-date.today { box-shadow: inset 0 0 0 1px #4FA3E8; }
+.fondfec .cal-date.selected, .fondfec .cal-date.selected:hover { background: var(--primary); color: #fff; }
+.fondfec .cal-date.blank:hover { background: transparent; }
+/* ---- 13. Responsive + reduced motion ---- */
+@media (max-width: 900px) {
+.fondfec .search-wrap { width: 100%; min-width: 0; }
+}
+@media (max-width: 700px) {
+.fondfec .app-header { padding: 4px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+.fondfec tbody tr, .fondfec tbody td, .fondfec button, .fondfec .modal, .fondfec .toast { transition: none; animation: none; }
+.fondfec tbody tr:hover, .fondfec button:active:not(:disabled) { transform: none; }
+}
+/* ===== Standard popup frame + no table grid lines (FX popup standard) — CSS only ===== */
+/* Popup frames: NDF Rate Correction (M), Transaction Details (L). Outcomes use the shared StatusPopup. */
+.fondfec .overlay { background: rgba(16,26,41,.5); padding: 20px; align-items: center; justify-content: center; }
+.fondfec .modal {
+  width: 640px; max-width: calc(100vw - 40px); max-height: 92vh; font-family: "72","Segoe UI",Arial,sans-serif;
+  background: #fff; border: 1px solid #B9C2C9; border-radius: 12px; box-shadow: 0 22px 70px rgba(16,38,58,.3);
+}
+.fondfec .modal.detail-modal { width: 880px; }
+.fondfec .modal-head { height: auto; min-height: 52px; padding: 12px 18px; background: #fff; border-bottom: 1px solid #E6E9EB; }
+.fondfec .modal-title { font-size: 14px; font-weight: 700; color: #1D2D3E; }
+.fondfec .close-btn { width: 28px; height: 28px; border-radius: 4px; color: #687B8D; font-size: 20px; line-height: 1; padding: 0; }
+.fondfec .close-btn:hover { background: #F2F4F5; }
+.fondfec .modal-body { padding: 16px 18px; }
+.fondfec .modal .field label { font-size: 13px; font-weight: 600; color: #475E75; }
+.fondfec .modal .field-control.readonly { font-size: 12.5px; font-weight: 600; color: #1D2D3E; }
+.fondfec .modal .field-error { font-size: 11px; color: #BB0000; }
+/* the MO remark / blocked-reason note under the form: warning-tinted note (hidden when it has nothing to say) */
+.fondfec .modal-body[role="note"]:not(:empty) { margin: 0 18px 16px; padding: 9px 12px !important; font-size: 12px; background: #FFF4CC; border-radius: 8px; }
+.fondfec .modal-foot { min-height: 56px; padding: 12px 18px; background: #fff; border-top: 1px solid #E6E9EB; justify-content: flex-end; gap: 10px; }
+.fondfec .modal-foot button { margin-left: 0; }
+/* Tables: no vertical grid lines, one horizontal #E6E9EB line under the header and each row. */
+.fondfec thead th, .fondfec tbody td { border-right: 0; border-left: 0; border-bottom: 1px solid #E6E9EB; }

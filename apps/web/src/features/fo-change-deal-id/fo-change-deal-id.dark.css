@@ -89,3 +89,228 @@
 :root[data-theme='dark'] .fo-change-deal-id .info-banner.error {
   color: #a9c2dd;
 }
+:root[data-theme='dark'] .fo-change-deal-id {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+  --blue-dark: #7cc0f8;
+  --blue-light: #17304a;
+  --green-bg: #14321f;
+  --orange-bg: #3a2a12;
+  --red-bg: #3a1b1e;
+  --gray-bg: #1b2b3d;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .fo-change-deal-id .header h1 {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .header p {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .btn-danger {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-change-deal-id .btn-danger:hover {
+  background: #3a1b1e;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-change-deal-id .btn-danger:disabled:hover {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-change-deal-id .search-input-wrap input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .search-input-wrap input::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .search-input-wrap input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id .typeahead {
+  border-color: #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id .field label,
+:root[data-theme='dark'] .fo-change-deal-id .form-field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input[type=text],
+:root[data-theme='dark'] .fo-change-deal-id .form-field input[type=number] {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input[readonly] {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .form-field input:disabled {
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .inline-err {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid td {
+  color: #e6eef8;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr.row-selected {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tbody tr.row-selected:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid td.hotspot {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid td.hotspot:hover {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid input.cell-input {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid input.cell-input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tfoot td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-blue {
+  background: #17304a;
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-green {
+  background: #14321f;
+  color: #6eeda3;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-gray {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-red {
+  background: #3a1b1e;
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .pill-orange {
+  background: #3a2a12;
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .info-banner.warn {
+  background: #3a2a12;
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .info-banner.error {
+  background: #3a1b1e;
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-close:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-foot .left-note {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-head {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-head h3 {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-close {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-close:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-body .section-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .form-field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .form-field .static {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .form-field input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .inline-err {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .info-banner {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .info-banner.warn {
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal .info-banner.error {
+  background: #3a1b1e;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-foot {
+  background: #14212f;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-foot .btn:not(.btn-primary):not(.btn-danger) {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-foot .btn-danger {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal-foot .btn-danger:hover {
+  background: #3a1b1e;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-change-deal-id .modal table.grid th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-change-deal-id table.grid tfoot td {
+  border-top: 1px solid #2a3d52;
+}

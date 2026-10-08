@@ -33,3 +33,10 @@
   white-space: nowrap;
   z-index: 80;
 }
+
+/* OTTK theme (see the block at the end of the legacy sheet): the drop hint chip uses the
+ * reference drag-ghost colours. Kept here because this rule must out-rank the one above. */
+.fo-fx-error-correction.row-dragging .drag-target::after {
+  background: #1d2d3e;
+  font-family: var(--font);
+}

@@ -82,3 +82,66 @@
 :root[data-theme='dark'] .fo-early-delivery-unwind-rollover .icon-btn {
   background: #14212f;
 }
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .search-box input {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .page-size-select select {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal.modal-scrollable .modal-head-row {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal-head-row h2 {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal-close-btn {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal-close-btn:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal.modal-scrollable .modal-actions {
+  background: #14212f;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .form-section:not(.cancel) .section-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .control:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .field .error-msg {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .summary-box .label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .summary-box .value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .modal-actions .btn-secondary {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .modal-actions .btn-danger {
+  background: #14212f;
+  color: #ff5c5c;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover .modal .modal-actions .btn-danger:hover {
+  background: #3a1b1e;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover table.pm-table thead th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-early-delivery-unwind-rollover table.pm-table tbody td {
+  border-bottom: 1px solid #2a3d52;
+}

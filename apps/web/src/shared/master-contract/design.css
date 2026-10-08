@@ -1,0 +1,164 @@
+/* Create Master Contract's effective SAP theme, scoped to the other MC screens.
+   Existing event handlers, visibility classes and status mappings stay authoritative. */
+.fx-master-ui {
+ --mc-bg:#F5F7F9; --mc-card:#FFFFFF; --mc-text:#1D2D3E; --mc-muted:#475E75; --mc-faint:#687B8D;
+ --mc-border:#D5DADD; --mc-strong:#8996A1; --mc-primary:#0A6ED1; --mc-primary-dark:#085CAF;
+ --mc-primary-light:#4FA3E8; --mc-primary-tint:#EAF3FC; --mc-success:#107E3E; --mc-success-tint:#E4F5E9;
+ --mc-warning:#E9730C; --mc-pending:#9B6B00; --mc-warning-tint:#FFF4CC; --mc-error:#BB0000;
+ --mc-error-tint:#FCEAEA; --mc-error-border:#F3C6C0; --mc-teal:#0F828C; --mc-teal-tint:#E4F5F5;
+ --mc-purple:#6B3FA0; --mc-purple-tint:#F1EAF8; --mc-gray:#F2F4F5; --mc-row-border:#E6E9EB;
+ --mc-hover:#F7FBFF; --mc-shadow:0 1px 3px rgba(34,53,72,.13); --mc-popup-shadow:0 22px 70px rgba(16,38,58,.3);
+ --mc-font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+ min-width:0; max-width:100%; font-family:var(--mc-font); color:var(--mc-text); font-size:13px;
+}
+.fx-master-ui > :is(.mocmc,.moume,.mormc,.fomcec,.ssdid) { font-family:var(--mc-font) !important; background:var(--mc-bg) !important; color:var(--mc-text) !important; min-width:0; max-width:100%; }
+.fx-master-ui :is(.page-head,.page-header) {
+ display:flex; flex-wrap:wrap; align-items:center; gap:12px !important; padding:4px 2px !important;
+ margin-bottom:12px !important; background:transparent !important; border:none !important; box-shadow:none !important;
+}
+.fx-master-ui :is(.page-title,.page-header h1) { font-size:16px !important; font-weight:700 !important; color:var(--mc-text) !important; margin:0; }
+.fx-master-ui :is(.page-subtitle,.page-header .subtitle) { font-size:15px !important; color:var(--mc-muted) !important; }
+.fx-master-ui :is(.head-icon,.logo-img) { height:40px !important; max-width:120px !important; object-fit:contain; }
+.fx-master-ui :is(.title-wrap,.titles) { flex:1; min-width:180px; }
+.fx-master-ui :is(.head-actions,.header-actions) { margin-left:auto; display:flex; flex-wrap:wrap; gap:10px; }
+.fx-master-ui .metrics-grid:not(.kpi-hidden) { display:flex !important; flex-wrap:wrap; gap:12px !important; }
+.fx-master-ui .metric-card {
+ flex:1 1 180px; min-width:170px; min-height:106px; padding:22px 20px !important;
+ background:var(--mc-card) !important; border:1px solid var(--mc-border) !important;
+ border-left:4px solid var(--mc-primary) !important; border-radius:8px !important; box-shadow:var(--mc-shadow) !important;
+ transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.fx-master-ui .metric-card::before, .fx-master-ui .metric-card::after { display:none !important; }
+.fx-master-ui .metric-inner { display:flex; flex-direction:column; gap:7px; height:100%; }
+.fx-master-ui .metric-val { font-size:30px !important; font-weight:700 !important; line-height:1.15; color:var(--mc-text) !important; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.fx-master-ui .metric-lbl { font-size:12px !important; font-weight:600 !important; color:var(--mc-muted) !important; }
+/* Natural flow keeps long KPI descriptions clear of their values. */
+.fx-master-ui .metric-help { position:static !important; align-self:flex-end; max-width:62%; margin-top:auto; text-align:right; font-size:13px !important; font-weight:500 !important; color:var(--mc-faint) !important; }
+.fx-master-ui .metric-card:hover { transform:translateY(-2px); border-left-color:var(--mc-primary-dark) !important; box-shadow:0 4px 12px rgba(34,53,72,.18) !important; }
+.fx-master-ui .metric-card.active { box-shadow:0 0 0 2px var(--mc-primary-tint),var(--mc-shadow) !important; }
+.fx-master-ui :is(.card,.panel) { background:var(--mc-card) !important; border:1px solid var(--mc-border) !important; border-radius:12px !important; box-shadow:var(--mc-shadow) !important; min-width:0; }
+.fx-master-ui :is(.section-title,.panel-title,.panel-title-left,.kpi-head-title) { font-size:13px !important; font-weight:700 !important; color:var(--mc-primary-dark) !important; }
+.fx-master-ui :is(.table-wrap,.table-scroll,.alv-wrap,.child-table-wrap) { max-width:100%; overflow:auto; }
+.fx-master-ui table { width:100%; border-collapse:collapse; border:none !important; font-variant-numeric:tabular-nums; }
+.fx-master-ui table :is(th,td) { border-left:none !important; border-right:none !important; border-top:none !important; border-bottom:1px solid var(--mc-row-border) !important; white-space:nowrap; }
+.fx-master-ui table th { position:sticky; top:0; z-index:3; padding:8px 10px !important; background:var(--mc-gray) !important; color:var(--mc-muted) !important; font-size:13px !important; font-weight:700 !important; text-transform:uppercase; letter-spacing:.4px; }
+.fx-master-ui table td { padding:8px 10px !important; font-size:14px !important; font-weight:400; color:var(--mc-text); background:var(--mc-card) !important; }
+/* No transforms on wide financial tables: sticky columns retain their alignment. */
+.fx-master-ui table tbody tr { transition:background .15s ease,box-shadow .15s ease; }
+.fx-master-ui table tbody tr:hover { transform:none !important; box-shadow:0 3px 9px rgba(34,53,72,.1); }
+.fx-master-ui table tbody tr:hover td { background:var(--mc-hover) !important; }
+.fx-master-ui table tbody tr:is(.selected,.row-selected,.checked,.row-checked) td { background:var(--mc-primary-tint) !important; }
+.fx-master-ui table td:is(.num,.numeric,.right,.amount,.rate) { text-align:right; font-variant-numeric:tabular-nums; }
+.fx-master-ui table :is(.mc-link,.hotspot,.ref-link,.deal-link) { color:var(--mc-primary-dark) !important; font-weight:700 !important; cursor:pointer; }
+.fx-master-ui table :is(.mc-link,.hotspot,.ref-link,.deal-link):hover { color:var(--mc-primary) !important; text-decoration:underline; }
+.fx-master-ui table .sortable { cursor:pointer; }
+.fx-master-ui table .sortable:hover { color:var(--mc-primary-dark) !important; }
+.fx-master-ui table :is(.arrow,.sort-arrow) { font-size:9px; color:var(--mc-primary); }
+.fx-master-ui :is(.status-text,.status-cell) { font-size:12px !important; font-weight:600 !important; background:none !important; border:none !important; border-radius:0 !important; box-shadow:none !important; padding:0 !important; }
+.fx-master-ui :is(.st-created,.status-created) { color:var(--mc-muted) !important; }
+.fx-master-ui :is(.st-pending,.status-pending,.st-expired,.status-expired) { color:var(--mc-pending) !important; }
+.fx-master-ui :is(.st-inuse,.status-inuse,.status-active) { color:var(--mc-success) !important; }
+.fx-master-ui :is(.st-confirmed,.status-confirmed) { color:var(--mc-primary) !important; }
+.fx-master-ui :is(.st-rejected,.status-rejected,.st-reversed) { color:var(--mc-error) !important; }
+.fx-master-ui :is(.st-errcorr,.status-errcorr) { color:var(--mc-warning) !important; }
+.fx-master-ui :is(.master-toolbar,.toolbar,.filter-bar,.table-toolbar,.filter-panel-body) { flex-wrap:wrap; gap:8px; }
+.fx-master-ui :is(input,select,textarea,button) { font-family:var(--mc-font) !important; }
+.fx-master-ui :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+ font-size:13px !important; color:var(--mc-text) !important; background:var(--mc-card) !important;
+ border:1px solid var(--mc-strong); border-radius:4px !important;
+}
+.fx-master-ui :is(input:not([type=checkbox]):not([type=radio]),select) { height:36px !important; padding:0 11px; }
+.fx-master-ui :is(.master-toolbar,.table-toolbar,.toolbar,.search-box) :is(input:not([type=checkbox]):not([type=radio]),select) { height:32px !important; }
+.fx-master-ui .search-box { min-width:min(200px,100%); height:32px !important; border-color:var(--mc-strong) !important; border-radius:4px !important; background:var(--mc-card) !important; }
+.fx-master-ui .search-box input { min-width:0; }
+.fx-master-ui :is(input,select,textarea):focus-visible { outline:none; border-color:var(--mc-primary) !important; box-shadow:0 0 0 3px var(--mc-primary-tint); }
+.fx-master-ui :is(input,textarea,select):is(.invalid,.error,[aria-invalid=true]) { border-color:var(--mc-error) !important; background:var(--mc-error-tint) !important; }
+.fx-master-ui :is(input,textarea,select):disabled,.fx-master-ui input[readonly] { background:var(--mc-gray) !important; color:var(--mc-faint) !important; }
+.fx-master-ui :is(input,textarea,select):disabled { cursor:not-allowed; }
+.fx-master-ui :is(.field,.form-field,.filter-field) > label { font-size:13px !important; font-weight:600 !important; color:var(--mc-muted) !important; margin-bottom:6px; }
+.fx-master-ui :is(.field-error,.inline-err,.error-text,.req) { font-size:11px !important; color:var(--mc-error) !important; }
+.fx-master-ui :is(input[type=checkbox],input[type=radio]) { accent-color:var(--mc-primary); }
+.fx-master-ui :is(.btn,.btn-outline,.btn-cancel,.btn-confirm,.rowaction-btn,.filter-reset) { height:32px !important; border-radius:4px !important; font-size:13px !important; font-weight:600 !important; padding:0 12px; transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease; }
+.fx-master-ui :is(.btn-secondary,.btn-outline,.btn-cancel,.filter-reset) { background:var(--mc-card) !important; color:var(--mc-text) !important; border:1px solid var(--mc-strong) !important; }
+.fx-master-ui :is(.btn-primary,.btn-confirm:not(.is-reject),.rowaction-btn.primary) { background:var(--mc-primary) !important; color:#fff !important; border:1px solid transparent !important; }
+.fx-master-ui :is(.btn-primary,.btn-confirm:not(.is-reject),.rowaction-btn.primary):hover:not(:disabled) { background:var(--mc-primary-dark) !important; }
+.fx-master-ui :is(.btn-danger,.btn-confirm.is-reject,.rowaction-btn.danger) { background:var(--mc-card) !important; color:var(--mc-error) !important; border:1px solid var(--mc-error-border) !important; }
+.fx-master-ui :is(.btn-danger,.btn-confirm.is-reject,.rowaction-btn.danger):hover:not(:disabled) { background:var(--mc-error-tint) !important; }
+.fx-master-ui :is(.btn,.btn-outline,.btn-cancel,.btn-confirm,.rowaction-btn):active:not(:disabled) { transform:translateY(1px); }
+.fx-master-ui button:disabled { opacity:.45; cursor:not-allowed; }
+.fx-master-ui button:focus-visible { outline:2px solid var(--mc-primary); outline-offset:2px; }
+.fx-master-ui :is(.pager-btn,.pagination button) { min-width:28px; min-height:28px; border:1px solid var(--mc-strong); border-radius:4px; font-size:11.5px !important; background:var(--mc-card); color:var(--mc-text); }
+.fx-master-ui :is(.pager-btn,.pagination button).active { background:var(--mc-primary) !important; color:#fff !important; }
+.fx-master-ui :is(.pager,.pagination,.table-footer) { font-size:11.5px; gap:4px; flex-wrap:wrap; }
+.fx-master-ui :is(.overlay,.modal-overlay) { background:rgba(16,26,41,.5) !important; padding:20px !important; }
+.fx-master-ui :is(.modal,.modal-card) { background:var(--mc-card) !important; border:1px solid var(--mc-strong) !important; border-radius:12px !important; box-shadow:var(--mc-popup-shadow) !important; max-width:calc(100vw - 40px) !important; max-height:92vh !important; display:flex; flex-direction:column; overflow:hidden; }
+.fx-master-ui :is(.modal-lg,.modal-large) { width:720px; }
+.fx-master-ui :is(.modal-header,.modal-head) { flex:none; padding:14px 20px !important; background:var(--mc-card) !important; border-bottom:1px solid var(--mc-row-border) !important; }
+.fx-master-ui :is(.modal-title,.modal-header h2,.modal-header h3,.modal-head h3) { font-size:14px !important; font-weight:700 !important; color:var(--mc-text) !important; }
+.fx-master-ui .modal-subtitle { font-size:12.5px !important; color:var(--mc-muted) !important; }
+.fx-master-ui .modal-body { flex:1 1 auto; min-height:0; overflow:auto; padding:20px !important; background:var(--mc-card) !important; font-size:12.5px; }
+.fx-master-ui :is(.modal-footer,.modal-foot) { flex:none; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; padding:12px 20px !important; background:var(--mc-card) !important; border-top:1px solid var(--mc-row-border) !important; }
+.fx-master-ui :is(.detail-grid,.details-grid) { gap:8px 18px !important; }
+.fx-master-ui :is(.detail-lbl,.dl,.detail-label) { font-size:10.5px !important; font-weight:600; color:var(--mc-muted) !important; }
+.fx-master-ui :is(.detail-val,.dv,.detail-value) { font-size:12.5px !important; font-weight:600; color:var(--mc-text) !important; overflow-wrap:anywhere; }
+.fx-master-ui :is(.detail-section h4,.modal-body .section-title) { font-size:11px !important; text-transform:uppercase; color:var(--mc-primary-dark) !important; }
+.fx-master-ui :is(.calendar-pop,.dp-popup,.cal-popup) { width:250px !important; max-width:calc(100vw - 40px); padding:10px !important; border:1px solid var(--mc-border) !important; border-radius:8px !important; background:var(--mc-card) !important; box-shadow:var(--mc-popup-shadow); }
+.fx-master-ui :is(.cal-title,.dp-month-label) { font-size:12px !important; font-weight:700; color:var(--mc-text); }
+.fx-master-ui :is(.cal-dow,.dp-dow) { font-size:10px !important; font-weight:700; color:var(--mc-muted); }
+.fx-master-ui :is(.cal-day,.dp-day) { font-size:11.5px !important; }
+.fx-master-ui :is(.cal-nav,.dp-head button) { width:24px; height:24px; }
+.fx-master-ui :is(.cal-day,.dp-day).selected { background:var(--mc-primary) !important; color:#fff !important; }
+.fx-master-ui :is(.sdd-pop,.dropdown-panel) { min-width:min(200px,100%); max-width:calc(100vw - 40px); max-height:240px; overflow:auto; padding:6px; border:1px solid var(--mc-border); border-radius:8px; background:var(--mc-card); box-shadow:var(--mc-popup-shadow); }
+.fx-master-ui .sdd-opt { padding:8px 10px; font-size:13px; font-weight:600; color:var(--mc-text); }
+.fx-master-ui .sdd-opt:hover { background:var(--mc-primary-tint); }
+.fx-master-ui .sdd-sub { font-size:11px; color:var(--mc-muted); }
+.fx-master-ui :is(.drag-over,.expiry-drag-over) { border-color:var(--mc-primary) !important; background:var(--mc-primary-tint) !important; color:var(--mc-primary) !important; box-shadow:0 0 0 2px rgba(10,110,209,.12) !important; }
+.fx-master-ui :is(.dragging,.dragging-row) td { opacity:.5; cursor:grabbing; }
+.fx-master-ui .success-banner { background:var(--mc-success-tint); color:var(--mc-success); border:1px solid #C5E0CD; padding:9px 14px; border-radius:8px; font-size:12px; }
+.mc-confirmation { position:relative; }
+.mc-confirm-close { position:absolute; top:8px; right:10px; border:none; background:transparent; color:var(--sp-muted); font-size:20px; cursor:pointer; }
+.mc-confirm-fields { margin:0; padding:0; border:none; min-width:0; }
+.mc-confirm-fields .detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 18px; }
+.mc-confirm-fields .detail-lbl { font-size:10.5px; color:var(--sp-muted); }
+.mc-confirm-fields .detail-val { font-size:12.5px; font-weight:600; overflow-wrap:anywhere; }
+.mc-confirm-fields .note { margin:12px 0; }
+:root[data-theme='dark'] .fx-master-ui {
+ --mc-bg:#0F1823; --mc-card:#18222E; --mc-text:#E6EDF3; --mc-muted:#A9B7C6; --mc-faint:#8394A6;
+ --mc-border:#2C3A4A; --mc-row-border:#2C3A4A; --mc-strong:#4A5B6E; --mc-primary:#3D95F0;
+ --mc-primary-dark:#7DB8F7; --mc-primary-tint:#16304D; --mc-gray:#111A24; --mc-hover:#1C3046;
+ --mc-success:#4CC27E; --mc-success-tint:#12331F; --mc-error:#FF6B6B; --mc-error-tint:#3A1A1A; --mc-error-border:#6B2C2C;
+ --mc-pending:#F0B13D; --mc-warning:#F0B13D; --mc-warning-tint:#3A2E10; --mc-teal:#4DC9CE; --mc-purple:#B69CF0;
+}
+@media(max-width:900px) { .fx-master-ui .metric-card { flex-basis:220px; } }
+@media(max-width:700px) { .fx-master-ui :is(.detail-grid,.details-grid,.form-grid) { grid-template-columns:1fr !important; } }
+@media(max-width:460px) { .fx-master-ui .metric-card { min-width:0; flex-basis:100%; } .fx-master-ui :is(.head-actions,.header-actions) { width:100%; } .mc-confirm-fields .detail-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce) { .fx-master-ui *, .mc-confirmation { animation:none !important; transition:none !important; } .fx-master-ui .metric-card:hover { transform:none; } }
+
+/* Distinguish statuses by their existing SAP meaning, without changing stored codes. */
+.fx-master-ui .ssdid .status-cell[data-status='01'], .fx-master-ui .status-draft { color:var(--mc-muted) !important; }
+.fx-master-ui .ssdid .status-cell[data-status='09'] { color:var(--mc-pending) !important; }
+.fx-master-ui .ssdid .status-cell[data-status='21'] { color:var(--mc-error) !important; }
+.fx-master-ui .status-settled { color:var(--mc-teal) !important; }
+.fx-master-ui .status-matured { color:var(--mc-purple) !important; }
+.fx-master-ui .mormc .status-pending { color:var(--mc-warning) !important; }
+.fx-master-ui :is(.cal-day,.dp-day):not(.selected):not(.muted):hover { background:var(--mc-primary-tint) !important; }
+.fx-master-ui :is(.cal-day,.dp-day).today:not(.selected) { box-shadow:inset 0 0 0 1px var(--mc-primary-light); }
+.mc-confirm-fields :is(textarea,input)[aria-invalid='true'] { border-color:var(--sp-error); background:var(--sp-error-tint); }
+.mc-drag-ghost { position:fixed; top:-1000px; left:-1000px; padding:6px 10px; background:#1D2D3E; color:#fff; border-radius:4px; font:600 12px "72","Segoe UI",Arial,sans-serif; white-space:nowrap; pointer-events:none; }
+.fx-master-ui .drag-ghost { background:var(--mc-text); color:var(--mc-card); font-family:var(--mc-font); font-size:12px; }
+
+/* The correction form uses a scroll body and action bar of its own. */
+.fx-master-ui .fomcec #correctionModal .correction-modal { max-height:97vh !important; border-radius:12px !important; background:var(--mc-card) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-head-row { flex:none; background:var(--mc-card) !important; border-bottom:1px solid var(--mc-row-border) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-head-row h2 { font-size:14px !important; color:var(--mc-text) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-head-row .mh-sub { font-size:12.5px !important; color:var(--mc-muted) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-body-scroll { flex:1 1 auto; min-height:0; overflow:auto; background:var(--mc-card) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-actions { flex:none; background:var(--mc-card) !important; border-top:1px solid var(--mc-row-border) !important; }
+.fx-master-ui .fomcec #correctionModal .modal-actions .btn { height:32px !important; font-size:13px !important; }
+.fx-master-ui .fomcec .field.invalid :is(input,select,textarea), .fx-master-ui .fomcec .field.has-error :is(input,select,textarea) { border-color:var(--mc-error) !important; background:var(--mc-error-tint) !important; }
+.fx-master-ui .fomcec .error-msg { color:var(--mc-error); font-size:11px; }
+.fx-master-ui .status-text-correction { color:var(--mc-warning) !important; }
+.fx-master-ui .status-text-resubmitted { color:var(--mc-pending) !important; }
+.fx-master-ui .status-text-reversed { color:var(--mc-error) !important; }
+.fx-master-ui .metric-card[role='button'] { cursor:pointer; }
+.fx-master-ui .metric-card:focus-visible { outline:2px solid var(--mc-primary); outline-offset:2px; }

@@ -4,6 +4,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CalendarField } from './CalendarField.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable, loadTxnStatusTexts } from '../../shared/fx/ndf.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import {
   loadCompanies,
   loadFixingReferences,
@@ -65,6 +66,7 @@ export default function TsfNdfFixing() {
   const [saving, setSaving] = useState(false)
 
   const draggingId = useRef<string | null>(null)
+  const status = useStatusPopup()
 
   /* 9001's lookups and the company value help, once. */
   useEffect(() => {
@@ -192,7 +194,12 @@ export default function TsfNdfFixing() {
     setSaving(true)
     void fixNdf({ bukrs: deal.company, rfha: deal.id, etag: deal.etag }, fix, TXN.FIXED, foRemarksText)
       .then((res) => {
-        showToast(res.ok ? 'success' : 'error', res.message)
+        // The SAP outcome as the standard popup (was a toast); same text, same follow-up as before.
+        status.show(
+          res.ok
+            ? { tone: 'success', title: 'NDF Fixing Saved', message: res.message, refLabel: 'Transaction No', refValue: deal.id }
+            : { tone: 'error', title: 'NDF Fixing Failed', message: res.message },
+        )
         if (res.ok) {
           setSelected(new Set())
           closeModal()
@@ -481,6 +488,8 @@ export default function TsfNdfFixing() {
       <ViewTxnModal open={openModal === 'viewTxn'} deal={modalDeal} onClose={closeModal} />
 
       <RefreshModal open={openModal === 'refresh'} onClose={closeModal} />
+
+      {status.element}
     </div>
   )
 }

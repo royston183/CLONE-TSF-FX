@@ -1,3 +1,4 @@
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -47,7 +48,6 @@ import type {
   MasterContract,
   Sort,
   SortField,
-  Toast,
 } from './types.ts'
 
 const BRAND_LOGO =
@@ -100,14 +100,10 @@ export default function FoCreateMasterContract() {
   const [detailMc, setDetailMc] = useState<number | null>(null)
   const [childMc, setChildMc] = useState<number | null>(null)
 
-  // Toast
-  const [toast, setToast] = useState<Toast | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const status = useStatusPopup()
   const showToast = useCallback((message: string, error: boolean) => {
-    clearTimeout(toastTimer.current)
-    setToast({ message, error, id: Date.now() })
-    toastTimer.current = setTimeout(() => setToast(null), 3200)
-  }, [])
+    status.show({ tone: error ? 'error' : 'success', title: error ? 'Action Failed' : 'Action Completed', message })
+  }, [status.show])
 
   // Drag and drop
   const rootRef = useRef<HTMLDivElement>(null)
@@ -116,7 +112,6 @@ export default function FoCreateMasterContract() {
 
   useEffect(
     () => () => {
-      clearTimeout(toastTimer.current)
       clearTimeout(formResetTimer.current)
     },
     [],
@@ -682,7 +677,7 @@ export default function FoCreateMasterContract() {
         items={childParent ? (childStore.byMc[String(childParent.mcNumber)] ?? []) : []}
       />
 
-      <div className={`toast${toast ? ' show' : ''}${toast?.error ? ' error' : ''}`}>{toast?.message}</div>
+      {status.element}
     </div>
   )
 }

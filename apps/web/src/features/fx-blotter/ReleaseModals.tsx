@@ -28,7 +28,7 @@ export function AssignModal({
   const tt = row ? txnTypeOf(row.txnType) : null
   return (
     <Overlay id="assign" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 640 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Assign to Existing Deal ID"
           subtitle={row ? `${row.transactionNumber} – ${row.txnType} ${row.curr1}/${row.curr2}` : ''}
@@ -147,7 +147,7 @@ export function McAssignModal({
   const d1 = legs[0]
   return (
     <Overlay id="mc" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 760 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Master Contract Assignment & New Deal ID"
           subtitle={legs.map((r) => r.transactionNumber).join(' + ')}
@@ -291,7 +291,7 @@ export function ShortStraddleModal({
   const close = () => modals.close('ss')
   return (
     <Overlay id="ss" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 640 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Short Straddle Release"
           subtitle={legs.map((r) => r.transactionNumber).join(' + ')}

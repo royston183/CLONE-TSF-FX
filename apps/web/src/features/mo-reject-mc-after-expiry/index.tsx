@@ -1,3 +1,4 @@
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -105,6 +106,12 @@ export default function MoRejectMcAfterExpiry() {
   const [pendingIds, setPendingIds] = useState<string[]>([])
   const [detailsMc, setDetailsMc] = useState<string | null>(null)
 
+<<<<<<< HEAD
+  const feedback = useMasterContractFeedback()
+  const showToast = useCallback((message: string, error = false) => {
+    feedback.show(message, error ? 'error' : 'success')
+  }, [feedback.show])
+=======
   // Outcomes show as the standard ResultDialog queue; each stays until OK.
   const [outcomes, setOutcomes] = useState<ResultItem[]>([])
   const nextToastId = useRef(1)
@@ -115,6 +122,7 @@ export default function MoRejectMcAfterExpiry() {
     const id = nextToastId.current++
     setOutcomes((list) => [...list, { id, tone: error ? 'error' : 'success', title: error ? 'Error' : 'Success', message }])
   }, [])
+>>>>>>> origin/main
 
   // The value helps load once; View Contracts waits for them, since the rows are mapped with them.
   useEffect(() => {
@@ -330,6 +338,10 @@ export default function MoRejectMcAfterExpiry() {
   escapeRef.current = () => {
     cancelConfirm()
     detailsModal.close()
+    dragState.current = null
+    setDraggingId(null)
+    setHoverId(null)
+    setRejectDragOver(false)
   }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -665,7 +677,12 @@ export default function MoRejectMcAfterExpiry() {
 
       <DetailsModal modal={detailsModal} contract={detailsMc === null ? undefined : byNumber.get(detailsMc)} onClose={detailsModal.close} />
 
+<<<<<<< HEAD
+      {/* TOASTS */}
+      <div id="toastWrap">{feedback.element}</div>
+=======
       <ResultQueue items={outcomes} onDismiss={dismissToast} />
+>>>>>>> origin/main
     </div>
   )
 }

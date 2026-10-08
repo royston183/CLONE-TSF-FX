@@ -1,3 +1,4 @@
+import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -34,7 +35,10 @@ import './mo-update-mc-expiry.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-update-mc-expiry.dark.css'
+<<<<<<< HEAD
+=======
 import './mo-update-mc-expiry.overrides.css'
+>>>>>>> origin/main
 import type { ExpiryConfirm, MasterContract, PostingMode, Sort, SortField } from './types.ts'
 
 const BRAND_LOGO =
@@ -94,6 +98,12 @@ export default function MoUpdateMcExpiry() {
   const [confirm, setConfirm] = useState<ExpiryConfirm | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
 
+<<<<<<< HEAD
+  const feedback = useMasterContractFeedback()
+  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
+    feedback.show(message, tone)
+  }, [feedback.show])
+=======
   // Outcomes show as the standard ResultDialog queue; each stays until OK.
   const [outcomes, setOutcomes] = useState<ResultItem[]>([])
   const toastSeq = useRef(0)
@@ -105,6 +115,7 @@ export default function MoUpdateMcExpiry() {
     const title = tone === 'error' ? 'Error' : tone === 'warning' ? 'Warning' : tone === 'info' ? 'Information' : 'Success'
     setOutcomes((list) => [...list, { id, tone, title, message }])
   }, [])
+>>>>>>> origin/main
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const loaded = await loadContracts(signal)
@@ -241,7 +252,7 @@ export default function MoUpdateMcExpiry() {
     }
     setContracts((list) => expireContracts(list, ids))
     updateSelected(NO_SELECTION)
-    showToast(expiredToast(ids))
+    showToast(expiredToast(ids), 'success')
   }
 
   // ------------------------------------------------------------------ details
@@ -257,6 +268,10 @@ export default function MoUpdateMcExpiry() {
     cancelConfirm()
     detailModal.close()
     setCalendarOpen(false)
+    dragRef.current = null
+    setDraggingId(null)
+    setHoverId(null)
+    setExpiryDragOver(false)
   }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -583,7 +598,7 @@ export default function MoUpdateMcExpiry() {
         </div>
       </div>
 
-      <ConfirmExpiryModal modal={confirmModal} confirm={confirm} onCancel={cancelConfirm} onExpire={() => void onExpire()} />
+      <ConfirmExpiryModal modal={confirmModal} confirm={confirm} onCancel={cancelConfirm} onExpire={onExpire} />
 
       <ContractDetailModal
         modal={detailModal}
@@ -591,7 +606,11 @@ export default function MoUpdateMcExpiry() {
         keyDate={keyDate}
       />
 
+<<<<<<< HEAD
+      <div id="toastWrap">{feedback.element}</div>
+=======
       <ResultQueue items={outcomes} onDismiss={dismissToast} />
+>>>>>>> origin/main
     </div>
   )
 }

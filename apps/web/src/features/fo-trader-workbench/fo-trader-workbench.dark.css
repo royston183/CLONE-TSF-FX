@@ -204,3 +204,96 @@
 :root[data-theme='dark'] .fo-trader-workbench .cal-sel {
   background: #14212f;
 }
+:root[data-theme='dark'] .fo-trader-workbench table.mc-table tbody tr.selected:hover td.pin {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-trader-workbench .grid-wrap {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-head-row {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-head-row h2 {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-sub {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-close-btn {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-close-btn:hover {
+  background: #1b2b3d;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-body-scroll {
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions {
+  border-top: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal.modal-scrollable .modal-actions .btn-secondary {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .detail-section-title,
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .pf-block-title {
+  color: #63aef8;
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .sub-title {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .sub-title .count {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .detail-item .detail-label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .detail-item .detail-value,
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .deal-summary .ds-value {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .control:focus,
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .dd-input:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .field .error-msg {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .inline-msg.error {
+  background: #3a1b1e;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .inline-msg.info {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal .deal-summary {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal table.grid thead th,
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal table.popup-table thead th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal table.grid td,
+:root[data-theme='dark'] .fo-trader-workbench .modal-overlay .modal table.popup-table td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-trader-workbench table.mc-table thead th,
+:root[data-theme='dark'] .fo-trader-workbench table.grid thead th,
+:root[data-theme='dark'] .fo-trader-workbench table.popup-table thead th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-trader-workbench table.mc-table tbody td,
+:root[data-theme='dark'] .fo-trader-workbench table.grid td,
+:root[data-theme='dark'] .fo-trader-workbench table.popup-table td {
+  border-bottom: 1px solid #2a3d52;
+}

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { FO_REMARK_MAX } from '../../shared/fx/ndf.ts'
+import { StatusPopup } from '../../shared/popup/Popup.tsx'
 import { money, rate } from './format.ts'
 import { calcCashSettlement, type Tcurf } from './logic.ts'
 import type { NdfDeal } from './types.ts'
@@ -228,7 +229,7 @@ export function ViewTxnModal({ open, deal, onClose }: { open: boolean; deal: Ndf
           </div>
         </div>
         <div className="modal-foot">
-          <button className="btn primary" onClick={onClose}>
+          <button className="btn ghost" onClick={onClose}>
             Close
           </button>
         </div>
@@ -237,27 +238,16 @@ export function ViewTxnModal({ open, deal, onClose }: { open: boolean; deal: Ndf
   )
 }
 
+/** "Refresh": the standard success popup (same text, one "OK"). */
 export function RefreshModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Overlay show={open} onBackdrop={onClose}>
-      <div className="modal small">
-        <div className="modal-head">
-          <h2>Refresh</h2>
-          <button className="x" onClick={onClose}>
-            ×
-          </button>
-        </div>
-        <div className="modal-body" style={{ textAlign: 'center', padding: '28px 26px' }}>
-          <div style={{ fontSize: 32, color: '#188918', marginBottom: 10 }}>✓</div>
-          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 7 }}>Screen refreshed successfully</div>
-          <div className="note">The NDF deals were reloaded from SAP; search, filters, sorting and row selection have been reset.</div>
-        </div>
-        <div className="modal-foot">
-          <button className="btn primary" onClick={onClose}>
-            OK
-          </button>
-        </div>
-      </div>
-    </Overlay>
+    <StatusPopup
+      open={open}
+      tone="success"
+      title="Screen refreshed successfully"
+      message="The NDF deals were reloaded from SAP; search, filters, sorting and row selection have been reset."
+      actions={[{ label: 'OK', onClick: onClose, variant: 'secondary', autoFocus: true }]}
+      onClose={onClose}
+    />
   )
 }

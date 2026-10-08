@@ -62,7 +62,7 @@ export function AutoDealModal({
 
   return (
     <Overlay id="auto" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 900 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Auto Deal Creation"
           subtitle="Master Contract driven two-leg FX creation (Screen 9006 reference)"

@@ -692,3 +692,395 @@
 .fx-blotter main {padding:0 10px 14px!important}
 .fx-blotter .sap-actionbar {margin:8px 10px!important}
 }
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* Appended last. The passes above pin most rules with #ids and !important, so a rule here
+   restates the same (or a slightly stronger) selector and only carries !important where the
+   rule it replaces already does; otherwise it could never take effect. Nothing in the
+   markup or behaviour changes. */
+/* ---- 1. Tokens (incl. this sheet's own alias / --modern-* names) ---- */
+.fx-blotter {
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+  --modern-primary:#0A6ED1;
+  --modern-primary-dark:#085CAF;
+  --modern-primary-soft:#EAF3FC;
+  --modern-ink:#1D2D3E;
+  --modern-muted:#475E75;
+  --modern-line:#D5DADD;
+  --modern-bg:#F5F7F9;
+  --modern-card:#FFFFFF;
+  --modern-radius:12px;
+  --modern-radius-sm:8px;
+  --modern-shadow:0 1px 3px rgba(34,53,72,.13);
+}
+.fx-blotter {font-family:var(--font);font-size:13px!important;color:var(--text)!important;background:var(--bg)!important;}
+.fx-blotter main {background:var(--bg)!important;}
+.fx-blotter ::-webkit-scrollbar-thumb {background:#B7C2CB;}
+/* ---- 2. Page header: flush on the page background ---- */
+.fx-blotter .app-ref-header {
+  background:transparent!important;border:none!important;box-shadow:none;border-radius:0;
+  min-height:0!important;padding:4px 2px!important;margin:10px 16px 12px;gap:12px;
+}
+.fx-blotter .head-left {gap:12px;}
+.fx-blotter .brand-logo {height:40px;width:auto!important;max-width:120px;object-fit:contain;}
+.fx-blotter .page-title {font-size:16px!important;font-weight:700;color:var(--text)!important;letter-spacing:0;}
+.fx-blotter .page-code {font-size:12px!important;font-weight:600;color:var(--text-faint)!important;}
+.fx-blotter .page-subtitle {font-size:15px;color:var(--text-muted);}
+/* ---- 3. Buttons ---- */
+.fx-blotter .nav-back, .fx-blotter .head-actions .tb-btn,
+.fx-blotter .sap-actionbar .tb-btn, .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn,
+.fx-blotter #fx-blotter-panel .context-row>.tb-btn, .fx-blotter .tb-btn,
+.fx-blotter .btn-cancel, .fx-blotter .btn-confirm {
+  height:32px!important;min-height:32px!important;padding:0 12px!important;border-radius:4px!important;
+  font-size:13px!important;font-weight:600!important;gap:6px;
+  display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease,box-shadow .15s ease,transform .1s ease;
+}
+/* secondary */
+.fx-blotter .nav-back, .fx-blotter .head-actions .tb-btn,
+.fx-blotter .sap-actionbar .tb-btn, .fx-blotter .sap-actionbar .tb-btn.warn, .fx-blotter .sap-actionbar .tb-btn.purple,
+.fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn, .fx-blotter .tb-btn, .fx-blotter .btn-cancel {
+  background:#fff!important;color:var(--text)!important;border:1px solid var(--border-strong)!important;box-shadow:none!important;
+}
+.fx-blotter .nav-back:hover, .fx-blotter .head-actions .tb-btn:hover:not(:disabled),
+.fx-blotter .sap-actionbar .tb-btn:hover:not(:disabled), .fx-blotter .sap-actionbar .tb-btn.warn:hover:not(:disabled),
+.fx-blotter .sap-actionbar .tb-btn.purple:hover:not(:disabled),
+.fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn:hover:not(:disabled), .fx-blotter .tb-btn:hover:not(:disabled), .fx-blotter .btn-cancel:hover {
+  background:#fff!important;border-color:var(--primary)!important;color:var(--primary)!important;box-shadow:0 1px 4px rgba(34,53,72,.1)!important;
+}
+/* primary */
+.fx-blotter .sap-actionbar .tb-btn.primary, .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.primary,
+.fx-blotter #fx-blotter-panel .context-row>.tb-btn, .fx-blotter .tb-btn.primary, .fx-blotter .btn-confirm {
+  background:var(--primary)!important;border:1px solid var(--primary)!important;color:#fff!important;box-shadow:none!important;
+}
+.fx-blotter .sap-actionbar .tb-btn.primary:hover:not(:disabled), .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.primary:hover:not(:disabled),
+.fx-blotter #fx-blotter-panel .context-row>.tb-btn:hover:not(:disabled), .fx-blotter .tb-btn.primary:hover:not(:disabled), .fx-blotter .btn-confirm:hover:not(:disabled) {
+  background:var(--primary-dark)!important;border-color:var(--primary-dark)!important;color:#fff!important;box-shadow:0 2px 6px rgba(10,110,209,.22)!important;
+}
+/* danger: Delete / Reverse / Reject, and the two "Release to MO" (send to M.O.) buttons */
+.fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.danger, .fx-blotter .tb-btn.danger,
+.fx-blotter .sap-actionbar #btn-release, .fx-blotter .sap-actionbar #btn-ss, .fx-blotter .btn-confirm.is-reject {
+  background:#fff!important;color:var(--error)!important;border:1px solid #F3C6C0!important;box-shadow:none!important;
+}
+.fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.danger:hover:not(:disabled), .fx-blotter .tb-btn.danger:hover:not(:disabled),
+.fx-blotter .sap-actionbar #btn-release:hover:not(:disabled), .fx-blotter .sap-actionbar #btn-ss:hover:not(:disabled),
+.fx-blotter .btn-confirm.is-reject:hover:not(:disabled) {
+  background:var(--error-tint)!important;color:var(--error)!important;border-color:#F3C6C0!important;
+}
+.fx-blotter .tb-btn:active:not(:disabled), .fx-blotter .btn-cancel:active, .fx-blotter .btn-confirm:active:not(:disabled), .fx-blotter .nav-back:active {transform:translateY(1px);}
+.fx-blotter .tb-btn:disabled, .fx-blotter .sap-actionbar .tb-btn:disabled, .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn:disabled, .fx-blotter .btn-confirm:disabled {opacity:.45!important;cursor:not-allowed!important;}
+/* drag a row onto an action: the armed targets get the reference .drag-over look */
+.fx-blotter .sap-actionbar .tb-btn.drag-armed, .fx-blotter .sap-actionbar .tb-btn.primary.drag-armed,
+.fx-blotter .sap-actionbar #btn-release.drag-armed, .fx-blotter .sap-actionbar #btn-ss.drag-armed {
+  border-color:var(--primary)!important;background:var(--primary-tint)!important;color:var(--primary)!important;
+  box-shadow:0 0 0 2px rgba(10,110,209,.12)!important;
+}
+.fx-blotter #fx-table tbody tr.dragging {opacity:.5;}
+/* ---- 4. Action strip + panel (cards) ---- */
+.fx-blotter .sap-actionbar {
+  background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--radius-lg)!important;
+  box-shadow:var(--shadow-card)!important;padding:10px 12px!important;gap:8px!important;margin:0 16px 12px!important;
+}
+.fx-blotter .sap-actionbar .tb-sep {height:22px!important;background:var(--border)!important;}
+.fx-blotter #fx-blotter-panel {
+  background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--radius-lg)!important;
+  box-shadow:var(--shadow-card)!important;
+}
+.fx-blotter #fx-blotter-panel:hover {border-color:var(--border)!important;box-shadow:var(--shadow-card)!important;}
+.fx-blotter #fx-blotter-panel .panel-title {padding:10px 16px!important;min-height:0!important;border-bottom:1px solid var(--border)!important;}
+.fx-blotter #fx-blotter-panel .fwd-panel-heading {font-size:13px!important;font-weight:700!important;color:var(--primary-dark)!important;letter-spacing:.3px!important;}
+/* ---- 5. Context row + popup forms: inputs ---- */
+.fx-blotter #fx-blotter-panel .context-row {padding:12px 16px!important;gap:10px 14px!important;background:#fff!important;border-bottom:1px solid var(--border)!important;}
+.fx-blotter #fx-blotter-panel .context-field {gap:6px!important;}
+.fx-blotter #fx-blotter-panel .context-field label, .fx-blotter .form-field label, .fx-blotter .auto-field-label {
+  font-size:13px!important;font-weight:600!important;color:var(--text-muted)!important;text-transform:none!important;letter-spacing:0!important;line-height:1.2;
+}
+.fx-blotter #fx-blotter-panel .context-field input, .fx-blotter #fx-blotter-panel .context-field select,
+.fx-blotter .form-field input:not([type=checkbox]):not([type=radio]), .fx-blotter .form-field select, .fx-blotter .auto-control, .fx-blotter .upload-file-row input[type=file] {
+  height:36px!important;padding:0 11px!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background-color:#fff!important;color:var(--text)!important;font-size:13px!important;font-weight:400!important;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.fx-blotter .upload-file-row input[type=file] {padding:6px 11px!important;}
+.fx-blotter .form-field textarea {
+  padding:8px 11px;border:1px solid var(--border-strong);border-radius:4px;background:#fff;color:var(--text);font-size:13px;
+  transition:border-color .15s,box-shadow .15s;
+}
+.fx-blotter #fx-blotter-panel .context-field input:hover, .fx-blotter #fx-blotter-panel .context-field select:hover,
+.fx-blotter .form-field input:hover, .fx-blotter .form-field select:hover, .fx-blotter .form-field textarea:hover, .fx-blotter .auto-control:hover {border-color:#A6B0B9!important;}
+.fx-blotter #fx-blotter-panel .context-field input:focus, .fx-blotter #fx-blotter-panel .context-field select:focus,
+.fx-blotter .form-field input:focus, .fx-blotter .form-field select:focus, .fx-blotter .form-field textarea:focus, .fx-blotter .auto-control:focus {
+  border-color:var(--primary)!important;box-shadow:0 0 0 3px var(--primary-tint)!important;
+}
+.fx-blotter .form-field input::placeholder, .fx-blotter .form-field textarea::placeholder, .fx-blotter .search-box input::placeholder {color:var(--text-faint);}
+.fx-blotter .auto-control[readonly], .fx-blotter .auto-control:disabled, .fx-blotter .auto-control.auto-locked, .fx-blotter .auto-readonly-value {
+  background:var(--gray-tint)!important;color:var(--text-muted)!important;border-color:var(--border)!important;
+}
+.fx-blotter .auto-control:disabled, .fx-blotter .auto-control.auto-locked {color:var(--text-faint)!important;cursor:not-allowed!important;}
+.fx-blotter .auto-readonly-value {height:36px;padding:0 11px;border-radius:4px;font-size:13px;}
+.fx-blotter .context-lock-note {font-size:12px!important;font-weight:500!important;color:var(--text-muted)!important;}
+.fx-blotter .field-error {border-color:var(--error)!important;background-color:var(--error-tint)!important;box-shadow:none!important;}
+/* ---- 6. Toolbar: search, status segments, counters ---- */
+.fx-blotter #fx-blotter-panel .master-toolbar {padding:12px 16px 10px!important;gap:8px!important;background:#fff!important;border-bottom:0!important;}
+.fx-blotter #fx-blotter-panel .toolbar-row2 {padding:0 16px 10px!important;gap:8px!important;background:#fff!important;border-bottom:1px solid var(--border)!important;}
+.fx-blotter #fx-blotter-panel .search-box {flex:1 1 260px;min-width:200px;max-width:340px!important;}
+.fx-blotter .search-box .icon {left:9px;color:var(--text-faint);}
+.fx-blotter #fx-blotter-panel .search-box input {
+  height:32px!important;padding:0 12px 0 30px!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background:#fff!important;color:var(--text)!important;font-size:13px!important;font-weight:400!important;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.fx-blotter #fx-blotter-panel .search-box input:focus {border-color:var(--primary)!important;box-shadow:0 0 0 3px var(--primary-tint)!important;}
+.fx-blotter #fx-blotter-panel .seg-group {
+  height:32px!important;padding:0!important;gap:0!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background:#fff!important;overflow:hidden!important;
+}
+.fx-blotter #fx-blotter-panel .seg {
+  height:30px!important;padding:0 11px!important;border:0!important;border-right:1px solid var(--border-strong)!important;border-radius:0!important;
+  background:#fff!important;color:var(--text)!important;font-size:12px!important;font-weight:600!important;box-shadow:none!important;
+  transition:background .15s ease,color .15s ease;
+}
+.fx-blotter #fx-blotter-panel .seg:last-child {border-right:0!important;}
+.fx-blotter #fx-blotter-panel .seg:hover:not(.active) {background:var(--primary-tint)!important;color:var(--primary-dark)!important;}
+.fx-blotter #fx-blotter-panel .seg.active {background:var(--primary)!important;color:#fff!important;box-shadow:none!important;}
+.fx-blotter #fx-blotter-panel .selected-count {font-size:11.5px!important;font-weight:600!important;color:var(--text-muted)!important;}
+.fx-blotter #fx-blotter-panel #result-count-badge {
+  min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+  color:var(--text-muted)!important;font-size:11.5px!important;font-weight:500!important;white-space:nowrap;
+}
+/* ---- 7. Grid (#fx-table). It has pinned columns, so the row hover is background-only. ---- */
+.fx-blotter #fx-blotter-panel .table-wrap {background:#fff!important;border:0!important;}
+.fx-blotter #fx-table {font-size:14px!important;}
+.fx-blotter #fx-table thead th {
+  padding:8px 10px!important;background:var(--gray-tint)!important;color:var(--text-muted)!important;
+  font-size:13px!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap!important;
+  border-bottom:1px solid #E6E9EB!important;border-right:0!important;
+}
+.fx-blotter #fx-table thead th.sticky-col {background:var(--gray-tint)!important;}
+.fx-blotter #fx-table thead th.sortable:hover {color:var(--primary-dark)!important;}
+.fx-blotter #fx-table thead th .arrow {font-size:9px;color:var(--primary);}
+.fx-blotter #fx-table tbody td {
+  padding:8px 10px!important;font-size:14px;font-weight:400;color:var(--text)!important;
+  border-bottom:1px solid #E6E9EB!important;border-right:0!important;white-space:nowrap;
+  transition:background .15s ease;
+}
+.fx-blotter #fx-table.list-table tbody tr:not(.empty-row):hover td,
+.fx-blotter #fx-table.list-table tbody tr:not(.empty-row):hover .sticky-col {background:#F7FBFF!important;}
+.fx-blotter #fx-table.list-table tbody tr.row-checked:not(.empty-row) td,
+.fx-blotter #fx-table.list-table tbody tr.row-checked:not(.empty-row) .sticky-col {background:var(--primary-tint)!important;}
+.fx-blotter #fx-table .sticky-3 {box-shadow:4px 0 6px -4px rgba(34,53,72,.18)!important;}
+.fx-blotter #fx-table input[type="checkbox"] {border-color:var(--border-strong)!important;accent-color:var(--primary);}
+.fx-blotter #fx-table input[type="checkbox"]:hover {border-color:var(--primary)!important;}
+.fx-blotter #fx-table input[type="checkbox"]:checked {background:var(--primary)!important;border-color:var(--primary)!important;}
+/* in-cell editors keep a dense height so the grid rows do not grow */
+.fx-blotter #fx-table .cell-input, .fx-blotter #fx-table .cell-select {
+  height:30px!important;padding:0 8px!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background:#fff!important;color:var(--text)!important;font-size:13px!important;font-weight:400!important;
+  transition:border-color .15s,box-shadow .15s;
+}
+.fx-blotter #fx-table .cell-input:hover, .fx-blotter #fx-table .cell-select:hover {border-color:#A6B0B9!important;}
+.fx-blotter #fx-table .cell-input:focus, .fx-blotter #fx-table .cell-select:focus {border-color:var(--primary)!important;box-shadow:0 0 0 3px var(--primary-tint)!important;}
+.fx-blotter #fx-table .cell-input:disabled, .fx-blotter #fx-table .cell-select:disabled {background:var(--gray-tint)!important;color:var(--text-faint)!important;border-color:var(--border)!important;}
+.fx-blotter #fx-table td.num {font-variant-numeric:tabular-nums;}
+.fx-blotter .mc-ref, .fx-blotter .aux-table .rfha-link {color:var(--primary-dark);font-weight:700;font-size:inherit;cursor:pointer;transition:color .15s ease;}
+.fx-blotter .mc-ref:hover, .fx-blotter .aux-table .rfha-link:hover {color:var(--primary);text-decoration:underline;}
+.fx-blotter #fx-table .rowaction-btn {
+  height:28px!important;min-height:28px!important;padding:0 10px!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background:#fff!important;color:var(--primary-dark)!important;font-size:11.5px!important;font-weight:600!important;
+  transition:border-color .15s ease,color .15s ease,box-shadow .15s ease;
+}
+.fx-blotter #fx-table .rowaction-btn:hover:not(:disabled) {border-color:var(--primary)!important;color:var(--primary)!important;background:#fff!important;box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.fx-blotter #fx-table .rowaction-btn:disabled {opacity:.45;cursor:not-allowed;}
+.fx-blotter .empty-row td {color:var(--text-muted)!important;}
+/* ---- 8. Status pills (same classes, palette by meaning) ---- */
+.fx-blotter .status-cell {
+  display:inline-flex!important;align-items:center!important;min-height:0!important;padding:3px 9px!important;border-radius:999px!important;
+  font-size:11px!important;font-weight:700!important;line-height:1.3;white-space:nowrap;
+}
+.fx-blotter .status-cell.st-draft {background:var(--gray-tint)!important;color:var(--text-muted)!important;}
+.fx-blotter .status-cell.st-created {background:var(--warning-tint)!important;color:#9B6B00!important;}
+.fx-blotter .status-cell.st-released {background:var(--success-tint)!important;color:var(--success)!important;}
+.fx-blotter .status-cell.st-reversed {background:var(--error-tint)!important;color:var(--error)!important;}
+.fx-blotter .tag {padding:3px 9px;font-size:11px;}
+/* ---- 9. Pagination ---- */
+.fx-blotter #fx-blotter-panel .pager {padding:10px 16px 12px!important;border-top:1px solid var(--border)!important;background:#fff!important;}
+.fx-blotter #fx-blotter-panel .pager-controls {gap:4px;}
+.fx-blotter #fx-blotter-panel .pager-info {font-size:11.5px!important;font-weight:500!important;color:var(--text-muted)!important;}
+.fx-blotter #fx-blotter-panel .pager-btn {
+  min-width:28px!important;height:28px!important;padding:0 7px!important;border:1px solid var(--border-strong)!important;border-radius:4px!important;
+  background:#fff!important;color:var(--text)!important;font-size:11.5px!important;font-weight:400!important;
+  transition:border-color .15s ease,color .15s ease,background .15s ease,transform .1s ease;
+}
+.fx-blotter #fx-blotter-panel .pager-btn:hover:not(:disabled) {border-color:var(--primary)!important;color:var(--primary)!important;}
+.fx-blotter #fx-blotter-panel .pager-btn:active:not(:disabled) {transform:translateY(1px);}
+.fx-blotter #fx-blotter-panel .pager-btn.active {background:var(--primary)!important;border-color:var(--primary)!important;color:#fff!important;}
+.fx-blotter #fx-blotter-panel .pager-btn:disabled {opacity:.4!important;cursor:not-allowed;}
+/* ---- 10. KPI cards (the Overview strip is hidden by the SAP-alignment pass above; if it is
+   ever shown again it matches the reference cards) ---- */
+.fx-blotter .metrics-grid {display:flex;flex-wrap:wrap;gap:12px;}
+.fx-blotter .metric-card {
+  flex:1 1 180px;min-width:170px;min-height:64px;background:var(--card);border:1px solid var(--border);border-left:4px solid var(--primary);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-card);display:flex;flex-direction:column;justify-content:center;
+  transition:transform .18s ease,box-shadow .18s ease,border-left-color .18s ease;
+}
+.fx-blotter .metric-card:hover {transform:translateY(-2px);box-shadow:0 4px 10px rgba(34,53,72,.1),0 10px 22px rgba(34,53,72,.1);border-left-color:var(--primary-dark);}
+.fx-blotter .metric-inner {padding:22px 20px;display:flex;flex-direction:column;gap:7px;}
+.fx-blotter .metric-val {font-size:30px;font-weight:700;line-height:1.15;color:var(--text);margin:0;}
+.fx-blotter .metric-lbl {font-size:12px;font-weight:600;color:var(--text-muted);}
+/* ---- 11. Modals ---- */
+.fx-blotter .modal-overlay {background:rgba(16,26,41,.5);transition:opacity .18s ease;}
+.fx-blotter .modal-card {
+  border:1px solid #B9C2C9;border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);
+  transform:scale(.98);transition:transform .18s ease-out;
+}
+.fx-blotter .modal-overlay.open .modal-card {transform:scale(1);}
+.fx-blotter .modal-header {background:#fff!important;border-bottom:1px solid var(--border)!important;padding:16px 20px;}
+.fx-blotter .modal-title {font-size:14px;font-weight:700;color:var(--text);}
+.fx-blotter .modal-subtitle {font-size:12.5px;color:var(--text-muted);}
+.fx-blotter .modal-close {border-radius:4px;transition:background .15s ease,color .15s ease;}
+.fx-blotter .modal-close:hover {background:var(--gray-tint);color:var(--text);}
+.fx-blotter .modal-body {padding:16px 20px;}
+.fx-blotter .modal-footer {padding:12px 20px;gap:10px;}
+.fx-blotter .section-label {font-size:13px;font-weight:700;color:var(--primary-dark);}
+.fx-blotter .detail-lbl {font-size:10.5px;font-weight:600;color:var(--text-muted);}
+.fx-blotter .detail-val {font-size:12.5px;font-weight:600;color:var(--text);}
+.fx-blotter .detail-cell {border-color:#E6E9EB;}
+.fx-blotter .auto-deal-title {background:var(--gray-tint);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--primary-dark);}
+.fx-blotter .aux-check, .fx-blotter .upload-process {border-color:var(--border-strong);border-radius:4px;font-size:13px;}
+.fx-blotter .aux-check {height:36px;}
+.fx-blotter .aux-check input, .fx-blotter .upload-process input, .fx-blotter .form-field input[type=checkbox] {accent-color:var(--primary);}
+/* popup tables */
+.fx-blotter .aux-table-wrap {border:1px solid var(--border);border-radius:var(--radius-md);}
+.fx-blotter .mini-table th, .fx-blotter .aux-table th {
+  background:var(--gray-tint);color:var(--text-muted);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+  padding:8px 10px;border-bottom:1px solid #E6E9EB;border-right:0;white-space:nowrap;
+}
+.fx-blotter .mini-table td, .fx-blotter .aux-table td {font-size:14px;padding:7px 10px;border-bottom:1px solid #E6E9EB;border-right:0;color:var(--text);}
+.fx-blotter .mini-table tr.selectable:hover td, .fx-blotter .aux-table tr:hover td {background:#F7FBFF;}
+.fx-blotter .mini-table tr.mc-selected td {background:var(--primary-tint)!important;}
+.fx-blotter .aux-table tr.released-row td {background:var(--success-tint);}
+/* validation boxes */
+.fx-blotter .validation-box {border-radius:var(--radius-md);font-size:12px;padding:9px 14px;}
+.fx-blotter .validation-box.ok {background:var(--success-tint);border-color:#C5E0CD;color:var(--success);}
+.fx-blotter .validation-box.warn {background:var(--warning-tint);border-color:#F2DDA6;color:#9B6B00;}
+.fx-blotter .validation-box.bad {background:var(--error-tint);border-color:#F3C6C0;color:var(--error);}
+/* calendar popup (inline-styled in ContextDatePicker; only the box and nav buttons are reachable) */
+.fx-blotter .dp-popup {width:250px!important;border-radius:var(--radius-md)!important;padding:10px!important;}
+.fx-blotter .dp-popup button {background:var(--gray-tint)!important;color:var(--text);border-radius:4px!important;}
+.fx-blotter .dp-popup button:hover {background:var(--primary-tint)!important;color:var(--primary);}
+/* ---- 12. Toast: dark, bottom centre ---- */
+.fx-blotter .zfac-toast {
+  left:50%;right:auto;bottom:22px;max-width:min(560px,calc(100vw - 32px));
+  background:#243B53;color:#fff;border:0;border-radius:var(--radius-md);box-shadow:var(--shadow-pop);
+  font-size:12.5px;padding:11px 18px;transform:translate(-50%,12px);
+}
+.fx-blotter .zfac-toast.show {transform:translate(-50%,0);}
+.fx-blotter .zfac-toast.success {background:#243B53;color:#fff;}
+.fx-blotter .zfac-toast.warn {background:#243B53;color:#fff;box-shadow:inset 3px 0 0 #E9730C,var(--shadow-pop);}
+.fx-blotter .zfac-toast.error {background:#4A211D;color:#fff;}
+/* ---- 13. Responsive + reduced motion ---- */
+@media (max-width:900px) {
+.fx-blotter .app-ref-header {margin:8px 10px 10px;flex-wrap:wrap;}
+.fx-blotter .sap-actionbar {margin:0 10px 10px!important;}
+.fx-blotter #fx-blotter-panel .search-box {max-width:none!important;}
+}
+@media (max-width:700px) {
+.fx-blotter .metric-card {flex-basis:45%;}
+}
+@media (max-width:600px) {
+.fx-blotter .modal-overlay {padding:12px;}
+.fx-blotter #fx-blotter-panel .pager {flex-wrap:wrap;justify-content:center!important;}
+}
+@media (max-width:460px) {
+.fx-blotter .metric-card {flex-basis:100%;}
+.fx-blotter #fx-blotter-panel .search-box {min-width:0;flex-basis:100%;}
+}
+@media (prefers-reduced-motion:reduce) {
+.fx-blotter .metric-card, .fx-blotter .modal-card, .fx-blotter .zfac-toast, .fx-blotter .tb-btn,
+.fx-blotter #fx-table tbody td, .fx-blotter #fx-blotter-panel .pager-btn {transition:none!important;}
+.fx-blotter .metric-card:hover, .fx-blotter .tb-btn:active:not(:disabled) {transform:none!important;}
+}
+/* ===== Standard popup frame + no table grid lines (FO popup standard: "Master Contract Created") =====
+   Appended last; the grid and button rules above use #fx-table / !important, so the rules here that
+   must beat them carry an extra class and !important. The Reverse / Create / Release confirmation is the
+   shared ConfirmPopup and outcomes are the shared StatusPopup; both carry their own styles. */
+/* ---- popup frame (sizes set inline per popup: S 420 / M 640 / L 880 / XL min(1200px,96vw)) ---- */
+.fx-blotter .modal-overlay {background:rgba(16,26,41,.5);align-items:center;justify-content:center;}
+.fx-blotter .modal-card {
+  max-width:calc(100vw - 40px);max-height:92vh;background:#fff;border:1px solid #B9C2C9;border-radius:12px;
+  box-shadow:0 22px 70px rgba(16,38,58,.3);overflow:hidden;display:flex;flex-direction:column;
+  font-family:"72","Segoe UI",Arial,sans-serif;
+}
+.fx-blotter .modal-card .modal-header {flex:none;background:#fff!important;border-bottom:1px solid #E6E9EB!important;padding:16px 20px;}
+.fx-blotter .modal-card .modal-title {font-size:14px;font-weight:700;color:#1D2D3E;}
+.fx-blotter .modal-card .modal-subtitle {font-size:12.5px;color:#475E75;}
+.fx-blotter .modal-card .modal-close {width:28px;height:28px;border-radius:4px;color:#687B8D;font-size:18px;}
+.fx-blotter .modal-card .modal-close:hover {background:#F2F4F5;color:#1D2D3E;}
+.fx-blotter .modal-card .modal-body {flex:1 1 auto;min-height:0;overflow-y:auto;background:#fff;padding:16px 20px;}
+.fx-blotter .modal-card .modal-footer {flex:none;background:#fff;border-top:1px solid #E6E9EB;justify-content:flex-end;gap:10px;padding:12px 20px;}
+.fx-blotter .modal-footer .btn-cancel, .fx-blotter .modal-footer .btn-confirm {
+  height:32px!important;min-height:32px!important;padding:0 14px!important;border-radius:4px!important;font-size:13px!important;font-weight:600!important;
+}
+.fx-blotter .modal-footer .btn-cancel {background:#fff!important;color:#1D2D3E!important;border:1px solid #8996A1!important;}
+.fx-blotter .modal-footer .btn-cancel:hover {border-color:#0A6ED1!important;color:#0A6ED1!important;}
+.fx-blotter .modal-footer .btn-confirm {background:#0A6ED1!important;color:#fff!important;border:1px solid #0A6ED1!important;}
+.fx-blotter .modal-footer .btn-confirm:hover:not(:disabled) {background:#085CAF!important;border-color:#085CAF!important;}
+.fx-blotter .modal-footer .btn-confirm.is-reject {background:#fff!important;color:#BB0000!important;border:1px solid #F3C6C0!important;}
+.fx-blotter .modal-footer .btn-confirm.is-reject:hover:not(:disabled) {background:#FCEAEA!important;}
+/* ---- popup body ---- */
+.fx-blotter .modal-body .section-label, .fx-blotter .modal-body .auto-deal-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#085CAF;}
+.fx-blotter .modal-body .form-field label, .fx-blotter .modal-body .auto-field-label {font-size:13px;font-weight:600;color:#475E75;}
+.fx-blotter .modal-body .detail-lbl {font-size:13px;font-weight:600;color:#475E75;}
+.fx-blotter .modal-body .detail-val {font-size:12.5px;font-weight:600;color:#1D2D3E;}
+.fx-blotter .modal-body .detail-val.accent {color:#085CAF;}
+.fx-blotter .modal-body .form-field input:not([type=checkbox]):not([type=radio]):not([type=file]), .fx-blotter .modal-body .form-field select,
+.fx-blotter .modal-body .auto-control {height:36px;font-size:13px;color:#1D2D3E;border:1px solid #8996A1;border-radius:4px;}
+.fx-blotter .modal-body .form-field textarea {font-size:13px;color:#1D2D3E;border:1px solid #8996A1;border-radius:4px;}
+.fx-blotter .modal-body .form-field input:focus, .fx-blotter .modal-body .form-field select:focus, .fx-blotter .modal-body .form-field textarea:focus,
+.fx-blotter .modal-body .auto-control:focus {border-color:#0A6ED1;box-shadow:0 0 0 3px #EAF3FC;outline:none;}
+.fx-blotter .modal-body .auto-control[readonly]:not(:disabled):not(.auto-locked), .fx-blotter .modal-body .auto-readonly-value {
+  background:#F5F7F9!important;color:#1D2D3E!important;border-color:#D5DADD!important;font-size:12.5px!important;font-weight:600!important;
+}
+.fx-blotter .modal-body .hint {font-size:12px;color:#475E75;}
+.fx-blotter .modal-body .validation-box {font-size:12px;border-radius:8px;}
+.fx-blotter .modal-body .validation-box.warn {background:#FFF4CC;}
+.fx-blotter .modal-body .validation-box.bad {background:#FCEAEA;color:#BB0000;}
+/* ---- popup tables: grey header, row lines only ---- */
+.fx-blotter .modal-body .mini-table th, .fx-blotter .modal-body .aux-table th {
+  background:#F2F4F5;color:#475E75;font-size:13px;font-weight:700;text-transform:uppercase;padding:7px 10px;
+  border-left:0;border-right:0;border-bottom:1px solid #E6E9EB;
+}
+.fx-blotter .modal-body .mini-table td, .fx-blotter .modal-body .aux-table td {
+  font-size:14px;padding:7px 10px;border-left:0;border-right:0;border-bottom:1px solid #E6E9EB;
+}
+/* ---- main grid (#fx-table): no vertical lines, one 1px #E6E9EB line under the header and each row ---- */
+.fx-blotter #fx-table.list-table th, .fx-blotter #fx-table.list-table td {border-left:0!important;border-right:0!important;}
+.fx-blotter #fx-table.list-table thead th {border-bottom:1px solid #E6E9EB!important;}
+.fx-blotter #fx-table.list-table tbody td {border-bottom:1px solid #E6E9EB!important;}
+.fx-blotter #fx-table.list-table .sticky-col, .fx-blotter #fx-table.list-table .sticky-3 {box-shadow:none!important;}

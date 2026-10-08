@@ -77,6 +77,7 @@ export function mkTxn(dealId: string, rfha: string, o: Partial<Txn>): Txn {
     coverTxn: '',
     portfolio: '',
     seq: 1,
+    etag: '',
     ...o,
   }
 }

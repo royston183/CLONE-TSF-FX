@@ -1,9 +1,13 @@
+<<<<<<< HEAD
+import type { Database } from './db.ts'
+=======
 import type Database from 'better-sqlite3'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { REPO_ROOT } from '../config.ts'
 import { ddicRepository } from './repositories/ddic-table.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from './repositories/trd-acc-columns.ts'
+>>>>>>> origin/main
 import type { LookupValue } from './schema.ts'
 
 /**
@@ -17,7 +21,7 @@ export const LOOKUP_SEED: readonly LookupValue[] = [
 ]
 
 /** Upserts the seed rows and returns how many it processed. */
-export function runSeeds(db: Database.Database, lookups: readonly LookupValue[] = LOOKUP_SEED): number {
+export function runSeeds(db: Database, lookups: readonly LookupValue[] = LOOKUP_SEED): number {
   const upsert = db.prepare(`
     INSERT INTO lookup_value (category, code, label, sort_order)
     VALUES (@category, @code, @label, @sortOrder)

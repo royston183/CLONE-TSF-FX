@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { fmtAmt } from './format.ts'
-import { AlertCircleIcon, WarningIcon } from './icons.tsx'
+import { ConfirmPopup } from '../../shared/popup/Popup.tsx'
+import { AlertCircleIcon } from './icons.tsx'
 import { Overlay, type Modal } from './modal.tsx'
 import type { Field, MasterContract, TopRow } from './types.ts'
 
@@ -327,7 +328,7 @@ export function CancelDealModal({
   )
 }
 
-/** Generic confirm popup (POPUP_TO_CONFIRM). */
+/** Generic confirm popup (POPUP_TO_CONFIRM), in the standard confirmation design. */
 export function ConfirmModal({
   modal,
   title,
@@ -340,31 +341,18 @@ export function ConfirmModal({
   onYes: () => void
 }) {
   return (
-    <Overlay modal={modal}>
-      <div className="modal modal-md">
-        <ModalHead title={title} onClose={modal.close} />
-        <div className="modal-body">
-          <div className="confirm-icon">
-            <WarningIcon />
-          </div>
-          <div style={{ fontSize: '13.5px', fontWeight: 600 }}>{message}</div>
-        </div>
-        <div className="modal-foot">
-          <button type="button" className="btn" onClick={modal.close}>
-            No
-          </button>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={() => {
-              modal.close()
-              onYes()
-            }}
-          >
-            Yes
-          </button>
-        </div>
-      </div>
-    </Overlay>
+    <ConfirmPopup
+      open={modal.state === 'open'}
+      tone="danger"
+      title={title}
+      message={message}
+      cancelLabel="No"
+      confirmLabel="Yes"
+      onCancel={modal.close}
+      onConfirm={() => {
+        modal.close()
+        onYes()
+      }}
+    />
   )
 }

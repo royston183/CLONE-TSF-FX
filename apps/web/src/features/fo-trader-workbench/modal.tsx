@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ConfirmPopup } from '../../shared/popup/Popup.tsx'
 import type { KpiId } from './logic.ts'
 import type { ActionCtx, SpotVariant } from './types.ts'
 
@@ -66,41 +67,28 @@ export function ModalFrame({
   )
 }
 
-/** POPUP_TO_CONFIRM — Yes / No. */
+/**
+ * POPUP_TO_CONFIRM — Yes / No, drawn as the standard ConfirmPopup. It stays an entry of the
+ * popup stack (opened and closed through it); its own Escape handler closes it like No.
+ */
 export function ConfirmModal({ frame, spec }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'confirm' }> }) {
   return (
-    <ModalFrame
-      frame={frame}
+    <ConfirmPopup
+      open={!frame.closing}
       title={spec.title || 'Confirm'}
-      cls="confirm-modal"
-      actions={
-        <>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              frame.onClose()
-              spec.onNo?.()
-            }}
-          >
-            {spec.noLabel || 'No'}
-          </button>
-          <button
-            type="button"
-            autoFocus
-            className={`btn ${spec.danger ? 'btn-danger' : 'btn-primary'}`}
-            onClick={() => {
-              frame.onClose()
-              spec.onYes()
-            }}
-          >
-            {spec.yesLabel || 'Yes'}
-          </button>
-        </>
-      }
-    >
-      <p>{spec.message}</p>
-    </ModalFrame>
+      message={spec.message}
+      tone={spec.danger ? 'danger' : 'primary'}
+      cancelLabel={spec.noLabel || 'No'}
+      confirmLabel={spec.yesLabel || 'Yes'}
+      onCancel={() => {
+        frame.onClose()
+        spec.onNo?.()
+      }}
+      onConfirm={() => {
+        frame.onClose()
+        spec.onYes()
+      }}
+    />
   )
 }
 

@@ -25,6 +25,7 @@ import {
 } from './logic.ts'
 import { ConfirmModal, type FrameProps, type Popup, type PopupSpec } from './modal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import './fo-trader-workbench.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -69,6 +70,9 @@ export default function FoTraderWorkbench() {
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToastShown(false), kind === 'success' ? 4600 : 3600)
   }, [])
+
+  /* ---------- outcome popup (standard StatusPopup, reports a finished SAP write) ---------- */
+  const status = useStatusPopup()
 
   /* ---------- popup stack ---------- */
   const [popups, setPopups] = useState<Popup[]>([])
@@ -157,6 +161,7 @@ export default function FoTraderWorkbench() {
     get: () => dataRef.current,
     set: setAppData,
     toast: showToast,
+    outcome: status.show,
     open: openPopup,
     confirm: (opts, onYes) => openPopup({ kind: 'confirm', ...opts, onYes }),
     today: todayIso,
@@ -506,6 +511,7 @@ export default function FoTraderWorkbench() {
       </div>
 
       {popups.map((p, i) => renderPopup(p, i))}
+      {status.element}
 
       <div className={toastCls} role="status" aria-live="polite">
         {toast.msg}

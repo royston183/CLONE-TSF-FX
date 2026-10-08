@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import type { DealRow } from '../../shared/fx/master-contract.ts'
 import { cancelDealRow, changeMc, loadScreen, type Loaded } from './api.ts'
 import { CANCELLED_STATUS, PREMIUMS } from './data.ts'
@@ -118,6 +119,8 @@ export default function FoChangeDealId() {
   const editPairModal = useModal()
   const cancelDealModal = useModal()
   const confirmModal = useModal()
+  /** The outcome popup of the MySQL writes (Change MC Ref No, Cancel Deal ID). */
+  const status = useStatusPopup()
 
   const toastTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
   useEffect(() => {
@@ -309,7 +312,13 @@ export default function FoChangeDealId() {
       const loaded = await reload().catch(() => undefined)
       if (loaded) openDealFrom(loaded.store, deal.dealId)
     }
-    toast('MC Ref No saved in ZSGTSFTR_DEALID. The Treasury transactions are not re-stamped (SAP).')
+    status.show({
+      tone: 'success',
+      title: 'MC Ref No Changed',
+      message: 'MC Ref No saved in ZSGTSFTR_DEALID. The Treasury transactions are not re-stamped (SAP).',
+      refLabel: 'MC Ref No',
+      refValue: pickedMc.ref,
+    })
   }
 
   // ------------------------------------------------------------------ Edit Deal Pair (Screen 9004)
@@ -359,7 +368,11 @@ export default function FoChangeDealId() {
         try {
           await cancelDealRow(row)
         } catch (error) {
-          toast(error instanceof Error ? error.message : String(error), true)
+          status.show({
+            tone: 'error',
+            title: 'Deal ID Not Cancelled',
+            message: error instanceof Error ? error.message : String(error),
+          })
           return
         } finally {
           busy.current = false
@@ -367,7 +380,13 @@ export default function FoChangeDealId() {
       }
       setStore((s) => cancelDeal(s, dealId))
       setDeal((d) => (d ? { ...d, status: CANCELLED_STATUS } : d))
-      toast(`Deal ID ${dealId} cancelled (ZSGTSFTR_DEALID). The Treasury transactions are not released in SAP.`)
+      status.show({
+        tone: 'success',
+        title: 'Deal ID Cancelled',
+        message: `Deal ID ${dealId} cancelled (ZSGTSFTR_DEALID). The Treasury transactions are not released in SAP.`,
+        refLabel: 'Deal ID',
+        refValue: dealId,
+      })
     })
   }
 
@@ -650,6 +669,7 @@ export default function FoChangeDealId() {
         message={confirmMsg}
         onYes={() => onConfirmYes.current?.()}
       />
+      {status.element}
 
       {toasts.map((t) => (
         <div key={t.id} className={`toast${t.isErr ? ' err' : ''}`}>

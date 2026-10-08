@@ -7,7 +7,7 @@ export function ViewModal({ modals, content }: { modals: ModalStack; content: Vi
   const close = () => modals.close('view')
   return (
     <Overlay id="view" modals={modals}>
-      <div className="modal-card" style={{ maxWidth: 680 }}>
+      <div className="modal-card" style={{ maxWidth: 'min(640px, calc(100vw - 40px))' }}>
         <ModalHeader title="Transaction Display" subtitle={content.subtitle} onClose={close} />
         <div className="modal-body">
           <DetailGrid pairs={content.pairs} />

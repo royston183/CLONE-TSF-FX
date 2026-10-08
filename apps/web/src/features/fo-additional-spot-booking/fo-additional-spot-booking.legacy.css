@@ -161,3 +161,241 @@
 .foasb .detail-item:nth-child(3n) {border-right:1px solid #e7ecf1}
 .foasb .detail-item:nth-child(2n) {border-right:0}
 }
+
+/* ===== OTTK visual theme — CSS-only override (Create Master Contract design system) ===== */
+/* Appended last so it wins the cascade over the original sheet above. Presentation only:
+   no markup, handler or behaviour is affected. */
+/* ---- 1. Design tokens + root ---- */
+.foasb {
+  --bg:#F5F7F9;
+  --card:#FFFFFF;
+  --text:#1D2D3E;
+  --text-muted:#475E75;
+  --text-faint:#687B8D;
+  --border:#D5DADD;
+  --border-strong:#8996A1;
+  --primary:#0A6ED1;
+  --primary-dark:#085CAF;
+  --primary-light:#4FA3E8;
+  --primary-tint:#EAF3FC;
+  --success:#107E3E;
+  --success-tint:#E4F5E9;
+  --warning:#E9730C;
+  --warning-tint:#FFF4CC;
+  --error:#BB0000;
+  --error-tint:#FCEAEA;
+  --teal:#0F828C;
+  --teal-tint:#E4F5F5;
+  --purple:#6B3FA0;
+  --purple-tint:#F1EAF8;
+  --gray-tint:#F2F4F5;
+  --radius-lg:12px;
+  --radius-md:8px;
+  --radius-sm:4px;
+  --shadow-card:0 1px 3px rgba(34,53,72,.13);
+  --shadow-pop:0 22px 70px rgba(16,38,58,.3);
+  --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
+  font-family:var(--font);
+  font-size:13px;
+  line-height:1.5;
+  color:var(--text);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+.foasb button, .foasb input, .foasb select {font-family:var(--font);}
+.foasb .app {background:var(--bg);}
+.foasb ::-webkit-scrollbar {height:8px;width:8px;}
+.foasb ::-webkit-scrollbar-thumb {background:#B7C2CB;border-radius:8px;}
+.foasb ::-webkit-scrollbar-track {background:transparent;}
+/* ---- 2. Page header: flush on the page background ---- */
+.foasb .header {height:auto;min-height:0;background:transparent;border:none;box-shadow:none;padding:12px 18px 4px;gap:12px;margin-bottom:0;}
+.foasb .header-left {gap:12px;}
+.foasb .brand {margin-left:0;}
+.foasb .brand-mark {margin-right:12px;}
+.foasb .brand-title {font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+.foasb .brand-sub {font-size:15px;color:var(--text-muted);}
+.foasb .header-right {gap:8px;}
+.foasb .header-right .btn {margin-left:0;}
+.foasb .header-note {color:var(--text-muted);}
+.foasb .content {padding:12px 16px 18px;}
+/* ---- 3. Buttons ---- */
+.foasb .btn, .foasb .back-btn {height:32px;padding:0 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;gap:6px;border:1px solid var(--border-strong);background:#fff;color:var(--text);transition:background .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease,box-shadow .15s ease,transform .1s ease;white-space:nowrap;}
+.foasb .btn svg, .foasb .back-btn svg {margin-right:0;}
+.foasb .btn:hover:not(:disabled), .foasb .back-btn:hover:not(:disabled) {background:#fff;border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
+.foasb .btn-primary {background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:none;}
+.foasb .btn-primary:hover:not(:disabled) {background:var(--primary-dark);border-color:var(--primary-dark);color:#fff;box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.foasb .btn-danger {background:#fff;color:var(--error);border-color:#F3C6C0;}
+.foasb .btn-danger:hover:not(:disabled) {background:var(--error-tint);color:var(--error);border-color:#F3C6C0;}
+.foasb .btn:active:not(:disabled), .foasb .back-btn:active:not(:disabled) {transform:translateY(1px);}
+.foasb .btn:disabled {opacity:.45;cursor:not-allowed;}
+.foasb .icon-btn {border-color:var(--border-strong);color:var(--text-muted);border-radius:var(--radius-sm);}
+.foasb .icon-btn:hover {border-color:var(--primary);color:var(--primary);}
+/* ---- 4. Card / section title ---- */
+.foasb .card {background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);}
+.foasb .card-head {min-height:44px;padding:8px 16px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;}
+.foasb .card-title {font-size:13px;font-weight:700;color:var(--primary-dark);letter-spacing:.3px;}
+.foasb .record-count {font-size:11.5px;color:var(--text-muted);margin-left:0;}
+.foasb .key-date-note {font-size:11.5px;color:var(--text-muted);}
+.foasb .head-actions {margin-left:2px;}
+/* ---- 5. Toolbar: search box, filter fields, status selection ---- */
+.foasb .toolbar {padding:12px 16px 10px;border-bottom:1px solid var(--border);gap:6px 0;}
+.foasb .toolbar-item {margin-right:8px;}
+.foasb .search-wrap {width:260px;min-width:200px;}
+.foasb .search-wrap svg {top:50%;transform:translateY(-50%);left:9px;width:14px;height:14px;color:var(--text-faint);}
+.foasb .control {height:32px;font-size:13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);transition:border-color .15s ease,box-shadow .15s ease;}
+.foasb .control::placeholder {color:var(--text-faint);}
+.foasb .control:hover {border-color:#A6B0B9;}
+.foasb .control:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.foasb .search {padding:0 12px 0 30px;}
+.foasb .filter-input, .foasb .deal-filter {min-width:88px;}
+.foasb .status-filter {height:32px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;padding:0 10px;}
+.foasb .status-filter label {color:var(--text-muted);font-size:13px;font-weight:600;}
+.foasb input[type="checkbox"] {accent-color:var(--primary);}
+/* Date field icon centred on its own input (toolbar and popup) */
+.foasb .date-shell > input {display:block;}
+.foasb .date-shell > .cal-icon, .foasb .field .date-shell > .cal-icon {top:50%;right:2px;transform:translateY(-50%);width:28px;height:28px;border-radius:var(--radius-sm);color:var(--text-muted);display:flex;align-items:center;justify-content:center;}
+.foasb .date-shell > .cal-icon:hover {background:var(--primary-tint);color:var(--primary);}
+/* ---- 6. Table ---- */
+.foasb .table-scroll {background:#fff;}
+.foasb .table-scroll table th, .foasb .table-scroll table td {border-right:0;}
+.foasb .table-scroll table thead th {position:sticky;top:0;z-index:3;background:var(--gray-tint);font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid #E6E9EB;white-space:nowrap;transition:color .15s ease;}
+.foasb .table-scroll table thead th:hover {color:var(--primary-dark);}
+.foasb .table-scroll table thead th.no-sort:hover {color:var(--text-muted);}
+.foasb .table-scroll table tbody td {padding:8px 10px;font-size:14px;font-weight:400;color:var(--text);border-bottom:1px solid #E6E9EB;white-space:nowrap;}
+.foasb .table-scroll table tbody tr {transition:transform .15s ease,box-shadow .15s ease,background .15s ease;}
+.foasb .table-scroll table tbody tr:hover {background:#F7FBFF;transform:translateY(-1px) scale(1.002);box-shadow:0 3px 9px rgba(34,53,72,.10);position:relative;z-index:2;}
+.foasb .table-scroll table tbody tr.selected {background:#EAF3FC;box-shadow:none;}
+.foasb .table-scroll table tbody tr.selected:hover {background:#EAF3FC;box-shadow:0 3px 9px rgba(10,110,209,.14);}
+.foasb .table-scroll table tbody tr.dragging {opacity:.5;}
+.foasb .check-col input {width:14px;height:14px;accent-color:var(--primary);cursor:pointer;}
+.foasb .sort-arrow {font-size:9px;color:var(--text-faint);}
+.foasb .num {font-variant-numeric:tabular-nums;}
+.foasb .link {color:var(--primary-dark);font-weight:700;text-decoration:none;cursor:pointer;transition:color .15s ease;}
+.foasb .link:hover {color:var(--primary);text-decoration:underline;}
+.foasb .link.created {color:var(--success);}
+.foasb .link.created:hover {color:var(--success);}
+.foasb .muted {color:var(--text-faint);}
+.foasb .side-buy {color:var(--success);}
+.foasb .empty {color:var(--text-muted);padding:40px 20px;}
+/* ---- 7. Footer + pagination ---- */
+.foasb .footer {padding:10px 16px 12px;border-top:1px solid var(--border);color:var(--text-muted);font-size:11.5px;flex-wrap:wrap;gap:10px;}
+.foasb .pagination {gap:4px;}
+.foasb .page-btn {width:auto;min-width:28px;height:28px;margin-left:0;padding:0 6px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);font-size:11.5px;transition:border-color .15s ease,color .15s ease,background .15s ease,transform .1s ease;}
+.foasb .page-btn:hover:not(:disabled) {border-color:var(--primary);color:var(--primary);}
+.foasb .page-btn:active:not(:disabled) {transform:translateY(1px);}
+.foasb .page-btn.active, .foasb .page-btn.active:hover:not(:disabled) {background:var(--primary);border-color:var(--primary);color:#fff;}
+.foasb .page-btn:disabled {opacity:.4;}
+/* ---- 8. Drag onto "Create Spot Txn": reference drop-target feedback ---- */
+.foasb .action-wrap.drag-ready .btn-primary {box-shadow:0 0 0 3px rgba(10,110,209,.18);}
+.foasb .action-wrap.drag-over .btn-primary {transform:none;border-color:var(--primary) !important;background:var(--primary-tint) !important;color:var(--primary) !important;box-shadow:0 0 0 2px rgba(10,110,209,.12);}
+/* ---- 9. Toasts: dark, bottom centre ---- */
+.foasb .toast-wrap {top:auto;right:auto;bottom:22px;left:50%;transform:translateX(-50%);width:auto;max-width:calc(100vw - 32px);display:flex;flex-direction:column;align-items:center;}
+.foasb .toast {background:#243B53;color:#fff;border:none;border-radius:var(--radius-md);box-shadow:var(--shadow-pop);padding:11px 18px;font-size:12.5px;margin-bottom:8px;max-width:520px;}
+.foasb .toast.info {background:#243B53;}
+.foasb .toast.error {background:#4A211D;}
+/* ---- 10. Modals ---- */
+.foasb .overlay {background:rgba(16,26,41,.5);}
+.foasb .modal {background:#fff;border:1px solid #B9C2C9;border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);animation:foasb-popIn .18s ease-out;}
+@keyframes foasb-popIn {from{transform:scale(.98);opacity:0;}to{transform:scale(1);opacity:1;}}
+.foasb .modal-head {height:auto;min-height:48px;padding:12px 20px;border-bottom:1px solid #E6E9EB;}
+.foasb .modal-title {font-size:14px;font-weight:700;color:var(--text);}
+.foasb .modal-close {width:28px;height:28px;font-size:18px;line-height:1;color:var(--text-muted);border-radius:6px;transition:background .15s ease,color .15s ease;}
+.foasb .modal-close:hover {background:var(--gray-tint);color:var(--text);}
+.foasb .modal-body {padding:16px 20px 14px;}
+.foasb .modal-footer {min-height:0;padding:12px 20px;border-top:1px solid #E6E9EB;background:#fff;gap:10px;}
+.foasb .modal-footer .btn {margin-left:0;}
+.foasb .section-label {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary-dark);}
+/* Form fields inside popups */
+.foasb .field label {font-size:13px;font-weight:600;color:var(--text-muted);margin:0 0 6px;white-space:nowrap;line-height:1.2;}
+.foasb .field .req {color:var(--error);}
+.foasb .field input, .foasb .field select {height:36px;font-size:13px;color:var(--text);background:#fff;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 11px;transition:border-color .15s ease,box-shadow .15s ease;}
+.foasb .field input::placeholder {color:var(--text-faint);}
+.foasb .field input:hover, .foasb .field select:hover {border-color:#A6B0B9;}
+.foasb .field input:focus, .foasb .field select:focus {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+.foasb .field input[readonly] {background:var(--gray-tint);color:var(--text-muted);cursor:default;}
+.foasb .field input[readonly]:hover {border-color:var(--border-strong);}
+.foasb .field input:disabled, .foasb .field select:disabled {background:var(--gray-tint);color:var(--text-faint);cursor:not-allowed;}
+.foasb .date-shell input {padding-right:34px;}
+.foasb .field-error {font-size:11px;color:var(--error);}
+.foasb .field:has(> .field-error:not(:empty)) input:not([readonly]), .foasb .field:has(> .field-error:not(:empty)) select {border-color:var(--error);background:var(--error-tint);}
+.foasb .meta-note {font-size:11px;color:var(--text-faint);}
+/* Currency amounts panel */
+.foasb .amount-panel {border:1px solid var(--border);border-radius:var(--radius-md);}
+.foasb .amount-row {background:var(--bg);border-bottom-color:#E6E9EB;}
+.foasb .amount-curr {color:var(--text-muted);}
+.foasb .amount-value {color:var(--text);}
+/* Transaction details grid */
+.foasb .detail-grid {border:1px solid #E6E9EB;border-radius:var(--radius-md);}
+.foasb .detail-item {border-right-color:#E6E9EB;border-bottom-color:#E6E9EB;}
+.foasb .detail-item .k {font-size:10.5px;font-weight:600;color:var(--text-muted);}
+.foasb .detail-item .v {font-size:12.5px;font-weight:600;color:var(--text);}
+/* ---- 11. Calendar popup ---- */
+.foasb .calendar {width:250px;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-pop);padding:10px;}
+.foasb .cal-top {gap:4px;}
+.foasb .cal-nav {width:24px;height:24px;padding:0;border:none;background:var(--gray-tint);border-radius:6px;color:var(--text);font-size:12px;}
+.foasb .cal-nav:hover {background:var(--primary-tint);color:var(--primary);}
+.foasb .cal-select {height:26px;margin-left:0;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;font-weight:700;}
+.foasb .cal-month {width:96px;}
+.foasb .cal-year {width:66px;}
+.foasb .cal-grid th {height:24px;font-size:10px;font-weight:700;color:var(--text-faint);text-transform:none;letter-spacing:0;}
+.foasb .cal-day {width:100%;height:28px;font-size:11.5px;border-radius:6px;color:var(--text);}
+.foasb .cal-day:hover {background:var(--primary-tint);}
+.foasb .cal-day.other {color:var(--text-faint);opacity:.6;}
+.foasb .cal-day.today {box-shadow:inset 0 0 0 1px var(--primary-light);}
+.foasb .cal-day.selected, .foasb .cal-day.selected:hover {background:var(--primary);color:#fff;font-weight:700;box-shadow:none;}
+/* ---- 12. Responsive ---- */
+@media (max-width:1080px) {
+.foasb .search-wrap {width:220px;}
+}
+@media (max-width:700px) {
+.foasb .header {flex-wrap:wrap;padding:10px 10px 4px;}
+.foasb .header-right {margin-left:0;}
+.foasb .card-head {padding:8px 12px;}
+.foasb .key-date-note {margin-left:0;}
+}
+@media (max-width:650px) {
+.foasb .content {padding:8px;}
+.foasb .toolbar-item {margin-right:0;}
+.foasb .search-wrap {width:100%;min-width:0;}
+}
+@media (max-width:460px) {
+.foasb .detail-item, .foasb .detail-item:nth-child(2n), .foasb .detail-item:nth-child(3n) {width:100%;border-right:0;}
+.foasb .brand-title {white-space:normal;}
+}
+/* ---- 13. Reduced motion ---- */
+@media (prefers-reduced-motion:reduce) {
+.foasb .btn, .foasb .back-btn, .foasb .page-btn, .foasb .table-scroll table tbody tr {transition:none;}
+.foasb .table-scroll table tbody tr:hover, .foasb .btn:active:not(:disabled), .foasb .back-btn:active:not(:disabled), .foasb .page-btn:active:not(:disabled) {transform:none;}
+.foasb .modal {animation:none;}
+}
+
+/* ===== Standard popup frame + no table grid lines (FO popup standard) ===== */
+/* Presentational only. Frame: centred card, header and footer fixed with dividers, body scrolls. */
+.foasb .overlay {background:rgba(16,26,41,.5);align-items:center;justify-content:center;padding:20px;overflow:auto;}
+.foasb .modal {display:flex;flex-direction:column;max-height:92vh;max-width:calc(100vw - 40px);margin:auto;background:#fff;border:1px solid #B9C2C9;border-radius:12px;box-shadow:0 22px 70px rgba(16,38,58,.3);font-family:"72","Segoe UI",Arial,sans-serif;}
+/* Sizes: Create Spot = L (multi-section create form), Transaction Details = M (read-only details). */
+.foasb .modal {width:880px;}
+.foasb .modal.small {width:640px;}
+.foasb .modal-head {flex:0 0 auto;background:#fff;border-bottom:1px solid #E6E9EB;gap:12px;}
+.foasb .modal-title {font-size:14px;font-weight:700;color:#1D2D3E;}
+.foasb .modal-close {width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none;color:#687B8D;border-radius:4px;}
+.foasb .modal-close:hover {background:#F2F4F5;color:#1D2D3E;}
+.foasb .modal-body {flex:1 1 auto;min-height:0;max-height:none;overflow:auto;}
+.foasb .modal-footer {flex:0 0 auto;background:#fff;border-top:1px solid #E6E9EB;justify-content:flex-end;gap:10px;}
+/* Body typography */
+.foasb .modal .section-label {font-size:11px;font-weight:700;text-transform:uppercase;color:#085CAF;}
+.foasb .modal .field label {font-size:13px;font-weight:600;color:#475E75;}
+.foasb .modal .field input, .foasb .modal .field select {height:36px;font-size:13px;border-color:#8996A1;}
+.foasb .modal .field input:focus, .foasb .modal .field select:focus {border-color:#0A6ED1;box-shadow:0 0 0 3px #EAF3FC;}
+.foasb .modal .field-error {font-size:11px;color:#BB0000;}
+.foasb .modal .detail-item .v {font-size:12.5px;font-weight:600;color:#1D2D3E;}
+/* Footer buttons: dismiss = secondary, main action = primary */
+.foasb .modal-footer .btn {height:32px;font-size:13px;font-weight:600;border-radius:4px;background:#fff;color:#1D2D3E;border-color:#8996A1;}
+.foasb .modal-footer .btn-primary {background:#0A6ED1;color:#fff;border-color:#0A6ED1;}
+.foasb .modal-footer .btn-primary:hover:not(:disabled) {background:#085CAF;border-color:#085CAF;color:#fff;}
+/* Detail grid: no vertical dividers, one line under each row */
+.foasb .detail-item, .foasb .detail-item:nth-child(2n), .foasb .detail-item:nth-child(3n) {border-right:0;border-bottom:1px solid #E6E9EB;}
+/* Tables: no grid lines - one 1px line under the header and under each row only */
+.foasb #spotTable th, .foasb #spotTable td {border-left:0;border-right:0;border-top:0;box-shadow:none;}
+.foasb #spotTable thead th {border-bottom:1px solid #E6E9EB;}
+.foasb #spotTable tbody td {border-bottom:1px solid #E6E9EB;}

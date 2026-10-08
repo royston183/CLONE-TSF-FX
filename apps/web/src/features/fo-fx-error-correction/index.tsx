@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
@@ -129,6 +130,8 @@ export default function FoFxErrorCorrection() {
     kind: '',
     show: true,
   }))
+  /** The outcome of a change or reversal in SAP, in the standard popup. */
+  const status = useStatusPopup()
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const hideToast = useCallback(() => setToast((t) => ({ ...t, kind: '', show: false })), [])
   const showToast = useCallback(
@@ -310,7 +313,7 @@ export default function FoFxErrorCorrection() {
       await correctTxn(t, patch)
     } catch (e) {
       // SAP refused: the popup stays open with what was typed.
-      showToast(`SAP did not change transaction ${t.rfha}: ${sapMessage(e)}`, 'error')
+      status.show({ tone: 'error', title: 'Correction Failed', message: `SAP did not change transaction ${t.rfha}: ${sapMessage(e)}` })
       busy.current = false
       return
     }
@@ -319,10 +322,13 @@ export default function FoFxErrorCorrection() {
       correctionModal.close()
       const changed = Object.keys(patch).map((k) => patchLabels[k] ?? k).join(', ')
       const refreshed = await loadRows()
-      showToast(
-        `Transaction ${t.rfha} changed in SAP (${changed}).${refreshed ? '' : ' The list could not be re-read; use Refresh.'}`,
-        refreshed ? 'success' : 'error',
-      )
+      status.show({
+        tone: refreshed ? 'success' : 'warning',
+        title: 'Transaction Corrected',
+        message: `Transaction ${t.rfha} changed in SAP (${changed}).${refreshed ? '' : ' The list could not be re-read; use Refresh.'}`,
+        refLabel: 'Transaction',
+        refValue: t.rfha,
+      })
       refilter()
     } finally {
       busy.current = false
@@ -363,12 +369,36 @@ export default function FoFxErrorCorrection() {
       setChecked((c) => c.filter((r) => !outcome.reversed.includes(r)))
       if (outcome.failed) {
         const rest = ts.length - done.length
-        showToast(
-          `${done.length ? `${reverseToast(done)} ` : ''}SAP refused to reverse ${outcome.failed.rfha}: ${outcome.failed.reason}${rest > 1 ? ` (${rest - 1} more not attempted)` : ''}`,
-          'error',
-        )
+        const failed = outcome.failed
+        const message = `${done.length ? `${reverseToast(done)} ` : ''}SAP refused to reverse ${failed.rfha}: ${failed.reason}${rest > 1 ? ` (${rest - 1} more not attempted)` : ''}`
+        if (done.length) {
+          status.show({
+            tone: 'warning',
+            title: 'Reversal Partly Done',
+            message,
+            details: (
+              <ul>
+                {done.map((d) => (
+                  <li key={d.rfha}>{d.rfha}: reversed.</li>
+                ))}
+                <li>
+                  {failed.rfha}: {failed.reason}
+                </li>
+              </ul>
+            ),
+          })
+        } else {
+          status.show({ tone: 'error', title: 'Reversal Failed', message })
+        }
       } else {
-        showToast(reverseToast(done), 'error')
+        const [only] = done
+        status.show({
+          tone: 'success',
+          title: done.length === 1 ? 'Transaction Reversed' : 'Transactions Reversed',
+          message: reverseToast(done),
+          refLabel: 'Transaction',
+          refValue: done.length === 1 && only ? only.rfha : undefined,
+        })
       }
       if (done.length) {
         reverseModal.close()
@@ -741,6 +771,8 @@ export default function FoFxErrorCorrection() {
       />
 
       <ReverseModal modal={reverseModal} txns={reversing} reason={reason} onReasonChange={setReason} onConfirm={() => void confirmReverse()} />
+
+      {status.element}
     </div>
   )
 }

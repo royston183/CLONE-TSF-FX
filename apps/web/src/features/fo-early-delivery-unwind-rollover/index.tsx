@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
+import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { DealTable } from './DealTable.tsx'
 import { WAITING, loadBankPartners, loadDealLegs, loadInrInvoiceAmount, loadTxnTypes } from './api.ts'
 import { realDeps } from './deps.ts'
@@ -60,9 +61,9 @@ import './fo-early-delivery-unwind-rollover.dark.css'
 import type { Avail, DdOption, Filters, Leg, PairForm, Sort, SortField, Toast, ToastKind, UnwindForm } from './types.ts'
 
 const TOAST_MS = 3200
-/** A failure names the stage and what is already created; it needs longer on screen. */
-const FAILURE_TOAST_MS = 12000
 const FLASH_MS = 1800
+/** The outcome popup's title per action, in the screen's words. */
+const ACTION_TITLE: Record<PrematureInput['kind'], string> = { early: 'Early Delivery', unwind: 'Unwinding Txn', rollover: 'Rollover' }
 
 type DropTarget = 'early' | 'unwind' | 'roll'
 type Banner = { dealId: string; count: string; cpair: string } | { dealId: string; waiting: string }
@@ -107,6 +108,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
   const [toast, setToast] = useState<Toast>({ msg: '', kind: undefined })
   const [toastShown, setToastShown] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const status = useStatusPopup()
 
   const [flashRfha, setFlashRfha] = useState<string | null>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -290,7 +292,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
     const made = result.progress
     if (!result.ok) {
       resume.current = canResume(result, input.original) ? { key, progress: made } : null
-      showToast(describeFailure(result) || result.error || 'The action failed.', 'error', FAILURE_TOAST_MS)
+      status.show({ tone: 'error', title: `${ACTION_TITLE[input.kind]} Not Created`, message: describeFailure(result) || result.error || 'The action failed.' })
       // Whatever was already created is shown, so the grid never hides a transaction SAP now holds.
       if (made.cancellationTransaction || made.replacementTransaction) void doLoad(loadedDeal.current)
       return
@@ -300,12 +302,20 @@ export default function FoEarlyDeliveryUnwindRollover() {
     const done = input.kind === 'early' ? MSG.earlyDone : input.kind === 'unwind' ? MSG.unwindDone : MSG.rollDone
     const loaded = await doLoad(loadedDeal.current)
     const extra = result.notes.length ? ` ${result.notes.join(' ')}` : ''
-    if (input.kind === 'rollover' && loaded && shouldNotifyRollover(loaded.length)) {
-      showToast(`${done} ${sendRolloverNotification().reason}${extra}`, 'warn', FAILURE_TOAST_MS)
-    } else {
-      showToast(`${done}${extra}`, result.notes.length ? 'warn' : undefined, result.notes.length ? FAILURE_TOAST_MS : TOAST_MS)
-    }
     const flash = made.replacementTransaction ?? made.cancellationTransaction
+    // The outcome popup takes the place of the result toast (which used to replace the load toast at once).
+    clearTimeout(toastTimer.current)
+    setToastShown(false)
+    const ref = {
+      refLabel: made.replacementTransaction ? 'New Booking Txn' : input.kind === 'unwind' ? 'Unwinding Txn' : 'Cancellation Txn',
+      refValue: flash?.transaction,
+    }
+    const title = `${ACTION_TITLE[input.kind]} Created`
+    if (input.kind === 'rollover' && loaded && shouldNotifyRollover(loaded.length)) {
+      status.show({ tone: 'warning', title, message: `${done} ${sendRolloverNotification().reason}${extra}`, ...ref })
+    } else {
+      status.show({ tone: result.notes.length ? 'warning' : 'success', title, message: `${done}${extra}`, ...ref })
+    }
     if (flash) flashRow(flash.transaction)
   }
 
@@ -638,6 +648,7 @@ export default function FoEarlyDeliveryUnwindRollover() {
       />
 
       <div className={toastCls}>{toast.msg}</div>
+      {status.element}
     </div>
   )
 }

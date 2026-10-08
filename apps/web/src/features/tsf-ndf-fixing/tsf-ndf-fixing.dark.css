@@ -205,3 +205,215 @@
 :root[data-theme='dark'] .tsf-ndf-fixing .day.muted {
   color: #7f9bb8;
 }
+:root[data-theme='dark'] .tsf-ndf-fixing {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --teal-tint: #113330;
+  --purple-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+  --line: #2a3d52;
+  --line2: #16243a;
+  --muted: #7f9bb8;
+  --soft: #17304a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .subtitle {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn,
+:root[data-theme='dark'] .tsf-ndf-fixing .back {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.ghost:hover:not(:disabled) {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .btn.danger:hover:not(:disabled) {
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .card {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .card-title {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .toolbar {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .search {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .search::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .filter-control {
+  background-color: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .filter-control::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .search:hover,
+:root[data-theme='dark'] .tsf-ndf-fixing .filter-control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .toolbar-date .calbtn {
+  border-left-color: #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .calbtn {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .table-wrap {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th,
+:root[data-theme='dark'] .tsf-ndf-fixing td {
+  border-right-color: #2a3d52;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing td {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td,
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td:first-child,
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr:hover td:nth-child(2) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td,
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td:first-child,
+:root[data-theme='dark'] .tsf-ndf-fixing tr.selected td:nth-child(2) {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing tbody tr.selected:hover td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing thead th:nth-child(2):hover {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .link {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .link:hover {
+  color: #63aef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.pending {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.released {
+  color: #6eeda3;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.correction {
+  color: #ffa35c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .status.error {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .pagebtn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .req {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .control {
+  color: #e6eef8;
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .control::placeholder {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .readonly,
+:root[data-theme='dark'] .tsf-ndf-fixing .control.readonly:hover {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .control:disabled {
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .field.invalid .control {
+  background: #3a1b1e;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .error-msg {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-head {
+  border-bottom-color: #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-foot {
+  border-top-color: #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .note {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .deal-strip {
+  border: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-head {
+  background: #14212f;
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-head h2 {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .x {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .x:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .field label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .control:focus {
+  box-shadow: 0 0 0 3px #17304a;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .control.readonly {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .error-msg {
+  color: #ff5c5c;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal .note {
+  color: #ffd35c;
+  background: #3a2a12;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-foot {
+  background: #14212f;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing .modal-foot .btn.ghost {
+  background: #14212f;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .tsf-ndf-fixing th,
+:root[data-theme='dark'] .tsf-ndf-fixing td {
+  border-bottom: 1px solid #2a3d52;
+}
