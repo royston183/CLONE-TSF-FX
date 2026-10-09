@@ -68,7 +68,10 @@ export function CorrectionModal({
       type="text"
       value={form[key]}
       disabled={!editable}
-      onChange={(e) => onChange({ [key]: e.target.value })}
+      // Rates take at most four decimal places; a fifth is simply not accepted.
+      onChange={(e) => {
+        if (!/\.\d{5,}/.test(e.target.value)) onChange({ [key]: e.target.value })
+      }}
       onBlur={() => onRateBlur(key)}
     />
   )

@@ -138,6 +138,7 @@ background:#f8fafc;border-radius:4px;overflow:hidden}
 .discloansirs .stat-label {color:#556b82;font-size:11px;font-weight:400;white-space:nowrap}
 .discloansirs .stat-value {color:#1d2d3e;font-size:13px;font-weight:600;white-space:nowrap}
 .discloansirs .input-error {border-color:#bb0000!important;box-shadow:0 0 0 1px #bb0000}
+.discloansirs .req {color:#bb0000;margin-left:2px}
 .discloansirs .data-table td.amount {font-weight:600}
 .discloansirs .data-table td.amount-pos {color:#107e3e}
 .discloansirs .data-table td.amount-neg {color:#bb0000}

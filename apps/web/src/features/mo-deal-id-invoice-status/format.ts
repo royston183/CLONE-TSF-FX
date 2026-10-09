@@ -28,9 +28,11 @@ export function formatAmount(value: number | null | undefined): string {
   return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function formatRate(value: number | '' | null | undefined): string {
+/** Rates show 4 decimals; a string that is not a number (the grids' text cells) is shown as it is. */
+export function formatRate(value: number | string | null | undefined): string {
   if (value === '' || value === null || value === undefined) return ''
-  return Number(value).toFixed(6)
+  const n = Number(value)
+  return Number.isNaN(n) ? String(value) : n.toFixed(4)
 }
 
 /** ISO date shifted by N days, still ISO — the legacy isoShift. */

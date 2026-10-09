@@ -356,3 +356,6 @@
   background: #17304a;
   color: #5cafff;
 }
+:root[data-theme='dark'] .sblcterminate .req {
+  color: #ff5c5c;
+}

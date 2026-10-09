@@ -319,7 +319,9 @@ export default function MoConfirmFxDealId() {
             <div className="card-body">
               <div className="selection-row">
                 <div className="field" style={{ flex: 1 }}>
-                  <label htmlFor={inputId}>Deal ID</label>
+                  <label htmlFor={inputId}>
+                    Deal ID<span className="req">*</span>
+                  </label>
                   <input
                     id={inputId}
                     list={listId}

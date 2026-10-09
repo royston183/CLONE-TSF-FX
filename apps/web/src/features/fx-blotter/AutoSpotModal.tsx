@@ -1,3 +1,4 @@
+import { isRateInput } from './format.ts'
 import { partnerLabel, spotEntities, spotTxnOptions } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoSpotForm, BusinessPartner } from './types.ts'
@@ -45,7 +46,9 @@ export function AutoSpotModal({
               <input id="spot-dss-type" type="text" value="DSS2" readOnly />
             </div>
             <div className="form-field">
-              <label>Company Code</label>
+              <label>
+                Company Code<span className="req">*</span>
+              </label>
               <select id="spot-company" value={form.company} onChange={(e) => onChange({ company: e.target.value })}>
                 {spotEntities().map((e) => (
                   <option key={e.code} value={e.code}>
@@ -55,7 +58,9 @@ export function AutoSpotModal({
               </select>
             </div>
             <div className="form-field span2">
-              <label>Transaction Type</label>
+              <label>
+                Transaction Type<span className="req">*</span>
+              </label>
               <select id="spot-txn-type" value={form.txnType} onChange={(e) => onChange({ txnType: e.target.value })}>
                 {spotTxnOptions().map((o) => (
                   <option key={o.value} value={o.value}>
@@ -73,7 +78,9 @@ export function AutoSpotModal({
               <input id="spot-value-date" type="text" readOnly value={form.valueDate} />
             </div>
             <div className="form-field span2">
-              <label>Business Partner</label>
+              <label>
+                Business Partner<span className="req">*</span>
+              </label>
               <select id="spot-bp" value={form.bp} onChange={(e) => onChange({ bp: e.target.value })}>
                 {partners.map((b) => (
                   <option key={b.code} value={b.code}>
@@ -88,7 +95,9 @@ export function AutoSpotModal({
                 id="spot-rate"
                 type="text"
                 value={form.rate}
-                onChange={(e) => onChange({ rate: e.target.value })}
+                onChange={(e) => {
+                  if (isRateInput(e.target.value)) onChange({ rate: e.target.value })
+                }}
               />
             </div>
             <div className="form-field" />
@@ -97,7 +106,9 @@ export function AutoSpotModal({
               <input id="spot-buy-curr" type="text" value={form.buyCurr} readOnly />
             </div>
             <div className="form-field">
-              <label>Buy Amount</label>
+              <label>
+                Buy Amount<span className="req">*</span>
+              </label>
               <input
                 id="spot-buy-amt"
                 type="text"
@@ -110,7 +121,9 @@ export function AutoSpotModal({
               <input id="spot-sell-curr" type="text" value={form.sellCurr} readOnly />
             </div>
             <div className="form-field">
-              <label>Sell Amount</label>
+              <label>
+                Sell Amount<span className="req">*</span>
+              </label>
               <input
                 id="spot-sell-amt"
                 type="text"

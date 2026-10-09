@@ -68,7 +68,9 @@ export function TxnListModal({
           <div className="section-label">Selection</div>
           <div className="aux-form-grid">
             <div className="form-field">
-              <label>Blotter Date *</label>
+              <label>
+                Blotter Date<span className="req">*</span>
+              </label>
               <input
                 id="list-date"
                 type="text"

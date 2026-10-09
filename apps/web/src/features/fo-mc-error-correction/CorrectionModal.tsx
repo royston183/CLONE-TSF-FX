@@ -131,6 +131,8 @@ export function CorrectionModal({
                     inputMode="decimal"
                     value={form.exRate}
                     onChange={(e) => {
+                      // At most four decimal places.
+                      if (/\.\d{5,}/.test(e.target.value)) return
                       onChange({ exRate: e.target.value })
                       onClearError('exRate')
                     }}

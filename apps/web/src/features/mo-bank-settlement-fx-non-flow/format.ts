@@ -8,7 +8,7 @@ export function fmtNum(n: number | null | undefined): string {
 
 export function fmtRate(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return DASH
-  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
 }
 
 /** dd-mm-yyyy from an ISO yyyy-mm-dd string or a Date; an em dash for empty or invalid input. */

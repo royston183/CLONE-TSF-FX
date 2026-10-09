@@ -113,9 +113,9 @@ export function validateNewRfha(value: string): { ok: true; value: string } | { 
   return v ? { ok: true, value: v } : { ok: false, error: NEW_RFHA_REQUIRED_MSG }
 }
 
-/** onExRateChange: `parseFloat(val) || 0`. */
+/** onExRateChange: `parseFloat(val) || 0`, rounded to the four decimals a rate carries. */
 export function parseExRate(text: string): number {
-  return parseFloat(text) || 0
+  return Math.round((parseFloat(text) || 0) * 1e4) / 1e4
 }
 
 export function setExRate(inv: InvoiceLine[], idx: number, text: string): InvoiceLine[] {

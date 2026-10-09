@@ -1,5 +1,5 @@
 import { GROUPS } from './data.ts'
-import { fmtDate, fmtNum } from './format.ts'
+import { fmtDate, fmtNum, fmtRateText } from './format.ts'
 import { tradersOf, validateUploadRows } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { UploadLevel, UploadResult, UploadRow } from './types.ts'
@@ -225,9 +225,9 @@ export function UploadModal({
                       <td>{r.curr2}</td>
                       <td>{r.buySell}</td>
                       <td>{r.valueDate}</td>
-                      <td>{r.totalRate}</td>
+                      <td>{fmtRateText(r.totalRate)}</td>
                       <td>{r.swap}</td>
-                      <td>{r.spot}</td>
+                      <td>{fmtRateText(r.spot)}</td>
                       <td>{r.ndfDate}</td>
                       <td>{r.ndfRef}</td>
                       <td>{r.assignment}</td>

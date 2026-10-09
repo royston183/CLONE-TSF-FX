@@ -26,7 +26,7 @@ export function rate(v: number | null): string {
   if (v === null) return ''
   const n = Number(v)
   if (!Number.isFinite(n)) return ''
-  return n.toFixed(6)
+  return n.toFixed(4)
 }
 
 /** The Old Fixing Rate as shown: NDF_RATE is served by no API yet, so a missing one says so. */

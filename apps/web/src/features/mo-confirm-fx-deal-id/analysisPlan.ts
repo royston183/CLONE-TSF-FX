@@ -92,7 +92,7 @@ export function usdSideAmount(leg: PlanLeg): number {
 export const legRate = (leg: PlanLeg): number => (leg.strike ? leg.strike : leg.allIn)
 
 const AMOUNT_DECIMALS = 2
-const RATE_DECIMALS = 7
+const RATE_DECIMALS = 4
 
 /**
  * FORM invoice_plan: up to three rows T1 / T2 / T3 from the entity string and currency string, each linked

@@ -100,7 +100,7 @@ export function DealForm(props: DealFormProps) {
     <aside className="sidebar">
       <div className="section-title">DTTK Details</div>
       <div className="field">
-        <label htmlFor="dttkNo">DTTK No *</label>
+        <label htmlFor="dttkNo">DTTK No<span className="req">*</span></label>
         <input
           id="dttkNo"
           value={dttkNo}
@@ -126,7 +126,7 @@ export function DealForm(props: DealFormProps) {
 
       <div className="section-title">OTTK Details</div>
       <div className="field">
-        <label htmlFor="ottkNo">OTTK No *</label>
+        <label htmlFor="ottkNo">OTTK No<span className="req">*</span></label>
         <div className="compound">
           <input
             id="ottkNo"
@@ -167,7 +167,7 @@ export function DealForm(props: DealFormProps) {
 
       <div className="section-title">Deal ID Details</div>
       <div className="field two">
-        <label htmlFor="dealAmt">Deal ID Amt *</label>
+        <label htmlFor="dealAmt">Deal ID Amt<span className="req">*</span></label>
         <input
           id="dealAmt"
           className={`amount fs-amount-input${amountInvalid ? ' field-error' : ''}`}

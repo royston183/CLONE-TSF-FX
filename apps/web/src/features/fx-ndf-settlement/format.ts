@@ -73,5 +73,10 @@ export function formatAmount(n: number): string {
 }
 
 export function formatRate(n: number): string {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+}
+
+/** Swap points keep six decimals; only rates are cut to four. */
+export function formatSwap(n: number): string {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
 }

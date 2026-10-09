@@ -80,7 +80,7 @@ function ChildBody({ mc }: { mc: MasterContract }) {
         <Cell label="Contract Amt">
           USD {fmtNum(mc.amtUSD)} / {mc.currOrigin} {fmtNum(mc.amtOrigin)}
         </Cell>
-        <Cell label="Exchange Rate">{mc.exRate.toFixed(6)}</Cell>
+        <Cell label="Exchange Rate">{mc.exRate.toFixed(4)}</Cell>
         <Cell label="Commodity">
           {mc.commodityCode} - {mc.commodityDesc}
         </Cell>

@@ -23,12 +23,14 @@ import {
   formatAmount,
   formatDMY,
   formatRate,
+  formatSwap,
   isMonthEnd,
   isoToDMY,
   monthsBetween,
   pad2,
   parseDMY,
   round2,
+  round4,
   round6,
   sameDay,
   toISO,
@@ -177,7 +179,7 @@ export function calculateValuation(rec: ViewRecord, keyISO: string): MtmRow {
   } else {
     vSwap = swapFor(rec.cpair, monat)
   }
-  const vRate = round6(vSpot + vSwap)
+  const vRate = round4(vSpot + vSwap)
 
   let vAmt = 0
   if (rec.f_curr1 !== 'USD') vAmt = round2(Math.abs(fAmt) * vRate)
@@ -442,7 +444,8 @@ export function cellText(key: ColumnKey, r: MtmRow): string {
   const v = r[key]
   if (c.type === 'date') return isoToDMY(String(v))
   if (c.type === 'amt') return formatAmount(v as number)
-  if (c.type === 'rate') return v ? formatRate(v as number) : '0.000000'
+  if (c.type === 'rate' && key === 'v_swap') return formatSwap(v as number)
+  if (c.type === 'rate') return v ? formatRate(v as number) : '0.0000'
   if (c.type === 'num') return String(v)
   return v === undefined || v === null ? '' : String(v)
 }

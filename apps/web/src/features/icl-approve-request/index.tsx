@@ -262,7 +262,7 @@ export default function IclApproveRequestApp() {
         <main className="screen">
           <div className="toolbar">
             <div className="toolbar-field">
-              <label htmlFor="uptoRequestDate">Upto Request Date</label>
+              <label htmlFor="uptoRequestDate">Upto Request Date<span className="req">*</span></label>
               <DateField
                 id="uptoRequestDate"
                 value={uptoRequestDate}
@@ -472,7 +472,7 @@ export default function IclApproveRequestApp() {
                   <input type="text" id="dmsReqNo" value={dmsRow?.iclRequestNo ?? ''} readOnly />
                 </div>
                 <div className="stacked-field">
-                  <label htmlFor="dmsReqStatus">ICL Request Status</label>
+                  <label htmlFor="dmsReqStatus">ICL Request Status<span className="req">*</span></label>
                   <select
                     id="dmsReqStatus"
                     value={dmsStatusDraft}

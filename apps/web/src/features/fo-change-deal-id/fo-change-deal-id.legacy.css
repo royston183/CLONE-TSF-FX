@@ -452,6 +452,7 @@
 .fo-change-deal-id .modal-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:20px; }
 .fo-change-deal-id .modal-body .section-title { font-size:11px; font-weight:700; text-transform:uppercase; color:#085CAF; }
 .fo-change-deal-id .modal .form-field label { font-size:13px; font-weight:600; color:#475E75; }
+.fo-change-deal-id .form-field label .req { color:var(--error); margin-left:2px; }
 .fo-change-deal-id .modal .form-field .static { font-size:12.5px; font-weight:600; color:#1D2D3E; }
 .fo-change-deal-id .modal .form-field input[type=text], .fo-change-deal-id .modal .form-field input[type=number] { height:36px; font-size:13px; border:1px solid #8996A1; border-radius:4px; }
 .fo-change-deal-id .modal .form-field input:focus { outline:none; border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }

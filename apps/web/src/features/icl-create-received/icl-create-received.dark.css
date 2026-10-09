@@ -317,3 +317,6 @@
   background: #17304a;
   color: #5cafff;
 }
+:root[data-theme='dark'] .iclcreate .req {
+  color: #ff5c5c;
+}

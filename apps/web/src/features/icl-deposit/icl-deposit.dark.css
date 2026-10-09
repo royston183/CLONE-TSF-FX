@@ -278,3 +278,6 @@ repeating-linear-gradient(0deg,#1e4368 0 2px,transparent 2px 4px) 2px 6px/11px 7
   border-top: 1px solid #2a3d52;
   color: #a9c2dd;
 }
+:root[data-theme='dark'] .icldeposit .req {
+  color: #ff5c5c;
+}

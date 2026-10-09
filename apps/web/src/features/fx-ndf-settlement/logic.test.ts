@@ -84,7 +84,7 @@ const companies: CompanyOption[] = [
 describe('format', () => {
   it('formats amounts, rates and dates', () => {
     strictEqual(formatAmount(1234567.891), '1,234,567.89')
-    strictEqual(formatRate(90.215), '90.215000')
+    strictEqual(formatRate(90.215), '90.2150')
     strictEqual(isoToDmy('2026-10-05'), '05-10-2026')
     strictEqual(parseDateInput('5/10/2026'), '2026-10-05')
     strictEqual(parseDateInput('31-02-2026'), null)
@@ -278,7 +278,7 @@ describe('bank settlement letter (screen 9001)', () => {
     const t = letterDealTable(buildLetterModel(listed[0]!))
     strictEqual(t.vals.length, 11)
     deepStrictEqual(t.numIdx, [8, 10])
-    strictEqual(t.vals[8], '90.880000')
+    strictEqual(t.vals[8], '90.8800')
     strictEqual(t.vals[10], '18,293.35')
     const unknown = letterDealTable(buildLetterModel({ ...listed[0]!, settlement_known: false }))
     deepStrictEqual([unknown.vals[8], unknown.vals[10]], ['', ''])

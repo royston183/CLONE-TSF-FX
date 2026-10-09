@@ -1084,3 +1084,5 @@
 .fx-blotter #fx-table.list-table thead th {border-bottom:1px solid #E6E9EB!important;}
 .fx-blotter #fx-table.list-table tbody td {border-bottom:1px solid #E6E9EB!important;}
 .fx-blotter #fx-table.list-table .sticky-col, .fx-blotter #fx-table.list-table .sticky-3 {box-shadow:none!important;}
+/* mandatory-field marker on labels and required grid column headers */
+.fx-blotter .req {color:var(--error);margin-left:2px;}

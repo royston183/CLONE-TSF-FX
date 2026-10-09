@@ -1,6 +1,6 @@
 import type { DragEvent } from 'react'
 import { fmtAmt, fmtRate } from './format.ts'
-import { legStatus, statusMeta } from './logic.ts'
+import { legStatus, parseExRate, statusMeta } from './logic.ts'
 import type { InvoiceLine, PlTable as PlTableData, TopRow } from './types.ts'
 
 export function StatusPill({ code }: { code: string }) {
@@ -185,8 +185,12 @@ export function InvoiceTable({
                   className="cell-input"
                   type="number"
                   step="0.0001"
-                  defaultValue={String(r.exRate)}
+                  defaultValue={r.exRate.toFixed(4)}
                   onChange={(e) => onExRateChange(idx, e.target.value)}
+                  onBlur={(e) => {
+                    // Rates carry four decimals: show a longer entry the way it is kept (see parseExRate).
+                    if (/\.\d{5,}/.test(e.target.value)) e.target.value = parseExRate(e.target.value).toFixed(4)
+                  }}
                 />
               </td>
               <td className="num">{fmtAmt(r.invAmt)}</td>

@@ -94,9 +94,9 @@ describe('FixNdf switch', () => {
     strictEqual(metadataHasAction(today, 'Settle'), true)
   })
 
-  it('rounds the rate to the parameter scale (9 decimals)', () => {
+  it('rounds the rate to 4 decimals', () => {
     strictEqual(fixingRateValue(90.4), 90.4)
-    strictEqual(fixingRateValue(90.12345678912), 90.123456789)
+    strictEqual(fixingRateValue(90.12345678912), 90.1235)
   })
 
   it('refuses a missing or non-positive rate before calling SAP', async () => {

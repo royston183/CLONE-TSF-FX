@@ -76,7 +76,10 @@ export function InvoicePlanModal({
                           step="0.0001"
                           value={rateTexts[i] ?? ''}
                           disabled={!editable}
-                          onChange={(e) => onRateChange(i, e.target.value)}
+                          // Rates carry at most 4 decimals.
+                          onChange={(e) => {
+                            if (/^\d*\.?\d{0,4}$/.test(e.target.value)) onRateChange(i, e.target.value)
+                          }}
                         />
                       </td>
                       <td className="num">{fmtAmt(inv.invAmt)}</td>
@@ -178,7 +181,9 @@ export function EditPairModal({
             <Field label="Company Code" value={leg?.bukrs || '—'} />
             <Field label="Old Transaction" value={leg?.rfha ?? '—'} />
             <div className="form-field">
-              <label>New Transaction</label>
+              <label>
+                New Transaction<span className="req">*</span>
+              </label>
               <select value={newTxn} disabled={!inputEnabled} onChange={(e) => onNewTxnChange(e.target.value)}>
                 <option value="">Select …</option>
                 {replacements.map((r) => (

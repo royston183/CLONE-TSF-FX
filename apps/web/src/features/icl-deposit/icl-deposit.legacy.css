@@ -173,3 +173,4 @@ border-top:1px solid #e1e6ea;color:#6a6d70;font-size:11px;z-index:900}
 .icldeposit .toolbar {align-items:flex-start}
 .icldeposit .toolbar-left, .icldeposit .toolbar-right {width:100%}
 }
+.icldeposit .req {color:#bb0000;margin-left:2px;}

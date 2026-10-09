@@ -23,7 +23,9 @@ export function RemarkModal({ blNo, onClose, onConfirm }: { blNo: string; onClos
           </button>
         </div>
         <div className="modal-body">
-          <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-soft)', display: 'block', marginBottom: 6 }}>Remark</label>
+          <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-soft)', display: 'block', marginBottom: 6 }}>
+            Remark<span className="req">*</span>
+          </label>
           <textarea className="remark-box" placeholder="Reason for de-assigning this BL..." value={remark} onChange={(e) => setRemark(e.target.value)} />
         </div>
         <div className="modal-footer">

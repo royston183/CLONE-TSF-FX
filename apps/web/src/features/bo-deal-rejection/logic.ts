@@ -4,7 +4,7 @@
  * rules / the calendar maths).
  */
 import { FX_FIELD_DEFS, MONTH_NAMES, OP_FIELD_DEFS, TABLE_COLUMNS } from './data.ts'
-import { formatAmount, formatDMY, formatRate, parseDMY } from './format.ts'
+import { formatAmount, formatDMY, formatRate, formatSwap, parseDMY } from './format.ts'
 import type {
   CalendarCell,
   CalendarView,
@@ -58,13 +58,16 @@ export function isNumeric(def: FieldDef): boolean {
   return def.type === 'amt' || def.type === 'rate'
 }
 
+/** "Rate" fields that actually hold swap points (shown to 6 dp, not the 4 dp of rates). */
+const SWAP_KEYS = new Set(['swap', 'oswap'])
+
 /** Display text for a cell (also what search matches against). */
 export function cellText(d: Deal, def: FieldDef, type: TxnType, remarks: Record<string, string>): string {
   if (def.key === 'bo_rem') return remarks[dealKey(type, d)] ?? ''
   const v = d[def.key]
   if (v === undefined || v === null || v === '') return ''
   if (def.type === 'amt') return Number(v) === 0 ? '' : formatAmount(v)
-  if (def.type === 'rate') return Number(v) === 0 ? '' : formatRate(v)
+  if (def.type === 'rate') return Number(v) === 0 ? '' : SWAP_KEYS.has(def.key) ? formatSwap(v) : formatRate(v)
   return String(v)
 }
 

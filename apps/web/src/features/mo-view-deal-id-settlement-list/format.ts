@@ -5,6 +5,11 @@ export function fmtNum(n: number): string {
   return `${neg ? '-' : ''}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${frac}`
 }
 
+/** Rates to four decimals, ungrouped; '' for a non-number. */
+export function fmtRate(n: number): string {
+  return Number.isFinite(n) ? n.toFixed(4) : ''
+}
+
 export function fmtCompactUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
   if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`

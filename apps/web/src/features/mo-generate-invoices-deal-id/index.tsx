@@ -65,8 +65,8 @@ const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'bs2', label: 'Side 2' },
   { key: 'curr2', label: 'Crcy 2' },
   { key: 'amt2', label: 'Amount 2', num: 2 },
-  { key: 'allIn', label: 'All in Rate', num: 9 },
-  { key: 'strike', label: 'Strike', num: 9 },
+  { key: 'allIn', label: 'All in Rate', num: 4 },
+  { key: 'strike', label: 'Strike', num: 4 },
   { key: 'mc', label: 'MC Ref No' },
   { key: 'txn', label: 'Txn Status' },
 ]
@@ -484,7 +484,9 @@ export default function MoGenerateInvoicesDealId() {
       toast('Enter a valid non-negative number.', 'error')
       return
     }
-    updateDeal((d) => ({ ...d, inv: d.inv.map((r, i) => (i === index ? recalcInvoiceRow({ ...r, [edit]: n }) : r)) }))
+    // Rates are kept to four decimals.
+    const value = edit === 'rate' ? Number(n.toFixed(4)) : n
+    updateDeal((d) => ({ ...d, inv: d.inv.map((r, i) => (i === index ? recalcInvoiceRow({ ...r, [edit]: value }) : r)) }))
   }
 
   const openBank = (index: number) => setBankRow(index)
@@ -911,7 +913,11 @@ export default function MoGenerateInvoicesDealId() {
                               <input className="cell-input" disabled={!canEdit} defaultValue={money(r.usdPrice, 9)} onBlur={(e) => setInvField(idx, 'usdPrice', e.target.value)} />
                             </td>
                             <td className="editable-cell">
-                              <input className="cell-input" disabled={!canEdit || amendMode || r.curr === 'USD'} defaultValue={money(r.rate, 9)} onBlur={(e) => setInvField(idx, 'rate', e.target.value)} />
+                              <input className="cell-input" disabled={!canEdit || amendMode || r.curr === 'USD'} defaultValue={money(r.rate, 4)} onBlur={(e) => {
+                                const v = parseNum(e.target.value)
+                                setInvField(idx, 'rate', e.target.value)
+                                if (!Number.isNaN(v) && v >= 0) e.target.value = money(v, 4)
+                              }} />
                             </td>
                             <td className="num">{money(r.price, 9)}</td>
                             <td className="num">{money(r.amt, 2)}</td>

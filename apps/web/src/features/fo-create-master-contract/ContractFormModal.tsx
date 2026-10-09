@@ -157,10 +157,13 @@ export function ContractFormModal({
                     </label>
                     <input
                       className="control text-right"
-                      placeholder="0.000000"
+                      placeholder="0.0000"
                       inputMode="decimal"
                       value={values.exchangeRate}
-                      onChange={(e) => set({ exchangeRate: e.target.value }, 'exchangeRate')}
+                      onChange={(e) => {
+                        // Rates carry at most four decimals: a keystroke that would add a fifth is ignored.
+                        if (/^[\d,]*\.?\d{0,4}$/.test(e.target.value)) set({ exchangeRate: e.target.value }, 'exchangeRate')
+                      }}
                     />
                     <div className="error-msg">Must be greater than 0.</div>
                   </div>

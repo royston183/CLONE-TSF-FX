@@ -6,3 +6,6 @@
  */
 .mo-confirm-fx-deal-id table th,
 .mo-confirm-fx-deal-id table td { border-left: 0; border-right: 0; }
+
+/* Mandatory-field marker on labels (Deal ID; New transaction in the Edit Deal Pair popup). */
+.mo-confirm-fx-deal-id .field label .req { color:var(--danger); margin-left:2px; }

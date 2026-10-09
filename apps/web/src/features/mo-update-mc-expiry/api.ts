@@ -35,11 +35,13 @@ const STATUS_LABEL: Record<string, string> = {
   [EXPIRED]: 'Expired',
 }
 
-export type Loaded = { contracts: MasterContract[]; source: MasterSource }
+export type Loaded = { contracts: MasterContract[]; source: MasterSource; demoCount: number }
 
 /**
- * Every Master Contract. An empty MAS_CON is a real answer (an empty grid); the seed rows
- * only appear when the middleware cannot be reached.
+ * Every Master Contract. When the middleware cannot be reached the seed rows stand in for
+ * MAS_CON. When it can, the seed rows MAS_CON does not already hold are added alongside, so
+ * the screen always has contracts to view and expire. Those demo rows carry no statusCode,
+ * so expirableRefs never sends them to MySQL: their expiry stays on the screen.
  */
 export async function loadContracts(signal?: AbortSignal): Promise<Loaded> {
   const statuses = (await loadMcStatuses(signal)).rows
@@ -48,7 +50,24 @@ export async function loadContracts(signal?: AbortSignal): Promise<Loaded> {
     seedContracts,
     'Master Contracts',
   )
-  return { contracts: rows, source }
+  if (source !== 'mysql') return { contracts: rows, source, demoCount: 0 }
+  const demo = withDemoContracts(rows)
+  return { contracts: demo, source, demoCount: demo.length - rows.length }
+}
+
+/** MAS_CON's rows followed by every seed row whose MC number MAS_CON does not use. */
+export function withDemoContracts(rows: readonly MasterContract[]): MasterContract[] {
+  const taken = new Set(rows.map((r) => r.mcNumber))
+  return [...rows, ...seedContracts().filter((c) => !taken.has(c.mcNumber))]
+}
+
+/**
+ * A re-read rebuilds the demo rows from the seed, which would undo an expiry made on them
+ * this session; the previous on-screen copy of each demo row is kept instead.
+ */
+export function keepDemoState(previous: readonly MasterContract[], next: readonly MasterContract[]): MasterContract[] {
+  const demo = new Map(previous.filter((c) => c.statusCode === undefined).map((c) => [c.mcNumber, c]))
+  return next.map((c) => (c.statusCode === undefined ? (demo.get(c.mcNumber) ?? c) : c))
 }
 
 export function toContract(r: McRow, statuses: readonly McStatusRow[]): MasterContract {

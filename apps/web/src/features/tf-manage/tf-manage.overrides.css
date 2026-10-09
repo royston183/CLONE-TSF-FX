@@ -41,3 +41,9 @@
   color: var(--red);
   font-weight: 600;
 }
+
+/* The red asterisk on a label whose field must be filled before its action runs. */
+.tfmanage .req {
+  color: var(--red);
+  margin-left: 2px;
+}

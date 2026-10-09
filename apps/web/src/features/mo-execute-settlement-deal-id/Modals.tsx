@@ -53,7 +53,9 @@ export function AmendModal({
       }
     >
       <div className="ffield">
-        <label htmlFor="amendDate">Deal End Date</label>
+        <label htmlFor="amendDate">
+          Deal End Date<span className="req">*</span>
+        </label>
         <input
           id="amendDate"
           type="text"
@@ -187,7 +189,10 @@ export function DiffModal({
                     type="text"
                     className="diffSpotInput"
                     value={spots[idx] ?? r.spot}
-                    onChange={(e) => onSpot(idx, e.target.value)}
+                    onChange={(e) => {
+                      // Spot rates take at most four decimals.
+                      if (/^\d*\.?\d{0,4}$/.test(e.target.value)) onSpot(idx, e.target.value)
+                    }}
                     style={{
                       width: '90px',
                       height: '28px',
@@ -313,7 +318,9 @@ export function EditDmsModal({
         </select>
       </div>
       <div className="ffield">
-        <label htmlFor="editDmsDate">Date</label>
+        <label htmlFor="editDmsDate">
+          Date<span className="req">*</span>
+        </label>
         <input
           id="editDmsDate"
           type="text"

@@ -34,6 +34,7 @@ import {
   padLeft,
   pad2,
   round2,
+  round4,
   round6,
 } from './format.ts'
 import type {
@@ -126,7 +127,7 @@ export function buildAccountingConfig(): AccConfig[] {
 /** Month-end spot for a key date's month; 0 when the table has no rate. */
 export function spotAt(db: Pick<Db, 'spot'>, pair: string, keyIso: string): number {
   const v = db.spot[pair]?.[keyIso.slice(0, 7)]
-  return v ? round6(v) : 0
+  return v ? round4(v) : 0
 }
 
 /** Swap points curve for a pair on a key date (ascending by tenor). */
@@ -140,7 +141,7 @@ export function swapCurveFor(pair: string, keyIso: string): SwapPoint[] {
 function decimalsForPair(pair: string): number {
   if (pair === 'USD-VND') return 2
   if (pair === 'USD-JPY') return 3
-  return pair === 'USD-INR' || pair === 'USD-THB' ? 4 : 5
+  return 4
 }
 
 /** Builds the demo deals and the MTM documents already posted for some of them. */
@@ -352,7 +353,7 @@ export function valuateTransaction(db: Db, deal: Deal, keyIso: string, months: r
   const ccAmt = convertToUsd(fAmt, deal.cRate, deal.toCurr)
   const vSpot = spotAt(db, deal.cpair, keyIso)
   const sw = calculateSwap(deal.cpair, keyIso, deal.delfz, months)
-  const vRate = round6(vSpot + sw.swap)
+  const vRate = round4(vSpot + sw.swap)
   const vAmt = convertToUsd(fAmt, vRate, deal.toCurr)
   const lvBs = deal.curr1 === fCurr ? deal.bs1 : deal.bs2
   const mtm = findMtmData(db, deal.bukrs, deal.rfha, keyIso)
@@ -576,7 +577,7 @@ export function transactionSections(row: Row, keyIso: string): DetailSection[] {
       items: [
         { label: 'Currency Pair', value: row.cpair },
         { label: 'Buy/Sell', value: row.bsBu },
-        { label: 'Contract Rate', value: formatNumber(row.cRate, 6) },
+        { label: 'Contract Rate', value: formatNumber(row.cRate, 4) },
         { label: 'Start Date', value: isoToDMY(row.dblfz) },
         { label: 'Maturity Date', value: isoToDMY(row.delfz) },
         { label: 'Exp Mth-yr', value: row.month },
@@ -589,9 +590,9 @@ export function transactionSections(row: Row, keyIso: string): DetailSection[] {
     {
       title: `MTM Valuation (Key Date ${isoToDMY(keyIso)})`,
       items: [
-        { label: 'Valuation Spot', value: formatNumber(row.vSpot, 6) },
+        { label: 'Valuation Spot', value: formatNumber(row.vSpot, 4) },
         { label: 'Valuation Swap', value: formatNumber(row.vSwap, 6) },
-        { label: 'Valuation Rate', value: formatNumber(row.vRate, 6) },
+        { label: 'Valuation Rate', value: formatNumber(row.vRate, 4) },
         { label: 'Valuation Amount (USD)', value: formatNumber(row.vAmt, 2) },
         { label: 'Valuation Gain/Loss (USD)', value: formatNumber(row.vGl, 2) },
         { label: 'Exp Mth', value: String(row.monat) },
@@ -613,7 +614,8 @@ export function visibleColumns(layout: string): readonly Column[] {
 export function cellText(col: Column, r: Row): string {
   if (col.fmt === 'date') return isoToDMY(String(r[col.key]))
   if (col.fmt === 'foreign') return formatNumber(r.fAmt, ccyDec(r.fCurr))
-  if (col.fmt === 'rate6') return formatNumber(Number(r[col.key]), 6)
+  if (col.fmt === 'rate4') return formatNumber(Number(r[col.key]), 4)
+  if (col.fmt === 'swap6') return formatNumber(Number(r[col.key]), 6)
   if (col.fmt === 'amount2') return formatNumber(Number(r[col.key]), 2)
   const v = r[col.key]
   return v === null || v === undefined ? '' : String(v)

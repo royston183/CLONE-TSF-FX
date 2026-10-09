@@ -123,7 +123,7 @@ describe('validateCorrection', () => {
     const form = formFromRow(firstRow(), TODAY)
     strictEqual(form.amendedDate, '25-09-2026')
     strictEqual(form.amountUsd, '3,459.00')
-    strictEqual(form.exRate, '4.000000')
+    strictEqual(form.exRate, '4.0000')
     strictEqual(form.amountOrigin, '13,836.00 INR')
   })
 

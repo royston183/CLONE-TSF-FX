@@ -91,7 +91,7 @@ describe('dates and numbers', () => {
     strictEqual(formatAmount(-1500), '-1,500.00')
     strictEqual(formatAmount(-0.004), '0.00')
     strictEqual(formatAmount(null), '0.00')
-    strictEqual(formatRate(1.171), '1.171000')
+    strictEqual(formatRate(1.171), '1.1710')
   })
 })
 
@@ -271,7 +271,7 @@ describe('criteria, search, sort, paging', () => {
     const r = byId('101')
     strictEqual(cellText('dblfz', r), '12-06-2026')
     strictEqual(cellText('f_amt', r), '446,250,000.00')
-    strictEqual(cellText('v_rate', r), '89.850000')
+    strictEqual(cellText('v_rate', r), '89.8500')
     strictEqual(cellText('monat', r), '3')
     strictEqual(cellText('mtm_doc', r), '')
     strictEqual(layoutColumns('VALUATION').length, 15)

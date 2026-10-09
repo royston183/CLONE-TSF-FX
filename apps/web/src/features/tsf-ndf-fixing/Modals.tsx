@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { FO_REMARK_MAX } from '../../shared/fx/ndf.ts'
 import { StatusPopup } from '../../shared/popup/Popup.tsx'
-import { money, rate } from './format.ts'
+import { isRateInput, money, points, rate } from './format.ts'
 import { calcCashSettlement, type Tcurf } from './logic.ts'
 import type { NdfDeal } from './types.ts'
 
@@ -106,7 +106,9 @@ export function NdfFixModal({
                 inputMode="decimal"
                 placeholder="Enter fixing rate"
                 value={fixRate}
-                onChange={(e) => onFixRateChange(e.target.value)}
+                onChange={(e) => {
+                  if (isRateInput(e.target.value)) onFixRateChange(e.target.value)
+                }}
               />
               <div className="error-msg">Fixing Rate is required.</div>
             </div>
@@ -200,7 +202,7 @@ export function ViewTxnModal({ open, deal, onClose }: { open: boolean; deal: Ndf
             </div>
             <div className="field">
               <label>Swap</label>
-              <input className="control readonly num" readOnly value={rate(deal.swap)} />
+              <input className="control readonly num" readOnly value={points(deal.swap)} />
             </div>
             <div className="field">
               <label>Forward Rate</label>

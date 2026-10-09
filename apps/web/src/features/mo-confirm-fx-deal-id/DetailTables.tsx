@@ -15,7 +15,6 @@ export function StatusBadge({ code }: { code: string }) {
 export function DealDetails({ deal }: { deal: Deal }) {
   const items: [string, string][] = [
     ['Deal ID', deal.dealId],
-    ['Deal Description', deal.dealDesc],
     ['Trader', `${deal.trader} — ${deal.traderName}`],
   ]
   const rest: [string, string][] = [

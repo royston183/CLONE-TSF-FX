@@ -398,8 +398,11 @@ export function fixNdfAvailable(): Promise<boolean> {
   return trmfxCapabilities().then((c) => c.actions.has(NDF_FIXING_ACTION_NAME))
 }
 
-/** FixingRate is Edm.Decimal(13, 9) in the service: rounded to 9 decimals so no float noise is sent. */
-export const fixingRateValue = (rate: number) => Math.round(rate * 1e9) / 1e9
+/**
+ * FixingRate is Edm.Decimal(13, 9) in the service, but rates are kept to 4 decimals (94.1234):
+ * rounded to 4 so no extra precision or float noise is sent.
+ */
+export const fixingRateValue = (rate: number) => Math.round(rate * 1e4) / 1e4
 
 export type ActionResult = { ok: boolean; message: string }
 
@@ -497,7 +500,7 @@ export async function fixNdf(
       message: `The fixing of transaction ${deal.rfha} was recorded in SAP, but its TSF status could not be set to ${nextStatus}: ${sapMessage(error)}`,
     }
   }
-  return { ok: true, message: `Fixing rate ${fixingRateValue(rate)} recorded for transaction ${deal.rfha} (status ${nextStatus}).` }
+  return { ok: true, message: `Fixing rate ${fixingRateValue(rate).toFixed(4)} recorded for transaction ${deal.rfha} (status ${nextStatus}).` }
 }
 
 /* ---------------- bank settlement posting (FX NDF Settlement, ZSGTSFR028) ---------------- */

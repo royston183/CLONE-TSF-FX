@@ -142,3 +142,6 @@
 .mo-execute-settlement-deal-id table { border: none; }
 .mo-execute-settlement-deal-id table th,
 .mo-execute-settlement-deal-id table td { border-left: none; border-right: none; }
+
+/* Mandatory-field marker on popup labels (Amend Deal End Date, Edit DMS Date). */
+.mo-execute-settlement-deal-id .ffield label .req { color: var(--red); margin-left: 2px; }

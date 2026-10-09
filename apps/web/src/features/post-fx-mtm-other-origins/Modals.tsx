@@ -81,7 +81,7 @@ export function MessageLogModal({ modal, msgs }: { modal: Modal; msgs: readonly 
                 <td>{m.doc}</td>
                 <td className={`num ${signClass(m.diff)}`}>{formatNumber(m.diff, 2)}</td>
                 <td className={m.ok ? 'msg-ok-text' : 'msg-err-text'}>{m.message}</td>
-                <td className="num">{formatNumber(m.cRate, 6)}</td>
+                <td className="num">{formatNumber(m.cRate, 4)}</td>
               </tr>
             ))}
           </tbody>
