@@ -73,7 +73,7 @@ function BookingSection({
           <label>
             Rate<span className="req">*</span>
           </label>
-          <input className="control" placeholder="0.0000" value={form.rate} onChange={(e) => onChange({ rate: e.target.value })} />
+          <input className="control" placeholder="0.0000" value={form.rate} onChange={(e) => { if (!/\.\d{5,}/.test(e.target.value)) onChange({ rate: e.target.value }) }} />
         </div>
       </div>
       <div className="form-row no-wrap">

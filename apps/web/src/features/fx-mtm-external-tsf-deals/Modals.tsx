@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { formatAmount, formatRate, ymdToDmy } from './format.ts'
-import { documentTotals, logSubtitle, rateDp } from './logic.ts'
+import { documentTotals, logSubtitle, rateDp, swapDp } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
 import type { AccountingDocument, Deal, Executed, MsgRow } from './types.ts'
 
@@ -258,7 +258,7 @@ export function DealModal({
               </Section>
               <Section title={`MTM Valuation at ${ymdToDmy(keyYmd)}`}>
                 <DetailItem label="Value Spot" value={formatRate(row.v_spot_n, rd)} />
-                <DetailItem label="Value Swap" value={formatRate(row.v_swap_n, rd + 1)} />
+                <DetailItem label="Value Swap" value={formatRate(row.v_swap_n, swapDp(row))} />
                 <DetailItem label="Value Rate" value={formatRate(row.v_rate_n, rd)} />
                 <DetailItem label="Amount in USD" value={formatAmount(row.usd_amt)} />
                 <DetailItem label="Value Amt" value={formatAmount(row.v_amt)} />

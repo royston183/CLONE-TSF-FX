@@ -325,3 +325,4 @@
 .iclapprove .toast.success { background:#14532d; border-left-color:#86efac; }
 .iclapprove .toast.warning { background:#7c4a03; border-left-color:#fdd67d; }
 .iclapprove .toast-title { font-size:11px; font-weight:700; margin-bottom:2px; }
+.iclapprove .req {color:var(--red);margin-left:2px;}

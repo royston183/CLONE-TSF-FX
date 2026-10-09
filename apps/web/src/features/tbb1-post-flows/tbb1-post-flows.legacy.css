@@ -283,7 +283,7 @@
   white-space:nowrap;
   line-height:1.2;
 }
-.tbb1 .field label .req {color:var(--error);margin-left:2px;}
+.tbb1 .field label .req, .tbb1 .section-title .req {color:var(--error);margin-left:2px;}
 .tbb1 .field .hint {font-size:11px;color:var(--text-faint);}
 .tbb1 .field .error-msg {
   font-size:11px;

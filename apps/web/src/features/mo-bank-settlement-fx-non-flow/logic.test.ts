@@ -38,9 +38,9 @@ describe('format', () => {
   it('formats numbers, rates and dates', () => {
     strictEqual(fmtNum(5000000), '5,000,000.00')
     strictEqual(fmtNum(null), '—')
-    strictEqual(fmtRate(83), '83.00')
-    strictEqual(fmtRate(15542.5), '15,542.50')
-    strictEqual(fmtRate(1.075), '1.075')
+    strictEqual(fmtRate(83), '83.0000')
+    strictEqual(fmtRate(15542.5), '15,542.5000')
+    strictEqual(fmtRate(1.075), '1.0750')
     strictEqual(fmtDate('2026-10-15'), '15-10-2026')
     strictEqual(fmtDate(null), '—')
     strictEqual(fmtDate('garbage'), '—')

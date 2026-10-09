@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { TXN } from '../../shared/fx/ndf.ts'
-import { formatAmount } from './format.ts'
+import { formatAmount, formatRate } from './format.ts'
 import { statusClass } from './logic.ts'
 import type { NdfDeal, Sort, SortField } from './types.ts'
 
@@ -51,6 +51,8 @@ function cellValue(d: NdfDeal, col: Column): ReactNode {
     case 'foRemark':
     case 'externalRef':
       return d[col.key] || DASH
+    case 'allInRate':
+      return formatRate(d.allInRate)
     case 'ndfValue':
       // ZCASH_AMT has no service yet (see api.ts): a dash, not a zero that reads like a real amount.
       return d.ndfValue ? formatAmount(d.ndfValue) : DASH

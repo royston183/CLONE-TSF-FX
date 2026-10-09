@@ -32,7 +32,7 @@ export function TerminationModal({
         </div>
         <div className="modal-body">
           <div className="form-row">
-            <div className="form-label">Enter Date</div>
+            <div className="form-label">Enter Date<span className="req">*</span></div>
             <div className="form-date-shell">
               <input
                 id="terminationDate"

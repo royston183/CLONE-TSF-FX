@@ -22,7 +22,7 @@ export function formatAmount(n: number): string {
 }
 
 export function formatRate(n: number): string {
-  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
 }
 
 /** 3459 → "0.003459M", 46215 → "0.046215M", 2000000 → "2.0M" — the MC description's amount tag. */

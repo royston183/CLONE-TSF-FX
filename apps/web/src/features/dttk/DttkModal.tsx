@@ -40,17 +40,25 @@ function Field({
   htmlFor,
   children,
   hidden,
+  required,
   className = 'field',
 }: {
   label?: ReactNode
   htmlFor?: string
   children: ReactNode
   hidden?: boolean
+  /** Marks the label with a red asterisk; the save handler enforces the value. */
+  required?: boolean
   className?: string
 }) {
   return (
     <div className={className} hidden={hidden}>
-      {label !== undefined ? <label htmlFor={htmlFor}>{label}</label> : null}
+      {label !== undefined ? (
+        <label htmlFor={htmlFor}>
+          {label}
+          {required ? <span className="req">*</span> : null}
+        </label>
+      ) : null}
       {children}
     </div>
   )
@@ -336,7 +344,7 @@ export function DttkModal(props: DttkModalProps) {
                 />
               </div>
             </div>
-            <Field label="Company Code">
+            <Field label="Company Code" required>
               <div className="compound">
                 <input
                   className="code"

@@ -82,12 +82,12 @@ function deal(patch: Partial<Deal>): Deal {
 }
 
 describe('format', () => {
-  it('formats amounts with grouping and a trailing minus, rates to six places', () => {
+  it('formats amounts with grouping and a trailing minus, rates to four places', () => {
     strictEqual(fmtAmount(1234567.891), '1,234,567.89')
     strictEqual(fmtAmount(-5), '5.00-')
     strictEqual(fmtAmount(-1234.5), '1,234.50-')
     strictEqual(fmtAmount(0), '0.00')
-    strictEqual(fmtRate(33.1), '33.100000')
+    strictEqual(fmtRate(33.1), '33.1000')
   })
 
   it('formats and parses DD-MM-YYYY like the page', () => {

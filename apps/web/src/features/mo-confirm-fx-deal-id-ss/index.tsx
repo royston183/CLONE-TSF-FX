@@ -191,7 +191,7 @@ export default function MoConfirmFxDealIdSs() {
   /* ---------- Change / Confirm (Invoice Plan) ---------- */
   const openInvoicePlan = () => {
     if (!deal) return
-    setRateTexts(deal.invoices.map((i) => String(i.exRate)))
+    setRateTexts(deal.invoices.map((i) => i.exRate.toFixed(4)))
     setUnreadyRfha(null)
     ipModal.open()
   }

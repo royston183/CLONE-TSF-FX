@@ -174,7 +174,9 @@ export function AssignDealModal({
             <div className="section-head">Assignment Details</div>
             <div className="section-body field-grid grid4">
               <div className="field">
-                <label htmlFor="adDealStructure">Deal Structure</label>
+                <label htmlFor="adDealStructure">
+                  Deal Structure<span className="req">*</span>
+                </label>
                 <select
                   id="adDealStructure"
                   value={dealStructure}
@@ -189,7 +191,9 @@ export function AssignDealModal({
                 </select>
               </div>
               <div className="field">
-                <label htmlFor="adDealId">Deal ID</label>
+                <label htmlFor="adDealId">
+                  Deal ID<span className="req">*</span>
+                </label>
                 <input
                   type="text"
                   id="adDealId"

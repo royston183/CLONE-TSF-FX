@@ -571,3 +571,5 @@
 .fondfec .modal-foot button { margin-left: 0; }
 /* Tables: no vertical grid lines, one horizontal #E6E9EB line under the header and each row. */
 .fondfec thead th, .fondfec tbody td { border-right: 0; border-left: 0; border-bottom: 1px solid #E6E9EB; }
+/* mandatory-field marker on labels */
+.fondfec .req { color: var(--error); margin-left: 2px; }

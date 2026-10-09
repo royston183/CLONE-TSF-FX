@@ -1,9 +1,10 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { MC_STATUS_DUMMY } from '../../shared/fx/status.ts'
-import { EXPIRED, IN_USE, expirableRefs, toContract } from './api.ts'
+import { EXPIRED, IN_USE, expirableRefs, keepDemoState, toContract, withDemoContracts } from './api.ts'
 import { eligibleIds, expireContracts, isEligibleForExpiry, loadScreen } from './logic.ts'
 import { parseDMY } from './format.ts'
+import { seedContracts } from './data.ts'
 
 const row = {
   ZMC_REF_NO: '2000000001',
@@ -158,5 +159,36 @@ describe('expiry', () => {
     const seedLike = { ...inUse }
     delete seedLike.statusCode
     strictEqual('statusCode' in (expireContracts([seedLike], [inUse.mcNumber])[0] ?? {}), false)
+  })
+})
+
+describe('demo contracts beside MySQL', () => {
+  const mysqlRow = toContract(row, MC_STATUS_DUMMY)
+  const seed = seedContracts()
+
+  it('adds every seed row whose MC number MySQL does not use, after the MySQL rows', () => {
+    const clash = toContract({ ...row, ZMC_REF_NO: seed[0]?.mcNumber ?? '' }, MC_STATUS_DUMMY)
+    const list = withDemoContracts([mysqlRow, clash])
+    strictEqual(list.length, 2 + seed.length - 1)
+    strictEqual(list[1], clash)
+    strictEqual(list.filter((c) => c.mcNumber === clash.mcNumber).length, 1)
+  })
+
+  it('never sends a demo row to MySQL', () => {
+    const list = withDemoContracts([mysqlRow])
+    const ids = eligibleIds(list, date('31-12-2026'))
+    ok(ids.length > 1)
+    deepStrictEqual(expirableRefs(list, ids), [mysqlRow.mcNumber])
+  })
+
+  it('keeps a demo row expired on screen across a re-read, but takes MySQL rows fresh', () => {
+    const first = withDemoContracts([mysqlRow])
+    const demoId = first[1]?.mcNumber ?? ''
+    const expiredOnScreen = expireContracts(first, [demoId, mysqlRow.mcNumber])
+    const reread = withDemoContracts([{ ...mysqlRow, changedBy: 'SOMEONE' }])
+    const kept = keepDemoState(expiredOnScreen, reread)
+    strictEqual(kept.find((c) => c.mcNumber === demoId)?.status, 'Expired')
+    strictEqual(kept[0]?.changedBy, 'SOMEONE')
+    strictEqual(kept[0]?.status, 'In Use')
   })
 })

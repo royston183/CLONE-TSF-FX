@@ -695,6 +695,7 @@
 .dealanal .modal-body { flex:1 1 auto; min-height:0; overflow:auto; padding:20px; }
 .dealanal .modal-section-title { font-size:11px; font-weight:700; color:#085CAF; text-transform:uppercase; }
 .dealanal .modal .field label { font-size:13px; font-weight:600; color:#475E75; }
+.dealanal .field label .req { color:var(--error); margin-left:2px; }
 .dealanal .modal .input, .dealanal .modal .select { height:36px; font-size:13px; border:1px solid #8996A1; border-radius:4px; }
 .dealanal .modal .input[readonly] { font-size:12.5px; font-weight:600; color:#1D2D3E; }
 .dealanal .modal .input:focus, .dealanal .modal .select:focus { outline:none; border-color:#0A6ED1; box-shadow:0 0 0 3px #EAF3FC; }

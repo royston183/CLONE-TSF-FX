@@ -73,7 +73,7 @@ const CSV_COLUMNS = [
 export function toCsv(rows: NdfDeal[]): string {
   const body = rows.map((r) => [
     r.id, r.company, r.trader, r.side, r.pair, r.amt1, r.c1, r.amt2, r.c2,
-    r.spot, r.swap, r.fwd, r.date, r.ndf, r.ref, r.status,
+    r.spot.toFixed(4), r.swap, r.fwd.toFixed(4), r.date, r.ndf, r.ref, r.status,
   ])
   return [CSV_COLUMNS, ...body]
     .map((row) => row.map((v) => `"${String(v ?? '').replaceAll('"', '""')}"`).join(','))

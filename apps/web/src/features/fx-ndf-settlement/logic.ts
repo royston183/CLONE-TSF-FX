@@ -11,7 +11,7 @@ import {
   WAITING_ACTION,
   WAITING_API,
 } from './data.ts'
-import { dateToIso, formatAmount, formatRate, isoToDmy, padLeft, pad2, parseDateInput } from './format.ts'
+import { dateToIso, formatAmount, formatRate, formatSwap, isoToDmy, padLeft, pad2, parseDateInput } from './format.ts'
 import type {
   ActionName,
   BankAddress,
@@ -165,7 +165,7 @@ export function cellValue(key: ColumnKey, row: Deal): string {
   if ((key === 'ndf_rate' || key === 'zcash_amt' || key === 'cash_curr') && !row.settlement_known) return ''
   if (col.type === 'date') return isoToDmy(String(v))
   if (col.type === 'amount') return formatAmount(Number(v))
-  if (col.type === 'rate') return formatRate(Number(v))
+  if (col.type === 'rate') return key === 'oswap' ? formatSwap(Number(v)) : formatRate(Number(v))
   return v === undefined || v === null ? '' : String(v)
 }
 

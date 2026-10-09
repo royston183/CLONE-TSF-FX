@@ -12,7 +12,7 @@ import {
   findFxModel,
   findPaymentTerm,
 } from './data.ts'
-import { formatAmount, formatRate, parseAmountInput, parseDMY } from './format.ts'
+import { formatAmount, formatRate, formatTolerance, parseAmountInput, parseRateInput, parseDMY } from './format.ts'
 import type {
   ChildContract,
   ChildStore,
@@ -120,7 +120,7 @@ export function formFromContract(c: MasterContract): FormValues {
     mcAmountUsd: formatAmount(c.mcAmountUsd || 0),
     exchangeRate: formatRate(c.exchangeRate || 0),
     mcReference: c.reference || '',
-    tolerance: formatRate(c.tolerance || 0),
+    tolerance: formatTolerance(c.tolerance || 0),
     commodity: c.commodityCode || null,
     selectedCommodities: c.selectedCommodities ? [...c.selectedCommodities] : [],
     shipStart: c.shipStart || '',
@@ -136,7 +136,7 @@ export function formFromContract(c: MasterContract): FormValues {
 /** MC Amount (Origin): USD × rate, blank until both are positive numbers. */
 export function originAmount(values: FormValues): string {
   const usd = parseAmountInput(values.mcAmountUsd)
-  const rate = parseFloat(values.exchangeRate)
+  const rate = parseRateInput(values.exchangeRate)
   return !Number.isNaN(usd) && !Number.isNaN(rate) && usd > 0 && rate > 0 ? formatAmount(usd * rate) : ''
 }
 
@@ -168,7 +168,7 @@ export function validateForm(values: FormValues): { valid: boolean; errors: Fiel
   const usd = parseAmountInput(values.mcAmountUsd)
   req('mcAmountUsd', !Number.isNaN(usd) && usd > 0)
 
-  const rate = parseFloat(values.exchangeRate)
+  const rate = parseRateInput(values.exchangeRate)
   req('exchangeRate', !Number.isNaN(rate) && rate > 0)
 
   req(
@@ -218,7 +218,7 @@ export function buildContract(values: FormValues, mcNumber: number, existing: Ma
     mcDate: values.mcDate,
     mcAmountUsd: parseAmountInput(values.mcAmountUsd),
     mcAmountOrigin: parseFloat((originAmount(values) || '0').replace(/,/g, '')),
-    exchangeRate: parseFloat(values.exchangeRate),
+    exchangeRate: parseRateInput(values.exchangeRate),
     tolerance: parseFloat(values.tolerance || '0'),
     reference: values.mcReference || `MC/${entity.code}/2026/${String(mcNumber).slice(-3)}`,
     paymentTerms: values.paymentTerms || 'P01',
@@ -300,7 +300,7 @@ export function buildContractEmailHtml(contract: MasterContract): string {
     ['MC Amount (Origin)', formatAmount(contract.mcAmountOrigin)],
     ['Exchange Rate', formatRate(contract.exchangeRate)],
     ['Currency', contract.originCurrency || '—'],
-    ['Tolerance %', formatRate(contract.tolerance)],
+    ['Tolerance %', formatTolerance(contract.tolerance)],
     ['Commodity', contract.commodityName],
     ['Commodity Description', commodityDesc],
     ['Shipment Start Date', contract.shipStart],

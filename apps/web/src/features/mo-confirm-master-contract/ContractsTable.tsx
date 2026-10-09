@@ -167,7 +167,7 @@ export function ContractsTable({
                 <td className="num">{fmtNum(mc.amtUSD)}</td>
                 <td className="num">{fmtNum(mc.amtOrigin)}</td>
                 <td className="left">{mc.currOrigin}</td>
-                <td className="num">{mc.exRate.toFixed(6)}</td>
+                <td className="num">{mc.exRate.toFixed(4)}</td>
                 <td className="left">{mc.currId}</td>
                 <td className="left">{mc.currChain.join('-')}</td>
                 <td className="left">{mc.paymentTerms}</td>

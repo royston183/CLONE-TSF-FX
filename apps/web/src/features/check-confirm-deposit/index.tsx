@@ -293,7 +293,9 @@ export default function CheckConfirmDepositApp() {
             <div className="card-body">
               <div className="selection-main-row">
                 <div className="field structure-field cc-field">
-                  <label htmlFor="ccCompanyCode">Company Code</label>
+                  <label htmlFor="ccCompanyCode">
+                    Company Code<span className="req">*</span>
+                  </label>
                   <select
                     id="ccCompanyCode"
                     className="select"
@@ -309,7 +311,9 @@ export default function CheckConfirmDepositApp() {
                   </select>
                 </div>
                 <div className="field structure-field date-field">
-                  <label htmlFor="ccKeyDate">Key Date</label>
+                  <label htmlFor="ccKeyDate">
+                    Key Date<span className="req">*</span>
+                  </label>
                   <div className="date-input-wrap">
                     <input
                       id="ccKeyDate"

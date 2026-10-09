@@ -81,7 +81,7 @@ export function searchHaystack(mc: MasterContract): string {
     fmtNum(mc.amtUSD),
     fmtNum(mc.amtOrigin),
     mc.currOrigin,
-    mc.exRate.toFixed(6),
+    mc.exRate.toFixed(4),
     mc.currId,
     mc.currChain.join('-'),
     mc.paymentTerms,

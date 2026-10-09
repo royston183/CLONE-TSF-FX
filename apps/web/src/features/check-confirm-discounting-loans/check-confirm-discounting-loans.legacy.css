@@ -25,6 +25,7 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .ccdiscloans .card-body {padding:12px}
 .ccdiscloans .field {display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px}
 .ccdiscloans .field label {color:#1d2d3e;font-size:12px;font-weight:400}
+.ccdiscloans .req {color:#bb0000;margin-left:2px}
 .ccdiscloans .input, .ccdiscloans .select {height:30px;width:100%;max-width:310px;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;
 color:#1d2d3e;font-size:12px}
 .ccdiscloans .input:focus, .ccdiscloans .select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}

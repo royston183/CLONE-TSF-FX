@@ -325,7 +325,7 @@ describe('auto deal creation', () => {
     strictEqual(legs[0]?.entity, 'OGA')
     strictEqual(legs[1]?.entity, 'DMCC')
     strictEqual(legs[0]?.amt1, 2_000_000)
-    strictEqual(legs[0]?.rate, 83.2 * (1 - 28 / 2 / 10000))
+    strictEqual(legs[0]?.rate, 83.0835)
     deepStrictEqual(validateAutoLegs(mc, legs), [])
   })
 

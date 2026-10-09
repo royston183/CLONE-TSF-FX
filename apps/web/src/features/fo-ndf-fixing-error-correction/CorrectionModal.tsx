@@ -68,7 +68,9 @@ export function CorrectionModal({
                 <input className="field-control readonly num" type="text" readOnly value={oldRateText(row.oldRate)} />
               </div>
               <div className="field">
-                <label>New Fixing Rate</label>
+                <label>
+                  New Fixing Rate<span className="req">*</span>
+                </label>
                 <input
                   ref={inputRef}
                   className="field-control num"
@@ -76,6 +78,8 @@ export function CorrectionModal({
                   inputMode="decimal"
                   value={newRate}
                   onChange={(e) => {
+                    // Fixing rates take at most four decimal places.
+                    if (/\.\d{5,}/.test(e.target.value)) return
                     setError('')
                     setNewRate(e.target.value)
                   }}

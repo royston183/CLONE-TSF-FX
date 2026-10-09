@@ -16,8 +16,8 @@ export function TxnModal({ row, onClose }: { row: FxRow; onClose: () => void }) 
     ['Amount 1', money(row.amt1, 2)],
     ['Currency 2', row.curr2],
     ['Amount 2', money(row.amt2, 2)],
-    ['All in Rate', money(row.allIn, 9)],
-    ['Strike', money(row.strike, 9)],
+    ['All in Rate', money(row.allIn, 4)],
+    ['Strike', money(row.strike, 4)],
     ['MC Ref No', row.mc],
     ['Transaction Status', row.txn],
   ]

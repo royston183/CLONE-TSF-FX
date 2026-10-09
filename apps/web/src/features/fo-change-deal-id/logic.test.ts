@@ -130,6 +130,7 @@ describe('invoice plan', () => {
     strictEqual(parseExRate('91.5'), 91.5)
     strictEqual(parseExRate(''), 0)
     strictEqual(parseExRate('abc'), 0)
+    strictEqual(parseExRate('94.123456'), 94.1235)
   })
   it('recalculates invoice amounts from the edited rate', () => {
     const d = deal('3000045211')

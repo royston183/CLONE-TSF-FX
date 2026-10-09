@@ -21,7 +21,22 @@ export function formatAmount(n: number): string {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+/** Exchange rates: four decimals (e.g. 94.1234). */
 export function formatRate(n: number): string {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+}
+
+/**
+ * Reads an Exchange Rate box. Edit and Copy fill it with formatRate's grouped text
+ * ("16,000.0000") and the box accepts typed commas, so they are dropped before parsing:
+ * parseFloat alone stops at the first comma and would read 16.
+ */
+export function parseRateInput(text: string): number {
+  return parseFloat(text.replace(/,/g, ''))
+}
+
+/** Tolerance % keeps six decimals; it is a percentage, not a rate. */
+export function formatTolerance(n: number): string {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
 }
 

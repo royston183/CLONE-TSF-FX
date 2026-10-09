@@ -414,7 +414,7 @@ export default function DiscountingLoansIrsApp() {
               <div className="card-body">
                 <div className="selection-main-row">
                   <div className="field structure-field date-field">
-                    <label htmlFor="keyDate">Key Date</label>
+                    <label htmlFor="keyDate">Key Date<span className="req">*</span></label>
                     <DateInput
                       id="keyDate"
                       value={keyDate}
@@ -671,7 +671,7 @@ export default function DiscountingLoansIrsApp() {
                 {selectedRecord && irsForm ? (
                   <div className="irs-grid">
                     <div className="irs-field">
-                      <label htmlFor="irsCoCode">IRS Co Code</label>
+                      <label htmlFor="irsCoCode">IRS Co Code<span className="req">*</span></label>
                       <select
                         id="irsCoCode"
                         className="select"
@@ -701,7 +701,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="irsBp">IRS BP</label>
+                      <label htmlFor="irsBp">IRS BP<span className="req">*</span></label>
                       <select
                         id="irsBp"
                         className="select"
@@ -719,7 +719,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="irsStartDate">Start Date</label>
+                      <label htmlFor="irsStartDate">Start Date<span className="req">*</span></label>
                       <DateInput
                         id="irsStartDate"
                         value={irsForm.startDate}
@@ -731,7 +731,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="irsEndDate">End Date</label>
+                      <label htmlFor="irsEndDate">End Date<span className="req">*</span></label>
                       <DateInput
                         id="irsEndDate"
                         value={irsForm.endDate}
@@ -743,7 +743,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label>Incoming Int Ref</label>
+                      <label>Incoming Int Ref<span className="req">*</span></label>
                       <div className="twin-input-wrap">
                         <input
                           id="incomingRef1"
@@ -765,7 +765,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="outgoingIntCat">Outgoing Int Cat</label>
+                      <label htmlFor="outgoingIntCat">Outgoing Int Cat<span className="req">*</span></label>
                       <select
                         id="outgoingIntCat"
                         className="select"
@@ -787,7 +787,7 @@ export default function DiscountingLoansIrsApp() {
                     <div id="outgoingRateWrap">
                       {irsForm.outgoingIntCat === '01' ? (
                         <div className="irs-field">
-                          <label htmlFor="outgoingRate1">Outgoing Int Rate</label>
+                          <label htmlFor="outgoingRate1">Outgoing Int Rate<span className="req">*</span></label>
                           <input
                             id="outgoingRate1"
                             className="input"
@@ -798,7 +798,7 @@ export default function DiscountingLoansIrsApp() {
                         </div>
                       ) : irsForm.outgoingIntCat === '02' ? (
                         <div className="irs-field">
-                          <label>Outgoing Int Rate</label>
+                          <label>Outgoing Int Rate<span className="req">*</span></label>
                           <div className="twin-input-wrap">
                             <input
                               id="outgoingRate1"
@@ -820,7 +820,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="outgoingIntFrq">Outgoing Int Frq</label>
+                      <label htmlFor="outgoingIntFrq">Outgoing Int Frq<span className="req">*</span></label>
                       <select
                         id="outgoingIntFrq"
                         className="select"
@@ -838,7 +838,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="interestPaymentDate">Interest Payment Date</label>
+                      <label htmlFor="interestPaymentDate">Interest Payment Date<span className="req">*</span></label>
                       <select
                         id="interestPaymentDate"
                         className="select"
@@ -856,7 +856,7 @@ export default function DiscountingLoansIrsApp() {
                     </div>
 
                     <div className="irs-field">
-                      <label htmlFor="irsSpecialCase">Special Case</label>
+                      <label htmlFor="irsSpecialCase">Special Case<span className="req">*</span></label>
                       <select
                         id="irsSpecialCase"
                         className="select"

@@ -57,3 +57,9 @@
     max-width: 150px;
   }
 }
+
+/* Mandatory-field marker on modal labels. */
+.ottk .field label .req {
+  color: #bb0000;
+  margin-left: 2px;
+}

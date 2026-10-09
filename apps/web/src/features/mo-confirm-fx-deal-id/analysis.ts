@@ -221,7 +221,7 @@ export type ConfirmInput = {
 
 /** How the stored decimals are written; the middleware rejects more decimals than the column holds. */
 const AMOUNT_SCALE = 2
-const RATE_SCALE = 5
+const RATE_SCALE = 4
 
 const invoiceColumns = (dealId: string, i: InvoiceRefInput): Record<string, unknown> => ({
   ZDEAL_ID: dealId,

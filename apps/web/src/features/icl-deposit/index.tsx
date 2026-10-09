@@ -120,6 +120,7 @@ function EditHead({ columns }: { columns: readonly EditColumn[] }) {
       {columns.map((column) => (
         <th key={column.label} style={{ width: `${column.width}px` }}>
           {column.label}
+          {column.required ? <span className="req">*</span> : null}
           <span className="sort-arrows">
             <span className="sort-up" />
             <span className="sort-down" />
@@ -400,7 +401,7 @@ export default function IclDepositApp() {
             <div className="card-body">
               <div className="selection-main-row">
                 <div className="field structure-field cc-field">
-                  <label htmlFor="depCompanyCode">Company Code</label>
+                  <label htmlFor="depCompanyCode">Company Code<span className="req">*</span></label>
                   <select
                     id="depCompanyCode"
                     className="select"
@@ -416,7 +417,7 @@ export default function IclDepositApp() {
                   </select>
                 </div>
                 <div className="field structure-field date-field">
-                  <label htmlFor="depKeyDate">Key Date</label>
+                  <label htmlFor="depKeyDate">Key Date<span className="req">*</span></label>
                   <div className="date-input-wrap">
                     <input
                       id="depKeyDate"

@@ -108,6 +108,7 @@ function HeaderCells({
           onClick={() => onSort(prefix, index)}
         >
           {column.label}
+          {column.required ? <span className="req">*</span> : null}
           <span className="sort-arrows">
             <span className="sort-up" />
             <span className="sort-down" />
@@ -418,7 +419,7 @@ export default function IclRequestApp() {
               <div className="card-body">
                 <div className="selection-main-row">
                   <div className="field structure-field">
-                    <label htmlFor="tsfStructure">TSF Structure</label>
+                    <label htmlFor="tsfStructure">TSF Structure<span className="req">*</span></label>
                     <select
                       id="tsfStructure"
                       className="select"

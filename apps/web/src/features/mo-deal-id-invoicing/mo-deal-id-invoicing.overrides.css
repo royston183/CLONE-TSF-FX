@@ -116,3 +116,6 @@
 :root:not(.nogrid):not(.nogrid2) .modiv table th,
 :root:not(.nogrid):not(.nogrid2) .modiv table td { border-left: none; border-right: none; }
 :root:not(.nogrid):not(.nogrid2) .modiv table { border: none; }
+
+/* Mandatory-field marker on labels (Remark in the BL De-Assign popup). */
+.modiv .req { color: var(--red); margin-left: 2px; }

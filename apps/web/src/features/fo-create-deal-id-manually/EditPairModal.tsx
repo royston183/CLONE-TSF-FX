@@ -51,7 +51,7 @@ export function EditPairModal({
               <input className="input" readOnly value={row.rfha} />
             </div>
             <div className="field">
-              <label>New Transaction</label>
+              <label>New Transaction<span className="req">*</span></label>
               <select
                 className="select"
                 disabled={!editing}

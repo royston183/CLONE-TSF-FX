@@ -181,8 +181,8 @@ export type ColumnKey =
   | 'rbusa'
   | 'txnStatus'
 
-/** How a cell is written: a date, 6 decimals, 2 decimals, or the foreign amount in its own currency. */
-export type CellFormat = 'date' | 'rate6' | 'amount2' | 'foreign'
+/** How a cell is written: a date, a 4-decimal rate, 6-decimal swap points, 2 decimals, or the foreign amount in its own currency. */
+export type CellFormat = 'date' | 'rate4' | 'swap6' | 'amount2' | 'foreign'
 
 export type Column = {
   key: ColumnKey

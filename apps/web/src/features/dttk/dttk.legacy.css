@@ -125,6 +125,7 @@
 .dttk .modal-footer {padding:0 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff}
 .dttk .modal-note {font-size:11px;color:var(--muted)}
 .dttk .modal-note b {color:#bb0000}
+.dttk .field label .req {color:#bb0000;margin-left:2px}
 .dttk .modal-actions {display:flex;gap:8px}
 .dttk .modal-actions .btn {min-width:96px;justify-content:center}
 .dttk body.modal-open {overflow:hidden}

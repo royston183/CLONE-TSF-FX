@@ -38,6 +38,7 @@ import {
   invoiceDifference,
   modelWithCurrency,
   rollDealTypes,
+  round,
   statusList,
   type StatusOption,
 } from './invoice.ts'
@@ -446,14 +447,14 @@ export function recalcWrites(deal: Deal, ctx: DealContext): RecalcWrite[] {
       out.push({
         table: 'billAdjustment',
         key: Object.fromEntries(ADJ_KEY.map((k) => [k, txt(b, k)])),
-        changes: { ZRATE: dec(top.allIn, 7), ZDUE_DATE: isoFromDmy(top.end), ZPRATE: dec(top.allIn, 7) },
+        changes: { ZRATE: dec(round(top.allIn, 4), 7), ZDUE_DATE: isoFromDmy(top.end), ZPRATE: dec(round(top.allIn, 4), 7) },
       })
     }
     for (const i of ctx.invRef.filter((x) => txt(x, 'ZINV_TRM_NO') === ref && txt(x, 'ZDTYPE') === r.dealType)) {
       out.push({
         table: 'invRef',
         key: { ZDEAL_ID: txt(i, 'ZDEAL_ID'), ZINV_TRM_NO: txt(i, 'ZINV_TRM_NO') },
-        changes: { ZAMT: dec(amt1, 2), ZINV_AMT: dec(amt2, 2), ZEX_RATE: dec(top.allIn, 7) },
+        changes: { ZAMT: dec(amt1, 2), ZINV_AMT: dec(amt2, 2), ZEX_RATE: dec(round(top.allIn, 4), 7) },
       })
     }
   }

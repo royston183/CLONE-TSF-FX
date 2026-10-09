@@ -55,7 +55,7 @@ export type MainColumn = {
 }
 
 /** A column of one of the two single-row edit grids — label and width only. */
-export type EditColumn = { label: string; width: number }
+export type EditColumn = { label: string; width: number; required?: boolean }
 
 export type ToastKind = 'success' | 'warning' | 'error' | ''
 

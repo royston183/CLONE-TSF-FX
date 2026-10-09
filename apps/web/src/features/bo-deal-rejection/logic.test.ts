@@ -66,9 +66,9 @@ describe('format', () => {
     strictEqual(dateOffset('05-10-2026', -5), '30-09-2026')
     strictEqual(dateOffset('05-10-2026', 30), '04-11-2026')
   })
-  it('formats amounts to 2 dp and rates to 6 dp', () => {
+  it('formats amounts to 2 dp and rates to 4 dp', () => {
     strictEqual(formatAmount(1250000), '1,250,000.00')
-    strictEqual(formatRate(88.5), '88.500000')
+    strictEqual(formatRate(88.5), '88.5000')
   })
 })
 
@@ -239,7 +239,7 @@ describe('cells and columns', () => {
     ok(amt && spot && rate)
     strictEqual(cellText(d, amt, 'FX', {}), '1,250,000.00')
     strictEqual(cellText(d, spot, 'FX', {}), '')
-    strictEqual(cellText(d, rate, 'FX', {}), '88.500000')
+    strictEqual(cellText(d, rate, 'FX', {}), '88.5000')
   })
   it('the Remarks column reads the typed remark', () => {
     const d = { bukrs: 'IN11', rfha: '9' }

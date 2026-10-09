@@ -104,7 +104,7 @@ describe('filterTxns', () => {
   it('searches every column as rendered, ignoring case and surrounding space', () => {
     const q = (text: string) => rfhas(filterTxns(list, { ...DEFAULT_FILTERS, q: text }, 'ALL', DESC))
     deepStrictEqual(q('  bank holiday '), ['6205000003772'])
-    deepStrictEqual(q('3.673300'), ['6205000003890'])
+    deepStrictEqual(q('3.6733'), ['6205000003890'])
     deepStrictEqual(q('750,000.00'), ['6205000003890'])
     deepStrictEqual(q('loans'), ['6005000001820']) // the Account Cat description
     strictEqual(q('released to mo').length, 2)
@@ -202,7 +202,7 @@ describe('FX Error Correction', () => {
   it('pre-fills New Details from the transaction', () => {
     const f = formFromTxn(t)
     strictEqual(f.amount1, '1,000,000.00')
-    strictEqual(f.spotRate, '34.000000')
+    strictEqual(f.spotRate, '34.0000')
     strictEqual(f.valueDate, '31-12-2026')
     strictEqual(f.profitCenter, 'TH102003 - TSF-FX')
   })
@@ -210,8 +210,8 @@ describe('FX Error Correction', () => {
   it('derives Amount 2, the rates and Profit Center as the popup does', () => {
     strictEqual(deriveAmount2('5M', '34.5'), '172,500,000.00')
     strictEqual(deriveAmount2('250T', 'x'), '0.00')
-    strictEqual(normaliseRate('1,234.5'), '1234.500000')
-    strictEqual(normaliseRate('abc'), '0.000000')
+    strictEqual(normaliseRate('1,234.5'), '1234.5000')
+    strictEqual(normaliseRate('abc'), '0.0000')
     strictEqual(deriveProfitCenter('0615'), 'AE1340 - TSF-FX')
     strictEqual(deriveProfitCenter('9999'), '')
   })
@@ -282,7 +282,7 @@ describe('buildCsv', () => {
     strictEqual(lines[0]?.startsWith('Transaction,Deal ID,Deal ID Description'), true)
     const row = lines[1] ?? ''
     strictEqual(row.startsWith('6005000001714,1100002634,Nidhi S._OGA_2026/OGA-DMCC-OSIPL,2000002317,SG03,'), true)
-    strictEqual(row.includes(',USD,1000,INR,91500,91.5,0,91.5,'), true)
+    strictEqual(row.includes(',USD,1000,INR,91500,91.5000,0.0000,91.5000,'), true)
     strictEqual(row.endsWith(',Correction Required,31-03-2026,02-04-2026,31-03-2026'), true)
     strictEqual(csvEsc('a "b", c'), '"a ""b"", c"')
     strictEqual(csvEsc(null), '')

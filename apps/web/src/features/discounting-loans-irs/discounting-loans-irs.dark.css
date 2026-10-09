@@ -187,6 +187,9 @@ repeating-linear-gradient(0deg,#1e4368 0 2px,transparent 2px 4px) 2px 6px/11px 7
 :root[data-theme='dark'] .discloansirs .stat-value {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .discloansirs .req {
+  color: #ff5c5c;
+}
 :root[data-theme='dark'] .discloansirs .data-table td.amount-pos {
   color: #6eeda3;
 }

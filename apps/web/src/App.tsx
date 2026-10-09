@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useParams } from 'react-r
 import { AppShell, Button, EmptyState, Spinner, ToastProvider } from '@slc/ui'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ThemeProvider } from './shared/ThemeContext.tsx'
+import { SelectSearch } from './shared/SelectSearch.tsx'
 import { LoginPage } from './auth/LoginPage.tsx'
 import { RequireAuth } from './auth/RequireAuth.tsx'
 import { MenuPage } from './menu/MenuPage.tsx'
@@ -20,6 +21,8 @@ export function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
+        {/* Adds a search box to every native <select> in every screen. */}
+        <SelectSearch />
         <AuthProvider>
           <ToastProvider>
             <Routes>

@@ -796,7 +796,7 @@ export default function MaintainLimitsApp() {
                 </select>
               </div>
               <div className="cl-field cl-fit">
-                <label>Start Date</label>
+                <label>Start Date<span className="required-mark">*</span></label>
                 <div className="date-input-wrap">
                   <input
                     className="input"
@@ -818,7 +818,7 @@ export default function MaintainLimitsApp() {
                 </div>
               </div>
               <div className="cl-field">
-                <label>End Date</label>
+                <label>End Date<span className="required-mark">*</span></label>
                 <div className="date-input-wrap">
                   <input
                     className="input"
@@ -840,7 +840,7 @@ export default function MaintainLimitsApp() {
                 </div>
               </div>
               <div className="cl-field cl-fit">
-                <label>Limit Amount</label>
+                <label>Limit Amount<span className="required-mark">*</span></label>
                 <input
                   className="input money amount-input"
                   type="text"
@@ -1151,7 +1151,7 @@ export default function MaintainLimitsApp() {
                 </div>
               </div>
               <div className="cl-field cl-mid">
-                <label>Group BP</label>
+                <label>Group BP<span className="required-mark">*</span></label>
                 <select
                   className="select"
                   value={assignGroupBp}
@@ -1196,7 +1196,7 @@ export default function MaintainLimitsApp() {
                 </div>
               </div>
               <div className="cl-field cl-mid">
-                <label>Group BP Name</label>
+                <label>Group BP Name<span className="required-mark">*</span></label>
                 <input
                   className="input"
                   type="text"

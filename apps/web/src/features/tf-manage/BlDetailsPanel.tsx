@@ -257,7 +257,9 @@ export function BlDetailsPanel({
         <div className="section-head">Create BL For Trade Flow</div>
         <div className="section-body toolstrip">
           <div className="ws-field">
-            <label htmlFor="blRowsInput">BL Rows</label>
+            <label htmlFor="blRowsInput">
+              BL Rows<span className="req">*</span>
+            </label>
             <input
               type="text"
               id="blRowsInput"

@@ -86,10 +86,15 @@ function pairOf(code: string): Pair {
   return p
 }
 
-/** Decimals a rate is shown with: the pair's, but never fewer than four. */
-export function rateDp(r: Pick<Deal, 'cpair'>): number {
+/** Decimals a rate is shown with: always four, whatever the pair. */
+export function rateDp(_r: Pick<Deal, 'cpair'>): number {
+  return 4
+}
+
+/** Decimals swap points are shown with: one more than the pair's (never fewer than four). */
+export function swapDp(r: Pick<Deal, 'cpair'>): number {
   const p = PAIRS.find((x) => x.code === r.cpair)
-  return Math.max(p ? p.dp : 4, 4)
+  return Math.max(p ? p.dp : 4, 4) + 1
 }
 
 // ------------------------------------------------------------------ mock market data
@@ -825,7 +830,7 @@ export function cellText(r: Deal, col: Column): string {
     case 'rate':
       return col.blankZero && !v ? '' : formatRate(v, rateDp(r))
     case 'swap':
-      return formatRate(v, rateDp(r) + 1)
+      return formatRate(v, swapDp(r))
     default:
       return v == null ? '' : String(v)
   }

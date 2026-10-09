@@ -81,7 +81,9 @@ export function BlSplitModal({ open, blId, nextSplitId, totalQty, onCancel, onCo
                 <input type="text" id="bsTotalQty" className="amt-input" readOnly value={fmtNum(totalQty, 3)} />
               </div>
               <div className="field">
-                <label htmlFor="bsSplitQty">Qty for BL Split</label>
+                <label htmlFor="bsSplitQty">
+                  Qty for BL Split<span className="req">*</span>
+                </label>
                 <input
                   type="text"
                   id="bsSplitQty"

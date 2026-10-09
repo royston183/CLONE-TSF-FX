@@ -35,6 +35,8 @@ const rateOf = (text: string) => {
   return isNaN(r) || r < 0 ? 0 : r
 }
 const rateText = (r: number) => (r ? r.toFixed(4) : '')
+/** Rate boxes take at most four decimal places; a keystroke that would add a fifth is ignored. */
+const overRateDp = (text: string) => /\.\d{5,}/.test(text)
 const todayDmy = () => formatDMY(new Date())
 
 function CoDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -140,7 +142,7 @@ function SpotForm({
       <Leg label="Currency 2" curr={sp.curr2} bs={sp.bs2} amt={sp.amt2} note={sp.invText2} />
       <div className="pf-row c3">
         <Fld label="Rate" req error={rateError}>
-          <input className="control mono" inputMode="decimal" placeholder="0.0000" value={rate} onChange={(e) => onRate(e.target.value)} />
+          <input className="control mono" inputMode="decimal" placeholder="0.0000" value={rate} onChange={(e) => { if (!overRateDp(e.target.value)) onRate(e.target.value) }} />
         </Fld>
       </div>
     </>
@@ -215,7 +217,7 @@ export function RatePopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
         <Fld label="Cover No">
           <input className="control mono" readOnly value={txn.rfha} />
         </Fld>
-        <Fld label="Current Market Rate">
+        <Fld label="Current Market Rate" req>
           <input
             className="control mono"
             inputMode="decimal"
@@ -224,6 +226,7 @@ export function RatePopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
             value={rate}
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
+              if (overRateDp(e.target.value)) return
               setMsg(null)
               setRate(e.target.value)
             }}
@@ -502,6 +505,7 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
             placeholder="Optional – enter to create the opposite spot"
             value={fwRate}
             onChange={(e) => {
+              if (overRateDp(e.target.value)) return
               setFwRate(e.target.value)
               setFwd(fwdCalc({ ...fwd, rate: rateOf(e.target.value) }))
             }}
@@ -719,6 +723,7 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
             value={rate}
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
+              if (overRateDp(e.target.value)) return
               setRate(e.target.value)
               setRateError('')
               setMsg(null)

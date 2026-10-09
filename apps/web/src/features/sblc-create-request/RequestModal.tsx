@@ -2,7 +2,23 @@ import { useRef } from 'react'
 import { REQUEST_COLUMNS, REQUEST_TYPES } from './data.ts'
 import { money, parseAmountValue } from './format.ts'
 import { RequestCalendar } from './RequestCalendar.tsx'
-import type { CalendarState, DateField, DraftTextField, RequestDraft, SblcRecord } from './types.ts'
+import type {
+  CalendarState,
+  DateField,
+  DraftTextField,
+  RequestColumnKey,
+  RequestDraft,
+  SblcRecord,
+} from './types.ts'
+
+/** The columns requiredFieldsMissing() checks before a request line can be created. */
+const REQUIRED_COLUMNS: ReadonlySet<RequestColumnKey> = new Set([
+  'startDate',
+  'endDate',
+  'expEndDate',
+  'amount',
+  'companyCode',
+])
 
 type RequestModalProps = {
   open: boolean
@@ -117,6 +133,12 @@ export function RequestModal({
                     {REQUEST_COLUMNS.map((column) => (
                       <th key={column.key} style={{ width: `${column.width}px` }}>
                         {column.label}
+                        {REQUIRED_COLUMNS.has(column.key) ? (
+                          <>
+                            {' '}
+                            <span className="required">*</span>
+                          </>
+                        ) : null}
                       </th>
                     ))}
                   </tr>

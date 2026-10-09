@@ -2,7 +2,7 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { ndfRecord, type FxTransaction } from '../../shared/fx/ndf.ts'
 import { dealFromRecord } from './api.ts'
-import { formatAmount, formatDMY, parseDMY } from './format.ts'
+import { formatAmount, formatDMY, formatRate, parseDMY } from './format.ts'
 import {
   EMPTY_FILTERS,
   applyFilterPanel,
@@ -78,6 +78,7 @@ describe('format', () => {
   it('formats amounts and dates like the page', () => {
     strictEqual(formatAmount(1234567.891), '1,234,567.89')
     strictEqual(formatAmount(5), '5.00')
+    strictEqual(formatRate(94.12346), '94.1235')
     strictEqual(formatDMY(new Date(2027, 8, 5)), '05-09-2027')
     strictEqual(parseDMY('28-09-2027').getTime(), new Date(2027, 8, 28).getTime())
   })

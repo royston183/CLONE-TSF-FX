@@ -183,10 +183,10 @@ describe('valuation', () => {
     strictEqual(r.vSpot, 90.4)
     strictEqual(r.monat, 1)
     strictEqual(r.vSwap, 0.145029)
-    strictEqual(r.vRate, 90.545029)
+    strictEqual(r.vRate, 90.545)
     strictEqual(r.ccAmt, 5033731.59)
-    strictEqual(r.vAmt, 4969902.88)
-    strictEqual(r.vGl, -63828.71)
+    strictEqual(r.vAmt, 4969904.47)
+    strictEqual(r.vGl, -63827.12)
     strictEqual(r.month, 'Oct 2026')
   })
   it('divides by the rate when USD is the first currency and multiplies when it is the second', () => {
@@ -265,8 +265,8 @@ describe('posting', () => {
     deepStrictEqual(
       res.msgs.map((m) => [m.ok, m.doc, m.message, m.diff, m.cRate]),
       [
-        [true, '4900001226', 'Document Posted Successfully', -63828.71, 89.3969],
-        [true, '4900001227', 'Document Posted Successfully', -63828.71, 89.3969],
+        [true, '4900001226', 'Document Posted Successfully', -63827.12, 89.3969],
+        [true, '4900001227', 'Document Posted Successfully', -63827.12, 89.3969],
       ],
     )
     strictEqual(res.db.docSeq, db.docSeq + 2)
@@ -347,8 +347,8 @@ describe('documents and details', () => {
     deepStrictEqual(
       v.items.map((i) => [i.item, i.gl, i.pc, i.ba, i.text, i.amount]),
       [
-        [1, '0005210010', 'PC_IN11_01', 'OAI1', `MTM Loss:${r.xtext}`, 112622.68],
-        [2, '0002290010', 'PC_IN11_01', 'OAI1', `MTM Provision:${r.xtext}`, -112622.68],
+        [1, '0005210010', 'PC_IN11_01', 'OAI1', `MTM Loss:${r.xtext}`, 112618.97],
+        [2, '0002290010', 'PC_IN11_01', 'OAI1', `MTM Provision:${r.xtext}`, -112618.97],
       ],
     )
   })
@@ -361,7 +361,7 @@ describe('documents and details', () => {
     strictEqual(v.reversalOf, '4900001206')
     deepStrictEqual(
       v.items.map((i) => i.amount),
-      [-112622.68, 112622.68],
+      [-112618.97, 112618.97],
     )
     const labels = documentHeaderItems(v, r).map((i) => i.label)
     ok(labels.includes('Reversal Of Document'))
@@ -420,9 +420,9 @@ describe('table', () => {
       return c ? cellText(c, r) : ''
     }
     strictEqual(text('dblfz'), '17-02-2026')
-    strictEqual(text('cRate'), '89.396900')
+    strictEqual(text('cRate'), '89.3969')
     strictEqual(text('ccAmt'), '5,033,731.59')
-    strictEqual(text('vGl'), '-63,828.71')
+    strictEqual(text('vGl'), '-63,827.12')
     strictEqual(text('mtmDoc'), '')
     strictEqual(text('monat'), '1')
   })

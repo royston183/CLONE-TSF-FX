@@ -440,12 +440,12 @@ export default function Tbb1PostFlows() {
                         <input className="control" autoComplete="off" placeholder="RFC server group" value={form.mtRg} onChange={(e) => set('mtRg', e.target.value)} />
                       </div>
                       <div className={fieldCls('gc-6', 'mtNr')}>
-                        <label>Number of Processes</label>
+                        <label>Number of Processes{form.mtA ? <span className="req">*</span> : null}</label>
                         <input className="control text-right" inputMode="numeric" maxLength={3} autoComplete="off" value={form.mtNr} onChange={(e) => { set('mtNr', e.target.value.trim()); clearError('mtNr') }} />
                         {err('mtNr')}
                       </div>
                       <div className={fieldCls('gc-6', 'mtPs')}>
-                        <label>Package Size</label>
+                        <label>Package Size{form.mtA ? <span className="req">*</span> : null}</label>
                         <input className="control text-right" inputMode="numeric" maxLength={4} autoComplete="off" value={form.mtPs} onChange={(e) => { set('mtPs', e.target.value.trim()); clearError('mtPs') }} />
                         {err('mtPs')}
                       </div>
@@ -458,7 +458,7 @@ export default function Tbb1PostFlows() {
                 <div className="card plain">
                   <div className="section-title">
                     <span className="dot" />
-                    Application
+                    Application<span className="req">*</span>
                   </div>
                   <div className="section-body">
                     <div className="check-grid">
@@ -534,7 +534,7 @@ export default function Tbb1PostFlows() {
                         </label>
                         <div className="form-grid-12" style={{ margin: '4px 0 0' }}>
                           <div className={fieldCls('gc-6', 'psize')}>
-                            <label>Package Size</label>
+                            <label>Package Size{form.pack ? <span className="req">*</span> : null}</label>
                             <input className="control text-right" inputMode="numeric" maxLength={2} autoComplete="off" value={form.psize} onChange={(e) => { set('psize', e.target.value.trim()); clearError('psize') }} />
                             {err('psize')}
                           </div>

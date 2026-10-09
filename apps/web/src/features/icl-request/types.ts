@@ -61,6 +61,7 @@ export type Bank = {
 export type HeaderColumn = {
   label: string
   width: number
+  required?: boolean
 }
 
 export type ListColumn = HeaderColumn & {
