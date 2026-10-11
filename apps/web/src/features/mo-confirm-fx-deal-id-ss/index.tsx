@@ -20,6 +20,7 @@ import {
 import { DealCombo } from './DealCombo.tsx'
 import { HeaderCard, InvoiceAndPlCards, LegTable } from './DealTables.tsx'
 import { firstUnreadyLeg, toggleLeg, toolbarButtons } from './logic.ts'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { useModal } from './modal.tsx'
 import {
   ConfirmModal,
@@ -44,7 +45,7 @@ const TOAST_MS = 3200
 const TOAST_FADE_MS = 250
 let toastSeq = 0
 
-type PendingConfirm = { title: string; message: string; onYes: () => void }
+type PendingConfirm = { title: string; message: string; details: ReadonlyArray<{ label: string; value: string }>; onYes: () => void }
 
 /**
  * ZSGTSFP017: MO — Confirm FX Deal ID for SS (Single Deal ID), converted from
@@ -82,6 +83,7 @@ export default function MoConfirmFxDealIdSs() {
   const ssModal = useModal()
   const confirmModal = useModal()
   const [pending, setPending] = useState<PendingConfirm | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const dmsModal = useModal()
   const txModal = useModal()
   const [txRfha, setTxRfha] = useState<string | null>(null)
@@ -149,7 +151,19 @@ export default function MoConfirmFxDealIdSs() {
   }
 
   const askConfirm = (title: string, message: string, onYes: () => void) => {
-    setPending({ title, message, onYes })
+    const d = deal
+    const details = d
+      ? [
+          { label: 'Deal ID', value: d.dealId },
+          { label: 'Deal Reference', value: d.dealRef },
+          { label: 'Master Contract', value: [d.mcRefNo, d.mcDesc].filter(Boolean).join(' · ') },
+          { label: 'FX Model', value: d.fxModelDesc || d.fxModel },
+          { label: 'Entity String', value: d.entityString },
+          { label: 'Trader', value: d.traderDesc || d.traderCode },
+          { label: 'Status', value: d.statusText },
+        ]
+      : []
+    setPending({ title, message, details, onYes })
     confirmModal.open()
   }
 
@@ -380,6 +394,7 @@ export default function MoConfirmFxDealIdSs() {
             <div className="field-label">
               Deal ID<span className="req">*</span>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <DealCombo
               db={db}
               value={comboText}
@@ -389,6 +404,8 @@ export default function MoConfirmFxDealIdSs() {
                 source === 'unavailable' ? reason : source === 'loading' ? 'Loading Deal IDs…' : 'No matching Deal ID'
               }
             />
+            <ViewDealsButton onClick={() => setPickerOpen(true)} />
+            </div>
           </div>
           <div className="selector-hint">Select a Deal ID to load its FX legs, invoice plan and settlement P&amp;L.</div>
         </div>
@@ -489,6 +506,7 @@ export default function MoConfirmFxDealIdSs() {
         modal={confirmModal}
         title={pending?.title ?? 'Confirm'}
         message={pending?.message ?? 'Are you sure?'}
+        details={pending?.details}
         onYes={() => {
           confirmModal.close()
           pending?.onYes()
@@ -506,6 +524,23 @@ export default function MoConfirmFxDealIdSs() {
         <div className="drag-ghost" ref={ghostRef}>
           {ghostText}
         </div>
+      ) : null}
+
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'Deal Reference', 'FX Model', 'Entity String', 'Status']}
+          rows={Object.values(db).map((d) => ({
+            dealId: d.dealId,
+            cells: [d.dealId, d.dealRef, d.fxModelDesc || d.fxModel, d.entityString, d.statusText],
+            text: [d.dealId, d.dealRef, d.fxModel, d.fxModelDesc, d.entityString, d.traderDesc, d.statusText].join(' '),
+          }))}
+          emptyText={source === 'unavailable' ? reason : source === 'loading' ? 'Loading Deal IDs…' : 'No matching Deal IDs found.'}
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            loadDeal(id)
+          }}
+        />
       ) : null}
 
       <ResultQueue items={results} onDismiss={dismissResult} />

@@ -257,11 +257,14 @@ export function ConfirmModal({
   modal,
   title,
   message,
+  details,
   onYes,
 }: {
   modal: Modal
   title: string
   message: string
+  /** What is being confirmed (the loaded deal). */
+  details?: ReadonlyArray<{ label: string; value: string }> | undefined
   onYes: () => void
 }) {
   if (!modal.isOpen) return null
@@ -270,6 +273,7 @@ export function ConfirmModal({
       tone="info"
       title={title}
       message={message}
+      details={details}
       actions={[
         { label: 'No', kind: 'secondary', onClick: modal.close },
         { label: 'Yes', kind: 'primary', onClick: onYes },

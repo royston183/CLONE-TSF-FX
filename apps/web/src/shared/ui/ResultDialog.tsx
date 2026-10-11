@@ -27,6 +27,7 @@ export function ResultDialog({
   title,
   message,
   reference,
+  details,
   actions,
   onClose,
   children,
@@ -36,6 +37,8 @@ export function ResultDialog({
   message?: ReactNode
   /** Highlighted reference, e.g. { label: 'Deal ID / MC Number', value: '2000000039' }. */
   reference?: { label: string; value: ReactNode } | undefined
+  /** What is being confirmed: label / value rows under the message (rows with an empty value are skipped). */
+  details?: ReadonlyArray<{ label: string; value: ReactNode }> | undefined
   actions: ResultAction[]
   onClose?: (() => void) | undefined
   children?: ReactNode
@@ -48,6 +51,8 @@ export function ResultDialog({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  const shownDetails = (details ?? []).filter((d) => d.value !== '' && d.value != null)
 
   return (
     <div className="std-result-overlay">
@@ -67,6 +72,16 @@ export function ResultDialog({
             <div className="std-result-ref-label">{reference.label}</div>
             <div className="std-result-ref-value">{reference.value}</div>
           </div>
+        ) : null}
+        {shownDetails.length > 0 ? (
+          <dl className="std-result-details">
+            {shownDetails.map((d) => (
+              <div className="std-result-detail" key={d.label}>
+                <dt>{d.label}</dt>
+                <dd>{d.value}</dd>
+              </div>
+            ))}
+          </dl>
         ) : null}
         {children}
         <div className="std-result-actions">

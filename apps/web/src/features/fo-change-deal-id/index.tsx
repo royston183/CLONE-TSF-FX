@@ -52,6 +52,7 @@ import {
   TxnModal,
   type ChangeHint,
 } from './Modals.tsx'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { DealTable, InvoiceTable, PlTable, StatusPill } from './Tables.tsx'
 import './fo-change-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -85,6 +86,7 @@ export default function FoChangeDealId() {
   const [search, setSearch] = useState('')
   // The page ran onDealSearchInput('') on load, so the suggestions start open.
   const [typeaheadOpen, setTypeaheadOpen] = useState(true)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [invGeneration, setInvGeneration] = useState(0)
   const [toasts, setToasts] = useState<Toast[]>([])
 
@@ -475,6 +477,23 @@ export default function FoChangeDealId() {
                   )}
                 </div>
               </div>
+              <ViewDealsButton onClick={() => setPickerOpen(true)} />
+              {pickerOpen ? (
+                <DealPickerModal
+                  columns={['Deal ID', 'Entity String', 'FX Model', 'Trader', 'MC Ref']}
+                  rows={Object.values(store).map((d) => ({
+                    dealId: d.dealId,
+                    cells: [d.dealId, d.entStr, d.modDesc || d.modId, d.trdDesc, d.mcRef],
+                    text: [d.dealId, d.dealRef, d.entStr, d.modId, d.modDesc, d.trdDesc, d.mcRef].join(' '),
+                  }))}
+                  emptyText={source === 'sap' || source === 'loading' ? 'No matching Deal IDs found.' : 'ZSGTSFTR_DEALID could not be read — no Deal IDs to show.'}
+                  onClose={() => setPickerOpen(false)}
+                  onPick={(id) => {
+                    setPickerOpen(false)
+                    pickDeal(id)
+                  }}
+                />
+              ) : null}
               <span className="sub" style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
                 Search by Deal ID, entity string or trader to open the Deal ID analysis workbench.{' '}
                 {source === 'loading'

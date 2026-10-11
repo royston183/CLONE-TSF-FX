@@ -3,6 +3,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
@@ -142,6 +143,7 @@ export default function MoExecuteSettlementDealId() {
 
   // Selection screen
   const [dealIdInput, setDealIdInput] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [selError, setSelError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [list, setList] = useState<DealList | null>(null)
@@ -476,6 +478,7 @@ export default function MoExecuteSettlementDealId() {
               >
                 Go
               </button>
+              <ViewDealsButton onClick={() => setPickerOpen(true)} />
             </div>
             <div className={selError || list?.state === 'unavailable' ? 'select-err show' : 'select-err'} id="selErr">
               {selError ?? (list?.state === 'unavailable' ? list.reason : '')}
@@ -562,6 +565,20 @@ export default function MoExecuteSettlementDealId() {
         </div>
       </main>
 
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'Status']}
+          rows={(list?.state === 'sap' ? list.picks : []).map((p) => ({ dealId: p.dealId, cells: [p.dealId, p.statusText], text: `${p.dealId} ${p.statusText}` }))}
+          emptyText={list?.state === 'unavailable' ? list.reason : 'No matching Deal IDs found.'}
+          hint="Click a deal row to load it."
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            setDealIdInput(id)
+            void executeSelection(id)
+          }}
+        />
+      ) : null}
       <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
       <div className={`zfac-toast${toast.visible ? ' show' : ''}${toast.visible && toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
         {toast.message}

@@ -9,7 +9,7 @@ import { confirmPrepared, prepareConfirmation, type Prepared } from './analysisC
 import { GAPS } from './data.ts'
 import { DealDetails } from './DetailTables.tsx'
 import { FxLegTable } from './FxLegTable.tsx'
-import { actionVisibility, legNote, nextSort, quickPickLabel, resolveDealId, sortedFilteredLegs, toggleLeg } from './logic.ts'
+import { actionVisibility, legNote, nextSort, quickPickLabel, resolveDealId, sortedFilteredLegs, statusMeta, toggleLeg } from './logic.ts'
 import { ConfirmModal, EditPairModal, PromptModal, type ConfirmPreview } from './Modals.tsx'
 import { InvoiceTable, PlTable } from './PlanTables.tsx'
 import './mo-confirm-fx-deal-id.legacy.css'
@@ -17,6 +17,7 @@ import './mo-confirm-fx-deal-id.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id.dark.css'
 import './mo-confirm-fx-deal-id.overrides.css'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type { ModalId, Sort, SortKey, Toast, ToastType } from './types.ts'
@@ -51,6 +52,7 @@ function previewOf(p: Prepared): ConfirmPreview {
 
 export default function MoConfirmFxDealId() {
   const [index, setIndex] = useState<readonly DealIndexEntry[]>([])
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [loaded, setLoaded] = useState<LoadedDeal | null>(null)
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -341,6 +343,7 @@ export default function MoConfirmFxDealId() {
                 <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void loadDeal(searchText)}>
                   {loading ? 'Loading…' : 'Load Deal'}
                 </button>
+                <ViewDealsButton onClick={() => setPickerOpen(true)} />
                 {deal && (
                   <button type="button" className="btn btn-secondary" onClick={clearDeal}>
                     Clear
@@ -452,6 +455,19 @@ export default function MoConfirmFxDealId() {
           )}
         </main>
       </div>
+
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'Status']}
+          rows={index.map((d) => ({ dealId: d.dealId, cells: [d.dealId, statusMeta(d.status).desc], text: `${d.dealId} ${statusMeta(d.status).desc}` }))}
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            setSearchText(id)
+            void loadDeal(id)
+          }}
+        />
+      ) : null}
 
       {/* ============ MODAL OVERLAY ============ */}
       <div
