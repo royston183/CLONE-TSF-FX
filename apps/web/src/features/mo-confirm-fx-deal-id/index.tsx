@@ -458,8 +458,11 @@ export default function MoConfirmFxDealId() {
 
       {pickerOpen ? (
         <DealPickerModal
-          columns={['Deal ID', 'Status']}
-          rows={index.map((d) => ({ dealId: d.dealId, cells: [d.dealId, statusMeta(d.status).desc], text: `${d.dealId} ${statusMeta(d.status).desc}` }))}
+          columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
+          rows={index.map((d) => {
+            const status = `${d.status} - ${statusMeta(d.status).desc}`
+            return { dealId: d.dealId, cells: [d.dealId, d.fxModel, d.entityString, status], text: `${d.dealId} ${d.fxModel} ${d.entityString} ${status}` }
+          })}
           onClose={() => setPickerOpen(false)}
           onPick={(id) => {
             setPickerOpen(false)

@@ -34,6 +34,7 @@ import {
   searchDeals,
   setExRate,
   showsInvoicePl,
+  statusMeta,
   summaryFields,
   traderLabel,
   txnFields,
@@ -480,11 +481,11 @@ export default function FoChangeDealId() {
               <ViewDealsButton onClick={() => setPickerOpen(true)} />
               {pickerOpen ? (
                 <DealPickerModal
-                  columns={['Deal ID', 'Entity String', 'FX Model', 'Trader', 'MC Ref']}
+                  columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
                   rows={Object.values(store).map((d) => ({
                     dealId: d.dealId,
-                    cells: [d.dealId, d.entStr, d.modDesc || d.modId, d.trdDesc, d.mcRef],
-                    text: [d.dealId, d.dealRef, d.entStr, d.modId, d.modDesc, d.trdDesc, d.mcRef].join(' '),
+                    cells: [d.dealId, [d.modId, d.modDesc].filter(Boolean).join(' - '), d.entStr, `${d.status} - ${statusMeta(d.status).label}`],
+                    text: [d.dealId, d.dealRef, d.entStr, d.modId, d.modDesc, d.status, statusMeta(d.status).label].join(' '),
                   }))}
                   emptyText={source === 'sap' || source === 'loading' ? 'No matching Deal IDs found.' : 'ZSGTSFTR_DEALID could not be read — no Deal IDs to show.'}
                   onClose={() => setPickerOpen(false)}

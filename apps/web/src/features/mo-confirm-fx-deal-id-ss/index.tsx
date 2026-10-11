@@ -528,10 +528,10 @@ export default function MoConfirmFxDealIdSs() {
 
       {pickerOpen ? (
         <DealPickerModal
-          columns={['Deal ID', 'Deal Reference', 'FX Model', 'Entity String', 'Status']}
+          columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
           rows={Object.values(db).map((d) => ({
             dealId: d.dealId,
-            cells: [d.dealId, d.dealRef, d.fxModelDesc || d.fxModel, d.entityString, d.statusText],
+            cells: [d.dealId, [d.fxModel, d.fxModelDesc].filter(Boolean).join(' - '), d.entityString, d.statusText],
             text: [d.dealId, d.dealRef, d.fxModel, d.fxModelDesc, d.entityString, d.traderDesc, d.statusText].join(' '),
           }))}
           emptyText={source === 'unavailable' ? reason : source === 'loading' ? 'Loading Deal IDs…' : 'No matching Deal IDs found.'}

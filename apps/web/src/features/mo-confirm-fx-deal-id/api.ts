@@ -37,12 +37,25 @@ import type { Deal, Invoice, Leg, StoredPl } from './types.ts'
 export const SLOTS = SLOT_NAMES
 
 /** A Deal ID the quick picks and the typeahead offer. */
-export type DealIndexEntry = { dealId: string; status: string }
+export type DealIndexEntry = { dealId: string; status: string; fxModel: string; entityString: string }
 
 /** The FX Deal IDs, newest first. Only the id and status are kept; a deal is read in full when it is loaded. */
 export async function loadDealIndex(signal?: AbortSignal): Promise<DealIndexEntry[]> {
-  const rows = await listDealIds({ ZDEAL_TYPE: DEAL_TYPE }, signal)
-  return rows.map((r) => ({ dealId: txt(r, 'ZDEAL_ID'), status: txt(r, 'ZDEAL_STAT') })).filter((r) => r.dealId)
+  const [rows, mcs] = await Promise.all([
+    listDealIds({ ZDEAL_TYPE: DEAL_TYPE }, signal),
+    fxList('masterContract', {}, { signal }).catch(() => [] as FxRow[]),
+  ])
+  return rows
+    .map((r) => {
+      const mc = mcs.find((m) => txt(m, 'ZMC_REF_NO') === txt(r, 'ZMC_REF'))
+      return {
+        dealId: txt(r, 'ZDEAL_ID'),
+        status: txt(r, 'ZDEAL_STAT'),
+        fxModel: mc ? [txt(mc, 'ZMOD_ID'), txt(mc, 'ZMOD_DESC')].filter(Boolean).join(' - ') : '',
+        entityString: mc ? txt(mc, 'ZENT_DESC') : '',
+      }
+    })
+    .filter((r) => r.dealId)
 }
 
 export type LoadedDeal = { deal: Deal; row: DealRow }

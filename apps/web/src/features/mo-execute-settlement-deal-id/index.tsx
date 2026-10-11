@@ -567,8 +567,11 @@ export default function MoExecuteSettlementDealId() {
 
       {pickerOpen ? (
         <DealPickerModal
-          columns={['Deal ID', 'Status']}
-          rows={(list?.state === 'sap' ? list.picks : []).map((p) => ({ dealId: p.dealId, cells: [p.dealId, p.statusText], text: `${p.dealId} ${p.statusText}` }))}
+          columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
+          rows={(list?.state === 'sap' ? list.picks : []).map((p) => {
+            const status = [p.statusCode, p.statusText].filter(Boolean).join(' - ')
+            return { dealId: p.dealId, cells: [p.dealId, p.fxModel ?? '', p.entityString ?? '', status], text: `${p.dealId} ${p.fxModel ?? ''} ${p.entityString ?? ''} ${status}` }
+          })}
           emptyText={list?.state === 'unavailable' ? list.reason : 'No matching Deal IDs found.'}
           hint="Click a deal row to load it."
           onClose={() => setPickerOpen(false)}
