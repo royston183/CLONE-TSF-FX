@@ -110,11 +110,15 @@ function toInvoices(deal: ChangeDeal): Invoice[] {
   }))
 }
 
-/** The P&L the deal was confirmed with; null when ZPL and ZPL_LAMT are both initial. */
+/**
+ * The P&L the deal was confirmed with. A confirmed deal (ZCONFIRM X, or a stored P&L rate) whose legs net to nothing
+ * stores 0 / 0, which is a real result and still shows; null only when nothing was ever stored.
+ */
 export function storedPl(row: FxRow): StoredPl | null {
   const amount = num(row['ZPL'])
   const localAmount = num(row['ZPL_LAMT'])
-  if (amount === 0 && localAmount === 0) return null
+  const confirmed = txt(row, 'ZCONFIRM') === 'X' || num(row['ZPL_RATE']) !== 0
+  if (amount === 0 && localAmount === 0 && !confirmed) return null
   return {
     amount,
     currency: txt(row, 'ZPL_CURR'),

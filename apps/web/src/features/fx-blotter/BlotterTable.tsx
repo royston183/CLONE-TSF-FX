@@ -92,13 +92,13 @@ export function BlotterTable({
           <th className="left">Txn Type</th>
           <th className="left">B/S 1</th>
           <th className="left">Curr 1</th>
-          <th>Amount 1</th>
+          <th className="num">Amount 1</th>
           <th className="left">B/S 2</th>
           <th className="left">Curr 2</th>
-          <th>Amount 2</th>
-          <th>All in Rate</th>
-          <th>Swap</th>
-          <th>Spot</th>
+          <th className="num">Amount 2</th>
+          <th className="num">All in Rate</th>
+          <th className="num">Swap</th>
+          <th className="num">Spot</th>
           {sortTh('valueDate', 'Value Date', 'sortable')}
           <th className="left">Mode of Trade</th>
           <th className="left">Acc Category</th>

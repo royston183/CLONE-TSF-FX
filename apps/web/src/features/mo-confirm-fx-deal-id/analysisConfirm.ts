@@ -21,7 +21,7 @@ import { txt } from '../../shared/fx/masters.ts'
 import { fxList, type FxRow } from '../../shared/fx/mw.ts'
 import { isoFromDmy, num } from '../../shared/fx/sap.ts'
 import { checkConfirmable, confirmDealId, livePorts, type ConfirmInput, type OpResult, type Ports, type PlInput } from './analysis.ts'
-import { buildInvoicePlan, buildPnl, persistedPl, pnlRateRequest, type PlanLeg, type PlanLine, type PnlRow } from './analysisPlan.ts'
+import { buildInvoicePlan, buildPnl, fxSummaryPl, fxSummaryRow, pnlRateRequest, type PlanLeg, type PlanLine, type PnlRow } from './analysisPlan.ts'
 import type { Leg } from './types.ts'
 
 /** The reads the calculation makes; tests substitute these. */
@@ -159,8 +159,17 @@ export async function prepareConfirmation(
   }
   const usdToLocal = req.from === 'USD' ? rate : req.to === 'USD' ? 1 / rate : 1
   const pnl = buildPnl(built.lines, usdToLocal)
-  const pl: PlInput | undefined = persistedPl(pnl, entityString, rate)
-  if (!pl) return { ok: false, reason: 'The P&L cannot be attributed: the entity string has no second entity.' }
+  // The stored P&L is the FX Deal P&L summary row (ALV1_SUB_TOTAL), not an entity row of the invoice-plan P&L above.
+  const summary = fxSummaryRow(planLegs)
+  if (!summary) return { ok: false, reason: 'The FX Deal P&L cannot be calculated: the Deal ID has no D1 or D2 transaction.' }
+  const summaryDate = summary.date || req.date
+  const leadRate =
+    summary.lead === req.from && summary.foreign === req.to ? rate : await plan.exchangeRate(summary.lead, summary.foreign, summaryDate, PNL_RATE_TYPE)
+  if (leadRate === null) {
+    return { ok: false, reason: `Exchange-rate service unavailable or no rate: TCURR type ${PNL_RATE_TYPE}, ${summary.lead} to ${summary.foreign}, on or before ${summaryDate}.` }
+  }
+  const pl: PlInput | undefined = fxSummaryPl(planLegs, leadRate, rate)
+  if (!pl) return { ok: false, reason: 'The FX Deal P&L cannot be calculated: the exchange rate is zero.' }
 
   return {
     ok: true,

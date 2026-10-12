@@ -33,5 +33,5 @@ export const GAPS = {
   dms: 'Not available yet: no document (DMS) service is registered for ZSGTSFFM_DMS (Deal ID, category 11), so the Deal ID documents cannot be shown or attached.',
   options:
     'This is an option deal (FX2). Its transactions come from ZSGTSFCDS_OPTION and no FX options service is registered, so only the transaction numbers are shown.',
-  pl: 'The planned P&L is worked out in SAP from the exchange rate, the currency string and the profit margin, none of which can be read yet. The figures here are the ones stored on the Deal ID when it was confirmed.',
+  pl: 'The figures stored on the Deal ID when it was confirmed. A deal that is not yet confirmed shows the planned P&L calculated from the TCURR rate, the currency string (ZSGTSFTR_CUR_STR) and the origin profit margin (ZSGTSFTR_ORG_PRO).',
 } as const

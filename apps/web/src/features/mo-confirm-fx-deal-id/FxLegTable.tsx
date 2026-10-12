@@ -1,4 +1,4 @@
-import { StatusBadge } from './DetailTables.tsx'
+import { LegStatusBadge } from './DetailTables.tsx'
 import { fmtAmt, fmtRate } from './format.ts'
 import { legRowClass } from './logic.ts'
 import type { Leg, Sort, SortKey } from './types.ts'
@@ -89,7 +89,7 @@ export function FxLegTable({
                   </td>
                   <td>{mcRef}</td>
                   <td>
-                    <StatusBadge code={l.txnStatus} />
+                    <LegStatusBadge code={l.txnStatus} />
                   </td>
                   <td
                     className="num mono"

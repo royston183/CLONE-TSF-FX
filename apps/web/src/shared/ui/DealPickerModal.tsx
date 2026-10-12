@@ -4,10 +4,10 @@ import './DealPickerModal.css'
 export type DealPickerRow = { dealId: string; cells: ReadonlyArray<ReactNode>; text: string }
 
 /** The "View Deals" button that opens the picker; sits next to the Deal ID input. */
-export function ViewDealsButton({ onClick }: { onClick: () => void }) {
+export function ViewDealsButton({ onClick, label = 'View Deals' }: { onClick: () => void; label?: string }) {
   return (
     <button className="dpm-btn" type="button" onClick={onClick}>
-      View Deals
+      {label}
     </button>
   )
 }
@@ -22,6 +22,8 @@ export function DealPickerModal({
   rows,
   emptyText = 'No matching Deal IDs found.',
   hint = 'Click a deal row to load it.',
+  title = 'View Deals',
+  searchPlaceholder = 'Search Deal ID, reference, entity or status...',
   onClose,
   onPick,
 }: {
@@ -29,6 +31,8 @@ export function DealPickerModal({
   rows: readonly DealPickerRow[]
   emptyText?: string
   hint?: string
+  title?: string
+  searchPlaceholder?: string
   onClose: () => void
   onPick: (dealId: string) => void
 }) {
@@ -50,16 +54,16 @@ export function DealPickerModal({
   }, [rows, q])
 
   return (
-    <div className="dpm-overlay" role="dialog" aria-modal="true" aria-label="View Deals" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="dpm-overlay" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="dpm-modal">
         <div className="dpm-head">
-          <div className="dpm-title">View Deals</div>
+          <div className="dpm-title">{title}</div>
           <button className="dpm-close" type="button" aria-label="Close" onClick={onClose}>
             &times;
           </button>
         </div>
         <div className="dpm-body">
-          <input ref={inputRef} className="dpm-search" placeholder="Search Deal ID, reference, entity or status..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <input ref={inputRef} className="dpm-search" placeholder={searchPlaceholder} value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="dpm-grid">
             <table>
               <thead>

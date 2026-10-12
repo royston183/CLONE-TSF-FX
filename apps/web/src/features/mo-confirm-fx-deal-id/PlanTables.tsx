@@ -1,6 +1,7 @@
 import { GAPS } from './data.ts'
 import { fmtAmt, fmtRate } from './format.ts'
 import { storedPlRows } from './logic.ts'
+import type { ConfirmPreview } from './Modals.tsx'
 import type { Deal, Invoice } from './types.ts'
 
 /** The invoice plan saved for the deal (ZSGTSFTR_INV_REF). A deal that was never confirmed has none. */
@@ -52,25 +53,37 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
 }
 
 /** The P&L stored on the Deal ID at confirmation, with the reason a planned P&L cannot be shown. */
-export function PlTable({ deal }: { deal: Deal }) {
+export function PlTable({ deal, planned }: { deal: Deal; planned?: { loading: boolean; reason: string | null; preview: ConfirmPreview | null } | null }) {
   const rows = storedPlRows(deal)
+  const calc = planned?.preview
+  const plRows = rows.length
+    ? rows
+    : calc
+      ? [
+          { type: 'P&L (USD)', value: fmtAmt(calc.pl.amount) },
+          { type: `P&L Local (${calc.pl.localCurrency || '—'})`, value: fmtAmt(calc.pl.localAmount) },
+          { type: 'P&L Rate', value: fmtRate(calc.rate) },
+        ]
+      : []
   return (
     <div className="card" id="plCard">
       <div className="card-head">
         <h3>Deal ID: P&amp;L</h3>
-        <span className="hint">{GAPS.pl}</span>
+        <span className="hint">
+          {rows.length ? GAPS.pl : calc ? `Planned P&L, calculated now: TCURR type M rate ${fmtRate(calc.rate)} (${calc.rateDate}), the currency string and the origin profit margin. Not saved until the deal is confirmed.` : planned?.loading ? 'Calculating the planned P&L…' : (planned?.reason ?? GAPS.pl)}
+        </span>
       </div>
       <div className="table-scroll">
         <table id="plTable">
           <thead>
             <tr>
               <th>Type</th>
-              <th className="num">Stored on the Deal ID</th>
+              <th className="num">{rows.length ? 'Stored on the Deal ID' : 'Planned'}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length ? (
-              rows.map((r) => (
+            {plRows.length ? (
+              plRows.map((r) => (
                 <tr key={r.type}>
                   <td>{r.type}</td>
                   <td className="num mono">{r.value}</td>
@@ -79,7 +92,7 @@ export function PlTable({ deal }: { deal: Deal }) {
             ) : (
               <tr>
                 <td colSpan={2} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 20 }}>
-                  No P&amp;L is stored: this Deal ID has not been confirmed.
+                  {planned?.loading ? 'Calculating…' : 'No P&L is stored: this Deal ID has not been confirmed.'}
                 </td>
               </tr>
             )}

@@ -165,6 +165,7 @@ export default function FoTraderWorkbench() {
     open: openPopup,
     confirm: (opts, onYes) => openPopup({ kind: 'confirm', ...opts, onYes }),
     today: todayIso,
+    reload: () => void reload(),
   }
 
   /* ---------- main grid ---------- */

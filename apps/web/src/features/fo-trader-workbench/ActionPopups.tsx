@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { Dropdown, DateField } from './controls.tsx'
 import { LOOKUPS } from './data.ts'
+import { loadPartners } from '../fo-additional-spot-booking/valueHelps.ts'
+import type { CodeLabel, ValueHelp } from '../fo-additional-spot-booking/types.ts'
+import { createNdfSpot } from './spotNdf.ts'
 import { bookSpot, findDeal, findTxn, runExercise, runExpire, type Wb } from './flows.ts'
 import { dmyToIso, formatAmount, formatDMY, formatRate, isoToDMY, numStr, parseDMY, parseNum } from './format.ts'
 import {
@@ -51,7 +54,27 @@ function CoDropdown({ value, onChange }: { value: string; onChange: (v: string) 
   )
 }
 
-function BpDropdown({ grp, value, onChange }: { grp: string; value: string; onChange: (v: string) => void }) {
+function BpDropdown({ grp, value, onChange, sap }: { grp: string; value: string; onChange: (v: string) => void; sap?: ValueHelp<CodeLabel> | undefined }) {
+  if (sap) {
+    const options = sap.state === 'ok' ? sap.options : []
+    return (
+      <>
+        <Dropdown
+          items={options}
+          value={value}
+          placeholder={sap.state === 'loading' ? 'Loading partners …' : 'Select ...'}
+          valueOf={(b) => b.key}
+          primary={(b) => b.text}
+          secondary={(b) => b.key}
+          display={(b) => (b.text === b.key ? b.key : `${b.text} (${b.key})`)}
+          search={(b) => `${b.key} ${b.text}`}
+          disabled={sap.state !== 'ok'}
+          onChange={onChange}
+        />
+        {sap.state === 'error' ? <div className="hint">{sap.message}</div> : null}
+      </>
+    )
+  }
   return (
     <Dropdown
       items={bpItemsForGroup(grp)}
@@ -100,6 +123,7 @@ function SpotForm({
   trade,
   rate,
   rateError,
+  sapBps,
   onCo,
   onBp,
   onTrade,
@@ -113,6 +137,8 @@ function SpotForm({
   trade: string | null
   rate: string
   rateError: string
+  /** NDF / DNDF spots: the partners SAP holds for the chosen company code; undefined keeps the trader-group list. */
+  sapBps?: ValueHelp<CodeLabel> | undefined
   onCo: (v: string) => void
   onBp: (v: string) => void
   onTrade: (v: string) => void
@@ -126,7 +152,7 @@ function SpotForm({
           <CoDropdown value={co} onChange={onCo} />
         </Fld>
         <Fld label="BP" req>
-          <BpDropdown grp={grp} value={bp} onChange={onBp} />
+          <BpDropdown grp={grp} value={bp} onChange={onBp} sap={sapBps} />
         </Fld>
         {trade !== null ? (
           <Fld label="Trade Date" req>
@@ -283,6 +309,29 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   const [rate, setRate] = useState(rateText(sp?.rate ?? 0))
   const [rateError, setRateError] = useState('')
   const [msg, setMsg] = useState<Msg>(null)
+  const [busy, setBusy] = useState(false)
+  /* NDF / DNDF book through FxTransaction, which only accepts a partner SAP holds for the company code. */
+  const sapPartners = spec.variant !== 'ndo'
+  const [sapBps, setSapBps] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
+  useEffect(() => {
+    if (!sapPartners) return
+    let live = true
+    setSapBps({ state: 'loading' })
+    loadPartners(co).then((r) => {
+      if (!live) return
+      // The NDF's own partner is always offered (the legacy default): SlcTsfBpBank lists bank partners only, and the counterparty is often not one.
+      const own = txn?.cpty ? { key: txn.cpty, text: txn.cptyName || txn.cpty } : undefined
+      const withOwn: ValueHelp<CodeLabel> =
+        own && r.state !== 'loading'
+          ? { state: 'ok', options: [own, ...(r.state === 'ok' ? r.options.filter((o) => o.key !== own.key) : [])] }
+          : r
+      setSapBps(withOwn)
+      if (withOwn.state === 'ok') setBp((cur) => (withOwn.options.some((o) => o.key === cur) ? cur : ''))
+    })
+    return () => {
+      live = false
+    }
+  }, [co, sapPartners])
   if (!txn || !sp) return null
   const showTrade = !txn.dealType /* group VIS hidden when a deal type exists */
   const variantText = spec.variant === 'ndo' ? 'Option settlement spot' : spec.variant === 'ndf' ? 'NDF settlement spot' : 'DNDF settlement spot'
@@ -301,8 +350,43 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
-    /* 9003 books through create_bapi (ORDERCREATE + ORDEREXECUTE); 9011 / 9012 through FXT_CREATE */
-    if (!wb.post(spec.variant === 'ndo' ? 'spotOrder' : 'spotNdf')) return
+    /* 9011 / 9012 book through FXT_CREATE: FxTransaction POST + the TSF row (spotNdf.ts) */
+    if (spec.variant !== 'ndo') {
+      if (busy) return
+      setBusy(true)
+      void createNdfSpot({
+        bukrs: co,
+        bp,
+        source: { bukrs: txn.bukrs, rfha: txn.rfha },
+        curr1: sp.curr1,
+        curr2: sp.curr2,
+        amt1: sp.amt1,
+        amt2: sp.amt2,
+        base: sp.base,
+        bs1: sp.bs1,
+        rate: sp.rate,
+        tradeDate: showTrade ? dmyToIso(trade) : '',
+        ndfDate: txn.ndfDate,
+        valueDate: txn.valueDate,
+        dealType: txn.dealType,
+      }).then((res) => {
+        setBusy(false)
+        if (!res.ok) {
+          setMsg({ text: res.message, kind: 'error' })
+          return
+        }
+        frame.onClose()
+        wb.outcome({
+          tone: res.appDataError ? 'warning' : 'success',
+          title: 'Spot Created',
+          message: res.appDataError ?? `Spot Transaction created Successfully: ${res.transaction}`,
+        })
+        wb.reload()
+      })
+      return
+    }
+    /* 9003 books through create_bapi (ORDERCREATE + ORDEREXECUTE) */
+    if (!wb.post('spotOrder')) return
     const rfha = bookSpot(wb, {
       dealId: spec.ctx.dealId,
       dealType: txn.dealType,
@@ -325,7 +409,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} />}>
+    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} />}>
       <SpotForm
         msg={msg}
         sp={sp}
@@ -335,6 +419,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
         trade={showTrade ? trade : null}
         rate={rate}
         rateError={rateError}
+        sapBps={sapPartners ? sapBps : undefined}
         onCo={setCo}
         onBp={setBp}
         onTrade={setTrade}

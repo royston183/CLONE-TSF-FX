@@ -176,8 +176,19 @@ export function lookupsFrom(m: Masters): Lookups {
   return l
 }
 
+/**
+ * The NDF fixing date and reference of an NDF / DNDF (transaction type 631 / 632): NDF_DATE and NDF_REF of the ZSGTSFV_FX row
+ * (middleware 'tsfvFx'), the fixing date falling back to the value date when the view has none or lacks the transaction,
+ * as the NDF screens do (shared/fx/ndf.ts ndfRecord). Any other transaction has neither.
+ */
+export function ndfFields(fx: { TransactionType?: string; ValueDate?: string | null }, view?: FxRow): { ndfDate: string; ndfRef: string } {
+  if (fx.TransactionType !== '631' && fx.TransactionType !== '632') return { ndfDate: '', ndfRef: '' }
+  const date = (view ? txt(view, 'NDF_DATE') : '').slice(0, 10) || String(fx.ValueDate ?? '').slice(0, 10)
+  return { ndfDate: date, ndfRef: view ? txt(view, 'NDF_REF') : '' }
+}
+
 /** One FxTransaction + its TrmFxApp row as a transaction of the workbench (a ZSGTSFCDS_FX row). */
-export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups()): Txn {
+export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups(), view?: FxRow): Txn {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
   const buysLead = fx.BuyCurrency === lead
@@ -214,6 +225,7 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     seq: Number(app.ZtsfDealSq) || 1,
     // NdfFixingRate (ZFS_SD_TRMFX NdfFixing): the rate FTR holds once the deal is fixed.
     ndfRate: num((fx as { NdfFixingRate?: number | string }).NdfFixingRate ?? 0),
+    ...ndfFields(fx, view),
     etag: (app as { '@odata.etag'?: string })['@odata.etag'] ?? '',
   })
 }
@@ -234,9 +246,24 @@ export async function loadDealTxns(dealIds: readonly string[], lookups: Lookups,
   )
   const apps = pages.flat()
   if (!apps.length) return []
-  return joinFxWithApp(apps, await loadFxFor(apps, signal))
-    .filter(({ fx }) => fx.ActiveStatus !== '3')
-    .map((r) => txnFromFx(r, lookups))
+  const joined = joinFxWithApp(apps, await loadFxFor(apps, signal)).filter(({ fx }) => fx.ActiveStatus !== '3')
+  const views = await loadNdfViews(joined, signal)
+  return joined.map((r) => txnFromFx(r, lookups, views.get(`${r.fx.CompanyCode}|${r.fx.FinancialTransaction}`)))
+}
+
+/** ZSGTSFV_FX rows of the listed NDF / DNDF transactions, by BUKRS|RFHA. Display data only: when it cannot be read the dates fall back. */
+async function loadNdfViews(rows: readonly FxWithApp[], signal?: AbortSignal): Promise<Map<string, FxRow>> {
+  const ndf = rows.filter(({ fx }) => fx.TransactionType === '631' || fx.TransactionType === '632')
+  const out = new Map<string, FxRow>()
+  if (!ndf.length) return out
+  try {
+    const companies = [...new Set(ndf.map(({ fx }) => fx.CompanyCode))]
+    for (const r of await fxList('tsfvFx', { 'BUKRS[in]': companies.join(',') }, { signal })) out.set(`${txt(r, 'BUKRS')}|${txt(r, 'RFHA')}`, r)
+  } catch (error) {
+    if (isAbort(error)) throw error
+    console.warn('[trader-workbench] ZSGTSFV_FX unavailable: the NDF fixing date falls back to the value date', error)
+  }
+  return out
 }
 
 /* ---------------- reads ---------------- */

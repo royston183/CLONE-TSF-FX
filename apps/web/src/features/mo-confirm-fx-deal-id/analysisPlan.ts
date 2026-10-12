@@ -13,6 +13,7 @@ import { leadCurrency, round } from '../mo-generate-invoices-deal-id/invoice.ts'
 import type { InvoiceRefInput, PlInput } from './analysis.ts'
 
 const USD = 'USD'
+const TWD = 'TWD'
 export type TradeType = 'T1' | 'T2' | 'T3'
 export type LegType = 'D1' | 'D2'
 
@@ -246,6 +247,55 @@ export function persistedPl(rows: readonly PnlRow[], entityString: FxRow | undef
   const row = rows.find((r) => r.entity === entity)
   if (!row) return undefined
   return { pl: row.plForeign, localAmount: row.plLocal, localCurrency: row.currency, rate }
+}
+
+/**
+ * ALV1_SUB_TOTAL, first half: the FX Deal P&L summary row (FX1 only). Every D1 / D2 leg whose CURR1 is not USD adds its
+ * AMT1 to the summary AMT1, any other leg adds its AMT2 to the summary AMT2 (USD legs therefore contribute the
+ * non-USD side); the currencies are the last leg's. A TWD pair scales AMT1 by 100, then both are made absolute.
+ * Returns the pair the RATE form then looks up (ZSGTRMFM_LEAD_CURR: lead, foreign) and the date (the earlier D1 / D2 start).
+ */
+export function fxSummaryRow(legs: readonly PlanLeg[]): { amt1: number; amt2: number; curr1: string; curr2: string; lead: string; foreign: string; date: string } | undefined {
+  const used = legs.filter((l) => l.dealType === 'D1' || l.dealType === 'D2')
+  if (!used.length) return undefined
+  let amt1 = 0
+  let amt2 = 0
+  for (const l of used) {
+    if (l.curr1 !== USD) amt1 += l.amt1
+    else amt2 += l.amt2
+  }
+  const last = used[used.length - 1]!
+  if (last.curr1 === TWD || last.curr2 === TWD) amt1 *= 100
+  const lead = leadCurrency(last.curr1, last.curr2)
+  return {
+    amt1: Math.abs(amt1),
+    amt2: Math.abs(amt2),
+    curr1: last.curr1,
+    curr2: last.curr2,
+    lead,
+    foreign: lead === last.curr1 ? last.curr2 : last.curr1,
+    date: used.map((l) => l.start).filter(Boolean).sort()[0] ?? '',
+  }
+}
+
+/**
+ * ALV1_SUB_TOTAL (RATE form) + UPDATE_INV_REF: the P&L an FX1 Deal ID stores. The summary row is completed with the
+ * lead-pair rate (a zero AMT1 is derived from AMT2, otherwise AMT2 from AMT1, each divided by the rate; TWD scales AMT1
+ * by 100 again), then the saved figures are chosen by the FIRST leg's CURR1: USD gives ZPL = AMT1, ZPL_LAMT = AMT2 and the
+ * currency CURR2; otherwise ZPL = AMT2, ZPL_LAMT = AMT1 and the currency CURR1. No sign is applied after the ABS above,
+ * so the stored amounts are never negative. `storedRate` is ZPL_RATE (GET_RATE for the first leg's F_CURR1 -> T_CURR1).
+ */
+export function fxSummaryPl(legs: readonly PlanLeg[], leadRate: number, storedRate: number): PlInput | undefined {
+  const row = fxSummaryRow(legs)
+  const first = legs.find((l) => l.dealType === 'D1' || l.dealType === 'D2')
+  if (!row || !first || !(leadRate > 0)) return undefined
+  let { amt1, amt2 } = row
+  if (amt1 !== 0) amt2 = amt1 / leadRate
+  else amt1 = amt2 / leadRate
+  if (row.lead === TWD || row.foreign === TWD) amt1 *= 100
+  return first.curr1 === USD
+    ? { pl: amt1, localAmount: amt2, localCurrency: row.curr2, rate: storedRate }
+    : { pl: amt2, localAmount: amt1, localCurrency: row.curr1, rate: storedRate }
 }
 
 /** The pair and date of the P&L rate: the leg's F_CURR1 -> T_CURR1 on the earlier of the D1 / D2 start dates. */

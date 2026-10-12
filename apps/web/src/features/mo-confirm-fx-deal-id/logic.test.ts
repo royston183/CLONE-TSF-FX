@@ -228,7 +228,7 @@ describe('SAP calls', () => {
 
   it('lists the FX Deal IDs with their status', async () => {
     install([])
-    deepStrictEqual(await loadDealIndex(), [{ dealId: '7000000007', status: '01' }])
+    deepStrictEqual(await loadDealIndex(), [{ dealId: '7000000007', status: '01', fxModel: 'M033', entityString: 'E' }])
   })
 
   it('loads a Deal ID with its contract, trader, model, saved invoices and live transaction', async () => {
