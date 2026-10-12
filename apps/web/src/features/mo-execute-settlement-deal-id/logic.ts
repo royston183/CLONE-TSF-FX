@@ -44,14 +44,16 @@ export function toolbarVisibility(statusCode: string): ToolbarVisibility {
   return { showInit: false, showExeC: false }
 }
 
-/** Execution Complete needs every FX leg and (unless there is no invoice) every invoice leg settled. */
-export function settlementComplete(fxDeals: readonly FxDeal[], invoices: readonly TradeInvoice[], noInvoiceFlag: boolean): boolean {
-  const allFxDone = fxDeals.every((r) => r.statusChip === 'chip-done')
-  const allInvDone = noInvoiceFlag || invoices.every((r) => r.setCo)
-  return allFxDone && allInvDone
+/** Bank Type (SET_FX ZACC) and Transfer Type (ZTRF_TYPE) texts, as screen 9003 shows them. */
+export const BANK_TYPES: Record<string, string> = { '01': 'Bank Account', '02': 'Bank BP', '04': 'Bank Clearing' }
+export const TRANSFER_TYPES: Record<string, string> = {
+  '01': 'TT Form',
+  '02': 'ECM',
+  '03': 'Letter',
+  '04': 'Indirect',
+  '05': 'SSI Letter + ECM',
+  '06': 'SSI Letter',
 }
-
-export const REMAINING_LEGS_MESSAGE = 'Please also do the settlement of all remaining legs. Do you want to continue?'
 
 // ------------------------------------------------------------------ grids
 
@@ -106,52 +108,80 @@ export function plAmount(fxDeals: readonly FxDeal[], r: FxDeal): number | null {
   return (parseFloat(d2.rate) - parseFloat(d1.rate)) * d1.amt1
 }
 
-// ------------------------------------------------------------------ FX transaction posting (9003)
+// ------------------------------------------------------------------ FX transaction settlement (9003)
 
 export const dealTypeLabel = (r: FxDeal): string =>
   `${r.dealType} - ${r.dealType === 'D1' ? 'Buy/Sell leg 1' : 'Buy/Sell leg 2'}`
 
+/**
+ * Screen 9003's fields, as the double-click on an FX row fills them (TOP handle_double_click): the buy amount is
+ * the leg's amount in the SET_FX buy row's currency, the sell amount likewise; the TSF bank fields are the
+ * transaction's (VTBFHA ZTSF_*, through TrmFxApp) and, where blank, the SET_FX defaults (ZRBUKRS, ZPAY_ID, ZBANK_ID).
+ */
 export function fxPostDefaults(r: FxDeal): FxPostDefaults {
+  const buy = r.setFxBuy
+  const sell = r.setFxSell
+  const amountIn = (curr: string | undefined) =>
+    curr === r.curr1 ? `${formatAmount(r.amt1)} ${r.curr1}` : `${formatAmount(r.amt2)} ${r.curr2}`
+  const t = r.tsf
   return {
     bukrs: r.bukrs,
     rfha: r.rfha,
     dealType: dealTypeLabel(r),
     partner: r.bp,
-    bAmt: `${formatAmount(r.amt2)} ${r.curr2}`,
-    sAmt: `${formatAmount(r.amt1)} ${r.curr1}`,
+    bAmt: amountIn(buy?.curr ?? r.curr2),
+    sAmt: amountIn(sell?.curr ?? r.curr1),
+    // The FI documents are BO's (BKPF, read by ZSGTSFR081); MO only shows them.
     bDoc: r.doc2 || '',
     sDoc: r.doc1 || '',
+    bBankType: BANK_TYPES[buy?.acc ?? ''] ?? '',
+    bTrfType: TRANSFER_TYPES[buy?.trfType ?? ''] ?? '',
+    bRecCoCode: t?.rbukrs || buy?.rbukrs || '',
+    bBankId: t?.bpayid || buy?.payId || '',
+    bPaymentId: t?.rpayid || buy?.bankId || '',
+    bHouseBank: t?.bhbkid ?? '',
+    bAccountId: t?.bhktid ?? '',
+    letterCode: buy?.letCode ?? '',
+    letterName: buy?.letName ?? '',
+    sBankType: BANK_TYPES[sell?.acc ?? ''] ?? '',
+    sTrfType: TRANSFER_TYPES[sell?.trfType ?? ''] ?? '',
+    sBankId: t?.spayid || sell?.payId || '',
+    sPayCoCode: t?.pbukrs || sell?.rbukrs || '',
+    sPaymentId: t?.ppayid || sell?.bankId || '',
+    sHouseBank: t?.shbkid ?? '',
+    sAccountId: t?.shktid ?? '',
   }
 }
 
-export const POST_FX_FIRST = 'Post the accounting entry before marking settlement complete.'
+// ------------------------------------------------------------------ invoice settlement (9002)
 
-/** Settlement Complete is only allowed once both FI documents exist. */
-export function completeFx(r: FxDeal): Result<FxDeal> {
-  if (!r.doc1 || !r.doc2) return { ok: false, error: POST_FX_FIRST }
-  return { ok: true, value: r }
-}
+/**
+ * The Sender / Receiver Details as the SAP pop-up shows them: the buyer (SET_TYP ZBUY) pays and the seller (ZSELL)
+ * receives, on a Receipt leg as on a Payment one. The house banks / accounts are the leg's stored ZSGTSFTR_TRD_POS
+ * values (ZHBKID / ZHKTID, ZREC_HBKID / ZREC_HKTID). The FI document is BO's posting, shown read-only.
+ *
+ * A leg with no stored house bank / account shows DEFAULT_BANKS. SAP derives them from VTBSTC1 (pay ID TRDINV)
+ * and T012K, which this app cannot read, so they are fixed values, as requested (from the SAP Trade Invoice
+ * Settlement screen). Update / Settlement Complete store whatever the pop-up holds, so a stored value wins.
+ */
+export const DEFAULT_BANKS = {
+  senderHouseBank: 'DBS03',
+  senderAccountId: 'DBS00',
+  receiverHouseBank: 'JPM01',
+  receiverAccountId: 'JPM02',
+} as const
 
-// ------------------------------------------------------------------ invoice posting (9002)
-
-/** The house bank comes from ZSGTSFTR_TRD_POS ZHBKID, which is not served: left blank. */
 export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
-  const payment = r.recPay === 'Payment'
   return {
     date: r.dueDate,
-    bank: '',
-    sender: payment ? r.drPost : r.crPost,
-    receiver: payment ? r.crPost : r.drPost,
+    sender: r.buy ?? '',
+    senderHouseBank: r.senderHouseBank || DEFAULT_BANKS.senderHouseBank,
+    senderAccountId: r.senderAccountId || DEFAULT_BANKS.senderAccountId,
+    receiver: r.sell ?? '',
+    receiverHouseBank: r.receiverHouseBank || DEFAULT_BANKS.receiverHouseBank,
+    receiverAccountId: r.receiverAccountId || DEFAULT_BANKS.receiverAccountId,
     amt: `${formatAmount(r.invAmt)} ${r.curr}`,
     fiDoc: r.fiDoc || '',
     docMsg: `${r.trfDesc} - ${r.leg} settlement for Deal ID ${dealId}`,
   }
-}
-
-export const POST_INV_FIRST = 'Post the document before marking settlement complete.'
-
-/** Settlement Complete is only allowed once the FI document exists. */
-export function completeInv(r: TradeInvoice): Result<TradeInvoice> {
-  if (!r.fiDoc) return { ok: false, error: POST_INV_FIRST }
-  return { ok: true, value: r }
 }

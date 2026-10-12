@@ -2,17 +2,13 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
+import { demoKey, finishDemo, nextDemoDoc, postDemo, restoreDemo } from './demo.ts'
 import { ACTION_WAITING, gateOutcome, loadDeal } from './api.ts'
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
 import { DocPreviewModal } from './DocModals.tsx'
 import {
-  accountingCompleted,
-  canPostTradeInvoice,
   initiateSettlement,
-  noPendingPostAllToast,
   pendingPostAll,
-  postAllConfirm,
-  postFxDeal,
   postingAction,
   resolveDrop,
   txnAction,
@@ -44,7 +40,6 @@ const TOAST_MS = 3600
 export default function BoPostAccountingSettlement() {
   const [dealInput, setDealInput] = useState('')
   const [deal, setDeal] = useState<Deal | null>(null)
-  const [explainHidden, setExplainHidden] = useState(false)
 
   // Popups
   const [modal, setModal] = useState<ActiveModal>(null)
@@ -97,7 +92,7 @@ export default function BoPostAccountingSettlement() {
       if (raw.trim()) setDeal(null)
       return
     }
-    setDeal(r.deal)
+    setDeal(restoreDemo(r.deal, localStorage.getItem(demoKey(r.deal.dealId))))
     setDealInput(r.deal.dealId)
     setStatus(`Deal ID ${r.deal.dealId} loaded.`, 'success')
   }
@@ -113,31 +108,48 @@ export default function BoPostAccountingSettlement() {
 
   // ---------------------------------------------------------------- toolbar
 
+  const applyDemo = (result: Outcome) => {
+    if (result.deal !== deal) {
+      try {
+        localStorage.setItem(demoKey(result.deal.dealId), JSON.stringify(result.deal))
+      } catch {
+        setStatus('Demo results could not be saved in this browser. Please enable browser storage and retry.', 'error')
+        return
+      }
+      setDeal(result.deal)
+    }
+    setStatus(result.toast.message, result.toast.kind)
+  }
+
+  // Post FX Deal: every settled, unposted FX leg; the unsettled ones are named and left out.
   const onPostFx = () => {
-    if (deal) gate(deal, postFxDeal(deal, NO_DOC), ACTION_WAITING.postFx)
+    if (!deal) return
+    applyDemo(postDemo(deal, 'fx', nextDemoDoc))
   }
 
   const onPostInvoice = () => {
     if (!deal) return
-    const guard = canPostTradeInvoice(deal)
-    if (!guard.allowed) {
-      setStatus(guard.toast.message, guard.toast.kind)
-      return
-    }
+    if (deal.status < 21) return setStatus('Complete execution first (status 21) before demo posting.', 'error')
     if (!deal.inv.length && deal.invWaiting) {
       setStatus(deal.invWaiting, 'error')
       return
     }
     if (!pendingPostAll(deal).length) {
-      const t = noPendingPostAllToast()
-      setStatus(t.message, t.kind)
+      // Nothing settled is left to post: say which legs still need settling, or that all are posted.
+      applyDemo(postDemo(deal, 'invoice', nextDemoDoc))
       return
     }
     setModal('pall')
   }
 
+  // Demo completion never writes a production Deal ID status.
   const onAccounting = () => {
-    if (deal) gate(deal, accountingCompleted(deal), ACTION_WAITING.accounting)
+    if (!deal) return
+    const completed = finishDemo(deal)
+    applyDemo({ deal: completed, toast: { message: completed.status === 22
+      ? 'Demo accounting complete (22). No SAP posting was performed.'
+      : 'Post the trade invoice and FX legs first. Execution must be complete (21).',
+      kind: completed.status === 22 ? 'success' : 'error' } })
   }
 
   const onInitiate = () => {
@@ -161,24 +173,34 @@ export default function BoPostAccountingSettlement() {
 
   const onTxnAction = (action: TxnAction) => {
     if (!deal) return
+    if (action === 'TBB1') {
+      applyDemo(postDemo(deal, 'fx', nextDemoDoc))
+      setModal(null)
+      return
+    }
     const o = txnAction(deal, txnIdx, action, NO_DOC)
     if (!deal.top[txnIdx]) return setStatus(o.toast.message, o.toast.kind)
-    if (action === 'TEST') return setStatus(ACTION_WAITING.txnTest, 'error')
-    if (action === 'UPD') return setStatus(ACTION_WAITING.txnUpdate, 'error')
+    if (action === 'TEST') return setStatus('Demo test run complete. No documents generated.', '')
+    if (action === 'UPD') return setStatus('Demo bank details are available. No SAP update performed.', 'success')
     gate(deal, o, ACTION_WAITING.txnPost)
   }
 
   const onPostingAction = (action: PostingAction) => {
     if (!deal) return
+    if (action === 'SET_POST') {
+      if (!deal.inv[postingIdx]?.postCheck) return setStatus('FI Posting is not set for this leg.', 'error')
+      applyDemo(postDemo(deal, 'invoice', nextDemoDoc, postingIdx))
+      return
+    }
     const o = postingAction(deal, postingIdx, action, NO_DOC)
     if (!deal.inv[postingIdx]) return setStatus(o.toast.message, o.toast.kind)
-    if (action === 'UPD_DATA') return setStatus(ACTION_WAITING.invUpdate, 'error')
+    if (action === 'UPD_DATA') return setStatus('Demo house bank details are filled. No SAP update performed.', 'success')
     gate(deal, o, action === 'SET_EXE' ? ACTION_WAITING.invSettle : ACTION_WAITING.invPost)
   }
 
   const onPostAllConfirm = () => {
     if (!deal) return
-    gate(deal, postAllConfirm(deal, NO_DOC), ACTION_WAITING.postAll)
+    applyDemo(postDemo(deal, 'invoice', nextDemoDoc))
     setModal(null)
   }
 
@@ -262,41 +284,6 @@ export default function BoPostAccountingSettlement() {
       </div>
 
       <main>
-        <div className={explainHidden ? 'explain hidden' : 'explain'}>
-          <button type="button" className="explain-close" title="Dismiss" onClick={() => setExplainHidden(true)}>
-            {'✕'}
-          </button>
-          <b>What this screen does:</b> once a{' '}
-          <span
-            className="term-def"
-            title="The key that links the Master Contract, FX Deal, Bill of Lading and Trade Invoices together once a shipment is matched to an FX deal."
-          >
-            Deal ID
-          </span>{' '}
-          has been confirmed, this is where Back Office settles it — posting the{' '}
-          <span
-            className="term-def"
-            title="The pair of offsetting currency deals (D1/D2) booked between group entities to pass FX exposure down the Entity String."
-          >
-            FX Deal
-          </span>{' '}
-          accounting entries, posting each{' '}
-          <span
-            className="term-def"
-            title="One accounting document per leg of the Entity String (e.g. T1, T2, T3) raised once a Bill of Lading is attached to the Deal ID."
-          >
-            Trade Invoice
-          </span>{' '}
-          leg, and marking the{' '}
-          <span
-            className="term-def"
-            title="The day the FX Deal and its linked invoices are paid & received — by design, on the same date."
-          >
-            Settlement
-          </span>{' '}
-          complete. Load a Deal ID below to begin.
-        </div>
-
         {/* ============== PANEL: Deal ID lookup ============== */}
         <div className="panel">
           <div className="panel-title">
