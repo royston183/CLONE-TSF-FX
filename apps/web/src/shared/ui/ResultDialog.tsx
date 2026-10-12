@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import './ResultDialog.css'
 
 export type ResultTone = 'success' | 'error' | 'warning' | 'info'
@@ -21,6 +22,11 @@ const ICON: Record<ResultTone, string> = { success: '✓', error: '✕', warning
  *
  * Like the Create Master Contract success popup it has no backdrop dismissal; Escape runs
  * onClose only when one is given, so an outcome that needs a decision cannot be dismissed by accident.
+ *
+ * It is the top layer of whatever is open. It renders into document.body, so no screen's stacking context
+ * (a transformed or z-indexed parent) can hold it under that screen's own popups, and its overlay sits above
+ * them (z-index in ResultDialog.css). Escape is taken in the capture phase and stopped, so it closes only this
+ * message, never the popup underneath; focus returns to where it was once the message closes.
  */
 export function ResultDialog({
   tone,
@@ -41,17 +47,36 @@ export function ResultDialog({
   children?: ReactNode
 }) {
   useEffect(() => {
-    if (!onClose) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      // The screen's own Escape handlers (closing its top popup) must not see this key.
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      onClose?.()
     }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [onClose])
 
-  return (
-    <div className="std-result-overlay">
+  // Focus the first action while the message is up, and hand focus back to the popup underneath after.
+  const cardRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    cardRef.current?.querySelector<HTMLButtonElement>('.std-result-btn-primary, .std-result-btn')?.focus()
+    return () => {
+      if (previous?.isConnected) previous.focus()
+    }
+  }, [])
+
+  return createPortal(
+    <div
+      className="std-result-overlay"
+      // A click here belongs to the message only: it must not reach a popup's backdrop handler underneath.
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <div
+        ref={cardRef}
         className={`std-result std-result-${tone}`}
         role={tone === 'error' ? 'alertdialog' : 'dialog'}
         aria-modal="true"
@@ -83,6 +108,7 @@ export function ResultDialog({
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

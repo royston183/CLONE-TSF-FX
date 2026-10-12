@@ -1,14 +1,10 @@
-import { deepStrictEqual, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { STATUS_LIST, seedDeal, seedFxDeals, seedTradeInvoices } from './fixtures.ts'
 import { formatAmount } from './format.ts'
 import {
   DATE_REQUIRED,
-  POST_FX_FIRST,
-  POST_INV_FIRST,
   amendDateInitial,
-  completeFx,
-  completeInv,
   diff1Amount,
   filterFxDeals,
   filterInvoices,
@@ -16,7 +12,6 @@ import {
   invPostDefaults,
   normalizeDealId,
   plAmount,
-  settlementComplete,
   statusClass,
   statusMeta,
   toggleRowSelection,
@@ -55,19 +50,6 @@ describe('status and toolbar', () => {
     strictEqual(statusClass('20'), 'pill-init')
     strictEqual(statusClass('22'), 'pill-done')
     strictEqual(statusClass(''), 'pill-early')
-  })
-})
-
-describe('settlement complete check', () => {
-  it('needs every FX leg and every invoice leg settled', () => {
-    const fx = seedFxDeals()
-    const inv = seedTradeInvoices()
-    strictEqual(settlementComplete(fx, inv, false), false)
-    const fxDone = fx.map((r) => ({ ...r, statusChip: 'chip-done' }))
-    strictEqual(settlementComplete(fxDone, inv, false), false)
-    strictEqual(settlementComplete(fxDone, inv, true), true)
-    strictEqual(settlementComplete(fxDone, inv.map((r) => ({ ...r, setCo: true })), false), true)
-    strictEqual(settlementComplete([], [], false), true)
   })
 })
 
@@ -134,30 +116,37 @@ describe('FX transaction posting', () => {
     strictEqual(fxPostDefaults(d2).dealType, 'D2 - Buy/Sell leg 2')
   })
 
-  it('allows Settlement Complete only once both FI documents exist', () => {
-    const r = seedFxDeals()[1] as FxDeal
-    deepStrictEqual(completeFx(r), { ok: false, error: POST_FX_FIRST })
-    strictEqual(completeFx({ ...r, doc1: '1', doc2: '2' }).ok, true)
+  it('shows the BO documents read-only and starts the house banks blank', () => {
+    const d = fxPostDefaults({ ...(seedFxDeals()[0] as FxDeal), doc1: '6800237281' })
+    strictEqual(d.sDoc, '6800237281')
+    deepStrictEqual([d.bHouseBank, d.bAccountId, d.sHouseBank, d.sAccountId], ['', '', '', ''])
   })
 })
 
-describe('invoice posting', () => {
-  it('swaps sender and receiver for a Payment leg and leaves the house bank blank', () => {
+describe('invoice settlement pop-up', () => {
+  it('the buyer pays and the seller receives, on a Receipt leg as on a Payment one', () => {
     const [t1, t2] = seedTradeInvoices() as [TradeInvoice, TradeInvoice]
-    const receipt = invPostDefaults(t1, 'TSF-9081')
-    strictEqual(receipt.sender, 'Cr OIL Trade Revenue')
-    strictEqual(receipt.receiver, 'Dr DMCC Trade A/R')
-    strictEqual(receipt.bank, '')
-    const payment = invPostDefaults(t2, 'TSF-9081')
-    strictEqual(payment.sender, 'Dr OAIPL Trade A/P')
-    strictEqual(payment.receiver, 'Cr DMCC Trade Revenue')
+    const receipt = invPostDefaults({ ...t1, buy: 'OGA', sell: 'DMCC' }, 'TSF-9081')
+    strictEqual(receipt.sender, 'OGA')
+    strictEqual(receipt.receiver, 'DMCC')
+    const payment = invPostDefaults({ ...t2, buy: 'OGA', sell: 'DMCC' }, 'TSF-9081')
+    strictEqual(payment.sender, 'OGA')
+    strictEqual(payment.receiver, 'DMCC')
     strictEqual(payment.amt, '5,010,000.00 USD')
     strictEqual(payment.docMsg, 'DMCC sells to OAIPL - T2 settlement for Deal ID TSF-9081')
   })
 
-  it('allows Settlement Complete only once the FI document exists', () => {
-    const r = seedTradeInvoices()[2] as TradeInvoice
-    deepStrictEqual(completeInv(r), { ok: false, error: POST_INV_FIRST })
-    strictEqual(completeInv({ ...r, fiDoc: '1950' }).ok, true)
+  it('fills the house banks and accounts from the stored leg, else the fixed defaults', () => {
+    const t1 = seedTradeInvoices()[0] as TradeInvoice
+    const d = invPostDefaults(t1, 'X')
+    deepStrictEqual(
+      [d.senderHouseBank, d.senderAccountId, d.receiverHouseBank, d.receiverAccountId],
+      ['DBS03', 'DBS00', 'JPM01', 'JPM02'],
+    )
+    const stored = invPostDefaults({ ...t1, senderHouseBank: 'SCB01', senderAccountId: 'USD01', receiverHouseBank: 'HDF01', receiverAccountId: 'INR01' }, 'X')
+    deepStrictEqual(
+      [stored.senderHouseBank, stored.senderAccountId, stored.receiverHouseBank, stored.receiverAccountId],
+      ['SCB01', 'USD01', 'HDF01', 'INR01'],
+    )
   })
 })

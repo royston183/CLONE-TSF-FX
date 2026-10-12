@@ -94,22 +94,16 @@ export type ToolbarActions = {
   diff: () => void
   pl: () => void
   editDms: () => void
-  postFx: () => void
-  postInv: () => void
   initiate: () => void
   executionComplete: () => void
 }
 
 export function ActionToolbar({
   noInvoiceFlag,
-  fxSelected,
-  invSelected,
   visibility,
   actions,
 }: {
   noInvoiceFlag: boolean
-  fxSelected: boolean
-  invSelected: boolean
   visibility: ToolbarVisibility
   actions: ToolbarActions
 }) {
@@ -134,12 +128,7 @@ export function ActionToolbar({
         &#9999; Edit DMS
       </ToolBtn>
       <span className="action-spacer"></span>
-      <ToolBtn fcode="POST_FX" disabled={!fxSelected} onClick={actions.postFx}>
-        Post FX Deal &#8594;
-      </ToolBtn>
-      <ToolBtn fcode="POST_TI" disabled={!invSelected || noInvoiceFlag} onClick={actions.postInv}>
-        Post Trade Invoice &#8594;
-      </ToolBtn>
+      {/* No Post FX Deal / Post Trade Invoice here: accounting posting is BO's (ZSGTSFR081). */}
       {visibility.showInit ? (
         <ToolBtn fcode="INIT" disabled={false} variant="primary" onClick={actions.initiate}>
           Initiate Settlement

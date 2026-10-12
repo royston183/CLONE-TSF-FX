@@ -25,15 +25,17 @@
  *                            APP_STR's; counterparty, dates, currencies, amounts and rates are SAP's.
  *
  * Gated:
- *   FX leg columns with no source: Entity (ZSGTSFTR_COMP name), Doc No 1/2 (BKPF documents) stay blank;
- *   Status is TXN_STATUS, and the settled flag (ZSGTSFTR_TRD_POS ZSET_CHECK) is not served, so no leg
- *   shows as settled. ZSGTSFCDS_OPTION (option legs) has no service -> WAITING FOR API.
+ *   FX leg columns with no source: Entity (ZSGTSFTR_COMP name) and Doc No 2 stay blank; Status is TXN_STATUS
+ *   until the leg's local ZSGTSFTR_TRD_POS row (settlement.ts) marks it settled, and Doc No 1 is that row's
+ *   ZBELNR. ZSGTSFCDS_OPTION (option legs) has no service -> WAITING FOR API.
  *   Trade Invoice grid       ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is
  *                            ZSGSLCTR_TRD_POS, the SLC table) and its default rows come from
  *                            ZSGTSFTR_SET_TYP by a selection that is not exported.
  *   Headsup, DMS list, View Trade Invoice, P&L, FX-Invoice Difference, bank / transfer / DMS
  *   type value helps -> WAITING FOR API.
- *   Every action except Save Spot Data -> WAITING FOR ACTION API. Save Spot Data books the Spot through the
+ *   Initiate Settlement, leg Update / Post / Settlement Complete and Execution Complete write ZSGTSFTR_TRD_POS
+ *   and ZDEAL_STAT (settlement.ts); a posting is recorded there under a local document number, since there is no
+ *   FI posting API. Every other action -> WAITING FOR ACTION API. Save Spot Data books the Spot through the
  *   Additional Spot Booking flow (standard FxTransaction + APP_STR + IN_SPOT ZSPOT_TXN/ZSPOT_CREATE); the
  *   entered rate is not stored in IN_SPOT. Its default rate is TCURR (type M, today).
  *
@@ -52,7 +54,7 @@ import { spotPorts } from '../fo-additional-spot-booking/spotPorts.ts'
 import { toSpotRow } from '../fo-additional-spot-booking/spotList.ts'
 import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { statusClass } from './logic.ts'
-import type { Deal, FxDeal, StatusMeta, TradeInvoice } from './types.ts'
+import type { Deal, FxDeal, SetFxSide, StatusMeta, TradeInvoice } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
@@ -85,7 +87,9 @@ export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
   const buysLead = fx.BuyCurrency === lead
   const status = (app.TxnStatus ?? '').trim()
+  const settled = app.ZtsfExeCo === true
   return {
+    // Replaced by ZSGTSFTR_SET_FX ZSEQ once the model is known (withSetFx).
     seq: (app.ZtsfDealSq ?? '').trim(),
     dealType: type,
     dealTypeChip: type === 'D1' ? 'chip-d1' : type === 'D2' ? 'chip-d2' : 'chip-t',
@@ -104,12 +108,71 @@ export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
     spot: rate(fx.SpotRate),
     rate: rate(fx.ForwardRate),
     mcRefNo: (app.ZtsfMcRefNo ?? '').trim(),
-    status: status ? fxTxnStatusLabel(status) : '',
-    // ZSET_CHECK (ZSGTSFTR_TRD_POS) is not served: no leg is shown as settled.
-    statusChip: 'chip-open',
+    // Settlement Complete (Execution): VTBFHA ZTSF_EXE_CO, gt_top-set_co in ZSGTSF_RDEAL_TRD_INV.
+    status: settled ? 'Settled' : status ? fxTxnStatusLabel(status) : '',
+    statusChip: settled ? 'chip-done' : 'chip-open',
+    // Doc No 1 / 2 are BKPF documents (BLART TR, XREF2_HD TSF, XBLNR = transaction): BKPF has no resource.
     doc1: '',
     doc2: '',
+    settled,
+    tsf: {
+      bhbkid: s(app.ZtsfBhbkID),
+      bhktid: s(app.ZtsfBhktID),
+      shbkid: s(app.ZtsfShbkID),
+      shktid: s(app.ZtsfShktID),
+      bpayid: s(app.ZtsfBpayID),
+      spayid: s(app.ZtsfSpayID),
+      rbukrs: s(app.ZtsfRbukrs),
+      rpayid: s(app.ZtsfRpayID),
+      pbukrs: s(app.ZtsfPbukrs),
+      ppayid: s(app.ZtsfPpayID),
+    },
   }
+}
+
+const s = (v: string | null | undefined): string => (v ?? '').trim()
+
+/** One ZSGTSFTR_SET_FX row as a side of a leg. */
+function toSetFxSide(r: FxRow): SetFxSide {
+  return {
+    seq: txt(r, 'ZSEQ'),
+    dssDeal: txt(r, 'ZDSS_DEAL'),
+    curr: txt(r, 'ZCURR'),
+    acc: txt(r, 'ZACC'),
+    trfType: txt(r, 'ZTRF_TYPE'),
+    rbukrs: txt(r, 'ZRBUKRS'),
+    payId: txt(r, 'ZPAY_ID'),
+    bankId: txt(r, 'ZBANK_ID'),
+    letCode: txt(r, 'ZLET_CODE'),
+    letName: txt(r, 'ZLET_NAME'),
+  }
+}
+
+/**
+ * The model's ZSGTSFTR_SET_FX laid over the FX legs, as ZSGTSF_RDEAL_TRD_INV's PBO does: the leg's sequence and DSS
+ * deal from the first row of its deal type, its buy / sell rows for the popup, and a DSS leg takes the sequence of
+ * the leg it belongs to.
+ */
+export function withSetFx(legs: readonly FxDeal[], setFx: readonly FxRow[]): FxDeal[] {
+  const out = legs.map((leg) => {
+    const rows = setFx.filter((r) => txt(r, 'ZD_MAP') === leg.dealType)
+    const first = rows[0]
+    const buy = rows.find((r) => txt(r, 'ZBS') === 'B')
+    const sell = rows.find((r) => txt(r, 'ZBS') === 'S')
+    return {
+      ...leg,
+      seq: first ? txt(first, 'ZSEQ') : '',
+      dssDeal: first ? txt(first, 'ZDSS_DEAL') : '',
+      ...(buy ? { setFxBuy: toSetFxSide(buy) } : {}),
+      ...(sell ? { setFxSell: toSetFxSide(sell) } : {}),
+    }
+  })
+  for (const leg of out) {
+    if (!leg.dssDeal) continue
+    const dss = out.find((l) => l.dealType === leg.dssDeal)
+    if (dss) dss.seq = leg.seq
+  }
+  return out
 }
 
 const bySeq = (a: FxDeal, b: FxDeal) => (a.seq + a.dealType + a.rfha < b.seq + b.dealType + b.rfha ? -1 : 1)
@@ -167,7 +230,8 @@ export function buildTradeInvoices(
   const saved = new Map(positions.map((p) => [text(p, 'ZT_TYPE'), p]))
   const acc = new Map(accounting.map((a) => [text(a, 'ZFI_TYPE'), a]))
   return [...setTyp]
-    .sort((a, b) => text(a, 'ZT_TYP_NO').localeCompare(text(b, 'ZT_TYP_NO')) || text(a, 'ZT_TYPE').localeCompare(text(b, 'ZT_TYPE')))
+    // In settlement sequence (ZSEQ): the previous-sequence checks of Settlement Complete read the leg before.
+    .sort((a, b) => Number(text(a, 'ZSEQ')) - Number(text(b, 'ZSEQ')) || text(a, 'ZT_TYPE').localeCompare(text(b, 'ZT_TYPE')))
     .map((t) => {
       const type = text(t, 'ZT_TYPE')
       const matches = billAdj.filter((b) => text(b, 'ZINV_REF').slice(11, 13) === type.slice(0, 2))
@@ -192,7 +256,29 @@ export function buildTradeInvoices(
         recPay,
         trfType: text(t, 'ZTRF_TYPE'),
         fiDoc: pos ? text(pos, 'ZBELNR') : '',
-        setCo: pos ? text(pos, 'ZSET_CHECK') === 'X' : text(t, 'ZSET_CHECK') === 'X',
+        // Settlement Complete (Execution): TRD_POS ZEXE_CO, gt_inv-set_co in ZSGTSF_RDEAL_TRD_INV.
+        setCo: pos ? text(pos, 'ZEXE_CO') === 'X' : false,
+        // SET_TYP configuration (the "Settlement" and "FI Posting" checkboxes of popup 9002), not a status.
+        setCheck: text(t, 'ZSET_CHECK') === 'X',
+        dssDeal: text(t, 'ZDSS_DEAL'),
+        setType: text(t, 'ZSET_TYPE'),
+        fiType: text(t, 'ZFI_TYPE'),
+        postDesc: text(t, 'ZPOST_DESC'),
+        // The settlement sequence: ZSGTSFTR_TRD_POS ZSEQ, and the Sequence column of ZSGTSFR081 (T3-P = 1 .. T1-S = 6 on M033).
+        seq: text(t, 'ZSEQ'),
+        setCurr: text(t, 'ZSET_CURR'),
+        bukrs: text(t, 'ZBUKRS'),
+        dMap: text(t, 'ZD_MAP'),
+        // SET_TYP ZPOST_CHECK is the leg's FI Posting flag (is it posted to FI at all); a posted leg has a ZBELNR.
+        postRequired: text(t, 'ZPOST_CHECK') === 'X',
+        buy: text(t, 'ZBUY'),
+        sell: text(t, 'ZSELL'),
+        // TRD_POS, kept by Update / Settlement Complete (save_bank_data). The VTBSTC1 (pay ID TRDINV) default the
+        // program shows before that has no resource, so the field is blank until stored. A Receipt leg has none.
+        senderHouseBank: pos && recPay !== 'Receipt' ? text(pos, 'ZHBKID') : '',
+        senderAccountId: pos && recPay !== 'Receipt' ? text(pos, 'ZHKTID') : '',
+        receiverHouseBank: pos ? text(pos, 'ZREC_HBKID') : '',
+        receiverAccountId: pos ? text(pos, 'ZREC_HKTID') : '',
       }
     })
 }
@@ -223,20 +309,11 @@ export const waitingAction = (what: string, apis: string): string =>
 /** Every function code; the BAPIs / FMs / tables are those the dependency note lists. */
 export const ACTION_WAITING = {
   status: waitingAction('Deal ID Status change', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
-  amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
-  initiate: waitingAction('Initiate Settlement', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT, ZSGTSFTR_TRD_POS, ZSGTSFTR_IN_SPOT — statements not exported'),
-  executionComplete: waitingAction('Execution Complete', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
+  amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
   printing: waitingAction('Initiate Printing', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS, BAPI_BUPA_ADDRESS_GETDETAIL'),
   dms: waitingAction('Edit DMS', 'FM ZSGTSFFM_DMS, UPDATE ZSGTSFTR_DEALDMS ZDDATE'),
-  fxTest: waitingAction('Post Test Run', 'BAPI_FTR_FXT_CHANGE test run'),
   fxPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
-  fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
-  fxPost: waitingAction('Post Accounting Entry', 'BAPI_FTR_FXT_CHANGE, MODIFY ZSGTSFTR_TRD_POS, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
-  fxComplete: waitingAction('Settlement Complete (FX leg)', 'MODIFY ZSGTSFTR_TRD_POS ZSET_CHECK — statement not exported'),
-  invPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
-  invUpdate: waitingAction('Update invoice posting', 'MODIFY ZSGTSFTR_TRD_POS — statement not exported'),
-  invPost: waitingAction('Post Document', 'FI posting into BKPF, MODIFY ZSGTSFTR_TRD_POS ZBELNR — FM not named in the dependency note'),
-  invComplete: waitingAction('Settlement Complete (invoice leg)', 'MODIFY ZSGTSFTR_TRD_POS ZSET_CHECK / ZPOST_CHECK — statement not exported'),
+  fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
   letterPdf: waitingAction('Print PDF', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE'),
 } as const
 
@@ -401,6 +478,8 @@ export function toDeal(input: { deal: FxRow; mc: FxRow | undefined; model: FxRow
     currencyString: txt(deal, 'ZDEAL_CURR_DESC'),
     dealStatus: txt(deal, 'ZDEAL_STAT'),
     noInvoiceFlag: model ? txt(model, 'ZNO_INV') !== '' : false,
+    dealType: txt(deal, 'ZDEAL_TYPE'),
+    subType: txt(deal, 'ZSUB_TYPE'),
   }
 }
 
@@ -414,6 +493,8 @@ export type DealScreen = {
   invoices: TradeInvoice[]
   /** Why the Trade Invoice grid is empty: nothing stored, or the table could not be read. */
   invoicesWaiting: string
+  /** The Deal ID's ZSGTSFTR_TRD_POS rows, so Initiate Settlement leaves rows already stored alone. */
+  positions: Record<string, unknown>[]
 }
 
 /** The FX legs; unreadable APP_STR / FxTransaction leaves the grid empty with the reason, never a guess. */
@@ -436,7 +517,7 @@ async function invoicesOrWaiting(
   modelId: string,
   fxDeals: readonly FxDeal[],
   signal?: AbortSignal,
-): Promise<{ invoices: TradeInvoice[]; invoicesWaiting: string }> {
+): Promise<{ invoices: TradeInvoice[]; invoicesWaiting: string; positions: Record<string, unknown>[] }> {
   try {
     const [setTyp, billAdj] = await Promise.all([
       modelId ? fxList('setTyp', { ZMOD_ID: modelId }, { signal }) : none,
@@ -455,10 +536,10 @@ async function invoicesOrWaiting(
     const invoices = buildTradeInvoices(setTyp, billAdj, positions, accounting, d1?.valDate ?? '')
     const known = new Set(accounting.map((a) => String(a['ZFI_TYPE'] ?? '').trim()))
     const missing = [...new Set(setTyp.map((t) => String(t['ZFI_TYPE'] ?? '').trim()).filter((f) => f && !known.has(f)))].sort()
-    return { invoices, invoicesWaiting: invoices.length ? `${INVOICE_GAPS}${missing.length && !note ? noPostingType(missing) : ''}${note}` : INVOICE_WAITING }
+    return { positions, invoices, invoicesWaiting: invoices.length ? `${INVOICE_GAPS}${missing.length && !note ? noPostingType(missing) : ''}${note}` : INVOICE_WAITING }
   } catch (error) {
     if (isAbort(error)) throw error
-    return { invoices: [], invoicesWaiting: invoicesUnavailable(messageOf(error)) }
+    return { positions: [], invoices: [], invoicesWaiting: invoicesUnavailable(messageOf(error)) }
   }
 }
 
@@ -481,14 +562,18 @@ export async function loadDealScreen(dealId: string, signal?: AbortSignal): Prom
   ])
   const mc = mcs[0]
   const modelId = mc ? txt(mc, 'ZMOD_ID') : ''
-  const models = modelId ? await fxList('fxModel', { ZMOD_ID: modelId }, { signal }) : []
-  const trade = await invoicesOrWaiting(dealId, modelId, legs.fxDeals, signal)
+  const [models, setFx] = modelId
+    ? await Promise.all([fxList('fxModel', { ZMOD_ID: modelId }, { signal }), fxList('setFx', { ZMOD_ID: modelId }, { signal })])
+    : [[], []]
+  const fxDeals = withSetFx(legs.fxDeals, setFx)
+  const trade = await invoicesOrWaiting(dealId, modelId, fxDeals, signal)
   return {
     deal: toDeal({ deal, mc, model: models[0], trader: traders[0] }),
     statuses: statusList(statuses, dealType, subType),
-    fxDeals: legs.fxDeals,
+    fxDeals,
     legsWaiting: legs.legsWaiting,
     invoices: trade.invoices,
     invoicesWaiting: trade.invoicesWaiting,
+    positions: trade.positions,
   }
 }

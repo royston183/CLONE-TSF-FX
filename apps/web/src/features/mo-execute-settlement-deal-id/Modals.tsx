@@ -465,7 +465,8 @@ export function ViewInvModal({
 
 // ------------------------------------------------------------------ Transactions Posting (9003)
 
-export type PostKind = 'test' | 'print' | 'update' | 'post' | 'complete'
+/** MO settles only: the accounting posting is BO's (ZSGTSFR081), so neither pop-up has a posting action. */
+export type PostKind = 'print' | 'update' | 'complete'
 
 export function FxPostModal({
   open,
@@ -489,21 +490,15 @@ export function FxPostModal({
       size="wide"
       icon={<>&#128179;</>}
       title="Transaction Settlement"
-      subtitle={<>Transaction <span>{form.rfha}</span> &ndash; post the buy &amp; sell legs of the FX deal to bank / accounting</>}
+      subtitle={<>Transaction <span>{form.rfha}</span> &ndash; settle the buy &amp; sell legs of the FX deal</>}
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="action-btn" type="button" onClick={() => onAction('test')}>
-            Post Test Run
-          </button>
           <button className="action-btn" type="button" onClick={() => onAction('print')}>
             Print Letters
           </button>
           <button className="action-btn" type="button" onClick={() => onAction('update')}>
             Update
-          </button>
-          <button className="action-btn" type="button" onClick={() => onAction('post')}>
-            Post Accounting Entry
           </button>
           <button className="btn-confirm green" type="button" onClick={() => onAction('complete')}>
             Settlement Complete
@@ -541,42 +536,39 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input
-              type="text"
-              placeholder="generated on posting"
-              value={form.bDoc}
-              onChange={(e) => onField('bDoc', e.target.value)}
-            />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.bDoc} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
-            <select value={form.bBankType} onChange={(e) => onField('bBankType', e.target.value)}>
-              {bankOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.bBankType} />
           </div>
           <div className="ffield">
             <label>Transfer Type</label>
-            <select value={form.bTrfType} onChange={(e) => onField('bTrfType', e.target.value)}>
-              {trfOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.bTrfType} />
+          </div>
+          <div className="ffield">
+            <label>Rec Co Code</label>
+            <input type="text" maxLength={4} value={form.bRecCoCode} onChange={(e) => onField('bRecCoCode', e.target.value.toUpperCase())} />
           </div>
           <div className="ffield">
             <label>Receiving Bank ID</label>
-            <input
-              type="text"
-              placeholder="e.g. BNK-1021"
-              value={form.bBankId}
-              onChange={(e) => onField('bBankId', e.target.value)}
-            />
+            <input type="text" maxLength={5} value={form.bBankId} onChange={(e) => onField('bBankId', e.target.value.toUpperCase())} />
           </div>
           <div className="ffield">
-            <label>House Bank / Account ID</label>
-            <input
-              type="text"
-              placeholder="e.g. HB01 / 100234"
-              value={form.bAcc}
-              onChange={(e) => onField('bAcc', e.target.value)}
-            />
+            <label>Payment ID</label>
+            <input type="text" maxLength={4} value={form.bPaymentId} onChange={(e) => onField('bPaymentId', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" disabled readOnly value={form.bHouseBank} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" disabled readOnly value={form.bAccountId} />
+          </div>
+          <div className="ffield">
+            <label>Letter Code</label>
+            <input type="text" disabled readOnly value={[form.letterCode, form.letterName].filter(Boolean).join(' - ')} />
           </div>
         </div>
         <label className="check-row">
@@ -593,42 +585,41 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input
-              type="text"
-              placeholder="generated on posting"
-              value={form.sDoc}
-              onChange={(e) => onField('sDoc', e.target.value)}
-            />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.sDoc} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
-            <select value={form.sBankType} onChange={(e) => onField('sBankType', e.target.value)}>
-              {bankOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.sBankType} />
           </div>
           <div className="ffield">
             <label>Transfer Type</label>
-            <select value={form.sTrfType} onChange={(e) => onField('sTrfType', e.target.value)}>
-              {trfOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.sTrfType} />
           </div>
           <div className="ffield">
             <label>Paying Bank ID</label>
             <input
               type="text"
-              placeholder="e.g. BNK-2044"
-              value={form.sBankId}
-              onChange={(e) => onField('sBankId', e.target.value)}
+              maxLength={5}
+              disabled={form.remit}
+              value={form.remit ? '' : form.sBankId}
+              onChange={(e) => onField('sBankId', e.target.value.toUpperCase())}
             />
           </div>
           <div className="ffield">
-            <label>House Bank / Account ID</label>
-            <input
-              type="text"
-              placeholder="e.g. HB02 / 200551"
-              value={form.sAcc}
-              onChange={(e) => onField('sAcc', e.target.value)}
-            />
+            <label>Pay Co Code</label>
+            <input type="text" maxLength={4} value={form.sPayCoCode} onChange={(e) => onField('sPayCoCode', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>Payment ID</label>
+            <input type="text" maxLength={4} value={form.sPaymentId} onChange={(e) => onField('sPaymentId', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" disabled readOnly value={form.sHouseBank} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" disabled readOnly value={form.sAccountId} />
           </div>
         </div>
         <label className="check-row">
@@ -639,9 +630,9 @@ export function FxPostModal({
       <div className="note-box">
         {row ? (
           <>
-            <strong>Current status:</strong> {row.status}. Use <em>Post Test Run</em> to simulate, then{' '}
-            <em>Post Accounting Entry</em> to post both legs to FI, and <em>Settlement Complete</em> once both FI documents
-            exist.
+            <strong>Settlement Complete:</strong> {row.settled ? 'Yes' : 'No'} (VTBFHA ZTSF_EXE_CO). House Bank and Account
+            ID are derived in SAP from the pay IDs (VTBSTC1), which this app cannot read: they show what the transaction
+            holds. The accounting entries are posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081).
           </>
         ) : null}
       </div>
@@ -664,26 +655,24 @@ export function InvPostModal({
   legLabel: string
   form: InvPostForm
   onField: <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) => void
-  onAction: (kind: Exclude<PostKind, 'test'>) => void
+  onAction: (kind: Exclude<PostKind, 'print'>) => void
 }) {
+  // modify_screen_9002: a Receipt leg's bank fields are display only; once posted, so are the receiver's.
+  const receipt = row?.recPay === 'Receipt'
+  const senderLocked = receipt
+  const receiverLocked = receipt || !!row?.fiDoc
   return (
     <ModalFrame
       open={open}
       onClose={onClose}
       icon={<>&#129534;</>}
-      title={<>Bank Settlement &ndash; Posting</>}
-      subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; generate the bank letter and post the accounting entry</>}
+      title={<>Trade Invoice Settlement</>}
+      subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; maintain the banking details and settle the leg</>}
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="action-btn" type="button" onClick={() => onAction('print')}>
-            Print Letters
-          </button>
           <button className="action-btn" type="button" onClick={() => onAction('update')}>
             Update
-          </button>
-          <button className="action-btn" type="button" onClick={() => onAction('post')}>
-            Post Document
           </button>
           <button className="btn-confirm green" type="button" onClick={() => onAction('complete')}>
             Settlement Complete
@@ -697,29 +686,41 @@ export function InvPostModal({
           <input type="text" disabled readOnly value={form.date} />
         </div>
         <div className="ffield">
-          <label>Bank</label>
-          <input type="text" disabled readOnly value={form.bank} />
-        </div>
-        <div className="ffield">
-          <label>Sender / Payer</label>
-          <input type="text" disabled readOnly value={form.sender} />
-        </div>
-        <div className="ffield">
-          <label>Receiver / Payee</label>
-          <input type="text" disabled readOnly value={form.receiver} />
-        </div>
-        <div className="ffield">
           <label>Invoice Amount</label>
           <input type="text" disabled readOnly value={form.amt} />
         </div>
         <div className="ffield">
           <label>FI Document No</label>
-          <input
-            type="text"
-            placeholder="generated on posting"
-            value={form.fiDoc}
-            onChange={(e) => onField('fiDoc', e.target.value)}
-          />
+          <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.fiDoc} />
+        </div>
+      </div>
+      <div className="fbox" style={{ marginTop: '12px' }}>
+        <div className="fbox-title">Sender / Receiver Details</div>
+        <div className="form-grid">
+          <div className="ffield">
+            <label>Sender / Payer</label>
+            <input type="text" disabled readOnly value={form.sender} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" maxLength={5} disabled={senderLocked} value={form.senderHouseBank} onChange={(e) => onField('senderHouseBank', e.target.value)} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" maxLength={5} disabled={senderLocked} value={form.senderAccountId} onChange={(e) => onField('senderAccountId', e.target.value)} />
+          </div>
+          <div className="ffield">
+            <label>Receiver / Payee</label>
+            <input type="text" disabled readOnly value={form.receiver} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" maxLength={5} disabled={receiverLocked} value={form.receiverHouseBank} onChange={(e) => onField('receiverHouseBank', e.target.value)} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" maxLength={5} disabled={receiverLocked} value={form.receiverAccountId} onChange={(e) => onField('receiverAccountId', e.target.value)} />
+          </div>
         </div>
       </div>
       <div className="ffield" style={{ marginTop: '12px' }}>
@@ -734,8 +735,9 @@ export function InvPostModal({
       <div className="note-box">
         {row ? (
           <>
-            <strong>Current status:</strong> {row.setCo ? 'Settled' : 'Open'}. The invoice and its linked FX deal are
-            designed to settle on the same value date.
+            <strong>Settlement:</strong> {row.setCo ? 'Yes' : 'No'} &middot; <strong>Accounting posting:</strong>{' '}
+            {row.fiDoc ? <>Yes ({row.fiDoc})</> : 'No'}. The posting is done on BO: Post Accounting Entries for Settlement
+            (ZSGTSFR081).
           </>
         ) : null}
       </div>

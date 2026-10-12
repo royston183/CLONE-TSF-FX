@@ -244,6 +244,7 @@ export function InvGrid({
         <table className="data-table">
           <thead>
             <tr>
+              <th className="left">Sequence</th>
               <th className="left">Leg</th>
               <th className="left">Transfer Desc</th>
               <th className="left">Doc Type</th>
@@ -264,7 +265,7 @@ export function InvGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={15}>{emptyText ?? 'No trade invoice legs for this Deal ID.'}</td>
+                <td colSpan={16}>{emptyText ?? 'No trade invoice legs for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -274,6 +275,7 @@ export function InvGrid({
                   onClick={() => onSelect(idx)}
                   onDoubleClick={() => onOpen(idx)}
                 >
+                  <td className="left">{r.seq ? Number(r.seq) || r.seq : <Dash />}</td>
                   <td className="left">
                     <span className="chip chip-t">{r.leg}</span>
                   </td>

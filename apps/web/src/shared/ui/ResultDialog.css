@@ -19,7 +19,9 @@
   --sr-warning-tint: #fff4cc;
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* The message layer: above every screen's popups (their overlays use 1000; shared/popup 5000), so an
+     outcome is never hidden behind the popup that raised it. Below the dropdown search (100000). */
+  z-index: 6000;
   display: flex;
   align-items: center;
   justify-content: center;

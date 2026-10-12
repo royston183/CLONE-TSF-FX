@@ -136,7 +136,24 @@ export async function createChildren(rows: readonly Record<string, unknown>[]): 
 
 // ---------------------------------------------------------------- helpers
 
+/**
+ * The middleware answers {error:{message}}, but the gateway itself (a 401 after its restart
+ * drops the session, a 502, an unconfigured service) answers OData V2's
+ * {error:{message:{value}}}; reading that object as the text showed "[object Object]".
+ */
 export function messageOf(error: unknown): string {
-  const body = (error as { body?: { error?: { message?: string; code?: string } } } | null)?.body
-  return body?.error?.message ?? body?.error?.code ?? (error instanceof Error ? error.message : String(error))
+  const body = (error as { body?: { error?: { message?: unknown; code?: unknown } } } | null)?.body
+  const message = body?.error?.message
+  const text =
+    typeof message === 'string'
+      ? message
+      : typeof (message as { value?: unknown } | undefined)?.value === 'string'
+        ? (message as { value: string }).value
+        : typeof body?.error?.code === 'string'
+          ? body.error.code
+          : error instanceof Error
+            ? error.message
+            : String(error)
+  const status = (error as { status?: unknown } | null)?.status
+  return status === 401 ? `${text} Your session has expired — sign out and sign in again.` : text
 }

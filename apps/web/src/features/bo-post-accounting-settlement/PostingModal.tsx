@@ -64,6 +64,10 @@ export function PostingModal({
           <div className="field-grid">
             <StaticField label="Sender / Payer">{leg.buy}</StaticField>
             <StaticField label="Receiver / Payee">{leg.sell}</StaticField>
+            <StaticField label="Sender House Bank">{leg.senderHouseBank || 'DBS03'}</StaticField>
+            <StaticField label="Sender Account ID">{leg.senderAccountId || 'DBS00'}</StaticField>
+            <StaticField label="Receiver House Bank">{leg.receiverHouseBank || 'JPM01'}</StaticField>
+            <StaticField label="Receiver Account ID">{leg.receiverAccountId || 'JPM02'}</StaticField>
           </div>
           <div className="check-row">
             <input className="chk" type="checkbox" checked={leg.setCheck} disabled readOnly /> Settlement complete
