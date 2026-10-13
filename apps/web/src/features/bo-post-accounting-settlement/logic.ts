@@ -45,7 +45,8 @@ export const isComplete = (deal: Deal) => deal.status >= 22
 
 // ---------------------------------------------------------------- posted-ness
 
-export const isFxPosted = (r: FxLeg) => !!(r.doc1 && r.doc2)
+/** Posted by TBB1 (TXN_STATUS 50, so status 'Posted'), or holding both of its documents. */
+export const isFxPosted = (r: FxLeg) => r.status === 'Posted' || !!(r.doc1 && r.doc2)
 export const isInvPosted = (r: InvLeg) => !!r.fiDoc
 export const allFxPosted = (deal: Deal) => deal.top.every(isFxPosted)
 export const allInvPosted = (deal: Deal) => deal.inv.every(isInvPosted)

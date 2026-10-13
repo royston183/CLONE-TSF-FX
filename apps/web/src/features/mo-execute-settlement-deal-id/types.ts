@@ -130,6 +130,9 @@ export type TradeInvoice = {
   senderAccountId?: string
   receiverHouseBank?: string
   receiverAccountId?: string
+  /** BIL_ADJ ZPTNR_BKID / ZBP: the Partner Bank assigned to the leg's invoice in Generate Invoices (display only). */
+  partnerBank?: string
+  businessPartner?: string
 }
 
 /** A fixture row of the legacy DMS list (tests only; the live panel is shared/fx/DealDmsModal.tsx). */

@@ -58,6 +58,9 @@ export type InvLeg = {
   senderAccountId?: string
   receiverHouseBank?: string
   receiverAccountId?: string
+  /** BIL_ADJ ZPTNR_BKID / ZBP: the Partner Bank assigned to the leg's invoice in Generate Invoices (display only). */
+  partnerBank?: string
+  businessPartner?: string
 }
 
 export type Deal = {

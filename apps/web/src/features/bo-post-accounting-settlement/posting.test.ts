@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildFiDocument, lineCategory, postFxLeg, postInvoiceLeg, UNCONFIRMED, type FxPostDeps, type InvPostDeps, type PositionRow } from './posting.ts'
+import { buildFiDocument, lineCategory, postFxLeg, postInvoiceLeg, UNCONFIRMED, type FlowState, type FxPostDeps, type InvPostDeps, type PositionRow } from './posting.ts'
 
 const row = (over: PositionRow = {}): PositionRow => ({
   ZDEAL_ID: 'D1', ZSEQ: '01', ZBUKRS: 'SG03', ZT_TYPE: 'T1-S', ZPOST_CHECK: 'X', ZEXE_CO: 'X', ZFI_TYPE: 'F1',
@@ -36,8 +36,8 @@ describe('buildFiDocument', () => {
     strictEqual(r.body.AccountingDocumentType, 'KR')
     strictEqual(r.body.PostingDate, '2026-10-13')
     deepStrictEqual(r.body._Item.map((i) => [i.LineCategory, i.AmountInTransactionCurrency, i.GLAccount ?? i.Supplier]), [
-      ['G', '1250.50', '113100'],
-      ['K', '-1250.50', '0000100055'],
+      ['G', 1250.5, '113100'],
+      ['K', -1250.5, '0000100055'],
     ])
   })
 
@@ -108,32 +108,91 @@ describe('postInvoiceLeg', () => {
 })
 
 describe('postFxLeg', () => {
-  const fxDeps = (docs: Record<string, unknown>[], calls: { status?: unknown[] } = {}): FxPostDeps => ({
-    postFlows: async () => docs,
-    setTxnStatus: async (_c, _t, fields) => {
-      ;(calls.status ??= []).push(fields)
-    },
-  })
+  const released = (status = '1'): FlowState => ({ paymentDate: '2026-11-14', status, released: true })
+  /** Flows before and after the post; postFlows records the due date it was asked for. */
+  const fxDeps = (docs: Record<string, unknown>[], calls: { status?: unknown[]; due?: string[]; saved?: string[][] } = {}, flows: { before?: FlowState[]; after?: FlowState[] } = {}): FxPostDeps => {
+    let reads = 0
+    return {
+      postFlows: async (p) => {
+        ;(calls.due ??= []).push(p.DueDate)
+        return docs
+      },
+      readFlows: async () => (reads++ === 0 ? flows.before ?? [released()] : flows.after ?? [released('2')]),
+      setTxnStatus: async (_c, _t, fields) => {
+        ;(calls.status ??= []).push(fields)
+      },
+      saveDocs: async (_c, _t, saved) => {
+        ;(calls.saved ??= []).push(saved.map((d) => d.document))
+      },
+    }
+  }
 
-  it('a real run returns the documents and sets TXN_STATUS 50', async () => {
-    const calls: { status?: unknown[] } = {}
+  it('a real run returns and stores the documents and sets TXN_STATUS 50', async () => {
+    const calls: { status?: unknown[]; saved?: string[][] } = {}
     const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([{ CompanyCode: 'SG03', FinancialTransaction: '70001', FiscalYear: '2026', AccountingDocument: '1500000001', ReferenceKey: 'K' }], calls))
     strictEqual(out.ok && out.docs.length, 1)
+    deepStrictEqual(calls.saved, [['1500000001']])
     deepStrictEqual(calls.status, [{ TxnStatus: '50' }])
   })
 
-  it('a test run changes nothing; a run with no document is not a posting', async () => {
+  it('a test run or a run with no document stores nothing', async () => {
+    const calls: { saved?: string[][] } = {}
+    await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: true }, fxDeps([{ AccountingDocument: '1500000001', FiscalYear: '2026' }], calls))
+    await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls))
+    strictEqual(calls.saved, undefined)
+  })
+
+  it('SAP posted but the documents could not be stored: still ok, and names them', async () => {
+    const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, {
+      ...fxDeps([{ AccountingDocument: '1500000001', FiscalYear: '2026' }]),
+      saveDocs: async () => { throw new Error('disk full') },
+    })
+    strictEqual(out.ok, true)
+    strictEqual(out.message.includes('could not be stored') && out.message.includes('1500000001/2026'), true)
+  })
+
+  it('the due date defaults to the latest released, unposted flow, not today', async () => {
+    const calls: { due?: string[] } = {}
+    const before = [{ paymentDate: '2026-11-13', status: '1', released: true }, released(), { paymentDate: '2026-12-31', status: '0', released: false }]
+    await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: true }, fxDeps([], calls, { before }))
+    deepStrictEqual(calls.due, ['2026-11-14'])
+  })
+
+  it('nothing released to post: SAP is not called', async () => {
+    const calls: { due?: string[] } = {}
+    const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls, { before: [released('2'), { paymentDate: '', status: '0', released: false }] }))
+    strictEqual(out.ok, false)
+    strictEqual(calls.due, undefined)
+  })
+
+  it('a test run changes nothing; a run with no document and no flow posted is not a posting', async () => {
     const calls: { status?: unknown[] } = {}
     const test = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: true }, fxDeps([{ AccountingDocument: '' }], calls))
     strictEqual(test.ok && test.test, true)
     strictEqual(calls.status, undefined)
-    strictEqual((await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls))).ok, false)
+    strictEqual((await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls, { after: [released()] }))).ok, false)
+    strictEqual(calls.status, undefined)
+  })
+
+  it('SAP posted the flows but returned no document: posted, and says the number is missing', async () => {
+    const calls: { status?: unknown[] } = {}
+    const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls))
+    strictEqual(out.ok, true)
+    strictEqual(out.message.includes('no FI document number'), true)
+    deepStrictEqual(calls.status, [{ TxnStatus: '50' }])
+  })
+
+  it('flows left unposted (blocked) keep TXN_STATUS unchanged', async () => {
+    const calls: { status?: unknown[] } = {}
+    const blocked = { paymentDate: '2026-11-14', status: '0', released: false }
+    const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, fxDeps([], calls, { before: [released(), blocked], after: [released('2'), blocked] }))
+    strictEqual(out.ok, true)
     strictEqual(calls.status, undefined)
   })
 
   it('SAP posted but the status write failed: still ok, and says so', async () => {
     const out = await postFxLeg({ entity: 'SG03', rfha: '70001' }, { testRun: false }, {
-      postFlows: async () => [{ AccountingDocument: '15', FiscalYear: '2026' }],
+      ...fxDeps([{ AccountingDocument: '15', FiscalYear: '2026' }]),
       setTxnStatus: async () => { throw new Error('locked') },
     })
     strictEqual(out.ok, true)

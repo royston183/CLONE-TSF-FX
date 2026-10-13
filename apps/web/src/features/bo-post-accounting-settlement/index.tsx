@@ -4,7 +4,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import { demoKey, finishDemo, nextDemoDoc, postDemo, restoreDemo } from './demo.ts'
-<<<<<<< HEAD
+import { markAccountingComplete } from './accounting.ts'
 import {
   ACTION_WAITING,
   filterSuggestions,
@@ -13,17 +13,14 @@ import {
   loadDealSuggestions,
   type DealSuggestion,
 } from './api.ts'
+import { LIVE_POSTING, postAllInvoiceLegs, postFxLeg, postInvoiceLeg } from './posting.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-=======
-import { markAccountingComplete } from './accounting.ts'
-import { ACTION_WAITING, gateOutcome, loadDeal } from './api.ts'
-import { LIVE_POSTING, postAllInvoiceLegs, postFxLeg, postInvoiceLeg } from './posting.ts'
->>>>>>> origin/main
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
 import { DocPreviewModal } from './DocModals.tsx'
 import {
   fxPostingPlan,
+  invPostingPlan,
   initiateSettlement,
   pendingPostAll,
   postingPlanToast,
@@ -235,12 +232,17 @@ export default function BoPostAccountingSettlement() {
 
   const onPostInvoice = () => {
     if (!deal) return
-    if (deal.status < 21) return setStatus('Complete execution first (status 21) before demo posting.', 'error')
+    if (deal.status < 21) return setStatus(`Complete execution first (status 21) before ${LIVE_POSTING ? '' : 'demo '}posting.`, 'error')
     if (!deal.inv.length && deal.invWaiting) {
       setStatus(deal.invWaiting, 'error')
       return
     }
     if (!pendingPostAll(deal).length) {
+      // Live: say why nothing is pending; never the demo's dummy documents.
+      if (LIVE_POSTING) {
+        const t = postingPlanToast('trade invoice', invPostingPlan(deal), '')
+        return setStatus(t.message, t.kind)
+      }
       // Nothing settled is left to post: say which legs still need settling, or that all are posted.
       applyDemo(postDemo(deal, 'invoice', nextDemoDoc))
       return
@@ -288,6 +290,8 @@ export default function BoPostAccountingSettlement() {
       if (action === 'TBB1') setModal(null)
       return
     }
+    // Bank / transfer details: BAPI_FTR_FXT_CHANGE has no API; the banks are set on MO: Execute Settlement.
+    if (LIVE_POSTING && action === 'UPD') return setStatus(ACTION_WAITING.txnUpdate, 'error')
     if (action === 'TBB1') {
       applyDemo(postDemo(deal, 'fx', nextDemoDoc))
       setModal(null)
@@ -303,6 +307,7 @@ export default function BoPostAccountingSettlement() {
   const onPostingAction = (action: PostingAction) => {
     if (!deal) return
     if (LIVE_POSTING && action === 'SET_POST') return void liveInvoice(deal, postingIdx)
+    if (LIVE_POSTING && action === 'UPD_DATA') return setStatus(ACTION_WAITING.invUpdate, 'error')
     if (action === 'SET_POST') {
       if (!deal.inv[postingIdx]?.postCheck) return setStatus('FI Posting is not set for this leg.', 'error')
       applyDemo(postDemo(deal, 'invoice', nextDemoDoc, postingIdx))
@@ -547,11 +552,12 @@ export default function BoPostAccountingSettlement() {
         )}
       </main>
 
-      <TxnModal open={modal === 'txn'} leg={txnLeg} onClose={closeAll} onAction={onTxnAction} />
+      <TxnModal open={modal === 'txn'} leg={txnLeg} live={LIVE_POSTING} onClose={closeAll} onAction={onTxnAction} />
       <PostingModal
         open={modal === 'posting'}
         leg={postingLeg}
         seq={postingIdx + 1}
+        live={LIVE_POSTING}
         onClose={closeAll}
         onAction={onPostingAction}
       />

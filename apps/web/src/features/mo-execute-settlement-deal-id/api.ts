@@ -48,6 +48,7 @@ import { apiFetch, odataString, service } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { invoiceBankOf } from '../../shared/fx/invoice-bank.ts'
 import { dmyFromIso, isoFromDate } from '../../shared/fx/sap.ts'
 import { createAdditionalSpot, defaultTradeDate, type SpotPorts } from '../fo-additional-spot-booking/spotCreate.ts'
 import { spotPorts } from '../fo-additional-spot-booking/spotPorts.ts'
@@ -237,6 +238,8 @@ export function buildTradeInvoices(
       const type = text(t, 'ZT_TYPE')
       const matches = billAdj.filter((b) => text(b, 'ZINV_REF').slice(11, 13) === type.slice(0, 2))
       const invAmt = matches.reduce((sum, b) => sum + num(b['ZAMT']), 0)
+      // The bank assigned to the leg's invoice in Generate Invoices: where the Receiver / Payee (the seller) is paid.
+      const assigned = invoiceBankOf(matches, type)
       const pos = saved.get(type)
       const post = acc.get(text(t, 'ZFI_TYPE'))
       const curr = text(t, 'ZCURR')
@@ -276,10 +279,13 @@ export function buildTradeInvoices(
         sell: text(t, 'ZSELL'),
         // TRD_POS, kept by Update / Settlement Complete (save_bank_data). The VTBSTC1 (pay ID TRDINV) default the
         // program shows before that has no resource, so the field is blank until stored. A Receipt leg has none.
+        // The receiver falls back to the bank assigned on the invoice in Generate Invoices.
         senderHouseBank: pos && recPay !== 'Receipt' ? text(pos, 'ZHBKID') : '',
         senderAccountId: pos && recPay !== 'Receipt' ? text(pos, 'ZHKTID') : '',
-        receiverHouseBank: pos ? text(pos, 'ZREC_HBKID') : '',
-        receiverAccountId: pos ? text(pos, 'ZREC_HKTID') : '',
+        receiverHouseBank: (pos ? text(pos, 'ZREC_HBKID') : '') || assigned.houseBank,
+        receiverAccountId: (pos ? text(pos, 'ZREC_HKTID') : '') || assigned.accountId,
+        partnerBank: assigned.partnerBank,
+        businessPartner: assigned.businessPartner,
       }
     })
 }
@@ -309,10 +315,10 @@ export const waitingAction = (what: string, apis: string): string =>
 /** Every function code; the BAPIs / FMs / tables are those the dependency note lists. */
 export const ACTION_WAITING = {
   status: waitingAction('Deal ID Status change', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
-  amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
+  amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
   printing: waitingAction('Initiate Printing', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS, BAPI_BUPA_ADDRESS_GETDETAIL'),
   fxPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
-  fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
+  fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
   letterPdf: waitingAction('Print PDF', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE'),
 } as const
 

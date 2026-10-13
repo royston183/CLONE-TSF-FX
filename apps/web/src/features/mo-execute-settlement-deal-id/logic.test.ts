@@ -136,12 +136,12 @@ describe('invoice settlement pop-up', () => {
     strictEqual(payment.docMsg, 'DMCC sells to OAIPL - T2 settlement for Deal ID TSF-9081')
   })
 
-  it('fills the house banks and accounts from the stored leg, else the fixed defaults', () => {
+  it('fills the house banks and accounts from the stored leg, else leaves them blank', () => {
     const t1 = seedTradeInvoices()[0] as TradeInvoice
-    const d = invPostDefaults(t1, 'X')
+    const d = invPostDefaults({ ...t1, senderHouseBank: '', senderAccountId: '', receiverHouseBank: '', receiverAccountId: '' }, 'X')
     deepStrictEqual(
       [d.senderHouseBank, d.senderAccountId, d.receiverHouseBank, d.receiverAccountId],
-      ['DBS03', 'DBS00', 'JPM01', 'JPM02'],
+      ['', '', '', ''],
     )
     const stored = invPostDefaults({ ...t1, senderHouseBank: 'SCB01', senderAccountId: 'USD01', receiverHouseBank: 'HDF01', receiverAccountId: 'INR01' }, 'X')
     deepStrictEqual(
