@@ -4,13 +4,13 @@ import { formatAmount } from './format.ts'
 import { plAmount } from './logic.ts'
 import type { DiffRow } from './invoiceDifference.ts'
 import { ModalFrame } from './modal.tsx'
-import type { DmsDoc, FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
+import type { FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
 
 type Base = { open: boolean; onClose: () => void }
 
 /**
- * Bank type, transfer type and DMS doc type had hard-coded lists. Their SAP value helps
- * (ZSGTSFTR_SET_FX / T012 / ZSGTSFTR_DEALDMS) are not exported, so they say so.
+ * Bank type and transfer type had hard-coded lists. Their SAP value helps
+ * (ZSGTSFTR_SET_FX / T012) are not exported, so they say so.
  */
 const gatedOptions = <option value="">{OPTIONS_WAITING}</option>
 
@@ -211,125 +211,6 @@ export function DiffModal({
         transaction in SAP: the FO trader workbench reads the saved rows and creates the spot later. A row already saved for
         its deal type is not saved again, and a zero difference is saved as well.
         {note ? <> {note}</> : null}
-      </div>
-    </ModalFrame>
-  )
-}
-
-// ------------------------------------------------------------------ DMS viewer + Edit DMS (9007)
-
-export function DmsModal({
-  open,
-  onClose,
-  dealId,
-  docs,
-  onEdit,
-  emptyText,
-}: Base & { dealId: string; docs: readonly DmsDoc[]; onEdit: () => void; emptyText: string }) {
-  return (
-    <ModalFrame
-      open={open}
-      onClose={onClose}
-      icon={<>&#128193;</>}
-      title={<>DMS &ndash; Deal Documents</>}
-      subtitle={<>Documents filed against Deal ID <span>{dealId}</span></>}
-      footer={
-        <>
-          <Cancel onClick={onClose} label="Close" />
-          <button className="btn-confirm" type="button" onClick={onEdit}>
-            Edit DMS
-          </button>
-        </>
-      }
-    >
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th className="left">Document Type</th>
-              <th className="left">File</th>
-              <th className="left">Uploaded On</th>
-              <th className="left">Uploaded By</th>
-            </tr>
-          </thead>
-          <tbody>
-            {docs.length === 0 ? (
-              <tr className="empty-row">
-                <td colSpan={4}>{emptyText}</td>
-              </tr>
-            ) : (
-              docs.map((d, i) => (
-                <tr key={`${d.file}-${i}`}>
-                  <td className="left">{d.type}</td>
-                  <td className="left">{d.file}</td>
-                  <td className="left">{d.date}</td>
-                  <td className="left">{d.by}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </ModalFrame>
-  )
-}
-
-export function EditDmsModal({
-  open,
-  onClose,
-  dealId,
-  docType,
-  date,
-  onDocType,
-  onDate,
-  onConfirm,
-}: Base & {
-  dealId: string
-  docType: string
-  date: string
-  onDocType: (v: string) => void
-  onDate: (v: string) => void
-  onConfirm: () => void
-}) {
-  return (
-    <ModalFrame
-      open={open}
-      onClose={onClose}
-      size="narrow"
-      icon={<>&#9999;</>}
-      title="Edit DMS"
-      subtitle="Upload a document against this Deal ID"
-      footer={
-        <>
-          <Cancel onClick={onClose} />
-          <button className="btn-confirm" type="button" onClick={onConfirm}>
-            Confirm
-          </button>
-        </>
-      }
-    >
-      <div className="ffield" style={{ marginBottom: '12px' }}>
-        <label>Deal ID</label>
-        <input id="editDmsDeal" type="text" disabled value={dealId} readOnly />
-      </div>
-      <div className="ffield" style={{ marginBottom: '12px' }}>
-        <label htmlFor="editDmsType">Doc Type</label>
-        <select id="editDmsType" value={docType} onChange={(e) => onDocType(e.target.value)}>
-          {gatedOptions}
-        </select>
-      </div>
-      <div className="ffield">
-        <label htmlFor="editDmsDate">
-          Date<span className="req">*</span>
-        </label>
-        <input
-          id="editDmsDate"
-          type="text"
-          placeholder="dd-mm-yyyy"
-          maxLength={10}
-          value={date}
-          onChange={(e) => onDate(e.target.value)}
-        />
       </div>
     </ModalFrame>
   )

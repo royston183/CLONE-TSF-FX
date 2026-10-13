@@ -297,7 +297,6 @@ export async function loadTradePositions(dealId: string, signal?: AbortSignal): 
 }
 
 export const HEADSUP_WAITING = `${WAITING} — ${NOT_EXPORTED}; the Headsup reminders (ZSGTSFTR_EMLBD / READ_TEXT) cannot be reproduced.`
-export const DMS_LIST_WAITING = `${WAITING} — the Deal ID documents are kept by FM ZSGTSFFM_DMS / ZSGTSFTR_DEALDMS, which have no API.`
 export const VIEW_INVOICE_WAITING = `${WAITING} — View Trade Invoice submits ZSGTSF_RDEAL_ID_INV (ZSGTSFTR_BIL_ADJ / ZSGTSFTR_BL / ZSGTSFTR_BL_RUSE); ${NOT_EXPORTED}.`
 export const OPTIONS_WAITING = `${WAITING} — value help not exported`
 export const pnlWaiting = (legs: string) => `${legs} The P&L is computed from the FX legs.`
@@ -312,7 +311,6 @@ export const ACTION_WAITING = {
   status: waitingAction('Deal ID Status change', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT — statement not exported'),
   amend: waitingAction('Amend End Date', 'UPDATE ZSGTSFTR_DEALID ZREV_DEDATE — statement not exported'),
   printing: waitingAction('Initiate Printing', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS, BAPI_BUPA_ADDRESS_GETDETAIL'),
-  dms: waitingAction('Edit DMS', 'FM ZSGTSFFM_DMS, UPDATE ZSGTSFTR_DEALDMS ZDDATE'),
   fxPrint: waitingAction('Print Letters', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE, READ_TEXT, ZSGTSFFM_CHANGE_AMT_TO_WORDS'),
   fxUpdate: waitingAction('Update transaction', 'ZSGTRMFM_VTBFHA_EXPORT, BAPI_FTR_FXT_CHANGE, BAPI_TRANSACTION_COMMIT / _ROLLBACK'),
   letterPdf: waitingAction('Print PDF', 'FP_FUNCTION_MODULE_NAME, FP_JOB_OPEN, FP_JOB_CLOSE'),
