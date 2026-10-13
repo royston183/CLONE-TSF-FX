@@ -158,28 +158,21 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
 /**
  * The Sender / Receiver Details as the SAP pop-up shows them: the buyer (SET_TYP ZBUY) pays and the seller (ZSELL)
  * receives, on a Receipt leg as on a Payment one. The house banks / accounts are the leg's stored ZSGTSFTR_TRD_POS
- * values (ZHBKID / ZHKTID, ZREC_HBKID / ZREC_HKTID). The FI document is BO's posting, shown read-only.
+ * values (ZHBKID / ZHKTID, ZREC_HBKID / ZREC_HKTID); the receiver's falls back to the house bank assigned to the
+ * invoice in Generate Invoices (api.ts). The FI document is BO's posting, shown read-only.
  *
- * A leg with no stored house bank / account shows DEFAULT_BANKS. SAP derives them from VTBSTC1 (pay ID TRDINV)
- * and T012K, which this app cannot read, so they are fixed values, as requested (from the SAP Trade Invoice
- * Settlement screen). Update / Settlement Complete store whatever the pop-up holds, so a stored value wins.
+ * SAP proposes the rest from VTBSTC1 (pay ID TRDINV) and T012K, which this app cannot read: those fields stay blank for
+ * the user to fill, never a made-up bank. Update / Settlement Complete store whatever the pop-up holds.
  */
-export const DEFAULT_BANKS = {
-  senderHouseBank: 'DBS03',
-  senderAccountId: 'DBS00',
-  receiverHouseBank: 'JPM01',
-  receiverAccountId: 'JPM02',
-} as const
-
 export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
   return {
     date: r.dueDate,
     sender: r.buy ?? '',
-    senderHouseBank: r.senderHouseBank || DEFAULT_BANKS.senderHouseBank,
-    senderAccountId: r.senderAccountId || DEFAULT_BANKS.senderAccountId,
+    senderHouseBank: r.senderHouseBank ?? '',
+    senderAccountId: r.senderAccountId ?? '',
     receiver: r.sell ?? '',
-    receiverHouseBank: r.receiverHouseBank || DEFAULT_BANKS.receiverHouseBank,
-    receiverAccountId: r.receiverAccountId || DEFAULT_BANKS.receiverAccountId,
+    receiverHouseBank: r.receiverHouseBank ?? '',
+    receiverAccountId: r.receiverAccountId ?? '',
     amt: `${formatAmount(r.invAmt)} ${r.curr}`,
     fiDoc: r.fiDoc || '',
     docMsg: `${r.trfDesc} - ${r.leg} settlement for Deal ID ${dealId}`,

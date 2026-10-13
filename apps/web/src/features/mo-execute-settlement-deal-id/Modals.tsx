@@ -630,6 +630,12 @@ export function InvPostModal({
             <input type="text" maxLength={5} list="inv-receiver-accounts" disabled={receiverLocked} value={form.receiverAccountId} onChange={(e) => onField('receiverAccountId', e.target.value)} />
             <datalist id="inv-receiver-accounts">{accountSuggestions(form.receiver, form.receiverHouseBank)}</datalist>
           </div>
+          {row?.partnerBank ? (
+            <div className="ffield">
+              <label>Partner Bank (Generate Invoices)</label>
+              <input type="text" disabled readOnly value={row.businessPartner ? `${row.partnerBank} · BP ${row.businessPartner}` : row.partnerBank} />
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="ffield" style={{ marginTop: '12px' }}>

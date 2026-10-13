@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Button, Dialog, Spinner } from '@slc/ui'
 import { dmyFromIso, sapNow } from './sap.ts'
 import {
@@ -9,7 +10,7 @@ import { messageOf } from './master-contract.ts'
 import './deal-dms.css'
 
 type Notice = { kind: 'ok' | 'error'; text: string } | null
-type Form = { mode: 'upload' | 'edit'; slot: DmsSlot; date: string; comment: string; file: File | null; errors: Record<string, string> }
+type Form = { mode: 'upload' | 'edit'; slot: DmsSlot; date: string; comment: string; file: File | null; errors: Record<string, string>; failure?: string }
 type Preview = { url: string; mimeType: string; name: string }
 
 const STATUS_TEXT: Record<DmsSlot['status'], string> = {
@@ -26,6 +27,10 @@ const todayDmy = (): string => dmyFromIso(sapNow().date)
  * what it reads and writes). Every row is a configured document type; a document is uploaded into an empty one and edited
  * or replaced in an occupied one. Nothing is shown as uploaded unless the DMS link, its metadata and an original in SAP DMS
  * exist. It never touches the Deal ID's status.
+ *
+ * Rendered into document.body: the converted legacy screens that host it carry a scoped reset
+ * (`.<screen> * { margin: 0; padding: 0 }`) that would otherwise strip the dialog's centring and padding. The Upload /
+ * Edit form and the preview are dialogs of their own, stacked above the list in the browser's top layer.
  */
 export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, deps = defaultDeps }: { open: boolean; onClose: () => void; dealId: string; category?: string; deps?: DmsDeps }) {
   const [slots, setSlots] = useState<DmsSlot[]>([])
@@ -57,7 +62,10 @@ export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, d
     if (open) {
       setForm(null)
       void reload()
-    } else clearPreview()
+    } else {
+      setForm(null)
+      clearPreview()
+    }
   }, [open, reload, clearPreview])
 
   const run = async (work: () => Promise<{ ok: boolean; message: string }>, after?: () => void) => {
@@ -68,6 +76,7 @@ export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, d
       const r = await work()
       setNotice({ kind: r.ok ? 'ok' : 'error', text: r.message })
       if (r.ok) after?.()
+      else setForm((f) => (f ? { ...f, failure: r.message } : f))
       await reload()
     } finally {
       busyRef.current = false
@@ -90,8 +99,8 @@ export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, d
       async () => {
         const content = f.file ? await fileToBase64(f.file) : ''
         return f.mode === 'upload'
-          ? uploadDocument({ dealId, category, type: f.slot.type, date: f.date, comment: f.comment, fileName: f.file!.name, size: f.file!.size, content, existing: slots }, deps)
-          : editDocument(dealId, category, { slot: f.slot, date: f.date, comment: f.comment, file: f.file ? { name: f.file.name, size: f.file.size, content } : null }, deps)
+          ? uploadDocument({ dealId, category, type: f.slot.type, date: f.date, comment: f.comment, fileName: f.file!.name, size: f.file!.size, mimeType: f.file!.type, content, existing: slots }, deps)
+          : editDocument(dealId, category, { slot: f.slot, date: f.date, comment: f.comment, file: f.file ? { name: f.file.name, size: f.file.size, content, mimeType: f.file.type } : null }, deps)
       },
       () => setForm(null),
     )
@@ -119,7 +128,8 @@ export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, d
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <Dialog
       open={open}
       onClose={() => {
@@ -191,37 +201,56 @@ export function DealDmsModal({ open, onClose, dealId, category = DMS_CATEGORY, d
           </div>
         )}
 
-        {form ? (
-          <form className="dms__form" onSubmit={(e) => { e.preventDefault(); submit() }} noValidate>
-            <h3>{form.mode === 'upload' ? 'Upload' : 'Edit'} · {form.slot.type.description}</h3>
-            <label>Document type<input value={`${form.slot.type.type} · ${form.slot.type.description}`} readOnly /></label>
-            <label>Document date<span className="dms__req">*</span>
-              <input value={form.date} placeholder="dd-mm-yyyy" maxLength={10} aria-invalid={!!form.errors['date']} onChange={(e) => setForm({ ...form, date: e.target.value, errors: { ...form.errors, date: '' } })} />
-              {form.errors['date'] ? <span className="dms__err">{form.errors['date']}</span> : null}
-            </label>
-            <label>Comment
-              <input value={form.comment} maxLength={255} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
-              {form.errors['comment'] ? <span className="dms__err">{form.errors['comment']}</span> : null}
-            </label>
-            <label>{form.mode === 'upload' ? 'File' : 'Replace the file (optional)'}{form.mode === 'upload' ? <span className="dms__req">*</span> : null}
-              <input type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0] ?? null, errors: { ...form.errors, file: '' } })} />
-              {form.file ? <span className="dms__sub">{form.file.name} · {formatSize(form.file.size)}</span> : null}
-              {form.errors['file'] ? <span className="dms__err">{form.errors['file']}</span> : null}
-            </label>
-            <div className="dms__formbtns">
+        <Dialog
+          open={!!form}
+          onClose={() => setForm(null)}
+          title={form ? `${form.mode === 'upload' ? 'Upload' : 'Edit'} · ${form.slot.type.description}` : ''}
+          width={560}
+          footer={form ? (
+            <>
               <Button onClick={() => setForm(null)} disabled={busy}>Cancel</Button>
               <Button variant="primary" loading={busy} onClick={submit} disabled={form.mode === 'edit' && !isoOfDmy(form.date)}>{form.mode === 'upload' ? 'Upload' : 'Save'}</Button>
-            </div>
-          </form>
-        ) : null}
+            </>
+          ) : null}
+        >
+          {form ? (
+            <form className="dms dms__form" onSubmit={(e) => { e.preventDefault(); submit() }} noValidate>
+              {form.failure ? <div className="dms__notice dms__notice--error" role="alert">{form.failure}</div> : null}
+              <label>Document type<input value={`${form.slot.type.type} · ${form.slot.type.description}`} readOnly /></label>
+              <label>Document date<span className="dms__req">*</span>
+                <input value={form.date} placeholder="dd-mm-yyyy" maxLength={10} aria-invalid={!!form.errors['date']} onChange={(e) => setForm({ ...form, date: e.target.value, errors: { ...form.errors, date: '' } })} />
+                {form.errors['date'] ? <span className="dms__err">{form.errors['date']}</span> : null}
+              </label>
+              <label className="dms__wide">Comment
+                <input value={form.comment} maxLength={255} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
+                {form.errors['comment'] ? <span className="dms__err">{form.errors['comment']}</span> : null}
+              </label>
+              <label className="dms__wide">{form.mode === 'upload' ? 'File' : 'Replace the file (optional)'}{form.mode === 'upload' ? <span className="dms__req">*</span> : null}
+                <input type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0] ?? null, errors: { ...form.errors, file: '' } })} />
+                {form.file ? <span className="dms__sub">{form.file.name} · {formatSize(form.file.size)}</span> : null}
+                {form.errors['file'] ? <span className="dms__err">{form.errors['file']}</span> : null}
+              </label>
+              {/* Enter in a field submits; the visible buttons are in the dialog footer. */}
+              <button type="submit" hidden />
+            </form>
+          ) : null}
+        </Dialog>
 
-        {preview ? (
-          <div className="dms__preview">
-            <div className="dms__previewhead"><strong>{preview.name}</strong><Button onClick={clearPreview}>Close preview</Button></div>
-            {preview.mimeType.startsWith('image/') ? <img src={preview.url} alt={preview.name} /> : <iframe src={preview.url} title={preview.name} />}
-          </div>
-        ) : null}
+        <Dialog
+          open={!!preview}
+          onClose={clearPreview}
+          title={preview?.name ?? ''}
+          width={960}
+          footer={<Button onClick={clearPreview}>Close preview</Button>}
+        >
+          {preview ? (
+            <div className="dms__preview">
+              {preview.mimeType.startsWith('image/') ? <img src={preview.url} alt={preview.name} /> : <iframe src={preview.url} title={preview.name} />}
+            </div>
+          ) : null}
+        </Dialog>
       </div>
-    </Dialog>
+    </Dialog>,
+    document.body,
   )
 }

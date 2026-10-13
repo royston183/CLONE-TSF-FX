@@ -3,6 +3,8 @@ import { getDb } from '../sqlite/db.ts'
 import { dealMetadataRepository } from '../sqlite/repositories/deal-metadata.ts'
 import { DdicInputError, ddicRepository } from '../sqlite/repositories/ddic-table.ts'
 import { DMS_TYP_CLIENT, DMS_TYP_COLUMNS } from '../sqlite/repositories/dms-typ-columns.ts'
+import { DEALDMS_CLIENT, DEALDMS_COLUMNS, DEALDMS_DATES, DEALDMS_TIMES } from '../sqlite/repositories/dealdms-columns.ts'
+import { FX_POST_DOC_CLIENT, FX_POST_DOC_COLUMNS } from '../sqlite/repositories/fx-post-doc-columns.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from '../sqlite/repositories/trd-acc-columns.ts'
 import { trdPosRepository } from '../sqlite/repositories/trd-pos.ts'
 import type { DealMetadataFields } from '../sqlite/schema.ts'
@@ -18,7 +20,7 @@ import { requireSession } from './auth.ts'
  * bodies are decoded here, for these routes only.
  */
 
-const LIMITS = { companyCode: 10, transactionId: 20, dealId: 15, seq: 2, fiType: 2, dmsCat: 2, dmsType: 3, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
+const LIMITS = { companyCode: 10, transactionId: 20, fxCompanyCode: 4, fxTransaction: 13, dealId: 15, seq: 2, fiType: 2, dmsCategory: 2, dmsType: 3, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
 const EDITABLE = ['productType', 'strategy', 'internalReference', 'remark'] as const
 
 class BadRequest extends Error {}
@@ -256,14 +258,138 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
     guarded((req, reply) => (trdAcc().remove(accKey(req)) ? reply.code(204).send() : fail(reply, 404, 'No posting type with this code.'))),
   )
 
+  // ZSGTSFTR_DEALDMS — the documents attached to a Deal ID, one slot per DMS category + type. The SLC middleware has
+  // no resource for it, so the Deal ID Documents dialog uses this one. Dates and times travel as the middleware speaks
+  // them (YYYY-MM-DD, HH:MM:SS) and are stored as SAP's DATS / TIMS (YYYYMMDD, HHMMSS).
+  const dealDms = () => ddicRepository(getDb(), { table: 'zsgtsftr_dealdms', client: DEALDMS_CLIENT, columns: DEALDMS_COLUMNS })
+  const dmsKey = (req: FastifyRequest) => {
+    const p = req.params as { dealId: string; category: string; type: string }
+    return { ZDEAL_ID: requiredText(p.dealId, 'dealId'), ZDMS_CAT: requiredText(p.category, 'dmsCategory'), ZDMS_TYPE: requiredText(p.type, 'dmsType') }
+  }
+  const dmsNotFound = (reply: FastifyReply) => fail(reply, 404, 'No document for this Deal ID, category and type.')
+  const toSapDate = (v: unknown, name: string): unknown => {
+    if (typeof v !== 'string' || !v) return v
+    if (/^\d{8}$/.test(v)) return v
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new BadRequest(`${name} must be a date as YYYY-MM-DD.`)
+    return v.replace(/-/g, '')
+  }
+  const toSapTime = (v: unknown, name: string): unknown => {
+    if (typeof v !== 'string' || !v) return v
+    if (/^\d{6}$/.test(v)) return v
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(v)) throw new BadRequest(`${name} must be a time as HH:MM:SS.`)
+    return v.replace(/:/g, '')
+  }
+  const dmsIn = (body: Record<string, unknown>): Record<string, unknown> => {
+    const out = { ...body }
+    for (const c of DEALDMS_DATES) if (c in out) out[c] = toSapDate(out[c], c)
+    for (const c of DEALDMS_TIMES) if (c in out) out[c] = toSapTime(out[c], c)
+    return out
+  }
+  const dmsOut = (row: Record<string, string | number>): Record<string, string | number | null> => {
+    const out: Record<string, string | number | null> = { ...row }
+    for (const c of DEALDMS_DATES) {
+      const v = String(row[c] ?? '')
+      out[c] = /^\d{8}$/.test(v) && v !== '00000000' ? `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)}` : null
+    }
+    for (const c of DEALDMS_TIMES) {
+      const v = String(row[c] ?? '')
+      out[c] = /^\d{6}$/.test(v) ? `${v.slice(0, 2)}:${v.slice(2, 4)}:${v.slice(4, 6)}` : null
+    }
+    return out
+  }
+
+  app.get(
+    '/api/localdb/tsf-deal-document',
+    guarded((req) => {
+      const q = req.query as Record<string, unknown>
+      const filter: Record<string, string> = {}
+      for (const name of ['ZDEAL_ID', 'ZDMS_CAT', 'ZDMS_TYPE'] as const) {
+        const v = q[name]
+        if (v === undefined || v === '') continue
+        if (typeof v !== 'string') throw new BadRequest(`${name} must be a single value.`)
+        filter[name] = v
+      }
+      const rows = dealDms().list(filter['ZDEAL_ID'] ? { column: 'ZDEAL_ID', value: filter['ZDEAL_ID'] } : undefined)
+      return { value: rows.filter((r) => Object.entries(filter).every(([k, v]) => r[k] === v)).map(dmsOut) }
+    }),
+  )
+
+  app.get(
+    '/api/localdb/tsf-deal-document/:dealId/:category/:type',
+    guarded((req, reply) => {
+      const row = dealDms().get(dmsKey(req))
+      return row ? dmsOut(row) : dmsNotFound(reply)
+    }),
+  )
+
+  // Create the slot, or update just the fields sent. The created / changed stamps are the gateway's.
+  app.put(
+    '/api/localdb/tsf-deal-document/:dealId/:category/:type',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const key = dmsKey(req)
+      const body = dmsIn(jsonObject(req.body))
+      for (const stamp of ['ZCREATED_BY', 'ZCREATED_DATE', 'ZCREATED_TIME', 'ZCHANGED_BY', 'ZCHANGED_DATE', 'ZCHANGED_TIME']) delete body[stamp]
+      const { date, time } = sapStamp()
+      const existing = dealDms().get(key)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = dealDms().upsert(key, { ...body, ...stamps })
+      return reply.code(existing ? 200 : 201).send(dmsOut(row))
+    }),
+  )
+
+  app.delete(
+    '/api/localdb/tsf-deal-document/:dealId/:category/:type',
+    guarded((req, reply) => (dealDms().remove(dmsKey(req)) ? reply.code(204).send() : dmsNotFound(reply))),
+  )
+
+  // TSF_FX_POST_DOC — the FI documents PostFlows returned for an FX deal leg (BKPF has no middleware resource), so BO's
+  // FI Doc 1 / 2 survive a reload. Written once per posting; the created / changed stamps are the gateway's.
+  const fxPostDoc = () => ddicRepository(getDb(), { table: 'tsf_fx_post_doc', client: FX_POST_DOC_CLIENT, columns: FX_POST_DOC_COLUMNS })
+  const fxDocKey = (req: FastifyRequest) => {
+    const p = req.params as { companyCode: string; transaction: string }
+    return { ZBUKRS: requiredText(p.companyCode, 'fxCompanyCode'), ZRFHA: requiredText(p.transaction, 'fxTransaction') }
+  }
+  const fxDocNotFound = (reply: FastifyReply) => fail(reply, 404, 'No FI documents are stored for this company code and transaction.')
+
+  app.get(
+    '/api/localdb/tsf-fx-post-doc/:companyCode/:transaction',
+    guarded((req, reply) => fxPostDoc().get(fxDocKey(req)) ?? fxDocNotFound(reply)),
+  )
+
+  app.put(
+    '/api/localdb/tsf-fx-post-doc/:companyCode/:transaction',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const key = fxDocKey(req)
+      const body = jsonObject(req.body)
+      for (const stamp of ['ZCREATED_BY', 'ZCREATED_DATE', 'ZCREATED_TIME', 'ZCHANGED_BY', 'ZCHANGED_DATE', 'ZCHANGED_TIME']) delete body[stamp]
+      const { date, time } = sapStamp()
+      const existing = fxPostDoc().get(key)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = fxPostDoc().upsert(key, { ...body, ...stamps })
+      return reply.code(existing ? 200 : 201).send(row)
+    }),
+  )
+
   // ZSGTSFTR_DMS_TYP — DMS document types per category, keyed by ZDMS_CAT + ZDMS_TYPE. Read by the Deal ID
   // documents panel (category 10) for its slots, their descriptions and number range object / interval.
   const dmsTyp = () => ddicRepository(getDb(), { table: 'zsgtsftr_dms_typ', client: DMS_TYP_CLIENT, columns: DMS_TYP_COLUMNS })
-  const dmsKey = (req: FastifyRequest) => {
+  const dmsTypKey = (req: FastifyRequest) => {
     const p = req.params as { dmsCat: string; dmsType: string }
-    return { ZDMS_CAT: requiredText(p.dmsCat, 'dmsCat'), ZDMS_TYPE: requiredText(p.dmsType, 'dmsType') }
+    return { ZDMS_CAT: requiredText(p.dmsCat, 'dmsCategory'), ZDMS_TYPE: requiredText(p.dmsType, 'dmsType') }
   }
-  const dmsNotFound = (reply: FastifyReply) => fail(reply, 404, 'No DMS document type with this category and type.')
+  const dmsTypNotFound = (reply: FastifyReply) => fail(reply, 404, 'No DMS document type with this category and type.')
 
   app.get(
     '/api/localdb/tsf-dms-type',
@@ -276,14 +402,14 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
-    guarded((req, reply) => dmsTyp().get(dmsKey(req)) ?? dmsNotFound(reply)),
+    guarded((req, reply) => dmsTyp().get(dmsTypKey(req)) ?? dmsTypNotFound(reply)),
   )
 
   app.put(
     '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
     guarded((req, reply) => {
       const user = requireSession(req, reply)?.username ?? ''
-      const key = dmsKey(req)
+      const key = dmsTypKey(req)
       const { date, time } = sapStamp()
       const existing = dmsTyp().get(key)
       const stamps = {
@@ -299,7 +425,7 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete(
     '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
-    guarded((req, reply) => (dmsTyp().remove(dmsKey(req)) ? reply.code(204).send() : dmsNotFound(reply))),
+    guarded((req, reply) => (dmsTyp().remove(dmsTypKey(req)) ? reply.code(204).send() : dmsTypNotFound(reply))),
   )
 
   // Anything else under /api/localdb is a 404 in this group's own words, rather than falling

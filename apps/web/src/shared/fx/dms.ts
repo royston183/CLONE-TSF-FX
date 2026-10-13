@@ -4,7 +4,8 @@
  * Deal ID shows the same attachments in both.
  *
  *   Document types   ZSGTSFTR_DMS_TYP  (local SQLite, /api/localdb/tsf-dms-type) WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
- *   Deal link        ZSGTSFTR_DEALDMS  (middleware "dealDocument") ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
+ *   Deal link        ZSGTSFTR_DEALDMS  (the gateway's local SQLite, /api/localdb/tsf-deal-document: the middleware has no
+ *                    resource for it) ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
  *   Metadata         ZSGTSFTR_TSF_DMS  (middleware "tsfDocument")  ZTSF_DMS_CODE (the custom code) + ZSTND_DMS
  *   The document     SAP DMS, document type TRM / part 000, through ZFS_SB_ALMDMSDOC_O4_API (service "almdmsdoc"):
  *                    Upload, CreateNewVersion (the replacement original: the document number stays), GetOriginal
@@ -17,7 +18,7 @@
  * Edit changes only what changed: the date, the comment, or a new original (a new version of the same document).
  * ZSTND_DMS is never rewritten with anything but what SAP returned (the legacy EDIT_UPLOAD_DOCUMENT cleared and reused LV_DOCNR).
  *
- * Not decided by this file, see the report that came with it: the middleware's registry rows for DEALDMS and the number
+ * Not decided by this file, see the report that came with it: the number
  * range of TSF_DMS-ZTSF_DMS_CODE per document type (ZDMS_OBJ / ZDMS_RANGE), and what the almdmsdoc Upload action returns.
  */
 import { apiFetch, apiRequest, odataString, service } from '@slc/api-client'
@@ -33,8 +34,39 @@ export const MAX_BYTES = 20 * 1024 * 1024
 export const RES = { type: 'dmsType', meta: 'tsfDocument', link: 'dealDocument' } as const
 
 const docApi = service('almdmsdoc')('Document')
-/** ZSGTSFTR_DMS_TYP lives in the gateway's local SQLite (migration 005), not behind the middleware. */
+const linkApi = service('localdb')('tsf-deal-document')
+/** ZSGTSFTR_DMS_TYP lives in the gateway's local SQLite (migration 007), not behind the middleware. */
 const dmsTypeApi = service('localdb')('tsf-dms-type')
+
+/** ZSGTSFTR_DEALDMS lives in the gateway's local SQLite; every other DMS table is read through the middleware. */
+const linkPath = (key: Record<string, string>) =>
+  `${linkApi}/${encodeURIComponent(key['ZDEAL_ID'] ?? '')}/${encodeURIComponent(key['ZDMS_CAT'] ?? '')}/${encodeURIComponent(key['ZDMS_TYPE'] ?? '')}`
+const LINK_KEY = ['ZDEAL_ID', 'ZDMS_CAT', 'ZDMS_TYPE'] as const
+const splitKey = (data: Record<string, unknown>) => {
+  const key: Record<string, string> = {}
+  const rest: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(data)) {
+    if ((LINK_KEY as readonly string[]).includes(k)) key[k] = String(v ?? '')
+    else rest[k] = v
+  }
+  return { key, rest }
+}
+
+const linkStore = {
+  list: async (filter: Record<string, string>): Promise<FxRow[]> =>
+    (await apiFetch<{ value?: FxRow[] }>(`${linkApi}?${new URLSearchParams(filter).toString()}`))?.value ?? [],
+  create: async (data: Record<string, unknown>) => {
+    const { key, rest } = splitKey(data)
+    await apiFetch(linkPath(key), { method: 'PUT', body: rest })
+    return { key, assignedNumber: undefined }
+  },
+  update: async (key: Record<string, string>, changes: Record<string, unknown>) => {
+    await apiFetch(linkPath(key), { method: 'PUT', body: splitKey(changes).rest })
+  },
+  remove: async (key: Record<string, string>) => {
+    await apiFetch(linkPath(key), { method: 'DELETE' })
+  },
+}
 const NS = 'com.sap.gateway.srvd_a2x.zfs_sd_almdmsdoc.v0001'
 
 /* ------------------------------------------------------------------ types */
@@ -137,6 +169,27 @@ export function safeFileName(name: string): string {
   return name.replace(/^.*[\\/]/, '').replace(/[\u0000-\u001f<>:"|?*]/g, '_').trim().slice(0, 100)
 }
 
+/** By extension, for a file the browser gave no type (File.type is '' for many Office and mail files on Windows). */
+const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  PDF: 'application/pdf', TXT: 'text/plain', CSV: 'text/csv', XML: 'application/xml', JSON: 'application/json', HTML: 'text/html', HTM: 'text/html',
+  PNG: 'image/png', JPG: 'image/jpeg', JPEG: 'image/jpeg', GIF: 'image/gif', BMP: 'image/bmp', WEBP: 'image/webp', TIF: 'image/tiff', TIFF: 'image/tiff',
+  DOC: 'application/msword', DOCX: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  XLS: 'application/vnd.ms-excel', XLSX: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  PPT: 'application/vnd.ms-powerpoint', PPTX: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  MSG: 'application/vnd.ms-outlook', EML: 'message/rfc822', ZIP: 'application/zip', RTF: 'application/rtf',
+}
+
+/** The MimeType SAP DMS requires on Upload / CreateNewVersion: the browser's, else by extension, else octet-stream. */
+export function mimeTypeOf(fileName: string, browserType = ''): string {
+  const given = browserType.trim()
+  if (given) return given.slice(0, 128)
+  return MIME_BY_EXTENSION[splitFileName(fileName).extension] ?? 'application/octet-stream'
+}
+
+/** Description is CHAR 40 on both DMS actions. */
+const DMS_DESCRIPTION_MAX = 40
+const dmsDescription = (text: string): string => text.trim().slice(0, DMS_DESCRIPTION_MAX)
+
 /** ZFILE_SIZE / ZSIZE_BYTE: KB below a megabyte, MB above. */
 export function sizeOf(bytes: number): { size: number; unit: 'KB' | 'MB' } {
   return bytes >= 1048576 ? { size: Math.round((bytes / 1048576) * 100) / 100, unit: 'MB' } : { size: Math.round((bytes / 1024) * 100) / 100, unit: 'KB' }
@@ -183,8 +236,13 @@ export async function fileToBase64(file: Blob): Promise<string> {
   return btoa(out)
 }
 
+/**
+ * OData V4 serialises Edm.Binary as base64url (RFC 4648 §5: '-' / '_', padding optional), and an ABAP encoder may wrap
+ * lines; atob takes only standard base64, so both are normalised first.
+ */
 export function base64ToBlob(content: string, mimeType: string): Blob {
-  const bin = atob(content)
+  const b64 = content.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/')
+  const bin = atob(b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '='))
   const bytes = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
   return new Blob([bytes], { type: mimeType || 'application/octet-stream' })
@@ -201,8 +259,8 @@ export type DmsDeps = {
   update: (resource: string, key: Record<string, string>, changes: Record<string, unknown>) => Promise<void>
   remove: (resource: string, key: Record<string, string>) => Promise<void>
   hasCodeRange: () => Promise<boolean>
-  upload: (a: { fileName: string; description: string; content: string }) => Promise<Created>
-  newVersion: (a: { number: string; version: string; fileName: string; content: string }) => Promise<Created>
+  upload: (a: { fileName: string; mimeType: string; description: string; content: string }) => Promise<Created>
+  newVersion: (a: { number: string; version: string; fileName: string; mimeType: string; description: string; content: string }) => Promise<Created>
   flagDeleted: (c: Created) => Promise<void>
   originalsOf: (numbers: readonly string[]) => Promise<Original[]>
   original: (c: Created) => Promise<OriginalContent>
@@ -214,18 +272,19 @@ const str = (v: unknown): string => String(v ?? '').trim()
 
 export const defaultDeps: DmsDeps = {
   list: async (resource, filter = {}) => {
+    if (resource === RES.link) return linkStore.list(filter)
     if (resource !== RES.type) return fxList(resource, filter)
     const query = filter['ZDMS_CAT'] ? `?ZDMS_CAT=${encodeURIComponent(filter['ZDMS_CAT'])}` : ''
     const body = await apiFetch<{ value?: FxRow[] }>(`${dmsTypeApi}${query}`)
     return body?.value ?? []
   },
-  create: fxCreate,
-  update: fxUpdate,
-  remove: fxDelete,
+  create: (resource, data) => (resource === RES.link ? linkStore.create(data) : fxCreate(resource, data)),
+  update: (resource, key, changes) => (resource === RES.link ? linkStore.update(key, changes) : fxUpdate(resource, key, changes)),
+  remove: (resource, key) => (resource === RES.link ? linkStore.remove(key) : fxDelete(resource, key)),
   hasCodeRange: () => fxHasNumberRange(RES.meta),
-  upload: async ({ fileName, description, content }) => {
+  upload: async ({ fileName, mimeType, description, content }) => {
     const started = Date.now() - 60_000
-    const res = await apiRequest<Record<string, unknown>>(`${docApi}/${NS}.Upload`, { method: 'POST', body: { FileName: fileName, Description: description, Content: content } })
+    const res = await apiRequest<Record<string, unknown>>(`${docApi}/${NS}.Upload`, { method: 'POST', body: { FileName: fileName, MimeType: mimeType, Description: description, Content: content } })
     const body = res.data ?? {}
     if (str(body['DocumentNumber'])) return { number: str(body['DocumentNumber']), version: str(body['DocumentVersion']) || '00' }
     // The action returned no entity: find the document it just made (this user, this name, created since the call began).
@@ -235,8 +294,8 @@ export const defaultDeps: DmsDeps = {
     if (mine.length !== 1) throw new Error('SAP DMS accepted the file but did not say which document it made; check DMS before uploading again.')
     return { number: mine[0]!.number, version: mine[0]!.version }
   },
-  newVersion: async ({ number, version, fileName, content }) => {
-    const res = await apiRequest<Record<string, unknown>>(`${key({ number, version })}/${NS}.CreateNewVersion`, { method: 'POST', body: { FileName: fileName, Content: content } })
+  newVersion: async ({ number, version, fileName, mimeType, description, content }) => {
+    const res = await apiRequest<Record<string, unknown>>(`${key({ number, version })}/${NS}.CreateNewVersion`, { method: 'POST', body: { FileName: fileName, MimeType: mimeType, Description: description, Content: content } })
     const next = str((res.data ?? {})['DocumentVersion'])
     if (next) return { number, version: next }
     const versions = await defaultDeps.originalsOf([number])
@@ -292,7 +351,7 @@ export type Result = { ok: true; message: string } | { ok: false; message: strin
 
 const stampCols = (st: { user: string; date: string; time: string }) => ({ ZCREATED_BY: st.user, ZCREATED_DATE: st.date, ZCREATED_TIME: st.time })
 
-export type UploadArgs = { dealId: string; category: string; type: DmsType; date: string; comment: string; fileName: string; size: number; content: string; existing: readonly DmsSlot[] }
+export type UploadArgs = { dealId: string; category: string; type: DmsType; date: string; comment: string; fileName: string; size: number; content: string; existing: readonly DmsSlot[]; mimeType?: string }
 
 /**
  * A new document in an empty slot. The slot is re-read first, so a second submit (or the other module) cannot add a
@@ -315,7 +374,7 @@ export async function uploadDocument(a: UploadArgs, deps: DmsDeps = defaultDeps)
 
   let created: Created
   try {
-    created = await deps.upload({ fileName: name, description: name, content: a.content })
+    created = await deps.upload({ fileName: name, mimeType: mimeTypeOf(name, a.mimeType), description: dmsDescription(name), content: a.content })
   } catch (error) {
     return { ok: false, message: `SAP DMS refused the upload: ${messageOf(error)}` }
   }
@@ -343,7 +402,7 @@ export async function uploadDocument(a: UploadArgs, deps: DmsDeps = defaultDeps)
   }
 }
 
-export type EditArgs = { slot: DmsSlot; date: string; comment: string; file: { name: string; size: number; content: string } | null }
+export type EditArgs = { slot: DmsSlot; date: string; comment: string; file: { name: string; size: number; content: string; mimeType?: string } | null }
 
 /**
  * Edit an attached document. Date and comment are written only where they changed (DEALDMS-ZDDATE, TSF_DMS-ZCOMMENT);
@@ -362,7 +421,10 @@ export async function editDocument(dealId: string, category: string, a: EditArgs
       const latest = newestFirst(slot.originals)[0]
       if (!latest) return { ok: false, message: 'SAP DMS holds no original to make a new version of; the document cannot be replaced from here.' }
       const name = safeFileName(a.file.name)
-      const version = await deps.newVersion({ number: slot.link.standardDoc, version: latest.version, fileName: name, content: a.file.content })
+      const version = await deps.newVersion({
+        number: slot.link.standardDoc, version: latest.version, fileName: name,
+        mimeType: mimeTypeOf(name, a.file.mimeType), description: dmsDescription(name), content: a.file.content,
+      })
       const { base, extension } = splitFileName(name)
       const { size, unit } = sizeOf(a.file.size)
       await deps.update(RES.meta, { ZTSF_DMS_CODE: slot.meta.code, ZSTND_DMS: slot.meta.standardDoc }, { ZDOC_NAME: base, ZDOC_EXTN: extension, ZSOURCE_PATH: name, ZFILE_SIZE: size, ZSIZE_BYTE: unit })

@@ -1,7 +1,7 @@
 import { strictEqual, ok } from 'node:assert/strict'
 import { it } from 'node:test'
 import { DEAL_LIBRARY } from './fixtures.ts'
-import { demoBanks, postDemo, restoreDemo } from './demo.ts'
+import { demoBase, postDemo, restoreDemo } from './demo.ts'
 import type { Deal } from './types.ts'
 
 const fresh = (): Deal => {
@@ -42,8 +42,8 @@ it('restores documents by leg identity after refresh and fills only empty bank f
   strictEqual(reloaded.inv[0]!.fiDoc, posted.inv.at(-1)!.fiDoc)
   strictEqual(restoreDemo(d, 'broken').status, 21)
   d.inv[0]!.senderHouseBank = 'REAL1'
-  const banks = demoBanks(d)
+  d.inv[0]!.receiverHouseBank = ''
+  const banks = demoBase(d)
   strictEqual(banks.inv[0]!.senderHouseBank, 'REAL1')
-  strictEqual(banks.inv[0]!.receiverHouseBank, 'JPM01')
-  strictEqual(banks.inv[0]!.receiverAccountId, 'JPM02')
+  strictEqual(banks.inv[0]!.receiverHouseBank, '')
 })

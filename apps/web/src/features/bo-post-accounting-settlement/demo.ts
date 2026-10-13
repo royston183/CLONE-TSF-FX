@@ -3,18 +3,13 @@ import type { Deal, Outcome } from './types.ts'
 export const DEMO_NOTE = 'Demo posting: dummy FI documents and status are saved in this browser. No SAP posting is performed.'
 export const demoKey = (id: string) => `tsf:demo-accounting:v1:${id}`
 
-export function demoBanks(deal: Deal): Deal {
-  return { ...deal, fxWaiting: deal.top.length ? '' : deal.fxWaiting || '', invWaiting: deal.inv.length ? '' : deal.invWaiting || '', inv: deal.inv.map((r) => ({
-    ...r,
-    senderHouseBank: r.senderHouseBank || 'DBS03',
-    senderAccountId: r.senderAccountId || 'DBS00',
-    receiverHouseBank: r.receiverHouseBank || 'JPM01',
-    receiverAccountId: r.receiverAccountId || 'JPM02',
-  })) }
+/** The deal as the demo shows it. The banks are the stored / assigned ones, never made up. */
+export function demoBase(deal: Deal): Deal {
+  return { ...deal, fxWaiting: deal.top.length ? '' : deal.fxWaiting || '', invWaiting: deal.inv.length ? '' : deal.invWaiting || '' }
 }
 
 export function restoreDemo(deal: Deal, saved: string | null): Deal {
-  const base = demoBanks(deal)
+  const base = demoBase(deal)
   if (!saved) return base
   try {
     const old = JSON.parse(saved) as Deal
