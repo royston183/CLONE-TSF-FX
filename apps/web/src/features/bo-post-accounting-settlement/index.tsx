@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import { demoKey, finishDemo, nextDemoDoc, postDemo, restoreDemo } from './demo.ts'
+import { markAccountingComplete } from './accounting.ts'
 import { ACTION_WAITING, gateOutcome, loadDeal } from './api.ts'
+import { LIVE_POSTING, postAllInvoiceLegs, postFxLeg, postInvoiceLeg } from './posting.ts'
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
 import { DocPreviewModal } from './DocModals.tsx'
 import {
+  fxPostingPlan,
   initiateSettlement,
   pendingPostAll,
+  postingPlanToast,
   postingAction,
   resolveDrop,
   txnAction,
@@ -46,6 +51,8 @@ export default function BoPostAccountingSettlement() {
   const [txnIdx, setTxnIdx] = useState(0)
   const [postingIdx, setPostingIdx] = useState(0)
   const [preview, setPreview] = useState<DocPreview | null>(null)
+  // Deal ID documents (DMS): shared with MO Execute Settlement; independent of posting and of the Deal ID status.
+  const [dmsOpen, setDmsOpen] = useState(false)
 
   // Drag and drop: the ref is read between renders, the state paints the row / button hints.
   const dragRef = useRef<DragState | null>(null)
@@ -92,7 +99,7 @@ export default function BoPostAccountingSettlement() {
       if (raw.trim()) setDeal(null)
       return
     }
-    setDeal(restoreDemo(r.deal, localStorage.getItem(demoKey(r.deal.dealId))))
+    setDeal(LIVE_POSTING ? r.deal : restoreDemo(r.deal, localStorage.getItem(demoKey(r.deal.dealId))))
     setDealInput(r.deal.dealId)
     setStatus(`Deal ID ${r.deal.dealId} loaded.`, 'success')
   }
@@ -121,9 +128,72 @@ export default function BoPostAccountingSettlement() {
     setStatus(result.toast.message, result.toast.kind)
   }
 
+  // ---------------------------------------------------------------- live posting (VITE_BO_LIVE_POSTING)
+
+  /** Re-reads the Deal ID from SAP, then says what the posting did (the load's own toast is replaced). */
+  const afterLive = async (d: Deal, message: string, kind: ToastKind) => {
+    await load(d.dealId)
+    setStatus(message, kind)
+  }
+
+  const liveFx = async (d: Deal, idx: number, testRun: boolean) => {
+    const leg = d.top[idx]
+    if (!leg) return
+    const o = txnAction(d, idx, testRun ? 'TEST' : 'TBB1', NO_DOC)
+    if (o.deal === d && o.toast.kind === 'error') return setStatus(o.toast.message, 'error')
+    if (!testRun && (leg.txnStatus ?? '') >= '50') return setStatus('This transaction is already posted.', 'error')
+    const r = await postFxLeg(leg, { testRun })
+    if (testRun) return setStatus(r.message, r.ok ? '' : 'error')
+    await afterLive(d, r.message, r.ok ? 'success' : 'error')
+  }
+
+  const liveFxAll = async (d: Deal) => {
+    const plan = fxPostingPlan(d)
+    if (plan.blocking.length || !plan.eligible.length) {
+      const t = postingPlanToast('FX deal', plan, '')
+      return setStatus(t.message, t.kind)
+    }
+    const lines: string[] = []
+    let failed = false
+    for (const leg of d.top.filter((x) => x.seq && (x.txnStatus ?? '') < '50')) {
+      const o = txnAction(d, d.top.indexOf(leg), 'TBB1', NO_DOC)
+      if (o.deal === d && o.toast.kind === 'error') {
+        lines.push(o.toast.message)
+        failed = true
+        continue
+      }
+      const r = await postFxLeg(leg, { testRun: false })
+      lines.push(r.message)
+      failed ||= !r.ok
+    }
+    await afterLive(d, lines.join(' ') || 'All FX deal legs are already posted.', failed ? 'error' : 'success')
+  }
+
+  const liveInvoice = async (d: Deal, idx: number) => {
+    const leg = d.inv[idx]
+    if (!leg) return
+    const o = postingAction(d, idx, 'SET_POST', NO_DOC)
+    if (o.deal === d) return setStatus(o.toast.message, 'error')
+    const r = await postInvoiceLeg(d.dealId, leg.seq ?? '', { testRun: false })
+    if (r.ok) setModal(null)
+    await afterLive(d, r.message, r.ok ? 'success' : 'error')
+  }
+
+  const liveInvoiceAll = async (d: Deal) => {
+    const results = await postAllInvoiceLegs(d.dealId, pendingPostAll(d).map((x) => x.seq ?? ''), {})
+    const failed = results.filter((x) => !x.outcome.ok)
+    setModal(null)
+    await afterLive(
+      d,
+      results.map((x) => x.outcome.message).join(' ') || 'All trade invoice legs are already posted.',
+      failed.length ? 'error' : 'success',
+    )
+  }
+
   // Post FX Deal: every settled, unposted FX leg; the unsettled ones are named and left out.
   const onPostFx = () => {
     if (!deal) return
+    if (LIVE_POSTING) return void liveFxAll(deal)
     applyDemo(postDemo(deal, 'fx', nextDemoDoc))
   }
 
@@ -145,6 +215,10 @@ export default function BoPostAccountingSettlement() {
   // Demo completion never writes a production Deal ID status.
   const onAccounting = () => {
     if (!deal) return
+    if (LIVE_POSTING) {
+      void markAccountingComplete(deal.dealId).then((r) => afterLive(deal, r.ok ? r.message : r.error, r.ok ? 'success' : 'error'))
+      return
+    }
     const completed = finishDemo(deal)
     applyDemo({ deal: completed, toast: { message: completed.status === 22
       ? 'Demo accounting complete (22). No SAP posting was performed.'
@@ -173,6 +247,11 @@ export default function BoPostAccountingSettlement() {
 
   const onTxnAction = (action: TxnAction) => {
     if (!deal) return
+    if (LIVE_POSTING && (action === 'TBB1' || action === 'TEST')) {
+      void liveFx(deal, txnIdx, action === 'TEST')
+      if (action === 'TBB1') setModal(null)
+      return
+    }
     if (action === 'TBB1') {
       applyDemo(postDemo(deal, 'fx', nextDemoDoc))
       setModal(null)
@@ -187,6 +266,7 @@ export default function BoPostAccountingSettlement() {
 
   const onPostingAction = (action: PostingAction) => {
     if (!deal) return
+    if (LIVE_POSTING && action === 'SET_POST') return void liveInvoice(deal, postingIdx)
     if (action === 'SET_POST') {
       if (!deal.inv[postingIdx]?.postCheck) return setStatus('FI Posting is not set for this leg.', 'error')
       applyDemo(postDemo(deal, 'invoice', nextDemoDoc, postingIdx))
@@ -200,6 +280,7 @@ export default function BoPostAccountingSettlement() {
 
   const onPostAllConfirm = () => {
     if (!deal) return
+    if (LIVE_POSTING) return void liveInvoiceAll(deal)
     applyDemo(postDemo(deal, 'invoice', nextDemoDoc))
     setModal(null)
   }
@@ -267,6 +348,9 @@ export default function BoPostAccountingSettlement() {
           </div>
         </div>
         <div className="head-actions">
+          <button type="button" className="btn-outline" title="Deal ID documents (DMS)" disabled={!deal} onClick={() => setDmsOpen(true)}>
+            {'📁'} DMS
+          </button>
           <button type="button" className="btn-icon" title="Refresh" disabled={!deal} onClick={refresh}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -383,6 +467,7 @@ export default function BoPostAccountingSettlement() {
         onClose={closeAll}
         onConfirm={onPostAllConfirm}
       />
+      {deal ? <DealDmsModal open={dmsOpen} onClose={() => setDmsOpen(false)} dealId={deal.dealId} /> : null}
       <DocPreviewModal open={modal === 'doc'} preview={preview} deal={deal} onClose={closeAll} />
 
       <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.show && toast.kind ? ` ${toast.kind}` : ''}`}>
