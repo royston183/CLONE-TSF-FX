@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
 import { txt } from '../../shared/fx/masters.ts'
@@ -9,7 +10,6 @@ import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModa
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
-  DMS_LIST_WAITING,
   HEADSUP_WAITING,
   INVOICE_WAITING,
   VIEW_INVOICE_WAITING,
@@ -40,8 +40,6 @@ import {
 import {
   AmendModal,
   DiffModal,
-  DmsModal,
-  EditDmsModal,
   FxPostModal,
   HeadsupModal,
   InvPostModal,
@@ -67,7 +65,6 @@ import './mo-execute-settlement-deal-id.overrides.css'
 import { ActionToolbar, HeaderGrid, StatusPill } from './Overview.tsx'
 import type {
   Deal,
-  DmsDoc,
   FxDeal,
   FxPostForm,
   Headsup,
@@ -133,7 +130,6 @@ const BLANK_DEAL: Deal = {
 const NO_FX: FxDeal[] = []
 const NO_INVOICES: TradeInvoice[] = []
 const NO_HEADSUPS: Headsup[] = []
-const NO_DOCS: DmsDoc[] = []
 
 const BLANK_INV_FORM: InvPostForm = {
   date: '',
@@ -166,7 +162,6 @@ export default function MoExecuteSettlementDealId() {
   const [invoices, setInvoices] = useState<TradeInvoice[]>(NO_INVOICES)
   const [invoicesWaiting, setInvoicesWaiting] = useState(INVOICE_WAITING)
   const [positions, setPositions] = useState<Record<string, unknown>[]>([])
-  const dms = NO_DOCS
 
   // Selection screen
   const [dealIdInput, setDealIdInput] = useState('')
@@ -192,8 +187,6 @@ export default function MoExecuteSettlementDealId() {
   const [diffView, setDiffView] = useState<DifferenceView | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
   const [diffError, setDiffError] = useState('')
-  const [editDocType, setEditDocType] = useState('')
-  const [editDate, setEditDate] = useState('')
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
   // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP): suggestions for the bank fields.
@@ -389,24 +382,8 @@ export default function MoExecuteSettlementDealId() {
     }
   }
 
-  // DMS viewer + Edit DMS (9007)
-  const openEditDms = () => {
-    modals.close('dms')
-    setEditDate('')
-    modals.open('editDms')
-  }
-  const openDms = (goStraightToEdit: boolean) => {
-    if (goStraightToEdit) openEditDms()
-    else modals.open('dms')
-  }
-  const confirmEditDms = () => {
-    const result = validateDate(editDate)
-    if (!result.ok) {
-      showToast(result.error, 'error')
-      return
-    }
-    showToast(ACTION_WAITING.dms, 'error')
-  }
+  // DMS (function code DMS -> ZSGTSFFM_DMS, IM_CAT '10'): the shared Deal ID documents panel; Edit is inside it.
+  const openDms = () => modals.open('dms')
 
   const openViewInvoice = () => {
     if (deal.noInvoiceFlag) {
@@ -475,7 +452,7 @@ export default function MoExecuteSettlementDealId() {
           <button className="btn-outline" type="button" onClick={initiatePrinting}>
             <span>&#128424;</span>Initiate Printing
           </button>
-          <button className="btn-outline" type="button" onClick={() => openDms(false)}>
+          <button className="btn-outline" type="button" onClick={openDms}>
             <span>&#128193;</span>DMS
           </button>
           <button className="btn-outline" type="button" onClick={refreshScreen}>
@@ -568,7 +545,7 @@ export default function MoExecuteSettlementDealId() {
                 viewInvoice: openViewInvoice,
                 diff: openDiff,
                 pl: () => modals.open('pl'),
-                editDms: () => openDms(true),
+                editDms: openDms,
                 initiate: initiateSettlement,
                 executionComplete,
               }}
@@ -662,24 +639,7 @@ export default function MoExecuteSettlementDealId() {
         saving={savingSpot}
         emptyText={diffError || diffWaiting(legsWaiting)}
       />
-      <DmsModal
-        open={modals.isOpen('dms')}
-        onClose={() => modals.close('dms')}
-        dealId={deal.dealId}
-        docs={dms}
-        onEdit={openEditDms}
-        emptyText={DMS_LIST_WAITING}
-      />
-      <EditDmsModal
-        open={modals.isOpen('editDms')}
-        onClose={() => modals.close('editDms')}
-        dealId={deal.dealId}
-        docType={editDocType}
-        date={editDate}
-        onDocType={setEditDocType}
-        onDate={setEditDate}
-        onConfirm={confirmEditDms}
-      />
+      <DealDmsModal open={modals.isOpen('dms')} onClose={() => modals.close('dms')} dealId={deal.dealId} />
       <PlModal
         open={modals.isOpen('pl')}
         onClose={() => modals.close('pl')}

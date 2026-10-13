@@ -132,8 +132,10 @@ export type TradeInvoice = {
   receiverAccountId?: string
 }
 
-export type Headsup = { date: string; cat: string; msg: string }
+/** A fixture row of the legacy DMS list (tests only; the live panel is shared/fx/DealDmsModal.tsx). */
 export type DmsDoc = { type: string; file: string; date: string; by: string }
+
+export type Headsup = { date: string; cat: string; msg: string }
 
 export type ToastKind = 'info' | 'success' | 'error'
 export type Toast = { message: string; kind: ToastKind | null; visible: boolean }
@@ -146,7 +148,6 @@ export type ModalId =
   | 'headsup'
   | 'diff'
   | 'dms'
-  | 'editDms'
   | 'pl'
   | 'fxPost'
   | 'invPost'

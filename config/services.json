@@ -105,6 +105,30 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_slctsfbpbank_o4_api/srvd_a2x/sap/zfs_sd_slctsfbpbank/0001",
       "description": "ZFS_SB_SLCTSFBPBANK_O4_API — SlcTsfBpBank (business partner bank details per company code)"
     },
+    "trmflowpost": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trmflowpost_o4_api/srvd_a2x/sap/zfs_sd_trmflowpost/0001",
+      "description": "ZFS_SB_TRMFLOWPOST_O4_API — TreasuryFlow (TBB1: static action PostFlows runs TB_DEAL_FIX_POST_PAR for one deal)"
+    },
+    "fiaccdoc": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_fiaccdoc_o4_api/srvd_a2x/sap/zfs_sd_fiaccdoc/0001",
+      "description": "ZFS_SB_FIACCDOC_O4_API — FiAccDoc + Item (FB01: BAPI_ACC_DOCUMENT_POST / _CHECK, Reverse)"
+    },
+    "almdmsdoc": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_almdmsdoc_o4_api/srvd_a2x/sap/zfs_sd_almdmsdoc/0001",
+      "description": "ZFS_SB_ALMDMSDOC_O4_API — Document (SAP DMS type TRM: Upload, CreateNewVersion, GetOriginal, SetDeletionFlag)"
+    },
     "housebank": {
       "kind": "odata",
       "auth": "sap-ds4",

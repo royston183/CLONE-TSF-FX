@@ -24,7 +24,9 @@ export async function build() {
   // Built conditionally rather than with `transport: undefined`: under
   // exactOptionalPropertyTypes an explicit undefined is not the same as an absent key,
   // and Fastify's logger option rejects it.
+  // bodyLimit: a DMS upload travels as base64 JSON, up to 20 MB of file (shared/fx/dms.ts MAX_BYTES) = ~27 MB; Fastify's 1 MiB default would refuse it.
   const app = Fastify({
+    bodyLimit: 32 * 1024 * 1024,
     logger: process.stdout.isTTY ? { transport: { target: 'pino-pretty' } } : true,
   })
 
