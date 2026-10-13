@@ -151,6 +151,43 @@ describe('/api/localdb/tsf-posting-type', () => {
   })
 })
 
+describe('/api/localdb/tsf-deal-document', () => {
+  before(() => {
+    runMigrations(getDb())
+  })
+
+  const slot = '7000000056/10/D02'
+  const put = (path: string, body: unknown) => call(`tsf-deal-document/${path}`, { method: 'PUT', body: json(body) })
+
+  it('requires a signed-in session', async () => {
+    strictEqual((await call('tsf-deal-document', {}, false)).status, 401)
+  })
+
+  it('stores a slot by Deal ID + category + type, speaking dates as the middleware does', async () => {
+    const created = await put(slot, { ZDDATE: '2026-10-13', ZDMS_CODE: '5070000001', ZSTND_DMS: '10000000123', ZCREATED_BY: 'SPOOF' })
+    strictEqual(created.status, 201)
+    const row = (await created.json()) as Record<string, unknown>
+    deepStrictEqual([row['ZDDATE'], row['ZDMS_CODE'], row['ZCREATED_BY']], ['2026-10-13', '5070000001', 'demo'])
+    ok(/^\d{2}:\d{2}:\d{2}$/.test(String(row['ZCREATED_TIME'])))
+    strictEqual((await put(slot, { ZDDATE: '2026-10-14' })).status, 200)
+
+    await put('7000000056/10/D03', { ZDDATE: '2026-10-13' })
+    await put('7000000057/10/D02', { ZDDATE: '2026-10-13' })
+    const list = async (q: string) => ((await (await call(`tsf-deal-document?${q}`)).json()) as { value: Record<string, unknown>[] }).value
+    strictEqual((await list('ZDEAL_ID=7000000056&ZDMS_CAT=10')).length, 2)
+    const one = await list('ZDEAL_ID=7000000056&ZDMS_CAT=10&ZDMS_TYPE=D02')
+    deepStrictEqual(one.map((r) => [r['ZDDATE'], r['ZSTND_DMS']]), [['2026-10-14', '10000000123']])
+  })
+
+  it('rejects bad input with 400 and answers 404 for a missing slot', async () => {
+    strictEqual((await put(slot, { ZDDATE: '13.10.2026' })).status, 400)
+    strictEqual((await put(slot, { NOPE: 'x' })).status, 400)
+    strictEqual((await put('7000000056/100/D02', {})).status, 400)
+    strictEqual((await call(`tsf-deal-document/${slot}`, { method: 'DELETE' })).status, 204)
+    strictEqual((await call(`tsf-deal-document/${slot}`)).status, 404)
+  })
+})
+
 describe('/api/localdb/deal-metadata', () => {
   before(() => {
     runMigrations(getDb())

@@ -1,7 +1,7 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
-  RES, buildSlots, canPreview, editDocument, fetchOriginal, isoOfDmy, loadDealDms, safeFileName, sizeOf, splitFileName, typesOf, uploadDocument, validateForm,
+  RES, base64ToBlob, buildSlots, canPreview, editDocument, mimeTypeOf, fetchOriginal, isoOfDmy, loadDealDms, safeFileName, sizeOf, splitFileName, typesOf, uploadDocument, validateForm,
   type DmsDeps, type DmsSlot, type DmsType, type Original,
 } from './dms.ts'
 import type { FxRow } from './mw.ts'
@@ -181,5 +181,37 @@ describe('download', () => {
     strictEqual(await r.blob.text(), 'hello')
     const { deps: empty } = mk({ original: async () => ({ fileName: 'a.pdf', mimeType: 'application/pdf', description: '', content: '' }) })
     strictEqual((await fetchOriginal({ number: '100', version: '00' }, empty)).ok, false)
+  })
+})
+
+describe('SAP DMS parameters', () => {
+  it('MimeType: the browser type, else by extension, else octet-stream', () => {
+    strictEqual(mimeTypeOf('a.pdf', 'application/pdf'), 'application/pdf')
+    strictEqual(mimeTypeOf('mail.msg', ''), 'application/vnd.ms-outlook')
+    strictEqual(mimeTypeOf('Book1.XLSX'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    strictEqual(mimeTypeOf('noext'), 'application/octet-stream')
+  })
+
+  it('Upload carries MimeType and a Description of at most 40 characters', async () => {
+    const sent: { fileName: string; mimeType: string; description: string }[] = []
+    const { deps } = mk({ upload: async (a) => (sent.push(a), { number: '10000000001', version: '00' }) })
+    const long = `${'x'.repeat(60)}.pdf`
+    strictEqual((await upload(deps, { fileName: long })).ok, true)
+    strictEqual(sent[0]!.mimeType, 'application/pdf')
+    strictEqual(sent[0]!.description.length, 40)
+    strictEqual(sent[0]!.fileName, long)
+  })
+})
+
+describe('base64ToBlob', () => {
+  const bytes = Uint8Array.from([0xfb, 0xff, 0xbf, 0x00, 0x3e, 0x3f, 0xd0])
+  const std = btoa(String.fromCharCode(...bytes))
+  const decode = async (s: string) => [...new Uint8Array(await base64ToBlob(s, '').arrayBuffer())]
+  it('reads standard base64, OData V4 base64url without padding, and wrapped lines alike', async () => {
+    const url = std.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    strictEqual(url === std, false)
+    deepStrictEqual(await decode(std), [...bytes])
+    deepStrictEqual(await decode(url), [...bytes])
+    deepStrictEqual(await decode(`${std.slice(0, 4)}\r\n${std.slice(4)}`), [...bytes])
   })
 })

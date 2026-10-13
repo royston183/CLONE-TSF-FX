@@ -18,9 +18,9 @@
  *                 FinancialTransaction to FxTransaction (the "tsfvFx" view lacks the Deal ID column). The legs
  *                 are every row of the Deal ID, as the header comment states no further selection; reversed
  *                 ones are kept. Entity is the company code (TSF entity ZCOM_ID has no source).
- *                 STILL WAITING FOR API: ZSGTSFCDS_OPTION (option legs, no resource) and the legs' FI documents
- *                 FI Doc 1 / 2 (BKPF, no resource) - those cells say so instead of "not posted"; Status is
- *                 'Confirmed' because 'Posted' would need the documents; DSS Deal has no source.
+ *                 STILL WAITING FOR API: ZSGTSFCDS_OPTION (option legs, no resource). FI Doc 1 / 2 (BKPF, no
+ *                 resource) are the documents PostFlows returned, stored locally (TSF_FX_POST_DOC), else the
+ *                 journal entries referencing the transaction; Status is 'Posted' from TXN_STATUS 50 (withPostedDocs).
  *   Trade Invoice Settlement   ZSGTSFTR_TRD_POS WHERE zdeal_id = <deal>: the rows MO: Execute Settlement for
  *                 Deal ID (ZSGTSFR060) stored (the gateway's local SQLite, positions.ts), with their Settlement
  *                 (ZSET_CHECK), FI Posting (ZPOST_CHECK) and FI document (ZBELNR) kept apart. The same table's FX
@@ -37,15 +37,17 @@ import { txt } from '../../shared/fx/masters.ts'
 import { odataString } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { invoiceBankOf } from '../../shared/fx/invoice-bank.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
 import { loadPositions, toInvLegs, withSetFxSequence, type PositionRow } from './positions.ts'
+import { findFxDocsInSap, readStoredFxDocs, TXN_POSTED, type FxDocs } from './posting.ts'
 import type { Deal, FxLeg, Outcome, ToastMessage } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
 export const PROGRAM = 'ZSGTSF_RDEAL_TRD_POST'
 
 /** What the FX Deal Settlement grid still cannot show once the legs come from TrmFxApp + FxTransaction. */
-export const LEGS_STILL_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (option legs) and BKPF (the FI Doc 1 / 2 of each leg, so its Posted status) have no middleware resource.`
+export const LEGS_STILL_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (option legs) has no middleware resource. FI Doc 1 / 2 are the documents TBB1 returned when posted from this screen (BKPF has no resource).`
 
 /** The grid's note: why no leg could be read, that none exists in APP_STR, or what the listed legs still lack. */
 export function legsWaitingReason(failure = '', legCount = 1): string {
@@ -165,6 +167,31 @@ export function toLeg({ fx, app }: FxWithApp): FxLeg {
   }
 }
 
+export type FxDocSources = {
+  stored: (companyCode: string, transaction: string, signal?: AbortSignal) => Promise<FxDocs | null>
+  sap: (companyCode: string, transaction: string, signal?: AbortSignal) => Promise<FxDocs | null>
+}
+
+/**
+ * FI Doc 1 / 2 and Posted status of each leg. A leg is Posted once TBB1 moved its TXN_STATUS to 50 (or later); its
+ * documents are the ones PostFlows returned and BO stored, else (posted before they were kept) the journal entries SAP
+ * holds with the transaction as reference. An unreadable source leaves the cells blank, never invented.
+ */
+export async function withPostedDocs(legs: readonly FxLeg[], src: FxDocSources = { stored: readStoredFxDocs, sap: findFxDocsInSap }, signal?: AbortSignal): Promise<FxLeg[]> {
+  return Promise.all(
+    legs.map(async (leg) => {
+      const posted = (leg.txnStatus ?? '') >= TXN_POSTED
+      const quiet = (p: Promise<FxDocs | null>) => p.catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return null
+      })
+      const docs = (await quiet(src.stored(leg.entity, leg.rfha, signal))) ?? (posted ? await quiet(src.sap(leg.entity, leg.rfha, signal)) : null)
+      if (!docs && !posted) return leg
+      return { ...leg, status: 'Posted' as const, doc1: docs?.doc1 ?? '', doc2: docs?.doc2 ?? '' }
+    }),
+  )
+}
+
 /** The FX legs of a Deal ID: its TrmFxApp rows with their transactions, by deal type then transaction number. */
 export async function loadLegs(dealId: string, signal?: AbortSignal): Promise<FxLeg[]> {
   const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
@@ -212,6 +239,21 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
       legsReason: legsWaitingReason(legsRead.failure, legsRead.legs.length),
     })
     const inv = toInvLegs(positionsRead.rows)
+    // The bank assigned to each leg's invoice in Generate Invoices (BIL_ADJ): the receiver's house bank where MO stored
+    // none, and the Partner Bank. Unreadable leaves the stored values as they are.
+    if (inv.length) {
+      const billAdj = await fxList('billAdjustment', { ZDEAL_ID: txt(deal, 'ZDEAL_ID') || key }, { signal }).catch((error: unknown) => {
+        if (isAbort(error)) throw error
+        return [] as FxRow[]
+      })
+      for (const r of inv) {
+        const assigned = invoiceBankOf(billAdj, r.tType)
+        r.receiverHouseBank ||= assigned.houseBank
+        r.receiverAccountId ||= assigned.accountId
+        r.partnerBank = assigned.partnerBank
+        r.businessPartner = assigned.businessPartner
+      }
+    }
     // The FX legs' sequence (ZSGTSFTR_SET_FX) and the model's no-invoice flag (ZSGTSFTR_RULE_BT ZNO_INV).
     const model = header.fxModelId
     const [setFx, rules, setTyp] = model
@@ -221,7 +263,7 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
           fxList('setTyp', { ZMOD_ID: model }, { signal }),
         ])
       : [[] as FxRow[], [] as FxRow[], [] as FxRow[]]
-    const top = withSetFxSequence(header.top, setFx)
+    const top = await withPostedDocs(withSetFxSequence(header.top, setFx), undefined, signal)
     // The leg's DSS deal is SET_TYP's (a~zdss_deal); TRD_POS has no column for it.
     const dss = new Map(setTyp.map((t) => [txt(t, 'ZT_TYPE'), txt(t, 'ZDSS_DEAL')]))
     for (const r of inv) r.dssDealType = dss.get(r.tType) ?? ''
