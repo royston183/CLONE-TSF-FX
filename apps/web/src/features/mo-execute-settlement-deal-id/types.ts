@@ -106,6 +106,8 @@ export type TradeInvoice = {
   invAmt: number
   curr: string
   payAmt: number
+  /** Why payAmt could not be worked out (no mapped FX deal / rate for a cross-currency leg); blank when it could. */
+  payReason?: string
   recPay: string
   trfType: string
   fiDoc: string

@@ -39,6 +39,7 @@ import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { invoiceBankOf } from '../../shared/fx/invoice-bank.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { paymentAmount } from '../../shared/fx/payment-amount.ts'
 import { loadPositions, toInvLegs, withSetFxSequence, type PositionRow } from './positions.ts'
 import { findFxDocsInSap, readStoredFxDocs, TXN_POSTED, type FxDocs } from './posting.ts'
 import type { Deal, FxLeg, Outcome, ToastMessage } from './types.ts'
@@ -267,6 +268,14 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
     // The leg's DSS deal is SET_TYP's (a~zdss_deal); TRD_POS has no column for it.
     const dss = new Map(setTyp.map((t) => [txt(t, 'ZT_TYPE'), txt(t, 'ZDSS_DEAL')]))
     for (const r of inv) r.dssDealType = dss.get(r.tType) ?? ''
+    // The payment amount is worked out on every load, as the ABAP's PBO does (INVOICE_SETTLEMENT_DATA), from the legs' all-in rates:
+    // a leg whose mapped FX deal (a settlement spot, say) does not exist yet keeps the stored amount, and Update / Post refuse it.
+    const prem = new Map(setTyp.map((t) => [txt(t, 'ZT_TYPE'), txt(t, 'ZPREM_ADJ')]))
+    const payDeals = top.map((f) => ({ dealType: f.dealType, rate: f.rate }))
+    for (const r of inv) {
+      const pay = paymentAmount({ invAmt: r.invAmt, curr: r.invCurr, setCurr: r.payCurr, dMap: r.dMap, premAdj: prem.get(r.tType) ?? '' }, payDeals)
+      if (!pay.reason) r.payAmt = pay.amount
+    }
     const noInvoice = rules[0] ? txt(rules[0], 'ZNO_INV') !== '' : false
     return { ok: true, deal: { ...header, top, inv, noInvoice, invWaiting: invoiceNote(positionsRead.failure, inv.length) } }
   } catch (error) {

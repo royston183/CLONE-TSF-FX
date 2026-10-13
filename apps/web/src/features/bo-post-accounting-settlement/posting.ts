@@ -223,12 +223,25 @@ async function afterPost(leg: Pick<FxLeg, 'entity' | 'rfha'>, docs: FlowDoc[], b
 export type PositionRow = Record<string, unknown>
 export type PostingType = Record<string, unknown>
 
-/** The posting key's account class (SAP: 0x / 1x customer, 2x / 3x vendor, anything else a G/L line). */
-export function lineCategory(postingKey: string): 'G' | 'K' | 'D' {
-  const first = postingKey.trim().charAt(0)
-  if (first === '0' || first === '1') return 'D'
-  if (first === '2' || first === '3') return 'K'
-  return 'G'
+/**
+ * The line class of an account category (ZSGTSFTR_TRD_ACC ZDR_ACC / ZCR_ACC), as the ABAP's DEBIT / CREDIT forms read them:
+ * 01 bank and 04 clearing are G/L lines, 03 a customer line, 02 a vendor line, and 05 / 06 a vendor line that also carries
+ * the G/L (reconciliation) account. The posting key does not choose the account class; the category does.
+ */
+export function categoryLine(category: string): 'G' | 'K' | 'D' | null {
+  switch (category) {
+    case '01':
+    case '04':
+      return 'G'
+    case '02':
+    case '05':
+    case '06':
+      return 'K'
+    case '03':
+      return 'D'
+    default:
+      return null
+  }
 }
 
 export type FiItem = {
@@ -242,6 +255,7 @@ export type FiItem = {
   ProfitCenter?: string
   BusinessArea?: string
   DocumentItemText?: string
+  ValueDate?: string
 }
 
 export type FiDocBody = {
@@ -256,28 +270,53 @@ export type FiDocBody = {
   _Item: FiItem[]
 }
 
-const line = (row: PositionRow, side: 'DR' | 'CR', amount: number, currency: string, itemText: string, no: number): FiItem => {
-  const account = text(row, `Z${side}_ACCNT`)
+/** What a side of the stored row lacks to be posted: '' when complete. ZDR_ACCNT / ZCR_ACCNT are labels, never accounts. */
+function sideIssue(row: PositionRow, side: 'DR' | 'CR'): string {
+  const word = side === 'DR' ? 'debit' : 'credit'
+  const category = text(row, `Z${side}_ACC`)
+  const kind = categoryLine(category)
+  if (!kind) return `has no ${word} account category (Z${side}_ACC '${category}')`
+  if (kind === 'G' && !text(row, `Z${side}_GL`)) return `has no ${word} G/L account (Z${side}_GL)`
+  if (kind !== 'G' && !text(row, `Z${side}_CV`)) return `has no ${word} ${kind === 'D' ? 'customer' : 'vendor'} number (Z${side}_CV)`
+  return ''
+}
+
+const line = (row: PositionRow, side: 'DR' | 'CR', amount: number, currency: string, itemText: string, no: number, valueDate: string): FiItem => {
+  const kind = categoryLine(text(row, `Z${side}_ACC`)) ?? 'G'
   const gl = text(row, `Z${side}_GL`)
-  const category = lineCategory(text(row, `Z${side}_PK`))
+  const partner = text(row, `Z${side}_CV`)
+  const category = text(row, `Z${side}_ACC`)
   const signed = side === 'DR' ? amount : -amount
   return {
     AccountingDocumentItem: String(no),
-    LineCategory: category,
-    ...(category === 'G' ? { GLAccount: gl || account } : category === 'K' ? { Supplier: account } : { Customer: account }),
+    LineCategory: kind,
+    ...(kind === 'G' ? { GLAccount: gl } : kind === 'D' ? { Customer: partner } : { Supplier: partner, ...(category !== '02' && gl ? { GLAccount: gl } : {}) }),
     TransactionCurrency: currency,
     AmountInTransactionCurrency: Number(signed.toFixed(2)),
     ...(text(row, `Z${side}_PRCTR`) ? { ProfitCenter: text(row, `Z${side}_PRCTR`) } : {}),
     ...(text(row, `Z${side}_RBUSA`) ? { BusinessArea: text(row, `Z${side}_RBUSA`) } : {}),
     ...(itemText ? { DocumentItemText: clip(itemText, 50) } : {}),
+    ValueDate: valueDate,
   }
 }
 
 export type BuildResult = { ok: true; body: FiDocBody } | { ok: false; message: string }
 
+/** HEADER_DATA's header text: the posting type (S1 / P1 / S2 / P2 read as 01..04), a dash and the Deal ID. */
+const headerText = (row: PositionRow): string => {
+  const fi = text(row, 'ZFI_TYPE')
+  const mapped = ({ S1: '01', P1: '02', S2: '03', P2: '04' } as Record<string, string>)[fi] ?? fi
+  return clip(`${mapped} - ${text(row, 'ZDEAL_ID')}`, 25)
+}
+
+const sapToIso = (d: string): string => (/^\d{8}$/.test(d) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : '')
+
 /**
- * The FI document of one trade invoice leg: HEADER_DATA / DEBIT / CREDIT. Debit is the positive line, credit the
- * negative one, for ZPAY_AMT in ZSET_CURR. A leg missing what SAP cannot be asked to guess is refused with the field.
+ * The FI document of one trade invoice leg: HEADER_DATA / DEBIT / CREDIT of ZSGTSF_RDEAL_TRD_POST. Debit is the positive
+ * line, credit the negative one, for ZPAY_AMT in ZSET_CURR; the lines come from the stored posting fields (ZDR_ACC / ZDR_CV /
+ * ZDR_GL and the credit twins, filled by Update). Document date, posting date and value date are the leg's posting date
+ * (ZP_DATE, else its due date). A leg missing what SAP cannot be asked to guess is refused with the field.
+ * Kept from this app, not from the ABAP: the reference defaults to the Deal ID, because an unconfirmed posting is found again by it.
  */
 export function buildFiDocument(row: PositionRow, acc: PostingType | undefined, opts: { testRun: boolean; postingDate?: string; today?: string }): BuildResult {
   const today = opts.today ?? isoToday()
@@ -288,28 +327,25 @@ export function buildFiDocument(row: PositionRow, acc: PostingType | undefined, 
   if (!currency) return { ok: false, message: `${name} has no settlement currency (ZSET_CURR).` }
   const amount = Math.abs(Number(row['ZPAY_AMT']))
   if (!Number.isFinite(amount) || amount === 0) return { ok: false, message: `${name} has no payment amount (ZPAY_AMT is zero): nothing to post.` }
-  for (const side of ['DR', 'CR'] as const) {
-    if (!text(row, `Z${side}_PK`) || !(text(row, `Z${side}_ACCNT`) || text(row, `Z${side}_GL`))) {
-      return { ok: false, message: `${name} has no ${side === 'DR' ? 'debit' : 'credit'} posting key / account: update its posting details first.` }
-    }
-  }
+  const gaps = (['DR', 'CR'] as const).map((side) => sideIssue(row, side)).filter(Boolean)
+  if (gaps.length) return { ok: false, message: `${name} ${gaps.join(' and ')}: update its posting details first.` }
   const docType = text(row, 'ZDOC_TYPE') || (acc ? text(acc, 'ZDOC_TYPE') : '')
   if (!docType) return { ok: false, message: `${name} has no FI document type (ZDOC_TYPE).` }
-  const posting = opts.postingDate || (text(row, 'ZP_DATE') ? `${text(row, 'ZP_DATE').slice(0, 4)}-${text(row, 'ZP_DATE').slice(4, 6)}-${text(row, 'ZP_DATE').slice(6, 8)}` : today)
+  const posting = opts.postingDate || sapToIso(text(row, 'ZP_DATE')) || sapToIso(text(row, 'ZDUE_DATE')) || today
   return {
     ok: true,
     body: {
       CompanyCode: company,
-      DocumentDate: today,
+      DocumentDate: posting,
       PostingDate: posting,
       AccountingDocumentType: docType,
       DocumentReferenceID: clip((acc ? text(acc, 'ZXBLNR1') : '') || text(row, 'ZDEAL_ID'), 16),
-      AccountingDocumentHeaderText: clip((acc ? text(acc, 'ZBKTXT') : '') || text(row, 'ZSET_DESC'), 25),
+      AccountingDocumentHeaderText: headerText(row),
       TransactionCurrency: currency,
       TestRun: opts.testRun,
       _Item: [
-        line(row, 'DR', amount, currency, acc ? text(acc, 'ZDR_TEXT') : '', 1),
-        line(row, 'CR', amount, currency, acc ? text(acc, 'ZCR_TEXT') : '', 2),
+        line(row, 'DR', amount, currency, acc ? text(acc, 'ZDR_TEXT') : '', 1, posting),
+        line(row, 'CR', amount, currency, acc ? text(acc, 'ZCR_TEXT') : '', 2, posting),
       ],
     },
   }

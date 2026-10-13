@@ -14,6 +14,7 @@ import {
   type DealSuggestion,
 } from './api.ts'
 import { LIVE_POSTING, postAllInvoiceLegs, postFxLeg, postInvoiceLeg } from './posting.ts'
+import { prepareInvoiceLeg } from './prepare.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
@@ -207,19 +208,39 @@ export default function BoPostAccountingSettlement() {
     if (!leg) return
     const o = postingAction(d, idx, 'SET_POST', NO_DOC)
     if (o.deal === d) return setStatus(o.toast.message, 'error')
+    // As the pop-up does on opening: the payment amount and debit / credit accounts, stored before anything is posted.
+    const prep = await prepareInvoiceLeg(d.dealId, leg.seq ?? '', d.top)
+    if (!prep.ok) return setStatus(prep.message, 'error')
     const r = await postInvoiceLeg(d.dealId, leg.seq ?? '', { testRun: false })
     if (r.ok) setModal(null)
     await afterLive(d, r.message, r.ok ? 'success' : 'error')
   }
 
+  // Update: the leg's payment amount and debit / credit accounts, worked out and stored (SAVE_POSTING_DATA).
+  const liveUpdate = async (d: Deal, idx: number) => {
+    const leg = d.inv[idx]
+    if (!leg) return
+    const prep = await prepareInvoiceLeg(d.dealId, leg.seq ?? '', d.top)
+    if (!prep.ok) return setStatus(prep.message, 'error')
+    await afterLive(d, `Posting details saved. ${prep.message}`, 'success')
+  }
+
   const liveInvoiceAll = async (d: Deal) => {
-    const results = await postAllInvoiceLegs(d.dealId, pendingPostAll(d).map((x) => x.seq ?? ''), {})
+    // Each leg is prepared first; one that cannot be is reported and left out, the others still post.
+    const prepared: string[] = []
+    const notes: string[] = []
+    for (const seq of pendingPostAll(d).map((x) => x.seq ?? '')) {
+      const prep = await prepareInvoiceLeg(d.dealId, seq, d.top)
+      if (prep.ok) prepared.push(seq)
+      else notes.push(prep.message)
+    }
+    const results = await postAllInvoiceLegs(d.dealId, prepared, {})
     const failed = results.filter((x) => !x.outcome.ok)
     setModal(null)
     await afterLive(
       d,
-      results.map((x) => x.outcome.message).join(' ') || 'All trade invoice legs are already posted.',
-      failed.length ? 'error' : 'success',
+      [...notes, ...results.map((x) => x.outcome.message)].join(' ') || 'All trade invoice legs are already posted.',
+      failed.length || notes.length ? 'error' : 'success',
     )
   }
 
@@ -307,7 +328,7 @@ export default function BoPostAccountingSettlement() {
   const onPostingAction = (action: PostingAction) => {
     if (!deal) return
     if (LIVE_POSTING && action === 'SET_POST') return void liveInvoice(deal, postingIdx)
-    if (LIVE_POSTING && action === 'UPD_DATA') return setStatus(ACTION_WAITING.invUpdate, 'error')
+    if (LIVE_POSTING && action === 'UPD_DATA') return void liveUpdate(deal, postingIdx)
     if (action === 'SET_POST') {
       if (!deal.inv[postingIdx]?.postCheck) return setStatus('FI Posting is not set for this leg.', 'error')
       applyDemo(postDemo(deal, 'invoice', nextDemoDoc, postingIdx))
