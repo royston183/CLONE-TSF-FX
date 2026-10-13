@@ -4,9 +4,22 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import { demoKey, finishDemo, nextDemoDoc, postDemo, restoreDemo } from './demo.ts'
+<<<<<<< HEAD
+import {
+  ACTION_WAITING,
+  filterSuggestions,
+  gateOutcome,
+  loadDeal,
+  loadDealSuggestions,
+  type DealSuggestion,
+} from './api.ts'
+import { messageOf } from '../../shared/fx/master-contract.ts'
+import { isAbort } from '../../shared/fx/mw.ts'
+=======
 import { markAccountingComplete } from './accounting.ts'
 import { ACTION_WAITING, gateOutcome, loadDeal } from './api.ts'
 import { LIVE_POSTING, postAllInvoiceLegs, postFxLeg, postInvoiceLeg } from './posting.ts'
+>>>>>>> origin/main
 import { DetailGrid, FxTable, InvTable, StatusBadge, Toolbar, type DropHandlers } from './DealPanels.tsx'
 import { DocPreviewModal } from './DocModals.tsx'
 import {
@@ -45,6 +58,22 @@ const TOAST_MS = 3600
 export default function BoPostAccountingSettlement() {
   const [dealInput, setDealInput] = useState('')
   const [deal, setDeal] = useState<Deal | null>(null)
+
+  // Deal ID dropdown: every ZSGTSFTR_DEALID row, filtered by what is typed; a click loads the deal.
+  const [suggestions, setSuggestions] = useState<DealSuggestion[]>([])
+  const [suggestError, setSuggestError] = useState('')
+  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [suggestIdx, setSuggestIdx] = useState(-1)
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadDealSuggestions(ctrl.signal)
+      .then(setSuggestions)
+      .catch((error: unknown) => {
+        if (!isAbort(error)) setSuggestError(`Deal IDs could not be read: ${messageOf(error)}`)
+      })
+    return () => ctrl.abort()
+  }, [])
+  const shownSuggestions = filterSuggestions(suggestions, dealInput)
 
   // Popups
   const [modal, setModal] = useState<ActiveModal>(null)
@@ -102,6 +131,13 @@ export default function BoPostAccountingSettlement() {
     setDeal(LIVE_POSTING ? r.deal : restoreDemo(r.deal, localStorage.getItem(demoKey(r.deal.dealId))))
     setDealInput(r.deal.dealId)
     setStatus(`Deal ID ${r.deal.dealId} loaded.`, 'success')
+  }
+
+  const pickSuggestion = (dealId: string) => {
+    setDealInput(dealId)
+    setSuggestOpen(false)
+    setSuggestIdx(-1)
+    void load(dealId)
   }
 
   const refresh = () => {
@@ -385,13 +421,71 @@ export default function BoPostAccountingSettlement() {
                   type="text"
                   placeholder="Enter Deal ID..."
                   value={dealInput}
-                  onChange={(e) => setDealInput(e.target.value)}
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded={suggestOpen}
+                  aria-controls="boDealSuggestions"
+                  onChange={(e) => {
+                    setDealInput(e.target.value)
+                    setSuggestOpen(true)
+                    setSuggestIdx(-1)
+                  }}
+                  onFocus={() => setSuggestOpen(true)}
+                  onClick={() => setSuggestOpen(true)}
+                  onBlur={() => setSuggestOpen(false)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') void load(dealInput)
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      setSuggestOpen(true)
+                      const n = shownSuggestions.length
+                      if (n) setSuggestIdx((i) => (e.key === 'ArrowDown' ? (i + 1) % n : (i - 1 + n) % n))
+                    } else if (e.key === 'Enter') {
+                      const active = suggestOpen ? shownSuggestions[suggestIdx] : undefined
+                      if (active) pickSuggestion(active.dealId)
+                      else {
+                        setSuggestOpen(false)
+                        void load(dealInput)
+                      }
+                    } else if (e.key === 'Escape') {
+                      setSuggestOpen(false)
+                    }
                   }}
                 />
+                {suggestOpen && (shownSuggestions.length > 0 || suggestError) && (
+                  <ul className="deal-suggest" id="boDealSuggestions" role="listbox">
+                    {suggestError && !suggestions.length ? (
+                      <li className="deal-suggest-note">{suggestError}</li>
+                    ) : (
+                      shownSuggestions.map((s, i) => (
+                        <li
+                          key={s.dealId}
+                          role="option"
+                          aria-selected={i === suggestIdx}
+                          className={i === suggestIdx ? 'active' : undefined}
+                          // mousedown, not click: the input's blur would close the list first.
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            pickSuggestion(s.dealId)
+                          }}
+                          onMouseEnter={() => setSuggestIdx(i)}
+                        >
+                          <span className="deal-suggest-id">{s.dealId}</span>
+                          {s.statusText && <span className="deal-suggest-status">{s.statusText}</span>}
+                          {s.dealRef && <span className="deal-suggest-ref">{s.dealRef}</span>}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
               </div>
-              <button type="button" className="btn-go" onClick={() => void load(dealInput)}>
+              <button
+                type="button"
+                className="btn-go"
+                onClick={() => {
+                  setSuggestOpen(false)
+                  void load(dealInput)
+                }}
+              >
                 Go
               </button>
             </div>

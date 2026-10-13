@@ -31,7 +31,7 @@
  * statements that are not exported, so each validates as before and then says WAITING FOR ACTION
  * API. Nothing is written to the middleware and no local state changes.
  */
-import { dealStatusText } from '../../shared/fx/deal-id.ts'
+import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { odataString } from '@slc/api-client'
@@ -232,4 +232,39 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
     console.warn('[deal-trd-post] ZSGTSFTR_DEALID unavailable', error)
     return { ok: false, message: `WAITING FOR DEAL ID API — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read: ${messageOf(error)}` }
   }
+}
+
+/* ------------------------------------------------------------------ Deal ID suggestions */
+
+export type DealSuggestion = { dealId: string; dealRef: string; statusText: string }
+
+/** Every ZSGTSFTR_DEALID row (newest first) for the Deal ID dropdown; unrestricted, as P_DEAL's search help is not exported. */
+export async function loadDealSuggestions(signal?: AbortSignal): Promise<DealSuggestion[]> {
+  const [rows, statuses] = await Promise.all([
+    listDealIds({}, signal),
+    fxList('tsfDealStatus', {}, { signal }).catch((error: unknown) => {
+      if (isAbort(error)) throw error
+      return [] as FxRow[]
+    }),
+  ])
+  const seen = new Set<string>()
+  const out: DealSuggestion[] = []
+  for (const r of rows) {
+    const dealId = txt(r, 'ZDEAL_ID')
+    if (!dealId || seen.has(dealId)) continue
+    seen.add(dealId)
+    out.push({
+      dealId,
+      dealRef: txt(r, 'ZDEAL_REF'),
+      statusText: dealStatusText({ statuses }, txt(r, 'ZSUB_TYPE'), txt(r, 'ZDEAL_STAT')),
+    })
+  }
+  return out
+}
+
+/** Suggestions whose Deal ID or reference contains the typed text (all of them when nothing is typed). */
+export function filterSuggestions(list: readonly DealSuggestion[], typed: string): DealSuggestion[] {
+  const q = normalizeDealId(typed)
+  if (!q) return [...list]
+  return list.filter((s) => s.dealId.toUpperCase().includes(q) || s.dealRef.toUpperCase().includes(q))
 }
