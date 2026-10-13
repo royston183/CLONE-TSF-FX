@@ -106,6 +106,7 @@ export type TxnRow = Txn & { sdAmt: number | ''; sdCurr: string; sdPending: bool
 
 /** An Action Items row (PROCESS_ACTION_ITEMS + COLOR_CODE_ACTION_ITEMS). */
 export type ActionItem = {
+  dealId: string
   rfha: string
   bukrs: string
   dealType: string

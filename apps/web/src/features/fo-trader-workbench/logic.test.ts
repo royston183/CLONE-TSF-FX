@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { DEFAULT_FILTERS, setLookups } from './data.ts'
+import { findTxn } from './flows.ts'
 import { DEMO_USER, FIXTURE_AS_OF, FIXTURE_LOOKUPS, SEED_DEALS, fixtureData as freshData } from './fixtures.ts'
 import { dmyToIso, formatAmount, isoToDMY, kpiCompact, parseDMY, parseNum } from './format.ts'
 import {
@@ -192,5 +193,32 @@ describe('KPIs', () => {
     strictEqual(k.gains, 4)
     strictEqual(k.losses, 1)
     ok(k.totalItems > 0 && k.progressPct >= 0 && k.progressPct <= 100)
+  })
+})
+
+describe('the same transaction number in two company codes', () => {
+  // Deal 7000000055 holds SG03/3000000000037 and deal 7000000060 holds IN11/3000000000037.
+  const twin = () => {
+    const base = txn('1700004201')
+    return { ...freshData(), txns: [{ ...base, dealId: '7000000055', bukrs: 'SG03', rfha: '3000000000037', status: '05' }, { ...base, dealId: '7000000060', bukrs: 'IN11', rfha: '3000000000037', status: '05' }] }
+  }
+
+  it('finds the transaction of the deal it is asked for, not the first with that number', () => {
+    const data = twin()
+    strictEqual(findTxn(data, '3000000000037')!.dealId, '7000000055')
+    strictEqual(findTxn(data, '3000000000037', { dealId: '7000000060' })!.bukrs, 'IN11')
+    strictEqual(findTxn(data, '3000000000037', { bukrs: 'IN11' })!.dealId, '7000000060')
+    strictEqual(findTxn(data, '3000000000037', { dealId: '7000000060', bukrs: 'SG03' }), undefined)
+  })
+
+  it('changes only the scoped transaction when a status is updated', () => {
+    const after = updateTxnStatus(twin(), '3000000000037', '24', null, { dealId: '7000000060' })
+    deepStrictEqual(after.txns.map((t) => [t.dealId, t.status]), [['7000000055', '05'], ['7000000060', '24']])
+  })
+
+  it('carries the deal on every action item so Create opens the right deal', () => {
+    const data = freshData()
+    const d = SEED_DEALS[0]!
+    for (const item of fetchActionItems(data, d, fetchTransactions(data, d.id))) strictEqual(item.dealId, d.id)
   })
 })

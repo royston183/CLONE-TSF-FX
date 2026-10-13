@@ -110,7 +110,7 @@ export function DealModal({
   const has = !!sel
 
   const withTxn = (fn: (wb: Wb, t: NonNullable<ReturnType<typeof findTxn>>) => void) => () => {
-    const t = sel ? findTxn(wb.get(), sel) : undefined
+    const t = sel ? findTxn(wb.get(), sel, { dealId: deal.id }) : undefined
     if (!t) {
       wb.toast('Select a transaction first.', 'error')
       return
@@ -213,7 +213,7 @@ export function DealModal({
                               title="Display transaction"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                wb.open({ kind: 'txn', rfha: t.rfha })
+                                wb.open({ kind: 'txn', rfha: t.rfha, dealId: t.dealId })
                               }}
                             >
                               {text}

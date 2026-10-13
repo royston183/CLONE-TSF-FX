@@ -6,7 +6,7 @@ import type { ActionCtx, SpotVariant } from './types.ts'
 /** Every popup the workbench opens. They stack: the newest sits on top and Escape closes it. */
 export type PopupSpec =
   | { kind: 'deal'; dealId: string; selectedRfha: string | null }
-  | { kind: 'txn'; rfha: string }
+  | { kind: 'txn'; rfha: string; dealId: string }
   | { kind: 'settlementData'; dealId: string }
   | { kind: 'rate'; ctx: ActionCtx }
   | { kind: 'spot'; ctx: ActionCtx; variant: SpotVariant; sfhaart: string; rate: number }

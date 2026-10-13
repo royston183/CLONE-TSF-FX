@@ -21,8 +21,8 @@ const kv = (l: string, v: string | number | null | undefined) => (
   </div>
 )
 
-export function TxnDetailsModal({ frame, rfha, wb }: { frame: FrameProps; rfha: string; wb: Wb }) {
-  const t = findTxn(wb.get(), rfha)
+export function TxnDetailsModal({ frame, rfha, dealId, wb }: { frame: FrameProps; rfha: string; dealId: string; wb: Wb }) {
+  const t = findTxn(wb.get(), rfha, { dealId })
   if (!t) return null
   return (
     <ModalFrame

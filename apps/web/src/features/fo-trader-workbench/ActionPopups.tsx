@@ -193,7 +193,7 @@ const Buttons = ({ frame, label, onOk, okCls = 'btn-primary', disabled = false }
 export function RatePopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'rate' }>; wb: Wb }) {
   const { ctx } = spec
   const data = wb.get()
-  const txn = findTxn(data, ctx.rfha)
+  const txn = findTxn(data, ctx.rfha, { dealId: ctx.dealId })
   const deal = findDeal(data, ctx.dealId)
   const [rate, setRate] = useState(() => {
     const r = txn ? marketRate(txn) : 0 /* gv_n_rate */
@@ -306,7 +306,7 @@ function initialSpot(wb: Wb, spec: Extract<PopupSpec, { kind: 'spot' }>, txn: Tx
 }
 
 export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'spot' }>; wb: Wb }) {
-  const txn = findTxn(wb.get(), spec.ctx.rfha)
+  const txn = findTxn(wb.get(), spec.ctx.rfha, { dealId: spec.ctx.dealId })
   const [sp, setSp] = useState<SpotDraft | null>(() => (txn ? initialSpot(wb, spec, txn) : null))
   const [co, setCo] = useState(sp?.bukrs ?? '')
   const [bp, setBp] = useState(sp?.bp ?? '')
@@ -444,7 +444,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
 type FwdDraft = { bukrs: string; bp: string; curr1: string; curr2: string; bs1: string; bs2: string; amt1: number; amt2: number; rate: number }
 
 export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'ssSpot' }>; wb: Wb }) {
-  const txn = findTxn(wb.get(), spec.ctx.rfha)
+  const txn = findTxn(wb.get(), spec.ctx.rfha, { dealId: spec.ctx.dealId })
   const [init] = useState(() => {
     if (!txn) return null
     const deal = findDeal(wb.get(), spec.ctx.dealId)
@@ -606,7 +606,7 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
 /* ---------------- Screen 9005 — FX forward (short straddle) opposite spot ---------------- */
 
 export function FwdSsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'fwdSsSpot' }>; wb: Wb }) {
-  const txn = findTxn(wb.get(), spec.ctx.rfha)
+  const txn = findTxn(wb.get(), spec.ctx.rfha, { dealId: spec.ctx.dealId })
   /* derive: fill whichever amount is still empty from the other and the rate */
   const derive = (s: SpotDraft): SpotDraft => {
     const n = { ...s }
@@ -718,7 +718,7 @@ export function FwdSsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: E
 /* ---------------- Screen 9010 — NDF Details (fixing) ---------------- */
 
 export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'ndf' }>; wb: Wb }) {
-  const txn = findTxn(wb.get(), spec.ctx.rfha)
+  const txn = findTxn(wb.get(), spec.ctx.rfha, { dealId: spec.ctx.dealId })
   const [rate, setRate] = useState(() => {
     const def = txn ? defaultFixingRate(txn) : 0
     return def ? def.toFixed(4) : ''
@@ -767,7 +767,7 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
     }
     const out = calcNdfSettlement(txn, rv)
     // The ETag changed with the update: a second change needs the row read again.
-    wb.set(updateTxnStatus(wb.get(), txn.rfha, TXN.FIXED, { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr, etag: '' }))
+    wb.set(updateTxnStatus(wb.get(), txn.rfha, TXN.FIXED, { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr, etag: '' }, { dealId: txn.dealId, bukrs: txn.bukrs }))
     frame.onClose()
     wb.toast(`Confirmation Sent — ${result.message}`, 'success') /* TEXT-003 */
     wb.confirm({ title: 'Create Spot', message: 'Do you want to create the Spot?' }, () =>
@@ -832,7 +832,7 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
 
 export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'settlementSpot' }>; wb: Wb }) {
   const data = wb.get()
-  const txn = findTxn(data, spec.ctx.rfha)
+  const txn = findTxn(data, spec.ctx.rfha, { dealId: spec.ctx.dealId })
   const deal = findDeal(data, spec.ctx.dealId)
   // What ZSGTSFR_SPOT_CREATE derives for this leg (settlementSpot.ts): the open IN_SPOT row, the spot's company and type.
   const [prep, setPrep] = useState<PrepareResult | 'loading'>('loading')

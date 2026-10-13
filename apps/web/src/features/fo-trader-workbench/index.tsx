@@ -235,7 +235,7 @@ export default function FoTraderWorkbench() {
       case 'deal':
         return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
       case 'txn':
-        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} wb={wb} />
+        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} dealId={s.dealId} wb={wb} />
       case 'settlementData':
         return <SettlementDataModal key={p.key} frame={frame} dealId={s.dealId} wb={wb} />
       case 'rate':
