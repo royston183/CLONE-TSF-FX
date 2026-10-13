@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { getDb } from '../sqlite/db.ts'
 import { dealMetadataRepository } from '../sqlite/repositories/deal-metadata.ts'
 import { DdicInputError, ddicRepository } from '../sqlite/repositories/ddic-table.ts'
+import { DMS_TYP_CLIENT, DMS_TYP_COLUMNS } from '../sqlite/repositories/dms-typ-columns.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from '../sqlite/repositories/trd-acc-columns.ts'
 import { trdPosRepository } from '../sqlite/repositories/trd-pos.ts'
 import type { DealMetadataFields } from '../sqlite/schema.ts'
@@ -17,7 +18,7 @@ import { requireSession } from './auth.ts'
  * bodies are decoded here, for these routes only.
  */
 
-const LIMITS = { companyCode: 10, transactionId: 20, dealId: 15, seq: 2, fiType: 2, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
+const LIMITS = { companyCode: 10, transactionId: 20, dealId: 15, seq: 2, fiType: 2, dmsCat: 2, dmsType: 3, productType: 10, strategy: 50, internalReference: 100, remark: 1000 }
 const EDITABLE = ['productType', 'strategy', 'internalReference', 'remark'] as const
 
 class BadRequest extends Error {}
@@ -253,6 +254,52 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
   app.delete(
     '/api/localdb/tsf-posting-type/:fiType',
     guarded((req, reply) => (trdAcc().remove(accKey(req)) ? reply.code(204).send() : fail(reply, 404, 'No posting type with this code.'))),
+  )
+
+  // ZSGTSFTR_DMS_TYP — DMS document types per category, keyed by ZDMS_CAT + ZDMS_TYPE. Read by the Deal ID
+  // documents panel (category 10) for its slots, their descriptions and number range object / interval.
+  const dmsTyp = () => ddicRepository(getDb(), { table: 'zsgtsftr_dms_typ', client: DMS_TYP_CLIENT, columns: DMS_TYP_COLUMNS })
+  const dmsKey = (req: FastifyRequest) => {
+    const p = req.params as { dmsCat: string; dmsType: string }
+    return { ZDMS_CAT: requiredText(p.dmsCat, 'dmsCat'), ZDMS_TYPE: requiredText(p.dmsType, 'dmsType') }
+  }
+  const dmsNotFound = (reply: FastifyReply) => fail(reply, 404, 'No DMS document type with this category and type.')
+
+  app.get(
+    '/api/localdb/tsf-dms-type',
+    guarded((req) => {
+      const category = (req.query as { ZDMS_CAT?: unknown }).ZDMS_CAT
+      if (category !== undefined && typeof category !== 'string') throw new BadRequest('ZDMS_CAT must be a single value.')
+      return { value: dmsTyp().list(category ? { column: 'ZDMS_CAT', value: category } : undefined) }
+    }),
+  )
+
+  app.get(
+    '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
+    guarded((req, reply) => dmsTyp().get(dmsKey(req)) ?? dmsNotFound(reply)),
+  )
+
+  app.put(
+    '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const key = dmsKey(req)
+      const { date, time } = sapStamp()
+      const existing = dmsTyp().get(key)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = dmsTyp().upsert(key, { ...jsonObject(req.body), ...stamps })
+      return reply.code(existing ? 200 : 201).send(row)
+    }),
+  )
+
+  app.delete(
+    '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
+    guarded((req, reply) => (dmsTyp().remove(dmsKey(req)) ? reply.code(204).send() : dmsNotFound(reply))),
   )
 
   // Anything else under /api/localdb is a 404 in this group's own words, rather than falling

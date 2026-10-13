@@ -3,7 +3,7 @@
  * FM ZSGTSFFM_DMS with IM_DEAL / IM_CAT '10') and BO Posting Accounting Entries (ZSGTSF_RDEAL_TRD_POST). One client, so a
  * Deal ID shows the same attachments in both.
  *
- *   Document types   ZSGTSFTR_DMS_TYP  (middleware "dmsType")      WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
+ *   Document types   ZSGTSFTR_DMS_TYP  (local SQLite, /api/localdb/tsf-dms-type) WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
  *   Deal link        ZSGTSFTR_DEALDMS  (middleware "dealDocument") ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
  *   Metadata         ZSGTSFTR_TSF_DMS  (middleware "tsfDocument")  ZTSF_DMS_CODE (the custom code) + ZSTND_DMS
  *   The document     SAP DMS, document type TRM / part 000, through ZFS_SB_ALMDMSDOC_O4_API (service "almdmsdoc"):
@@ -33,6 +33,8 @@ export const MAX_BYTES = 20 * 1024 * 1024
 export const RES = { type: 'dmsType', meta: 'tsfDocument', link: 'dealDocument' } as const
 
 const docApi = service('almdmsdoc')('Document')
+/** ZSGTSFTR_DMS_TYP lives in the gateway's local SQLite (migration 005), not behind the middleware. */
+const dmsTypeApi = service('localdb')('tsf-dms-type')
 const NS = 'com.sap.gateway.srvd_a2x.zfs_sd_almdmsdoc.v0001'
 
 /* ------------------------------------------------------------------ types */
@@ -211,7 +213,12 @@ const key = (c: Created) => `${docApi}(DocumentNumber=${odataString(c.number)},D
 const str = (v: unknown): string => String(v ?? '').trim()
 
 export const defaultDeps: DmsDeps = {
-  list: (resource, filter = {}) => fxList(resource, filter),
+  list: async (resource, filter = {}) => {
+    if (resource !== RES.type) return fxList(resource, filter)
+    const query = filter['ZDMS_CAT'] ? `?ZDMS_CAT=${encodeURIComponent(filter['ZDMS_CAT'])}` : ''
+    const body = await apiFetch<{ value?: FxRow[] }>(`${dmsTypeApi}${query}`)
+    return body?.value ?? []
+  },
   create: fxCreate,
   update: fxUpdate,
   remove: fxDelete,

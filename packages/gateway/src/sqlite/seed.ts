@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { REPO_ROOT } from '../config.ts'
 import { ddicRepository, type DdicRow } from './repositories/ddic-table.ts'
+import { DMS_TYP_CLIENT, DMS_TYP_COLUMNS } from './repositories/dms-typ-columns.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from './repositories/trd-acc-columns.ts'
 import type { LookupValue } from './schema.ts'
 
@@ -40,6 +41,20 @@ export function seedTrdAcc(db: Database): number {
       const { ZFI_TYPE, ...fields } = row
       if (typeof ZFI_TYPE !== 'string') throw new Error('Posting seed requires a ZFI_TYPE string.')
       repo.upsert({ ZFI_TYPE }, fields)
+    }
+  })()
+  return rows.length
+}
+
+/** Loads the shipped DMS document types, keyed by ZDMS_CAT + ZDMS_TYPE; safe to run again. */
+export function seedDmsTyp(db: Database): number {
+  const rows = JSON.parse(readFileSync(resolve(REPO_ROOT, 'database/seed/zsgtsftr_dms_typ.json'), 'utf8')) as DdicRow[]
+  const repo = ddicRepository(db, { table: 'zsgtsftr_dms_typ', client: DMS_TYP_CLIENT, columns: DMS_TYP_COLUMNS })
+  db.transaction(() => {
+    for (const row of rows) {
+      const { ZDMS_CAT, ZDMS_TYPE, ...fields } = row
+      if (typeof ZDMS_CAT !== 'string' || typeof ZDMS_TYPE !== 'string') throw new Error('DMS type seed requires ZDMS_CAT and ZDMS_TYPE strings.')
+      repo.upsert({ ZDMS_CAT, ZDMS_TYPE }, fields)
     }
   })()
   return rows.length

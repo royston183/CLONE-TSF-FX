@@ -34,7 +34,9 @@ export async function build() {
     // No fallback constant: an unset AUTH_SECRET yields a fresh random one, which invalidates
     // sessions across restarts. That is the correct dev behaviour, and it means a shipped
     // default secret can never be the thing protecting a deployment.
-    secret: process.env['AUTH_SECRET'] ?? randomBytes(32).toString('hex'),
+    // `||` not `??`: .env.example ships `AUTH_SECRET=`, and an empty string makes
+    // @fastify/cookie treat '' as a custom signer, so setCookie throws "signer.sign is not a function".
+    secret: process.env['AUTH_SECRET'] || randomBytes(32).toString('hex'),
   })
 
   // The proxy must forward request bodies byte-for-byte, so nothing is parsed into an object.
