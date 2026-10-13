@@ -2,6 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { Dropdown, DateField } from './controls.tsx'
 import { LOOKUPS } from './data.ts'
+import { loadPartners } from '../fo-additional-spot-booking/valueHelps.ts'
+import type { CodeLabel, ValueHelp } from '../fo-additional-spot-booking/types.ts'
+import { createNdfSpot } from './spotNdf.ts'
+import { bookSettlementSpot, defaultSpotRate, defaultTradeOf, prepareSettlementSpot, type PrepareResult } from './settlementSpot.ts'
+import { amountsView } from '../fo-additional-spot-booking/logic.ts'
 import { bookSpot, findDeal, findTxn, runExercise, runExpire, type Wb } from './flows.ts'
 import { dmyToIso, formatAmount, formatDMY, formatRate, isoToDMY, numStr, parseDMY, parseNum } from './format.ts'
 import {
@@ -53,7 +58,27 @@ function CoDropdown({ value, onChange }: { value: string; onChange: (v: string) 
   )
 }
 
-function BpDropdown({ grp, value, onChange }: { grp: string; value: string; onChange: (v: string) => void }) {
+function BpDropdown({ grp, value, onChange, sap }: { grp: string; value: string; onChange: (v: string) => void; sap?: ValueHelp<CodeLabel> | undefined }) {
+  if (sap) {
+    const options = sap.state === 'ok' ? sap.options : []
+    return (
+      <>
+        <Dropdown
+          items={options}
+          value={value}
+          placeholder={sap.state === 'loading' ? 'Loading partners …' : 'Select ...'}
+          valueOf={(b) => b.key}
+          primary={(b) => b.text}
+          secondary={(b) => b.key}
+          display={(b) => (b.text === b.key ? b.key : `${b.text} (${b.key})`)}
+          search={(b) => `${b.key} ${b.text}`}
+          disabled={sap.state !== 'ok'}
+          onChange={onChange}
+        />
+        {sap.state === 'error' ? <div className="hint">{sap.message}</div> : null}
+      </>
+    )
+  }
   return (
     <Dropdown
       items={bpItemsForGroup(grp)}
@@ -102,6 +127,7 @@ function SpotForm({
   trade,
   rate,
   rateError,
+  sapBps,
   onCo,
   onBp,
   onTrade,
@@ -115,6 +141,8 @@ function SpotForm({
   trade: string | null
   rate: string
   rateError: string
+  /** NDF / DNDF spots: the partners SAP holds for the chosen company code; undefined keeps the trader-group list. */
+  sapBps?: ValueHelp<CodeLabel> | undefined
   onCo: (v: string) => void
   onBp: (v: string) => void
   onTrade: (v: string) => void
@@ -128,7 +156,7 @@ function SpotForm({
           <CoDropdown value={co} onChange={onCo} />
         </Fld>
         <Fld label="BP" req>
-          <BpDropdown grp={grp} value={bp} onChange={onBp} />
+          <BpDropdown grp={grp} value={bp} onChange={onBp} sap={sapBps} />
         </Fld>
         {trade !== null ? (
           <Fld label="Trade Date" req>
@@ -286,6 +314,29 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   const [rate, setRate] = useState(rateText(sp?.rate ?? 0))
   const [rateError, setRateError] = useState('')
   const [msg, setMsg] = useState<Msg>(null)
+  const [busy, setBusy] = useState(false)
+  /* NDF / DNDF book through FxTransaction, which only accepts a partner SAP holds for the company code. */
+  const sapPartners = spec.variant !== 'ndo'
+  const [sapBps, setSapBps] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
+  useEffect(() => {
+    if (!sapPartners) return
+    let live = true
+    setSapBps({ state: 'loading' })
+    loadPartners(co).then((r) => {
+      if (!live) return
+      // The NDF's own partner is always offered (the legacy default): SlcTsfBpBank lists bank partners only, and the counterparty is often not one.
+      const own = txn?.cpty ? { key: txn.cpty, text: txn.cptyName || txn.cpty } : undefined
+      const withOwn: ValueHelp<CodeLabel> =
+        own && r.state !== 'loading'
+          ? { state: 'ok', options: [own, ...(r.state === 'ok' ? r.options.filter((o) => o.key !== own.key) : [])] }
+          : r
+      setSapBps(withOwn)
+      if (withOwn.state === 'ok') setBp((cur) => (withOwn.options.some((o) => o.key === cur) ? cur : ''))
+    })
+    return () => {
+      live = false
+    }
+  }, [co, sapPartners])
   if (!txn || !sp) return null
   const showTrade = !txn.dealType /* group VIS hidden when a deal type exists */
   const variantText = spec.variant === 'ndo' ? 'Option settlement spot' : spec.variant === 'ndf' ? 'NDF settlement spot' : 'DNDF settlement spot'
@@ -304,8 +355,43 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
-    /* 9003 books through create_bapi (ORDERCREATE + ORDEREXECUTE); 9011 / 9012 through FXT_CREATE */
-    if (!wb.post(spec.variant === 'ndo' ? 'spotOrder' : 'spotNdf')) return
+    /* 9011 / 9012 book through FXT_CREATE: FxTransaction POST + the TSF row (spotNdf.ts) */
+    if (spec.variant !== 'ndo') {
+      if (busy) return
+      setBusy(true)
+      void createNdfSpot({
+        bukrs: co,
+        bp,
+        source: { bukrs: txn.bukrs, rfha: txn.rfha },
+        curr1: sp.curr1,
+        curr2: sp.curr2,
+        amt1: sp.amt1,
+        amt2: sp.amt2,
+        base: sp.base,
+        bs1: sp.bs1,
+        rate: sp.rate,
+        tradeDate: showTrade ? dmyToIso(trade) : '',
+        ndfDate: txn.ndfDate,
+        valueDate: txn.valueDate,
+        dealType: txn.dealType,
+      }).then((res) => {
+        setBusy(false)
+        if (!res.ok) {
+          setMsg({ text: res.message, kind: 'error' })
+          return
+        }
+        frame.onClose()
+        wb.outcome({
+          tone: res.appDataError ? 'warning' : 'success',
+          title: 'Spot Created',
+          message: res.appDataError ?? `Spot Transaction created Successfully: ${res.transaction}`,
+        })
+        wb.reload()
+      })
+      return
+    }
+    /* 9003 books through create_bapi (ORDERCREATE + ORDEREXECUTE) */
+    if (!wb.post('spotOrder')) return
     const rfha = bookSpot(wb, {
       dealId: spec.ctx.dealId,
       dealType: txn.dealType,
@@ -328,7 +414,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} />}>
+    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} />}>
       <SpotForm
         msg={msg}
         sp={sp}
@@ -338,6 +424,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
         trade={showTrade ? trade : null}
         rate={rate}
         rateError={rateError}
+        sapBps={sapPartners ? sapBps : undefined}
         onCo={setCo}
         onBp={setBp}
         onTrade={setTrade}
@@ -747,47 +834,78 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
   const data = wb.get()
   const txn = findTxn(data, spec.ctx.rfha)
   const deal = findDeal(data, spec.ctx.dealId)
+  // What ZSGTSFR_SPOT_CREATE derives for this leg (settlementSpot.ts): the open IN_SPOT row, the spot's company and type.
+  const [prep, setPrep] = useState<PrepareResult | 'loading'>('loading')
+  const [partners, setPartners] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
+  const [partner, setPartner] = useState(txn?.cpty ?? '')
+  const [rate, setRate] = useState('')
+  const [trade, setTrade] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<Msg>(null)
+  const key = txn ? `${txn.dealId}|${txn.dealType}|${txn.rfha}` : ''
+  useEffect(() => {
+    if (!txn) return
+    let live = true
+    setPrep('loading')
+    void prepareSettlementSpot({ dealId: txn.dealId, dealType: txn.dealType, rfha: txn.rfha, bukrs: txn.bukrs }).then(async (r) => {
+      if (!live) return
+      setPrep(r)
+      if (!r.ok) return
+      setTrade(formatDMY(defaultTradeOf(r.value.ctx)))
+      const [list, tcurr] = await Promise.all([loadPartners(r.value.ctx.companyCode), defaultSpotRate(r.value.row, r.value.ctx)])
+      if (!live) return
+      // The original transaction's own partner is always offered, as the legacy default.
+      const own = txn.cpty ? { key: txn.cpty, text: txn.cptyName || txn.cpty } : undefined
+      const options = [...(own ? [own] : []), ...(list.state === 'ok' ? list.options.filter((o) => o.key !== own?.key) : [])]
+      setPartners(options.length ? { state: 'ok', options } : list)
+      if (tcurr) setRate(tcurr.toFixed(4))
+    })
+    return () => {
+      live = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
   if (!txn || !deal) return null
+
   const rec = inSpotFor(data, deal.id, txn.dealType)
   const created = !!rec && rec.spotCreate === 'X'
-  const info: Msg = !rec
-    ? { text: 'No invoice difference is stored for this deal type.', kind: 'info' }
-    : created
-      ? { text: 'The settlement spot for this deal type has already been created.', kind: 'info' }
-      : null
+  const ready = prep !== 'loading' && prep.ok ? prep.value : null
+  const info: Msg =
+    prep !== 'loading' && !prep.ok
+      ? { text: prep.reason, kind: 'info' }
+      : created
+        ? { text: 'The settlement spot for this deal type has already been created.', kind: 'info' }
+        : null
   const kvItem = (l: string, v: ReactNode) => (
     <div className="detail-item" key={l}>
       <span className="detail-label">{l}</span>
       <span className="detail-value">{v === undefined || v === '' ? '—' : v}</span>
     </div>
   )
+  const rateNum = rateOf(rate)
+  const amounts = ready ? amountsView(ready.row, ready.ctx, rateNum) : null
 
-  const create = () => {
-    if (!rec || !rec.dAmt) return
-    if (!wb.post('settlementSpot')) return
-    const other = txn.curr1 === rec.curr ? txn.curr2 : txn.curr1
-    const rate = spotRateFor(rec.curr, other)
-    const amt1 = Math.abs(rec.dAmt)
-    const amt2 = convertViaRate(amt1, rec.curr, other, rate)
-    const sell = rec.bs === 'Sell' || rec.bs.charAt(0) === 'S'
-    const rfha = bookSpot(wb, {
-      dealId: deal.id,
-      dealType: txn.dealType,
-      sourceRfha: txn.rfha,
-      bukrs: txn.bukrs,
-      sfhaart: '604',
-      bs1: sell ? 'Sell' : 'Buy',
-      curr1: rec.curr,
-      amt1,
-      bs2: sell ? 'Buy' : 'Sell',
-      curr2: other,
-      amt2,
-      rate,
-      bp: txn.cpty,
-      text: 'Spot – invoice difference',
-    })
+  const create = async () => {
+    if (!ready || busy) return
+    const tradeDate = parseDMY(trade)
+    const errs: string[] = []
+    if (!partner) errs.push('BP is required.')
+    if (!tradeDate) errs.push('Enter a valid trade date (dd-mm-yyyy).')
+    if (!(rateNum > 0)) errs.push('Rate is required.')
+    if (errs.length || !tradeDate) {
+      setMsg({ text: errs.join(' '), kind: 'error' })
+      return
+    }
+    setBusy(true)
+    const out = await bookSettlementSpot(ready.row, { partner, tradeDate, rate: rateNum })
+    setBusy(false)
+    if (!out.ok) {
+      setMsg({ text: out.message, kind: 'error' })
+      return
+    }
     frame.onClose()
-    wb.outcome({ tone: 'success', title: 'Spot Created', message: `Spot Transaction created Successfully: ${rfha}` })
+    wb.outcome({ tone: out.message.includes('was booked in SAP, but') ? 'warning' : 'success', title: 'Spot Created', message: out.message })
+    wb.reload()
   }
 
   return (
@@ -801,13 +919,13 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
           <button type="button" className="btn btn-secondary" onClick={frame.onClose}>
             Close
           </button>
-          <button type="button" className="btn btn-primary" disabled={!rec || created} onClick={create}>
-            Create Spot
+          <button type="button" className="btn btn-primary" disabled={!ready || created || busy} onClick={() => void create()}>
+            {busy ? 'Creating …' : 'Create Spot'}
           </button>
         </>
       }
     >
-      <InlineMsg msg={info} />
+      <InlineMsg msg={msg ?? info} />
       <div className="kv-grid">
         {kvItem('Date', todayDmy())}
         {kvItem('Deal ID', deal.id)}
@@ -818,7 +936,33 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
         {kvItem('Difference', rec ? `${formatAmount(rec.dAmt)} ${rec.curr}` : '')}
         {kvItem('Buy / Sell', rec ? rec.bs : '')}
         {kvItem('Spot', created ? `Created (${rec!.spotTxn})` : 'Pending')}
+        {kvItem('Spot Company', ready?.ctx.companyCode)}
+        {kvItem('Spot Transaction Type', ready ? `12A ${ready.ctx.txnType}` : '')}
+        {kvItem('Currency 1 / Amount', amounts ? `${amounts.buyCurr} ${amounts.buyAmt}` : '')}
+        {kvItem('Currency 2 / Amount', amounts ? `${amounts.sellCurr} ${amounts.sellAmt}` : '')}
       </div>
+      {ready && !created ? (
+        <div className="pf-row c3">
+          <Fld label="BP" req>
+            <BpDropdown grp={txn.grp} value={partner} onChange={setPartner} sap={partners} />
+          </Fld>
+          <Fld label="Trade Date" req>
+            <DateField value={trade} onCommit={(v) => setTrade(v)} />
+          </Fld>
+          <Fld label="Rate" req>
+            <input
+              className="control mono"
+              inputMode="decimal"
+              placeholder="0.0000"
+              value={rate}
+              onChange={(e) => {
+                setRate(e.target.value)
+                setMsg(null)
+              }}
+            />
+          </Fld>
+        </div>
+      ) : null}
     </ModalFrame>
   )
 }

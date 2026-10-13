@@ -19,6 +19,7 @@
  * This feature never touches the original transaction (its TXN_STATUS, deal type) and never writes
  * ZSGTSFTR_DEALID: the Spot is an additional booking, not a replacement Deal ID leg.
  */
+import { invalidCurrencyMessage, roundToCurrency } from '../../shared/fx/currency-decimals.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import type { FxRow } from '../../shared/fx/mw.ts'
 import { isoFromDate, num } from '../../shared/fx/sap.ts'
@@ -189,8 +190,9 @@ export function buildSpotCreatePayload(input: {
     ValueDate: isoFromDate(input.valueDate)!,
     BuyCurrency: amounts.buyCurrency,
     SellCurrency: amounts.sellCurrency,
-    BuyAmount: money(amounts.buyAmount),
-    SellAmount: money(amounts.sellAmount),
+    // Each amount carries its own currency's decimals: the BAPI refuses USD 1,922,912.8071 (wrong decimal place).
+    BuyAmount: roundToCurrency(amounts.buyAmount, amounts.buyCurrency),
+    SellAmount: roundToCurrency(amounts.sellAmount, amounts.sellCurrency),
     LeadCurrency: lead,
     FollowCurrency: follow,
     TradedCurrency: input.diffCurrency,
@@ -393,6 +395,8 @@ export async function createAdditionalSpot(ports: SpotPorts, row: SpotRow, input
     const amounts = calculateSpotAmounts({ diffAmt, diffCurrency: fresh.currency, direction: ctx.direction, otherCurrency: ctx.otherCurrency, rate: input.rate })
     if (!amounts) throw new SpotError('Enter a valid spot rate.')
     if (!amounts.buyCurrency || !amounts.sellCurrency) throw new SpotError('The Spot currency pair could not be derived from the original transaction.')
+    const badCurrency = invalidCurrencyMessage([amounts.buyCurrency, amounts.sellCurrency])
+    if (badCurrency) throw new SpotError(badCurrency)
 
     const out = await ports.createFx(
       buildSpotCreatePayload({

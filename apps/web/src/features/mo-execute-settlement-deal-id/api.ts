@@ -95,6 +95,7 @@ export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
     dealTypeChip: type === 'D1' ? 'chip-d1' : type === 'D2' ? 'chip-d2' : 'chip-t',
     rfha: fx.FinancialTransaction,
     bukrs: fx.CompanyCode,
+    txnType: fx.TransactionType ?? '',
     bp: fx.Partner,
     txnDate: dmyFromIso(fx.ContractDate),
     valDate: dmyFromIso(fx.ValueDate),
@@ -424,7 +425,7 @@ export async function saveSpotData(
 
 /* ------------------------------------------------------------------ Deal ID picker */
 
-export type DealPick = { dealId: string; statusText: string }
+export type DealPick = { dealId: string; statusText: string; statusCode?: string; fxModel?: string; entityString?: string }
 export type DealList = { state: 'sap'; picks: DealPick[] } | { state: 'unavailable'; reason: string }
 
 export function toPick(row: FxRow, statuses: readonly FxRow[]): DealPick {
@@ -434,10 +435,22 @@ export function toPick(row: FxRow, statuses: readonly FxRow[]): DealPick {
 /** Every ZSGTSFTR_DEALID row (newest first), unrestricted: the P_DEAL search help is not exported. */
 export async function loadDealList(signal?: AbortSignal): Promise<DealList> {
   try {
-    const [rows, statuses] = await Promise.all([listDealIds({}, signal), fxList('tsfDealStatus', {}, { signal })])
+    const [rows, statuses, mcs] = await Promise.all([
+      listDealIds({}, signal),
+      fxList('tsfDealStatus', {}, { signal }),
+      fxList('masterContract', {}, { signal }).catch(() => [] as FxRow[]),
+    ])
     const seen = new Set<string>()
     const picks = rows
-      .map((r) => toPick(r, statuses))
+      .map((r): DealPick => {
+        const mc = mcs.find((m) => txt(m, 'ZMC_REF_NO') === txt(r, 'ZMC_REF'))
+        return {
+          ...toPick(r, statuses),
+          statusCode: txt(r, 'ZDEAL_STAT'),
+          fxModel: mc ? [txt(mc, 'ZMOD_ID'), txt(mc, 'ZMOD_DESC')].filter(Boolean).join(' - ') : '',
+          entityString: mc ? txt(mc, 'ZENT_DESC') : '',
+        }
+      })
       .filter((p) => p.dealId && !seen.has(p.dealId) && (seen.add(p.dealId), true))
     return { state: 'sap', picks }
   } catch (error) {

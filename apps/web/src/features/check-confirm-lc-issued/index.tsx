@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ConfirmDetails } from '../../shared/ui/ConfirmDetails.tsx'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { Calendar } from './Calendar.tsx'
@@ -586,6 +587,17 @@ export default function CheckConfirmLcIssued() {
               {selectedRow ? (
                 <>
                   Are you sure you want to settle LC Transaction <b>{selectedRow.lcTxn}</b>?
+                  <ConfirmDetails
+                    rows={[
+                      { label: 'Deal ID', value: selectedRow.dealId },
+                      { label: 'Applicant', value: selectedRow.applicant },
+                      { label: 'Beneficiary', value: selectedRow.beneficiary },
+                      { label: 'Bank', value: selectedRow.bank },
+                      { label: 'LC Amount', value: `${selectedRow.currency} ${selectedRow.lcAmount}` },
+                      { label: 'Start Date', value: selectedRow.startDate },
+                      { label: 'End Date', value: selectedRow.endDate },
+                    ]}
+                  />
                 </>
               ) : null}
             </div>

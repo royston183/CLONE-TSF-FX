@@ -100,19 +100,19 @@ export function BlotterTable({
           <th className="left">
             Curr 1<span className="req">*</span>
           </th>
-          <th>
+          <th className="num">
             Amount 1<span className="req">*</span>
           </th>
           <th className="left">B/S 2</th>
           <th className="left">
             Curr 2<span className="req">*</span>
           </th>
-          <th>Amount 2</th>
-          <th>
+          <th className="num">Amount 2</th>
+          <th className="num">
             All in Rate<span className="req">*</span>
           </th>
-          <th>Swap</th>
-          <th>Spot</th>
+          <th className="num">Swap</th>
+          <th className="num">Spot</th>
           {sortTh('valueDate', <>Value Date<span className="req">*</span></>, 'sortable')}
           <th className="left">Mode of Trade</th>
           <th className="left">Acc Category</th>

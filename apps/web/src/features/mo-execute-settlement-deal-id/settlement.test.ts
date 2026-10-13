@@ -182,13 +182,16 @@ describe('trade leg Update (UPD_DATA -> save_bank_data)', () => {
 })
 
 describe('trade leg Settlement Complete (SET_EXE -> set_complete / set_update)', () => {
-  it('sets ZEXE_CO only, with no FI document and no posting flag', async () => {
+  it('marks the leg complete with no FI document, and gives a row Initiate never wrote the leg\'s own configuration', async () => {
     const { deps, rows } = fakeDeps()
     const inv = M033()
     ok((await completeInvoiceLeg(at('20'), inv[0]!, inv, fxLegs(), invForm, deps)).ok)
     const r = rows.get('7000000032/1')
     strictEqual(r?.['ZEXE_CO'], 'X')
-    deepStrictEqual([r?.['ZBELNR'], r?.['ZPOST_CHECK'], r?.['ZSET_CHECK']], [undefined, undefined, undefined])
+    // No FI document, message or posting date: those belong to the posting step.
+    deepStrictEqual([r?.['ZBELNR'], r?.['ZMSG'], r?.['ZP_DATE']], [undefined, undefined, undefined])
+    // But not a bare row: the description, type and amounts BO: Post Accounting Entries reads are there.
+    deepStrictEqual([r?.['ZT_TYPE'], r?.['ZSET_DESC'], r?.['ZAMT'], r?.['ZTRF_TYPE']], [inv[0]!.leg, inv[0]!.trfDesc, inv[0]!.invAmt, inv[0]!.trfType])
   })
 
   it('needs status 20+', async () => {

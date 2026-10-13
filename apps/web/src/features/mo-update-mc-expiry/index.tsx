@@ -95,7 +95,7 @@ export default function MoUpdateMcExpiry() {
   const [detailId, setDetailId] = useState<string | null>(null)
 
   const feedback = useMasterContractFeedback()
-  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
+  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'warning' | 'info' = 'info') => {
     feedback.show(message, tone)
   }, [feedback.show])
 

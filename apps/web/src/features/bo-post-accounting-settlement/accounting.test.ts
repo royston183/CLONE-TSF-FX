@@ -2,7 +2,8 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { markAccountingComplete, type AccountingDeps } from './accounting.ts'
 
-const settled = (type: string, extra: Record<string, string> = {}) => ({ ZT_TYPE: type, ZSET_CHECK: 'X', ...extra })
+// Settled on MO is Settlement Complete (ZEXE_CO); ZSET_CHECK is SET_TYP configuration and may be blank on a settled leg.
+const settled = (type: string, extra: Record<string, string> = {}) => ({ ZT_TYPE: type, ZEXE_CO: 'X', ...extra })
 
 function deps(status: string, positions: Record<string, unknown>[]) {
   const writes: string[] = []
@@ -43,10 +44,21 @@ describe('Accounting Completed', () => {
   })
 
   it('names the legs that are not settled', async () => {
-    const { d, writes } = deps('21', [settled('T2-S'), { ZT_TYPE: 'T3-P', ZSET_CHECK: '' }, { ZT_TYPE: 'FX', ZD_MAP: 'D2', ZRP: '2000000000038' }])
+    const { d, writes } = deps('21', [settled('T2-S'), { ZT_TYPE: 'T3-P', ZEXE_CO: '' }, { ZT_TYPE: 'FX', ZD_MAP: 'D2', ZRP: '2000000000038' }])
     const result = await markAccountingComplete('7000000034', d)
     strictEqual(result.ok ? '' : result.error, 'These legs are not settled yet: T3-P, FX D2 2000000000038.')
     deepStrictEqual(writes, [])
+  })
+
+  it('does not mistake the SET_TYP "Settlement" flag for the leg not being settled (Deal ID 7000000053: all six ZEXE_CO = X, ZSET_CHECK blank on T3-P / T3-S / T2-S)', async () => {
+    const { d, writes } = deps('21', [
+      { ZT_TYPE: 'T3-P', ZSET_CHECK: '', ZPOST_CHECK: '', ZEXE_CO: 'X' },
+      { ZT_TYPE: 'T3-S', ZSET_CHECK: '', ZPOST_CHECK: '', ZEXE_CO: 'X' },
+      { ZT_TYPE: 'T2-P', ZSET_CHECK: 'X', ZPOST_CHECK: '', ZEXE_CO: 'X' },
+    ])
+    const result = await markAccountingComplete('7000000053', d)
+    ok(result.ok)
+    deepStrictEqual(writes, ['22'])
   })
 
   it('refuses with no stored legs, and when already at 22', async () => {

@@ -20,6 +20,7 @@ import {
 } from './appStr.ts'
 import { TRADERS } from './data.ts'
 import { isInSap, traderCodeOf } from './dealIds.ts'
+import { extendedAppFields } from './extendedFields.ts'
 import { toISO } from './format.ts'
 import type { AppDataPending, AutoSpotForm, BlotterRow } from './types.ts'
 
@@ -100,6 +101,7 @@ export async function createBlotterDeal(r: BlotterRow, blotterDate: Date): Promi
   const fields: AppStrFields = {
     ...fieldsOfRow(r),
     ...(await traderField(r.trader)),
+    ...((await extendedAppFields(r, `${payload['LeadCurrency']}/${payload['FollowCurrency']}`)) as AppStrFields),
     ZtsfBcurr: String(payload['BuyCurrency'] ?? ''),
     ZtsfScurr: String(payload['SellCurrency'] ?? ''),
     BlotterDate: toISO(blotterDate),

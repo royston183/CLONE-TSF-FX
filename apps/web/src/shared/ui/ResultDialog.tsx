@@ -33,6 +33,7 @@ export function ResultDialog({
   title,
   message,
   reference,
+  details,
   actions,
   onClose,
   children,
@@ -42,6 +43,8 @@ export function ResultDialog({
   message?: ReactNode
   /** Highlighted reference, e.g. { label: 'Deal ID / MC Number', value: '2000000039' }. */
   reference?: { label: string; value: ReactNode } | undefined
+  /** What is being confirmed: label / value rows under the message (rows with an empty value are skipped). */
+  details?: ReadonlyArray<{ label: string; value: ReactNode }> | undefined
   actions: ResultAction[]
   onClose?: (() => void) | undefined
   children?: ReactNode
@@ -57,6 +60,8 @@ export function ResultDialog({
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
   }, [onClose])
+
+  const shownDetails = (details ?? []).filter((d) => d.value !== '' && d.value != null)
 
   // Focus the first action while the message is up, and hand focus back to the popup underneath after.
   const cardRef = useRef<HTMLDivElement>(null)
@@ -92,6 +97,16 @@ export function ResultDialog({
             <div className="std-result-ref-label">{reference.label}</div>
             <div className="std-result-ref-value">{reference.value}</div>
           </div>
+        ) : null}
+        {shownDetails.length > 0 ? (
+          <dl className="std-result-details">
+            {shownDetails.map((d) => (
+              <div className="std-result-detail" key={d.label}>
+                <dt>{d.label}</dt>
+                <dd>{d.value}</dd>
+              </div>
+            ))}
+          </dl>
         ) : null}
         {children}
         <div className="std-result-actions">

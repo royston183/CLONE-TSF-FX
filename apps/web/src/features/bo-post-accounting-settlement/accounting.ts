@@ -4,7 +4,7 @@
  * The legs' state is ZSGTSFTR_TRD_POS (the gateway's local SQLite, /api/localdb/tsf-trade-position). The rule is
  * the screen's own (all FX deal and trade invoice documents posted before accounting is complete), on top of
  * execution being complete (21): every row, FX and trade invoice legs alike, has to be settled on MO
- * (ZSET_CHECK = 'X'), and every leg that is posted to FI (an FX leg; an invoice leg with ZPOST_CHECK = 'X') has
+ * (Settlement Complete, ZEXE_CO = 'X'; ZSET_CHECK is only the SET_TYP configuration flag), and every leg that is posted to FI (an FX leg; an invoice leg with ZPOST_CHECK = 'X') has
  * to carry its FI document (ZBELNR). Only a SAP posting fills ZBELNR, and that posting has no API yet, so until
  * it does a Deal ID cannot reach 22 from here. The Deal ID row is
  * re-read by key so its status is current and its full key (ZDEAL_TYPE, ZSUB_TYPE) is at hand for the write.
@@ -60,7 +60,7 @@ export async function markAccountingComplete(dealId: string, deps: AccountingDep
   if (!positions.length) {
     return { ok: false, error: 'No settlement legs are stored for this Deal ID: settle them on MO: Execute Settlement for Deal ID first.' }
   }
-  const open = positions.filter((p) => String(p['ZSET_CHECK'] ?? '').trim() !== 'X').map(legName)
+  const open = positions.filter((p) => String(p['ZEXE_CO'] ?? '').trim() !== 'X').map(legName)
   if (open.length) return { ok: false, error: `These legs are not settled yet: ${open.join(', ')}.` }
   const unposted = positions
     .filter((p) => String(p['ZT_TYPE'] ?? '').trim() === 'FX' || String(p['ZPOST_CHECK'] ?? '').trim() === 'X')

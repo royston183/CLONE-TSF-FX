@@ -2,8 +2,10 @@ import { ApiError } from '@slc/api-client'
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { dateFromIso, num } from '../../shared/fx/sap.ts'
-import { BUSINESS_AREAS, COMMODITIES, ENTITIES, FX_MODELS, PROFIT_CENTERS, pairOf } from './data.ts'
-import type { CodeDesc, CodeLabel, Entity, FxModel, LegTemplate, MasterContract } from './types.ts'
+import { BUSINESS_AREAS, COMMODITIES, ENTITIES, FIXING_REFERENCES, FX_MODELS, PROFIT_CENTERS, pairOf } from './data.ts'
+import { loadD1LegsOfContracts } from './appStr.ts'
+import { toAreaCodes, installAreaCodes, type AreaCodes } from './extendedFields.ts'
+import type { CodeDesc, CodeLabel, Entity, FixingReference, FxModel, LegTemplate, MasterContract } from './types.ts'
 
 /**
  * The masters the blotter reads from the middleware, instead of the constants that used to sit
@@ -84,6 +86,22 @@ export function toCommodities(rows: readonly FxRow[]): CodeDesc[] {
   return rows
     .filter((r) => txt(r, 'ZCOM_ID'))
     .map((r) => ({ code: txt(r, 'ZCOM_ID'), desc: txt(r, 'ZCOM_DESC') || txt(r, 'ZCOM_SDESC') }))
+}
+
+/**
+ * ftrtFixDef (FTRT_FIX_DEF): FIX_ID is the reference, FCURR/LCURR its foreign and local currency, so
+ * FBIL (INR per USD) is the pair USD/INR. Each reference once.
+ */
+export function toFixingReferences(rows: readonly FxRow[]): FixingReference[] {
+  const seen = new Set<string>()
+  const out: FixingReference[] = []
+  for (const r of rows) {
+    const code = txt(r, 'FIX_ID')
+    if (!code || seen.has(code)) continue
+    seen.add(code)
+    out.push({ code, pair: `${txt(r, 'FCURR')}/${txt(r, 'LCURR')}` })
+  }
+  return out
 }
 
 /** The value of the tolerance row with the given ID, or undefined when the API has none. */
@@ -167,7 +185,7 @@ export function toFxModels(rows: readonly FxRow[], tolerancePct: number): FxMode
  * against a deal; a row without them is left out. The balance is read as USD, so a contract in
  * another currency is left out too rather than mixed into a USD total.
  */
-export function toMasterContracts(rows: readonly FxRow[]): MasterContract[] {
+export function toMasterContracts(rows: readonly FxRow[], usage?: Readonly<Record<string, number>>): MasterContract[] {
   const out: MasterContract[] = []
   for (const r of rows) {
     const shipStart = dateFromIso(r['ZSHIP_START'])
@@ -175,7 +193,9 @@ export function toMasterContracts(rows: readonly FxRow[]): MasterContract[] {
     const mcDate = dateFromIso(r['ZMC_DATE'])
     if (!txt(r, 'ZMC_REF_NO') || !shipStart || !shipEnd || !mcDate) continue
     if (txt(r, 'ZCURR') !== 'USD' || !txt(r, 'ZOCURR')) continue
-    const utilized = num(r['ZUTI_AMT'])
+    // ZUTI_AMT is never written (the legacy blotter does not touch it); the amount in use is what the
+    // contract's Deal 1 legs add up to. Without a usage read (tests), the column is all there is.
+    const utilized = usage ? (usage[txt(r, 'ZMC_REF_NO')] ?? 0) : num(r['ZUTI_AMT'])
     out.push({
       mcNumber: txt(r, 'ZMC_REF_NO'),
       origin: txt(r, 'ZORIGIN'),
@@ -202,6 +222,59 @@ export function toMasterContracts(rows: readonly FxRow[]): MasterContract[] {
   return out
 }
 
+// ---------------------------------------------------------------- Master Contract usage
+
+/**
+ * What each contract has drawn, as the legacy AMT_CHECK works it out: the absolute amount, in the contract's
+ * currency (USD here), of every Deal 1 leg booked against it. `legs` are the TrmFxApp rows (contract + company
+ * code + transaction), `deals` the transactions' amounts (ZSGTSFV_FX: the view repeats a transaction per
+ * activity, so each BUKRS + RFHA counts once). A leg with no USD side, or no deal row, adds nothing.
+ */
+export function sumContractUsage(
+  legs: ReadonlyArray<{ mcRef: string; companyCode: string; transaction: string }>,
+  deals: readonly FxRow[],
+): Record<string, number> {
+  const byTxn = new Map<string, FxRow>()
+  for (const d of deals) {
+    const key = `${txt(d, 'BUKRS')}::${txt(d, 'RFHA')}`
+    if (!byTxn.has(key)) byTxn.set(key, d)
+  }
+  const used: Record<string, number> = {}
+  const counted = new Set<string>()
+  for (const leg of legs) {
+    const key = `${leg.companyCode}::${leg.transaction}`
+    if (counted.has(key)) continue
+    counted.add(key)
+    const d = byTxn.get(key)
+    if (!d) continue
+    const amount = txt(d, 'CURR1') === USD ? num(d['AMT1']) : txt(d, 'CURR2') === USD ? num(d['AMT2']) : 0
+    if (amount) used[leg.mcRef] = (used[leg.mcRef] ?? 0) + Math.abs(amount)
+  }
+  return used
+}
+
+/** Reads the Deal 1 legs of the given contracts and their amounts. */
+export async function loadContractUsage(mcRefs: readonly string[], signal?: AbortSignal): Promise<Record<string, number>> {
+  if (!mcRefs.length) return {}
+  let app: Awaited<ReturnType<typeof loadD1LegsOfContracts>>
+  try {
+    app = await loadD1LegsOfContracts(mcRefs, signal)
+  } catch (error) {
+    if (isAbort(error)) throw error
+    throw new MasterLoadError('TrmFxApp (Master Contract usage)', error)
+  }
+  const legs = app
+    .filter((a) => a.ZtsfMcRefNo && a.CompanyCode && a.FinancialTransaction)
+    .map((a) => ({ mcRef: (a.ZtsfMcRefNo ?? '').trim(), companyCode: a.CompanyCode, transaction: a.FinancialTransaction }))
+  if (!legs.length) return {}
+  const deals: FxRow[] = []
+  const transactions = unique(legs.map((l) => l.transaction))
+  for (let i = 0; i < transactions.length; i += 100) {
+    deals.push(...(await read('tsfvFx', { 'RFHA[in]': transactions.slice(i, i + 100).join(',') }, signal)))
+  }
+  return sumContractUsage(legs, deals)
+}
+
 // ---------------------------------------------------------------- loading
 
 export type BlotterMasters = {
@@ -211,6 +284,10 @@ export type BlotterMasters = {
   fxModels: FxModel[]
   commodities: CodeDesc[]
   contracts: MasterContract[]
+  /** NDF fixing references (ftrtFixDef); the dropdown's list. */
+  fixingReferences?: FixingReference[]
+  /** Profit centre / business area names -> the SAP codes a deal is booked with. */
+  areaCodes?: AreaCodes
 }
 
 /**
@@ -246,6 +323,9 @@ export function buildMasters(raw: {
   commodity: readonly FxRow[]
   masterContract: readonly FxRow[]
   tolerance: readonly FxRow[]
+  fixingRef?: readonly FxRow[]
+  /** Amount drawn per contract; absent means ZUTI_AMT is taken as it is. */
+  usage?: Readonly<Record<string, number>>
 }): BlotterMasters {
   const entities = toEntities(raw.comp)
   if (!entities.length) throw new MasterLoadError('comp', new Error('it returned no usable entities.'))
@@ -257,27 +337,35 @@ export function buildMasters(raw: {
   if (!fxModels.length) throw new MasterLoadError('fxModel', new Error('it returned no FX models.'))
   const commodities = toCommodities(raw.commodity)
   if (!commodities.length) throw new MasterLoadError('commodity', new Error('it returned no commodities.'))
+  const fixingReferences = raw.fixingRef ? toFixingReferences(raw.fixingRef) : undefined
+  if (fixingReferences && !fixingReferences.length) {
+    throw new MasterLoadError('ftrtFixDef', new Error('it returned no fixing references.'))
+  }
   return {
     entities,
+    ...(fixingReferences ? { fixingReferences } : {}),
     profitCenters: toProfitCenters(raw.comp),
     businessAreas: toBusinessAreas(raw.comp),
     fxModels,
     commodities,
     // No usable contract is a real answer, not a failure: the Auto Deal list is just empty.
-    contracts: toMasterContracts(raw.masterContract),
+    contracts: toMasterContracts(raw.masterContract, raw.usage),
+    areaCodes: toAreaCodes(raw.comp),
   }
 }
 
 /** Reads the five masters in parallel. Rejects on the first failure; nothing is substituted. */
 export async function loadBlotterMasters(signal?: AbortSignal): Promise<BlotterMasters> {
-  const [comp, fxModel, commodity, masterContract, tolerance] = await Promise.all([
+  const [comp, fxModel, commodity, masterContract, tolerance, fixingRef] = await Promise.all([
     read('comp', {}, signal),
     read('fxModel', {}, signal),
     read('commodity', {}, signal),
     read('masterContract', { 'ZMC_STAT[in]': USABLE_MC_STATUSES.join(',') }, signal),
     read('tolerance', {}, signal),
+    read('ftrtFixDef', {}, signal),
   ])
-  return buildMasters({ comp, fxModel, commodity, masterContract, tolerance })
+  const usage = await loadContractUsage(unique(masterContract.map((r) => txt(r, 'ZMC_REF_NO'))), signal)
+  return buildMasters({ comp, fxModel, commodity, masterContract, tolerance, fixingRef, usage })
 }
 
 /**
@@ -291,4 +379,6 @@ export function installMasters(m: BlotterMasters): void {
   replaceInPlace(BUSINESS_AREAS, m.businessAreas)
   replaceInPlace(FX_MODELS, m.fxModels)
   replaceInPlace(COMMODITIES, m.commodities)
+  if (m.fixingReferences) replaceInPlace(FIXING_REFERENCES, m.fixingReferences)
+  if (m.areaCodes) installAreaCodes(m.areaCodes)
 }

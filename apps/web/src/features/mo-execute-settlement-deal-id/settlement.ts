@@ -172,6 +172,16 @@ export function invoicePosition(r: TradeInvoice, idx: number): PositionWrite {
   }
 }
 
+/**
+ * What Initiate Settlement stores that does not change afterwards: the leg's SET_TYP configuration and amounts, without the
+ * banks, the posting date and the completion / posting state, which belong to the later steps. Writing it again with a bank
+ * update or Settlement Complete is harmless on a row Initiate made and completes a row it did not.
+ */
+export function positionConfig(r: TradeInvoice, idx: number): Record<string, string | number> {
+  const skip = new Set(['ZEXE_CO', 'ZBELNR', 'ZMSG', 'ZP_DATE', 'ZHBKID', 'ZHKTID', 'ZREC_HBKID', 'ZREC_HKTID'])
+  return Object.fromEntries(Object.entries(invoicePosition(r, idx).fields).filter(([name]) => !skip.has(name)))
+}
+
 /** Initiate Settlement (offered 05..19): every trade leg's TRD_POS row, then ZDEAL_STAT 20 (S030). */
 export async function initiateSettlement(deal: Deal, invoices: readonly TradeInvoice[], deps: SettlementDeps = defaultDeps): Promise<ActionResult> {
   if (!(stat(deal) >= 5 && stat(deal) <= 19)) {
@@ -203,7 +213,9 @@ async function saveBankData(deal: Deal, r: TradeInvoice, invoices: readonly Trad
   }
   const type = r.leg.slice(0, 2)
   for (const [idx, leg] of invoices.entries()) {
-    if (leg.leg.slice(0, 2) === type) await deps.putPosition(deal.dealId, { seq: invoiceSeq(leg, idx), fields })
+    // The leg's configuration rides along with the banks: a row created here (no Initiate row for that sequence) would otherwise hold
+    // only the banks, and every screen that reads the row (BO: Post Accounting Entries) would show blank descriptions and 0.00 amounts.
+    if (leg.leg.slice(0, 2) === type) await deps.putPosition(deal.dealId, { seq: invoiceSeq(leg, idx), fields: { ...positionConfig(leg, idx), ...fields } })
   }
 }
 
@@ -239,7 +251,7 @@ export async function completeInvoiceLeg(
   if (refusal) return { ok: false, error: refusal }
   try {
     await saveBankData(deal, r, invoices, form, deps)
-    await deps.putPosition(deal.dealId, { seq: invoiceSeq(r, invoices.indexOf(r)), fields: { ZEXE_CO: 'X' } })
+    await deps.putPosition(deal.dealId, { seq: invoiceSeq(r, invoices.indexOf(r)), fields: { ...positionConfig(r, invoices.indexOf(r)), ZEXE_CO: 'X' } })
     return { ok: true, message: `Sequence ${r.seq} (${r.leg}) settled (S051). Its accounting entry is posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081).` }
   } catch (error) {
     return failed(`Settling leg ${r.leg}`, error)

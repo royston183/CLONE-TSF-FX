@@ -9,7 +9,7 @@ import { confirmPrepared, prepareConfirmation, type Prepared } from './analysisC
 import { GAPS } from './data.ts'
 import { DealDetails } from './DetailTables.tsx'
 import { FxLegTable } from './FxLegTable.tsx'
-import { actionVisibility, legNote, nextSort, quickPickLabel, resolveDealId, sortedFilteredLegs, toggleLeg } from './logic.ts'
+import { actionVisibility, legNote, nextSort, resolveDealId, sortedFilteredLegs, statusMeta, toggleLeg } from './logic.ts'
 import { ConfirmModal, EditPairModal, PromptModal, type ConfirmPreview } from './Modals.tsx'
 import { InvoiceTable, PlTable } from './PlanTables.tsx'
 import './mo-confirm-fx-deal-id.legacy.css'
@@ -17,13 +17,12 @@ import './mo-confirm-fx-deal-id.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-confirm-fx-deal-id.dark.css'
 import './mo-confirm-fx-deal-id.overrides.css'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import type { ResultTone } from '../../shared/ui/ResultDialog.tsx'
 import type { ModalId, Sort, SortKey, Toast, ToastType } from './types.ts'
 
 const TOAST_MS = 3200
-/** How many Deal IDs the quick picks list; the typeahead offers them all. */
-const QUICK_PICKS = 8
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
@@ -51,6 +50,7 @@ function previewOf(p: Prepared): ConfirmPreview {
 
 export default function MoConfirmFxDealId() {
   const [index, setIndex] = useState<readonly DealIndexEntry[]>([])
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [loaded, setLoaded] = useState<LoadedDeal | null>(null)
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -63,6 +63,7 @@ export default function MoConfirmFxDealId() {
   const [modal, setModal] = useState<ModalId | null>(null)
   const [pair, setPair] = useState<{ candidates: ReplacementCandidate[]; loading: boolean; error: string | null }>({ candidates: [], loading: false, error: null })
   /** Set when Reverse MO Confirmation stopped after the status step; the next run finishes the deletion only. */
+  const [planned, setPlanned] = useState<{ loading: boolean; reason: string | null; prepared: Prepared | null } | null>(null)
   const [confirmState, setConfirmState] = useState<{ loading: boolean; reason: string | null; prepared: Prepared | null }>({ loading: false, reason: null, prepared: null })
   const [reverseResume, setReverseResume] = useState<string | null>(null)
 
@@ -70,7 +71,6 @@ export default function MoConfirmFxDealId() {
   const toastSeq = useRef(0)
   const toastTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
 
-  const listId = useId()
   const inputId = useId()
 
   useEffect(() => {
@@ -264,6 +264,20 @@ export default function MoConfirmFxDealId() {
   /* ---------- Change / Confirm ---------- */
 
   /** Calculates the plan and P&L for the Deal ID (and the chosen Master Contract) and shows them; nothing is saved yet. */
+  /** The planned P&L of a deal with none stored: calculated like Change / Confirm does (TCURR rate, currency string, profit margin), nothing written. */
+  useEffect(() => {
+    setPlanned(null)
+    if (!deal || deal.storedPl) return
+    let stale = false
+    setPlanned({ loading: true, reason: null, prepared: null })
+    prepareConfirmation(deal.dealId, deal.legs)
+      .then((r) => !stale && setPlanned(r.ok ? { loading: false, reason: null, prepared: r } : { loading: false, reason: r.reason, prepared: null }))
+      .catch((e) => !stale && setPlanned({ loading: false, reason: messageOf(e), prepared: null }))
+    return () => {
+      stale = true
+    }
+  }, [deal])
+
   const openConfirm = async (mcRef = '') => {
     if (!deal) return
     setConfirmState({ loading: true, reason: null, prepared: null })
@@ -311,7 +325,7 @@ export default function MoConfirmFxDealId() {
 
         <main>
           {/* ============ DEAL SELECTION ============ */}
-          <section className="card">
+          <section className={deal ? "card" : "card selection-compact"}>
             <div className="card-head">
               <h2>Deal Selection</h2>
               <span className="hint">Enter a Deal ID to load its FX legs and invoice plan</span>
@@ -324,7 +338,6 @@ export default function MoConfirmFxDealId() {
                   </label>
                   <input
                     id={inputId}
-                    list={listId}
                     placeholder="Deal ID"
                     autoComplete="off"
                     value={searchText}
@@ -333,16 +346,12 @@ export default function MoConfirmFxDealId() {
                       if (e.key === 'Enter') void loadDeal(searchText)
                     }}
                   />
-                  <datalist id={listId}>
-                    {index.map((d) => (
-                      <option key={d.dealId} value={d.dealId} />
-                    ))}
-                  </datalist>
                   {searchErr !== null && <div className="err-msg">{searchErr}</div>}
                 </div>
                 <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void loadDeal(searchText)}>
                   {loading ? 'Loading…' : 'Load Deal'}
                 </button>
+                <ViewDealsButton onClick={() => setPickerOpen(true)} />
                 {deal && (
                   <button type="button" className="btn btn-secondary" onClick={clearDeal}>
                     Clear
@@ -350,21 +359,6 @@ export default function MoConfirmFxDealId() {
                 )}
               </div>
             </div>
-            <div className="quick-picks">
-              {index.slice(0, QUICK_PICKS).map((d) => (
-                <div
-                  key={d.dealId}
-                  className="quick-pick"
-                  onClick={() => {
-                    setSearchText(d.dealId)
-                    void loadDeal(d.dealId)
-                  }}
-                >
-                  {quickPickLabel(d)}
-                </div>
-              ))}
-            </div>
-
             {deal && <DealDetails deal={deal} />}
           </section>
 
@@ -440,7 +434,7 @@ export default function MoConfirmFxDealId() {
               </div>
 
               {!deal.noInv && <InvoiceTable rows={deal.invoices} />}
-              {!deal.noInv && <PlTable deal={deal} />}
+              {!deal.noInv && <PlTable deal={deal} planned={planned ? { loading: planned.loading, reason: planned.reason, preview: planned.prepared ? previewOf(planned.prepared) : null } : null} />}
             </section>
           )}
 
@@ -449,11 +443,27 @@ export default function MoConfirmFxDealId() {
             <div className="empty-state">
               <div className="icon">&#128269;</div>
               <h3>No deal loaded</h3>
-              <p>Search for a Deal ID above, or pick one of the quick-access deals to see its FX legs and invoice plan.</p>
+              <p>Enter a Deal ID above, or use View Deals, to see its FX legs and invoice plan.</p>
             </div>
           )}
         </main>
       </div>
+
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
+          rows={index.map((d) => {
+            const status = `${d.status} - ${statusMeta(d.status).desc}`
+            return { dealId: d.dealId, cells: [d.dealId, d.fxModel, d.entityString, status], text: `${d.dealId} ${d.fxModel} ${d.entityString} ${status}` }
+          })}
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            setSearchText(id)
+            void loadDeal(id)
+          }}
+        />
+      ) : null}
 
       {/* ============ MODAL OVERLAY ============ */}
       <div

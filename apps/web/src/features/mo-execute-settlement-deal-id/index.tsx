@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
-import { isAbort } from '../../shared/fx/mw.ts'
+import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
+import { txt } from '../../shared/fx/masters.ts'
+import { fxList, isAbort } from '../../shared/fx/mw.ts'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
@@ -16,11 +19,10 @@ import {
   loadDealList,
   loadDealScreen,
   pnlWaiting,
-  saveSpotData as bookSpots,
-  tcurrSpotRates,
   type DealList,
   type DealScreen,
 } from './api.ts'
+import { loadDifference, saveDifference, type DifferenceView } from './differenceApi.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
 import {
   DEAL_ID_REQUIRED,
@@ -168,6 +170,7 @@ export default function MoExecuteSettlementDealId() {
 
   // Selection screen
   const [dealIdInput, setDealIdInput] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [selError, setSelError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [list, setList] = useState<DealList | null>(null)
@@ -186,11 +189,31 @@ export default function MoExecuteSettlementDealId() {
   // Popups and their forms
   const modals = useModals()
   const [amendDate, setAmendDate] = useState('')
-  const [spots, setSpots] = useState<string[]>([])
+  const [diffView, setDiffView] = useState<DifferenceView | null>(null)
+  const [diffLoading, setDiffLoading] = useState(false)
+  const [diffError, setDiffError] = useState('')
   const [editDocType, setEditDocType] = useState('')
   const [editDate, setEditDate] = useState('')
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
+  // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP): suggestions for the bank fields.
+  const [houseBanks, setHouseBanks] = useState<HouseBankAccount[]>([])
+  const [entityCompany, setEntityCompany] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let live = true
+    void Promise.all([loadHouseBankAccounts(), fxList('comp')])
+      .then(([accounts, comp]) => {
+        if (!live) return
+        setHouseBanks(accounts)
+        setEntityCompany(Object.fromEntries(comp.map((r) => [txt(r, 'ZCOM_ID'), txt(r, 'ZBUKRS')])))
+      })
+      .catch((error: unknown) => {
+        if (!isAbort(error)) console.warn('[execute-settlement] house bank accounts unavailable: the bank fields stay free text', error)
+      })
+    return () => {
+      live = false
+    }
+  }, [])
 
   // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
   const [results, setResults] = useState<ResultItem[]>([])
@@ -336,31 +359,31 @@ export default function MoExecuteSettlementDealId() {
     showToast(ACTION_WAITING.amend, 'error')
   }
 
-  // FX-Invoice Difference (9006)
+  // FX-Invoice Difference (9006): PROCESS_DATA_NEW on open, SAVE_SPOT_DATA_NEW on the SPOT button.
+  const readDifference = () => {
+    setDiffLoading(true)
+    setDiffError('')
+    return loadDifference(deal, fxDeals, invoices)
+      .then(setDiffView)
+      .catch((error: unknown) => {
+        if (isAbort(error)) return
+        setDiffView(null)
+        setDiffError(`The invoice difference could not be read: ${messageOf(error)}`)
+      })
+      .finally(() => setDiffLoading(false))
+  }
   const openDiff = () => {
-    const initial = fxDeals.map((r) => r.spot)
-    setSpots(initial)
     modals.open('diff')
-    // The default Spot Rate is TCURR's (type M, today); a rate the user already typed is left alone.
-    void tcurrSpotRates(fxDeals).then((rates) =>
-      setSpots((list) => list.map((v, i) => (v === initial[i] ? (rates[i] ?? v) : v))),
-    )
+    void readDifference()
   }
   const [savingSpot, setSavingSpot] = useState(false)
   const saveSpotData = async () => {
-    if (savingSpot) return
+    if (savingSpot || !diffView) return
     setSavingSpot(true)
     try {
-      const results = await bookSpots(deal.dealId, fxDeals, fxDeals.map((r, i) => spots[i] ?? r.spot))
-      const booked = results.filter((r) => r.ok)
-      const lines = results.map((r) => `${r.dealType} ${r.rfha}: ${r.message}`)
-      showToast(lines.join(' | '), booked.length === results.length ? 'success' : 'error')
-      if (booked.length) {
-        modals.close('diff')
-        refreshScreen()
-      }
-    } catch (error) {
-      showToast(`Save Spot Data failed: ${messageOf(error)}`, 'error')
+      const result = await saveDifference(diffView)
+      showToast(result.ok ? result.message : result.error, result.ok ? 'success' : 'error')
+      if (result.ok) await readDifference()
     } finally {
       setSavingSpot(false)
     }
@@ -510,6 +533,7 @@ export default function MoExecuteSettlementDealId() {
               >
                 Go
               </button>
+              <ViewDealsButton onClick={() => setPickerOpen(true)} />
             </div>
             <div className={selError || list?.state === 'unavailable' ? 'select-err show' : 'select-err'} id="selErr">
               {selError ?? (list?.state === 'unavailable' ? list.reason : '')}
@@ -591,6 +615,23 @@ export default function MoExecuteSettlementDealId() {
         </div>
       </main>
 
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'FX Model', 'Entity String', 'Status']}
+          rows={(list?.state === 'sap' ? list.picks : []).map((p) => {
+            const status = [p.statusCode, p.statusText].filter(Boolean).join(' - ')
+            return { dealId: p.dealId, cells: [p.dealId, p.fxModel ?? '', p.entityString ?? '', status], text: `${p.dealId} ${p.fxModel ?? ''} ${p.entityString ?? ''} ${status}` }
+          })}
+          emptyText={list?.state === 'unavailable' ? list.reason : 'No matching Deal IDs found.'}
+          hint="Click a deal row to load it."
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            setDealIdInput(id)
+            void executeSelection(id)
+          }}
+        />
+      ) : null}
       <ResultQueue items={results} onDismiss={(id) => setResults((r) => r.filter((x) => x.id !== id))} />
       <div className={`zfac-toast${toast.visible ? ' show' : ''}${toast.visible && toast.kind ? ` ${toast.kind}` : ''}`} id="toast">
         {toast.message}
@@ -614,12 +655,12 @@ export default function MoExecuteSettlementDealId() {
       <DiffModal
         open={modals.isOpen('diff')}
         onClose={() => modals.close('diff')}
-        rows={fxDeals}
-        spots={spots}
-        onSpot={(idx, v) => setSpots((list) => list.map((s, i) => (i === idx ? v : s)))}
+        rows={diffView?.rows ?? []}
+        loading={diffLoading}
+        note={diffView?.note ?? ''}
         onSave={() => void saveSpotData()}
         saving={savingSpot}
-        emptyText={diffWaiting(legsWaiting)}
+        emptyText={diffError || diffWaiting(legsWaiting)}
       />
       <DmsModal
         open={modals.isOpen('dms')}
@@ -662,6 +703,8 @@ export default function MoExecuteSettlementDealId() {
         form={invForm}
         onField={setInvField}
         onAction={postInvAction}
+        houseBanks={houseBanks}
+        companyOf={(entity) => entityCompany[entity] ?? ''}
       />
       <ViewInvModal
         open={modals.isOpen('viewInv')}

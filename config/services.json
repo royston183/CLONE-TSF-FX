@@ -105,6 +105,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_slctsfbpbank_o4_api/srvd_a2x/sap/zfs_sd_slctsfbpbank/0001",
       "description": "ZFS_SB_SLCTSFBPBANK_O4_API — SlcTsfBpBank (business partner bank details per company code)"
     },
+    "housebank": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_hbkacct_o4_api/srvd_a2x/sap/zfs_sd_housebankaccount/0001",
+      "description": "ZFS_SB_HBKACCT_O4_API — HouseBankAccount (company house banks and their accounts: T012 / T012K)"
+    },
     "companycode": {
       "kind": "odata",
       "auth": "sap-ds4",

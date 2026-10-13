@@ -1,3 +1,4 @@
+import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { statusMeta } from './logic.ts'
 import type { Deal } from './types.ts'
 
@@ -7,6 +8,21 @@ export function StatusBadge({ code }: { code: string }) {
     <span className={`status-badge ${meta.cls}`}>
       <span className="status-dot"></span>
       {code} - {meta.desc}
+    </span>
+  )
+}
+
+/**
+ * A transaction's own status (ZSGTSFTR_APP_STR.TXN_STATUS), worded from ZSGTSFTR_TXNSTAT type 01 — not from the Deal ID
+ * status table, which uses the same codes for something else (07 is "Partial Invoice Created in TRM" for a Deal ID, but
+ * "MO: Match & Release for Settlement" for a transaction). The colour is the code's badge colour.
+ */
+export function LegStatusBadge({ code }: { code: string }) {
+  const meta = statusMeta(code)
+  return (
+    <span className={`status-badge ${meta.cls}`}>
+      <span className="status-dot"></span>
+      {code ? `${code} - ${fxTxnStatusLabel(code)}` : '–'}
     </span>
   )
 }

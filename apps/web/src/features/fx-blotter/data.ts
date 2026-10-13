@@ -121,12 +121,8 @@ export const PROFIT_CENTERS: CodeLabel[] = []
 /** Filled from the middleware (comp, the business area columns) before the screen opens; see masters.ts. */
 export const BUSINESS_AREAS: CodeLabel[] = []
 
-export const FIXING_REFERENCES: FixingReference[] = [
-  { code: 'FBIL', pair: 'USD/INR' },
-  { code: 'ABS/BBSW', pair: 'USD/VND' },
-  { code: 'TAIFX', pair: 'USD/TWD' },
-  { code: 'JISDOR', pair: 'USD/IDR' },
-]
+/** Filled from the middleware (ftrtFixDef, the fixing references) before the screen opens; see masters.ts. */
+export const FIXING_REFERENCES: FixingReference[] = []
 
 /** Static factory-calendar holidays (illustrative, not exhaustive), as YYYY-MM-DD. */
 export const HOLIDAYS = ['2026-01-01', '2026-01-26', '2026-03-25', '2026-08-15', '2026-10-02', '2026-12-25']

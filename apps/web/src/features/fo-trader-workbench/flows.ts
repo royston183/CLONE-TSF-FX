@@ -34,6 +34,8 @@ export type Wb = {
   outcome: (opts: StatusOptions) => void
   open: (spec: PopupSpec) => void
   confirm: (opts: { title: string; message: string }, onYes: () => void) => void
+  /** Reads the workbench from SAP again, after something was booked there. */
+  reload: () => void
   /** Today, ISO — the trade/value date of a spot booked here. */
   today: () => string
 }

@@ -113,7 +113,7 @@ export async function loadPartners(companyCode: string, signal?: AbortSignal): P
   try {
     const opts = signal ? { signal } : undefined
     const v4 = await apiFetch<V4<{ BusinessPartner?: string; CompanyCode?: string }>>(
-      `${bpBankApi('SlcTsfBpBank')}?${qs({ $filter: `CompanyCode eq ${quote(companyCode)}`, $select: 'BusinessPartner,CompanyCode' })}`,
+      `${bpBankApi('SlcTsfBpBank')}?${qs({ $filter: `CompanyCode eq ${quote(companyCode)}`, $select: 'BusinessPartner,CompanyCode', $top: '5000' })}`,
       opts,
     )
     const banks = v4?.value ?? []

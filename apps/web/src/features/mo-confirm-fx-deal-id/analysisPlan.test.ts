@@ -4,7 +4,7 @@ import type { FxRow } from '../../shared/fx/mw.ts'
 import { rateOfRow } from '../../shared/fx/exchange-rate.ts'
 import { dealRow, fake, rec } from './analysisTestKit.ts'
 import { confirmPrepared, pickCurrencyString, prepareConfirmation, type PlanPorts } from './analysisConfirm.ts'
-import { applyProfitMargin, buildInvoicePlan, buildPnl, linkedLeg, persistedPl, pnlRateRequest, usdSideAmount, type PlanInput, type PlanLeg } from './analysisPlan.ts'
+import { applyProfitMargin, buildInvoicePlan, buildPnl, fxSummaryPl, fxSummaryRow, linkedLeg, persistedPl, pnlRateRequest, usdSideAmount, type PlanInput, type PlanLeg } from './analysisPlan.ts'
 import type { Leg } from './types.ts'
 
 const RULE: FxRow = { ZMOD_ID: 'M033', ZSUB_TYPE: 'FX1', ZD1_INV_LINK: '01', ZD1_INV_LINK2: '', ZD2_INV_LINK: '02', ZD2_INV_LINK2: '03', ZD1_ADJ: '', ZD2_ADJ: '' }
@@ -27,6 +27,33 @@ const input = (over: Partial<PlanInput> = {}): PlanInput => ({
 })
 
 const line = (r: ReturnType<typeof buildInvoicePlan>, t: string) => r.lines.find((l) => l.ZTTYPE === t)!
+
+describe('FX Deal P&L summary (ALV1_SUB_TOTAL / UPDATE_INV_REF)', () => {
+  it('sums the non-USD side of USD legs, absolute, and derives the USD side from the lead-pair rate', () => {
+    const row = fxSummaryRow([d1, d2])!
+    deepStrictEqual([row.amt1, row.amt2, row.lead, row.foreign, row.date], [0, 6000, 'USD', 'INR', '2026-10-06'])
+    const pl = fxSummaryPl([d1, d2], 83.2, 83.2)!
+    strictEqual(pl.localCurrency, 'INR')
+    strictEqual(pl.localAmount, 6000)
+    strictEqual(Math.round(pl.pl * 100) / 100, 72.12)
+    strictEqual(pl.rate, 83.2)
+  })
+
+  it('stores AMT2 / AMT1 the other way round when the first leg is not USD-first', () => {
+    const e1: PlanLeg = { ...d1, curr1: 'INR', curr2: 'USD', amt1: -1664000, amt2: 20000 }
+    const e2: PlanLeg = { ...d2, curr1: 'INR', curr2: 'USD', amt1: 1670000, amt2: -20000 }
+    const pl = fxSummaryPl([e1, e2], 83.2, 83.2)!
+    // AMT1 = |sum of INR| = 6000, AMT2 = AMT1 / rate; ZPL takes AMT2 (USD), ZPL_LAMT takes AMT1.
+    strictEqual(pl.localAmount, 6000)
+    strictEqual(pl.localCurrency, 'INR')
+    strictEqual(Math.round(pl.pl * 100) / 100, 72.12)
+  })
+
+  it('is undefined without a D1 / D2 leg or a usable rate', () => {
+    strictEqual(fxSummaryPl([], 83.2, 83.2), undefined)
+    strictEqual(fxSummaryPl([d1, d2], 0, 83.2), undefined)
+  })
+})
 
 describe('invoice plan rows', () => {
   it('builds T1 / T2 / T3 from the entity and currency strings with deterministic references', () => {
@@ -269,6 +296,7 @@ describe('Change / Confirm end to end', () => {
     ok(r.ok)
     strictEqual(f.state.deal['ZDEAL_STAT'], '02')
     strictEqual(f.state.deal['ZCONFIRM'], 'X')
+    strictEqual(f.state.deal['ZPL'], '72.12')
     strictEqual(f.state.deal['ZPL_CURR'], 'USD')
     strictEqual(f.state.deal['ZPL_LAMT'], '6000.00')
     strictEqual(f.state.deal['ZPL_LCURR'], 'INR')

@@ -29,6 +29,7 @@
  */
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { setDealStatus } from '../../shared/fx/deal-id.ts'
+import { tradeCurrency } from '../../shared/fx/currency-string.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num, sapUser } from '../../shared/fx/sap.ts'
@@ -221,7 +222,7 @@ export function planInvoices(p: PlanInput): Plan {
   const ent = entId ? p.entStr.find((r) => txt(r, 'ZENT_ID') === entId) : undefined
   const cur = p.dealCurrId ? p.curStr.find((r) => txt(r, 'ZCURR_ID') === p.dealCurrId) : undefined
   const e = (n: 1 | 2 | 3) => (ent ? txt(ent, `ZENT${n}`) : '')
-  const c = (n: 1 | 2 | 3) => (cur ? txt(cur, `ZCURR${n}`) : '')
+  const c = (n: 1 | 2 | 3) => tradeCurrency(cur, n)
 
   const shape: [string, string, string, string, string][] = [
     // ttype, link, sell, buy, currency

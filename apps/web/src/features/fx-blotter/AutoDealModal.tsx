@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { entityOf, txnTypeOf } from './data.ts'
 import { fmtDate, fmtNum, RATE_DP } from './format.ts'
 import { CommitInput } from './inputs.tsx'
@@ -62,8 +63,10 @@ export function AutoDealModal({
   const close = () => modals.close('auto')
   const ready = !!(mc && legs)
   const ok = ready && msgs.length === 0
+  const [mcPickerOpen, setMcPickerOpen] = useState(false)
 
   return (
+    <>
     <Overlay id="auto" modals={modals}>
       <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
@@ -88,14 +91,17 @@ export function AutoDealModal({
               <label htmlFor="auto-mc">
                 MC Ref No<span className="req">*</span>
               </label>
-              <select id="auto-mc" value={mc?.mcNumber ?? ''} onChange={(e) => onMc(e.target.value)}>
-                <option value="">Select MC Ref No</option>
-                {eligible.map((m) => (
-                  <option key={m.mcNumber} value={m.mcNumber}>
-                    {m.mcNumber} - {m.modelDesc}
-                  </option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  id="auto-mc"
+                  readOnly
+                  placeholder="Select MC Ref No"
+                  value={mc ? `${mc.mcNumber} - ${mc.modelDesc}` : ''}
+                  style={{ flex: 1, cursor: 'pointer' }}
+                  onClick={() => setMcPickerOpen(true)}
+                />
+                <ViewDealsButton label="View MCs" onClick={() => setMcPickerOpen(true)} />
+              </div>
             </div>
           </div>
           <div id="auto-mc-detail" className="auto-mc-summary">
@@ -147,6 +153,26 @@ export function AutoDealModal({
         </div>
       </div>
     </Overlay>
+    {mcPickerOpen ? (
+      <DealPickerModal
+        title="View Master Contracts"
+        searchPlaceholder="Search MC Ref No, model, commodity or currency pair..."
+        columns={['MC Ref No', 'FX Model', 'Commodity', 'Currency Pair', 'Available (USD)']}
+        rows={eligible.map((m) => ({
+          dealId: m.mcNumber,
+          cells: [m.mcNumber, m.modelDesc, m.commodityDesc, m.currPair, fmtNum(mcBalance(m))],
+          text: [m.mcNumber, m.fxModel, m.modelDesc, m.commodityCode, m.commodityDesc, m.currPair].join(' '),
+        }))}
+        emptyText="No eligible Master Contracts for this origin entity."
+        hint="Click a row to select the Master Contract."
+        onClose={() => setMcPickerOpen(false)}
+        onPick={(id) => {
+          setMcPickerOpen(false)
+          onMc(id)
+        }}
+      />
+    ) : null}
+    </>
   )
 }
 

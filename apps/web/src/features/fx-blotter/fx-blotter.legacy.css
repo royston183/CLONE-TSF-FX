@@ -1086,3 +1086,9 @@
 .fx-blotter #fx-table.list-table .sticky-col, .fx-blotter #fx-table.list-table .sticky-3 {box-shadow:none!important;}
 /* mandatory-field marker on labels and required grid column headers */
 .fx-blotter .req {color:var(--error);margin-left:2px;}
+
+/* Blotter columns: a header sits over its values — left for text, dates and selects, right for numbers (headers were left to the browser default, centred). */
+.fx-blotter #fx-table thead th { text-align: left; }
+.fx-blotter #fx-table thead th.num { text-align: right; }
+.fx-blotter #fx-table thead th.sticky-1 { text-align: center; }
+.fx-blotter #fx-table tbody td:not(.num):not(.sticky-1) { text-align: left; }

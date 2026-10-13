@@ -17,7 +17,8 @@
  *   Tolerance            ZSGTSFTR_TOLR ztol_id 'T02'
  *   View BLs (9001)      ZSGTSFTR_BL WHERE zdeal_id; ZSGTSFTR_BL_RUSE WHERE zdeal_id AND zreuse_conf = ''
  *   Invoice Diff (9004)  FORM fetch_invoice_diff: INV_REF, BIL_ADJ, RULE_BT(gv_mod); deal amounts from gt_top
- *   House / Partner bank T012 / T012K / T012T ⋈ COMP, BUT0BK of the FX deal's partner -> not served: WAITING
+ *   House bank           T012 / T012K ⋈ COMP -> HouseBankAccount (shared/fx/house-bank.ts)
+ *   Partner bank         BUT0BK of the FX deal's partner -> SlcTsfBpBank (shared/fx/partner-bank.ts)
  *
  * Writes (each reproduces the ABAP's own Z-table statement; none writes APP_STR or a Treasury transaction):
  *   SAVE      FORM save_initial_data  MODIFY zsgtsftr_bil_adj (unconfirmed rows, created stamp)
@@ -52,8 +53,8 @@ export const WAITING_ACTION = 'WAITING FOR ACTION API'
 export const invWaitingReason = (fxReason: string) =>
   `${WAITING} — Adjusted Price / Qty is priced from the deal's FX transactions (FORM invoice_plan reads gt_top for rates, due date and business partner). ${fxReason.replace(`${WAITING} — `, '')}`
 
-/** Screen 9005's value helps read T012 / T012K / T012T and BUT0BK, which the middleware does not serve. */
-export const BANK_WAITING = `${WAITING} — House Bank / Account ID come from T012 / T012K / T012T ⋈ ZSGTSFTR_COMP and Partner Bank from BUT0BK of the FX deal's partner; none is served by the middleware.`
+/** Shown on the bank popup when the Partner Bank list (SlcTsfBpBank, BUT0BK of the deal's partner) could not be read. */
+export const BANK_WAITING = `Partner Bank could not be read from SlcTsfBpBank (BUT0BK of the FX deal's partner). House Bank / Account ID are read from HouseBankAccount (the seller's company code).`
 
 export const actionWaiting = (what: string, apis: string) => `${WAITING_ACTION} — ${what} (${apis}) has no API yet. Nothing was posted to SAP.`
 

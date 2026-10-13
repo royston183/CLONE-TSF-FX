@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ConfirmDetails } from '../../shared/ui/ConfirmDetails.tsx'
 import type { CSSProperties } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -702,6 +703,19 @@ export default function CheckConfirmDepositApp() {
           <div className="modal-body">
             <div id="confirmMessage">
               <div className="confirm-text">Are you sure you want to confirm/settle this deposit?</div>
+              {selected ? (
+                <ConfirmDetails
+                  rows={[
+                    { label: 'Transaction No', value: selected.transactionNo },
+                    { label: 'Deal ID', value: selected.dealId },
+                    { label: 'Company', value: selected.companyName },
+                    { label: 'Bank', value: selected.bankName },
+                    { label: 'Trade Value', value: `${selected.currency} ${selected.tradeValue}` },
+                    { label: 'Start Date', value: selected.startDate },
+                    { label: 'No. of Days', value: String(selected.noOfDays) },
+                  ]}
+                />
+              ) : null}
             </div>
           </div>
           <div className="modal-foot">

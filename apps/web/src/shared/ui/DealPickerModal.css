@@ -1,0 +1,53 @@
+/*
+ * "View Deals" button + picker popup shared by the screens that select one Deal ID (see DealPickerModal.tsx).
+ * Several screens reset every descendant with `.screen * { margin: 0; padding: 0; font-family: ... }`, which ties a plain
+ * one-class rule on specificity and wins on load order — so every rule here is scoped one level deeper.
+ */
+button.dpm-btn {
+  box-sizing: border-box;
+  height: 33px;
+  min-width: 72px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #36516a;
+  background: #fff;
+  border: 1px solid #aebfce;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button.dpm-btn:hover { background: #f4f8fc; border-color: #7f97af; }
+:root[data-theme='dark'] button.dpm-btn { background: #14212f; color: #a9c2dd; border-color: #3a4958; }
+:root[data-theme='dark'] button.dpm-btn:hover { background: #1b2b3d; }
+
+div.dpm-overlay {
+  --dpm-card: #ffffff; --dpm-text: #1d2d3e; --dpm-muted: #475e75; --dpm-border: #d5dadd;
+  --dpm-head: #f5f7f9; --dpm-hover: #eef7ff;
+  position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(16, 26, 41, 0.5);
+}
+:root[data-theme='dark'] div.dpm-overlay {
+  --dpm-card: #1c2733; --dpm-text: #e6edf3; --dpm-muted: #a9b8c6; --dpm-border: #3a4958;
+  --dpm-head: #141d27; --dpm-hover: #17304a;
+}
+div.dpm-overlay, div.dpm-overlay * { font-family: '72', 'Segoe UI', Arial, Helvetica, sans-serif; box-sizing: border-box; }
+.dpm-overlay .dpm-modal { width: min(760px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--dpm-card); color: var(--dpm-text); border: 1px solid var(--dpm-border); border-radius: 10px; box-shadow: 0 22px 70px rgba(16, 38, 58, 0.3); overflow: hidden; }
+.dpm-overlay .dpm-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--dpm-border); }
+.dpm-overlay .dpm-title { font-size: 14px; font-weight: 700; }
+.dpm-overlay .dpm-close { border: 0; background: none; color: var(--dpm-muted); font-size: 22px; line-height: 1; padding: 0 4px; cursor: pointer; }
+.dpm-overlay .dpm-body { padding: 14px 16px; overflow: hidden; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dpm-overlay input.dpm-search { width: 100%; height: 34px; padding: 0 10px; font-size: 12.5px; color: var(--dpm-text); background: var(--dpm-card); border: 1px solid var(--dpm-border); border-radius: 5px; outline: none; }
+.dpm-overlay input.dpm-search:focus { border-color: #0a6ed1; box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.2); }
+.dpm-overlay .dpm-grid { overflow: auto; max-height: 430px; border: 1px solid var(--dpm-border); border-radius: 6px; }
+.dpm-overlay .dpm-grid table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dpm-overlay .dpm-grid th { position: sticky; top: 0; text-align: left; padding: 8px 10px; background: var(--dpm-head); color: var(--dpm-muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.dpm-overlay .dpm-grid td { padding: 8px 10px; border-top: 1px solid var(--dpm-border); vertical-align: middle; }
+.dpm-overlay .dpm-row { cursor: pointer; }
+.dpm-overlay .dpm-row:hover td { background: var(--dpm-hover); }
+.dpm-overlay .dpm-empty { text-align: center; color: var(--dpm-muted); padding: 18px 10px; }
+.dpm-overlay .dpm-hint { font-size: 11px; color: var(--dpm-muted); }
+.dpm-overlay .dpm-foot { display: flex; justify-content: flex-end; padding: 10px 16px; border-top: 1px solid var(--dpm-border); }
+.dpm-overlay .dpm-foot button { height: 32px; padding: 0 16px; font-size: 13px; font-weight: 600; color: var(--dpm-text); background: var(--dpm-card); border: 1px solid var(--dpm-border); border-radius: 4px; cursor: pointer; }
+.dpm-overlay .dpm-foot button:hover { border-color: #0a6ed1; color: #0a6ed1; }

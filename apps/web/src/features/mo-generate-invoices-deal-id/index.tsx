@@ -6,7 +6,10 @@ import './mo-generate-invoices-deal-id.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-generate-invoices-deal-id.dark.css'
 import './mo-generate-invoices-deal-id.overrides.css'
-import { isAbort } from '../../shared/fx/mw.ts'
+import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
+import { loadPartnerBanks, type PartnerBank } from '../../shared/fx/partner-bank.ts'
+import { txt } from '../../shared/fx/masters.ts'
+import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   BANK_WAITING,
@@ -152,6 +155,43 @@ export default function MoGenerateInvoicesDealId() {
   const [remarkBlIndex, setRemarkBlIndex] = useState(-1)
   const [diffOpen, setDiffOpen] = useState(false)
   const [bankRow, setBankRow] = useState(-1)
+  // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP) for the bank popup.
+  const [houseBanks, setHouseBanks] = useState<HouseBankAccount[]>([])
+  const [entityCompany, setEntityCompany] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let live = true
+    void Promise.all([loadHouseBankAccounts(), fxList('comp')])
+      .then(([accounts, comp]) => {
+        if (!live) return
+        setHouseBanks(accounts)
+        setEntityCompany(Object.fromEntries(comp.map((r) => [txt(r, 'ZCOM_ID'), txt(r, 'ZBUKRS')])))
+      })
+      .catch((error: unknown) => {
+        console.warn('[invoice-finalisation] house bank accounts unavailable: the bank lists stay empty', error)
+      })
+    return () => {
+      live = false
+    }
+  }, [])
+
+  // Partner banks (SlcTsfBpBank, BUT0BK) of the business partner of the row whose bank popup is open.
+  const [partnerBanks, setPartnerBanks] = useState<PartnerBank[]>([])
+  const [partnerBankError, setPartnerBankError] = useState(false)
+  const bankBp = bankRow >= 0 ? (deal?.inv[bankRow]?.bp ?? '') : ''
+  useEffect(() => {
+    setPartnerBanks([])
+    setPartnerBankError(false)
+    if (!bankBp) return
+    const ctl = new AbortController()
+    loadPartnerBanks(bankBp, ctl.signal)
+      .then(setPartnerBanks)
+      .catch((error: unknown) => {
+        if (ctl.signal.aborted) return
+        console.warn('[invoice-finalisation] partner banks unavailable', error)
+        setPartnerBankError(true)
+      })
+    return () => ctl.abort()
+  }, [bankBp])
 
   // Outcomes show as the standard ResultDialog queue (stay until OK).
   const [outcomes, setOutcomes] = useState<ResultItem[]>([])
@@ -970,7 +1010,17 @@ export default function MoGenerateInvoicesDealId() {
       {blOpen && deal ? <BlModal key={blVersion} rows={deal.bl} reason={deal.blReason} onClose={() => setBlOpen(false)} onDeassign={openDeassign} /> : null}
       {remarkBlIndex >= 0 ? <RemarkModal onClose={() => setRemarkBlIndex(-1)} onUpdate={saveRemark} /> : null}
       {diffOpen && deal ? <DiffModal rows={deal.diff} fxReason={deal.fxReason} onClose={() => setDiffOpen(false)} /> : null}
-      {bankRow >= 0 && deal ? <BankModal row={deal.inv[bankRow]!} reason={BANK_WAITING} onClose={() => setBankRow(-1)} onUpdate={saveBank} /> : null}
+      {bankRow >= 0 && deal ? (
+        <BankModal
+          row={deal.inv[bankRow]!}
+          reason={partnerBankError ? BANK_WAITING : ''}
+          partnerBanks={partnerBanks}
+          houseBanks={houseBanks}
+          company={entityCompany[deal.inv[bankRow]!.seller] ?? ''}
+          onClose={() => setBankRow(-1)}
+          onUpdate={saveBank}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ConfirmDetails } from '../../shared/ui/ConfirmDetails.tsx'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { Calendar } from './Calendar.tsx'
@@ -496,6 +497,18 @@ export default function CheckConfirmPrepaymentApp() {
             <div id="settleText" className="confirm-copy">
               Are you sure you want to settle Transaction <b>{selectedRow?.transaction ?? ''}</b>?
             </div>
+            {selectedRow ? (
+              <ConfirmDetails
+                rows={[
+                  { label: 'Deal No', value: selectedRow.dealNo },
+                  { label: 'Company', value: selectedRow.companyName },
+                  { label: 'Bank', value: selectedRow.bankName },
+                  { label: 'Prepayment', value: `${selectedRow.currency} ${selectedRow.prepayment}` },
+                  { label: 'Start Date', value: selectedRow.startDate },
+                  { label: 'End Date', value: selectedRow.endDate },
+                ]}
+              />
+            ) : null}
           </div>
           <div className="modal-foot">
             <button

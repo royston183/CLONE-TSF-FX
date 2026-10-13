@@ -30,6 +30,8 @@ export type FxDeal = {
   rfha: string
   /** BUKRS of the leg (ZSGTSFCDS_FX). */
   bukrs: string
+  /** The transaction type (VTBFHA SFHAART, 619 forward, 631 NDF ...): the FX-Invoice Difference leaves 619 to the invoice rows. */
+  txnType?: string
   bp: string
   txnDate: string
   valDate: string

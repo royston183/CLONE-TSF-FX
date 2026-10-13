@@ -2,6 +2,7 @@
  * The page's rules as pure functions. Nothing here changes a deal: the only write the screen can
  * make (Cancel Deal ID) is a SAP call in api.ts, and the deal is read back afterwards.
  */
+import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { STATUS_META } from './data.ts'
 import { fmtAmt, fmtRate } from './format.ts'
 import type { ActionVisibility, Deal, Leg, PlRow, Sort, SortKey, StatusMeta } from './types.ts'
@@ -47,7 +48,7 @@ export function resolveDealId(input: string): { ok: true; id: string } | { ok: f
 }
 
 function sortValue(leg: Leg, key: SortKey): string | number | null | undefined {
-  if (key === 'txnStatusDesc') return statusMeta(leg.txnStatus).desc
+  if (key === 'txnStatusDesc') return fxTxnStatusLabel(leg.txnStatus)
   // "MC Ref No" carries a data-key but is not a leg field, so every row compares equal.
   if (key === 'mcRef') return undefined
   return leg[key]

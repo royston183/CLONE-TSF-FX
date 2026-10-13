@@ -396,6 +396,20 @@ export default function CheckConfirmIrsApp() {
       <SettleModal
         open={settleOpen}
         transaction={selectedRow?.transaction ?? ''}
+        details={
+          selectedRow
+            ? [
+                { label: 'IRS ID', value: selectedRow.irsId },
+                { label: 'Deal No', value: selectedRow.dealNo },
+                { label: 'Company', value: selectedRow.companyNameDisplay },
+                { label: 'Bank', value: selectedRow.bankName },
+                { label: 'Start Date', value: selectedRow.startDate },
+                { label: 'End Date', value: selectedRow.endDate },
+                { label: 'Incoming Amount', value: String(selectedRow.incomingAmount) },
+                { label: 'Outgoing Amount', value: String(selectedRow.outgoingAmount) },
+              ]
+            : []
+        }
         onNo={() => setSettleOpen(false)}
         onYes={handleSettleYes}
       />

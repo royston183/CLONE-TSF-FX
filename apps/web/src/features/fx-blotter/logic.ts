@@ -78,6 +78,16 @@ export function nextWorkingDay(d: Date): Date {
   return r
 }
 
+/** The date `n` working days before `d`: SAP's own default for an NDF's fixing date is two of them before the value date. */
+export function workingDaysBack(d: Date, n: number): Date {
+  let r = new Date(d)
+  for (let left = n; left > 0; ) {
+    r = addDays(r, -1)
+    if (!isWeekend(r) && !isHoliday(r)) left--
+  }
+  return r
+}
+
 /** Working days after the earlier date up to and including the later one. */
 export function workingDaysBetween(a: Date, b: Date): number {
   let n = 0
@@ -890,7 +900,8 @@ export function toleranceCheck(a: BlotterRow, mc: MasterContract, pairOk: boolea
   const m = modelOf(mc.fxModel)
   const tolPct = m?.tolerancePct ?? 5
   const msgs: string[] = []
-  if (num(a.amt1) > mcBalance(mc) + mc.amtUSD * (tolPct / 100))
+  // The legacy AMT_CHECK: balance plus the tolerance percent of the balance (not of the contract amount).
+  if (num(a.amt1) > mcBalance(mc) * (1 + tolPct / 100))
     msgs.push(`Leg amount ${fmtNum(a.amt1)} exceeds MC balance (${fmtNum(mcBalance(mc))}) plus ${tolPct}% tolerance.`)
   const vd = a.valueDate
   if (!vd || vd < mc.shipStart || vd > addDays(mc.shipEnd, m?.valueDateToleranceDays ?? 5))
@@ -974,7 +985,7 @@ export function recalcAutoLeg(input: AutoLeg): AutoLeg {
     l.fixingDate = null
     l.fixRef = ''
   } else if (!l.fixingDate && l.valueDate) {
-    l.fixingDate = addDays(l.valueDate, -2)
+    l.fixingDate = workingDaysBack(l.valueDate, 2)
   }
   return l
 }

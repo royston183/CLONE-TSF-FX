@@ -1,6 +1,8 @@
+import type { HouseBankAccount } from '../../shared/fx/house-bank.ts'
 import { OPTIONS_WAITING } from './api.ts'
 import { formatAmount } from './format.ts'
-import { diff1Amount, plAmount } from './logic.ts'
+import { plAmount } from './logic.ts'
+import type { DiffRow } from './invoiceDifference.ts'
 import { ModalFrame } from './modal.tsx'
 import type { DmsDoc, FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
 
@@ -127,19 +129,21 @@ export function DiffModal({
   open,
   onClose,
   rows,
-  spots,
-  onSpot,
+  loading,
+  note,
   onSave,
   saving = false,
   emptyText,
 }: Base & {
   emptyText: string
-  rows: readonly FxDeal[]
-  spots: readonly string[]
-  onSpot: (idx: number, value: string) => void
+  rows: readonly DiffRow[]
+  loading: boolean
+  /** An optional table that could not be read. */
+  note: string
   onSave: () => void
   saving?: boolean
 }) {
+  const amount = (v: number) => formatAmount(v)
   return (
     <ModalFrame
       open={open}
@@ -147,12 +151,12 @@ export function DiffModal({
       size="wide"
       icon={<>&Delta;</>}
       title={<>FX &ndash; Invoice Difference</>}
-      subtitle="Compares the FX deal rate against the invoice rate for each leg, and lets the trader fix the spot rate"
+      subtitle="The planned and final invoice of each trade against the FX deal it maps to"
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="btn-confirm" type="button" onClick={onSave} disabled={saving}>
-            {saving ? 'Booking Spot…' : 'Save Spot Data'}
+          <button className="btn-confirm" type="button" onClick={onSave} disabled={saving || loading || rows.length === 0}>
+            {saving ? 'Saving…' : 'Save Difference'}
           </button>
         </>
       }
@@ -161,55 +165,52 @@ export function DiffModal({
         <table className="data-table">
           <thead>
             <tr>
+              <th className="left">Trade</th>
+              <th className="left">Curr</th>
+              <th>Planned Amt</th>
+              <th>Final Invoice Amt</th>
               <th className="left">Deal Type</th>
-              <th className="left">Action</th>
-              <th>All-in Rate</th>
-              <th>Strike</th>
-              <th>Diff 1 Amt</th>
+              <th>Deal Amt</th>
+              <th>Difference</th>
               <th>Diff 2 Amt</th>
+              <th className="left">Deal 3 Type</th>
+              <th>Deal 3 Amt</th>
               <th>Diff 3 Amt</th>
-              <th className="left">Spot Rate</th>
+              <th className="left">Spot Co.</th>
+              <th className="left">B/S</th>
+              <th className="left">Saved</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? <EmptyRow span={8} text={emptyText} /> : null}
-            {rows.map((r, idx) => (
-              <tr key={r.rfha}>
-                <td className="left">
-                  <span className={`chip ${r.dealTypeChip}`}>{r.dealType}</span>
-                </td>
-                <td className="left">Action FX</td>
-                <td className="num">{r.rate}</td>
-                <td className="num">{r.spot}</td>
-                <td className="num">{diff1Amount(r)}</td>
-                <td className="num">0.00</td>
-                <td className="num">0.00</td>
-                <td className="left">
-                  <input
-                    type="text"
-                    className="diffSpotInput"
-                    value={spots[idx] ?? r.spot}
-                    onChange={(e) => {
-                      // Spot rates take at most four decimals.
-                      if (/^\d*\.?\d{0,4}$/.test(e.target.value)) onSpot(idx, e.target.value)
-                    }}
-                    style={{
-                      width: '90px',
-                      height: '28px',
-                      border: '1px solid #CBD9E8',
-                      borderRadius: '6px',
-                      padding: '0 8px',
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
+            {loading ? <EmptyRow span={14} text="Reading the invoices and the deals from SAP…" /> : null}
+            {!loading && rows.length === 0 ? <EmptyRow span={14} text={emptyText} /> : null}
+            {!loading &&
+              rows.map((r) => (
+                <tr key={r.ttype}>
+                  <td className="left">{r.ttype}</td>
+                  <td className="left">{r.invCurr}</td>
+                  <td className="num">{amount(r.planAmt)}</td>
+                  <td className="num">{amount(r.finalAmt)}</td>
+                  <td className="left">{r.dealType || '—'}</td>
+                  <td className="num">{amount(r.dealAmt)}</td>
+                  <td className="num">{amount(r.diffAmt)}</td>
+                  <td className="num">{amount(r.diff2Amt)}</td>
+                  <td className="left">{r.deal3Type || '—'}</td>
+                  <td className="num">{amount(r.deal3Amt)}</td>
+                  <td className="num">{amount(r.diff3Amt)}</td>
+                  <td className="left">{r.sbukrs || '—'}</td>
+                  <td className="left">{r.bs || '—'}</td>
+                  <td className="left">{r.saved ? 'Yes' : 'No'}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
       <div className="note-box">
-        Enter the fixed spot conversion rate for each leg, then <strong>Save Spot Data</strong>. This rate feeds the +/-
-        difference used when the trade invoice is finalised.
+        <strong>Save Difference</strong> records these rows in ZSGTSFTR_IN_SPOT (the original SPOT button). It books no
+        transaction in SAP: the FO trader workbench reads the saved rows and creates the spot later. A row already saved for
+        its deal type is not saved again, and a zero difference is saved as well.
+        {note ? <> {note}</> : null}
       </div>
     </ModalFrame>
   )
@@ -650,13 +651,36 @@ export function InvPostModal({
   form,
   onField,
   onAction,
+  houseBanks = [],
+  companyOf = () => '',
 }: Base & {
   row: TradeInvoice | undefined
   legLabel: string
   form: InvPostForm
   onField: <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) => void
   onAction: (kind: Exclude<PostKind, 'print'>) => void
+  /** HouseBankAccount (ZFS_SB_HBKACCT_O4_API): suggestions only, the fields stay editable. */
+  houseBanks?: readonly HouseBankAccount[]
+  /** The company code of an entity (ZSGTSFTR_COMP), so each side is offered its own company's accounts. */
+  companyOf?: (entity: string) => string
 }) {
+  const accountsOf = (entity: string) => {
+    const company = companyOf(entity)
+    return houseBanks.filter((b) => !company || b.companyCode === company)
+  }
+  const bankSuggestions = (entity: string) => {
+    const seen = new Map<string, string>()
+    for (const b of accountsOf(entity)) if (!seen.has(b.houseBank)) seen.set(b.houseBank, b.bankName)
+    return [...seen].map(([bank, name]) => <option key={bank} value={bank}>{name}</option>)
+  }
+  const accountSuggestions = (entity: string, bank: string) =>
+    accountsOf(entity)
+      .filter((b) => !bank.trim() || b.houseBank === bank.trim().toUpperCase())
+      .map((b) => (
+        <option key={`${b.companyCode}|${b.houseBank}|${b.accountId}`} value={b.accountId}>
+          {[b.houseBank, b.currency, b.description].filter(Boolean).join(' · ')}
+        </option>
+      ))
   // modify_screen_9002: a Receipt leg's bank fields are display only; once posted, so are the receiver's.
   const receipt = row?.recPay === 'Receipt'
   const senderLocked = receipt
@@ -703,11 +727,13 @@ export function InvPostModal({
           </div>
           <div className="ffield">
             <label>House Bank</label>
-            <input type="text" maxLength={5} disabled={senderLocked} value={form.senderHouseBank} onChange={(e) => onField('senderHouseBank', e.target.value)} />
+            <input type="text" maxLength={5} list="inv-sender-banks" disabled={senderLocked} value={form.senderHouseBank} onChange={(e) => onField('senderHouseBank', e.target.value)} />
+            <datalist id="inv-sender-banks">{bankSuggestions(form.sender)}</datalist>
           </div>
           <div className="ffield">
             <label>Account ID</label>
-            <input type="text" maxLength={5} disabled={senderLocked} value={form.senderAccountId} onChange={(e) => onField('senderAccountId', e.target.value)} />
+            <input type="text" maxLength={5} list="inv-sender-accounts" disabled={senderLocked} value={form.senderAccountId} onChange={(e) => onField('senderAccountId', e.target.value)} />
+            <datalist id="inv-sender-accounts">{accountSuggestions(form.sender, form.senderHouseBank)}</datalist>
           </div>
           <div className="ffield">
             <label>Receiver / Payee</label>
@@ -715,11 +741,13 @@ export function InvPostModal({
           </div>
           <div className="ffield">
             <label>House Bank</label>
-            <input type="text" maxLength={5} disabled={receiverLocked} value={form.receiverHouseBank} onChange={(e) => onField('receiverHouseBank', e.target.value)} />
+            <input type="text" maxLength={5} list="inv-receiver-banks" disabled={receiverLocked} value={form.receiverHouseBank} onChange={(e) => onField('receiverHouseBank', e.target.value)} />
+            <datalist id="inv-receiver-banks">{bankSuggestions(form.receiver)}</datalist>
           </div>
           <div className="ffield">
             <label>Account ID</label>
-            <input type="text" maxLength={5} disabled={receiverLocked} value={form.receiverAccountId} onChange={(e) => onField('receiverAccountId', e.target.value)} />
+            <input type="text" maxLength={5} list="inv-receiver-accounts" disabled={receiverLocked} value={form.receiverAccountId} onChange={(e) => onField('receiverAccountId', e.target.value)} />
+            <datalist id="inv-receiver-accounts">{accountSuggestions(form.receiver, form.receiverHouseBank)}</datalist>
           </div>
         </div>
       </div>

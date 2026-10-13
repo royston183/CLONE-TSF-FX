@@ -1,5 +1,6 @@
 import { ApiError, apiFetch, createEntity, entityPath, list, odataString, service } from '@slc/api-client'
 import { ENTITIES, SPOT_TXN_TYPES, TRANSACTION_TYPES, entityOf, pairOf } from './data.ts'
+import { extendCreatePayload } from './extendedFields.ts'
 import { parseAmount, parseUiDate, toISO } from './format.ts'
 import type { AutoSpotForm, BlotterRow, BusinessPartner, Num } from './types.ts'
 
@@ -179,7 +180,7 @@ function dealBody(f: DealFields): Record<string, unknown> {
 
 /** Creates one deal and returns its transaction number; SAP's own message is the thrown error. */
 export async function createDeal(r: BlotterRow): Promise<{ companyCode: string; transaction: string }> {
-  const payload = toCreatePayload(r)
+  const payload = await extendCreatePayload(toCreatePayload(r), r)
   const { key } = await createEntity<FxTransaction>(FX, payload, 'FinancialTransaction')
   if (!key) throw new Error(`${rowLabel(r)}: SAP accepted the deal but returned no transaction number.`)
   return { companyCode: String(payload.CompanyCode), transaction: key }

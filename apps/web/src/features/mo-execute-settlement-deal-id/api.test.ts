@@ -108,7 +108,7 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
   it('maps a leg: lead currency first, B/S from the buy side, APP_STR seq / type / MC, status text, ZtsfExeCo as settled', () => {
     const r = toFxDeal({ fx: fx('1'), app: app('1') })
     deepStrictEqual(r, {
-      seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', bp: '400000002', txnDate: '30-09-2026',
+      seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', txnType: '600', bp: '400000002', txnDate: '30-09-2026',
       valDate: '30-10-2026', entity: '', bs1: 'Buy', curr1: 'USD', amt1: 1000, bs2: 'Sell', curr2: 'INR', amt2: 83000,
       spot: '82.5000', rate: '83.0000', mcRefNo: '2000000005', status: 'MO: Match & Release for Settlement',
       statusChip: 'chip-open', doc1: '', doc2: '', settled: false,
