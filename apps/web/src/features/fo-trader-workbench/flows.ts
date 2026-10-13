@@ -2,7 +2,7 @@
  * The workbench's multi-step actions, ported from the original's run… and action… functions:
  * they read the latest data, apply a mutation, report it and hand over to the next popup.
  */
-import { buildNdoSpot, createSpotTransaction, fetchTransactions, isAuthorized, updateTxnStatus, type SpotRequest } from './logic.ts'
+import { buildNdoSpot, createSpotTransaction, fetchTransactions, inScope, isAuthorized, updateTxnStatus, type SpotRequest, type TxnScope } from './logic.ts'
 import type { PopupSpec } from './modal.tsx'
 import type { StatusOptions } from '../../shared/popup/Popup.tsx'
 import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './types.ts'
@@ -41,7 +41,8 @@ export type Wb = {
 }
 
 export const findDeal = (data: AppData, id: string): Deal | undefined => data.deals.find((d) => d.id === id)
-export const findTxn = (data: AppData, rfha: string): Txn | undefined => data.txns.find((t) => t.rfha === rfha)
+/** `scope` (the deal and / or company code) is what tells apart the same transaction number in two company codes. */
+export const findTxn = (data: AppData, rfha: string, scope?: TxnScope): Txn | undefined => data.txns.find((t) => t.rfha === rfha && inScope(t, scope))
 
 /** Books a spot and returns its number. */
 export function bookSpot(wb: Wb, p: SpotRequest): string {
@@ -86,7 +87,7 @@ export function actionDiffSpot(wb: Wb, t: Txn) {
 
 export function actionItemCreate(wb: Wb, it: ActionItem) {
   const data = wb.get()
-  const t = findTxn(data, it.rfha)
+  const t = findTxn(data, it.rfha, { dealId: it.dealId, bukrs: it.bukrs })
   const deal = t ? findDeal(data, t.dealId) : undefined
   if (!t || !deal) return
   const ctx: ActionCtx = { dealId: t.dealId, rfha: t.rfha, fromAction: true }
@@ -116,11 +117,11 @@ export function actionItemCreate(wb: Wb, it: ActionItem) {
 /** EXERCISE: status 24, "Exercise Updated Successfully", then the spot logic. */
 export function runExercise(wb: Wb, ctx: ActionCtx, txn: Txn, rate: number, cs: number) {
   const cash = cs ? { cashAmt: Math.abs(cs), cashCurr: txn.curr1 === 'USD' || txn.curr2 === 'USD' ? 'USD' : txn.curr2 } : null
-  wb.set(updateTxnStatus(wb.get(), txn.rfha, '24', cash))
+  wb.set(updateTxnStatus(wb.get(), txn.rfha, '24', cash, { dealId: txn.dealId, bukrs: txn.bukrs }))
   wb.toast('Exercise Updated Sucessfully', 'success') /* TEXT-008 */
   const data = wb.get()
   const deal = findDeal(data, ctx.dealId)
-  const fresh = findTxn(data, txn.rfha)
+  const fresh = findTxn(data, txn.rfha, { dealId: txn.dealId, bukrs: txn.bukrs })
   if (!deal || !fresh) return
   if (fresh.settlfl === '1') {
     /* physical delivery -> spot */
@@ -140,9 +141,10 @@ export function runExercise(wb: Wb, ctx: ActionCtx, txn: Txn, rate: number, cs: 
 
 /** EXPIRY: status 34, "Expire Updated Successfully", then the spot logic. */
 export function runExpire(wb: Wb, ctx: ActionCtx, txn: Txn, rate: number) {
-  wb.set(updateTxnStatus(wb.get(), txn.rfha, '34'))
+  const scope = { dealId: txn.dealId, bukrs: txn.bukrs }
+  wb.set(updateTxnStatus(wb.get(), txn.rfha, '34', null, scope))
   wb.toast('Expire Updated Successfully', 'success') /* TEXT-007 */
-  const fresh = findTxn(wb.get(), txn.rfha)
+  const fresh = findTxn(wb.get(), txn.rfha, scope)
   if (fresh && (fresh.settlfl === '1' || fresh.settlfl === '2') && fresh.dealType) {
     wb.confirm({ title: 'Create Spot', message: 'Do you want to create the Spot?' }, () =>
       wb.open({ kind: 'spot', ctx: { ...ctx, rfha: fresh.rfha }, variant: 'ndo', sfhaart: '605', rate }),

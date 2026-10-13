@@ -193,6 +193,7 @@ const textFor = (sf: string, code: string) => LOOKUPS.actionTexts.find((a) => a.
 
 export function fetchActionItems(data: AppData, deal: Deal, txns: readonly TxnRow[]): ActionItem[] {
   let items: ActionItem[] = txns.map((t) => ({
+    dealId: deal.id,
     rfha: t.rfha,
     bukrs: t.bukrs,
     dealType: t.dealType,
@@ -292,8 +293,16 @@ export function ssSpotFor(model: string, sfhaart: string, pc1: string) {
 
 /* ---------------- mutations (return a new AppData) ---------------- */
 
-export function updateTxnStatus(data: AppData, rfha: string, status: string, extra?: Partial<Txn> | null): AppData {
-  return { ...data, txns: data.txns.map((t) => (t.rfha === rfha ? { ...t, status, ...(extra ?? {}) } : t)) }
+/**
+ * A treasury transaction number repeats across company codes (deal 7000000055 holds SG03/3000000000037, deal 7000000060
+ * holds IN11/3000000000037), so a number alone does not identify a transaction: it takes its deal or company code too.
+ */
+export type TxnScope = { dealId?: string; bukrs?: string }
+export const inScope = (t: Pick<Txn, 'dealId' | 'bukrs'>, scope?: TxnScope): boolean =>
+  (!scope?.dealId || t.dealId === scope.dealId) && (!scope?.bukrs || t.bukrs === scope.bukrs)
+
+export function updateTxnStatus(data: AppData, rfha: string, status: string, extra?: Partial<Txn> | null, scope?: TxnScope): AppData {
+  return { ...data, txns: data.txns.map((t) => (t.rfha === rfha && inScope(t, scope) ? { ...t, status, ...(extra ?? {}) } : t)) }
 }
 
 export function setCoverTxn(data: AppData, rfha: string, coverTxn: string): AppData {

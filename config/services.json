@@ -153,6 +153,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata/sap/API_BUSINESS_PARTNER",
       "description": "API_BUSINESS_PARTNER (OData V2) — A_BusinessPartner; read here only for partner names"
     },
+    "glaccount": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata/sap/API_GLACCOUNTINCHARTOFACCOUNTS_SRV",
+      "description": "API_GLACCOUNTINCHARTOFACCOUNTS_SRV (OData V2) — G/L account master by chart of accounts (read)"
+    },
     "fx": {
       "kind": "odata",
       "auth": "sap-ds4",

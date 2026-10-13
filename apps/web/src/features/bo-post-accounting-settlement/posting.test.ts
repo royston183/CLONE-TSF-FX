@@ -1,10 +1,10 @@
 import { deepStrictEqual, strictEqual } from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildFiDocument, lineCategory, postFxLeg, postInvoiceLeg, UNCONFIRMED, type FlowState, type FxPostDeps, type InvPostDeps, type PositionRow } from './posting.ts'
+import { buildFiDocument, categoryLine, postFxLeg, postInvoiceLeg, UNCONFIRMED, type FlowState, type FxPostDeps, type InvPostDeps, type PositionRow } from './posting.ts'
 
 const row = (over: PositionRow = {}): PositionRow => ({
-  ZDEAL_ID: 'D1', ZSEQ: '01', ZBUKRS: 'SG03', ZT_TYPE: 'T1-S', ZPOST_CHECK: 'X', ZEXE_CO: 'X', ZFI_TYPE: 'F1',
-  ZPAY_AMT: 1250.5, ZSET_CURR: 'USD', ZDR_PK: '40', ZDR_GL: '113100', ZCR_PK: '31', ZCR_ACCNT: '0000100055', ZDOC_TYPE: 'KR',
+  ZDEAL_ID: 'D1', ZSEQ: '01', ZBUKRS: 'SG03', ZT_TYPE: 'T1-S', ZPOST_CHECK: 'X', ZEXE_CO: 'X', ZFI_TYPE: 'S1',
+  ZPAY_AMT: 1250.5, ZSET_CURR: 'USD', ZDR_PK: '40', ZDR_ACC: '01', ZDR_ACCNT: 'Bank', ZDR_GL: '113100', ZCR_PK: '31', ZCR_ACC: '02', ZCR_ACCNT: 'BP-Vendor', ZCR_CV: '0000100055', ZDOC_TYPE: 'KR',
   ...over,
 })
 
@@ -22,14 +22,14 @@ const invDeps = (over: Partial<InvPostDeps> = {}, state: { rows?: Record<string,
   ...over,
 })
 
-describe('posting key -> line category', () => {
-  it('follows the SAP posting key ranges', () => {
-    deepStrictEqual(['01', '11', '21', '31', '40', '50'].map(lineCategory), ['D', 'D', 'K', 'K', 'G', 'G'])
+describe('account category -> line class', () => {
+  it('reads the category, not the posting key: bank and clearing G/L, vendor and bank-BP vendor, customer', () => {
+    deepStrictEqual(['01', '02', '03', '04', '05', '06', '07', ''].map(categoryLine), ['G', 'K', 'D', 'G', 'K', 'K', null, null])
   })
 })
 
 describe('buildFiDocument', () => {
-  it('debit positive, credit negative, vendor line on 31, G/L on 40', () => {
+  it('debit positive, credit negative; a bank line posts the G/L, a vendor line the vendor', () => {
     const r = buildFiDocument(row(), { ZXBLNR1: 'REFX', ZBKTXT: 'Trade inv' }, { testRun: false, today: '2026-10-13' })
     if (!r.ok) throw new Error(r.message)
     strictEqual(r.body.DocumentReferenceID, 'REFX')
@@ -41,12 +41,39 @@ describe('buildFiDocument', () => {
     ])
   })
 
-  it('uses ZP_DATE when no date is given and refuses what it cannot guess', () => {
+  it('never sends the ZDR_ACCNT / ZCR_ACCNT label as an account', () => {
+    const r = buildFiDocument(row(), undefined, { testRun: true, today: '2026-10-13' })
+    if (!r.ok) throw new Error(r.message)
+    const sent = JSON.stringify(r.body)
+    strictEqual(sent.includes('BP-Vendor'), false)
+    strictEqual(sent.includes('"Bank"'), false)
+  })
+
+  it('header text is the posting type, a dash and the Deal ID; document, posting and value date are the posting date', () => {
+    const r = buildFiDocument(row({ ZFI_TYPE: 'P2', ZP_DATE: '20261001' }), undefined, { testRun: true, today: '2026-10-13' })
+    if (!r.ok) throw new Error(r.message)
+    strictEqual(r.body.AccountingDocumentHeaderText, '04 - D1')
+    deepStrictEqual([r.body.DocumentDate, r.body.PostingDate, r.body._Item[0]!.ValueDate, r.body._Item[1]!.ValueDate], ['2026-10-01', '2026-10-01', '2026-10-01', '2026-10-01'])
+    const plain = buildFiDocument(row({ ZFI_TYPE: '03' }), undefined, { testRun: true, today: '2026-10-13' })
+    if (!plain.ok) throw new Error(plain.message)
+    strictEqual(plain.body.AccountingDocumentHeaderText, '03 - D1')
+  })
+
+  it('a bank-BP line carries the vendor and its reconciliation G/L; a customer line only the customer', () => {
+    const r = buildFiDocument(row({ ZDR_ACC: '05', ZDR_CV: 'BANKV', ZDR_GL: '121000', ZCR_ACC: '03', ZCR_CV: 'CUST9', ZCR_GL: '140000' }), undefined, { testRun: true, today: '2026-10-13' })
+    if (!r.ok) throw new Error(r.message)
+    deepStrictEqual(r.body._Item.map((i) => [i.LineCategory, i.Supplier, i.Customer, i.GLAccount]), [['K', 'BANKV', undefined, '121000'], ['D', undefined, 'CUST9', undefined]])
+  })
+
+  it('uses ZP_DATE, else the due date, when no date is given, and refuses what it cannot guess', () => {
     const r = buildFiDocument(row({ ZP_DATE: '20261001' }), undefined, { testRun: true, today: '2026-10-13' })
     if (!r.ok) throw new Error(r.message)
     strictEqual(r.body.PostingDate, '2026-10-01')
     strictEqual(r.body.DocumentReferenceID, 'D1')
-    for (const bad of [{ ZBUKRS: '' }, { ZPAY_AMT: 0 }, { ZDR_PK: '' }, { ZCR_ACCNT: '' }, { ZDOC_TYPE: '' }]) {
+    const due = buildFiDocument(row({ ZDUE_DATE: '20261120' }), undefined, { testRun: true, today: '2026-10-13' })
+    if (!due.ok) throw new Error(due.message)
+    strictEqual(due.body.PostingDate, '2026-11-20')
+    for (const bad of [{ ZBUKRS: '' }, { ZPAY_AMT: 0 }, { ZDR_ACC: '' }, { ZDR_GL: '' }, { ZCR_CV: '' }, { ZCR_ACC: '07' }, { ZDOC_TYPE: '' }]) {
       strictEqual(buildFiDocument(row(bad), undefined, { testRun: false }).ok, false, JSON.stringify(bad))
     }
   })

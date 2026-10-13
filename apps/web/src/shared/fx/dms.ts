@@ -3,7 +3,7 @@
  * FM ZSGTSFFM_DMS with IM_DEAL / IM_CAT '10') and BO Posting Accounting Entries (ZSGTSF_RDEAL_TRD_POST). One client, so a
  * Deal ID shows the same attachments in both.
  *
- *   Document types   ZSGTSFTR_DMS_TYP  (middleware "dmsType")      WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
+ *   Document types   ZSGTSFTR_DMS_TYP  (local SQLite, /api/localdb/tsf-dms-type) WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
  *   Deal link        ZSGTSFTR_DEALDMS  (the gateway's local SQLite, /api/localdb/tsf-deal-document: the middleware has no
  *                    resource for it) ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
  *   Metadata         ZSGTSFTR_TSF_DMS  (middleware "tsfDocument")  ZTSF_DMS_CODE (the custom code) + ZSTND_DMS
@@ -35,6 +35,8 @@ export const RES = { type: 'dmsType', meta: 'tsfDocument', link: 'dealDocument' 
 
 const docApi = service('almdmsdoc')('Document')
 const linkApi = service('localdb')('tsf-deal-document')
+/** ZSGTSFTR_DMS_TYP lives in the gateway's local SQLite (migration 007), not behind the middleware. */
+const dmsTypeApi = service('localdb')('tsf-dms-type')
 
 /** ZSGTSFTR_DEALDMS lives in the gateway's local SQLite; every other DMS table is read through the middleware. */
 const linkPath = (key: Record<string, string>) =>
@@ -269,7 +271,13 @@ const key = (c: Created) => `${docApi}(DocumentNumber=${odataString(c.number)},D
 const str = (v: unknown): string => String(v ?? '').trim()
 
 export const defaultDeps: DmsDeps = {
-  list: (resource, filter = {}) => (resource === RES.link ? linkStore.list(filter) : fxList(resource, filter)),
+  list: async (resource, filter = {}) => {
+    if (resource === RES.link) return linkStore.list(filter)
+    if (resource !== RES.type) return fxList(resource, filter)
+    const query = filter['ZDMS_CAT'] ? `?ZDMS_CAT=${encodeURIComponent(filter['ZDMS_CAT'])}` : ''
+    const body = await apiFetch<{ value?: FxRow[] }>(`${dmsTypeApi}${query}`)
+    return body?.value ?? []
+  },
   create: (resource, data) => (resource === RES.link ? linkStore.create(data) : fxCreate(resource, data)),
   update: (resource, key, changes) => (resource === RES.link ? linkStore.update(key, changes) : fxUpdate(resource, key, changes)),
   remove: (resource, key) => (resource === RES.link ? linkStore.remove(key) : fxDelete(resource, key)),

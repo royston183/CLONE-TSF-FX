@@ -44,6 +44,7 @@
 import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
+import { paymentAmount, type PayDeal } from '../../shared/fx/payment-amount.ts'
 import { apiFetch, odataString, service } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
@@ -228,7 +229,9 @@ export function buildTradeInvoices(
   positions: readonly Record<string, unknown>[],
   accounting: readonly Record<string, unknown>[],
   d1Due: string,
+  fxDeals: readonly FxDeal[] = [],
 ): TradeInvoice[] {
+  const payDeals: PayDeal[] = fxDeals.map((f) => ({ dealType: f.dealType, rate: num(f.rate) }))
   const saved = new Map(positions.map((p) => [text(p, 'ZT_TYPE'), p]))
   const acc = new Map(accounting.map((a) => [text(a, 'ZFI_TYPE'), a]))
   return [...setTyp]
@@ -243,6 +246,7 @@ export function buildTradeInvoices(
       const pos = saved.get(type)
       const post = acc.get(text(t, 'ZFI_TYPE'))
       const curr = text(t, 'ZCURR')
+      const pay = paymentAmount({ invAmt, curr, setCurr: text(t, 'ZSET_CURR'), dMap: text(t, 'ZD_MAP'), premAdj: text(t, 'ZPREM_ADJ') }, payDeals)
       const recPay = type.charAt(3) === 'P' ? 'Payment' : type.charAt(3) === 'S' ? 'Receipt' : ''
       return {
         leg: type,
@@ -255,8 +259,11 @@ export function buildTradeInvoices(
         postDate: pos ? dmyFromSap(text(pos, 'ZP_DATE')) : '',
         invAmt,
         curr,
-        // Same currency: the invoice amount. A different settlement currency needs the mapped total rate: not guessed.
-        payAmt: curr === text(t, 'ZSET_CURR') ? invAmt : 0,
+        // Same currency: the invoice amount. A different settlement currency: the invoice amount / the all-in rate of the
+        // FX deal the leg maps to (ZD_MAP), less its premium adjustment (shared/fx/payment-amount.ts). Zero, with the
+        // reason, when that deal or its rate does not exist yet; never a guessed amount.
+        payAmt: pay.amount,
+        payReason: pay.reason,
         recPay,
         trfType: text(t, 'ZTRF_TYPE'),
         fiDoc: pos ? text(pos, 'ZBELNR') : '',
@@ -550,7 +557,7 @@ async function invoicesOrWaiting(
       note = ` The saved settlement state / posting types (local ZSGTSFTR_TRD_POS / ZSGTSFTR_TRD_ACC) could not be read: ${messageOf(error)}`
     }
     const d1 = fxDeals.find((f) => f.dealType === 'D1')
-    const invoices = buildTradeInvoices(setTyp, billAdj, positions, accounting, d1?.valDate ?? '')
+    const invoices = buildTradeInvoices(setTyp, billAdj, positions, accounting, d1?.valDate ?? '', fxDeals)
     const known = new Set(accounting.map((a) => String(a['ZFI_TYPE'] ?? '').trim()))
     const missing = [...new Set(setTyp.map((t) => String(t['ZFI_TYPE'] ?? '').trim()).filter((f) => f && !known.has(f)))].sort()
     return { positions, invoices, invoicesWaiting: invoices.length ? `${INVOICE_GAPS}${missing.length && !note ? noPostingType(missing) : ''}${note}` : INVOICE_WAITING }
