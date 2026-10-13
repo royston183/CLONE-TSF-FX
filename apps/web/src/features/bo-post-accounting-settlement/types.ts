@@ -20,6 +20,12 @@ export type FxLeg = {
   doc2: string
   dssDeal: string
   sgsart: string
+  /** Settlement Complete (Execution) of the transaction: VTBFHA ZTSF_EXE_CO (TrmFxApp ZtsfExeCo), gt_top-set_co. */
+  settled?: boolean
+  /** ZSGTSFTR_SET_FX ZSEQ of the deal type (a DSS deal takes its parent's); blank = not in the model's sequence. */
+  seq?: string
+  /** TXN_STATUS of the transaction: the FX popup's Test Run / Post need '07' or later. */
+  txnStatus?: string
 }
 
 /** One trade invoice leg (T1/T2/T3) in the "Trade Invoice Settlement" grid. */
@@ -42,6 +48,16 @@ export type InvLeg = {
   docMsg: string
   buy: string
   sell: string
+  /** ZSGTSFTR_TRD_POS: settlement sequence, Sender / Payer and Receiver / Payee house bank and account. */
+  seq?: string
+  /** Settlement Complete (Execution): ZSGTSFTR_TRD_POS ZEXE_CO, set on MO (ZSGTSFR060). gt_inv-set_co. */
+  exeCo?: boolean
+  /** ZSGTSFTR_SET_TYP ZDSS_DEAL of the leg: the DSS deal type whose FX documents Accounting Completed checks too. */
+  dssDealType?: string
+  senderHouseBank?: string
+  senderAccountId?: string
+  receiverHouseBank?: string
+  receiverAccountId?: string
 }
 
 export type Deal = {
@@ -69,6 +85,8 @@ export type Deal = {
   invWaiting?: string
   top: FxLeg[]
   inv: InvLeg[]
+  /** ZSGTSFTR_RULE_BT ZNO_INV of the model: no trade invoice legs (Accounting Completed checks the FX legs only). */
+  noInvoice?: boolean
 }
 
 export type ToastKind = '' | 'error' | 'success'

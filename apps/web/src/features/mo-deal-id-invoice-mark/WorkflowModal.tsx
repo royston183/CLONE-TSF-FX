@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { formatAmount, formatRate, parseDate } from './format.ts'
+import { formatAmount, formatPoints, formatRate, parseDate } from './format.ts'
 import { buildAdjustedInvoiceRows, buildBlRows, buildFxRows, buildInvoiceRows, buildPlannedPnlRows, buildSettlementInvoiceRows, buildViewDealData, waitingAction } from './logic.ts'
 import type { AdjustedInvoiceRow, DealRow, FxRow, InvoiceRow, PlannedPlRow, SettlementRow, WorkflowExtra, WorkflowKind } from './types.ts'
 
@@ -100,7 +100,7 @@ function FxTable({ rows, settlementMode, onOpenTxn }: { rows: FxRow[]; settlemen
               <td>{fx.curr2}</td>
               <td className="num">{formatAmount(fx.amt2)}</td>
               {!settlementMode ? <td className="num">{formatRate(fx.spot)}</td> : null}
-              {!settlementMode ? <td className="num">{formatRate(fx.swap)}</td> : null}
+              {!settlementMode ? <td className="num">{formatPoints(fx.swap)}</td> : null}
               <td className="num">{formatRate(fx.allIn || fx.strike)}</td>
               {!settlementMode ? <td className="num">{formatRate(fx.strike)}</td> : null}
               {!settlementMode ? <td>{fx.mcRef}</td> : null}
@@ -161,7 +161,7 @@ function AdjustedInvoiceTable({ rows, onChange }: { rows: AdjustedInvoiceRow[]; 
                   <input className="workflow-input" value={r.usdPrice.toFixed(6)} onChange={(e) => recalc(r.qty, parseFloat(e.target.value) || 0)} />
                 </td>
                 <td>
-                  <input className="workflow-input" value={r.rate.toFixed(6)} onChange={(e) => onChange(idx, { rate: parseFloat(e.target.value) || 0 })} />
+                  <input className="workflow-input" value={r.rate.toFixed(4)} onChange={(e) => onChange(idx, { rate: Number((parseFloat(e.target.value) || 0).toFixed(4)) })} />
                 </td>
                 <td>
                   <input className="workflow-input" value={r.invDate} onChange={(e) => onChange(idx, { invDate: e.target.value })} />
@@ -647,7 +647,9 @@ export function WorkflowModal({
                       <input className="workflow-input" defaultValue={extra.row.dealId} disabled />
                     </label>
                     <label>
-                      <span className="workflow-label">Deal End Date</span>
+                      <span className="workflow-label">
+                        Deal End Date<span className="req">*</span>
+                      </span>
                       <input className="workflow-input" value={amendEndDate} onChange={(e) => setAmendEndDate(e.target.value)} />
                     </label>
                     <div className="workflow-form-actions">

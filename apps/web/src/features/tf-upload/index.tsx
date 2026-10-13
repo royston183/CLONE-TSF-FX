@@ -612,7 +612,9 @@ export default function TfUploadApp() {
               <section className="card upload-card compact-upload-card">
                 <div className="card-head compact-card-head">
                   <div>
-                    <div className="card-title">Excel File</div>
+                    <div className="card-title">
+                      Excel File<span className="req">*</span>
+                    </div>
                   </div>
                 </div>
                 <div className="card-body compact-upload-body">

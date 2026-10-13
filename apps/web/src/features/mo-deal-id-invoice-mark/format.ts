@@ -42,5 +42,11 @@ export function formatAmount(value: number | null | undefined): string {
 
 export function formatRate(value: number | '' | null | undefined): string {
   if (value === '' || value === null || value === undefined) return ''
+  return Number(value).toFixed(4)
+}
+
+/** Swap (forward) points are not a rate: they keep their 6 decimals. */
+export function formatPoints(value: number | '' | null | undefined): string {
+  if (value === '' || value === null || value === undefined) return ''
   return Number(value).toFixed(6)
 }

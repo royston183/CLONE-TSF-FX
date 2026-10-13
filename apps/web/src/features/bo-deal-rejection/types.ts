@@ -1,7 +1,7 @@
 /** FX deals or Options deals - the two result sets the report lists. */
 export type TxnType = 'FX' | 'OP'
 
-/** How a field is shown: text as-is, amounts 2 dp, rates 6 dp, blank when zero. */
+/** How a field is shown: text as-is, amounts 2 dp, rates 4 dp (swap points 6), blank when zero. */
 export type FieldType = 'text' | 'date' | 'time' | 'amt' | 'rate'
 
 export type FieldDef = {

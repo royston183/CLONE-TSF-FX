@@ -100,7 +100,9 @@ export function EditPairModal({
           <p className="table-note">No transaction matches this one (same type, value date, side, currency and amount, status 03 or 07).</p>
         ) : (
           <div className="field">
-            <label htmlFor="pair-new">New transaction</label>
+            <label htmlFor="pair-new">
+              New transaction<span className="req">*</span>
+            </label>
             <select id="pair-new" value={picked} onChange={(e) => setPicked(e.target.value)}>
               <option value="">Select…</option>
               {candidates.map((c) => (

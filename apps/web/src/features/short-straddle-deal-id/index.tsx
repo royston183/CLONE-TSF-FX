@@ -373,7 +373,7 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div className="ssdid">
       <div className="page-head">
-        <BackButton className="btn-outline btn-back" />
+        <BackButton className="fx-back-btn" />
         <img className="head-icon" src={BRAND_LOGO} alt="Company logo" />
         <div className="title-wrap">
           <div className="title-row">

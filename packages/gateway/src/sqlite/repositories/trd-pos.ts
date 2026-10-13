@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type { Database } from '../db.ts'
 import { createDdicRepository, DdicInputError, ddicRepository } from './ddic-table.ts'
 import type { DdicRepository, DdicRow, DdicTable } from './ddic-table.ts'
 import { TRD_POS_CLIENT, TRD_POS_COLUMNS } from './trd-pos-columns.ts'
@@ -20,5 +20,5 @@ function byDealAndSeq(repo: DdicRepository) {
   }
 }
 
-export const createTrdPosRepository = (db: Database.Database) => byDealAndSeq(createDdicRepository(db, TRD_POS_TABLE))
-export const trdPosRepository = (db: Database.Database) => byDealAndSeq(ddicRepository(db, TRD_POS_TABLE))
+export const createTrdPosRepository = (db: Database) => byDealAndSeq(createDdicRepository(db, TRD_POS_TABLE))
+export const trdPosRepository = (db: Database) => byDealAndSeq(ddicRepository(db, TRD_POS_TABLE))

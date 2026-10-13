@@ -130,6 +130,15 @@ describe('buildContract', () => {
     strictEqual(c.linkedDealId, 'DEAL-900187')
     strictEqual(c.mcAmountUsd, 100_000)
   })
+
+  it('reads back a grouped exchange rate of 1,000 or more from Edit/Copy', () => {
+    const [existing] = seedContracts()
+    const values = formFromContract({ ...existing!, exchangeRate: 16000.1234 })
+    strictEqual(values.exchangeRate, '16,000.1234')
+    strictEqual(buildContract(values, existing!.mcNumber, existing!).exchangeRate, 16000.1234)
+    strictEqual(originAmount({ ...values, mcAmountUsd: '2' }), '32,000.25')
+    strictEqual(validateForm(values).errors.exchangeRate, undefined)
+  })
 })
 
 describe('form helpers', () => {

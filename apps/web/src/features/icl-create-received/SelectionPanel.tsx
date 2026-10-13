@@ -48,7 +48,7 @@ export function SelectionPanel({
     <div className="selection-panel">
       <div className="selection-row">
         <div className="main-date-item">
-          <label htmlFor="uptoRequestDate">Upto Request Date</label>
+          <label htmlFor="uptoRequestDate">Upto Request Date<span className="req">*</span></label>
           <div className="inline-date-shell" onClick={(e) => e.stopPropagation()}>
             <input
               id="uptoRequestDate"

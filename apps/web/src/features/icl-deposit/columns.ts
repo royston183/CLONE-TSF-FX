@@ -42,7 +42,7 @@ export const ICL_COLUMNS: readonly EditColumn[] = [
   { label: 'Start Date', width: 110 },
   { label: 'Planned End Date', width: 125 },
   { label: 'Direct/Indirect Payment', width: 230 },
-  { label: 'Payment ID (Pay To)', width: 170 },
+  { label: 'Payment ID (Pay To)', width: 170, required: true },
   { label: 'Request No', width: 110 },
   { label: 'Create', width: 90 },
 ]

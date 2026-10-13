@@ -48,5 +48,5 @@ export function fmtAmount(n: number): string {
   return neg ? `${out}-` : out
 }
 
-/** All in Rate, six decimals. */
-export const fmtRate = (n: number): string => n.toFixed(6)
+/** All in Rate, four decimals. */
+export const fmtRate = (n: number): string => n.toFixed(4)

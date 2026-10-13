@@ -36,7 +36,6 @@ import './mo-reject-mc-after-expiry.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-reject-mc-after-expiry.dark.css'
-import './mo-reject-mc-after-expiry.overrides.css'
 import type {
   Criteria,
   CriteriaError,
@@ -342,7 +341,7 @@ export default function MoRejectMcAfterExpiry() {
       <div className="app-shell">
         {/* PAGE HEADER */}
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="FS logo" />
           <div className="titles">
             <h1>Reject MC after Expiry</h1>

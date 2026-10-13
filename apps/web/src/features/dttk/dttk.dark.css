@@ -69,6 +69,9 @@
 :root[data-theme='dark'] .dttk .modal-note b {
   color: #ff5c5c;
 }
+:root[data-theme='dark'] .dttk .field label .req {
+  color: #ff5c5c;
+}
 :root[data-theme='dark'] .dttk .status-pill.open {
   background: #14321f;
 }

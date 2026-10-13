@@ -63,14 +63,24 @@ export function formatAmount(n: number | null | undefined): string {
   return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-/** Six-decimal rate. */
+/** Four-decimal rate. */
 export function formatRate(n: number | null | undefined): string {
+  const v = Number(n) || 0
+  return v.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+}
+
+/** Six-decimal swap points (not a rate, so not cut to four). */
+export function formatSwap(n: number | null | undefined): string {
   const v = Number(n) || 0
   return v.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
 }
 
 export function round2(n: number): number {
   return Math.round(n * 100) / 100
+}
+
+export function round4(n: number): number {
+  return Math.round(n * 10000) / 10000
 }
 
 export function round6(n: number): number {

@@ -276,7 +276,7 @@ function WorkbenchScreen({
   return (
     <div className="dealanal">
       <header className="topbar">
-        <BackButton className="btn ghost" />
+        <BackButton className="fx-back-btn" />
         <div className="brand-mark" aria-hidden="true">
           <i /><i /><i /><i />
         </div>
@@ -314,7 +314,7 @@ function WorkbenchScreen({
           <div className="selection-body">
             <div className="selection-grid">
               <div className="field selection-field">
-                <label>Deal ID</label>
+                <label>Deal ID<span className="req">*</span></label>
                 <div className="lookup-wrap">
                   <input
                     className="input"
@@ -614,7 +614,13 @@ function WorkbenchScreen({
                             <input
                               className="calc-input"
                               defaultValue={r.exchangeRate.toFixed(4)}
-                              onBlur={(e) => setInvoiceRate(idx, Number(e.target.value))}
+                              onBlur={(e) => {
+                                // Rates carry four decimals: round what was typed and show it that way.
+                                const rate = Number(e.target.value)
+                                if (Number.isNaN(rate)) return
+                                e.target.value = rate.toFixed(4)
+                                setInvoiceRate(idx, Number(rate.toFixed(4)))
+                              }}
                             />
                           </td>
                           <td className="num">{money(r.invAmount)}</td>

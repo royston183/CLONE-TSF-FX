@@ -422,6 +422,8 @@ export default function FoChangeDealId() {
         {/* HEADER */}
         <div className="header">
           <div className="titleblock">
+            {/* Inside a loaded deal, Back is the original's App.goToSelection: it returns to the Deal ID search. */}
+            <BackButton className="fx-back-btn" onClick={deal ? goToSelection : undefined} />
             <img className="logo-mark" alt="FS logo" src={FS_SHORT_LOGO} />
             <div className="header-text">
               <h1>FO: Change Deal ID</h1>
@@ -431,17 +433,6 @@ export default function FoChangeDealId() {
             </div>
           </div>
           <div className="header-actions">
-            {deal ? (
-              // The original's App.goToSelection: leaves the loaded deal for the Deal ID search.
-              <button type="button" className="btn" onClick={goToSelection}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                Back
-              </button>
-            ) : (
-              <BackButton className="btn" />
-            )}
             <button type="button" className="btn btn-icon" title="Refresh" onClick={refresh}>
               <RefreshIcon />
             </button>

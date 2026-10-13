@@ -307,3 +307,6 @@
 :root[data-theme='dark'] .iclrequest .filter-inline-group .filter-item label {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .iclrequest .req {
+  color: #ff5c5c;
+}

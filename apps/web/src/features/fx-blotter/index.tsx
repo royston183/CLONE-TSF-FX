@@ -976,7 +976,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
     <div className="fx-blotter">
       <div className="page-head app-ref-header">
         <div className="head-left">
-          <BackButton className="nav-back" />
+          <BackButton className="fx-back-btn" />
           <img className="brand-logo" src={BRAND_LOGO} alt="Application logo" />
           <div className="title-wrap">
             <div className="page-title-row">

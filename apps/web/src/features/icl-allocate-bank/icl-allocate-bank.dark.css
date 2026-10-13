@@ -387,3 +387,6 @@
 :root[data-theme='dark'] .iclallocate .main-date-item label {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .iclallocate .req {
+  color: #ff5c5c;
+}

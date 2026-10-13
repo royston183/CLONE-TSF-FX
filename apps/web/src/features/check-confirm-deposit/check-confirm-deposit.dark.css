@@ -52,6 +52,9 @@
 :root[data-theme='dark'] .ccdeposit .field label {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .ccdeposit .req {
+  color: #ff5c5c;
+}
 :root[data-theme='dark'] .ccdeposit .input,
 :root[data-theme='dark'] .ccdeposit .select {
   border: 1px solid #3d5670;

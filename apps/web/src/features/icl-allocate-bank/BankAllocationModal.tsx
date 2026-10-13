@@ -31,12 +31,12 @@ export function BankAllocationModal({
         </div>
         <div className="modal-body">
           <div className="compact-bank-form">
-            <div className="modal-label">House Bank</div>
+            <div className="modal-label">House Bank<span className="req">*</span></div>
             <div className="lookup-field" onClick={onOpenHouseBank}>
               <input className="lookup-input" type="text" readOnly placeholder="Select" value={houseBankValue} />
               <span className="lookup-cue" />
             </div>
-            <div className="modal-label">Account ID</div>
+            <div className="modal-label">Account ID<span className="req">*</span></div>
             <div
               className={accountEnabled ? 'lookup-field account' : 'lookup-field account disabled'}
               onClick={() => {

@@ -61,6 +61,8 @@ describe('header by key', () => {
       currencyString: 'USD-USD-INR',
       dealStatus: '01',
       noInvoiceFlag: false,
+      dealType: 'FX',
+      subType: 'FX1',
     })
   })
 
@@ -103,14 +105,17 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
     CompanyCode: 'SG03', FinancialTransaction: txn, ZtsfDealID: '7000000006', ZtsfDealType: 'D1', ZtsfDealSq: '01', ZtsfMcRefNo: '2000000005', TxnStatus: '07', ...over,
   })
 
-  it('maps a leg: lead currency first, B/S from the buy side, APP_STR seq / type / MC, status text, no settled flag', () => {
+  it('maps a leg: lead currency first, B/S from the buy side, APP_STR seq / type / MC, status text, ZtsfExeCo as settled', () => {
     const r = toFxDeal({ fx: fx('1'), app: app('1') })
     deepStrictEqual(r, {
-      seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', bp: '400000002', txnDate: '30-09-2026',
+      seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', txnType: '600', bp: '400000002', txnDate: '30-09-2026',
       valDate: '30-10-2026', entity: '', bs1: 'Buy', curr1: 'USD', amt1: 1000, bs2: 'Sell', curr2: 'INR', amt2: 83000,
       spot: '82.5000', rate: '83.0000', mcRefNo: '2000000005', status: 'MO: Match & Release for Settlement',
-      statusChip: 'chip-open', doc1: '', doc2: '',
+      statusChip: 'chip-open', doc1: '', doc2: '', settled: false,
+      tsf: { bhbkid: '', bhktid: '', shbkid: '', shktid: '', bpayid: '', spayid: '', rbukrs: '', rpayid: '', pbukrs: '', ppayid: '' },
     })
+    const done = toFxDeal({ fx: fx('1'), app: app('1', { ZtsfExeCo: true, ZtsfBhbkID: 'SCB01' }) })
+    deepStrictEqual([done.settled, done.statusChip, done.status, done.tsf?.bhbkid], [true, 'chip-done', 'Settled', 'SCB01'])
     const sell = toFxDeal({ fx: fx('2', { BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 83000, SellAmount: 1000 }), app: app('2', { ZtsfDealType: 'D2' }) })
     strictEqual(sell.bs1, 'Sell')
     strictEqual(sell.amt1, 1000)
@@ -231,8 +236,8 @@ describe('buildTradeInvoices (R060 invoice_settlement_data)', () => {
     deepStrictEqual([rows[1]!.docType, rows[1]!.drPost, rows[1]!.crPost], ['', '', ''])
   })
 
-  it('lays the saved TRD_POS state over the leg with the same ZT_TYPE', () => {
-    const rows = buildTradeInvoices(setTyp, billAdj, [{ ZT_TYPE: '02XP', ZSET_CHECK: 'X', ZBELNR: '1900000001', ZP_DATE: '20261121' }], [], '')
+  it('lays the saved TRD_POS state over the leg with the same ZT_TYPE: settled is ZEXE_CO, not ZSET_CHECK', () => {
+    const rows = buildTradeInvoices(setTyp, billAdj, [{ ZT_TYPE: '02XP', ZEXE_CO: 'X', ZBELNR: '1900000001', ZP_DATE: '20261121' }, { ZT_TYPE: '01XS', ZSET_CHECK: 'X' }], [], '')
     deepStrictEqual([rows[1]!.setCo, rows[1]!.fiDoc, rows[1]!.postDate], [true, '1900000001', '21-11-2026'])
     deepStrictEqual([rows[0]!.setCo, rows[0]!.fiDoc, rows[0]!.postDate], [false, '', ''])
   })

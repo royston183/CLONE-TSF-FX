@@ -201,7 +201,7 @@ export default function FoNdfFixingErrorCorrection() {
     <div className="fondfec">
       <div className="app-header">
         <div className="header-left">
-          <BackButton className="back-btn" />
+          <BackButton className="fx-back-btn" />
           <div className="logo-mark" aria-label="FS">
             <span className="l1" />
             <span className="l2" />

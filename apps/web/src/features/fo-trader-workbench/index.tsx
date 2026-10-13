@@ -274,7 +274,7 @@ export default function FoTraderWorkbench() {
     <div className="fo-trader-workbench" ref={rootRef}>
       <div className="app">
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Trader Workbench</h1>

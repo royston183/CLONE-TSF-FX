@@ -1,5 +1,5 @@
 import { STATUS_MAP } from './data.ts'
-import { toDisplayDate } from './format.ts'
+import { formatRate, toDisplayDate } from './format.ts'
 import type { DealRow, FxRow, InvoiceRow, PlRow } from './types.ts'
 
 /**
@@ -68,7 +68,7 @@ function FxTable({ rows, emptyText }: { rows: FxRow[]; emptyText: string }) {
                 <td>{r.bs2}</td>
                 <td>{r.curr2}</td>
                 <td className="num">{r.amt2}</td>
-                <td className="num">{r.rate}</td>
+                <td className="num">{formatRate(r.rate)}</td>
                 <td>{r.status}</td>
               </tr>
             ))
@@ -112,7 +112,7 @@ function InvoiceTable({ rows, emptyText }: { rows: InvoiceRow[]; emptyText: stri
                 <td>{r.buy}</td>
                 <td>{r.curr}</td>
                 <td className="num">{r.amt}</td>
-                <td className="num">{r.ex}</td>
+                <td className="num">{formatRate(r.ex)}</td>
                 <td className="num">{r.inv}</td>
                 <td>{r.ref}</td>
               </tr>

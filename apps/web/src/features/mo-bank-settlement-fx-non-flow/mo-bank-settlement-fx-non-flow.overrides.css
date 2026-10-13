@@ -185,3 +185,6 @@
 :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .list-table thead th,
 :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .mini-table th,
 :root:not([data-theme='dark']) .mo-bank-settlement-fx-non-flow .mini-table td { border-bottom-color: #E6E9EB; }
+
+/* Mandatory-field marker on labels (e.g. House Bank in the Assign House Bank popup). */
+.mo-bank-settlement-fx-non-flow .req { color:var(--red); margin-left:2px; }

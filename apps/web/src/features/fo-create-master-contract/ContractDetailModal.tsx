@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { DEFAULT_STATUS_META, STATUS_META, findPaymentTerm } from './data.ts'
-import { formatAmount, formatRate } from './format.ts'
+import { formatAmount, formatRate, formatTolerance } from './format.ts'
 import { commodityNames } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
 import type { MasterContract } from './types.ts'
@@ -76,7 +76,7 @@ export function ContractDetailModal({
                 <Item label="MC Amount (USD)" value={formatAmount(c.mcAmountUsd)} />
                 <Item label="MC Amount (Origin)" value={formatAmount(c.mcAmountOrigin) + (c.originCurrency ? ` ${c.originCurrency}` : '')} />
                 <Item label="Exchange Rate" value={formatRate(c.exchangeRate)} />
-                <Item label="Tolerance %" value={formatRate(c.tolerance)} />
+                <Item label="Tolerance %" value={formatTolerance(c.tolerance)} />
               </Section>
 
               <Section title="Commodity Details">

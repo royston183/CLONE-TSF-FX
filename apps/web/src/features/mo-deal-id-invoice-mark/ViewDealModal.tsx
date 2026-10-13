@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { WAITING_FX_LEGS_OPTION, loadDealFxRows } from './dealLegs.ts'
-import { formatAmount, formatRate } from './format.ts'
+import { formatAmount, formatPoints, formatRate } from './format.ts'
 import { WAITING_VIEW_DEAL, buildViewDealData } from './logic.ts'
 import type { DealRow, FxRow, InvoiceRow } from './types.ts'
 
@@ -64,7 +64,7 @@ function FxDealsTable({ rows, onOpenTxn }: { rows: FxRow[]; onOpenTxn: (fx: FxRo
               <td>{fx.curr2}</td>
               <td className="num">{formatAmount(fx.amt2)}</td>
               <td className="num">{formatRate(fx.spot)}</td>
-              <td className="num">{formatRate(fx.swap)}</td>
+              <td className="num">{formatPoints(fx.swap)}</td>
               <td className="num">{formatRate(fx.allIn)}</td>
               <td className="num">{formatRate(fx.strike)}</td>
               <td>{fx.mcRef}</td>

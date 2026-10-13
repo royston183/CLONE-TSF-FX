@@ -1,4 +1,4 @@
-import { fmtDate, fmtNum } from './format.ts'
+import { fmtDate, fmtNum, fmtRate } from './format.ts'
 import { dealsForMc, regionName } from './logic.ts'
 import { DetailCell, ModalHeader, Overlay, type ModalTarget } from './modal.tsx'
 import { StatusCell } from './DealTable.tsx'
@@ -60,7 +60,7 @@ export function DealModal({
             <DetailCell label="Fixing Day" value={fmtDate(deal.fixingDay)} />
             <DetailCell label="Partner name" value={deal.partner} />
             <DetailCell label="P&L" value={`${deal.plCurr} ${fmtNum(deal.plAmt)}`} />
-            <DetailCell label="P&L Rate" value={deal.plRate} />
+            <DetailCell label="P&L Rate" value={fmtRate(deal.plRate)} />
             <DetailCell label="Utilized Amt (USD)" value={fmtNum(deal.utiAmt)} />
             <DetailCell label="Save Spot Data" value={deal.spot ? 'Saved' : 'Not saved'} />
             <DetailCell

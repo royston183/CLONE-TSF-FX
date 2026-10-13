@@ -8,6 +8,7 @@
  */
 import { txt } from '../../shared/fx/masters.ts'
 import type { FxRow } from '../../shared/fx/mw.ts'
+import { tradeCurrency } from '../../shared/fx/currency-string.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { leadCurrency, round } from '../mo-generate-invoices-deal-id/invoice.ts'
 import type { InvoiceRefInput, PlInput } from './analysis.ts'
@@ -93,7 +94,7 @@ export function usdSideAmount(leg: PlanLeg): number {
 export const legRate = (leg: PlanLeg): number => (leg.strike ? leg.strike : leg.allIn)
 
 const AMOUNT_DECIMALS = 2
-const RATE_DECIMALS = 7
+const RATE_DECIMALS = 4
 
 /**
  * FORM invoice_plan: up to three rows T1 / T2 / T3 from the entity string and currency string, each linked
@@ -108,7 +109,7 @@ const RATE_DECIMALS = 7
 export function buildInvoicePlan(p: PlanInput): PlanResult {
   const problems: string[] = []
   const ent = (n: 1 | 2 | 3) => (p.entityString ? txt(p.entityString, `ZENT${n}`) : '')
-  const cur = (n: 1 | 2 | 3) => (p.currencyString ? txt(p.currencyString, `ZCURR${n}`) : '')
+  const cur = (n: 1 | 2 | 3) => tradeCurrency(p.currencyString, n)
   const leg = (t: LegType) => p.legs.find((l) => l.dealType === t)
   const adj = (t: LegType) => !!p.rule && txt(p.rule, t === 'D1' ? 'ZD1_ADJ' : 'ZD2_ADJ') === 'X'
 

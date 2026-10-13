@@ -249,10 +249,10 @@ export function formFromTxn(t: Txn): CorrectionForm {
   }
 }
 
-/** A rate input on blur: six places, or 0.000000 when it is not a number. */
+/** A rate input on blur: four places, or 0.0000 when it is not a number. */
 export function normaliseRate(value: string): string {
   const v = parseRate(value)
-  return Number.isNaN(v) ? '0.000000' : v.toFixed(6)
+  return Number.isNaN(v) ? '0.0000' : v.toFixed(4)
 }
 
 /** The derived Amount 2: Amount 1 (shorthand allowed) × Spot Rate. */
@@ -359,11 +359,13 @@ export function csvEsc(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-/** The rows exactly as the page exported them: raw numbers, then status and the three dates. */
+const CSV_RATE_COLS: ReadonlySet<string> = new Set(['spotRate', 'swapRate', 'allInRate'])
+
+/** The rows as the page exported them: raw numbers (rates to four places), then status and the three dates. */
 export function buildCsv(rows: Txn[]): string {
   const lines = [CSV_HEADER.join(',')]
   for (const t of rows) {
-    const row = CSV_COLS.map((c) => csvEsc(t[c]))
+    const row = CSV_COLS.map((c) => csvEsc(CSV_RATE_COLS.has(c) ? fmtRate(t[c] as number) : t[c]))
     row.push(csvEsc(STATUS_SHORT[t.status]), csvEsc(fmtDate(t.tradeDate)), csvEsc(fmtDate(t.valueDate)), csvEsc(t.blotterDate ? fmtDate(t.blotterDate) : ''))
     lines.push(row.join(','))
   }

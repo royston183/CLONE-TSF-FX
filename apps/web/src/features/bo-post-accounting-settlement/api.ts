@@ -21,12 +21,13 @@
  *                 STILL WAITING FOR API: ZSGTSFCDS_OPTION (option legs, no resource) and the legs' FI documents
  *                 FI Doc 1 / 2 (BKPF, no resource) - those cells say so instead of "not posted"; Status is
  *                 'Confirmed' because 'Posted' would need the documents; DSS Deal has no source.
- *   Trade Invoice Settlement   ZSGTSFTR_TRD_POS WHERE zdeal_id = <deal> (+ ZSGTSFTR_SET_TYP / _SET_FX /
- *                 _TRD_ACC, BKPF)  -> WAITING FOR API: ZSGTSFTR_TRD_POS has no middleware resource
- *                 (middleware "tradePosition" is the SLC table ZSGSLCTR_TRD_POS, not this one)
+ *   Trade Invoice Settlement   ZSGTSFTR_TRD_POS WHERE zdeal_id = <deal>: the rows MO: Execute Settlement for
+ *                 Deal ID (ZSGTSFR060) stored (the gateway's local SQLite, positions.ts), with their Settlement
+ *                 (ZSET_CHECK), FI Posting (ZPOST_CHECK) and FI document (ZBELNR) kept apart. The same table's FX
+ *                 rows give each FX leg its MO settlement.
  *   FI documents  BKPF -> no middleware resource
  *
- * Writes: every button posts through BAPIs / reports or updates ZSGTSFTR_DEALID / _TRD_POS with
+ * Writes: Accounting Completed moves ZDEAL_STAT 21 -> 22 (accounting.ts). Every other button posts through BAPIs / reports or updates ZSGTSFTR_DEALID / _TRD_POS with
  * statements that are not exported, so each validates as before and then says WAITING FOR ACTION
  * API. Nothing is written to the middleware and no local state changes.
  */
@@ -37,6 +38,7 @@ import { odataString } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import { loadPositions, toInvLegs, withSetFxSequence, type PositionRow } from './positions.ts'
 import type { Deal, FxLeg, Outcome, ToastMessage } from './types.ts'
 
 export const WAITING = 'WAITING FOR API'
@@ -50,6 +52,16 @@ export function legsWaitingReason(failure = '', legCount = 1): string {
   if (failure) return `${WAITING} — ZSGTSFTR_APP_STR / FxTransaction could not be read: ${failure} ${LEGS_STILL_WAITING}`
   return legCount ? LEGS_STILL_WAITING : `No FX deal legs for this Deal ID in ZSGTSFTR_APP_STR. ${LEGS_STILL_WAITING}`
 }
+
+/** Under the Trade Invoice grid: why it is empty, or what its posting still waits for. */
+export function invoiceNote(failure: string, legCount: number): string {
+  if (failure) return `The settlement legs (local ZSGTSFTR_TRD_POS) could not be read: ${failure}`
+  if (!legCount) return 'No settlement legs are stored for this Deal ID yet: run Initiate Settlement on MO: Execute Settlement for Deal ID (ZSGTSFR060) first.'
+  return POSTING_WAITING
+}
+
+/** The accounting posting both Post buttons need, which SAP does not expose yet. */
+export const POSTING_WAITING = `${WAITING} — the FI posting (BAPI_ACC_DOCUMENT_POST for trade invoice legs; RFTBBB00 / TBB1 for FX deals, service ZFS_SB_TRMPOSTING_O4_API not published) has no API, so no leg can be posted from here yet.`
 
 export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_TRD_POS (trade invoice settlement rows) has no middleware resource; ${PROGRAM} source not exported (only dependency notes), so the rows built from ZSGTSFTR_SET_TYP / _SET_FX / _TRD_ACC cannot be reproduced.`
 
@@ -73,7 +85,6 @@ export const ACTION_WAITING = {
   invSettle: waitingAction('Settlement Complete', 'UPDATE ZSGTSFTR_TRD_POS ZSET_CHECK + ZSGTSFTR_DEALID status — statements not exported'),
   invPost: waitingAction('Post Document', `BAPI_ACC_DOCUMENT_POST, ${COMMIT}, UPDATE ZSGTSFTR_TRD_POS`),
   postAll: waitingAction('Trade Invoice: Posting All', `BAPI_ACC_DOCUMENT_POST, ${COMMIT}, UPDATE ZSGTSFTR_TRD_POS`),
-  accounting: waitingAction('Accounting Completed', 'UPDATE ZSGTSFTR_DEALID ZDEAL_STAT + ZCHANGED_BY / _DATE / _TIME — statement not exported'),
 } as const
 
 /**
@@ -148,6 +159,9 @@ export function toLeg({ fx, app }: FxWithApp): FxLeg {
     doc2: '',
     dssDeal: '',
     sgsart: fx.ProductType ?? '',
+    settled: app.ZtsfExeCo === true,
+    seq: '',
+    txnStatus: (app.TxnStatus ?? '').trim(),
   }
 }
 
@@ -168,7 +182,7 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
     if (!deal) return { ok: false, message: `No Deal ID '${key}' in ZSGTSFTR_DEALID.` }
     const mcRef = txt(deal, 'ZMC_REF')
     const trdCode = txt(deal, 'ZTRD_CODE')
-    const [mcs, traders, statuses, legsRead] = await Promise.all([
+    const [mcs, traders, statuses, legsRead, positionsRead] = await Promise.all([
       mcRef ? fxList('masterContract', { ZMC_REF_NO: mcRef }, { signal }) : Promise.resolve([] as FxRow[]),
       trdCode ? fxList('trmTrader', { ZTCODE: trdCode }, { signal }) : Promise.resolve([] as FxRow[]),
       fxList('tsfDealStatus', { ZDEAL_STAT: txt(deal, 'ZDEAL_STAT') }, { signal }),
@@ -180,18 +194,39 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
           return { legs: [] as FxLeg[], failure: messageOf(error) }
         },
       ),
+      // MO's settlement state (local ZSGTSFTR_TRD_POS); unreadable leaves the invoice grid empty with the reason.
+      loadPositions(txt(deal, 'ZDEAL_ID') || key, signal).then(
+        (rows) => ({ rows, failure: '' }),
+        (error: unknown) => {
+          if (isAbort(error)) throw error
+          return { rows: [] as PositionRow[], failure: messageOf(error) }
+        },
+      ),
     ])
-    return {
-      ok: true,
-      deal: toDeal({
-        deal,
-        mc: first(mcs),
-        trader: first(traders),
-        statuses,
-        legs: legsRead.legs,
-        legsReason: legsWaitingReason(legsRead.failure, legsRead.legs.length),
-      }),
-    }
+    const header = toDeal({
+      deal,
+      mc: first(mcs),
+      trader: first(traders),
+      statuses,
+      legs: legsRead.legs,
+      legsReason: legsWaitingReason(legsRead.failure, legsRead.legs.length),
+    })
+    const inv = toInvLegs(positionsRead.rows)
+    // The FX legs' sequence (ZSGTSFTR_SET_FX) and the model's no-invoice flag (ZSGTSFTR_RULE_BT ZNO_INV).
+    const model = header.fxModelId
+    const [setFx, rules, setTyp] = model
+      ? await Promise.all([
+          fxList('setFx', { ZMOD_ID: model }, { signal }),
+          fxList('fxModel', { ZMOD_ID: model }, { signal }),
+          fxList('setTyp', { ZMOD_ID: model }, { signal }),
+        ])
+      : [[] as FxRow[], [] as FxRow[], [] as FxRow[]]
+    const top = withSetFxSequence(header.top, setFx)
+    // The leg's DSS deal is SET_TYP's (a~zdss_deal); TRD_POS has no column for it.
+    const dss = new Map(setTyp.map((t) => [txt(t, 'ZT_TYPE'), txt(t, 'ZDSS_DEAL')]))
+    for (const r of inv) r.dssDealType = dss.get(r.tType) ?? ''
+    const noInvoice = rules[0] ? txt(rules[0], 'ZNO_INV') !== '' : false
+    return { ok: true, deal: { ...header, top, inv, noInvoice, invWaiting: invoiceNote(positionsRead.failure, inv.length) } }
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[deal-trd-post] ZSGTSFTR_DEALID unavailable', error)

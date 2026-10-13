@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { entityOf, txnTypeOf } from './data.ts'
-import { fmtDate, fmtNum } from './format.ts'
+import { fmtDate, fmtNum, RATE_DP } from './format.ts'
 import { CommitInput } from './inputs.tsx'
 import {
   autoBpOptions,
@@ -17,6 +17,9 @@ import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoLeg, AutoLegField, BusinessPartner, MasterContract, Option } from './types.ts'
 
 const AWAITING = <div className="auto-awaiting-mc">Select a Master Contract to derive Deal 1 / Deal 2 details.</div>
+
+/** The editable leg fields validateAutoLegs requires before Create Transaction is enabled. */
+const REQUIRED_LEG_FIELDS = new Set(['Trade Date', 'Value Date', 'Partner', 'Amount 1', 'All in Rate'])
 
 const optionList = (items: Option[]) =>
   items.map((o, i) => (
@@ -85,7 +88,9 @@ export function AutoDealModal({
               </select>
             </div>
             <div className="form-field">
-              <label htmlFor="auto-mc">MC Ref No</label>
+              <label htmlFor="auto-mc">
+                MC Ref No<span className="req">*</span>
+              </label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   id="auto-mc"
@@ -215,9 +220,9 @@ function LegBlock({
     ['B/S 2', lockedSelect(bsOptions(), l.bs2), true],
     ['Curr 2', lockedSelect(currOptions(), l.curr2), true],
     ['Amount 2', lockedValue(fmtNum(l.amt2, 2)), true],
-    ['All in Rate', input('rate', fmtNum(l.rate, 6), 'num')],
+    ['All in Rate', input('rate', fmtNum(l.rate, RATE_DP), 'num')],
     ['Swap Rate', input('swap', fmtNum(l.swap, 6), 'num')],
-    ['Spot Rate', input('spot', fmtNum(l.spot, 6), 'num')],
+    ['Spot Rate', input('spot', fmtNum(l.spot, RATE_DP), 'num')],
     ['Mode of Trade', select('mode', assignmentOptions(), l.mode)],
   ]
   if (txnTypeOf(l.txnType)?.ndf) {
@@ -231,7 +236,10 @@ function LegBlock({
       <div className="auto-deal-grid">
         {fields.map(([label, control, locked]) => (
           <div className={locked ? 'auto-edit-field locked-field' : 'auto-edit-field'} key={label}>
-            <div className="auto-field-label">{label}</div>
+            <div className="auto-field-label">
+              {label}
+              {REQUIRED_LEG_FIELDS.has(label) ? <span className="req">*</span> : null}
+            </div>
             {control}
           </div>
         ))}

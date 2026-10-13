@@ -52,3 +52,7 @@
 .mo-confirm-fx-deal-id-ss table.data th,
 .mo-confirm-fx-deal-id-ss table.data td { border-left: 0; border-right: 0; }
 :root:not([data-theme='dark']) .mo-confirm-fx-deal-id-ss table.data thead th { border-bottom-color: #E6E9EB; }
+
+/* Mandatory-field marker inside popup form fields (New Transaction in Edit Deal Pair); the
+   generated sheet only styles it under .field-label. */
+.mo-confirm-fx-deal-id-ss .form-field label .req { color:var(--red); margin-left:2px; }

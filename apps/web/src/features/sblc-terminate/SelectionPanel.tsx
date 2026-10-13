@@ -138,7 +138,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
     <div className="selection-panel">
       <div className="selection-row">
         <div className="main-field-item">
-          <label htmlFor="companyCode">Company Code *</label>
+          <label htmlFor="companyCode">Company Code<span className="req">*</span></label>
           <div className="field-shell company-shell">
             <input
               id="companyCode"
@@ -161,7 +161,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
           </div>
         </div>
         <div className="main-field-item">
-          <label htmlFor="keyDate">Key Date *</label>
+          <label htmlFor="keyDate">Key Date<span className="req">*</span></label>
           <div className="field-shell date-shell">
             <input
               id="keyDate"

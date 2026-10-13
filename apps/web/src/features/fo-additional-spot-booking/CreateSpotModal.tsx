@@ -162,6 +162,8 @@ export function CreateSpotModal({
                     value={values.rate}
                     readOnly={locked}
                     onChange={(e) => {
+                      // Rates carry at most four decimals: a keystroke that would add a fifth is ignored.
+                      if (!/^[\d,]*\.?\d{0,4}$/.test(e.target.value)) return
                       onClearErrors()
                       onChange({ rate: e.target.value })
                     }}

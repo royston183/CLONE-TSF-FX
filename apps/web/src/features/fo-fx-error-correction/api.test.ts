@@ -151,13 +151,13 @@ describe('toCorrectionPatch', () => {
   })
 
   it('sends only the fields that changed, in the service\'s names', () => {
-    const f = { ...form(), allInRate: '84.000000', amount1: '2M', valueDate: '05-11-2026', tradeDate: '29-09-2026' }
+    const f = { ...form(), allInRate: '84.0000', amount1: '2M', valueDate: '05-11-2026', tradeDate: '29-09-2026' }
     deepStrictEqual(toCorrectionPatch(t, f), { ForwardRate: 84, BuyAmount: 2_000_000, ValueDate: '2026-11-05', ContractDate: '2026-09-29' })
   })
 
   it('allows a swap rate of zero but not a zero rate elsewhere', () => {
-    deepStrictEqual(toCorrectionPatch(t, { ...form(), swapRate: '0.000000' }), { SwapRate: 0 })
-    deepStrictEqual(toCorrectionPatch(t, { ...form(), allInRate: '0.000000', spotRate: 'abc' }), {})
+    deepStrictEqual(toCorrectionPatch(t, { ...form(), swapRate: '0.0000' }), { SwapRate: 0 })
+    deepStrictEqual(toCorrectionPatch(t, { ...form(), allInRate: '0.0000', spotRate: 'abc' }), {})
   })
 
   it('never sends Amount 2, or the fields SAP has no home for', () => {

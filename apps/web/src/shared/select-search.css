@@ -1,0 +1,79 @@
+/* The search popup every native <select> opens (SelectSearch.tsx). It is portalled to <body>,
+   so it is styled here once rather than under any screen's scope. */
+.slc-select-search {
+  --ss-bg: #ffffff;
+  --ss-text: #22354c;
+  --ss-muted: #67768c;
+  --ss-border: #d5dde8;
+  --ss-hover: #eaf3ff;
+  --ss-selected: #1265c8;
+  --ss-focus: #1265c8;
+  position: fixed;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 6px;
+  background: var(--ss-bg);
+  color: var(--ss-text);
+  border: 1px solid var(--ss-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(34, 53, 72, 0.22);
+  font: 13px/1.35 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+}
+:root[data-theme='dark'] .slc-select-search {
+  --ss-bg: #1d2633;
+  --ss-text: #e4ebf5;
+  --ss-muted: #9aa8bb;
+  --ss-border: #36445a;
+  --ss-hover: #263852;
+  --ss-selected: #6ea8ff;
+  --ss-focus: #6ea8ff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.slc-select-search__input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  margin: 0 0 6px;
+  border: 1px solid var(--ss-border);
+  border-radius: 6px;
+  background: var(--ss-bg);
+  color: var(--ss-text);
+  font: inherit;
+  outline: none;
+}
+.slc-select-search__input:focus {
+  border-color: var(--ss-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ss-focus) 25%, transparent);
+}
+.slc-select-search__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+.slc-select-search__opt {
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.slc-select-search__opt.is-active {
+  background: var(--ss-hover);
+}
+.slc-select-search__opt.is-selected {
+  color: var(--ss-selected);
+  font-weight: 600;
+}
+.slc-select-search__opt.is-disabled {
+  color: var(--ss-muted);
+  cursor: default;
+}
+.slc-select-search__empty {
+  padding: 8px 10px;
+  color: var(--ss-muted);
+}

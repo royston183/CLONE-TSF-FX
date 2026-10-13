@@ -1,6 +1,6 @@
 import type { DragEvent, MouseEvent, ReactNode } from 'react'
 import { txnTypeOf } from './data.ts'
-import { fmtDate, fmtNum } from './format.ts'
+import { fmtDate, fmtNum, RATE_DP } from './format.ts'
 import { CommitInput } from './inputs.tsx'
 import {
   STATUS_CLASS,
@@ -62,7 +62,7 @@ export function BlotterTable({
   h: TableHandlers
 }) {
   const arrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '▲' : '▼') : '')
-  const sortTh = (key: SortKey, label: string, cls: string) => (
+  const sortTh = (key: SortKey, label: ReactNode, cls: string) => (
     <th className={cls} onClick={() => h.onSort(key)}>
       {label}{' '}
       <span className="arrow" id={`sort-${key}`}>
@@ -86,20 +86,34 @@ export function BlotterTable({
           </th>
           <th className="left sticky-col sticky-2">Status</th>
           {sortTh('transactionNumber', 'RFHA / Draft', 'left sortable sticky-col sticky-3')}
-          {sortTh('tradeDate', 'Trade Date', 'sortable')}
-          <th className="left">Company Code</th>
-          <th className="left">Bank BP</th>
-          <th className="left">Txn Type</th>
+          {sortTh('tradeDate', <>Trade Date<span className="req">*</span></>, 'sortable')}
+          <th className="left">
+            Company Code<span className="req">*</span>
+          </th>
+          <th className="left">
+            Bank BP<span className="req">*</span>
+          </th>
+          <th className="left">
+            Txn Type<span className="req">*</span>
+          </th>
           <th className="left">B/S 1</th>
-          <th className="left">Curr 1</th>
-          <th className="num">Amount 1</th>
+          <th className="left">
+            Curr 1<span className="req">*</span>
+          </th>
+          <th className="num">
+            Amount 1<span className="req">*</span>
+          </th>
           <th className="left">B/S 2</th>
-          <th className="left">Curr 2</th>
+          <th className="left">
+            Curr 2<span className="req">*</span>
+          </th>
           <th className="num">Amount 2</th>
-          <th className="num">All in Rate</th>
+          <th className="num">
+            All in Rate<span className="req">*</span>
+          </th>
           <th className="num">Swap</th>
           <th className="num">Spot</th>
-          {sortTh('valueDate', 'Value Date', 'sortable')}
+          {sortTh('valueDate', <>Value Date<span className="req">*</span></>, 'sortable')}
           <th className="left">Mode of Trade</th>
           <th className="left">Acc Category</th>
           <th className="left">Profit Center</th>
@@ -180,8 +194,13 @@ function Row({
     if (!editable) return r[field] ? fmtDate(r[field]) : DASH
     return <CommitInput className="cell-input" value={fmtDate(r[field])} onCommit={(v) => h.onDate(r.id, field, v)} />
   }
+  // The All in Rate cell reads back at 4 decimals; the other number cells as entered.
   const numIn = (field: NumField) => (
-    <CommitInput className="cell-input num-in" value={String(r[field])} onCommit={(v) => h.onField(r.id, field, v)} />
+    <CommitInput
+      className="cell-input num-in"
+      value={field === 'totalRate' && r[field] !== '' ? fmtNum(r[field], RATE_DP) : String(r[field])}
+      onCommit={(v) => h.onField(r.id, field, v)}
+    />
   )
 
   return (

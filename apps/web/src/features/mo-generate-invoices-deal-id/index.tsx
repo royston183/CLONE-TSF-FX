@@ -6,7 +6,10 @@ import './mo-generate-invoices-deal-id.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './mo-generate-invoices-deal-id.dark.css'
 import './mo-generate-invoices-deal-id.overrides.css'
-import { isAbort } from '../../shared/fx/mw.ts'
+import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
+import { loadPartnerBanks, type PartnerBank } from '../../shared/fx/partner-bank.ts'
+import { txt } from '../../shared/fx/masters.ts'
+import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   BANK_WAITING,
@@ -65,8 +68,8 @@ const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'bs2', label: 'Side 2' },
   { key: 'curr2', label: 'Crcy 2' },
   { key: 'amt2', label: 'Amount 2', num: 2 },
-  { key: 'allIn', label: 'All in Rate', num: 9 },
-  { key: 'strike', label: 'Strike', num: 9 },
+  { key: 'allIn', label: 'All in Rate', num: 4 },
+  { key: 'strike', label: 'Strike', num: 4 },
   { key: 'mc', label: 'MC Ref No' },
   { key: 'txn', label: 'Txn Status' },
 ]
@@ -152,6 +155,43 @@ export default function MoGenerateInvoicesDealId() {
   const [remarkBlIndex, setRemarkBlIndex] = useState(-1)
   const [diffOpen, setDiffOpen] = useState(false)
   const [bankRow, setBankRow] = useState(-1)
+  // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP) for the bank popup.
+  const [houseBanks, setHouseBanks] = useState<HouseBankAccount[]>([])
+  const [entityCompany, setEntityCompany] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let live = true
+    void Promise.all([loadHouseBankAccounts(), fxList('comp')])
+      .then(([accounts, comp]) => {
+        if (!live) return
+        setHouseBanks(accounts)
+        setEntityCompany(Object.fromEntries(comp.map((r) => [txt(r, 'ZCOM_ID'), txt(r, 'ZBUKRS')])))
+      })
+      .catch((error: unknown) => {
+        console.warn('[invoice-finalisation] house bank accounts unavailable: the bank lists stay empty', error)
+      })
+    return () => {
+      live = false
+    }
+  }, [])
+
+  // Partner banks (SlcTsfBpBank, BUT0BK) of the business partner of the row whose bank popup is open.
+  const [partnerBanks, setPartnerBanks] = useState<PartnerBank[]>([])
+  const [partnerBankError, setPartnerBankError] = useState(false)
+  const bankBp = bankRow >= 0 ? (deal?.inv[bankRow]?.bp ?? '') : ''
+  useEffect(() => {
+    setPartnerBanks([])
+    setPartnerBankError(false)
+    if (!bankBp) return
+    const ctl = new AbortController()
+    loadPartnerBanks(bankBp, ctl.signal)
+      .then(setPartnerBanks)
+      .catch((error: unknown) => {
+        if (ctl.signal.aborted) return
+        console.warn('[invoice-finalisation] partner banks unavailable', error)
+        setPartnerBankError(true)
+      })
+    return () => ctl.abort()
+  }, [bankBp])
 
   // Outcomes show as the standard ResultDialog queue (stay until OK).
   const [outcomes, setOutcomes] = useState<ResultItem[]>([])
@@ -484,7 +524,9 @@ export default function MoGenerateInvoicesDealId() {
       toast('Enter a valid non-negative number.', 'error')
       return
     }
-    updateDeal((d) => ({ ...d, inv: d.inv.map((r, i) => (i === index ? recalcInvoiceRow({ ...r, [edit]: n }) : r)) }))
+    // Rates are kept to four decimals.
+    const value = edit === 'rate' ? Number(n.toFixed(4)) : n
+    updateDeal((d) => ({ ...d, inv: d.inv.map((r, i) => (i === index ? recalcInvoiceRow({ ...r, [edit]: value }) : r)) }))
   }
 
   const openBank = (index: number) => setBankRow(index)
@@ -519,7 +561,7 @@ export default function MoGenerateInvoicesDealId() {
       <div className="app">
         <header className="topbar">
           <div className="top-left">
-            <BackButton className="back-btn" />
+            <BackButton className="fx-back-btn" />
             <div className="brand-mark" aria-label="FourthSignal">
               <span className="b1" />
               <span className="b2" />
@@ -911,7 +953,11 @@ export default function MoGenerateInvoicesDealId() {
                               <input className="cell-input" disabled={!canEdit} defaultValue={money(r.usdPrice, 9)} onBlur={(e) => setInvField(idx, 'usdPrice', e.target.value)} />
                             </td>
                             <td className="editable-cell">
-                              <input className="cell-input" disabled={!canEdit || amendMode || r.curr === 'USD'} defaultValue={money(r.rate, 9)} onBlur={(e) => setInvField(idx, 'rate', e.target.value)} />
+                              <input className="cell-input" disabled={!canEdit || amendMode || r.curr === 'USD'} defaultValue={money(r.rate, 4)} onBlur={(e) => {
+                                const v = parseNum(e.target.value)
+                                setInvField(idx, 'rate', e.target.value)
+                                if (!Number.isNaN(v) && v >= 0) e.target.value = money(v, 4)
+                              }} />
                             </td>
                             <td className="num">{money(r.price, 9)}</td>
                             <td className="num">{money(r.amt, 2)}</td>
@@ -964,7 +1010,17 @@ export default function MoGenerateInvoicesDealId() {
       {blOpen && deal ? <BlModal key={blVersion} rows={deal.bl} reason={deal.blReason} onClose={() => setBlOpen(false)} onDeassign={openDeassign} /> : null}
       {remarkBlIndex >= 0 ? <RemarkModal onClose={() => setRemarkBlIndex(-1)} onUpdate={saveRemark} /> : null}
       {diffOpen && deal ? <DiffModal rows={deal.diff} fxReason={deal.fxReason} onClose={() => setDiffOpen(false)} /> : null}
-      {bankRow >= 0 && deal ? <BankModal row={deal.inv[bankRow]!} reason={BANK_WAITING} onClose={() => setBankRow(-1)} onUpdate={saveBank} /> : null}
+      {bankRow >= 0 && deal ? (
+        <BankModal
+          row={deal.inv[bankRow]!}
+          reason={partnerBankError ? BANK_WAITING : ''}
+          partnerBanks={partnerBanks}
+          houseBanks={houseBanks}
+          company={entityCompany[deal.inv[bankRow]!.seller] ?? ''}
+          onClose={() => setBankRow(-1)}
+          onUpdate={saveBank}
+        />
+      ) : null}
     </div>
   )
 }

@@ -8,8 +8,8 @@ export function fmtNum(n: number): string {
   return `${neg ? '-' : ''}${whole}.${parts[1] ?? ''}`
 }
 
-/** Rates are always shown to six places. */
-export const fmtRate = (n: number) => n.toFixed(6)
+/** Rates are always shown to four places. */
+export const fmtRate = (n: number) => n.toFixed(4)
 
 /** DD-MM-YYYY, the format every date on the screen uses. */
 export function fmtDate(d: Date): string {

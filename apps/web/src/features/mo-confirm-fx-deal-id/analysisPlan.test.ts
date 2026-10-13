@@ -147,7 +147,7 @@ describe('profit margin', () => {
     const r = buildInvoicePlan(input({ modelId: 'M001', profitMargin: 2 }))
     const d1Rate = 83.2
     strictEqual(line(r, 'T1').ZEX_RATE, d1Rate)
-    const want = Math.round(((d1Rate * 102) / 100) * 1e7) / 1e7
+    const want = Math.round(((d1Rate * 102) / 100) * 1e4) / 1e4
     strictEqual(line(r, 'T2').ZEX_RATE, want)
     strictEqual(line(r, 'T2').ZINV_AMT, Math.round(20000 * want * 100) / 100)
     strictEqual(line(r, 'T3').ZEX_RATE, want) // T3 is also D2
@@ -155,7 +155,7 @@ describe('profit margin', () => {
 
   it('M002 marks T1 down from the D1 rate', () => {
     const r = buildInvoicePlan(input({ modelId: 'M002', profitMargin: 2 }))
-    const want = Math.round(((83.2 * 98) / 100) * 1e7) / 1e7
+    const want = Math.round(((83.2 * 98) / 100) * 1e4) / 1e4
     strictEqual(line(r, 'T1').ZEX_RATE, want)
     strictEqual(line(r, 'T1').ZINV_AMT, Math.round(20000 * want * 100) / 100)
     strictEqual(line(r, 'T2').ZEX_RATE, 83.5)
@@ -300,7 +300,7 @@ describe('Change / Confirm end to end', () => {
     strictEqual(f.state.deal['ZPL_CURR'], 'USD')
     strictEqual(f.state.deal['ZPL_LAMT'], '6000.00')
     strictEqual(f.state.deal['ZPL_LCURR'], 'INR')
-    strictEqual(f.state.deal['ZPL_RATE'], '83.20000')
+    strictEqual(f.state.deal['ZPL_RATE'], '83.2000')
     strictEqual(f.state.deal['ZTSF_MODEL'], 'M033')
     deepStrictEqual(f.state.inv.map((i) => i['ZINV_TRM_NO']), ['1000000231-T1', '1000000231-T2', '1000000231-T3'])
     ok(!f.log.some((l) => l.includes('TxnStatus')))

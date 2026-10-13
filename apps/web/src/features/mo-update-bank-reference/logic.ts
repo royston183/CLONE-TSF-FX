@@ -93,10 +93,15 @@ function csvCell(value: unknown): string {
   return /[,"\n]/.test(v) ? '"' + v + '"' : v
 }
 
-/** Header of column labels, then the raw (unformatted) values of each row. */
+/** A rate column's value to four decimals, ungrouped; swap points and everything else stay raw. */
+function csvValue(c: Column, value: unknown): unknown {
+  return c.type === 'rate' && c.key !== 'SWAP' && typeof value === 'number' ? value.toFixed(4) : value
+}
+
+/** Header of column labels, then the raw (unformatted) values of each row; rates to four decimals. */
 export function buildCsv(cols: readonly Column[], rows: readonly Deal[]): string {
   const lines = [cols.map((c) => c.label).join(',')]
-  for (const r of rows) lines.push(cols.map((c) => csvCell(r[c.key])).join(','))
+  for (const r of rows) lines.push(cols.map((c) => csvCell(csvValue(c, r[c.key]))).join(','))
   return lines.join('\n')
 }
 

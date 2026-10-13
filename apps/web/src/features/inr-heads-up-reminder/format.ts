@@ -44,7 +44,7 @@ export function formatAmount(n: number | string): string {
 }
 
 export function formatRate(n: number | string): string {
-  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
 }
 
 /** 1,500,000 -> 1.5M, 22,500 -> 22.5K; smaller amounts as they are. */

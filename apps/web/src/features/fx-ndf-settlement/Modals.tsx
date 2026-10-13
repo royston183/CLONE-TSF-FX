@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { formatAmount, formatRate, isoToDmy } from './format.ts'
+import { formatAmount, formatRate, formatSwap, isoToDmy } from './format.ts'
 import { letterDealTable, runSummary, statusText } from './logic.ts'
 import { ModalFrame, type Modal } from './modal.tsx'
 import type { ConfirmRequest, Deal, LetterModel, RunView } from './types.ts'
@@ -69,7 +69,7 @@ export function TransactionModal({ modal, row }: { modal: Modal; row: Deal | nul
               <DetailItem label="Currency 2" value={row.curr2} />
               <DetailItem label="Amount 2" value={formatAmount(row.amt2)} />
               <DetailItem label="Spot Rate" value={formatRate(row.ospot)} />
-              <DetailItem label="Swap Rate" value={formatRate(row.oswap)} />
+              <DetailItem label="Swap Rate" value={formatSwap(row.oswap)} />
               <DetailItem label="All in Rate" value={formatRate(row.otot_rate)} />
               <DetailItem label="Currency Pair" value={row.cpair} />
             </DetailSection>

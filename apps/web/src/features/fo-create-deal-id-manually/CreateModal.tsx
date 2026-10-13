@@ -92,7 +92,7 @@ export function CreateModal({
             <div className="modal-section-title">MC Details</div>
             <div className="form-grid four">
               <div className="field">
-                <label>MC No</label>
+                <label>MC No<span className="req">*</span></label>
                 <select className="select" value={mcRef} onChange={(e) => changeMc(e.target.value)}>
                   {mcsForOrigin.map((m) => (
                     <option key={m.ref} value={m.ref}>
@@ -129,7 +129,7 @@ export function CreateModal({
             <div className="help-note">The SAP program validates that both transactions contain a USD leg and that their end dates are within ±3 days.</div>
             <div className="form-grid two">
               <div className="field">
-                <label>Deal 1 Transaction</label>
+                <label>Deal 1 Transaction<span className="req">*</span></label>
                 <select
                   className="select"
                   value={deal1}
@@ -146,7 +146,7 @@ export function CreateModal({
                 </select>
               </div>
               <div className="field">
-                <label>Deal 2 Transaction</label>
+                <label>Deal 2 Transaction<span className="req">*</span></label>
                 <select
                   className="select"
                   value={deal2}

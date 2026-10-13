@@ -36,7 +36,9 @@ function LegBox({ leg, bukrs }: { leg: Leg; bukrs: string }) {
         <input type="text" readOnly value={transferTypeOf(TRANSFER_TYPES, leg.curr)} title={TRANSFER_TYPE_WAITING} />
       </div>
       <div className="assign-field">
-        <label>House Bank</label>
+        <label>
+          House Bank{leg.locked ? null : <span className="req">*</span>}
+        </label>
         <select
           disabled={leg.locked}
           value={leg.hb}

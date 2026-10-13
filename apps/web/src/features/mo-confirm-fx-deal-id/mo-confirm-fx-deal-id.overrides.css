@@ -12,3 +12,5 @@
 .mo-confirm-fx-deal-id .selection-compact .card-head { padding-top: 10px; padding-bottom: 10px; }
 .mo-confirm-fx-deal-id .selection-compact .card-body { padding-top: 10px; padding-bottom: 14px; }
 .mo-confirm-fx-deal-id .selection-compact .field input { min-width: 0; }
+/* Mandatory-field marker on labels (Deal ID; New transaction in the Edit Deal Pair popup). */
+.mo-confirm-fx-deal-id .field label .req { color:var(--danger); margin-left:2px; }

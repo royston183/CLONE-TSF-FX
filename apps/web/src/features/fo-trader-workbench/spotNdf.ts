@@ -17,6 +17,7 @@ import { saveAppStr, type AppStrFields } from '../fx-blotter/appStr.ts'
 import { realDeps } from '../fo-early-delivery-unwind-rollover/deps.ts'
 import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import { loadFxFor, loadTrmFxAppFor } from '../../shared/fx/app-str.ts'
+import { invalidCurrencyMessage, roundToCurrency } from '../../shared/fx/currency-decimals.ts'
 
 const fxApi = service('fx')
 
@@ -65,8 +66,8 @@ export function buildSpotBody(req: NdfSpotRequest, productType: string, original
   const traded = req.base === 1 ? req.curr1 : req.curr2
   const contractDate = isoDay(req.tradeDate) || isoDay(req.ndfDate) || isoDay(original.ContractDate) || new Date().toISOString().slice(0, 10)
   const valueDate = isoDay(original.ValueDate) || isoDay(req.valueDate) || contractDate
-  const buyAmount = money(buysFirst ? req.amt1 : req.amt2)
-  const sellAmount = money(buysFirst ? req.amt2 : req.amt1)
+  const buyAmount = roundToCurrency(Math.abs(buysFirst ? req.amt1 : req.amt2), buyCurrency)
+  const sellAmount = roundToCurrency(Math.abs(buysFirst ? req.amt2 : req.amt1), sellCurrency)
   const body: Record<string, unknown> = {
     CompanyCode: req.bukrs,
     ProductType: productType,
@@ -112,6 +113,8 @@ export type NdfSpotResult = { ok: true; transaction: string; companyCode: string
 
 /** Reads the NDF, books the spot and saves its TSF row. A failed TSF save keeps the SAP spot and says so. */
 export async function createNdfSpot(req: NdfSpotRequest): Promise<NdfSpotResult> {
+  const badCurrency = invalidCurrencyMessage([req.curr1, req.curr2])
+  if (badCurrency) return { ok: false, message: badCurrency }
   let original: FxTransaction & Record<string, unknown>
   let app: Record<string, unknown> | undefined
   try {

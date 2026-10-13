@@ -10,6 +10,7 @@
  *   statusList         FORM drop_down          — the Deal ID Status list box
  *   modelWithCurrency  FORM screen_desc_fields — M030/M034/M020 + 01/02 by the deal's currency ID
  */
+import { tradeCurrency } from '../../shared/fx/currency-string.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import type { FxRow as MwRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
@@ -333,7 +334,7 @@ export function buildInvoiceRows(p: PlanInput): { rows: InvRow[]; profitMaintain
         rec['ZINV_TYPE'] = g.invType || `I${String(idx + 1).padStart(2, '0')}`
         rec['ZSELL'] = p.entStr ? txt(p.entStr, sell) : ''
         rec['ZBUY'] = p.entStr ? txt(p.entStr, buy) : ''
-        rec['ZCURR'] = p.curStr ? txt(p.curStr, currCol) : ''
+        rec['ZCURR'] = tradeCurrency(p.curStr, Number(currCol.slice(5)) as 1 | 2 | 3)
         rec['ZINCO'] = g.inco
         rec['ZINV_PDATE'] = isoDate(g.invDate)
         rec['ZINV_DATE'] = isoDate(g.invDate)
@@ -361,7 +362,7 @@ export function buildInvoiceRows(p: PlanInput): { rows: InvRow[]; profitMaintain
             const rfha = link ? (link.rfhaSlot === 1 ? p.zrfha1 : p.zrfha2) : ''
             const top = p.top.find((t) => t.rfha === rfha)
             if (top) exchRate = top.strike ? top.strike : top.allIn
-            rec['ZRATE'] = round(exchRate, 7)
+            rec['ZRATE'] = round(exchRate, 4)
             const lead = leadCurrency(USD, String(rec['ZCURR']))
             rec['ZPRICE'] = lead === USD ? g.cprice * exchRate : exchRate ? g.cprice / exchRate : 0
           }
@@ -439,7 +440,7 @@ export function buildInvoiceRows(p: PlanInput): { rows: InvRow[]; profitMaintain
       }
     }
     if (rec['ZCURR'] === USD) rate = savedRate
-    rec['ZRATE'] = round(rate, 7)
+    rec['ZRATE'] = round(rate, 4)
 
     // Premium in the T3 invoice amount for M030 (Put option on D1).
     if (p.model === 'M030' && w.ttype === T3) {

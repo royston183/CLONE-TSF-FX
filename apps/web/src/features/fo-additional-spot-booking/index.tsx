@@ -297,7 +297,7 @@ export default function FoAdditionalSpotBooking() {
       <div className="app">
         <div className="header">
           <div className="header-left">
-            <BackButton className="back-btn" />
+            <BackButton className="fx-back-btn" />
             <div className="brand">
               <div className="brand-mark" aria-hidden="true">
                 <span className="r" />

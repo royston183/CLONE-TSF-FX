@@ -865,3 +865,4 @@ border-right:7px solid transparent;border-bottom:13px solid #f5c242;border-top:0
 .iclallocate .filter-item label {position:static;display:block;height:12px;line-height:12px;margin:0 0 2px;overflow:visible}
 .iclallocate .filter-row-btn {align-self:flex-end;margin-bottom:0}
 .iclallocate .filter-item>.btn {margin-left:0}
+.iclallocate .req {color:#bb0000;margin-left:2px;}

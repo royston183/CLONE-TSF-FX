@@ -16,7 +16,7 @@ import {
   type Avail,
   type Option,
 } from './api.ts'
-import { money, rate } from './format.ts'
+import { money, points, rate } from './format.ts'
 import { applyFilters, statusClass, toCsv, type Tcurf } from './logic.ts'
 import { NdfFixModal, RefreshModal, ViewTxnModal } from './Modals.tsx'
 import './tsf-ndf-fixing.legacy.css'
@@ -166,7 +166,7 @@ export default function TsfNdfFixing() {
     setOpenModal('ndfFix')
     // gv_ndf_rate: TCURR kurst RBI on the Fixing Date, for USD:INR only.
     void loadRbiRate(r, filters.fixingDate || r.date).then((rbi) => {
-      if (rbi) setFixRateText((cur) => cur || String(rbi))
+      if (rbi) setFixRateText((cur) => cur || rbi.toFixed(4))
     })
   }
 
@@ -238,7 +238,7 @@ export default function TsfNdfFixing() {
     <div className="tsf-ndf-fixing">
       <div className="app">
         <header className="topbar">
-          <BackButton className="back" />
+          <BackButton className="fx-back-btn" />
           <div className="logo" aria-label="FS">
             <i />
             <i />
@@ -420,7 +420,7 @@ export default function TsfNdfFixing() {
                       <td className="num">{money(r.amt2)}</td>
                       <td>{r.c2}</td>
                       <td className="num">{rate(r.spot)}</td>
-                      <td className="num">{rate(r.swap)}</td>
+                      <td className="num">{points(r.swap)}</td>
                       <td className="num">{rate(r.fwd)}</td>
                       <td>{r.date}</td>
                       <td className="num">{money(r.ndf)}</td>

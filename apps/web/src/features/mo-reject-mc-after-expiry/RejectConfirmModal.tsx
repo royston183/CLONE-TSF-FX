@@ -1,4 +1,3 @@
-import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { rejectConfirmText } from './logic.ts'
 import type { Modal } from './modal.tsx'
 import { MasterContractConfirmation } from '../../shared/master-contract/Confirmation.tsx'

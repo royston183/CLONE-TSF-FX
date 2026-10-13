@@ -32,7 +32,7 @@ import {
   txnTypeOf,
 } from './data.ts'
 import { FX_TXN_STATUS, fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
-import { addDays, fmtDate, fmtNum, parseAmount, parseGridDate, parseUiDate, toISO } from './format.ts'
+import { addDays, fmtDate, fmtNum, parseAmount, parseGridDate, parseUiDate, RATE_DP, roundRate, toISO } from './format.ts'
 import type {
   AppDataPending,
   AutoLeg,
@@ -205,7 +205,7 @@ export function recalcRow(input: BlotterRow): BlotterRow {
   // Spot = total rate less swap points (points in local pips / 100) for the forward types.
   row.spotRate =
     tt && (tt.code === 'FWD' || tt.ndf || tt.code === 'SWAP')
-      ? +(num(row.totalRate) - num(row.swapPoints) / 100).toFixed(6)
+      ? roundRate(num(row.totalRate) - num(row.swapPoints) / 100)
       : row.totalRate
   if (!row.profitCenter) row.profitCenter = ent ? ent.defaultProfitCenter : ''
   if (!row.businessArea) row.businessArea = ent ? ent.businessArea : ''
@@ -485,9 +485,9 @@ export function rowSearchHay(r: BlotterRow, partners: BusinessPartner[]): string
     r.curr2,
     fmtNum(r.amt1),
     fmtNum(r.amt2),
-    r.spotRate,
+    fmtNum(r.spotRate, RATE_DP),
     r.swapPoints,
-    r.totalRate,
+    fmtNum(r.totalRate, RATE_DP),
     fmtDate(r.valueDate),
     r.assignment,
     r.portfolio,
@@ -607,7 +607,7 @@ export function editField(b: Blotter, id: string, field: TextField | NumField, v
   const row = { ...found }
   if (field === 'amt1' || field === 'swapPoints' || field === 'totalRate') {
     const n = parseAmount(value)
-    row[field] = Number.isNaN(n) ? 0 : n
+    row[field] = Number.isNaN(n) ? 0 : field === 'totalRate' ? roundRate(n) : n
   } else {
     row[field] = value
   }
@@ -980,7 +980,7 @@ export function recalcAutoLeg(input: AutoLeg): AutoLeg {
   const amt = l.amt1 || 0
   if (rate > 0) l.amt2 = l.curr1 === lead ? (amt * rate) / quotePer : (amt * quotePer) / rate
   else l.amt2 = 0
-  l.spot = rate - (l.swap || 0)
+  l.spot = roundRate(rate - (l.swap || 0))
   if (!txnTypeOf(l.txnType)?.ndf) {
     l.fixingDate = null
     l.fixRef = ''
@@ -996,8 +996,8 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
   const p = pairOf(mc.currPair)
   if (!m || !p) return []
   const amt = Math.min(mcBalance(mc), mc.amtUSD * 0.4)
-  const d1Rate = p.baseRate * (1 - m.spreadBp / 2 / 10000)
-  const d2Rate = p.baseRate * (1 + m.spreadBp / 2 / 10000)
+  const d1Rate = roundRate(p.baseRate * (1 - m.spreadBp / 2 / 10000))
+  const d2Rate = roundRate(p.baseRate * (1 + m.spreadBp / 2 / 10000))
   const valueDate = nextWorkingDay(addDays(ctxDate, 32))
   const base = {
     // The legs are booked in SAP, where only a real partner number is accepted.
@@ -1049,7 +1049,9 @@ export function updateAutoLeg(legs: AutoLeg[], index: number, field: AutoLegFiel
   if (field === 'tradeDate' || field === 'valueDate' || field === 'fixingDate') {
     const d = parseUiDate(value)
     if (d) l[field] = d
-  } else if (field === 'amt1' || field === 'rate' || field === 'swap' || field === 'spot') {
+  } else if (field === 'rate' || field === 'spot') {
+    l[field] = roundRate(parseAmount(value) || 0)
+  } else if (field === 'amt1' || field === 'swap') {
     l[field] = parseAmount(value) || 0
   } else {
     l[field] = value
@@ -1507,7 +1509,7 @@ export function processUpload(
     const bp = uploadBpCode(partners, u.bp)
     partners = bp.partners
     const vd = parseUiDate(u.valueDate)
-    const rate = parseAmount(u.totalRate) || 0
+    const rate = roundRate(parseAmount(u.totalRate) || 0)
     let r = makeRow(c, b.ctx, {
       status: level === 'ORDER' ? 'CREATED' : 'RELEASED',
       entity: ent.code,
@@ -1546,7 +1548,7 @@ export function processUpload(
       uploaded: true,
       settled: level === 'SETTLEMENT',
     })
-    if (u.spot) r = { ...r, spotRate: parseAmount(u.spot) || r.spotRate }
+    if (u.spot) r = { ...r, spotRate: roundRate(parseAmount(u.spot) || 0) || r.spotRate }
     made.push(r)
     results.push({
       sr: i + 1,

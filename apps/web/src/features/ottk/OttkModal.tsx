@@ -38,6 +38,7 @@ function Field({
   size,
   children,
   hidden,
+  required,
 }: {
   label: ReactNode
   htmlFor?: string
@@ -45,10 +46,15 @@ function Field({
   size?: 'num' | 'code' | 'date'
   children: ReactNode
   hidden?: boolean
+  /** Marks the label with a red asterisk; the save handler enforces the value. */
+  required?: boolean
 }) {
   return (
     <div className={size ? `field narrow-${size}` : 'field'} hidden={hidden}>
-      <label htmlFor={htmlFor}>{label}</label>
+      <label htmlFor={htmlFor}>
+        {label}
+        {required ? <span className="req">*</span> : null}
+      </label>
       {children}
     </div>
   )
@@ -314,7 +320,7 @@ export function OttkModal(props: OttkModalProps) {
             <Field label="LC Beneficiary" size="code">
               <input maxLength={10} value={form.lcBeneficiary} onChange={(e) => set('lcBeneficiary', e.target.value)} />
             </Field>
-            <Field label="Company Code">
+            <Field label="Company Code" required>
               <div className="compound">
                 <input className="code" maxLength={4} value={form.coCode} onChange={(e) => set('coCode', e.target.value)} />
                 <input placeholder="(auto)" readOnly value={form.coCodeName} />

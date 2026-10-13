@@ -455,7 +455,7 @@ export default function FoFxErrorCorrection() {
     return (
       <div className="fo-fx-error-correction">
         <div className="topbar">
-          <BackButton className="btn-outline" />
+          <BackButton className="fx-back-btn" />
           <span className="topbar-title">EC2: TSF FO Error Correction</span>
           <span className="topbar-code">FX</span>
           <div className="topbar-right">
@@ -489,7 +489,7 @@ export default function FoFxErrorCorrection() {
   return (
     <div className={`fo-fx-error-correction${draggingRow !== null ? ' row-dragging' : ''}`}>
       <div className="topbar">
-        <BackButton className="btn-outline" />
+        <BackButton className="fx-back-btn" />
         <img className="topbar-logo" src={COMPANY_LOGO} alt="Company logo" />
         <span className="topbar-title">EC2: TSF FO Error Correction</span>
         <span className="topbar-code">FX</span>

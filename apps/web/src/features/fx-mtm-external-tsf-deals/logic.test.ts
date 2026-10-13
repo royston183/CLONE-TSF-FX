@@ -55,6 +55,7 @@ import {
   postingContextOf,
   rateDp,
   recordCountText,
+  swapDp,
   seedPostedHistory,
   showingText,
   statusClass,
@@ -583,7 +584,9 @@ describe('layouts and columns', () => {
     strictEqual(cellText(firstRow('IN11', '3000014819'), col('ndf_rate') ?? COLUMNS[0]!), '')
     strictEqual(text('mtm_doc'), '')
     strictEqual(rateDp({ cpair: 'USD-VND' }), 4)
-    strictEqual(rateDp({ cpair: 'EUR-USD' }), 5)
+    strictEqual(rateDp({ cpair: 'EUR-USD' }), 4)
+    strictEqual(swapDp({ cpair: 'USD-INR' }), 5)
+    strictEqual(swapDp({ cpair: 'EUR-USD' }), 6)
   })
 
   it('classifies status text by its code', () => {

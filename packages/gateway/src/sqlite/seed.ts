@@ -1,13 +1,9 @@
-<<<<<<< HEAD
 import type { Database } from './db.ts'
-=======
-import type Database from 'better-sqlite3'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { REPO_ROOT } from '../config.ts'
-import { ddicRepository } from './repositories/ddic-table.ts'
+import { ddicRepository, type DdicRow } from './repositories/ddic-table.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from './repositories/trd-acc-columns.ts'
->>>>>>> origin/main
 import type { LookupValue } from './schema.ts'
 
 /**
@@ -35,18 +31,16 @@ export function runSeeds(db: Database, lookups: readonly LookupValue[] = LOOKUP_
   return lookups.length
 }
 
-export const TRD_ACC_SEED_FILE = resolve(REPO_ROOT, 'database/seed/zsgtsftr_trd_acc.json')
-
-/**
- * ZSGTSFTR_TRD_ACC (Trade Invoice posting configuration) is SAP customizing, so it is loaded from an export of the
- * SAP table (database/seed/zsgtsftr_trd_acc.json, SAP field names), not typed in. Idempotent: each row is upserted
- * by ZFI_TYPE and every other field takes the file's value. Returns how many rows it processed.
- */
-export function seedTrdAcc(db: Database.Database, file = TRD_ACC_SEED_FILE): number {
-  const rows = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>[]
+/** Loads the shipped posting configuration, keyed by ZFI_TYPE; safe to run again. */
+export function seedTrdAcc(db: Database): number {
+  const rows = JSON.parse(readFileSync(resolve(REPO_ROOT, 'database/seed/zsgtsftr_trd_acc.json'), 'utf8')) as DdicRow[]
   const repo = ddicRepository(db, { table: 'zsgtsftr_trd_acc', client: TRD_ACC_CLIENT, columns: TRD_ACC_COLUMNS })
   db.transaction(() => {
-    for (const { ZFI_TYPE, ...fields } of rows) repo.upsert({ ZFI_TYPE: ZFI_TYPE ?? '' }, fields)
+    for (const row of rows) {
+      const { ZFI_TYPE, ...fields } = row
+      if (typeof ZFI_TYPE !== 'string') throw new Error('Posting seed requires a ZFI_TYPE string.')
+      repo.upsert({ ZFI_TYPE }, fields)
+    }
   })()
   return rows.length
 }

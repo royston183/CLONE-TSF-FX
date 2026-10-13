@@ -221,7 +221,7 @@ describe('columns, search and sort', () => {
     if (!r) throw new Error('no row')
     strictEqual(cellText(col('maturityDate'), r), '05-10-2026')
     strictEqual(cellText(col('mcAmt'), r), '30,087.00')
-    strictEqual(cellText(col('plRate'), r), '90.400000')
+    strictEqual(cellText(col('plRate'), r), '90.4000')
     strictEqual(cellText(col('plAmt'), r), '125.00')
     strictEqual(cellText(col('confirmed'), r), 'X')
     strictEqual(cellText(col('spot'), r), '')

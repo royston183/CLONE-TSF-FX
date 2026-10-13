@@ -42,7 +42,7 @@ export function FilterPanel({
     <div className="selection-panel">
       <div className="selection-main-row">
         <div className="main-date-item">
-          <label htmlFor="uptoRequestDate">Upto Request Date</label>
+          <label htmlFor="uptoRequestDate">Upto Request Date<span className="req">*</span></label>
           <DateField
             id="uptoRequestDate"
             value={uptoRequestDate}

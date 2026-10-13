@@ -237,7 +237,7 @@ export default function MoDealIdInvoiceMark() {
       <div className="app-shell">
         <header className="topbar">
           <div className="top-left">
-            <BackButton className="back-btn" />
+            <BackButton className="fx-back-btn" />
             <div className="brand-wrap">
               <div className="fs-mark" aria-hidden="true">
                 <span className="m1" />

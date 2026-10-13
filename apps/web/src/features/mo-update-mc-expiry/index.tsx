@@ -5,7 +5,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
-import { expireOnMysql, loadContracts } from './api.ts'
+import { expireOnMysql, keepDemoState, loadContracts } from './api.ts'
 import { ConfirmExpiryModal } from './ConfirmExpiryModal.tsx'
 import { ContractDetailModal } from './ContractDetailModal.tsx'
 import { ContractsTable } from './ContractsTable.tsx'
@@ -59,6 +59,8 @@ export default function MoUpdateMcExpiry() {
   const [contracts, setContracts] = useState<MasterContract[]>([])
   /** Where the contract list came from; 'dummy' means expiries cannot reach MySQL. */
   const [source, setSource] = useState<MasterSource | 'loading'>('loading')
+  /** Seed contracts shown beside MySQL's, so there is always something to expire. */
+  const [demoCount, setDemoCount] = useState(0)
   const busy = useRef(false)
 
   // Selection screen
@@ -99,8 +101,9 @@ export default function MoUpdateMcExpiry() {
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const loaded = await loadContracts(signal)
-    setContracts(loaded.contracts)
+    setContracts((previous) => keepDemoState(previous, loaded.contracts))
     setSource(loaded.source)
+    setDemoCount(loaded.demoCount)
   }, [])
 
   useEffect(() => {
@@ -142,7 +145,7 @@ export default function MoUpdateMcExpiry() {
   const loadScreenData = async (text: string, mode: PostingMode) => {
     if (busy.current) return
     if (source === 'loading') {
-      showToast('Master Contracts are still loading. Try again in a moment.', 'info')
+      showToast('Master Contracts are still loading. Try again in a moment.')
       return
     }
     const check = validateKeyDate(text)
@@ -192,7 +195,7 @@ export default function MoUpdateMcExpiry() {
     if (mode === 'post' && postingMode !== 'post' && keyDate) {
       const ids = eligibleIds(contracts, keyDate)
       if (ids.length === 0) {
-        showToast('No Master Contracts are eligible for expiry for the selected Key Date.', 'warning')
+        showToast('No Master Contracts are eligible for expiry for the selected Key Date.')
         return
       }
       setConfirm(batchConfirm(ids))
@@ -413,7 +416,7 @@ export default function MoUpdateMcExpiry() {
     <div className="moume" ref={rootRef}>
       <div className="app-shell">
         <div className="page-header">
-          <BackButton className="btn btn-secondary" />
+          <BackButton className="fx-back-btn" />
           <img className="logo-img" src={BRAND_LOGO} alt="FS logo" />
           <div className="titles">
             <h1>Master Contract Expiry</h1>
@@ -511,7 +514,7 @@ export default function MoUpdateMcExpiry() {
               <span className="result-count" id="resultCount">
                 Showing <b>{pageRows.length}</b> of <b>{filtered.length}</b> contract{filtered.length === 1 ? '' : 's'}
               </span>
-              <SourceNote source={source} />
+              <SourceNote source={source} demoCount={demoCount} />
             </div>
             <div className="toolbar-right">
               <span
@@ -592,12 +595,14 @@ export default function MoUpdateMcExpiry() {
 }
 
 /** Says where the rows came from, so dummy data is never mistaken for MySQL's. */
-function SourceNote({ source }: { source: MasterSource | 'loading' }) {
+function SourceNote({ source, demoCount }: { source: MasterSource | 'loading'; demoCount: number }) {
   const text =
     source === 'loading'
       ? 'Loading from MySQL…'
       : source === 'mysql'
-        ? 'ZSGTSFTR_MAS_CON · MySQL'
-        : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
+        ? demoCount > 0
+          ? `ZSGTSFTR_MAS_CON · MySQL + ${demoCount} demo contracts (their expiry stays on this screen)`
+          : 'ZSGTSFTR_MAS_CON · MySQL'
+        :'Dummy data — the middleware could not be reached, so changes stay on this screen'
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

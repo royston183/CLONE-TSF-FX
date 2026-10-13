@@ -52,6 +52,9 @@
 :root[data-theme='dark'] .ccdiscloans .field label {
   color: #e6eef8;
 }
+:root[data-theme='dark'] .ccdiscloans .req {
+  color: #ff5c5c;
+}
 :root[data-theme='dark'] .ccdiscloans .input,
 :root[data-theme='dark'] .ccdiscloans .select {
   border: 1px solid #3d5670;

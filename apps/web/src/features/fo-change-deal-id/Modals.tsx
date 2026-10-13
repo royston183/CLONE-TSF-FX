@@ -267,7 +267,7 @@ export function EditPairModal({
               <div className="static">{row?.rfha}</div>
             </div>
             <div className="form-field">
-              <label>New Transaction</label>
+              <label>New Transaction<span className="req">*</span></label>
               <input
                 ref={input}
                 type="text"

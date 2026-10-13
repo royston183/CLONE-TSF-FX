@@ -1,6 +1,8 @@
+import type { HouseBankAccount } from '../../shared/fx/house-bank.ts'
 import { OPTIONS_WAITING } from './api.ts'
 import { formatAmount } from './format.ts'
-import { diff1Amount, plAmount } from './logic.ts'
+import { plAmount } from './logic.ts'
+import type { DiffRow } from './invoiceDifference.ts'
 import { ModalFrame } from './modal.tsx'
 import type { DmsDoc, FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
 
@@ -53,7 +55,9 @@ export function AmendModal({
       }
     >
       <div className="ffield">
-        <label htmlFor="amendDate">Deal End Date</label>
+        <label htmlFor="amendDate">
+          Deal End Date<span className="req">*</span>
+        </label>
         <input
           id="amendDate"
           type="text"
@@ -125,19 +129,21 @@ export function DiffModal({
   open,
   onClose,
   rows,
-  spots,
-  onSpot,
+  loading,
+  note,
   onSave,
   saving = false,
   emptyText,
 }: Base & {
   emptyText: string
-  rows: readonly FxDeal[]
-  spots: readonly string[]
-  onSpot: (idx: number, value: string) => void
+  rows: readonly DiffRow[]
+  loading: boolean
+  /** An optional table that could not be read. */
+  note: string
   onSave: () => void
   saving?: boolean
 }) {
+  const amount = (v: number) => formatAmount(v)
   return (
     <ModalFrame
       open={open}
@@ -145,12 +151,12 @@ export function DiffModal({
       size="wide"
       icon={<>&Delta;</>}
       title={<>FX &ndash; Invoice Difference</>}
-      subtitle="Compares the FX deal rate against the invoice rate for each leg, and lets the trader fix the spot rate"
+      subtitle="The planned and final invoice of each trade against the FX deal it maps to"
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="btn-confirm" type="button" onClick={onSave} disabled={saving}>
-            {saving ? 'Booking Spot…' : 'Save Spot Data'}
+          <button className="btn-confirm" type="button" onClick={onSave} disabled={saving || loading || rows.length === 0}>
+            {saving ? 'Saving…' : 'Save Difference'}
           </button>
         </>
       }
@@ -159,52 +165,52 @@ export function DiffModal({
         <table className="data-table">
           <thead>
             <tr>
+              <th className="left">Trade</th>
+              <th className="left">Curr</th>
+              <th>Planned Amt</th>
+              <th>Final Invoice Amt</th>
               <th className="left">Deal Type</th>
-              <th className="left">Action</th>
-              <th>All-in Rate</th>
-              <th>Strike</th>
-              <th>Diff 1 Amt</th>
+              <th>Deal Amt</th>
+              <th>Difference</th>
               <th>Diff 2 Amt</th>
+              <th className="left">Deal 3 Type</th>
+              <th>Deal 3 Amt</th>
               <th>Diff 3 Amt</th>
-              <th className="left">Spot Rate</th>
+              <th className="left">Spot Co.</th>
+              <th className="left">B/S</th>
+              <th className="left">Saved</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? <EmptyRow span={8} text={emptyText} /> : null}
-            {rows.map((r, idx) => (
-              <tr key={r.rfha}>
-                <td className="left">
-                  <span className={`chip ${r.dealTypeChip}`}>{r.dealType}</span>
-                </td>
-                <td className="left">Action FX</td>
-                <td className="num">{r.rate}</td>
-                <td className="num">{r.spot}</td>
-                <td className="num">{diff1Amount(r)}</td>
-                <td className="num">0.00</td>
-                <td className="num">0.00</td>
-                <td className="left">
-                  <input
-                    type="text"
-                    className="diffSpotInput"
-                    value={spots[idx] ?? r.spot}
-                    onChange={(e) => onSpot(idx, e.target.value)}
-                    style={{
-                      width: '90px',
-                      height: '28px',
-                      border: '1px solid #CBD9E8',
-                      borderRadius: '6px',
-                      padding: '0 8px',
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
+            {loading ? <EmptyRow span={14} text="Reading the invoices and the deals from SAP…" /> : null}
+            {!loading && rows.length === 0 ? <EmptyRow span={14} text={emptyText} /> : null}
+            {!loading &&
+              rows.map((r) => (
+                <tr key={r.ttype}>
+                  <td className="left">{r.ttype}</td>
+                  <td className="left">{r.invCurr}</td>
+                  <td className="num">{amount(r.planAmt)}</td>
+                  <td className="num">{amount(r.finalAmt)}</td>
+                  <td className="left">{r.dealType || '—'}</td>
+                  <td className="num">{amount(r.dealAmt)}</td>
+                  <td className="num">{amount(r.diffAmt)}</td>
+                  <td className="num">{amount(r.diff2Amt)}</td>
+                  <td className="left">{r.deal3Type || '—'}</td>
+                  <td className="num">{amount(r.deal3Amt)}</td>
+                  <td className="num">{amount(r.diff3Amt)}</td>
+                  <td className="left">{r.sbukrs || '—'}</td>
+                  <td className="left">{r.bs || '—'}</td>
+                  <td className="left">{r.saved ? 'Yes' : 'No'}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
       <div className="note-box">
-        Enter the fixed spot conversion rate for each leg, then <strong>Save Spot Data</strong>. This rate feeds the +/-
-        difference used when the trade invoice is finalised.
+        <strong>Save Difference</strong> records these rows in ZSGTSFTR_IN_SPOT (the original SPOT button). It books no
+        transaction in SAP: the FO trader workbench reads the saved rows and creates the spot later. A row already saved for
+        its deal type is not saved again, and a zero difference is saved as well.
+        {note ? <> {note}</> : null}
       </div>
     </ModalFrame>
   )
@@ -313,7 +319,9 @@ export function EditDmsModal({
         </select>
       </div>
       <div className="ffield">
-        <label htmlFor="editDmsDate">Date</label>
+        <label htmlFor="editDmsDate">
+          Date<span className="req">*</span>
+        </label>
         <input
           id="editDmsDate"
           type="text"
@@ -458,7 +466,8 @@ export function ViewInvModal({
 
 // ------------------------------------------------------------------ Transactions Posting (9003)
 
-export type PostKind = 'test' | 'print' | 'update' | 'post' | 'complete'
+/** MO settles only: the accounting posting is BO's (ZSGTSFR081), so neither pop-up has a posting action. */
+export type PostKind = 'print' | 'update' | 'complete'
 
 export function FxPostModal({
   open,
@@ -482,21 +491,15 @@ export function FxPostModal({
       size="wide"
       icon={<>&#128179;</>}
       title="Transaction Settlement"
-      subtitle={<>Transaction <span>{form.rfha}</span> &ndash; post the buy &amp; sell legs of the FX deal to bank / accounting</>}
+      subtitle={<>Transaction <span>{form.rfha}</span> &ndash; settle the buy &amp; sell legs of the FX deal</>}
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="action-btn" type="button" onClick={() => onAction('test')}>
-            Post Test Run
-          </button>
           <button className="action-btn" type="button" onClick={() => onAction('print')}>
             Print Letters
           </button>
           <button className="action-btn" type="button" onClick={() => onAction('update')}>
             Update
-          </button>
-          <button className="action-btn" type="button" onClick={() => onAction('post')}>
-            Post Accounting Entry
           </button>
           <button className="btn-confirm green" type="button" onClick={() => onAction('complete')}>
             Settlement Complete
@@ -534,42 +537,39 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input
-              type="text"
-              placeholder="generated on posting"
-              value={form.bDoc}
-              onChange={(e) => onField('bDoc', e.target.value)}
-            />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.bDoc} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
-            <select value={form.bBankType} onChange={(e) => onField('bBankType', e.target.value)}>
-              {bankOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.bBankType} />
           </div>
           <div className="ffield">
             <label>Transfer Type</label>
-            <select value={form.bTrfType} onChange={(e) => onField('bTrfType', e.target.value)}>
-              {trfOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.bTrfType} />
+          </div>
+          <div className="ffield">
+            <label>Rec Co Code</label>
+            <input type="text" maxLength={4} value={form.bRecCoCode} onChange={(e) => onField('bRecCoCode', e.target.value.toUpperCase())} />
           </div>
           <div className="ffield">
             <label>Receiving Bank ID</label>
-            <input
-              type="text"
-              placeholder="e.g. BNK-1021"
-              value={form.bBankId}
-              onChange={(e) => onField('bBankId', e.target.value)}
-            />
+            <input type="text" maxLength={5} value={form.bBankId} onChange={(e) => onField('bBankId', e.target.value.toUpperCase())} />
           </div>
           <div className="ffield">
-            <label>House Bank / Account ID</label>
-            <input
-              type="text"
-              placeholder="e.g. HB01 / 100234"
-              value={form.bAcc}
-              onChange={(e) => onField('bAcc', e.target.value)}
-            />
+            <label>Payment ID</label>
+            <input type="text" maxLength={4} value={form.bPaymentId} onChange={(e) => onField('bPaymentId', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" disabled readOnly value={form.bHouseBank} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" disabled readOnly value={form.bAccountId} />
+          </div>
+          <div className="ffield">
+            <label>Letter Code</label>
+            <input type="text" disabled readOnly value={[form.letterCode, form.letterName].filter(Boolean).join(' - ')} />
           </div>
         </div>
         <label className="check-row">
@@ -586,42 +586,41 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input
-              type="text"
-              placeholder="generated on posting"
-              value={form.sDoc}
-              onChange={(e) => onField('sDoc', e.target.value)}
-            />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.sDoc} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
-            <select value={form.sBankType} onChange={(e) => onField('sBankType', e.target.value)}>
-              {bankOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.sBankType} />
           </div>
           <div className="ffield">
             <label>Transfer Type</label>
-            <select value={form.sTrfType} onChange={(e) => onField('sTrfType', e.target.value)}>
-              {trfOptions}
-            </select>
+            <input type="text" disabled readOnly value={form.sTrfType} />
           </div>
           <div className="ffield">
             <label>Paying Bank ID</label>
             <input
               type="text"
-              placeholder="e.g. BNK-2044"
-              value={form.sBankId}
-              onChange={(e) => onField('sBankId', e.target.value)}
+              maxLength={5}
+              disabled={form.remit}
+              value={form.remit ? '' : form.sBankId}
+              onChange={(e) => onField('sBankId', e.target.value.toUpperCase())}
             />
           </div>
           <div className="ffield">
-            <label>House Bank / Account ID</label>
-            <input
-              type="text"
-              placeholder="e.g. HB02 / 200551"
-              value={form.sAcc}
-              onChange={(e) => onField('sAcc', e.target.value)}
-            />
+            <label>Pay Co Code</label>
+            <input type="text" maxLength={4} value={form.sPayCoCode} onChange={(e) => onField('sPayCoCode', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>Payment ID</label>
+            <input type="text" maxLength={4} value={form.sPaymentId} onChange={(e) => onField('sPaymentId', e.target.value.toUpperCase())} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" disabled readOnly value={form.sHouseBank} />
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" disabled readOnly value={form.sAccountId} />
           </div>
         </div>
         <label className="check-row">
@@ -632,9 +631,9 @@ export function FxPostModal({
       <div className="note-box">
         {row ? (
           <>
-            <strong>Current status:</strong> {row.status}. Use <em>Post Test Run</em> to simulate, then{' '}
-            <em>Post Accounting Entry</em> to post both legs to FI, and <em>Settlement Complete</em> once both FI documents
-            exist.
+            <strong>Settlement Complete:</strong> {row.settled ? 'Yes' : 'No'} (VTBFHA ZTSF_EXE_CO). House Bank and Account
+            ID are derived in SAP from the pay IDs (VTBSTC1), which this app cannot read: they show what the transaction
+            holds. The accounting entries are posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081).
           </>
         ) : null}
       </div>
@@ -652,31 +651,52 @@ export function InvPostModal({
   form,
   onField,
   onAction,
+  houseBanks = [],
+  companyOf = () => '',
 }: Base & {
   row: TradeInvoice | undefined
   legLabel: string
   form: InvPostForm
   onField: <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) => void
-  onAction: (kind: Exclude<PostKind, 'test'>) => void
+  onAction: (kind: Exclude<PostKind, 'print'>) => void
+  /** HouseBankAccount (ZFS_SB_HBKACCT_O4_API): suggestions only, the fields stay editable. */
+  houseBanks?: readonly HouseBankAccount[]
+  /** The company code of an entity (ZSGTSFTR_COMP), so each side is offered its own company's accounts. */
+  companyOf?: (entity: string) => string
 }) {
+  const accountsOf = (entity: string) => {
+    const company = companyOf(entity)
+    return houseBanks.filter((b) => !company || b.companyCode === company)
+  }
+  const bankSuggestions = (entity: string) => {
+    const seen = new Map<string, string>()
+    for (const b of accountsOf(entity)) if (!seen.has(b.houseBank)) seen.set(b.houseBank, b.bankName)
+    return [...seen].map(([bank, name]) => <option key={bank} value={bank}>{name}</option>)
+  }
+  const accountSuggestions = (entity: string, bank: string) =>
+    accountsOf(entity)
+      .filter((b) => !bank.trim() || b.houseBank === bank.trim().toUpperCase())
+      .map((b) => (
+        <option key={`${b.companyCode}|${b.houseBank}|${b.accountId}`} value={b.accountId}>
+          {[b.houseBank, b.currency, b.description].filter(Boolean).join(' · ')}
+        </option>
+      ))
+  // modify_screen_9002: a Receipt leg's bank fields are display only; once posted, so are the receiver's.
+  const receipt = row?.recPay === 'Receipt'
+  const senderLocked = receipt
+  const receiverLocked = receipt || !!row?.fiDoc
   return (
     <ModalFrame
       open={open}
       onClose={onClose}
       icon={<>&#129534;</>}
-      title={<>Bank Settlement &ndash; Posting</>}
-      subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; generate the bank letter and post the accounting entry</>}
+      title={<>Trade Invoice Settlement</>}
+      subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; maintain the banking details and settle the leg</>}
       footer={
         <>
           <Cancel onClick={onClose} />
-          <button className="action-btn" type="button" onClick={() => onAction('print')}>
-            Print Letters
-          </button>
           <button className="action-btn" type="button" onClick={() => onAction('update')}>
             Update
-          </button>
-          <button className="action-btn" type="button" onClick={() => onAction('post')}>
-            Post Document
           </button>
           <button className="btn-confirm green" type="button" onClick={() => onAction('complete')}>
             Settlement Complete
@@ -690,29 +710,45 @@ export function InvPostModal({
           <input type="text" disabled readOnly value={form.date} />
         </div>
         <div className="ffield">
-          <label>Bank</label>
-          <input type="text" disabled readOnly value={form.bank} />
-        </div>
-        <div className="ffield">
-          <label>Sender / Payer</label>
-          <input type="text" disabled readOnly value={form.sender} />
-        </div>
-        <div className="ffield">
-          <label>Receiver / Payee</label>
-          <input type="text" disabled readOnly value={form.receiver} />
-        </div>
-        <div className="ffield">
           <label>Invoice Amount</label>
           <input type="text" disabled readOnly value={form.amt} />
         </div>
         <div className="ffield">
           <label>FI Document No</label>
-          <input
-            type="text"
-            placeholder="generated on posting"
-            value={form.fiDoc}
-            onChange={(e) => onField('fiDoc', e.target.value)}
-          />
+          <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.fiDoc} />
+        </div>
+      </div>
+      <div className="fbox" style={{ marginTop: '12px' }}>
+        <div className="fbox-title">Sender / Receiver Details</div>
+        <div className="form-grid">
+          <div className="ffield">
+            <label>Sender / Payer</label>
+            <input type="text" disabled readOnly value={form.sender} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" maxLength={5} list="inv-sender-banks" disabled={senderLocked} value={form.senderHouseBank} onChange={(e) => onField('senderHouseBank', e.target.value)} />
+            <datalist id="inv-sender-banks">{bankSuggestions(form.sender)}</datalist>
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" maxLength={5} list="inv-sender-accounts" disabled={senderLocked} value={form.senderAccountId} onChange={(e) => onField('senderAccountId', e.target.value)} />
+            <datalist id="inv-sender-accounts">{accountSuggestions(form.sender, form.senderHouseBank)}</datalist>
+          </div>
+          <div className="ffield">
+            <label>Receiver / Payee</label>
+            <input type="text" disabled readOnly value={form.receiver} />
+          </div>
+          <div className="ffield">
+            <label>House Bank</label>
+            <input type="text" maxLength={5} list="inv-receiver-banks" disabled={receiverLocked} value={form.receiverHouseBank} onChange={(e) => onField('receiverHouseBank', e.target.value)} />
+            <datalist id="inv-receiver-banks">{bankSuggestions(form.receiver)}</datalist>
+          </div>
+          <div className="ffield">
+            <label>Account ID</label>
+            <input type="text" maxLength={5} list="inv-receiver-accounts" disabled={receiverLocked} value={form.receiverAccountId} onChange={(e) => onField('receiverAccountId', e.target.value)} />
+            <datalist id="inv-receiver-accounts">{accountSuggestions(form.receiver, form.receiverHouseBank)}</datalist>
+          </div>
         </div>
       </div>
       <div className="ffield" style={{ marginTop: '12px' }}>
@@ -727,8 +763,9 @@ export function InvPostModal({
       <div className="note-box">
         {row ? (
           <>
-            <strong>Current status:</strong> {row.setCo ? 'Settled' : 'Open'}. The invoice and its linked FX deal are
-            designed to settle on the same value date.
+            <strong>Settlement:</strong> {row.setCo ? 'Yes' : 'No'} &middot; <strong>Accounting posting:</strong>{' '}
+            {row.fiDoc ? <>Yes ({row.fiDoc})</> : 'No'}. The posting is done on BO: Post Accounting Entries for Settlement
+            (ZSGTSFR081).
           </>
         ) : null}
       </div>

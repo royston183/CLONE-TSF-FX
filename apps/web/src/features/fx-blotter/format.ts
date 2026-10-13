@@ -20,6 +20,21 @@ export function fmtNum(n: Num | null | undefined, dp = 2): string {
   return (v < 0 ? '-' : '') + int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (dp > 0 ? `.${dec}` : '')
 }
 
+/** Rates (all in, spot, deal) are kept and shown to 4 decimals: 94.1234. */
+export const RATE_DP = 4
+
+/** A rate rounded to RATE_DP decimals, as it is entered, stored and sent. */
+export const roundRate = (n: number): number => +n.toFixed(RATE_DP)
+
+/** A rate field mid-typing: digits (grouping commas allowed) and no more than RATE_DP decimals. */
+export const isRateInput = (v: string): boolean => /^[\d,]*\.?\d{0,4}$/.test(v)
+
+/** A rate as typed in an uploaded file: 4 decimals when it reads as a number, else as it was. */
+export function fmtRateText(raw: string | null | undefined): string {
+  const v = parseAmount(raw)
+  return Number.isNaN(v) ? String(raw ?? '') : fmtNum(v, RATE_DP)
+}
+
 /** The Overview's Total Notional: $5.00M, $1.2K, $2.10B. */
 export function fmtCompactUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`

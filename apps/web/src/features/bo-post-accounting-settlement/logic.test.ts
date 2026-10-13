@@ -16,7 +16,11 @@ import {
   pendingPostAll,
   postAllConfirm,
   postFxDeal,
+  NOT_SETTLED,
+  fxPostingPlan,
+  invPostingPlan,
   postingAction,
+  postingPlanToast,
   resolveDrop,
   statusInfo,
   toolbarState,
@@ -26,7 +30,9 @@ import type { Deal } from './types.ts'
 
 const fresh = (): Deal => structuredClone(DEAL_LIBRARY['TSF-9081']!)
 const initiated = (): Deal => initiateSettlement(fresh()).deal
-const fxPosted = (): Deal => postFxDeal(initiated(), docCounter(INITIAL_DOC_COUNTER)).deal
+/** Every leg settled on MO (ZSGTSFR060), which BO posting needs first. */
+const settled = (d: Deal): Deal => ({ ...d, top: d.top.map((r) => ({ ...r, settled: true })), inv: d.inv.map((r) => ({ ...r, setCheck: true })) })
+const fxPosted = (): Deal => postFxDeal(settled(initiated()), docCounter(INITIAL_DOC_COUNTER)).deal
 const allPosted = (): Deal => postAllConfirm(fxPosted(), docCounter(1900020001)).deal
 
 describe('format', () => {
@@ -130,47 +136,58 @@ describe('postFxDeal', () => {
   })
 })
 
-describe('canPostTradeInvoice', () => {
-  it('needs initiation, then posted FX legs', () => {
+describe('canPostTradeInvoice (POST_TI)', () => {
+  it('needs status 20, then six execution-complete trade legs (I054), with no FX-posted condition', () => {
     const a = canPostTradeInvoice(fresh())
     strictEqual(a.allowed, false)
-    if (!a.allowed) strictEqual(a.toast.message, 'Please initiate settlement before posting trade invoices.')
+    if (!a.allowed) strictEqual(a.toast.message, NOT_INITIATED)
     const b = canPostTradeInvoice(initiated())
-    strictEqual(b.allowed, false)
-    if (!b.allowed) strictEqual(b.toast.kind, 'error')
-    strictEqual(canPostTradeInvoice(fxPosted()).allowed, true)
+    ok(!b.allowed && b.toast.message.includes('I054'))
+    strictEqual(canPostTradeInvoice(sixDone(initiated())).allowed, true)
   })
 })
 
-describe('accountingCompleted', () => {
-  it('refuses before initiation', () => {
-    strictEqual(accountingCompleted(fresh()).toast.message, 'Settlement has not been initiated yet.')
+describe('accountingCompleted (ACC)', () => {
+  it('has no status condition, but refuses while an FI-posting leg has no document (I066)', () => {
+    const o = accountingCompleted(fresh())
+    strictEqual(o.deal.status, fresh().status)
+    ok(o.toast.message.includes('I066'))
   })
-  it('refuses while anything is unposted', () => {
-    const o = accountingCompleted(fxPosted())
-    strictEqual(o.deal.status, 20)
-    strictEqual(o.toast.kind, 'error')
+  it('then needs Doc No 1 on the FX deals the legs map to (I067)', () => {
+    const d = postAllConfirm(initiated(), docCounter(300)).deal
+    const mapped: Deal = { ...d, inv: d.inv.map((r) => ({ ...r, dMap: d.top[0]!.dealType })) }
+    ok(accountingCompleted(mapped).toast.message.includes('I067'))
+    strictEqual(accountingCompleted(postFxDeal(mapped, docCounter(1)).deal).deal.status, 22)
   })
-  it('moves 20 to 22 once all documents exist', () => {
+  it('moves to 22 once all documents exist', () => {
     const o = accountingCompleted(allPosted())
     strictEqual(o.deal.status, 22)
     strictEqual(o.toast.message, 'Deal ID TSF-9081 marked Accounting Complete.')
   })
+  it('a no-invoice model checks the sequenced FX legs only', () => {
+    const d: Deal = { ...initiated(), noInvoice: true, top: initiated().top.map((r) => ({ ...r, seq: '6' })) }
+    ok(accountingRefusal(d).includes('I067'))
+    strictEqual(accountingRefusal(postFxDeal(d, docCounter(1)).deal), '')
+  })
 })
 
 describe('txnAction (FX leg popup)', () => {
-  it('test run and update leave the deal untouched and the popup open', () => {
+  it('update leaves the deal untouched and the popup open', () => {
     const d = initiated()
-    const t = txnAction(d, 0, 'TEST', docCounter(1))
-    strictEqual(t.deal, d)
-    strictEqual(t.close, false)
-    strictEqual(t.toast.message, 'Test run completed for transaction 5000011041. No documents were posted.')
     const u = txnAction(d, 1, 'UPD', docCounter(1))
     strictEqual(u.deal, d)
     strictEqual(u.toast.message, 'Bank and transfer details updated for transaction 5000011042.')
   })
+  it('test run and post need status 21 (I071) and the transaction at 07 (I072)', () => {
+    ok(txnAction(initiated(), 0, 'TEST', docCounter(1)).toast.message.includes('I071'))
+    const early: Deal = { ...executed(), top: executed().top.map((r) => ({ ...r, txnStatus: '03' })) }
+    ok(txnAction(early, 0, 'TBB1', docCounter(1)).toast.message.includes('I072'))
+    const t = txnAction(executed(), 0, 'TEST', docCounter(1))
+    strictEqual(t.toast.message, 'Test run completed for transaction 5000011041. No documents were posted.')
+    strictEqual(t.close, false)
+  })
   it('posts only the chosen leg and closes', () => {
-    const o = txnAction(initiated(), 1, 'TBB1', docCounter(INITIAL_DOC_COUNTER))
+    const o = txnAction(executed(), 1, 'TBB1', docCounter(INITIAL_DOC_COUNTER))
     strictEqual(o.close, true)
     strictEqual(o.deal.top[0]!.doc1, '')
     strictEqual(o.deal.top[1]!.doc1, '1900010001')
@@ -178,42 +195,46 @@ describe('txnAction (FX leg popup)', () => {
     strictEqual(o.deal.top[1]!.status, 'Posted')
   })
   it('refuses a leg that is already posted', () => {
-    const o = txnAction(fxPosted(), 0, 'TBB1', docCounter(1))
+    const d = postFxDeal(executed(), docCounter(1)).deal
+    const o = txnAction(d, 0, 'TBB1', docCounter(1))
     strictEqual(o.toast.message, 'This transaction is already posted.')
     strictEqual(o.close, false)
   })
 })
 
 describe('postingAction (invoice leg popup)', () => {
-  it('Update only reports', () => {
-    const d = fxPosted()
-    const o = postingAction(d, 0, 'UPD_DATA', docCounter(1))
-    strictEqual(o.deal, d)
+  it('Update and Post need status 21 (I070)', () => {
+    ok(postingAction(initiated(), 0, 'UPD_DATA', docCounter(1)).toast.message.includes('I070'))
+    ok(postingAction(initiated(), 0, 'SET_POST', docCounter(1)).toast.message.includes('I070'))
+    const o = postingAction(executed(), 0, 'UPD_DATA', docCounter(1))
     strictEqual(o.toast.message, 'Bank settlement data updated for T1 · OIL → DMCC.')
   })
-  it('Settlement Complete ticks Settle and keeps the popup open', () => {
-    const o = postingAction(fxPosted(), 2, 'SET_EXE', docCounter(1))
-    strictEqual(o.deal.inv[2]!.setCheck, true)
-    strictEqual(o.deal.inv[0]!.setCheck, false)
-    strictEqual(o.close, false)
+  it('Settlement Complete has no function in this program', () => {
+    const d = initiated()
+    const o = postingAction(d, 2, 'SET_EXE', docCounter(1))
+    strictEqual(o.deal, d)
+    strictEqual(o.toast.message, NO_SETTLEMENT_HERE)
   })
   it('Post Document assigns a document and closes', () => {
-    const o = postingAction(fxPosted(), 0, 'SET_POST', docCounter(77))
+    const o = postingAction(executed(), 0, 'SET_POST', docCounter(77))
     strictEqual(o.deal.inv[0]!.fiDoc, '77')
     strictEqual(o.close, true)
     strictEqual(o.toast.kind, 'success')
   })
-  it('refuses to post a leg twice', () => {
-    const once = postingAction(fxPosted(), 0, 'SET_POST', docCounter(77)).deal
+  it('refuses a leg not flagged for FI posting, and a leg already posted', () => {
+    const d = executed()
+    const noFi: Deal = { ...d, inv: d.inv.map((r, i) => (i === 0 ? { ...r, postCheck: false } : r)) }
+    strictEqual(postingAction(noFi, 0, 'SET_POST', docCounter(1)).deal.inv[0]!.fiDoc, '')
+    const once = postingAction(d, 0, 'SET_POST', docCounter(77)).deal
     const o = postingAction(once, 0, 'SET_POST', docCounter(88))
     strictEqual(o.toast.message, 'This invoice leg is already posted.')
     strictEqual(o.deal.inv[0]!.fiDoc, '77')
   })
 })
 
-describe('Posting All', () => {
-  it('lists unposted legs that are checked for FI posting', () => {
-    const d = fxPosted()
+describe('Posting All (P_ALL)', () => {
+  it('lists the legs flagged for FI posting that have no document', () => {
+    const d = executed()
     strictEqual(pendingPostAll(d).length, 3)
     const one = postingAction(d, 1, 'SET_POST', docCounter(5)).deal
     deepStrictEqual(
@@ -224,7 +245,7 @@ describe('Posting All', () => {
     strictEqual(pendingPostAll(unchecked).length, 2)
   })
   it('posts each pending leg with the next document number', () => {
-    const o = postAllConfirm(fxPosted(), docCounter(300))
+    const o = postAllConfirm(executed(), docCounter(300))
     deepStrictEqual(
       o.deal.inv.map((r) => r.fiDoc),
       ['300', '301', '302'],
@@ -335,5 +356,35 @@ describe('api (SAP header by key, legs and actions waiting)', () => {
     const refused = postFxDeal(d, docCounter(1))
     deepStrictEqual(gateOutcome(d, refused, ACTION_WAITING.postFx), refused.toast)
     strictEqual(ACTION_WAITING.invPost, 'WAITING FOR ACTION API — Post Document (BAPI_ACC_DOCUMENT_POST, BAPI_TRANSACTION_COMMIT / _ROLLBACK, UPDATE ZSGTSFTR_TRD_POS) has no API yet. Nothing was posted to SAP.')
+  })
+})
+
+describe('posting plans', () => {
+  it('Post FX Deal takes every sequenced FX leg, and one not execution-complete stops the run (I054)', () => {
+    const d = initiated()
+    const seq: Deal = { ...d, top: d.top.map((r, i) => ({ ...r, seq: '6', settled: i === 0 })) }
+    const plan = fxPostingPlan(seq)
+    deepStrictEqual(plan.eligible, d.top.map((r) => `${r.dealType} ${r.rfha}`))
+    deepStrictEqual(plan.blocking, [`${d.top[1]!.dealType} ${d.top[1]!.rfha}`])
+    const t = postingPlanToast('FX deal', plan, 'WAITING')
+    strictEqual(t.kind, 'error')
+    ok(t.message.includes('I054'))
+    const ready = postingPlanToast('FX deal', fxPostingPlan({ ...seq, top: seq.top.map((r) => ({ ...r, settled: true })) }), 'WAITING')
+    ok(ready.message.startsWith('WAITING To be posted:'))
+  })
+
+  it('leaves out FX legs outside the model sequence', () => {
+    strictEqual(fxPostingPlan(initiated()).eligible.length, 0)
+  })
+
+  it('Post Trade Invoice waits for all six trade legs, then takes the FI-posting legs', () => {
+    ok(postingPlanToast('trade invoice', invPostingPlan(initiated()), 'WAITING').message.includes('I054'))
+    const d = sixDone(initiated())
+    const noFi: Deal = { ...d, inv: d.inv.map((r, i) => (i === 0 ? { ...r, postCheck: false } : r)) }
+    strictEqual(invPostingPlan(noFi).eligible.length, d.inv.length - 1)
+    deepStrictEqual(postingPlanToast('trade invoice', invPostingPlan(postAllConfirm(d, docCounter(1)).deal), 'W'), {
+      message: 'All trade invoice legs are already posted.',
+      kind: '',
+    })
   })
 })
