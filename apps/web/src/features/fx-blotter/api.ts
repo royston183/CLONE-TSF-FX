@@ -1,4 +1,4 @@
-import { ApiError, apiFetch, createEntity, entityPath, list, odataString, service } from '@slc/api-client'
+import { ApiError, apiFetch, apiRequest, createEntity, entityPath, list, odataString, service } from '@slc/api-client'
 import { ENTITIES, SPOT_TXN_TYPES, TRANSACTION_TYPES, entityOf, pairOf } from './data.ts'
 import { extendCreatePayload } from './extendedFields.ts'
 import { parseAmount, parseUiDate, toISO } from './format.ts'
@@ -111,7 +111,7 @@ export const companyCodeOf =(r: BlotterRow): string => r.companyCode || entityOf
  * amounts, which is how the deals created so far came back (forward rate = sell / buy).
  */
 export function toCreatePayload(r: BlotterRow): Record<string, unknown> {
-  const product = SAP_PRODUCTS[r.txnType]
+  const product = r.uploadProduct ?? SAP_PRODUCTS[r.txnType]
   if (!product) {
     throw new Error(`${rowLabel(r)}: ${r.txnType || 'This transaction type'} is not available in SAP yet — use Spot, TOM, Forward, NDF or DNDF.`)
   }
@@ -180,10 +180,43 @@ function dealBody(f: DealFields): Record<string, unknown> {
 
 /** Creates one deal and returns its transaction number; SAP's own message is the thrown error. */
 export async function createDeal(r: BlotterRow): Promise<{ companyCode: string; transaction: string }> {
-  const payload = await extendCreatePayload(toCreatePayload(r), r)
+  const payload = r.uploadProduct ? await uploadCreatePayload(r) : await extendCreatePayload(toCreatePayload(r), r)
+  if (r.uploadProduct) {
+    // Only a key returned by this create can identify this upload. A highest-number lookup
+    // could pick another user's transaction and must never be used as an upload fallback.
+    const response = await apiRequest<FxTransaction>(FX, { method: 'POST', body: payload })
+    const header = decodeURIComponent(response.headers.get('OData-EntityId') ?? response.headers.get('Location') ?? '')
+    const key = response.data?.FinancialTransaction
+      || /FinancialTransaction=['"]([^'"]+)['"]/.exec(header)?.[1]
+      || /\(['"]([^'"]+)['"]\)\s*$/.exec(header)?.[1]
+    if (!key) throw new Error(`${rowLabel(r)}: SAP accepted the deal but returned no transaction number. Check SAP before resubmitting.`)
+    return { companyCode: response.data?.CompanyCode || String(payload.CompanyCode), transaction: String(key) }
+  }
   const { key } = await createEntity<FxTransaction>(FX, payload, 'FinancialTransaction')
   if (!key) throw new Error(`${rowLabel(r)}: SAP accepted the deal but returned no transaction number.`)
   return { companyCode: String(payload.CompanyCode), transaction: key }
+}
+
+/** Upload-specific payload: rates and NDF reference are explicit rather than grid defaults. */
+async function uploadCreatePayload(r: BlotterRow): Promise<Record<string, unknown>> {
+  const payload = await extendCreatePayload(toCreatePayload(r), r)
+  return {
+    ...payload,
+    SpotRate: r.spotRate,
+    SwapRate: r.swapPoints,
+    ForwardRate: r.totalRate,
+    ...(r.txnType === 'NDF' ? {
+      NdfFixingCurrency: 'USD',
+      ...(r.ndfDate ? { NdfFixingDate: toISO(r.ndfDate) } : {}),
+      ...(r.ndfRef ? { FixingReferenceId: r.ndfRef } : {}),
+    } : {}),
+  }
+}
+
+/** The same bound Settle operation used by MO Match & Release. */
+export async function settleDeal(companyCode: string, transaction: string): Promise<void> {
+  const key = entityPath('FxTransaction', { CompanyCode: companyCode, FinancialTransaction: transaction })
+  await apiFetch(`${fxApi(key)}/com.sap.gateway.srvd_a2x.zfs_sd_trmfx.v0001.Settle`, { method: 'POST', body: {} })
 }
 
 /**

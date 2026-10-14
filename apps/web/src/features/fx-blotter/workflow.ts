@@ -95,7 +95,8 @@ async function traderField(blotterTrader: string | undefined): Promise<AppStrFie
  * a failed application-data save does not — the result carries `appDataPending` so the row can be
  * shown as Created and the save retried without booking the deal again.
  */
-export async function createBlotterDeal(r: BlotterRow, blotterDate: Date): Promise<Booked> {
+export async function createBlotterDeal(r: BlotterRow, blotterDate: Date, options?: { initialStatus?: string; appProperties?: ReadonlySet<string> }): Promise<Booked> {
+  const initialStatus = options?.initialStatus ?? FX_TXN_STATUS.FO_CREATE
   const payload = toCreatePayload(r)
   const created = await createDeal(r)
   const fields: AppStrFields = {
@@ -106,10 +107,13 @@ export async function createBlotterDeal(r: BlotterRow, blotterDate: Date): Promi
     ZtsfScurr: String(payload['SellCurrency'] ?? ''),
     BlotterDate: toISO(blotterDate),
   }
-  const saved = await persist(created, fields, 'create', FX_TXN_STATUS.FO_CREATE)
+  const supported = options?.appProperties
+    ? Object.fromEntries(Object.entries(fields).filter(([name]) => options.appProperties!.has(name))) as AppStrFields
+    : fields
+  const saved = await persist(created, supported, options?.appProperties ? 'upload' : 'create', initialStatus)
   return saved.ok
     ? created
-    : { ...created, appDataPending: { intent: 'create' }, appDataError: appDataMessage(created.transaction, 'created', saved.error) }
+    : { ...created, appDataPending: { intent: options?.appProperties ? 'upload' : 'create', ...(initialStatus !== FX_TXN_STATUS.FO_CREATE ? { status: initialStatus } : {}), ...(options?.appProperties ? { fields: supported as Record<string, string | boolean> } : {}) }, appDataError: appDataMessage(created.transaction, 'created', saved.error) }
 }
 
 /** The Create Spot popup's version of the same: one SAP spot, then its application data. */
@@ -222,11 +226,10 @@ export async function retryPendingAppData(rows: readonly BlotterRow[], blotterDa
   for (const row of rows) {
     const pending = row.appDataPending
     if (!pending || !isInSap(row)) continue
-    const wanted =
-      pending.intent === 'reverse' ? (pending.status ?? FX_TXN_STATUS.FO_DELETE) : pending.intent === 'release' ? FX_TXN_STATUS.FO_TO_MO_UNMATCHED : FX_TXN_STATUS.FO_CREATE
+    const wanted = pending.status ?? (pending.intent === 'reverse' ? FX_TXN_STATUS.FO_DELETE : pending.intent === 'settle' ? FX_TXN_STATUS.MO_MATCH_RELEASE : pending.intent === 'release' ? FX_TXN_STATUS.FO_TO_MO_UNMATCHED : FX_TXN_STATUS.FO_CREATE)
     const saved = await persist(
       { companyCode: row.companyCode ?? '', transaction: row.transactionNumber },
-      { ...fieldsOfRow(row), ...(pending.intent === 'reverse' ? {} : await traderField(row.trader)), BlotterDate: toISO(blotterDate) },
+      pending.fields ?? { ...fieldsOfRow(row), ...(pending.intent === 'reverse' ? {} : await traderField(row.trader)), BlotterDate: toISO(row.uploadBlotterDate ?? blotterDate) },
       pending.intent,
       wanted,
     )

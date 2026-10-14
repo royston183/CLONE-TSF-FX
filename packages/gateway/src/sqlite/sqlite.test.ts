@@ -6,7 +6,7 @@ import { describe, it } from 'node:test'
 import { openDatabase } from './db.ts'
 import { runMigrations } from './migrate.ts'
 import { createDealMetadataRepository } from './repositories/deal-metadata.ts'
-import { runSeeds } from './seed.ts'
+import { runSeeds, seedDmsTyp } from './seed.ts'
 
 const fresh = () => {
   const db = openDatabase(':memory:')
@@ -118,6 +118,25 @@ describe('deal metadata repository', () => {
     repo.createDealMetadata({ companyCode: nasty, transactionId: '1', remark: nasty })
     strictEqual(repo.getDealMetadata(nasty, '1')?.remark, nasty)
     strictEqual(repo.listDealMetadata().length, 1)
+  })
+})
+
+describe('seedDmsTyp', () => {
+  it('imports the spreadsheet including blank categories and preserves existing data on rerun', () => {
+    const db = fresh()
+    try {
+      strictEqual(seedDmsTyp(db), 461)
+      strictEqual(db.prepare('SELECT COUNT(*) FROM zsgtsftr_dms_typ').pluck().get(), 461)
+      strictEqual(db.prepare("SELECT COUNT(*) FROM zsgtsftr_dms_typ WHERE zdms_cat = ''").pluck().get(), 3)
+      deepStrictEqual(db.prepare("SELECT zcreated_date, zcreated_time FROM zsgtsftr_dms_typ WHERE zdms_cat = '01' AND zdms_type = 'D01'").get(),
+        { zcreated_date: '20260827', zcreated_time: '184242' })
+      db.exec("UPDATE zsgtsftr_dms_typ SET zdms_desc = 'Custom description'; DELETE FROM zsgtsftr_dms_typ WHERE zdms_type = 'D99'")
+      const before = db.prepare('SELECT * FROM zsgtsftr_dms_typ').all()
+      strictEqual(seedDmsTyp(db), 0)
+      deepStrictEqual(db.prepare('SELECT * FROM zsgtsftr_dms_typ').all(), before)
+    } finally {
+      db.close()
+    }
   })
 })
 

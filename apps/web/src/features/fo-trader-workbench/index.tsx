@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
@@ -10,7 +11,7 @@ import { DealModal } from './DealModal.tsx'
 import { dropCls, useDnd } from './dnd.ts'
 import { WRITE_ACTIONS, openDeal, type Wb } from './flows.ts'
 import { todayIso } from './format.ts'
-import { KpiDetailModal, SettlementDataModal, TxnDetailsModal } from './InfoModals.tsx'
+import { KpiDetailModal, TxnDetailsModal } from './InfoModals.tsx'
 import {
   DEAL_COLS,
   KPI_DEFS,
@@ -50,6 +51,7 @@ const CLOSE_MS = 150
  * the actions report WAITING FOR API instead of posting.
  */
 export default function FoTraderWorkbench() {
+  const navigate = useNavigate()
   const rootRef = useRef<HTMLDivElement>(null)
 
   /* ---------- data (in memory, from the seed) ---------- */
@@ -216,7 +218,8 @@ export default function FoTraderWorkbench() {
       showToast('Select a deal first.', 'error')
       return
     }
-    openPopup({ kind: 'settlementData', dealId: selected })
+    // V_EX submits ZSGTSF_RDEAL_TRD_INV with P_DEAL, including its category 10 DMS action.
+    navigate(`/apps/mo-execute-settlement-deal-id?dealId=${encodeURIComponent(selected)}`)
   }
   const openDealRow = (id: string) => {
     setSelectedDealId(id)
@@ -236,8 +239,6 @@ export default function FoTraderWorkbench() {
         return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
       case 'txn':
         return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} dealId={s.dealId} wb={wb} />
-      case 'settlementData':
-        return <SettlementDataModal key={p.key} frame={frame} dealId={s.dealId} wb={wb} />
       case 'rate':
         return <RatePopup key={p.key} frame={frame} spec={s} wb={wb} />
       case 'spot':

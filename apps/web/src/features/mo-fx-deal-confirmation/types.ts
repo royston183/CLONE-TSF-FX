@@ -21,6 +21,8 @@ export type Deal = {
   partnerName: string
   txnTypeCode: string
   txnTypeDesc: string
+  /** Product type returned by SAP; absent on older or sample rows. */
+  productType?: string
   tradeDate: Date
   buySell1: string
   currency1: string

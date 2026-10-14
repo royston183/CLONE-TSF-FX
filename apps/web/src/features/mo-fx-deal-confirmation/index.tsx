@@ -118,6 +118,7 @@ export default function MoFxDealConfirmation() {
   const crModal = useModal()
   const statusModal = useModal()
   const [mrSummary, setMrSummary] = useState<DealSummary>(EMPTY_SUMMARY)
+  const [mrDeals, setMrDeals] = useState<Deal[]>([])
   const [mrValues, setMrValues] = useState<MatchReleaseValues>(EMPTY_MR)
   const [crSummary, setCrSummary] = useState<DealSummary>(EMPTY_SUMMARY)
   const [crRemarks, setCrRemarks] = useState('')
@@ -246,6 +247,7 @@ export default function MoFxDealConfirmation() {
     const list = selectedDeals(deals, selected)
     if (list.length === 0 || blocked(list)) return
     setMrSummary(dealSummary(list))
+    setMrDeals(list)
     setMrValues(EMPTY_MR)
     mrModal.open()
   }
@@ -273,7 +275,7 @@ export default function MoFxDealConfirmation() {
    * the first failure. The Options rows have no service and keep their on-screen behaviour.
    */
   const confirmMatchRelease = async () => {
-    const list = selectedDeals(deals, selected)
+    const list = mrDeals
     if (list.length === 0 || busy.current) return
     busy.current = true
     mrModal.close()
@@ -602,6 +604,7 @@ export default function MoFxDealConfirmation() {
       <MatchReleaseModal
         modal={mrModal}
         summary={mrSummary}
+        deals={mrDeals}
         values={mrValues}
         onChange={(patch) => setMrValues((v) => ({ ...v, ...patch }))}
         onConfirm={confirmMatchRelease}

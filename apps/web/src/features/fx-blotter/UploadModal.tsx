@@ -1,11 +1,15 @@
 import { GROUPS } from './data.ts'
+import { Download } from 'lucide-react'
+import { Fragment } from 'react'
 import { fmtDate, fmtNum, fmtRateText } from './format.ts'
 import { tradersOf, validateUploadRows } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
-import type { UploadLevel, UploadResult, UploadRow } from './types.ts'
+import type { BlotterRow, UploadLevel, UploadRow } from './types.ts'
+import { UPLOAD_COLUMNS, UPLOAD_LEVEL_LABELS } from './upload-schema.ts'
+import type { PreparedUpload, UploadCapabilities, UploadOutcome } from './upload-workflow.ts'
 
 /** What the validation box shows instead of the row summary. */
-export type UploadNotice = 'intro' | 'xls' | null
+export type UploadNotice = 'intro' | null
 
 export type UploadState = {
   date: string
@@ -16,83 +20,65 @@ export type UploadState = {
   notice: UploadNotice
   /** False until rows were loaded once: the preview is then a bare placeholder without headers. */
   previewed: boolean
-  results: UploadResult[] | null
-  /** Set once processed; loading rows again clears it. */
-  processed: boolean
   /** Bumped on open so the file box forgets its last file. */
   fileKey: number
+  reading: boolean
+  fileError: string
+  processing: boolean
+  processed: boolean
+  results: UploadOutcome[]
 }
 
-const PREVIEW_COLS = [
-  'Company',
-  'Trade Date',
-  'BP',
-  'Profit Ctr',
-  'Unit(BA)',
-  'Txn Type',
-  'Curr 1',
-  'Amt 1',
-  'Curr 2',
-  'Buy/Sell',
-  'Value Date',
-  'All in Rate',
-  'Swap',
-  'Spot',
-  'NDF Date',
-  'NDF Ref',
-  'Mode of Trade',
-  'MC Ref',
-  'Deal ID',
-]
-const RESULT_COLS = [
-  'Sr. No.',
-  'Signal',
-  'Partner',
-  'Curr 1',
-  'Curr 2',
-  'Amt 1',
-  'Amt 2',
-  'Value Date',
-  'Trade Date',
-  'Transaction No',
-  'Message',
-]
 const LEVELS: Array<[UploadLevel, string]> = [
-  ['ORDER', 'Order'],
-  ['CONTRACT', 'Contract'],
-  ['SETTLEMENT', 'Settlement'],
+  ['CREATE', UPLOAD_LEVEL_LABELS.CREATE],
+  ['CONTRACT', UPLOAD_LEVEL_LABELS.CONTRACT],
+  ['SETTLEMENT', UPLOAD_LEVEL_LABELS.SETTLEMENT],
 ]
 
-/** FX Blotter Upload (the P009 uploader), reading CSV / TSV / text instead of XLS. */
+/** FX Blotter Upload (P009), with the original 30-column spreadsheet layout. */
 export function UploadModal({
   modals,
   s,
   onChange,
   onGroup,
   onFile,
-  onSample,
+  onDownloadTemplate,
   onProcess,
-  onViewRfha,
+  onViewRow,
+  caps,
+  serviceError,
+  onRetryConnection,
+  prepared,
+  planError,
+  unsupportedFields,
 }: {
   modals: ModalStack
   s: UploadState
   onChange: (patch: Partial<UploadState>) => void
   onGroup: (group: string) => void
   onFile: (file: File | undefined) => void
-  onSample: () => void
+  onDownloadTemplate: () => void
   onProcess: () => void
-  onViewRfha: (rfha: string) => void
+  onViewRow: (row: BlotterRow) => void
+  caps: UploadCapabilities | null
+  serviceError: string
+  onRetryConnection: () => void
+  prepared: PreparedUpload[]
+  planError: string
+  unsupportedFields: string[]
 }) {
-  const close = () => modals.close('upload')
+  const close = () => { if (!s.processing) modals.close('upload') }
+  const busyModals = s.processing ? { ...modals, close: () => {} } : modals
   const v = validateUploadRows(s.rows)
-  const issues = [...v.errors, ...v.warnings]
+  const errors = v.errors.length ? v.errors : planError ? [planError] : []
+  const issues = [...errors, ...v.warnings]
 
   return (
-    <Overlay id="upload" modals={modals}>
+    <Overlay id="upload" modals={busyModals}>
       <div className="modal-card" style={{ maxWidth: 'min(1200px, 96vw, calc(100vw - 40px))' }}>
         <ModalHeader
           title="FX Blotter Upload"
-          subtitle="Order / Contract / Settlement upload flow from the supplied SAP program"
+          subtitle="Upload FX transactions from a spreadsheet"
           onClose={close}
         />
         <div className="modal-body">
@@ -101,6 +87,7 @@ export function UploadModal({
             <div className="form-field">
               <label>Blotter Date</label>
               <input
+                disabled={s.processing || s.processed}
                 id="upload-date"
                 type="text"
                 placeholder="dd-mm-yyyy"
@@ -110,7 +97,7 @@ export function UploadModal({
             </div>
             <div className="form-field">
               <label>Group</label>
-              <select id="upload-group" value={s.group} onChange={(e) => onGroup(e.target.value)}>
+              <select disabled={s.processing || s.processed} id="upload-group" value={s.group} onChange={(e) => onGroup(e.target.value)}>
                 {GROUPS.map((g) => (
                   <option key={g.code} value={g.code}>
                     {g.code} {g.desc}
@@ -120,7 +107,7 @@ export function UploadModal({
             </div>
             <div className="form-field">
               <label>Trader / Trade Code</label>
-              <select id="upload-trader" value={s.trader} onChange={(e) => onChange({ trader: e.target.value })}>
+              <select disabled={s.processing || s.processed} id="upload-trader" value={s.trader} onChange={(e) => onChange({ trader: e.target.value })}>
                 {tradersOf(s.group).map((t) => (
                   <option key={t.code} value={t.code}>
                     {t.name}
@@ -135,6 +122,7 @@ export function UploadModal({
               <label key={value}>
                 <input
                   type="radio"
+                  disabled={s.processing || s.processed || (value === 'SETTLEMENT' && (!caps || !caps.settle))}
                   name="upload-level"
                   value={value}
                   checked={s.level === value}
@@ -144,8 +132,7 @@ export function UploadModal({
               </label>
             ))}
             <span className="hint">
-              Order = create transaction; Contract = Order + release to MO; Settlement = Order + Contract + settlement
-              simulation.
+              Create Deal books a contract; Contract also releases it to MO; Settlement also settles it in SAP.
             </span>
           </div>
           <div className="section-label">Upload File</div>
@@ -155,37 +142,35 @@ export function UploadModal({
                 key={s.fileKey}
                 id="upload-file"
                 type="file"
-                accept=".csv,.tsv,.txt"
+                accept=".xls,.xlsx,.csv,.tsv,.txt"
+                disabled={s.reading || s.processing}
                 onChange={(e) => onFile(e.target.files?.[0])}
               />
               <div className="upload-hint">
-                SAP reads XLS using TEXT_CONVERT_XLS_TO_SAP. To keep this standalone HTML dependency-free, this browser
-                version accepts CSV/TSV/text with the same logical fields.
+                XLS, XLSX, CSV or TSV. Use the first sheet with column headers in row 1. Dates: DD-MM-YYYY.
               </div>
             </div>
-            <button type="button" className="tb-btn" onClick={onSample}>
-              Load Sample Rows
+            <button type="button" className="tb-btn" onClick={onDownloadTemplate}>
+              <Download size={14} aria-hidden="true" /> Download Template
             </button>
           </div>
           <div id="upload-validation">
-            {s.notice === 'intro' ? (
+            {s.reading ? (
+              <div className="validation-box" role="status">Reading upload file…</div>
+            ) : s.fileError ? (
+              <div className="validation-box bad" role="alert">{s.fileError}</div>
+            ) : s.notice === 'intro' ? (
               <div className="validation-box warn">
-                Select a CSV/TSV/text file or load the sample rows. The SAP uploader reads XLS; this dependency-free
-                standalone version uses text-delimited files.
-              </div>
-            ) : s.notice === 'xls' ? (
-              <div className="validation-box bad">
-                Binary XLS/XLSX parsing would require an embedded spreadsheet library. Save the same upload as CSV/TSV
-                for this standalone file.
+                Download the template, enter your transactions, then select the completed file to review it.
               </div>
             ) : s.rows.length ? (
-              <div className={`validation-box ${v.errors.length ? 'bad' : v.warnings.length ? 'warn' : 'ok'}`}>
+              <div className={`validation-box ${errors.length ? 'bad' : v.warnings.length ? 'warn' : 'ok'}`}>
                 <strong>{s.rows.length} row(s) loaded.</strong>{' '}
-                {v.errors.length
-                  ? `${v.errors.length} blocking validation issue(s).`
+                {errors.length
+                  ? `${errors.length} blocking validation issue(s).`
                   : v.warnings.length
                     ? `${v.warnings.length} warning(s).`
-                    : 'Ready to process.'}
+                    : 'File validation passed.'}
                 {issues.length ? (
                   <ul>
                     {issues.slice(0, 8).map((x) => (
@@ -204,8 +189,11 @@ export function UploadModal({
               {s.previewed ? (
                 <thead>
                   <tr>
-                    {PREVIEW_COLS.map((c) => (
-                      <th key={c}>{c}</th>
+                    {UPLOAD_COLUMNS.map((c) => (
+                      <Fragment key={c.header}>
+                        <th title={c.label}>{c.header}</th>
+                        {c.field === 'curr2' ? <th>Calculated Amount 2</th> : null}
+                      </Fragment>
                     ))}
                   </tr>
                 </thead>
@@ -214,30 +202,18 @@ export function UploadModal({
                 {s.rows.length ? (
                   s.rows.slice(0, 20).map((r, i) => (
                     <tr key={i}>
-                      <td>{r.companyCode}</td>
-                      <td>{r.tradeDate}</td>
-                      <td>{r.bp}</td>
-                      <td>{r.profitCenter}</td>
-                      <td>{r.businessArea}</td>
-                      <td>{r.txnType}</td>
-                      <td>{r.curr1}</td>
-                      <td className="num">{r.amt1}</td>
-                      <td>{r.curr2}</td>
-                      <td>{r.buySell}</td>
-                      <td>{r.valueDate}</td>
-                      <td>{fmtRateText(r.totalRate)}</td>
-                      <td>{r.swap}</td>
-                      <td>{fmtRateText(r.spot)}</td>
-                      <td>{r.ndfDate}</td>
-                      <td>{r.ndfRef}</td>
-                      <td>{r.assignment}</td>
-                      <td>{r.mcRef}</td>
-                      <td>{r.dealId}</td>
+                      {UPLOAD_COLUMNS.map((c) => (
+                        <Fragment key={c.header}>
+                          <td>{c.field === 'totalRate' || c.field === 'spot' || c.field === 'swap'
+                            ? fmtRateText(r[c.field]) : r[c.field]}</td>
+                          {c.field === 'curr2' ? <td className="num">{prepared[i] ? `${fmtNum(prepared[i]!.row.amt2, 4)} ${prepared[i]!.row.curr2}` : '—'}</td> : null}
+                        </Fragment>
+                      ))}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={s.previewed ? 19 : undefined} className="upload-preview-empty">
+                    <td colSpan={s.previewed ? UPLOAD_COLUMNS.length + 1 : undefined} className="upload-preview-empty">
                       No upload rows loaded.
                     </td>
                   </tr>
@@ -245,58 +221,41 @@ export function UploadModal({
               </tbody>
             </table>
           </div>
-          <div id="upload-results-section" style={{ display: s.results ? 'block' : 'none' }}>
+          {s.rows.length > 20 ? <div className="upload-hint">Showing the first 20 of {s.rows.length} rows. All rows are validated.</div> : null}
+          {!caps ? <div className={`validation-box ${serviceError ? 'bad' : 'warn'}`} role="status">
+            {serviceError || 'Checking the SAP upload connection…'}
+            {serviceError ? <button type="button" className="tb-btn" onClick={onRetryConnection}>Retry Connection</button> : null}
+          </div> : null}
+          {caps && !caps.settle ? <div className="validation-box warn">Settlement is unavailable on the connected service. Create Deal and Contract are available.</div> : null}
+          {unsupportedFields.length ? <div className="validation-box warn">These fields cannot be saved by the connected services and will remain in the preview: {unsupportedFields.join(', ')}.</div> : null}
+          {s.results.length ? <>
             <div className="section-label">Processing Results</div>
             <div className="aux-table-wrap" style={{ maxHeight: 260 }}>
-              <table className="aux-table" id="upload-results-table">
-                {s.results ? (
-                  <>
-                    <thead>
-                      <tr>
-                        {RESULT_COLS.map((c) => (
-                          <th key={c}>{c}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {s.results.map((r) => (
-                        <tr key={r.sr}>
-                          <td>{r.sr}</td>
-                          <td className={r.ok ? 'result-ok' : 'result-err'}>{r.ok ? 'Success' : 'Error'}</td>
-                          <td>{r.bp}</td>
-                          <td>{r.curr1}</td>
-                          <td>{r.curr2}</td>
-                          <td className="num">{fmtNum(r.amt1)}</td>
-                          <td className="num">{fmtNum(r.amt2)}</td>
-                          <td>{fmtDate(r.valueDate)}</td>
-                          <td>{fmtDate(r.tradeDate)}</td>
-                          <td>
-                            <button type="button" className="rfha-link" onClick={() => onViewRfha(r.rfha)}>
-                              {r.rfha}
-                            </button>
-                          </td>
-                          <td>{r.msg}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </>
-                ) : null}
+              <table className="aux-table">
+                <thead><tr>{['Row', 'Result', 'Stage', 'Company', 'Partner', 'Amount 1', 'Amount 2', 'Value Date', 'Transaction', 'Message'].map((label) => <th key={label}>{label}</th>)}</tr></thead>
+                <tbody>{s.results.map((result) => <tr key={result.sr}>
+                  <td>{result.sr}</td><td className={result.state === 'success' ? 'result-ok' : result.state === 'skipped' ? undefined : 'result-err'}>{result.state === 'partial' ? 'Partly completed' : result.state === 'skipped' ? 'Not processed' : result.state === 'success' ? 'Success' : 'Error'}</td>
+                  <td>{result.stage}</td><td>{result.row.companyCode}</td><td>{result.row.bp}</td>
+                  <td>{fmtNum(result.row.amt1)} {result.row.curr1}</td><td>{fmtNum(result.row.amt2)} {result.row.curr2}</td><td>{fmtDate(result.row.valueDate)}</td>
+                  <td>{result.row.transactionNumber ? <button type="button" className="rfha-link" disabled={s.processing} onClick={() => onViewRow(result.row)}>{result.row.transactionNumber}</button> : '—'}</td>
+                  <td style={{ whiteSpace: 'normal', minWidth: 260 }}>{result.message}</td>
+                </tr>)}</tbody>
               </table>
             </div>
-          </div>
+          </> : null}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn-cancel" onClick={close}>
+          <button type="button" className="btn-cancel" disabled={s.processing} onClick={close}>
             Cancel
           </button>
           <button
             type="button"
             className="btn-confirm"
             id="upload-process-btn"
-            disabled={!s.rows.length || v.errors.length > 0 || s.processed}
+            disabled={s.reading || s.processing || s.processed || !caps || !prepared.length || !!planError || (s.level === 'SETTLEMENT' && !caps.settle)}
             onClick={onProcess}
           >
-            Process Upload
+            {s.processing ? `Processing ${s.results.length} / ${s.rows.length}…` : s.processed ? 'Upload Processed' : 'Process Upload'}
           </button>
         </div>
       </div>

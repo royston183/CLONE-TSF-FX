@@ -32,6 +32,8 @@ export function ContractsTable({
   onCheck,
   onCheckAll,
   onOpenChild,
+  onOpenLinkedDeals,
+  canViewLinkedDeals,
   onEdit,
   onDragStart,
   onDragEnd,
@@ -46,6 +48,8 @@ export function ContractsTable({
   onCheck: (mc: MasterContract, checked: boolean) => void
   onCheckAll: (checked: boolean) => void
   onOpenChild: (mc: MasterContract) => void
+  onOpenLinkedDeals: (mc: MasterContract) => void
+  canViewLinkedDeals: boolean
   onEdit: (mc: MasterContract) => void
   onDragStart: (e: DragEvent<HTMLTableRowElement>, mc: MasterContract) => void
   onDragEnd: () => void
@@ -176,7 +180,12 @@ export function ContractsTable({
                 <td>{fmtDate(mc.shipEnd)}</td>
                 <td className="left">{mc.portOfShipment}</td>
                 <td className="left">{mc.portOfDestination}</td>
-                <td className="num">{fmtNum(mc.utilizedAmt)}</td>
+                <td className="num">
+                  <button className="tbl-link" type="button" disabled={!canViewLinkedDeals} onClick={() => onOpenLinkedDeals(mc)}
+                    title={canViewLinkedDeals ? 'View linked Deal IDs' : 'Linked Deal IDs are unavailable while contracts are offline.'}>
+                    {fmtNum(mc.utilizedAmt)}
+                  </button>
+                </td>
                 <td className="left">{mc.moRemarks || <Dash />}</td>
                 <td className="left">{mc.foRemarks || <Dash />}</td>
                 <td className="left">{mc.enteredBy}</td>

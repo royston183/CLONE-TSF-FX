@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { KPI_DUE_DAYS } from './data.ts'
-import { findDeal, findTxn, type Wb } from './flows.ts'
+import { findTxn, type Wb } from './flows.ts'
 import { formatAmount, formatRate, isoToDMY, todayIso } from './format.ts'
 import { KPI_DEFS, companyName, dealStatusInfo, kpiCountRows, kpiToUsd, modelDesc, txnStatusInfo, txnTypeText, type KpiId, type Kpis } from './logic.ts'
 import { ModalFrame, type FrameProps } from './modal.tsx'
@@ -69,63 +69,6 @@ export function TxnDetailsModal({ frame, rfha, dealId, wb }: { frame: FrameProps
           </div>
         </div>
       ) : null}
-    </ModalFrame>
-  )
-}
-
-/* ---------------- View Settlement Data (V_EX) ---------------- */
-
-export function SettlementDataModal({ frame, dealId, wb }: { frame: FrameProps; dealId: string; wb: Wb }) {
-  const data = wb.get()
-  const deal = findDeal(data, dealId)
-  if (!deal) return null
-  const rows = data.inSpot.filter((s) => s.dealId === dealId)
-  return (
-    <ModalFrame frame={frame} title="Settlement Data" sub={`Deal ${deal.id} · ${deal.desc}`} cls="lg-modal" actions={closeBtn(frame)}>
-      <div className="grid-wrap">
-        <table className="grid">
-          <thead>
-            <tr>
-              <th>Deal Type</th>
-              <th>Straddle</th>
-              <th className="num">Invoice Amount</th>
-              <th className="num">FX Deal Amount</th>
-              <th>Curr</th>
-              <th className="num">Difference</th>
-              <th>Buy/Sell</th>
-              <th>Spot Created</th>
-              <th>Spot Transaction</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr className="no-hover">
-                <td colSpan={9} className="empty-row">
-                  No settlement data stored for this deal.
-                </td>
-              </tr>
-            ) : (
-              rows.map((s) => (
-                <tr className="no-hover" key={s.dealType}>
-                  <td className="cell-type">{s.dealType}</td>
-                  <td>{s.dssType ? 'Yes' : ''}</td>
-                  <td className="num">{formatAmount(s.fAmt)}</td>
-                  <td className="num">{formatAmount(s.fxAmt)}</td>
-                  <td>{s.curr}</td>
-                  <td className="num">{formatAmount(s.dAmt)}</td>
-                  <td>{s.bs}</td>
-                  <td>
-                    <span className={`status-text ${s.spotCreate === 'X' ? 'status-text-in-use' : 'status-text-pending'}`}>
-                      {s.spotCreate === 'X' ? 'Yes' : 'Pending'}
-                    </span>
-                  </td>
-                  <td className="mono">{s.spotTxn}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
     </ModalFrame>
   )
 }

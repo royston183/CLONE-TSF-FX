@@ -162,6 +162,8 @@ function toFxModels(rows: FxRow[]): FxModel[] {
 
 export type Loaded = { contracts: MasterContract[]; children: ChildStore; source: MasterSource }
 
+export { loadLinkedDeals } from '../../shared/fx/master-contract.ts'
+
 /**
  * Every Master Contract with its children and linked Deal IDs. An empty table is a real
  * answer; the seed contracts only appear when the middleware cannot be reached.

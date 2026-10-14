@@ -1,0 +1,8 @@
+.mc-linked-deals { font-size: 13px; color: var(--text); }
+.mc-linked-deals__scroll { overflow: auto; max-height: 60vh; border: 1px solid var(--border); border-radius: var(--radius); }
+.mc-linked-deals__table { width: 100%; border-collapse: collapse; }
+.mc-linked-deals__table th, .mc-linked-deals__table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.mc-linked-deals__table th { background: var(--surface-2); color: var(--text-sub); white-space: nowrap; position: sticky; top: 0; }
+.mc-linked-deals__table a { color: var(--blue); }
+.mc-linked-deals__actions { white-space: nowrap; }
+.mc-linked-deals__actions a { text-decoration: none; }

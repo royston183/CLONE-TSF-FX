@@ -1,5 +1,6 @@
 import { masterContractDragImage } from '../../shared/master-contract/drag.ts'
 import { useMasterContractFeedback } from '../../shared/master-contract/Feedback.tsx'
+import { LinkedDealsModal } from '../../shared/master-contract/LinkedDealsModal.tsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -40,7 +41,6 @@ import './mo-confirm-master-contract.dark.css'
 // Hand-written deviations from the generated sheet (the drag hint's body class) — see inside.
 import './mo-confirm-master-contract.overrides.css'
 import type {
-  ActionScope,
   Filters,
   MasterContract,
   McAction,
@@ -91,8 +91,9 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   const actionModal = useModal()
   const childModal = useModal()
   const editModal = useModal()
+  const linkedDealsModal = useModal()
+  const [linkedDealsMc, setLinkedDealsMc] = useState<number | null>(null)
   const [pendingAction, setPendingAction] = useState<McAction>('confirm')
-  const [pendingScope, setPendingScope] = useState<ActionScope>('bulk')
   const [actionMcs, setActionMcs] = useState<MasterContract[]>([])
   const [remark, setRemark] = useState('')
   const [remarkError, setRemarkError] = useState(false)
@@ -179,6 +180,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       actionModal.close()
       childModal.close()
       editModal.close()
+      linkedDealsModal.close()
       setOpenPicker(null)
     }
   }
@@ -205,9 +207,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
 
   // ------------------------------------------------------------------ confirm / reject
 
-  const openActionDialog = (action: McAction, mcs: MasterContract[], scope: ActionScope) => {
+  const openActionDialog = (action: McAction, mcs: MasterContract[]) => {
     setPendingAction(action)
-    setPendingScope(scope)
     setActionMcs(mcs)
     setRemark('')
     setRemarkError(false)
@@ -216,12 +217,13 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
 
   const askBulkAction = (action: McAction) => {
     if (selected.length === 0) return
-    openActionDialog(action, selected, 'bulk')
+    openActionDialog(action, selected)
   }
 
   const doAction = async () => {
     if (busy.current) return
-    const mcs = pendingScope === 'bulk' ? selected : contracts.filter((mc) => mc.mcNumber === pendingScope)
+    // Confirm exactly the records displayed in the review, including drag-and-drop selections.
+    const mcs = actionMcs
     if (!isActionValid(pendingAction, remark)) {
       setRemarkError(true) // keep the dialog open until a remark is entered
       return
@@ -302,7 +304,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
       const mcs = numbers
         .map((n) => contracts.find((mc) => mc.mcNumber === n))
         .filter((mc): mc is MasterContract => !!mc && isActionable(mc))
-      if (mcs.length) openActionDialog(action, mcs, 'bulk')
+      if (mcs.length) openActionDialog(action, mcs)
     },
   })
 
@@ -313,9 +315,18 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     childModal.open()
   }
 
+  const openLinkedDeals = (mc: MasterContract) => {
+    if (source !== 'mysql') return
+    actionModal.close()
+    childModal.close()
+    editModal.close()
+    setLinkedDealsMc(mc.mcNumber)
+    linkedDealsModal.open()
+  }
+
   const quickAction = (action: McAction, mc: MasterContract) => {
     const current = contracts.find((m) => m.mcNumber === mc.mcNumber)
-    if (current) openActionDialog(action, [current], current.mcNumber)
+    if (current) openActionDialog(action, [current])
   }
 
   const openEdit = (mc: MasterContract) => {
@@ -550,6 +561,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
               onCheck={(mc, on) => setChecked((s) => toggleChecked(s, mc, on))}
               onCheckAll={(on) => setChecked((s) => setPageChecked(s, paged.rows, on))}
               onOpenChild={openChild}
+              onOpenLinkedDeals={openLinkedDeals}
+              canViewLinkedDeals={source === 'mysql'}
               onEdit={openEdit}
               onDragStart={onDragStart}
               onDragEnd={endDrag}
@@ -620,6 +633,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
           </div>
         </div>
       </main>
+
+      <LinkedDealsModal open={linkedDealsModal.isOpen} onClose={linkedDealsModal.close} mcNumber={linkedDealsMc} />
 
       <div id="toast">{feedback.element}</div>
 

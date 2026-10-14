@@ -115,4 +115,4 @@ export type PlRow = { type: string; value: string }
 export type ToastType = 'success' | 'error' | 'info'
 export type Toast = { id: number; msg: string; type: ToastType }
 
-export type ModalId = 'cancelDeal' | 'reverse' | 'editPair' | 'confirm'
+export type ModalId = 'cancelDeal' | 'reverse' | 'editPair' | 'confirm' | 'dms'

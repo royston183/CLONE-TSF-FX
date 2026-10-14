@@ -127,6 +127,9 @@ const FX_NAMES = {
   assignment: ['Assignment', 'Zuond'],
   ndfFixingDate: ['NdfFixingDate', 'NdfDate'],
   fixingReferenceId: ['FixingReferenceId', 'NdfRef', 'FixingRefId'],
+  externalReference: ['ExternalReference', 'Nordext'],
+  financeProject: ['FinanceProject'],
+  remark: ['Characteristics'],
 } as const
 
 /**
@@ -143,9 +146,14 @@ export async function extendCreatePayload(payload: Record<string, unknown>, r: B
   }
   const portfolio = portfolioOf(r)
   if (portfolio) out['Portfolio'] = portfolio
-  put(FX_NAMES.businessArea, AREA_CODES.businessAreas[r.businessArea ?? ''])
-  put(FX_NAMES.profitCenter, AREA_CODES.profitCenters[r.profitCenter ?? ''])
+  put(FX_NAMES.businessArea, AREA_CODES.businessAreas[r.businessArea ?? ''] ?? (r.uploaded ? r.businessArea : undefined))
+  put(FX_NAMES.profitCenter, AREA_CODES.profitCenters[r.profitCenter ?? ''] ?? (r.uploaded ? r.profitCenter : undefined))
   put(FX_NAMES.assignment, r.assignment?.trim())
+  if (r.uploaded) {
+    put(FX_NAMES.externalReference, r.externalReference)
+    put(FX_NAMES.financeProject, r.financeProject)
+    put(FX_NAMES.remark, r.notes)
+  }
   if (isNdf(r)) {
     const fixing = fixingDateOf(r)
     put(FX_NAMES.ndfFixingDate, fixing ? toISO(fixing) : '')
