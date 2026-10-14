@@ -30,7 +30,6 @@ export const GAPS = {
     'Not available yet: Confirm & Save SS Deal ID creates the short-straddle deal from the option legs (ZSGTSFCDS_OPTION), which no service provides.',
   premium:
     'Not available yet: Premium Adjustment needs the option data (ZSGTSFCDS_OPTION, no FX options service is registered) and an RBI exchange-rate API (BAPI_EXCHANGERATE_GETDETAIL, rate type RBI). The rate must come from the backend, not the browser.',
-  dms: 'Not available yet: no document (DMS) service is registered for ZSGTSFFM_DMS (Deal ID, category 11), so the Deal ID documents cannot be shown or attached.',
   options:
     'This is an option deal (FX2). Its transactions come from ZSGTSFCDS_OPTION and no FX options service is registered, so only the transaction numbers are shown.',
   pl: 'The figures stored on the Deal ID when it was confirmed. A deal that is not yet confirmed shows the planned P&L calculated from the TCURR rate, the currency string (ZSGTSFTR_CUR_STR) and the origin profit margin (ZSGTSFTR_ORG_PRO).',

@@ -20,6 +20,11 @@ export type McRow = FxRow
 export type DealRow = FxRow
 export type ChildRow = FxRow
 
+/** All linked Deal IDs for one master contract, including cancelled deals; no sample fallback. */
+export function loadLinkedDeals(mcNumber: number, signal?: AbortSignal): Promise<DealRow[]> {
+  return fxList('tsfDealId', { ZMC_REF: String(mcNumber) }, { sort: '-ZDEAL_ID', signal })
+}
+
 /** ABAP excludes cancelled Deal IDs from utilization: WHERE zdeal_stat <> '30'. */
 export const CANCELLED_DEAL = '30'
 

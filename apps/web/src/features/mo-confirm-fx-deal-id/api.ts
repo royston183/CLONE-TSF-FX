@@ -29,8 +29,9 @@ import type { Deal, Invoice, Leg, StoredPl } from './types.ts'
  * Written, because the middleware's PATCH on ZSGTSFTR_DEALID is proven (shared/fx/deal-id.ts):
  *   Cancel Deal ID   ZDEAL_STAT = 30 with the changed-by stamp (the program's DEASSIGN_DATA)
  *
- * Not possible with what is registered, so the screen disables the control and says why (data.ts GAPS):
- * Confirm, Edit Deal Pair, Reverse MO Confirmation, Premium Adjustment, DMS and the SS confirmation.
+ * Confirmation, replacement and reversal use analysis.ts / analysisConfirm.ts. Category 11 documents
+ * use shared/fx/dms.ts (local document types and Deal ID links, middleware metadata and SAP originals).
+ * Premium Adjustment and SS confirmation remain disabled (data.ts GAPS).
  */
 
 /** The Deal ID slots ZRFHA1..8 and their names (D1 D2 D3 D4 DS1 DS2 DSS1 DSS2). */

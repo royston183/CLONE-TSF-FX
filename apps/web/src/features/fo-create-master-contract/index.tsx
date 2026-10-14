@@ -21,6 +21,7 @@ import {
 } from './data.ts'
 import { formatAmount, formatCompactUSD } from './format.ts'
 import { KpiDetailModal, type KpiKind } from './KpiDetailModal.tsx'
+import { LinkedDealsModal } from '../../shared/master-contract/LinkedDealsModal.tsx'
 import {
   blankForm,
   buildContract,
@@ -96,9 +97,11 @@ export default function FoCreateMasterContract() {
   const kpiModal = useModal()
   const detailModal = useModal()
   const childModal = useModal()
+  const linkedDealsModal = useModal()
   const [kpiKind, setKpiKind] = useState<KpiKind | null>(null)
   const [detailMc, setDetailMc] = useState<number | null>(null)
   const [childMc, setChildMc] = useState<number | null>(null)
+  const [linkedDealsMc, setLinkedDealsMc] = useState<number | null>(null)
 
   const status = useStatusPopup()
   const showToast = useCallback((message: string, error: boolean) => {
@@ -322,11 +325,19 @@ export default function FoCreateMasterContract() {
     childModal.open()
   }
 
+  const openLinkedDeals = (c: MasterContract) => {
+    if (source !== 'mysql') return
+    setLinkedDealsMc(c.mcNumber)
+    detailModal.hide()
+    linkedDealsModal.open()
+  }
+
   const escapeRef = useRef<() => void>(() => {})
   escapeRef.current = () => {
     kpiModal.close()
     detailModal.close()
     childModal.close()
+    linkedDealsModal.close()
     if (formModal.state === 'open') closeForm()
   }
   useEffect(() => {
@@ -669,6 +680,8 @@ export default function FoCreateMasterContract() {
         onCopy={openCopy}
         onEdit={openEdit}
         onSendToMO={(c) => sendToMO([c])}
+        onLinkedDeals={openLinkedDeals}
+        canViewDeals={source === 'mysql'}
       />
 
       <ChildContractsModal
@@ -676,6 +689,8 @@ export default function FoCreateMasterContract() {
         parent={childParent}
         items={childParent ? (childStore.byMc[String(childParent.mcNumber)] ?? []) : []}
       />
+
+      <LinkedDealsModal open={linkedDealsModal.state === 'open'} onClose={linkedDealsModal.close} mcNumber={linkedDealsMc} />
 
       {status.element}
     </div>

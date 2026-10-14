@@ -122,6 +122,7 @@ export function toDeal(
     partnerCode: d.Partner,
     partnerName: d.Partner,
     txnTypeCode: d.TransactionType,
+    productType: d.ProductType ?? '',
     txnTypeDesc: desc ? `${d.TransactionType} - ${desc}` : d.TransactionType,
     tradeDate,
     buySell1: buysLead ? 'Buy' : 'Sell',

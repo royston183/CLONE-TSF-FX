@@ -46,16 +46,23 @@ export function seedTrdAcc(db: Database): number {
   return rows.length
 }
 
-/** Loads the shipped DMS document types, keyed by ZDMS_CAT + ZDMS_TYPE; safe to run again. */
+/** Loads the exported DMS document types only when the table is empty. */
 export function seedDmsTyp(db: Database): number {
-  const rows = JSON.parse(readFileSync(resolve(REPO_ROOT, 'database/seed/zsgtsftr_dms_typ.json'), 'utf8')) as DdicRow[]
-  const repo = ddicRepository(db, { table: 'zsgtsftr_dms_typ', client: DMS_TYP_CLIENT, columns: DMS_TYP_COLUMNS })
-  db.transaction(() => {
+  return db.transaction(() => {
+    if (db.prepare('SELECT 1 FROM zsgtsftr_dms_typ LIMIT 1').get()) return 0
+    const rows = JSON.parse(readFileSync(resolve(REPO_ROOT, 'database/seed/zsgtsftr_dms_typ.json'), 'utf8')) as DdicRow[]
+    // SAP exports can contain an initial (blank) category; preserve those rows too.
+    const insert = db.prepare(`INSERT INTO zsgtsftr_dms_typ
+      (client, ${DMS_TYP_COLUMNS.map((c) => c.name.toLowerCase()).join(', ')})
+      VALUES (@CLIENT, ${DMS_TYP_COLUMNS.map((c) => `@${c.name}`).join(', ')})`)
     for (const row of rows) {
-      const { ZDMS_CAT, ZDMS_TYPE, ...fields } = row
-      if (typeof ZDMS_CAT !== 'string' || typeof ZDMS_TYPE !== 'string') throw new Error('DMS type seed requires ZDMS_CAT and ZDMS_TYPE strings.')
-      repo.upsert({ ZDMS_CAT, ZDMS_TYPE }, fields)
+      for (const column of DMS_TYP_COLUMNS) {
+        const value = row[column.name]
+        if (typeof value !== 'string' || value.length > column.max) throw new Error(`Invalid DMS type seed field: ${column.name}.`)
+      }
+      if (!row['ZDMS_TYPE']) throw new Error('DMS type seed requires ZDMS_TYPE.')
+      insert.run({ CLIENT: DMS_TYP_CLIENT, ...row })
     }
+    return rows.length
   })()
-  return rows.length
 }

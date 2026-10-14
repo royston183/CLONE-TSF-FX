@@ -155,6 +155,10 @@ export type BlotterRow = {
   moRemark?: string
   dealDescription?: string
   dealSequence?: string
+  olamDealNumber?: string
+  uploadBlotterDate?: Date
+  /** An upload's exact SAP product / transaction type, resolved against the value help. */
+  uploadProduct?: { productType: string; transactionType: string }
   uploaded?: boolean
   settled?: boolean
   /** True for a row that exists in SAP (created through, or read from, the FxTransaction service). */
@@ -166,7 +170,7 @@ export type BlotterRow = {
 }
 
 /** The application-data save still owed for a row. `status` is the TXN_STATUS to write for a reverse. */
-export type AppDataPending = { intent: 'create' | 'release' | 'reverse'; status?: string }
+export type AppDataPending = { intent: 'create' | 'release' | 'reverse' | 'settle' | 'upload'; status?: string; fields?: Record<string, string | boolean> }
 
 export type TextField =
   | 'entity'
@@ -267,7 +271,7 @@ export type TxnListCriteria = {
 
 // ---------------------------------------------------------------- upload
 
-export type UploadLevel = 'ORDER' | 'CONTRACT' | 'SETTLEMENT'
+export type UploadLevel = 'CREATE' | 'CONTRACT' | 'SETTLEMENT'
 
 /** One upload line after its headers are matched to the logical fields; every value is text. */
 export type UploadRow = {

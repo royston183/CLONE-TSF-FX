@@ -1,13 +1,16 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import '../popup/popup.css'
+import './confirmation-review.css'
 
 /** Reference popup styling, retaining existing transaction element IDs. */
 export function MasterContractConfirmation({ open, title, message, children, danger = false,
-  confirmLabel = 'Confirm', onCancel, onConfirm, ids = {}, iconId, subtitle }: {
+  confirmLabel = 'Confirm', onCancel, onConfirm, ids = {}, iconId, subtitle, review = false, eyebrow }: {
   open: boolean; title: string; message?: ReactNode; children?: ReactNode; danger?: boolean
   confirmLabel?: string; onCancel: () => void; onConfirm: () => void | Promise<void>; subtitle?: ReactNode
   iconId?: string
+  review?: boolean
+  eyebrow?: string
   ids?: { overlay?: string; title?: string; message?: string; body?: string; cancel?: string; confirm?: string; close?: string }
 }) {
   const generatedId = useId()
@@ -42,11 +45,14 @@ export function MasterContractConfirmation({ open, title, message, children, dan
     try { await onConfirm() } finally { pending.current = false; setBusy(false) }
   }
   return createPortal(<div className="std-pop-overlay" id={ids.overlay}>
-    <div className="std-pop mc-confirmation" ref={card} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy}>
+    <div className={`std-pop mc-confirmation${review ? ' mc-confirmation--review' : ''}`} ref={card} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy}>
       {ids.close ? <button id={ids.close} className="mc-confirm-close" type="button" aria-label="Close" disabled={busy} onClick={onCancel}>&times;</button> : null}
-      <div className={`std-pop-icon ${danger ? 'danger' : 'primary'}`} id={iconId} aria-hidden="true">{danger ? '!' : '?'}</div>
-      <h2 className="std-pop-title" id={titleId}>{title}</h2>
-      {subtitle}
+      {!review ? <div className={`std-pop-icon ${danger ? 'danger' : 'primary'}`} id={iconId} aria-hidden="true">{danger ? '!' : '?'}</div> : null}
+      <div className={review ? 'confirmation-review-header' : undefined}>
+        {review && eyebrow ? <div className="confirmation-review-eyebrow">{eyebrow}</div> : null}
+        <h2 className="std-pop-title" id={titleId}>{title}</h2>
+        {subtitle}
+      </div>
       {message ? <div className="std-pop-message" id={ids.message}>{message}</div> : null}
       {children ? <div className="std-pop-body" id={ids.body}><fieldset className="mc-confirm-fields" disabled={busy}>{children}</fieldset></div> : null}
       <div className="std-pop-actions">

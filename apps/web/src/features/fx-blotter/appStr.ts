@@ -130,7 +130,7 @@ const NDF_TYPES = new Set(['NDF', 'DNDF'])
  */
 export function fieldsOfRow(r: BlotterRow): AppStrFields {
   const hasDeal = !!r.dealId
-  const legType = hasDeal ? legTypeOf(r.dealType) : undefined
+  const legType = r.uploaded && r.dealType ? r.dealType : hasDeal ? legTypeOf(r.dealType) : undefined
   return cleanFields({
     ...(hasDeal ? { ZtsfDealID: r.dealId } : {}),
     ...(legType ? { ZtsfDealType: legType } : {}),
@@ -138,6 +138,7 @@ export function fieldsOfRow(r: BlotterRow): AppStrFields {
     ZtsfDealDesc: r.dealDescription ?? '',
     ZtsfDealSq: r.dealSequence ?? '',
     ...(NDF_TYPES.has(r.txnType) ? { NdfFoRem: r.foRemark ?? '', NdfMoRem: r.moRemark ?? '' } : {}),
+    ...(r.olamDealNumber ? { ZolamDealNo: r.olamDealNumber } : {}),
   })
 }
 
@@ -260,10 +261,12 @@ export async function clearDealLink(companyCode: string, transaction: string): P
  *   release   Release to MO: 03, unless the transaction is already past FO (07, a fixing status, ...)
  *   reverse   FO delete / reverse: the given status, always
  */
-export type AppStrIntent = 'create' | 'release' | 'reverse'
+export type AppStrIntent = 'create' | 'release' | 'reverse' | 'settle' | 'upload'
 
 export function resolveStatus(intent: AppStrIntent, current: string | undefined, wanted: string): string {
   if (intent === 'reverse') return wanted
+  if (intent === 'upload') return !current || current === '01' ? wanted : current
+  if (intent === 'settle') return !current || ['01', '03', '06'].includes(current) ? wanted : current
   if (intent === 'release') return statusAfterRelease(current)
   return current?.trim() ? current : wanted
 }

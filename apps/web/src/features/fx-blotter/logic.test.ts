@@ -35,7 +35,6 @@ import {
   nextWorkingDay,
   pairCheck,
   parseDelimitedUpload,
-  processUpload,
   releaseRows,
   resultBadge,
   reverseTxn,
@@ -402,24 +401,11 @@ describe('upload', () => {
     deepStrictEqual(v.warnings, ['Row 1: Trade Date falls on a non-working day.'])
   })
 
-  it('adds unknown partners and processes rows to the top at the chosen level', () => {
+  it('matches partner short names in the legacy lookup helper', () => {
     const b = fresh()
     const bp = uploadBpCode(b.partners, 'New Bank')
     strictEqual(bp.code, `UPL${BUSINESS_PARTNERS.length + 1}`)
     strictEqual(uploadBpCode(b.partners, 'dbs sg').code, 'BP1001')
-    const out = processUpload(b, sampleUploadRows(NOW), 'CONTRACT', 'G03', 'TER')!
-    strictEqual(out.results.length, 2)
-    strictEqual(out.results[0]?.msg, 'Order created and released to MO')
-    const top = out.blotter.rows[0]!
-    strictEqual(top.txnType, 'NDF')
-    strictEqual(top.status, 'RELEASED')
-    strictEqual(top.bp, 'BP1002')
-    strictEqual(top.ndfRef, 'FBIL')
-    strictEqual(top.spotRate, 83.3)
-    strictEqual(top.companyCode, 'SG03')
-    strictEqual(top.trader, 'TER')
-    strictEqual(out.blotter.rows[1]?.swapPoints, 0.05)
-    strictEqual(processUpload(b, [{ ...sampleUploadRows(NOW)[0]!, amt1: '0' }], 'ORDER', 'G02', 'NID'), null)
   })
 })
 

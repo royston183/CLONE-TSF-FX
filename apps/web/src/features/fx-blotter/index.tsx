@@ -53,7 +53,6 @@ import {
   initialBlotter,
   insertRow,
   isPreassigned,
-  isSpreadsheetFile,
   loadContext,
   mcCandidates,
   mergeLiveRows,
@@ -61,15 +60,11 @@ import {
   openDealsFor,
   pagerWindow,
   pairCheck,
-  parseDelimitedUpload,
-  canonicalUploadRow,
-  processUpload,
   releaseRows,
   resultBadge,
   reverseTxn,
   rowRef,
   runTxnList,
-  sampleUploadRows,
   saveNote,
   setAppDataPending,
   setCtx,
@@ -93,6 +88,9 @@ import { NotesModal } from './NotesModal.tsx'
 import { AssignModal, McAssignModal, ShortStraddleModal } from './ReleaseModals.tsx'
 import { TxnListModal } from './TxnListModal.tsx'
 import { UploadModal, type UploadState } from './UploadModal.tsx'
+import { downloadUploadTemplate, parseUploadFile } from './upload-file.ts'
+import { loadUploadCapabilities, prepareUpload, processSapUpload, unsupportedUploadFields, type UploadCapabilities } from './upload-workflow.ts'
+import { UPLOAD_LEVEL_LABELS } from './upload-schema.ts'
 import type { ViewContent } from './ViewModal.tsx'
 import { ViewModal } from './ViewModal.tsx'
 import './fx-blotter.legacy.css'
@@ -136,13 +134,16 @@ function freshUpload(b: Blotter, fileKey: number): UploadState {
     date: fmtDate(b.ctx.date),
     group: b.ctx.group,
     trader: uploadTrader(b.ctx.group, b.ctx.trader),
-    level: 'ORDER',
+    level: 'CREATE',
     rows: [],
     notice: 'intro',
     previewed: false,
-    results: null,
-    processed: false,
     fileKey,
+    reading: false,
+    fileError: '',
+    processing: false,
+    processed: false,
+    results: [],
   }
 }
 
@@ -202,6 +203,9 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   const [listCrit, setListCrit] = useState<TxnListCriteria>(() => defaultListCriteria(b.ctx, '', ''))
   const [listResult, setListResult] = useState<BlotterRow[] | null>(null)
   const [upload, setUpload] = useState<UploadState>(() => freshUpload(b, 0))
+  const uploadReadId = useRef(0)
+  const [uploadCaps, setUploadCaps] = useState<UploadCapabilities | null>(null)
+  const [uploadServiceError, setUploadServiceError] = useState('')
 
   // Toast
   const [toast, setToast] = useState<ToastState>({ message: '', kind: '', show: false })
@@ -285,11 +289,11 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // Escape closes the top-most popup.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') modals.closeTop()
+      if (e.key === 'Escape' && !upload.processing) modals.closeTop()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [modals])
+  }, [modals, upload.processing])
 
   /**
    * Stores a new blotter. `refilter` is the original's applyFilters(): the grid is topped up
@@ -856,37 +860,82 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
 
   // ------------------------------------------------------------------ upload
 
-  const openUpload = () => {
-    setUpload((u) => freshUpload(b, u.fileKey + 1))
-    modals.open('upload')
+  const checkUploadConnection = async () => {
+    setUploadCaps(null)
+    setUploadServiceError('')
+    try { setUploadCaps(await loadUploadCapabilities()) }
+    catch (error) { setUploadServiceError(sapMessage(error)) }
   }
 
-  const loadUploadRows = (rows: UploadState['rows']) =>
-    setUpload((u) => ({ ...u, rows, notice: null, previewed: true, results: null, processed: false }))
+  const uploadPlan = useMemo(() => {
+    if (!upload.rows.length || !uploadCaps) return { rows: [], error: '' }
+    try { return { rows: prepareUpload(upload.rows, upload, b.partners, uploadCaps), error: '' } }
+    catch (error) { return { rows: [], error: sapMessage(error) } }
+  }, [upload.rows, upload.date, upload.group, upload.trader, uploadCaps, b.partners])
+  const omittedUploadFields = uploadCaps ? unsupportedUploadFields(upload.rows, uploadCaps) : []
 
-  const readUploadFile = (file: File | undefined) => {
+  const openUpload = () => {
+    if (sapBusy.current) { showToast('Wait for the current SAP request to finish.', 'warn'); return }
+    ++uploadReadId.current
+    setUpload((u) => freshUpload(b, u.fileKey + 1))
+    modals.open('upload')
+    void checkUploadConnection()
+  }
+
+  const readUploadFile = async (file: File | undefined) => {
+    const readId = ++uploadReadId.current
     if (!file) return
-    if (isSpreadsheetFile(file.name || '')) {
-      setUpload((u) => ({ ...u, rows: [], notice: 'xls', previewed: true, results: null, processed: false }))
-      return
+    setUpload((u) => ({ ...u, rows: [], notice: null, previewed: true, reading: true, fileError: '', results: [], processed: false }))
+    try {
+      if (file.size > 10 * 1024 * 1024) throw new Error('The upload file must be 10 MB or smaller.')
+      const rows = await parseUploadFile(await file.arrayBuffer(), file.name)
+      if (readId !== uploadReadId.current) return
+      setUpload((u) => ({ ...u, rows, reading: false, fileError: rows.length ? '' : 'No data rows found. Fill the Upload sheet from row 2.' }))
+    } catch (error) {
+      if (readId !== uploadReadId.current) return
+      setUpload((u) => ({ ...u, reading: false, fileError: error instanceof Error ? error.message : 'Could not read the selected upload file.' }))
     }
-    const reader = new FileReader()
-    reader.onload = () => loadUploadRows(parseDelimitedUpload(String(reader.result ?? '')).map(canonicalUploadRow))
-    reader.onerror = () => showToast('Could not read the selected upload file.', 'error')
-    reader.readAsText(file)
+  }
+
+  const downloadTemplate = async () => {
+    try {
+      await downloadUploadTemplate()
+    } catch (error) {
+      showToast(`Could not download the upload template: ${sapMessage(error)}`, 'error')
+    }
   }
 
   const runUpload = () => {
-    const out = processUpload(latest.current, upload.rows, upload.level, upload.group, upload.trader)
-    if (!out) return
-    commit({ ...out.blotter, checked: [] })
-    setUpload((u) => ({ ...u, results: out.results, processed: true }))
-    showToast(`${upload.rows.length} upload row(s) processed as ${upload.level}.`, 'success')
+    if (!uploadCaps || upload.processing || upload.processed || !uploadPlan.rows.length || uploadPlan.error) return
+    const caps = uploadCaps
+    const prepared = uploadPlan.rows
+    const level = upload.level
+    const omissions = omittedUploadFields.length ? ` These fields cannot be saved: ${omittedUploadFields.join(', ')}.` : ''
+    askConfirm('Process FX Upload', `${UPLOAD_LEVEL_LABELS[level]} for ${prepared.length} row(s) in SAP? Review the calculated amounts first. Successful transactions will remain created if a later row fails.${omissions}`,
+      guarded(async () => {
+        setUpload((u) => ({ ...u, processing: true, processed: true, results: [], fileError: '' }))
+        try {
+          const results = await processSapUpload(prepared, level, caps, (result) => {
+            if (result.row.live) {
+              const { id: _id, seq: _seq, ...incoming } = result.row
+              commit(mergeLiveRows(latest.current, [incoming], latest.current.partners))
+            }
+            setUpload((u) => ({ ...u, results: [...u.results, result] }))
+          })
+          const done = results.filter((r) => r.state === 'success').length
+          const failure = results.find((r) => r.state === 'partial' || r.state === 'error')
+          showToast(failure ? `${done} of ${results.length} completed. Row ${failure.sr}: ${failure.message}` : `${done} upload row(s) completed in SAP.`, failure ? 'warn' : 'success')
+        } catch (error) {
+          setUpload((u) => ({ ...u, fileError: sapMessage(error) }))
+        } finally {
+          setUpload((u) => ({ ...u, processing: false }))
+        }
+      }))
   }
 
-  const viewUploadedRfha = (rfha: string) => {
-    const r = latest.current.rows.find((x) => x.transactionNumber === rfha)
-    if (r) viewRow(r.id)
+  const viewUploadRow = (row: BlotterRow) => {
+    setView({ subtitle: `${row.companyCode} / ${row.transactionNumber}`, pairs: viewRowPairs(row, b.partners), kind: 'row' })
+    modals.open('view', true)
   }
 
   // ------------------------------------------------------------------ drag to an action button
@@ -1301,11 +1350,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
               )}
             </div>
           </div>
-          <div className="sap-ref-note">
-            <strong>Standalone demo:</strong> the main FX Blotter, transaction display, FX Txn List and Upload flows are
-            represented from the supplied ABAP. Database/BAPI updates, email delivery and SAP transaction calls are
-            simulated in-browser only.
-          </div>
         </div>
       </main>
 
@@ -1389,9 +1433,15 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         onChange={(patch) => setUpload((u) => ({ ...u, ...patch }))}
         onGroup={(group) => setUpload((u) => ({ ...u, group, trader: uploadTrader(group, b.ctx.trader) }))}
         onFile={readUploadFile}
-        onSample={() => loadUploadRows(sampleUploadRows(b.ctx.date))}
+        onDownloadTemplate={downloadTemplate}
         onProcess={runUpload}
-        onViewRfha={viewUploadedRfha}
+        onViewRow={viewUploadRow}
+        caps={uploadCaps}
+        serviceError={uploadServiceError}
+        onRetryConnection={checkUploadConnection}
+        prepared={uploadPlan.rows}
+        planError={uploadPlan.error}
+        unsupportedFields={omittedUploadFields}
       />
       {status.element}
     </div>

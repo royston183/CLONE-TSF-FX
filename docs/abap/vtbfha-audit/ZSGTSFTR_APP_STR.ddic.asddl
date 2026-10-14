@@ -1,0 +1,52 @@
+@EndUserText.label : 'Append Structure'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zsgtsftr_app_str {
+
+  key client            : mandt not null;
+  key bukrs             : bukrs not null;
+  key rfha              : tb_rfha not null;
+  ztsf_deal_type        : zsgtsfdt_dtype;
+  ztsf_deal_id          : zsgtsfdt_tsf_deal_id;
+  ztsf_deal_desc        : zsgtsfdt_deal_desc;
+  ztsf_mc_ref_no        : char10;
+  ztsf_ex_opt_no        : zsgtsfdt_ex_opt_no;
+  ztsf_ex_spot_no       : zsgtsfdt_ex_spot_no;
+  ztsf_bcurr            : zsgtsfdt_buy_curr;
+  ztsf_bhbkid           : zsgtsfdt_bhbkid;
+  ztsf_bhktid           : zsgtsfdt_bhktid;
+  ztsf_scurr            : zsgtsfdt_sell_curr;
+  ztsf_shbkid           : zsgtsfdt_shbkid;
+  ztsf_shktid           : zsgtsfdt_shktid;
+  ztsf_exe_co           : zsgtsfdt_exe_co;
+  ztsf_acc_co           : zsgtsfdt_acc_co;
+  ztsf_bpayid           : zsgtsfdt_buy_payid;
+  ztsf_spayid           : zsgtsfdt_sell_payid;
+  ztsf_rbukrs           : zsgtsfdt_rbukrs;
+  ztsf_rpayid           : zsgtsfdt_rpayid;
+  ztsf_pbukrs           : zsgtsfdt_pbukrs;
+  ztsf_ppayid           : zsgtsfdt_rpayid;
+  ztsf_trftype          : zsgtsfdt_btrf_type;
+  ztsf_trftype2         : zsgtsfdt_strf_type;
+  ztsf_bnktype          : zsgtsfdt_trd_acc;
+  ztsf_bnktype2         : zsgtsfdt_trd_acc;
+  ztsf_deal_sq          : char2;
+  ztsf_pre_mature       : flag;
+  ztsf_unwind           : flag;
+  ndf_fo_rem            : char80;
+  ndf_mo_rem            : char80;
+  opt_fo_rem            : char80;
+  opt_mo_rem            : char80;
+  zolam_deal_no         : char15;
+  txn_status            : zsgtrmdt_txn;
+  ztrcode               : zsgtrmdt_trcode;
+  blotter_date          : dats;
+  local_created_by      : abp_creation_user;
+  local_created_at      : abp_creation_tstmpl;
+  local_last_changed_by : abp_locinst_lastchange_user;
+  local_last_changed_at : abp_locinst_lastchange_tstmpl;
+  last_changed_at       : abp_lastchange_tstmpl;
+
+}

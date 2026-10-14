@@ -1,9 +1,10 @@
 import type { Modal } from './modal.tsx'
 import { MasterContractConfirmation } from '../../shared/master-contract/Confirmation.tsx'
+import { ReviewDetails } from '../../shared/master-contract/ReviewDetails.tsx'
+import { fmtDate, fmtNum } from './format.ts'
 import type { MasterContract, McAction } from './types.ts'
 
-/** How many contracts the dialog lists by name before summarising the rest. */
-const LISTED = 8
+const reviewDate = (date: Date) => Number.isFinite(date.getTime()) ? fmtDate(date) : '—'
 
 /** The bulk (or single, from the child modal) Confirm / Reject confirmation dialog. */
 export function ActionDialog({
@@ -26,32 +27,44 @@ export function ActionDialog({
 }) {
   const isReject = action === 'reject'
   const many = mcs.length > 1
-  return <MasterContractConfirmation open={modal.isOpen} danger={isReject}
+  return <MasterContractConfirmation open={modal.isOpen} danger={isReject} review eyebrow="Master Contract Review"
     title={`${isReject ? 'Reject' : 'Confirm'} Master Contract${many ? 's' : ''}`}
-    subtitle={<div className="std-pop-message" id="action-subtitle">{mcs.length} contract{many ? 's' : ''} selected</div>}
-    iconId="action-icon" ids={{ overlay: 'action-overlay', title: 'action-title', body: 'action-body', confirm: 'action-confirm-btn' }}
-    confirmLabel={`Yes, ${isReject ? 'reject' : 'confirm'}`} onCancel={modal.close} onConfirm={onProceed}>
-          <div className="detail-grid">
-            {mcs.slice(0, LISTED).map((mc) => (
-              <div className="detail-cell" key={mc.mcNumber}>
-                <div className="detail-lbl">MC {mc.mcNumber}</div>
-                <div className="detail-val accent">{mc.mcDescription}</div>
-              </div>
-            ))}
-          </div>
-          {mcs.length > LISTED ? <div className="note">...and {mcs.length - LISTED} more.</div> : null}
-          <div className="note">
-            Are you sure you want to <strong>{isReject ? 'reject' : 'confirm'}</strong>{' '}
-            {many ? 'these Master Contracts' : 'this Master Contract'}?
-          </div>
+    subtitle={<div className="std-pop-message" id="action-subtitle">Review {many ? `all ${mcs.length} selected contracts` : 'the contract details'} before {isReject ? 'rejecting' : 'confirming'}.</div>}
+    iconId="action-icon" ids={{ overlay: 'action-overlay', title: 'action-title', body: 'action-body', confirm: 'action-confirm-btn', close: 'action-close-btn' }}
+    confirmLabel={`${isReject ? 'Reject' : 'Confirm'} ${many ? `${mcs.length} Contracts` : 'Contract'}`} onCancel={modal.close} onConfirm={onProceed}>
+          {mcs.map((mc, index) => (
+            <ReviewDetails key={mc.mcNumber} title={`MC ${mc.mcNumber} · ${mc.mcDescription}`} open={index === 0} rows={[
+              ['MC Number', mc.mcNumber],
+              ['Description', mc.mcDescription],
+              ['Current Status', mc.status],
+              ['MC Date', reviewDate(mc.mcDate)],
+              ['Origin Entity', mc.originEntity],
+              ['Contract Amount (USD)', `${fmtNum(mc.amtUSD)} USD`],
+              ['Contract Amount (Origin)', `${fmtNum(mc.amtOrigin)} ${mc.currOrigin}`],
+              ['Exchange Rate', mc.exRate.toFixed(7)],
+              ['Commodity', [mc.commodityCode, mc.commodityDesc].filter(Boolean).join(' · ')],
+              ['FX Model', [mc.fxModel, mc.modelDesc].filter(Boolean).join(' · ')],
+              ['Entity String', mc.entities.join(' → ')],
+              ['Currency String', mc.currChain.join(' / ')],
+              ['Shipment Window', `${reviewDate(mc.shipStart)} → ${reviewDate(mc.shipEnd)}`],
+              ['Payment Terms', mc.paymentTerms],
+              ['Payment Date', reviewDate(mc.paymentDate)],
+              ['Port of Shipment', mc.portOfShipment],
+              ['Port of Destination', mc.portOfDestination],
+              ['FO Remarks', mc.foRemarks],
+              ['MO Remarks', mc.moRemarks],
+            ]} />
+          ))}
           {isReject ? (
-            <div className="filter-field" style={{ width: '100%', marginTop: 12 }}>
+            <div className="confirmation-review-form">
+              <div>
               <label htmlFor="action-remark">
                 Rejection Remark <span style={{ color: 'var(--sp-error)' }}>*</span>
               </label>
               <textarea
                 id="action-remark"
                 rows={3}
+                maxLength={80}
                 aria-invalid={remarkError}
                 placeholder="Why is this Master Contract being rejected? This is recorded as the MO Remark."
                 value={remark}
@@ -76,6 +89,7 @@ export function ActionDialog({
                 style={{ display: remarkError ? 'block' : 'none', color: 'var(--sp-error)', fontSize: 11, fontWeight: 600, marginTop: 4 }}
               >
                 Please fill the MO Remarks and Update.
+              </div>
               </div>
             </div>
           ) : null}

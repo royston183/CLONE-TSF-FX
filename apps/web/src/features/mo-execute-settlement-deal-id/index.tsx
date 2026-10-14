@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
@@ -155,6 +156,8 @@ const BLANK_INV_FORM: InvPostForm = {
  * ACTION API without changing anything. No sample data at runtime (fixtures.ts is for tests).
  */
 export default function MoExecuteSettlementDealId() {
+  const [params] = useSearchParams()
+  const routeDealId = params.get('dealId') ?? ''
   const [deal, setDeal] = useState<Deal>(BLANK_DEAL)
   const [statuses, setStatuses] = useState<StatusMeta[]>([])
   const [legsWaiting, setLegsWaiting] = useState(() => legsWaitingReason(0))
@@ -254,7 +257,7 @@ export default function MoExecuteSettlementDealId() {
 
   // ------------------------------------------------------------------ selection screen
 
-  const executeSelection = async (raw: string): Promise<DealScreen | null> => {
+  const executeSelection = useCallback(async (raw: string): Promise<DealScreen | null> => {
     const id = normalizeDealId(raw)
     if (id === null) {
       setSelError(DEAL_ID_REQUIRED)
@@ -289,7 +292,16 @@ export default function MoExecuteSettlementDealId() {
       if (loadCtrl.current === ctrl) setLoading(false)
     }
     return null
-  }
+  }, [])
+
+  // P_DEAL from Trader Workbench's View Settlement Data skips manual selection.
+  useEffect(() => {
+    if (!routeDealId) return
+    setDealIdInput(routeDealId)
+    setMainShown(false)
+    void executeSelection(routeDealId)
+    return () => loadCtrl.current?.abort()
+  }, [routeDealId, executeSelection])
 
   const backToSelection = () => {
     setMainShown(false)
@@ -458,9 +470,7 @@ export default function MoExecuteSettlementDealId() {
           <button className="btn-outline" type="button" onClick={refreshScreen}>
             <span>&#8635;</span>Refresh
           </button>
-          <button className="btn-outline subtle" type="button" onClick={backToSelection}>
-            <span>&#10060;</span>Exit
-          </button>
+          <BackButton className="btn-outline subtle" label="Exit" onClick={routeDealId ? undefined : backToSelection} />
           <SignOutButton className="btn-outline subtle" />
         </div>
       </div>

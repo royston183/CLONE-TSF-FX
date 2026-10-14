@@ -33,6 +33,7 @@ import {
 } from './data.ts'
 import { FX_TXN_STATUS, fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
 import { addDays, fmtDate, fmtNum, parseAmount, parseGridDate, parseUiDate, RATE_DP, roundRate, toISO } from './format.ts'
+import { parseUploadDate, uploadNumber, UPLOAD_COLUMNS } from './upload-schema.ts'
 import type {
   AppDataPending,
   AutoLeg,
@@ -59,8 +60,6 @@ import type {
   TextField,
   Trader,
   TxnListCriteria,
-  UploadLevel,
-  UploadResult,
   UploadRow,
 } from './types.ts'
 
@@ -1353,7 +1352,7 @@ export function canonicalUploadRow(o: Record<string, string>): UploadRow {
   }
 }
 
-/** Only CSV / TSV / text is read; SAP's XLS upload would need a spreadsheet library. */
+/** Excel uploads use the spreadsheet reader in upload-file.ts. */
 export const isSpreadsheetFile = (name: string): boolean => /\.xls(x)?$/.test(name.toLowerCase())
 
 export function sampleUploadRows(ctxDate: Date): UploadRow[] {
@@ -1463,113 +1462,36 @@ export function validateUploadRows(rows: UploadRow[]): { errors: string[]; warni
   const warnings: string[] = []
   rows.forEach((r, i) => {
     const n = i + 1
-    const td = parseUiDate(r.tradeDate)
-    const vd = parseUiDate(r.valueDate)
-    const nd = parseUiDate(r.ndfDate)
+    const td = parseUploadDate(r.tradeDate)
+    const vd = parseUploadDate(r.valueDate)
+    const nd = parseUploadDate(r.ndfDate)
     if (!r.companyCode) errors.push(`Row ${n}: Company Code is required.`)
     if (!td) errors.push(`Row ${n}: Trade Date is invalid.`)
     if (!r.bp) errors.push(`Row ${n}: Business Partner is required.`)
+    if (!r.businessArea) errors.push(`Row ${n}: Business Area is required.`)
+    if (!r.txnType) errors.push(`Row ${n}: Transaction Type is required.`)
+    if (!/^(B|BUY|1|S|SELL|2)$/i.test(r.buySell)) errors.push(`Row ${n}: Buy/Sell must be B, Buy, 1, S, Sell or 2.`)
     if (!r.curr1 || !r.curr2) errors.push(`Row ${n}: both currencies are required.`)
     if (r.curr1 && r.curr2 && r.curr1.toUpperCase() === r.curr2.toUpperCase())
       errors.push(`Row ${n}: Curr 1 and Curr 2 cannot be the same.`)
-    if (!(parseAmount(r.amt1) > 0)) errors.push(`Row ${n}: Amount 1 must be greater than zero.`)
-    if (!(parseAmount(r.totalRate) > 0)) errors.push(`Row ${n}: All in Rate must be greater than zero.`)
+    if (!(uploadNumber(r.amt1) > 0)) errors.push(`Row ${n}: Amount 1 must be a valid number greater than zero.`)
+    if (!(uploadNumber(r.totalRate) > 0)) errors.push(`Row ${n}: All in Rate must be a valid number greater than zero.`)
+    if (r.valueDate && !vd) errors.push(`Row ${n}: Value Date is invalid.`)
+    if (r.ndfDate && !nd) errors.push(`Row ${n}: NDF Fixing Date is invalid.`)
+    if (r.blotterDate && !parseUploadDate(r.blotterDate)) errors.push(`Row ${n}: Blotter Date is invalid.`)
+    for (const field of ['swap', 'spot'] as const) {
+      if (r[field] && !Number.isFinite(uploadNumber(r[field]))) errors.push(`Row ${n}: ${field === 'swap' ? 'Swap' : 'Spot'} must be a valid number.`)
+    }
+    for (const column of UPLOAD_COLUMNS) {
+      if ((r[column.field]?.length ?? 0) > column.length) errors.push(`Row ${n}: ${column.header} exceeds ${column.length} characters.`)
+    }
     if (vd && nd && nd > vd) errors.push(`Row ${n}: NDF fixing date cannot be after Value Date.`)
-    if (mapUploadTxnType(r.txnType) === 'NDF' && !r.ndfRef) errors.push(`Row ${n}: NDF Fixing Ref is required.`)
+    if (/^(NDF|631)$/i.test(r.txnType) && !r.ndfRef) errors.push(`Row ${n}: NDF Fixing Ref is required.`)
     if (td && (isWeekend(td) || isHoliday(td))) warnings.push(`Row ${n}: Trade Date falls on a non-working day.`)
   })
   return { errors, warnings }
 }
 
-const LEVEL_MESSAGE: Record<UploadLevel, string> = {
-  ORDER: 'Order created',
-  CONTRACT: 'Order created and released to MO',
-  SETTLEMENT: 'Order/contract created; settlement simulated',
-}
-
-/**
- * Process Upload: every line becomes a row at the top — Created for Order, Released for
- * Contract and Settlement (whose settlement is only flagged). Returns null while any line
- * has a blocking error.
- */
-export function processUpload(
-  b: Blotter,
-  uploadRows: UploadRow[],
-  level: UploadLevel,
-  group: string,
-  trader: string,
-): { blotter: Blotter; results: UploadResult[] } | null {
-  if (validateUploadRows(uploadRows).errors.length) return null
-  const c = { ...b.counters }
-  let partners = b.partners
-  const made: BlotterRow[] = []
-  const results: UploadResult[] = []
-  uploadRows.forEach((u, i) => {
-    const ent = uploadEntity(u.companyCode)
-    const bp = uploadBpCode(partners, u.bp)
-    partners = bp.partners
-    const vd = parseUiDate(u.valueDate)
-    const rate = roundRate(parseAmount(u.totalRate) || 0)
-    let r = makeRow(c, b.ctx, {
-      status: level === 'ORDER' ? 'CREATED' : 'RELEASED',
-      entity: ent.code,
-      bp: bp.code,
-      txnType: mapUploadTxnType(u.txnType),
-      buySell: mapUploadBuySell(u.buySell),
-      curr1: String(u.curr1 || 'USD').toUpperCase(),
-      amt1: parseAmount(u.amt1) || 0,
-      tradeDate: parseUiDate(u.tradeDate) || b.ctx.date,
-      group,
-      trader,
-      assignment: u.assignment || '360T',
-      portfolio: 'TRADING',
-      mcRef: u.mcRef || '',
-      dealId: u.dealId || '',
-      dealType: u.dealType || '',
-    })
-    r = recalcRow({
-      ...r,
-      companyCode: u.companyCode || ent.cocode,
-      curr2: String(u.curr2 || r.curr2).toUpperCase(),
-      totalRate: rate || r.totalRate,
-      swapPoints: parseAmount(u.swap || '0') || 0,
-      valueDate: vd ?? r.valueDate,
-      ndfDate: parseUiDate(u.ndfDate),
-      ndfRef: u.ndfRef || '',
-      profitCenter: u.profitCenter || r.profitCenter,
-      businessArea: u.businessArea || r.businessArea,
-      externalReference: u.externalRef || '',
-      financeProject: u.financeProject || '',
-      foRemark: u.foRemark || '',
-      moRemark: u.moRemark || '',
-      dealDescription: u.dealDesc || '',
-      dealSequence: u.dealSeq || '',
-      notes: u.remark || '',
-      uploaded: true,
-      settled: level === 'SETTLEMENT',
-    })
-    if (u.spot) r = { ...r, spotRate: roundRate(parseAmount(u.spot) || 0) || r.spotRate }
-    made.push(r)
-    results.push({
-      sr: i + 1,
-      ok: true,
-      bp: u.bp,
-      curr1: r.curr1,
-      curr2: r.curr2,
-      amt1: r.amt1,
-      amt2: r.amt2,
-      valueDate: r.valueDate,
-      tradeDate: r.tradeDate,
-      rfha: r.transactionNumber,
-      msg: LEVEL_MESSAGE[level],
-    })
-  })
-  return {
-    // Unshifted one at a time, so the last line ends up on top.
-    blotter: { ...b, rows: [...made].reverse().concat(b.rows), counters: c, partners, checked: [] },
-    results,
-  }
-}
 
 // ---------------------------------------------------------------- display
 

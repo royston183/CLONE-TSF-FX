@@ -50,6 +50,7 @@ describe('toDeal', () => {
     strictEqual(d.transaction, '7000000000001')
     strictEqual(d.partnerCode, '400000002')
     strictEqual(d.txnTypeCode, '619')
+    strictEqual(d.productType, '12B')
     strictEqual(d.txnTypeDesc, '619 - FX Forwards: External-Forward')
     strictEqual(d.status, STATUS.UNMATCHED)
     strictEqual(d.live, true)

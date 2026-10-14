@@ -7,7 +7,6 @@ import type { ActionCtx, SpotVariant } from './types.ts'
 export type PopupSpec =
   | { kind: 'deal'; dealId: string; selectedRfha: string | null }
   | { kind: 'txn'; rfha: string; dealId: string }
-  | { kind: 'settlementData'; dealId: string }
   | { kind: 'rate'; ctx: ActionCtx }
   | { kind: 'spot'; ctx: ActionCtx; variant: SpotVariant; sfhaart: string; rate: number }
   | { kind: 'ssSpot'; ctx: ActionCtx; sfhaart: string; rate: number }

@@ -32,6 +32,8 @@ export function ContractDetailModal({
   onCopy,
   onEdit,
   onSendToMO,
+  onLinkedDeals,
+  canViewDeals,
 }: {
   modal: Modal
   contract: MasterContract | undefined
@@ -40,6 +42,8 @@ export function ContractDetailModal({
   onCopy: (c: MasterContract) => void
   onEdit: (c: MasterContract) => void
   onSendToMO: (c: MasterContract) => void
+  onLinkedDeals: (c: MasterContract) => void
+  canViewDeals: boolean
 }) {
   const meta = c ? (STATUS_META[c.status] ?? DEFAULT_STATUS_META) : DEFAULT_STATUS_META
   return (
@@ -69,7 +73,9 @@ export function ContractDetailModal({
                 <Item label="MC Date" value={c.mcDate} />
                 <Item label="MC Reference No" value={c.reference} />
                 <Item label="Child Contracts" value={String(childCount)} />
-                {c.linkedDealId ? <Item label="Linked Deal ID" value={c.linkedDealId} /> : null}
+                {c.linkedDealId ? <Item label="Linked Deal ID" value={
+                  <button type="button" className="btn btn-ghost" disabled={!canViewDeals} onClick={() => onLinkedDeals(c)}>{c.linkedDealId}</button>
+                } /> : null}
               </Section>
 
               <Section title="Financial Details">
@@ -110,6 +116,10 @@ export function ContractDetailModal({
           </button>
           <button className="btn btn-secondary" type="button" onClick={() => c && onChildren(c)}>
             Child Contracts
+          </button>
+          <button className="btn btn-secondary" type="button" disabled={!c || !canViewDeals} onClick={() => c && onLinkedDeals(c)}
+            title={canViewDeals ? undefined : 'Linked Deal IDs are unavailable while contracts are offline.'}>
+            Linked Deal IDs
           </button>
           <button className="btn btn-secondary" type="button" onClick={() => c && onCopy(c)}>
             Copy

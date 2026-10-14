@@ -1,6 +1,8 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
+import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { cancelDeal, loadDeal as loadDealFromSap, loadDealIndex, type DealIndexEntry, type LoadedDeal } from './api.ts'
@@ -31,9 +33,9 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  * legacy/confirm-fx-deal.html and wired to SAP (api.ts lists every source).
  *
  * Wired: loading a Deal ID with its Master Contract, trader, model rules, transactions and saved
- * invoice plan, and Cancel Deal ID (status 30). Not wired, because the registered services cannot
- * do it, so the control is disabled and its tooltip gives the reason (data.ts GAPS): Change / Confirm,
- * Edit Deal Pair, Reverse MO Confirmation, Premium Adjustment, DMS and the SS confirmation.
+ * invoice plan, confirmation, transaction replacement, reversal, cancellation and category 11
+ * documents through the shared DMS panel. Premium Adjustment and SS confirmation remain
+ * disabled with the service limitations explained in data.ts GAPS.
  * Nothing is mocked and nothing is written that SAP has not accepted.
  */
 /** The screen's view of a calculated confirmation. */
@@ -49,6 +51,8 @@ function previewOf(p: Prepared): ConfirmPreview {
 }
 
 export default function MoConfirmFxDealId() {
+  const [params] = useSearchParams()
+  const routeDealId = params.get('dealId') ?? ''
   const [index, setIndex] = useState<readonly DealIndexEntry[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
   const [loaded, setLoaded] = useState<LoadedDeal | null>(null)
@@ -123,10 +127,11 @@ export default function MoConfirmFxDealId() {
 
   /* ---------- Deal search ---------- */
 
-  const readDeal = async (id: string): Promise<boolean> => {
+  const readDeal = useCallback(async (id: string, signal?: AbortSignal): Promise<boolean> => {
     setLoading(true)
     try {
-      const result = await loadDealFromSap(id)
+      const result = await loadDealFromSap(id, signal)
+      if (signal?.aborted) return false
       if (!result) {
         setSearchErr('Deal ID not found.')
         return false
@@ -135,12 +140,25 @@ export default function MoConfirmFxDealId() {
       setLoaded(result)
       return true
     } catch (error) {
+      if (signal?.aborted || isAbort(error)) return false
       setSearchErr(`The Deal ID could not be read: ${messageOf(error)}`)
       return false
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
-  }
+  }, [])
+
+  // Linked Deal IDs from Master Contract Manager supply the selected Deal ID directly.
+  useEffect(() => {
+    if (!routeDealId) return
+    const ctl = new AbortController()
+    setSearchText(routeDealId)
+    setLoaded(null)
+    setSelected(null)
+    setModal(null)
+    void readDeal(routeDealId.trim(), ctl.signal)
+    return () => ctl.abort()
+  }, [routeDealId, readDeal])
 
   const loadDeal = async (text: string) => {
     const r = resolveDealId(text)
@@ -148,10 +166,14 @@ export default function MoConfirmFxDealId() {
       setSearchErr(r.error)
       return
     }
-    if (await readDeal(r.id)) setSelected(null)
+    if (await readDeal(r.id)) {
+      setSelected(null)
+      closeModals()
+    }
   }
 
   const clearDeal = () => {
+    closeModals()
     setLoaded(null)
     setSelected(null)
     setSearchText('')
@@ -392,7 +414,7 @@ export default function MoConfirmFxDealId() {
                   <button type="button" className="btn btn-secondary" disabled title={GAPS.premium}>
                     Premium Adjustment
                   </button>
-                  <button type="button" className="btn btn-secondary" disabled title={GAPS.dms}>
+                  <button type="button" className="btn btn-secondary" disabled={busy || loading} onClick={() => setModal('dms')}>
                     DMS
                   </button>
                   {(vis.rev || reverseResume === deal.dealId) && (
@@ -467,7 +489,7 @@ export default function MoConfirmFxDealId() {
 
       {/* ============ MODAL OVERLAY ============ */}
       <div
-        className={modal && deal ? 'modal-overlay' : 'modal-overlay hidden'}
+        className={modal && modal !== 'dms' && deal ? 'modal-overlay' : 'modal-overlay hidden'}
         onClick={(e) => {
           if (e.target === e.currentTarget && !busy) closeModals()
         }}
@@ -525,6 +547,8 @@ export default function MoConfirmFxDealId() {
           onClose={closeModals}
         />
       )}
+
+      {deal ? <DealDmsModal key={deal.dealId} open={modal === 'dms'} onClose={closeModals} dealId={deal.dealId} category="11" /> : null}
 
       <ResultQueue items={results} onDismiss={dismissResult} />
 
