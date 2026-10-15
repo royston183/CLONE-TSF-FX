@@ -48,6 +48,8 @@ export type Deal = {
   fixRefId: string
   foRemark: string
   moRemark: string
+  externalRef?: string
+  internalRef?: string
   /** True for a deal read from SAP (FxTransaction); the Options rows are dummy data. */
   live?: boolean
   /** APP_STR ZTSF_DEAL_TYPE; '00' marks a cancellation deal, which Match & Release writes as 59. */

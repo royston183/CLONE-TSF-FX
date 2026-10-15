@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CalendarPopup } from './DatePicker.tsx'
@@ -38,7 +38,7 @@ import './bo-reverse-fx-mtm-other-origins.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './bo-reverse-fx-mtm-other-origins.dark.css'
 import './bo-reverse-fx-mtm-other-origins.overrides.css'
-import type { CalendarView, Counters, DocField, Filters, LogEntry, RowField, Sort } from './types.ts'
+import type { Counters, DocField, Filters, LogEntry, RowField, Sort } from './types.ts'
 
 const TOAST_MS = 2600
 
@@ -85,11 +85,9 @@ export default function BoReverseFxMtmOtherOrigins() {
   const [modal, setModal] = useState<ModalState>(null)
   const [toast, setToast] = useState<Toast>(null)
   const [calOpen, setCalOpen] = useState(false)
-  const [calView, setCalView] = useState<CalendarView>({ y: 2026, m: 8 })
-  const [calPos, setCalPos] = useState({ left: 0, top: 0 })
+  const closeCalendar = useCallback(() => setCalOpen(false), [])
 
   const fieldRef = useRef<HTMLDivElement>(null)
-  const popRef = useRef<HTMLDivElement>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const showToast = (text: string, type: 'success' | 'info') => {
@@ -119,24 +117,13 @@ export default function BoReverseFxMtmOtherOrigins() {
     setModal(null)
     setCalOpen(false)
   }
-  const calOpenRef = useRef(false)
-  calOpenRef.current = calOpen
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') dismissRef.current()
     }
-    const onClick = (e: MouseEvent) => {
-      if (!calOpenRef.current) return
-      const t = e.target as Node | null
-      if (t && (popRef.current?.contains(t) || fieldRef.current?.contains(t))) return
-      setCalOpen(false)
-    }
     document.addEventListener('keydown', onKey)
-    document.addEventListener('click', onClick)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('click', onClick)
       clearTimeout(toastTimer.current)
     }
   }, [])
@@ -181,17 +168,7 @@ export default function BoReverseFxMtmOtherOrigins() {
     return true
   }
 
-  const toggleCalendar = () => {
-    if (calOpen) {
-      setCalOpen(false)
-      return
-    }
-    const d = parseDisplayDate(keyText) ?? new Date()
-    setCalView({ y: d.getFullYear(), m: d.getMonth() })
-    const rect = fieldRef.current?.getBoundingClientRect()
-    if (rect) setCalPos({ left: Math.max(8, Math.min(window.innerWidth - 286, rect.left)), top: rect.bottom + 4 })
-    setCalOpen(true)
-  }
+  const toggleCalendar = () => setCalOpen((o) => !o)
 
   const onSort = (field: RowField) => {
     setSort((s) => nextSort(s, field))
@@ -321,14 +298,14 @@ export default function BoReverseFxMtmOtherOrigins() {
                   ))}
                 </select>
               </div>
-              <div className="field" ref={fieldRef}>
+              <div className="field">
                 <label htmlFor="keyDateInput">
                   Key Date<span className="required">*</span>{' '}
                   <span title="Key Date is the Month End Date" style={{ cursor: 'help', color: '#0874D1' }}>
                     &#9432;
                   </span>
                 </label>
-                <div className="date-wrap">
+                <div className="date-wrap" ref={fieldRef}>
                   <input
                     id="keyDateInput"
                     className="control"
@@ -465,14 +442,10 @@ export default function BoReverseFxMtmOtherOrigins() {
       </div>
 
       <CalendarPopup
-        popRef={popRef}
+        anchorRef={fieldRef}
         open={calOpen}
-        left={calPos.left}
-        top={calPos.top}
-        view={calView}
         selected={parseDisplayDate(keyText)}
-        today={new Date()}
-        onView={setCalView}
+        onClose={closeCalendar}
         onPick={(d) => {
           const text = toDisplay(d)
           setKeyText(text)

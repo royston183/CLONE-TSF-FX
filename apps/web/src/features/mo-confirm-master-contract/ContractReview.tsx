@@ -1,42 +1,43 @@
+import { ReviewDetails } from '../../shared/master-contract/ReviewDetails.tsx'
+import { MC_TOLERANCE, PAYMENT_TERMS, entityOf } from './data.ts'
 import { fmtDate, fmtNum } from './format.ts'
 import type { MasterContract } from './types.ts'
 
 const date = (value: Date) => Number.isFinite(value.getTime()) ? fmtDate(value) : '—'
+const both = (code: string, text: string) => [code, text].filter(Boolean).join(' - ')
 
-/** Read-only form groups keep the review in the same order as contract creation. */
+/** Tolerance % keeps six decimals, as Create Master Contract shows it. */
+const tolerance = (value: number | null) => value === null ? '' : value.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+
+/**
+ * One contract as the same expandable record FX Deal Confirmation's Confirm Deal popup uses (ReviewDetails): a label / value
+ * row per field, in the order and wording of Create Master Contract, with the FO / MO remarks last. Several contracts each get
+ * their own record, and only the first starts open.
+ */
 export function ContractReview({ contract: mc, open }: { contract: MasterContract; open: boolean }) {
-  const groups: Array<{ title: string; fields: Array<[string, string | number, number?]> }> = [
-    { title: 'Basic Selection', fields: [
-      ['Origin Entity', mc.originEntity], ['MC Number', mc.mcNumber], ['Current Status', mc.status],
-    ] },
-    { title: 'Basic Details', fields: [
-      ['MC Date', date(mc.mcDate)], ['MC Amount (USD)', `${fmtNum(mc.amtUSD)} USD`], ['Exchange Rate', mc.exRate.toFixed(4)],
-      ['MC Reference No', mc.mcDescription, 2], ['MC Amount (Origin)', `${fmtNum(mc.amtOrigin)} ${mc.currOrigin}`],
-    ] },
-    { title: 'Commodity Details', fields: [
-      ['Commodity', mc.commodityCode], ['Commodity Description', mc.commodityDesc, 2],
-    ] },
-    { title: 'Shipment Details', fields: [
-      ['Shipment Start', date(mc.shipStart)], ['Shipment End', date(mc.shipEnd)], ['Payment Terms', mc.paymentTerms],
-      ['Payment Date', date(mc.paymentDate)], ['Port of Shipment', mc.portOfShipment], ['Port of Destination', mc.portOfDestination],
-    ] },
-    { title: 'FX Model Details', fields: [
-      ['FX Model', [mc.fxModel, mc.modelDesc].filter(Boolean).join(' · ')],
-      ['Entity String', mc.entities.join(' → ')], ['Currency String', mc.currChain.join(' / ')],
-    ] },
-    { title: 'Remarks', fields: [['FO Remarks', mc.foRemarks], ['MO Remarks', mc.moRemarks, 2]] },
-  ]
-  return <details className="mc-contract-review" open={open}>
-    <summary>MC {mc.mcNumber} · {mc.mcDescription}</summary>
-    <div className="mc-review-groups">
-      {groups.map(group => <section className="mc-review-group" key={group.title} aria-label={group.title}>
-        <h3>{group.title}</h3>
-        <dl className="mc-review-fields">
-          {group.fields.map(([label, value, span = 1]) => <div key={label} className={`mc-review-field mc-review-span-${span}`}>
-            <dt>{label}</dt><dd>{value || '—'}</dd>
-          </div>)}
-        </dl>
-      </section>)}
-    </div>
-  </details>
+  const term = PAYMENT_TERMS.find((p) => p.code === mc.paymentTerms)
+  return <ReviewDetails title={`MC ${mc.mcNumber} · ${mc.mcDescription}`} open={open} rows={[
+    ['MC Number', mc.mcNumber],
+    ['Current Status', mc.status],
+    ['Origin Entity', both(mc.originEntity, entityOf(mc.originEntity)?.name ?? '')],
+    ['MC Date', date(mc.mcDate)],
+    ['MC Reference No', mc.mcDescription],
+    ['MC Amount (USD)', `${fmtNum(mc.amtUSD)} USD`],
+    ['Exchange Rate', mc.exRate.toFixed(4)],
+    ['MC Amount (Origin)', `${fmtNum(mc.amtOrigin)} ${mc.currOrigin}`],
+    ['Tolerance %', tolerance(MC_TOLERANCE.value)],
+    ['Commodity', both(mc.commodityCode, mc.commodityDesc)],
+    ['Comm. Description Long', mc.commodityDesc],
+    ['Shipment Start', date(mc.shipStart)],
+    ['Shipment End', date(mc.shipEnd)],
+    ['Payment Terms', both(mc.paymentTerms, term?.desc ?? '')],
+    ['Payment Date', date(mc.paymentDate)],
+    ['Port of Shipment', mc.portOfShipment],
+    ['Port of Destination', mc.portOfDestination],
+    ['FX Model', both(mc.fxModel, mc.modelDesc)],
+    ['Entity String', mc.entities.join(' → ')],
+    ['Currency String', mc.currChain.join(' / ')],
+    ['FO Remarks', mc.foRemarks],
+    ['MO Remarks', mc.moRemarks],
+  ]} />
 }

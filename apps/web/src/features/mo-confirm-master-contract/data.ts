@@ -74,6 +74,12 @@ export const PAYMENT_TERMS: PaymentTerm[] = [
   { code: 'P07', desc: '60 days from B/L date' },
 ]
 
+/**
+ * The Master Contract tolerance %: no MAS_CON column holds it, the program reads tolerance ID T01 of ZSGTSFTR_TOLR each time
+ * (as Create Master Contract does). null until it has been read, or when it could not be.
+ */
+export const MC_TOLERANCE: { value: number | null } = { value: null }
+
 export const PORT_PAIRS: PortPair[] = [
   { ship: 'Any Port(s) in Vietnam or any other port(s)', dest: 'Any Port(s) in Europe or any other port(s)' },
   { ship: 'Any Port(s) in Africa, Europe or any other port(s)', dest: 'Any Port(s) in Belgium, Netherlands or any other port(s)' },

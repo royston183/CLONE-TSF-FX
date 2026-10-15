@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { getDb } from '../sqlite/db.ts'
 import { dealMetadataRepository } from '../sqlite/repositories/deal-metadata.ts'
 import { DdicInputError, ddicRepository } from '../sqlite/repositories/ddic-table.ts'
+import { DAYLOCK_BLOTTER, DAYLOCK_CLIENT, DAYLOCK_COLUMNS, DAYLOCK_CO_AREA } from '../sqlite/repositories/daylock-columns.ts'
 import { DMS_TYP_CLIENT, DMS_TYP_COLUMNS } from '../sqlite/repositories/dms-typ-columns.ts'
 import { DEALDMS_CLIENT, DEALDMS_COLUMNS, DEALDMS_DATES, DEALDMS_TIMES } from '../sqlite/repositories/dealdms-columns.ts'
 import { FX_POST_DOC_CLIENT, FX_POST_DOC_COLUMNS } from '../sqlite/repositories/fx-post-doc-columns.ts'
@@ -426,6 +427,72 @@ export async function localdbRoutes(app: FastifyInstance): Promise<void> {
   app.delete(
     '/api/localdb/tsf-dms-type/:dmsCat/:dmsType',
     guarded((req, reply) => (dmsTyp().remove(dmsTypKey(req)) ? reply.code(204).send() : dmsTypNotFound(reply))),
+  )
+
+  // ZSGTSFTR_DAYLOCK — TRM Day Wise Locking: one row per blotter date + group + trader code once that day's FX Deal Blotter
+  // (ZB_TYPE DE6) is locked. The date is YYYYMMDD in the path; ZB_TYPE, ZCO_AREA (OL10), ZYEAR and ZMONTH are the program's own
+  // constants / derived from the date, so a caller names only the day, the group and the trader.
+  const dayLock = () => ddicRepository(getDb(), { table: 'zsgtsftr_daylock', client: DAYLOCK_CLIENT, columns: DAYLOCK_COLUMNS })
+  const dayLockKey = (req: FastifyRequest) => {
+    const p = req.params as { date: string; group: string; trader: string }
+    const date = String(p.date ?? '')
+    const y = Number(date.slice(0, 4))
+    const m = Number(date.slice(4, 6))
+    const d = Number(date.slice(6, 8))
+    const real = /^[0-9]{8}$/.test(date) && new Date(y, m - 1, d).getMonth() === m - 1 && new Date(y, m - 1, d).getDate() === d
+    if (!real) throw new BadRequest('date must be a real date as YYYYMMDD.')
+    const group = String(p.group ?? '').trim()
+    const trader = String(p.trader ?? '').trim()
+    if (!group || group.length > 3) throw new BadRequest('group is required, at most 3 characters.')
+    if (!trader || trader.length > 10) throw new BadRequest('trader is required, at most 10 characters.')
+    return {
+      ZB_TYPE: DAYLOCK_BLOTTER,
+      ZCO_AREA: DAYLOCK_CO_AREA,
+      ZGRP: group,
+      ZMONTH: date.slice(4, 6),
+      ZPDATE: date,
+      ZTYPE: trader,
+      ZYEAR: date.slice(0, 4),
+    }
+  }
+  const dayLockNotFound = (reply: FastifyReply) => fail(reply, 404, 'This blotter day is not locked.')
+
+  app.get(
+    '/api/localdb/tsf-day-lock',
+    guarded((req) => {
+      const trader = (req.query as { ZTYPE?: unknown }).ZTYPE
+      if (trader !== undefined && typeof trader !== 'string') throw new BadRequest('ZTYPE must be a single value.')
+      return { value: dayLock().list(trader ? { column: 'ZTYPE', value: trader } : undefined) }
+    }),
+  )
+
+  app.get(
+    '/api/localdb/tsf-day-lock/:date/:group/:trader',
+    guarded((req, reply) => dayLock().get(dayLockKey(req)) ?? dayLockNotFound(reply)),
+  )
+
+  // Locking is the only write: ZLOCKED = 'X', as the program's MODIFY does. Locking an already locked day is a no-op update.
+  app.put(
+    '/api/localdb/tsf-day-lock/:date/:group/:trader',
+    guarded((req, reply) => {
+      const user = requireSession(req, reply)?.username ?? ''
+      const key = dayLockKey(req)
+      const { date, time } = sapStamp()
+      const existing = dayLock().get(key)
+      const stamps = {
+        ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
+        ZCHANGED_BY: user.slice(0, 12),
+        ZCHANGED_DATE: date,
+        ZCHANGED_TIME: time,
+      }
+      const row = dayLock().upsert(key, { ZLOCKED: 'X', ...stamps })
+      return reply.code(existing ? 200 : 201).send(row)
+    }),
+  )
+
+  app.delete(
+    '/api/localdb/tsf-day-lock/:date/:group/:trader',
+    guarded((req, reply) => (dayLock().remove(dayLockKey(req)) ? reply.code(204).send() : dayLockNotFound(reply))),
   )
 
   // Anything else under /api/localdb is a 404 in this group's own words, rather than falling

@@ -41,7 +41,18 @@ export function useModalStack(): ModalStack {
  * The original's .modal-overlay. Like the legacy markup it is always mounted and only toggles
  * .open: the stylesheet fades it in and out, and the content keeps its last record meanwhile.
  */
-export function Overlay({ id, modals, children }: { id: ModalId; modals: ModalStack; children: ReactNode }) {
+export function Overlay({
+  id,
+  modals,
+  closeOnBackdrop = true,
+  children,
+}: {
+  id: ModalId
+  modals: ModalStack
+  /** False for a popup holding a form, so a stray click outside it cannot throw away what was typed. */
+  closeOnBackdrop?: boolean
+  children: ReactNode
+}) {
   const open = modals.isOpen(id)
   const z = modals.zIndex(id)
   return (
@@ -50,7 +61,7 @@ export function Overlay({ id, modals, children }: { id: ModalId; modals: ModalSt
       className={open ? 'modal-overlay open' : 'modal-overlay'}
       style={z === undefined ? undefined : { zIndex: z }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) modals.close(id)
+        if (closeOnBackdrop && e.target === e.currentTarget) modals.close(id)
       }}
     >
       {children}

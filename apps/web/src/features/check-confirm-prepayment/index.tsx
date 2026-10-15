@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConfirmDetails } from '../../shared/ui/ConfirmDetails.tsx'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -31,6 +31,8 @@ export default function CheckConfirmPrepaymentApp() {
   const [statusFilter, setStatusFilter] = useState(FIRST_STATUS)
   const [transactionListOpen, setTransactionListOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const closeCalendar = useCallback(() => setCalendarOpen(false), [])
+  const dateShellRef = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [sort, setSort] = useState<SortState | null>(null)
@@ -217,7 +219,7 @@ export default function CheckConfirmPrepaymentApp() {
                     <label htmlFor="keyDate">
                       Key Date <span className="required">*</span>
                     </label>
-                    <div className="date-shell">
+                    <div className="date-shell" ref={dateShellRef}>
                       <input
                         id="keyDate"
                         className="input date-input"
@@ -240,7 +242,9 @@ export default function CheckConfirmPrepaymentApp() {
                       />
                       <Calendar
                         open={calendarOpen}
+                        anchorRef={dateShellRef}
                         value={keyDate}
+                        onClose={closeCalendar}
                         onPick={(value) => {
                           setKeyDate(value)
                           setCalendarOpen(false)

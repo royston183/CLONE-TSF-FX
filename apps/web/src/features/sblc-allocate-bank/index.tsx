@@ -32,6 +32,7 @@ import './sblc-allocate-bank.legacy.css'
 // colours that change, at a higher specificity, so it must be imported after it.
 import './sblc-allocate-bank.dark.css'
 import type { DmsDoc, FacilityTransaction, SblcRecord, Toast, ToastKind } from './types.ts'
+import { CalendarPicker } from '../../shared/ui/CalendarPicker.tsx'
 
 const VERSION = 'v8'
 const PAGE_SIZE = 12
@@ -78,9 +79,8 @@ function LegacyDateInput({
       />
       <div className="calendar-btn-wrap">
         <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true" />
-        <input
+        <CalendarPicker
           className="calendar-native"
-          type="date"
           aria-label="Open calendar"
           value=""
           onChange={(e) => {
@@ -1153,9 +1153,8 @@ function LegacyDmsDate({ value, onChange }: { value: string; onChange: (value: s
       />
       <div className="calendar-btn-wrap">
         <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true" />
-        <input
+        <CalendarPicker
           className="calendar-native dms-date-native"
-          type="date"
           aria-label="Open calendar"
           value=""
           onChange={(e) => {

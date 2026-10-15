@@ -245,15 +245,10 @@ export default function FoFxErrorCorrection() {
   }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => keyRef.current(e)
-    // A click anywhere outside a date picker closes whichever calendar is open.
-    const onClick = (e: MouseEvent) => {
-      if (!(e.target instanceof Element && e.target.closest('.dp'))) setOpenPicker(null)
-    }
+    // Clicks outside an open calendar are closed by the shared DatePopup itself (its onClose).
     document.addEventListener('keydown', onKey)
-    document.addEventListener('click', onClick)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('click', onClick)
     }
   }, [])
 

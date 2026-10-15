@@ -68,7 +68,7 @@ export function AutoDealModal({
 
   return (
     <>
-    <Overlay id="auto" modals={modals}>
+    <Overlay id="auto" modals={modals} closeOnBackdrop={false}>
       <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
         <ModalHeader
           title="Auto Deal Creation"
@@ -226,10 +226,10 @@ function LegBlock({
     ['Amount 1', input('amt1', fmtNum(l.amt1, 2), 'num')],
     ['B/S 2', lockedSelect(bsOptions(), l.bs2), true],
     ['Curr 2', lockedSelect(currOptions(), l.curr2), true],
-    ['Amount 2', lockedValue(fmtNum(l.amt2, 2)), true],
-    ['All in Rate', input('rate', fmtNum(l.rate, RATE_DP), 'num')],
-    ['Swap Rate', input('swap', fmtNum(l.swap, 6), 'num')],
-    ['Spot Rate', input('spot', fmtNum(l.spot, RATE_DP), 'num')],
+    ['Amount 2', lockedValue(l.amt2 ? fmtNum(l.amt2, 2) : ''), true],
+    ['All in Rate', input('rate', l.rate ? fmtNum(l.rate, RATE_DP) : '', 'num')],
+    ['Swap Rate', input('swap', l.swap ? fmtNum(l.swap, 6) : '', 'num')],
+    ['Spot Rate', input('spot', l.spot ? fmtNum(l.spot, RATE_DP) : '', 'num')],
     ['Mode of Trade', select('mode', assignmentOptions(), l.mode)],
   ]
   if (txnTypeOf(l.txnType)?.ndf) {

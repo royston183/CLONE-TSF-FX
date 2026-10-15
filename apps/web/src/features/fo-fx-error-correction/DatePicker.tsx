@@ -1,7 +1,6 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
-import { MONTH_ABBR, fmtDate, safeParseDate } from './format.ts'
-
-const DOW_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+import { useRef, type CSSProperties, type ReactNode } from 'react'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
+import { fmtDate, safeParseDate } from './format.ts'
 
 /** The filter bar's calendar glyph; the correction popup's pickers use the 📅 emoji instead. */
 export const CALENDAR_ICON = (
@@ -36,87 +35,30 @@ export function DatePicker({
   /** A read-only transaction: the input is disabled and the calendar will not open. */
   disabled?: boolean
 }) {
-  const [view, setView] = useState(() => new Date())
+  const wrapRef = useRef<HTMLDivElement>(null)
 
   const toggle = () => {
     if (disabled) return
-    if (!open) {
-      const current = safeParseDate(value) ?? new Date()
-      setView(new Date(current.getFullYear(), current.getMonth(), 1))
-    }
     onOpenChange(!open)
   }
 
-  const y = view.getFullYear()
-  const m = view.getMonth()
-  const firstDow = new Date(y, m, 1).getDay()
-  const totalDays = new Date(y, m + 1, 0).getDate()
-  const prevMonthDays = new Date(y, m, 0).getDate()
-  const trailing = (7 - ((firstDow + totalDays) % 7)) % 7
-  const selected = safeParseDate(value)
-  const today = new Date()
-  const sameDay = (d: Date | null, day: number) => !!d && d.getFullYear() === y && d.getMonth() === m && d.getDate() === day
-
   return (
-    <div className="dp">
+    <div className="dp" ref={wrapRef}>
       <input id={id} type="text" value={value} disabled={disabled} placeholder="DD-MM-YYYY" aria-label={id === 'new-blotterdate' ? 'Blotter Date' : id === 'new-tradedate' ? 'Trade Date' : id === 'new-valuedate' ? 'Value Date' : undefined} aria-invalid={!!value && !safeParseDate(value)} onChange={e => onPick(e.target.value)} style={inputStyle} />
       <button type="button" className="dp-btn" disabled={disabled} onClick={toggle} aria-label="Open calendar">
         {icon}
       </button>
-      <div className={`dp-popup${open ? ' open' : ''}`} id={`${id}-cal`}>
-        {open ? (
-          <>
-            <div className="dp-head">
-              <button type="button" onClick={() => setView(new Date(y, m - 1, 1))}>
-                ‹
-              </button>
-              <select aria-label="Calendar month" data-no-search value={m} onChange={e => setView(new Date(y, Number(e.target.value), 1))}>
-                {MONTH_ABBR.map((month, index) => <option key={month} value={index}>{month}</option>)}
-              </select>
-              <select aria-label="Calendar year" data-no-search value={y} onChange={e => setView(new Date(Number(e.target.value), m, 1))}>
-                {Array.from({ length: Math.max(new Date().getFullYear() + 100, y) - Math.min(1900, y) + 1 }, (_, index) => Math.min(1900, y) + index).map(year => <option key={year} value={year}>{year}</option>)}
-              </select>
-              <button type="button" onClick={() => setView(new Date(y, m + 1, 1))}>
-                ›
-              </button>
-            </div>
-            <div className="dp-grid">
-              {DOW_LABELS.map((dw) => (
-                <div key={dw} className="dp-dow">
-                  {dw}
-                </div>
-              ))}
-              {Array.from({ length: firstDow }, (_, i) => (
-                <div key={`p${i}`} className="dp-day muted">
-                  {prevMonthDays - firstDow + 1 + i}
-                </div>
-              ))}
-              {Array.from({ length: totalDays }, (_, i) => {
-                const d = i + 1
-                const cls = sameDay(selected, d) ? 'dp-day selected' : sameDay(today, d) ? 'dp-day today' : 'dp-day'
-                return (
-                  <button type="button"
-                    key={d}
-                    className={cls}
-                    aria-label={fmtDate(new Date(y, m, d))}
-                    onClick={() => {
-                      onPick(fmtDate(new Date(y, m, d)))
-                      onOpenChange(false)
-                    }}
-                  >
-                    {d}
-                  </button>
-                )
-              })}
-              {Array.from({ length: trailing }, (_, i) => (
-                <div key={`n${i}`} className="dp-day muted">
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </div>
+      <DatePopup
+        open={open && !disabled}
+        anchorRef={wrapRef}
+        value={safeParseDate(value)}
+        title={id === 'new-blotterdate' ? 'Blotter Date' : id === 'new-tradedate' ? 'Trade Date' : id === 'new-valuedate' ? 'Value Date' : 'Date'}
+        onSelect={(date) => {
+          onPick(fmtDate(date))
+          onOpenChange(false)
+        }}
+        onClose={() => onOpenChange(false)}
+      />
     </div>
   )
 }

@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useRef } from 'react'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
 import { formatDMY, parseDMY } from './format.ts'
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-
 /**
- * The Key Date box with the original's pop-up month calendar. It opens on focus or from the
- * calendar button and closes on an outside click; the parent owns `open` so Escape can close it.
+ * The Key Date box with the shared pop-up calendar. It opens on focus or from the calendar
+ * button and closes on an outside click or Escape; the parent owns `open`.
  */
 export function KeyDateField({
   value,
@@ -30,52 +28,24 @@ export function KeyDateField({
   /** A day was chosen from the calendar; the text is DD-MM-YYYY. */
   onPick: (dmy: string) => void
 }) {
-  const [view, setView] = useState(() => new Date())
-  const [selected, setSelected] = useState<Date | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const iconRef = useRef<HTMLButtonElement>(null)
-  const popRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  // Escape closes the popup and refocuses the input, which would otherwise reopen it.
+  const skipFocus = useRef(false)
 
-  useEffect(() => {
-    if (!open) return
-    const onDocClick = (e: globalThis.MouseEvent) => {
-      const t = e.target as Node
-      if (!popRef.current?.contains(t) && t !== inputRef.current && t !== iconRef.current) onOpenChange(false)
-    }
-    document.addEventListener('click', onDocClick)
-    return () => document.removeEventListener('click', onDocClick)
-  }, [open, onOpenChange])
-
-  const openPicker = () => {
-    const cur = parseDMY(value)
-    if (cur) {
-      setView(new Date(cur.getFullYear(), cur.getMonth(), 1))
-      setSelected(cur)
-    }
-    onOpenChange(true)
-  }
-
-  const nav = (e: MouseEvent, delta: number) => {
-    e.stopPropagation()
-    setView((v) => new Date(v.getFullYear(), v.getMonth() + delta, 1))
-  }
-
-  const year = view.getFullYear()
-  const month = view.getMonth()
-  const startOffset = new Date(year, month, 1).getDay()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const daysInPrevMonth = new Date(year, month, 0).getDate()
-  const trailing = (7 - ((startOffset + daysInMonth) % 7)) % 7
-  const todayStr = formatDMY(new Date())
-  const selectedStr = selected ? formatDMY(selected) : null
+  const close = useCallback(() => {
+    skipFocus.current = true
+    setTimeout(() => {
+      skipFocus.current = false
+    }, 0)
+    onOpenChange(false)
+  }, [onOpenChange])
 
   return (
-    <div className="field date-field">
+    <div ref={wrapRef} className="field date-field">
       <label htmlFor="keyDateInput">
         Key Date<span className="req">*</span>
       </label>
       <input
-        ref={inputRef}
         className={`control${invalid ? ' invalid' : ''}`}
         id="keyDateInput"
         type="text"
@@ -84,81 +54,33 @@ export function KeyDateField({
         autoComplete="off"
         value={value}
         onChange={(e) => onType(e.target.value)}
-        onFocus={openPicker}
-        onBlur={onBlur}
+        onFocus={() => {
+          if (!skipFocus.current) onOpenChange(true)
+        }}
+        onBlur={(e) => {
+          // Moving into the calendar popup is not leaving the field; picking a day commits it.
+          const to = e.relatedTarget
+          if (to instanceof Element && to.closest('.sdp')) return
+          onBlur()
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') onEnter()
         }}
       />
-      <button
-        ref={iconRef}
-        className="date-icon-btn"
-        type="button"
-        aria-label="Open calendar"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (open) onOpenChange(false)
-          else openPicker()
-        }}
-      >
+      <button className="date-icon-btn" type="button" aria-label="Open calendar" onClick={() => onOpenChange(!open)}>
         📅
       </button>
-      <div ref={popRef} className={`calendar-pop${open ? ' open' : ''}`}>
-        {open ? (
-          <>
-            <div className="cal-head">
-              <button type="button" className="cal-nav" onClick={(e) => nav(e, -1)}>
-                ‹
-              </button>
-              <span className="cal-title">
-                {MONTHS[month]} {year}
-              </span>
-              <button type="button" className="cal-nav" onClick={(e) => nav(e, 1)}>
-                ›
-              </button>
-            </div>
-            <div className="cal-grid">
-              {DOW.map((d) => (
-                <div key={d} className="cal-dow">
-                  {d}
-                </div>
-              ))}
-              {Array.from({ length: startOffset }, (_, i) => (
-                <div key={`p${i}`} className="cal-day muted">
-                  {daysInPrevMonth - startOffset + 1 + i}
-                </div>
-              ))}
-              {Array.from({ length: daysInMonth }, (_, i) => {
-                const day = i + 1
-                const dmy = formatDMY(new Date(year, month, day))
-                let cls = 'cal-day'
-                if (dmy === todayStr) cls += ' today'
-                if (dmy === selectedStr) cls += ' selected'
-                return (
-                  <div
-                    key={day}
-                    className={cls}
-                    data-date={dmy}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelected(parseDMY(dmy))
-                      onOpenChange(false)
-                      onPick(dmy)
-                    }}
-                  >
-                    {day}
-                  </div>
-                )
-              })}
-              {Array.from({ length: trailing }, (_, i) => (
-                <div key={`n${i}`} className="cal-day muted">
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </div>
+      <DatePopup
+        open={open}
+        anchorRef={wrapRef}
+        value={parseDMY(value)}
+        title="Key Date"
+        onSelect={(d) => {
+          onOpenChange(false)
+          onPick(formatDMY(d))
+        }}
+        onClose={close}
+      />
       <span className={`field-error${invalid ? ' show' : ''}`} id="keyDateError">
         {error}
       </span>

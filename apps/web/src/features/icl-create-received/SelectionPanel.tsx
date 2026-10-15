@@ -71,6 +71,7 @@ export function SelectionPanel({
                 value={uptoRequestDate}
                 onSelect={(formatted) => onCalendarSelect('uptoRequestDate', formatted)}
                 onClear={() => onCalendarClear('uptoRequestDate')}
+                onClose={() => onToggleCalendar('uptoRequestDate')}
               />
             )}
           </div>
@@ -157,6 +158,7 @@ export function SelectionPanel({
                     value={filters.plannedDate}
                     onSelect={(formatted) => onCalendarSelect('plannedDateFilter', formatted)}
                     onClear={() => onCalendarClear('plannedDateFilter')}
+                    onClose={() => onToggleCalendar('plannedDateFilter')}
                   />
                 )}
               </div>
