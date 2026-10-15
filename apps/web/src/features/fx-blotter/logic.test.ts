@@ -59,7 +59,8 @@ installFixtures()
 
 // A Friday; Monday 26-10-2026 is 31 days on, so the seeded legs value on 27 and 28 October.
 const NOW = new Date(2026, 8, 25)
-const fresh = (): Blotter => initialBlotter(NOW, buildMasterContracts(NOW, MC_SEED), [...BUSINESS_PARTNERS])
+// The screen no longer lays out the two example Created legs; these tests need example data to work on, so they ask for them.
+const fresh = (): Blotter => initialBlotter(NOW, buildMasterContracts(NOW, MC_SEED), [...BUSINESS_PARTNERS], { demoLegs: true })
 const created = (b: Blotter) => b.rows.filter((r) => r.status === 'CREATED')
 const row = (b: Blotter, id: string): BlotterRow => b.rows.find((r) => r.id === id)!
 const firstBlank = (b: Blotter): BlotterRow => b.rows.find(isCompletelyBlankDraft)!
@@ -94,7 +95,14 @@ describe('calendar', () => {
 })
 
 describe('load context', () => {
-  it('seeds two Created M021 legs and ten empty rows', () => {
+  it('a new screen starts with ten empty rows and no example transactions', () => {
+    const b = initialBlotter(NOW, buildMasterContracts(NOW, MC_SEED), [...BUSINESS_PARTNERS])
+    strictEqual(b.rows.length, 10)
+    strictEqual(created(b).length, 0)
+    strictEqual(b.rows.filter(isCompletelyBlankDraft).length, 10)
+  })
+
+  it('can lay out two example Created M021 legs and ten empty rows for tests', () => {
     const b = fresh()
     strictEqual(b.rows.length, 12)
     deepStrictEqual(
@@ -114,7 +122,7 @@ describe('load context', () => {
   })
 
   it('draws new RFHA numbers on every load', () => {
-    const b = loadContext(fresh()).blotter
+    const b = loadContext(fresh(), { demoLegs: true }).blotter
     deepStrictEqual(
       created(b).map((r) => r.transactionNumber),
       ['8100003', '8100004'],
@@ -275,7 +283,7 @@ describe('release to MO', () => {
     const b = fresh()
     const [a, c] = created(b)
     let next = assignMc(b, a!.id, c!.id, 'MC-7001')!.blotter
-    next = loadContext(next).blotter
+    next = loadContext(next, { demoLegs: true }).blotter
     const leg = created(next)[0]!
     const deal = next.deals[0]!
     ok(assignCheck(leg, deal, next.contracts).ok)
@@ -322,18 +330,23 @@ describe('auto deal creation', () => {
     deepStrictEqual(autoOrigins(), ['OGA', 'OGAT', 'OAL', 'SEDA'])
     const mc = autoEligible(b.contracts, 'OGA')[0]!
     strictEqual(mc.mcNumber, 'MC-7001')
-    const legs = initAutoLegs(mc, NOW)
+    let legs = initAutoLegs(mc, NOW)
     strictEqual(legs[0]?.entity, 'OGA')
     strictEqual(legs[1]?.entity, 'DMCC')
     strictEqual(legs[0]?.amt1, 2_000_000)
-    strictEqual(legs[0]?.rate, 83.0835)
+    // The rates are not filled in: the trader enters them, and nothing can be booked until both are entered.
+    deepStrictEqual(legs.map((l) => [l.rate, l.swap, l.spot, l.amt2]), [[0, 0, 0, 0], [0, 0, 0, 0]])
+    deepStrictEqual(validateAutoLegs(mc, legs), ['Deal 1: All in Rate must be greater than zero.', 'Deal 2: All in Rate must be greater than zero.'])
+    legs = updateAutoLeg(updateAutoLeg(legs, 0, 'rate', '83.0835'), 1, 'rate', '83.0835')
     deepStrictEqual(validateAutoLegs(mc, legs), [])
+    strictEqual(legs[0]?.spot, 83.0835, 'spot follows the entered rate while the swap is 0')
   })
 
   it('requires equal amounts and books both legs under one Deal ID', () => {
     const b = fresh()
     const mc = b.contracts[0]!
     let legs = initAutoLegs(mc, NOW)
+    legs = updateAutoLeg(updateAutoLeg(legs, 0, 'rate', '83.2'), 1, 'rate', '83.2')
     legs = updateAutoLeg(legs, 1, 'amt1', '1,000,000')
     deepStrictEqual(validateAutoLegs(mc, legs), ['Deal 1 and Deal 2 Amount 1 must be identical.'])
     legs = updateAutoLeg(legs, 0, 'amt1', '1,000,000')
@@ -416,15 +429,13 @@ describe('hard reset', () => {
     let next = assignMc(b, a!.id, c!.id, 'MC-7001')!.blotter
     next = { ...changeGroup(next, 'G04'), partners: uploadBpCode(next.partners, 'New Bank').partners, checked: [a!.id] }
     const reset = hardReset(next, NOW)
-    deepStrictEqual(
-      created(reset).map((r) => r.transactionNumber),
-      ['8100001', '8100002'],
-    )
+    strictEqual(created(reset).length, 0, 'a reset leaves no example transactions either')
+    strictEqual(reset.counters.rfha, 8100001, 'the RFHA counter is back at its start')
     strictEqual(reset.deals.length, 0)
     strictEqual(reset.contracts[0]?.utilizedUSD, 0)
     strictEqual(reset.partners.length, BUSINESS_PARTNERS.length + 1)
     strictEqual(reset.ctx.group, 'G02')
     deepStrictEqual(checkedRows(reset), [])
-    strictEqual(sortRows(reset.rows, BY_SEQ)[0]?.transactionNumber, '8100002')
+    strictEqual(reset.rows.filter(isCompletelyBlankDraft).length, 10)
   })
 })

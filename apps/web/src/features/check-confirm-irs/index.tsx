@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CashflowModal } from './CashflowModal.tsx'
@@ -6,9 +6,7 @@ import { IRS_COLUMNS, IRS_RECORDS, IRS_STATUSES } from './data.ts'
 import {
   buildComboOptions,
   filterRows,
-  formatDate,
   isValidDate,
-  parseDate,
   sortRows,
 } from './format.ts'
 import { IrsTable } from './IrsTable.tsx'
@@ -22,7 +20,6 @@ import './check-confirm-irs.legacy.css'
 import './check-confirm-irs.dark.css'
 
 const PAGE_SIZE = 15
-const DEFAULT_CALENDAR_DATE = new Date(2026, 8, 18)
 
 let toastSeq = 0
 
@@ -43,9 +40,6 @@ export default function CheckConfirmIrsApp() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [calendarMode, setCalendarMode] = useState<'days' | 'years'>('days')
-  const [calendarViewDate, setCalendarViewDate] = useState(DEFAULT_CALENDAR_DATE)
-  const [calendarYear, setCalendarYear] = useState(DEFAULT_CALENDAR_DATE.getFullYear())
 
   const [cashflowId, setCashflowId] = useState<number | null>(null)
   const [settleOpen, setSettleOpen] = useState(false)
@@ -206,71 +200,13 @@ export default function CheckConfirmIrsApp() {
     refreshFilters()
   }
 
-  function openCalendar() {
-    const parsed = parseDate(keyDate)
-    if (parsed) {
-      setCalendarViewDate(parsed)
-      setCalendarYear(parsed.getFullYear())
-    }
-    setCalendarMode('days')
-    setCalendarOpen(true)
-  }
-
-  function handleCalendarStep(months: number) {
-    setCalendarViewDate((current) => {
-      const next = new Date(current)
-      next.setMonth(next.getMonth() + months)
-      setCalendarYear(next.getFullYear())
-      return next
-    })
-  }
-
-  function handleCalendarToggleMode() {
-    setCalendarMode((mode) => (mode === 'days' ? 'years' : 'days'))
-    setCalendarYear(calendarViewDate.getFullYear())
-  }
-
   function handleCalendarPickDate(date: string) {
     setKeyDate(date)
-    const parsed = parseDate(date)
-    if (parsed) {
-      setCalendarViewDate(parsed)
-      setCalendarYear(parsed.getFullYear())
-    }
     setCalendarOpen(false)
     loadResults(companyCode, date)
   }
 
-  function handleCalendarPickYear(year: number) {
-    setCalendarYear(year)
-    setCalendarViewDate((current) => {
-      const next = new Date(current)
-      next.setFullYear(year)
-      return next
-    })
-    setCalendarMode('years')
-  }
-
-  function handleCalendarPickMonth(month: number) {
-    setCalendarViewDate(new Date(calendarYear, month, 1))
-    setCalendarMode('days')
-  }
-
-  function handleCalendarClear() {
-    setKeyDate('')
-    setCalendarOpen(false)
-    loadResults(companyCode, '')
-  }
-
-  function handleCalendarToday() {
-    const today = new Date()
-    const formatted = formatDate(today)
-    setKeyDate(formatted)
-    setCalendarViewDate(today)
-    setCalendarYear(today.getFullYear())
-    setCalendarOpen(false)
-    loadResults(companyCode, formatted)
-  }
+  const closeCalendar = useCallback(() => setCalendarOpen(false), [])
 
   const cashflowRow = records.find((row) => row.id === cashflowId) ?? null
 
@@ -298,17 +234,9 @@ export default function CheckConfirmIrsApp() {
               onKeyDateChange={handleKeyDateChange}
               onKeyDateCommit={handleKeyDateCommit}
               calendarOpen={calendarOpen}
-              calendarMode={calendarMode}
-              calendarViewDate={calendarViewDate}
-              calendarYear={calendarYear}
-              onCalendarToggle={() => (calendarOpen ? setCalendarOpen(false) : openCalendar())}
-              onCalendarStep={handleCalendarStep}
-              onCalendarToggleMode={handleCalendarToggleMode}
+              onCalendarToggle={() => setCalendarOpen((open) => !open)}
               onCalendarPickDate={handleCalendarPickDate}
-              onCalendarPickYear={handleCalendarPickYear}
-              onCalendarPickMonth={handleCalendarPickMonth}
-              onCalendarClear={handleCalendarClear}
-              onCalendarToday={handleCalendarToday}
+              onCalendarClose={closeCalendar}
               filterOpen={filterOpen}
               onFilterToggle={() => setFilterOpen((open) => !open)}
               transactionFilter={transactionFilter}

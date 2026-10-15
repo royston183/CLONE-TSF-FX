@@ -37,6 +37,7 @@ import './maintain-limits.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './maintain-limits.dark.css'
+import { CalendarPicker } from '../../shared/ui/CalendarPicker.tsx'
 
 const PAGE_SIZE = 10
 const VERSION = 'v1'
@@ -509,10 +510,9 @@ export default function MaintainLimitsApp() {
                     />
                     <div className="calendar-btn-wrap">
                       <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true"></button>
-                      <input
+                      <CalendarPicker
                         id="mlKeyDateNative"
                         className="calendar-native"
-                        type="date"
                         aria-label="Open calendar"
                         onChange={(e) => {
                           if (e.target.value) changeSelection({ keyDate: displayDate(e.target.value) })
@@ -807,9 +807,8 @@ export default function MaintainLimitsApp() {
                   />
                   <div className="calendar-btn-wrap">
                     <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true"></button>
-                    <input
+                    <CalendarPicker
                       className="calendar-native"
-                      type="date"
                       onChange={(e) => {
                         if (e.target.value) changeCreateForm({ startDate: displayDate(e.target.value) })
                       }}
@@ -829,9 +828,8 @@ export default function MaintainLimitsApp() {
                   />
                   <div className="calendar-btn-wrap">
                     <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true"></button>
-                    <input
+                    <CalendarPicker
                       className="calendar-native"
-                      type="date"
                       onChange={(e) => {
                         if (e.target.value) changeCreateForm({ endDate: displayDate(e.target.value) })
                       }}
@@ -1040,9 +1038,8 @@ export default function MaintainLimitsApp() {
                                   tabIndex={-1}
                                   aria-hidden="true"
                                 ></button>
-                                <input
+                                <CalendarPicker
                                   className="calendar-native dms-date-native"
-                                  type="date"
                                   onChange={(e) => {
                                     if (e.target.value)
                                       updateDocument(dmsIndex, d.code, {

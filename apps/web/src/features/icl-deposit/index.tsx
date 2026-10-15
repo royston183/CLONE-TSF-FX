@@ -9,6 +9,7 @@ import './icl-deposit.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './icl-deposit.dark.css'
+import { CalendarPicker } from '../../shared/ui/CalendarPicker.tsx'
 
 const VERSION = 'v1'
 const PAGE_SIZE = 12
@@ -429,10 +430,9 @@ export default function IclDepositApp() {
                     />
                     <div className="calendar-btn-wrap">
                       <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true" />
-                      <input
+                      <CalendarPicker
                         id="depKeyDateNative"
                         className="calendar-native"
-                        type="date"
                         aria-label="Open calendar"
                         value={isoFromDisplay(keyDate) ?? ''}
                         onChange={(e) => {

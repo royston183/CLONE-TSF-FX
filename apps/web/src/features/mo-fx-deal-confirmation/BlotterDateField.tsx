@@ -1,15 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { MONTH_NAMES, fmtDate, parseDDMMYYYY } from './format.ts'
-import { calendarCells, shiftMonth } from './logic.ts'
-import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
-
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+import { useCallback, useRef, useState } from 'react'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
+import { fmtDate, parseDDMMYYYY } from './format.ts'
 
 /**
- * Upto Blotter Date: a free-text DD-MM-YYYY input with the page's own popup calendar. The
- * calendar opens from the icon (which toggles it) or when the input takes focus, starts on
- * the typed date's month when it can read one — otherwise on the month it was last left at —
- * and closes on a day click or any click outside the field.
+ * Upto Blotter Date: a free-text DD-MM-YYYY input with the shared popup calendar. The calendar
+ * opens from the icon (which toggles it) or when the input takes focus, and closes on a day
+ * pick or any click outside the field.
  *
  * `invalid` puts has-error on the .date-field wrapper, where the page put it. The page's
  * error styles are all keyed on `.field.has-error`, so — as there — that shows nothing; the
@@ -25,32 +21,8 @@ export function BlotterDateField({
   onChange: (value: string) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState(() => {
-    const now = new Date()
-    return { year: now.getFullYear(), month: now.getMonth() }
-  })
   const fieldRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as Node | null
-      if (!target || !target.isConnected) return
-      if (!fieldRef.current?.contains(target)) setOpen(false)
-    }
-    document.addEventListener('click', onClick)
-    return () => document.removeEventListener('click', onClick)
-  }, [open])
-
-  const toggle = () => {
-    if (!open) {
-      const existing = parseDDMMYYYY(value)
-      if (existing) setView({ year: existing.getFullYear(), month: existing.getMonth() })
-    }
-    setOpen(!open)
-  }
-
-  const cells = open ? calendarCells(view.year, view.month, parseDDMMYYYY(value), new Date()) : []
+  const close = useCallback(() => setOpen(false), [])
 
   return (
     <div className={`date-field${invalid ? ' has-error' : ''}`} id="blotterDateField" ref={fieldRef}>
@@ -60,9 +32,7 @@ export function BlotterDateField({
         placeholder="dd-mm-yyyy"
         autoComplete="off"
         value={value}
-        onFocus={() => {
-          if (!open) toggle()
-        }}
+        onFocus={() => setOpen(true)}
         onChange={(e) => onChange(e.target.value)}
       />
       <button
@@ -71,51 +41,22 @@ export function BlotterDateField({
         id="blotterDateIcon"
         onClick={(e) => {
           e.stopPropagation()
-          toggle()
+          setOpen((o) => !o)
         }}
       >
         &#128197;
       </button>
-      <div className={`calendar-pop${open ? ' open' : ''}`} id="blotterCalendar">
-        {open ? (
-          <>
-            <div className="cal-head">
-              <button type="button" id="calPrev" onClick={() => setView((v) => shiftMonth(v.year, v.month, -1))}>
-                &#8249;
-              </button>
-              <CalendarSelects year={view.year} month={view.month} onChange={(year, month) => setView({ year, month })} />
-              <button type="button" id="calNext" onClick={() => setView((v) => shiftMonth(v.year, v.month, 1))}>
-                &#8250;
-              </button>
-            </div>
-            <div className="cal-grid">
-              {DOW.map((d) => (
-                <div key={d} className="cal-dow">
-                  {d}
-                </div>
-              ))}
-              {cells.map((c, i) =>
-                c.muted ? (
-                  <div key={i} className="cal-day muted">
-                    {c.day}
-                  </div>
-                ) : (
-                  <div
-                    key={i}
-                    className={`cal-day${c.today ? ' today' : ''}${c.selected ? ' selected' : ''}`}
-                    onClick={() => {
-                      onChange(fmtDate(new Date(view.year, view.month, c.day)))
-                      setOpen(false)
-                    }}
-                  >
-                    {c.day}
-                  </div>
-                ),
-              )}
-            </div>
-          </>
-        ) : null}
-      </div>
+      <DatePopup
+        open={open}
+        anchorRef={fieldRef}
+        value={parseDDMMYYYY(value)}
+        title="Upto Blotter Date"
+        onSelect={(d) => {
+          onChange(fmtDate(d))
+          setOpen(false)
+        }}
+        onClose={close}
+      />
     </div>
   )
 }

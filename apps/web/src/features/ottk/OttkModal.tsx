@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { DateInput } from '../../shared/ui/DateInput.tsx'
 import { formatAmount, formatAmountWhileTyping, parseAmount } from '@slc/api-client'
 import { applyInterestCategory, isFixedInterest, isPrepayStructure } from './form.ts'
 import type { OttkForm } from './form.ts'
@@ -268,7 +269,7 @@ export function OttkModal(props: OttkModalProps) {
               </div>
             </Field>
             <Field label="Expected LC Date" htmlFor="lcdate">
-              <input id="lcdate" type="date" value={form.lcdate} onChange={(e) => set('lcdate', e.target.value)} />
+              <DateInput id="lcdate" aria-label="Expected LC Date" value={form.lcdate} onChange={(v) => set('lcdate', v)} />
             </Field>
             <Field label="Expected LC Tenor">
               <div className="compound">
@@ -361,7 +362,7 @@ export function OttkModal(props: OttkModalProps) {
               </div>
             </Field>
             <Field label="Expected Date">
-              <input type="date" value={form.depositDate} onChange={(e) => set('depositDate', e.target.value)} />
+              <DateInput aria-label="Expected Date" value={form.depositDate} onChange={(v) => set('depositDate', v)} />
             </Field>
             <Field label="Interest Category">
               <select
@@ -409,10 +410,10 @@ export function OttkModal(props: OttkModalProps) {
               />
             </Field>
             <Field label="1st Interest Date" size="date">
-              <input
-                type="date"
+              <DateInput
+                aria-label="1st Interest Date"
                 value={form.firstInterestDate}
-                onChange={(e) => set('firstInterestDate', e.target.value)}
+                onChange={(v) => set('firstInterestDate', v)}
               />
             </Field>
             <Field label="Reset Frequency">
@@ -469,10 +470,10 @@ export function OttkModal(props: OttkModalProps) {
               />
             </Field>
             <Field label="Commitment End Date">
-              <input
-                type="date"
+              <DateInput
+                aria-label="Commitment End Date"
                 value={form.commitmentEndDate}
-                onChange={(e) => set('commitmentEndDate', e.target.value)}
+                onChange={(v) => set('commitmentEndDate', v)}
               />
             </Field>
           </Section>

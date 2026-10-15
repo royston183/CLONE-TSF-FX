@@ -15,12 +15,14 @@
  * No operation here writes TXN_STATUS. A Deal ID status change (ZDEAL_STAT) and a transaction status
  * (TXN_STATUS) are separate lifecycles.
  */
+import { list, odataString, service } from '@slc/api-client'
 import { createAppStrRecord, clearDealLink, getAppStrRecord, loadAppStrRecords, updateAppStrRecord, type AppStrFields, type AppStrRecord } from '../fx-blotter/appStr.ts'
 import { DEAL_STATUS, REVERSIBLE_DEAL_STATUSES } from '../../shared/fx/deal-status.ts'
 import { dealKey } from '../../shared/fx/deal-id.ts'
 import { messageOf, type DealRow } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxCreate, fxDelete, fxList, fxUpdate, type FxRow } from '../../shared/fx/mw.ts'
+import type { FxTransaction } from '../../shared/fx/ndf.ts'
 import { changedStamp, dec } from '../../shared/fx/sap.ts'
 import {
   blockerMessage,
@@ -408,27 +410,44 @@ export type ReplacementCandidate = {
   linkedDealId: string
 }
 
-/** The transaction being replaced, as ZSGTSFV_FX reports it; throws when it cannot be found, since nothing can be compared. */
-export async function loadReplacementReference(old: Target): Promise<ReplacementReference> {
-  const [view] = await fxList('tsfvFx', { BUKRS: old.bukrs, RFHA: old.rfha })
-  if (!view) throw new Error(`Transaction ${old.rfha} (company ${old.bukrs}) is not in ZSGTSFV_FX, so replacements cannot be matched to it.`)
-  return referenceOf(view)
+const FX = service('fx')('FxTransaction')
+const FX_PAGE = 1000
+
+/** Every FxTransaction of one company code, paged so the newest transactions are not cut off. */
+async function companyTransactions(bukrs: string, signal?: AbortSignal): Promise<FxTransaction[]> {
+  const rows: FxTransaction[] = []
+  for (let skip = 0; ; skip += FX_PAGE) {
+    const page = await list<FxTransaction>(FX, { filter: `CompanyCode eq ${odataString(bukrs)}`, top: FX_PAGE, skip }, signal ? { signal } : undefined)
+    rows.push(...page)
+    if (page.length < FX_PAGE) return rows
+  }
 }
 
 /**
- * The transactions that may replace `ref`: the legacy filters applied to ZSGTSFV_FX rows of the same
- * company code and transaction type, with each one's status taken from APP_STR (BUKRS + RFHA).
+ * The transaction being replaced, read from the live FxTransaction service (ZSGTSFV_FX is a stale copy that
+ * lacks the newest transactions); throws when it cannot be found, since nothing can be compared.
+ */
+export async function loadReplacementReference(old: Target): Promise<ReplacementReference> {
+  const filter = `CompanyCode eq ${odataString(old.bukrs)} and FinancialTransaction eq ${odataString(old.rfha)}`
+  const [fx] = await list<FxTransaction>(FX, { filter, top: 1 })
+  if (!fx) throw new Error(`Transaction ${old.rfha} (company ${old.bukrs}) was not found in FxTransaction, so replacements cannot be matched to it.`)
+  return referenceOf(fx)
+}
+
+/**
+ * The transactions that may replace `ref`: the legacy filters applied to the live FxTransactions of the same
+ * company code. FxTransaction carries the trade details; each candidate's status and Deal ID link come from
+ * APP_STR by BUKRS + RFHA.
  */
 export async function loadReplacementCandidates(ref: ReplacementReference, signal?: AbortSignal): Promise<ReplacementCandidate[]> {
-  const rows = await fxList('tsfvFx', { BUKRS: ref.bukrs, SFHAART: ref.sfhaart, DELFZ: ref.delfz }, { signal })
-  const pool = rows.filter((r) => txt(r, 'RFHA') !== ref.rfha)
-  const records = pool.length ? await loadAppStrRecords(pool.map((r) => ({ CompanyCode: txt(r, 'BUKRS'), FinancialTransaction: txt(r, 'RFHA') })), signal) : []
+  const pool = (await companyTransactions(ref.bukrs, signal)).filter((t) => t.FinancialTransaction !== ref.rfha)
+  const records = pool.length ? await loadAppStrRecords(pool.map((t) => ({ CompanyCode: t.CompanyCode, FinancialTransaction: t.FinancialTransaction })), signal) : []
   const byKey = new Map(records.map((r) => [`${r.CompanyCode}|${r.FinancialTransaction}`, r]))
-  return pool.flatMap((r) => {
-    const rec = byKey.get(`${txt(r, 'BUKRS')}|${txt(r, 'RFHA')}`)
+  return pool.flatMap((t) => {
+    const rec = byKey.get(`${t.CompanyCode}|${t.FinancialTransaction}`)
     const status = rec?.TxnStatus ?? ''
-    if (!isEligibleReplacement(ref, r, status)) return []
-    const c = referenceOf(r)
-    return [{ bukrs: c.bukrs, rfha: c.rfha, description: txt(r, 'XTEXT'), valueDate: c.delfz, side: c.side, currency: c.currency, amount: c.amount, txnStatus: status, linkedDealId: rec?.ZtsfDealID ?? '' }]
+    if (!isEligibleReplacement(ref, t, status)) return []
+    const c = referenceOf(t)
+    return [{ bukrs: c.bukrs, rfha: c.rfha, description: t.TransactionType ?? '', valueDate: c.delfz, side: c.side, currency: c.currency, amount: c.amount, txnStatus: status, linkedDealId: rec?.ZtsfDealID ?? '' }]
   })
 }

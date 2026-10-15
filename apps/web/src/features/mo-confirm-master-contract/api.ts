@@ -23,10 +23,10 @@ import {
   updateMasterContract,
   type McRow,
 } from '../../shared/fx/master-contract.ts'
-import { isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { loadRegions } from '../../shared/fx/regions.ts'
 import { clip, dateFromIso, dec, num, sapUser } from '../../shared/fx/sap.ts'
-import { COMMODITIES, ENTITIES, FX_MODELS, PAYMENT_TERMS, REGIONS, STATUS, STATUS_KEY, commodityOf, seedContracts } from './data.ts'
+import { COMMODITIES, ENTITIES, FX_MODELS, MC_TOLERANCE, PAYMENT_TERMS, REGIONS, STATUS, STATUS_KEY, commodityOf, seedContracts } from './data.ts'
 import { addDays } from './format.ts'
 import type { Commodity, Entity, FxModel, MasterContract, McAction, PaymentTerm, StatusValue } from './types.ts'
 
@@ -77,6 +77,15 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
     return null
   })
   if (regions?.length) replaceInPlace(REGIONS, regions.map((r) => ({ id: r.id, name: r.name })))
+
+  // ZSGTSFTR_TOLR, tolerance ID T01: the Master Contract tolerance shown in the review. Left unknown when it cannot be read.
+  const tolerance = await fxList('tolerance', {}, { signal })
+    .then((rows) => rows.filter((r) => txt(r, 'ZTOL_ID') === 'T01').map((r) => num(r['ZTOL_PER']))[0] ?? null)
+    .catch((error: unknown) => {
+      if (isAbort(error)) throw error
+      return null
+    })
+  MC_TOLERANCE.value = tolerance
   return { entities: entities.source, fxModels: models.source, commodities: commodities.source, paymentTerms: terms.source }
 }
 

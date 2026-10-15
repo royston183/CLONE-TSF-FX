@@ -188,6 +188,51 @@ describe('/api/localdb/tsf-deal-document', () => {
   })
 })
 
+describe('/api/localdb/tsf-day-lock', () => {
+  before(() => {
+    runMigrations(getDb())
+  })
+
+  const day = 'tsf-day-lock/20261015/G01/T001'
+  const put = (path = day) => call(path, { method: 'PUT', body: json({}) })
+  const list = async (q: string) => ((await (await call(`tsf-day-lock?${q}`)).json()) as { value: Record<string, unknown>[] }).value
+
+  it('requires a signed-in session', async () => {
+    strictEqual((await call('tsf-day-lock', {}, false)).status, 401)
+    strictEqual((await call(day, { method: 'PUT', body: json({}) }, false)).status, 401)
+  })
+
+  it('an unlocked day is a 404, locking it answers 201 and stamps who locked it, locking again is a 200', async () => {
+    strictEqual((await call(day)).status, 404)
+    const created = await put()
+    strictEqual(created.status, 201)
+    const row = (await created.json()) as Record<string, unknown>
+    deepStrictEqual([row['ZLOCKED'], row['ZB_TYPE'], row['ZCO_AREA'], row['ZPDATE'], row['ZGRP'], row['ZTYPE'], row['ZYEAR'], row['ZMONTH'], row['ZCREATED_BY']], ['X', 'DE6', 'OL10', '20261015', 'G01', 'T001', '2026', '10', 'demo'])
+    strictEqual((await call(day)).status, 200)
+    strictEqual((await put()).status, 200)
+    strictEqual((await list('ZTYPE=T001')).filter((r) => r['ZPDATE'] === '20261015').length, 1)
+  })
+
+  it('lists the locked days of one trader, and those of another trader are not in it', async () => {
+    await put('tsf-day-lock/20261014/G01/T001')
+    await put('tsf-day-lock/20261015/G01/T002')
+    deepStrictEqual((await list('ZTYPE=T001')).map((r) => r['ZPDATE']), ['20261014', '20261015'])
+    deepStrictEqual((await list('ZTYPE=T002')).map((r) => r['ZPDATE']), ['20261015'])
+  })
+
+  it('rejects a bad date, group or trader with 400, ignores any field in the body, and unlocks with a 204 then a 404', async () => {
+    strictEqual((await put('tsf-day-lock/2026-10-15/G01/T001')).status, 400)
+    strictEqual((await put('tsf-day-lock/20261340/G01/T001')).status, 400)
+    strictEqual((await put('tsf-day-lock/20261015/G012/T001')).status, 400)
+    strictEqual((await put('tsf-day-lock/20261015/G01/T0000000001')).status, 400)
+    const forged = await call('tsf-day-lock/20261016/G01/T001', { method: 'PUT', body: json({ ZLOCKED: '', ZCREATED_BY: 'SPOOF' }) })
+    strictEqual(((await forged.json()) as Record<string, unknown>)['ZLOCKED'], 'X')
+    strictEqual((await call(day, { method: 'DELETE' })).status, 204)
+    strictEqual((await call(day, { method: 'DELETE' })).status, 404)
+    strictEqual((await call(day)).status, 404)
+  })
+})
+
 describe('/api/localdb/deal-metadata', () => {
   before(() => {
     runMigrations(getDb())

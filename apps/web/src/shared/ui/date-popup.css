@@ -1,0 +1,72 @@
+/* The shared calendar popup (DatePopup.tsx). Drawn on document.body, so it is not scoped to a screen:
+   every selector starts with .sdp and the colours carry their own fallbacks. */
+.sdp {
+  position: fixed;
+  z-index: 100000; /* above every dialog, overlay and toast in the app */
+  box-sizing: border-box;
+  padding: 12px;
+  background: #fff;
+  color: #1d2d3e;
+  border: 1px solid #d5dde5;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(16, 38, 58, 0.22);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.sdp *, .sdp *::before, .sdp *::after { box-sizing: border-box; }
+
+.sdp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.sdp-nav {
+  flex: 0 0 28px; width: 28px; height: 28px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: #eaf3fc; color: #0a6ed1;
+  font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer;
+}
+.sdp-nav:hover { background: #d6e8fa; }
+.sdp-select {
+  flex: 1 1 0; min-width: 0; height: 30px; padding: 0 8px;
+  border: 1px solid #cdd6df; border-radius: 6px; background-color: #fff; color: #1d2d3e;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.sdp-select.sdp-year { flex: 0 0 76px; }
+.sdp-select:focus-visible, .sdp-nav:focus-visible, .sdp-day:focus-visible { outline: 2px solid #0a6ed1; outline-offset: 1px; }
+
+.sdp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.sdp-dow { padding: 4px 0 6px; font-size: 11.5px; font-weight: 700; color: #5d7287; }
+.sdp-day {
+  height: 32px; padding: 0; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: #1d2d3e; font: inherit; font-size: 13px; cursor: pointer;
+}
+.sdp-day:hover:not(:disabled) { background: #eaf3fc; }
+.sdp-day.out { color: #a3b0bd; }
+.sdp-day.today { border-color: #0a6ed1; }
+.sdp-day.on, .sdp-day.on:hover { background: #0a6ed1; border-color: #0a6ed1; color: #fff; font-weight: 700; }
+.sdp-day:disabled { color: #c3ccd5; cursor: not-allowed; text-decoration: line-through; }
+
+:root[data-theme='dark'] .sdp { background: #16212d; color: #e3eaf1; border-color: #2d4a6b; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55); }
+:root[data-theme='dark'] .sdp-nav { background: #1d3550; color: #7db8f0; }
+:root[data-theme='dark'] .sdp-nav:hover { background: #26466a; }
+:root[data-theme='dark'] .sdp-select { background-color: #14212f; color: #e3eaf1; border-color: #2d4a6b; }
+:root[data-theme='dark'] .sdp-dow { color: #8fa3b8; }
+:root[data-theme='dark'] .sdp-day { color: #e3eaf1; }
+:root[data-theme='dark'] .sdp-day:hover:not(:disabled) { background: #1d3550; }
+:root[data-theme='dark'] .sdp-day.out { color: #5f7488; }
+:root[data-theme='dark'] .sdp-day.today { border-color: #4a9be8; }
+:root[data-theme='dark'] .sdp-day.on, :root[data-theme='dark'] .sdp-day.on:hover { background: #2b7fd1; border-color: #2b7fd1; color: #fff; }
+:root[data-theme='dark'] .sdp-day:disabled { color: #3d5063; }
+
+/* DateInput: a text box with the calendar button inside its right edge. The input keeps whatever
+   class the screen gives it; only the room for the button is added. */
+.sdp-field { position: relative; display: flex; align-items: center; min-width: 0; width: 100%; }
+.sdp-field > input { flex: 1 1 auto; min-width: 0; width: 100%; padding-right: 34px; }
+.sdp-trigger {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 5px; background: transparent; color: #5d7287; cursor: pointer;
+}
+.sdp-trigger:hover:not(:disabled) { background: #eaf3fc; color: #0a6ed1; }
+.sdp-trigger:disabled { opacity: 0.45; cursor: not-allowed; }
+.sdp-trigger:focus-visible { outline: 2px solid #0a6ed1; outline-offset: 1px; }
+:root[data-theme='dark'] .sdp-trigger { color: #8fa3b8; }
+:root[data-theme='dark'] .sdp-trigger:hover:not(:disabled) { background: #1d3550; color: #7db8f0; }
