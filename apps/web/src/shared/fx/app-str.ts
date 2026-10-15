@@ -57,6 +57,9 @@ export type TrmFxApp = {
   OptFoRem?: string | null
   OptMoRem?: string | null
   ZolamDealNo?: string | null
+  /** FO_REMARK and REMARK (added to ZSGTSFTR_APP_STR). Property names assumed from the CDS naming; unverified against the live $metadata. */
+  FoRemark?: string | null
+  Remark?: string | null
   /** TXN_STATUS: the transaction's lifecycle (shared/fx/txn-status.ts). */
   TxnStatus?: string | null
   Ztrcode?: string | null

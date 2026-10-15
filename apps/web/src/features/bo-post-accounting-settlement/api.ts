@@ -32,7 +32,7 @@
  * API. Nothing is written to the middleware and no local state changes.
  */
 import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
-import { messageOf } from '../../shared/fx/master-contract.ts'
+import { listMasterContracts, messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { odataString } from '@slc/api-client'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
@@ -287,17 +287,24 @@ export async function loadDeal(raw: string, signal?: AbortSignal): Promise<LoadR
 
 /* ------------------------------------------------------------------ Deal ID suggestions */
 
-export type DealSuggestion = { dealId: string; dealRef: string; statusText: string }
+export type DealSuggestion = { dealId: string; dealRef: string; statusText: string; model: string }
 
 /** Every ZSGTSFTR_DEALID row (newest first) for the Deal ID dropdown; unrestricted, as P_DEAL's search help is not exported. */
 export async function loadDealSuggestions(signal?: AbortSignal): Promise<DealSuggestion[]> {
-  const [rows, statuses] = await Promise.all([
-    listDealIds({}, signal),
-    fxList('tsfDealStatus', {}, { signal }).catch((error: unknown) => {
+  const soft = <T,>(p: Promise<T>, empty: T): Promise<T> =>
+    p.catch((error: unknown) => {
       if (isAbort(error)) throw error
-      return [] as FxRow[]
-    }),
+      return empty
+    })
+  const [rows, statuses, models, mcs] = await Promise.all([
+    listDealIds({}, signal),
+    soft(fxList('tsfDealStatus', {}, { signal }), [] as FxRow[]),
+    // The FX model text is a nicety: the list still opens without it.
+    soft(fxList('fxModel', {}, { signal }), [] as FxRow[]),
+    soft(listMasterContracts({}, signal), [] as FxRow[]),
   ])
+  const modelDesc = new Map(models.map((m) => [txt(m, 'ZMOD_ID'), txt(m, 'ZMOD_DESC')]))
+  const mcModel = new Map(mcs.map((m) => [txt(m, 'ZMC_REF_NO'), txt(m, 'ZMOD_ID')]))
   const seen = new Set<string>()
   const out: DealSuggestion[] = []
   for (const r of rows) {
@@ -308,10 +315,14 @@ export async function loadDealSuggestions(signal?: AbortSignal): Promise<DealSug
       dealId,
       dealRef: txt(r, 'ZDEAL_REF'),
       statusText: dealStatusText({ statuses }, txt(r, 'ZSUB_TYPE'), txt(r, 'ZDEAL_STAT')),
+      // The Deal ID's own model, else its Master Contract's (as dealJoin in deal-id.ts).
+      model: modelText(txt(r, 'ZTSF_MODEL') || mcModel.get(txt(r, 'ZMC_REF')) || '', modelDesc),
     })
   }
   return out
 }
+
+const modelText = (id: string, desc: ReadonlyMap<string, string>): string => [id, desc.get(id)].filter(Boolean).join(' - ')
 
 /** Suggestions whose Deal ID or reference contains the typed text (all of them when nothing is typed). */
 export function filterSuggestions(list: readonly DealSuggestion[], typed: string): DealSuggestion[] {
