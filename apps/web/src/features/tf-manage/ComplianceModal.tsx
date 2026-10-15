@@ -21,7 +21,7 @@ const CHECKLIST_ITEMS: readonly string[] = [
 export type ComplianceModalProps = {
   open: boolean
   onCancel: () => void
-  onProceed: () => void
+  onProceed: (withException: boolean) => void
 }
 
 /** BL Data 1's "BL Compliance Checklist" gate, shown before the Assign Deal ID popup opens. */
@@ -60,10 +60,10 @@ export function ComplianceModal({ open, onCancel, onProceed }: ComplianceModalPr
               does for the workspace footer's hint-span + .modal-actions pair. */}
           <span />
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onProceed}>
+            <button type="button" className="btn-secondary" onClick={() => onProceed(true)}>
               Yes With Exception
             </button>
-            <button type="button" className="hdr-btn primary" onClick={onProceed}>
+            <button type="button" className="hdr-btn primary" onClick={() => onProceed(false)}>
               Yes
             </button>
             <button type="button" className="btn-secondary" onClick={onCancel}>

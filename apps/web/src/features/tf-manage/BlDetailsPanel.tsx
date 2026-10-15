@@ -18,6 +18,8 @@ import {
 } from './bl.ts'
 import { BlSplitModal } from './BlSplitModal.tsx'
 import { ComplianceModal } from './ComplianceModal.tsx'
+import { BlDmsUploadModal } from './BlDmsUploadModal.tsx'
+import { blUploadSelectionError, type BlDocumentKind } from './bl-dms.ts'
 import type { BlInvoiceDetails, BlRow, PendingBlAssignment, TrdFlowKey } from './types.ts'
 
 /** ZSGTSFTR_BL_STAT '01': BL Created — what a brand-new local row starts as. */
@@ -33,8 +35,8 @@ type EditableNumField = 'Zquantity' | 'Zcprice'
  * The grid, its Total row and the five-row pager follow the legacy page. Create BL, BL Split and
  * the editable cells change this component's row state first, and Update writes them to
  * ZSGTSFTR_BL (see planBlSave / saveBlChanges): a created BL gets its BL ID from the SNRO range on
- * insert — it shows as New until then — and a split row is inserted under its source's BL ID. Upload BL PDF and Insert/Delete Row change
- * BL state through processes that are not built at all yet, so they stay disabled. BLs are
+ * insert — it shows as New until then — and a split row is inserted under its source's BL ID. Document upload
+ * links the file to the selected saved BLs. Insert/Delete Row remain unavailable. BLs are
  * otherwise created today by the Excel upload. Assign Deal ID & Release for Invoicing picks a
  * live Deal ID (see dealMaster.ts); Update writes it to the BL (see assignBlDeal) — the moment a
  * line item's Deal ID is committed, BL Number/Vessel Name/Grade-Commodity/Quantity/CPMT lock on
@@ -87,6 +89,11 @@ export function BlDetailsPanel({
   const [splitOpen, setSplitOpen] = useState(false)
   const [blRowsInput, setBlRowsInput] = useState('')
   const [actionError, setActionError] = useState('')
+  const [documentNotice, setDocumentNotice] = useState('')
+  const [documentReload, setDocumentReload] = useState(0)
+  const [assignmentTargets, setAssignmentTargets] = useState<BlRow[]>([])
+  const [withException, setWithException] = useState(false)
+  const [documentSession, setDocumentSession] = useState<{ kind: BlDocumentKind; targets: BlRow[]; continueAssignment: boolean } | null>(null)
   // Local-only text for a row's own Quantity/CPMT input (keyed by "<row id>:<field>"), so a
   // half-typed number ("12.") is never forced back to "12" mid-keystroke — the same reason
   // DateField keeps its own typed text.
@@ -106,7 +113,8 @@ export function BlDetailsPanel({
 
   // BL DMS details: the documents filed against these BLs (ZSGTSFTR_BL_DMS, TSF_DMS, DMS_TYP).
   const blNos = rows.map((row) => String(row.ZblNo ?? '')).join(',')
-  const documents = useAsync((signal) => loadBlDocuments(blNos ? blNos.split(',') : [], signal), [blNos])
+  const documentRefs = JSON.stringify(rows.map((r) => [r.ZblNo, r.ZtsfDmsCode, r.ZdmsCodeExc]))
+  const documents = useAsync((signal) => loadBlDocuments(blNos ? blNos.split(',') : [], signal, rows), [blNos, documentRefs, documentReload, reloadToken])
   const docRows = documents.data ?? []
   // Read through a ref by the registered callback below: it is registered once (the effect's
   // deps never change), while the ref is reassigned fresh on every render.
@@ -134,6 +142,7 @@ export function BlDetailsPanel({
   // is the one it acts on. Assign Deal ID & Release for Invoicing acts on every checked row.
   const targetRow = rows.find((row) => selectedRows.has(blRowId(row)))
   const selectedRowsList = rows.filter((row) => selectedRows.has(blRowId(row)))
+  const uploadSelectionError = blUploadSelectionError(selectedRowsList)
   // Once every checked row already carries a Deal ID, there is nothing left to assign; with at
   // least one still unassigned among the checked rows, the button stays enabled for it.
   const allSelectedAssigned =
@@ -188,6 +197,10 @@ export function BlDetailsPanel({
       newRow.Zquantity = perRowQty
       newRow.ZdealId = ''
       newRow.ZblStatId = BL_CREATED_STATUS
+      // A newly numbered BL does not inherit another BL's attachments or exception approval.
+      delete newRow.ZtsfDmsCode
+      delete newRow.ZdmsCodeExc
+      delete newRow.ZblExc
       created.push(newRow)
       drafts[numDraftKey(blRowId(newRow), 'Zquantity')] = String(perRowQty)
     }
@@ -283,7 +296,12 @@ export function BlDetailsPanel({
                   ? 'The selected line item(s) already have a Deal ID assigned.'
                   : undefined
             }
-            onClick={() => setComplianceOpen(true)}
+            onClick={() => {
+              setAssignmentTargets(selectedRowsList.map((row) => ({ ...row })))
+              setWithException(false)
+              setActionError('')
+              setComplianceOpen(true)
+            }}
           >
             Assign Deal ID &amp; Release for Invoicing
           </button>
@@ -526,29 +544,58 @@ export function BlDetailsPanel({
       </div>
 
       <div className="toolstrip">
-        <button type="button" className="hdr-btn" disabled title={notBuilt}>
-          Upload BL PDF
+        <button type="button" className="hdr-btn" disabled={!!uploadSelectionError} title={uploadSelectionError || undefined}
+          onClick={() => {
+            setDocumentNotice('')
+            setDocumentSession({ kind: 'D01', targets: selectedRowsList.map((row) => ({ ...row })), continueAssignment: false })
+          }}>
+          Upload BL Document
         </button>
         <span className="field-hint">
           {rows.length} BL(s) for {tfKey.ZtfNo} / {tfKey.ZtfSplit}
           {pendingAssignment ? ' — Deal ID ready; click Update to save it.' : ''}
         </span>
       </div>
+      {documentNotice ? <div className="section-body" role="status">{documentNotice}</div> : null}
+
+      {documentSession ? <BlDmsUploadModal rows={documentSession.targets} kind={documentSession.kind}
+        onCancel={() => {
+          const resume = documentSession.continueAssignment
+          setDocumentSession(null)
+          if (resume) setComplianceOpen(true)
+        }}
+        onUploaded={(result) => {
+          const session = documentSession
+          const ids = new Set(session.targets.map(blRowId))
+          const field = session.kind === 'D02' ? 'ZdmsCodeExc' : 'ZtsfDmsCode'
+          setRows((current) => current.map((row) => ids.has(blRowId(row)) ? { ...row, [field]: result.code } : row))
+          setDocumentNotice(result.message)
+          setDocumentReload((token) => token + 1)
+          setDocumentSession(null)
+          if (session.continueAssignment) setAssignOpen(true)
+        }} /> : null}
 
       <ComplianceModal
         open={complianceOpen}
         onCancel={() => setComplianceOpen(false)}
-        onProceed={() => {
+        onProceed={(exception) => {
           setComplianceOpen(false)
+          setWithException(exception)
+          if (exception) {
+            const error = blUploadSelectionError(assignmentTargets)
+            if (error) { setActionError(error); return }
+            setDocumentSession({ kind: 'D02', targets: assignmentTargets, continueAssignment: true })
+            return
+          }
           setAssignOpen(true)
         }}
       />
 
-      {selectedRowsList.length > 0 ? (
+      {assignmentTargets.length > 0 ? (
         <AssignDealModal
-          key={selectedRowsList.map((row) => blRowId(row)).join(',')}
+          key={assignmentTargets.map((row) => blRowId(row)).join(',')}
           open={assignOpen}
-          selectedBlAmount={selectedRowsList.reduce((sum, row) => sum + blAmount(row), 0)}
+          selectedBlAmount={assignmentTargets.reduce((sum, row) => sum + blAmount(row), 0)}
           // Only a still-pending choice for this exact trade flow is offered back; once it's
           // committed, dealAssignments (not this) is what the grid itself reads from.
           initialDealId={
@@ -564,9 +611,9 @@ export function BlDetailsPanel({
             onPendingAssignmentChange({
               // GT Commodity (ZTRM_COM_ID) is the trade flow's own commodity code; the BL carries it
               // to the invoice lines (ZSGTSFTR_BIL_ADJ-ZGT_COMM).
-              details: { ...details, ZtrmComId: String(tradeFlow?.['ZtrmComId'] ?? '').trim() },
+              details: { ...details, ZtrmComId: String(tradeFlow?.['ZtrmComId'] ?? '').trim(), ZblExc: withException ? 'X' : '' },
               tfKey,
-              targets: selectedRowsList.map((row) => ({
+              targets: assignmentTargets.map((row) => ({
                 blId: blRowId(row),
                 bl: {
                   ZblNo: String(row.ZblNo ?? ''),
@@ -575,7 +622,7 @@ export function BlDetailsPanel({
                 },
               })),
               dealId,
-              totalQuantity: selectedRowsList.reduce((sum, row) => sum + (Number(row.Zquantity) || 0), 0),
+              totalQuantity: assignmentTargets.reduce((sum, row) => sum + (Number(row.Zquantity) || 0), 0),
             })
             setAssignOpen(false)
           }}

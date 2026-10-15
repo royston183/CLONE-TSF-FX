@@ -9,6 +9,8 @@ export type DialogProps = {
   footer?: ReactNode
   /** Roughly how wide the dialog should be; it never exceeds the viewport. */
   width?: number
+  /** Keep a committed operation visible until it finishes, including native Escape handling. */
+  closeDisabled?: boolean
 }
 
 /**
@@ -17,7 +19,7 @@ export type DialogProps = {
  * with a div, a global keydown listener and an `inert` toggle, and each console's copy had
  * drifted from the others.
  */
-export function Dialog({ open, onClose, title, children, footer, width = 880 }: DialogProps) {
+export function Dialog({ open, onClose, title, children, footer, width = 880, closeDisabled = false }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -42,15 +44,16 @@ export function Dialog({ open, onClose, title, children, footer, width = 880 }: 
       ref={ref}
       className="slc-dialog"
       style={{ width: `min(${width}px, calc(100vw - 32px))` }}
+      onCancel={(event) => { if (closeDisabled) event.preventDefault() }}
       // Clicking the backdrop closes. The check is against the dialog itself because the
       // backdrop is not a separate node — clicks on children never match.
       onClick={(event) => {
-        if (event.target === ref.current) onClose()
+        if (!closeDisabled && event.target === ref.current) onClose()
       }}
     >
       <div className="slc-dialog__head">
         <h2 className="slc-dialog__title">{title}</h2>
-        <button type="button" className="slc-dialog__close" onClick={onClose} aria-label="Close">
+        <button type="button" className="slc-dialog__close" onClick={onClose} aria-label="Close" disabled={closeDisabled}>
           ×
         </button>
       </div>

@@ -185,7 +185,7 @@ export function withPendingDeals(
 
 /** The Assign Deal popup's Invoice Details that were entered: a blank one never clears a stored value. */
 export function invoiceDetailChanges(details: Readonly<Record<string, string>> | undefined): Record<string, string> {
-  return Object.fromEntries(Object.entries(details ?? {}).filter(([, value]) => String(value ?? '').trim() !== ''))
+  return Object.fromEntries(Object.entries(details ?? {}).filter(([field, value]) => field === 'ZblExc' || String(value ?? '').trim() !== ''))
 }
 
 /** Stored by the middleware or never copied: the client, the audit stamps. */

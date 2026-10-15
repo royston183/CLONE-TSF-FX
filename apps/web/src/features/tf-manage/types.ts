@@ -142,6 +142,8 @@ export type BlInvoiceDetails = {
   Zinco: string
   ZexcNotes: string
   ZtrmComId: string
+  /** Explicitly blank for normal compliance, X for Yes With Exception. */
+  ZblExc?: string
 }
 
 /**
@@ -165,6 +167,9 @@ export type BlRow = {
   ZblStatId?: string
   ZblStat?: string
   ZblDate?: string
+  ZtsfDmsCode?: string
+  ZdmsCodeExc?: string
+  ZblExc?: string
   /**
    * Set only on a row Create BL or BL Split added on screen and not yet saved. It identifies
    * the row until Update writes it; a created row has no BL ID before then, since the SNRO range

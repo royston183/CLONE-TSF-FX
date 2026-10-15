@@ -5,6 +5,7 @@ import { mwCreate, mwList, mwUpdate } from '../../shared/middleware.ts'
 import { dealAssignedTotals, invoiceDetailChanges } from './bl.ts'
 import type { BlSavePlan } from './bl.ts'
 import type { BlInvoiceDetails, BlKey, BlRow, TrdFlowKey, TrdFlowRow } from './types.ts'
+import { defaultDeps as dmsDeps } from '../../shared/fx/dms.ts'
 
 const tfApi = service('tf')
 
@@ -204,7 +205,7 @@ export type BlDocumentRow = {
   description: string
 }
 
-type BlDmsRow = { ZblNo?: string; ZtsfDmsCode?: string; ZstndDms?: string }
+type BlDmsRow = { ZblNo?: string; ZtsfDmsCode?: string; ZstndDms?: string; typeHint?: string }
 type TsfDmsRow = {
   ZtsfDmsCode?: string
   ZstndDms?: string
@@ -229,36 +230,49 @@ export function joinBlDocuments(
   types: readonly DmsTypeRow[],
 ): BlDocumentRow[] {
   const typeText = new Map(types.map((t) => [`${s(t.ZdmsCat)}|${s(t.ZdmsType)}`, s(t.ZdmsDesc) || s(t.ZdmsDdesc)]))
-  return links.flatMap((link) => {
+  const all = links.flatMap((link) => {
     const code = s(link.ZtsfDmsCode)
     const standard = s(link.ZstndDms)
-    const docs = documents.filter((d) => s(d.ZtsfDmsCode) === code && (!standard || s(d.ZstndDms) === standard))
+    const alpha = (v: string) => v.replace(/^0+(?=\d)/, '')
+    const docs = documents.filter((d) => code && s(d.ZtsfDmsCode) === code || standard && alpha(s(d.ZstndDms)) === alpha(standard))
     const base = { blNo: s(link.ZblNo), dmsCode: code, standardDms: standard }
     if (docs.length === 0) return [{ ...base, name: '', extension: '', typeText: '', description: '' }]
     return docs.map((d) => ({
-      ...base,
+      ...base, dmsCode: s(d.ZtsfDmsCode) || code, standardDms: s(d.ZstndDms) || standard,
       name: s(d.ZdocName),
       extension: s(d.ZdocExtn),
-      typeText: typeText.get(`${s(d.ZdmsCat)}|${s(d.ZdocType)}`) || s(d.ZdocType),
+      typeText: typeText.get(`${s(d.ZdmsCat) || '01'}|${s(d.ZdocType) || link.typeHint || ''}`) || s(d.ZdocType),
       description: s(d.ZdocDesc),
     }))
   })
+  return [...new Map(all.map((row) => [`${row.blNo}|${row.dmsCode}|${row.standardDms}`, row])).values()]
 }
 
 /**
  * The documents of the given BLs. MySQL only: no SAP OData set exposes the DMS tables, so a
  * failure is reported rather than masked by a fallback that does not exist.
  */
-export async function loadBlDocuments(blNos: readonly string[], signal?: AbortSignal): Promise<BlDocumentRow[]> {
+export async function loadBlDocuments(blNos: readonly string[], signal?: AbortSignal, blRows: readonly BlRow[] = []): Promise<BlDocumentRow[]> {
   const unique = [...new Set(blNos.map(s).filter(Boolean))]
   if (unique.length === 0) return []
-  const links = (await Promise.all(unique.map((ZblNo) => mwList<BlDmsRow>('blDocument', { ZblNo }, signal)))).flat()
+  const links: BlDmsRow[] = [
+    ...(await Promise.all(unique.map((ZblNo) => mwList<BlDmsRow>('blDocument', { ZblNo }, signal)))).flat(),
+    ...blRows.flatMap((row) => [
+      ...(row.ZtsfDmsCode ? [{ ZblNo: String(row.ZblNo ?? ''), ZtsfDmsCode: row.ZtsfDmsCode, typeHint: 'D01' }] : []),
+      ...(row.ZdmsCodeExc ? [{ ZblNo: String(row.ZblNo ?? ''), ZtsfDmsCode: row.ZdmsCodeExc, typeHint: 'D02' }] : []),
+    ]),
+  ]
   if (links.length === 0) return []
   const codes = [...new Set(links.map((l) => s(l.ZtsfDmsCode)).filter(Boolean))]
-  const [documents, types] = await Promise.all([
-    Promise.all(codes.map((ZtsfDmsCode) => mwList<TsfDmsRow>('tsfDocument', { ZtsfDmsCode }, signal))).then((r) => r.flat()),
-    mwList<DmsTypeRow>('dmsType', undefined, signal).catch(() => [] as DmsTypeRow[]),
+  const standards = [...new Set(links.map((l) => s(l.ZstndDms)).filter(Boolean))]
+  const [documents, rawTypes] = await Promise.all([
+    Promise.all([
+      ...codes.map((ZtsfDmsCode) => mwList<TsfDmsRow>('tsfDocument', { ZtsfDmsCode }, signal)),
+      ...standards.map((ZstndDms) => mwList<TsfDmsRow>('tsfDocument', { ZstndDms }, signal)),
+    ]).then((r) => r.flat()),
+    dmsDeps.list('dmsType', { ZDMS_CAT: '01' }),
   ])
+  const types: DmsTypeRow[] = rawTypes.map((r) => ({ ZdmsCat: r['ZDMS_CAT'] ?? '', ZdmsType: r['ZDMS_TYPE'] ?? '', ZdmsDesc: r['ZDMS_DESC'] ?? '', ZdmsDdesc: r['ZDMS_DDESC'] ?? '' }))
   return joinBlDocuments(links, documents, types)
 }
 
