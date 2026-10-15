@@ -253,7 +253,6 @@ export default function BoReverseFxMtmIndia() {
               </svg>
               <div className="title-wrap">
                 <span className="page-title">Reverse FX MTM</span>
-                <span className="subtitle">India / INR</span>
               </div>
             </div>
           </div>

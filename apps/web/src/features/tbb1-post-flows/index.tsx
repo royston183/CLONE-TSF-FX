@@ -293,7 +293,6 @@ export default function Tbb1PostFlows() {
           <img className="logo-img" src={BRAND_LOGO} alt="Fourth Signal" />
           <div className="header-text">
             <h1>Post Flows</h1>
-            <p>Treasury: Post Flows &middot; TBB1</p>
           </div>
           <div className="header-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary" type="button" title="Restore the selection screen and re-read the value helps from SAP" onClick={onRefresh}>

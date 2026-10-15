@@ -165,7 +165,6 @@ export default function MoDealIdInvoiceStatus() {
         </div>
         <div className="title-wrap">
           <h1>Deal ID Invoice Status</h1>
-          <span className="title-sub">FX</span>
         </div>
         <div className="header-actions">
           <button className="header-btn" type="button" onClick={refreshAll}>

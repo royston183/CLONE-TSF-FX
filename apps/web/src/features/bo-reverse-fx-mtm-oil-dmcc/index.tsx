@@ -260,7 +260,6 @@ export default function BoReverseFxMtmOilDmcc() {
               </svg>
               <div className="title-wrap">
                 <span className="page-title">Reverse FX MTM</span>
-                <span className="subtitle">OIL / OGA / DMCC (USD)</span>
               </div>
             </div>
           </div>

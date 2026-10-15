@@ -34,7 +34,7 @@ export function ModalFrame({
 }: {
   open: boolean
   onClose: () => void
-  size?: 'wide' | 'narrow'
+  size?: 'wide' | 'narrow' | 'compact'
   icon: ReactNode
   title: ReactNode
   subtitle: ReactNode

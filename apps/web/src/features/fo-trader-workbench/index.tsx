@@ -279,7 +279,6 @@ export default function FoTraderWorkbench() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Trader Workbench</h1>
-            <p>Settle FX deals, options and NDFs</p>
           </div>
           <div className="header-actions">
             <button className="btn btn-secondary" type="button" title="Reload the workbench and reset all demo changes" onClick={refreshWorkbench}>

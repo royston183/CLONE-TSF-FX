@@ -367,7 +367,6 @@ export default function MoFxDealConfirmation() {
           </div>
           <div className="app-title">
             FX Deal Confirmation - FX&amp;Options
-            <small>Review, match and release FX &amp; Options deal confirmations</small>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <SignOutButton className="btn btn-secondary" />

@@ -170,7 +170,6 @@ export default function MoExecuteSettlementDealId() {
   const [dealIdInput, setDealIdInput] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [selError, setSelError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
   const [list, setList] = useState<DealList | null>(null)
   const loadCtrl = useRef<AbortController | null>(null)
   const [mainShown, setMainShown] = useState(false)
@@ -266,7 +265,6 @@ export default function MoExecuteSettlementDealId() {
     loadCtrl.current?.abort()
     const ctrl = new AbortController()
     loadCtrl.current = ctrl
-    setLoading(true)
     try {
       const screen = await loadDealScreen(id, ctrl.signal)
       if (!screen) {
@@ -288,8 +286,6 @@ export default function MoExecuteSettlementDealId() {
     } catch (error) {
       if (isAbort(error)) return null
       setSelError(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read: ${messageOf(error)}`)
-    } finally {
-      if (loadCtrl.current === ctrl) setLoading(false)
     }
     return null
   }, [])
@@ -457,7 +453,6 @@ export default function MoExecuteSettlementDealId() {
         <div className="head-badge"></div>
         <div className="title-wrap">
           <div className="page-title">Execute Settlement for Deal ID</div>
-          <span className="page-code">ZSGTSF_RDEAL_TRD_INV &middot; R060</span>
         </div>
         <div className="head-actions">
           <span className="live-dot" title="Connected"></span>
@@ -487,7 +482,6 @@ export default function MoExecuteSettlementDealId() {
           <div className="panel-body">
             <div className="select-row">
               <div className="select-field">
-                <span className="select-icon">&#128269;</span>
                 <input
                   id="selDealId"
                   ref={dealInputRef}
@@ -512,14 +506,6 @@ export default function MoExecuteSettlementDealId() {
                     : null}
                 </datalist>
               </div>
-              <button
-                className="btn-primary-inline"
-                type="button"
-                disabled={loading}
-                onClick={() => void executeSelection(dealIdInput)}
-              >
-                Go
-              </button>
               <ViewDealsButton onClick={() => setPickerOpen(true)} />
             </div>
             <div className={selError || list?.state === 'unavailable' ? 'select-err show' : 'select-err'} id="selErr">

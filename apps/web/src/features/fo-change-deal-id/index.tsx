@@ -427,9 +427,6 @@ export default function FoChangeDealId() {
             <img className="logo-mark" alt="FS logo" src={FS_SHORT_LOGO} />
             <div className="header-text">
               <h1>FO: Change Deal ID</h1>
-              <p>
-                Deal ID analysis &amp; maintenance <span className="subcode">· ZSGTSFP013</span>
-              </p>
             </div>
           </div>
           <div className="header-actions">

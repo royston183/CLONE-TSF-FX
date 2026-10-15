@@ -209,7 +209,6 @@ export default function FoNdfFixingErrorCorrection() {
             <span className="l4" />
           </div>
           <div className="page-title">AE1: TSF FO Error Correction - NDF Fixing</div>
-          <div className="page-tag">FO</div>
         </div>
         <div className="header-right">
           <div className="header-status" title="Application ready" />

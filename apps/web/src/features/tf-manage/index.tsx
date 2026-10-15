@@ -343,7 +343,6 @@ export default function TfManageApp() {
             <BackButton className="hdr-btn" />
             <img className="ds-mark" alt="Fourth Signal" src={BRAND_LOGO} />
             <div className="app-title">Manage Trade Flows</div>
-            <span className="ds-code">TF</span>
           </div>
           <div className="ds-header-right">
             <span className="ds-conn" title="System connected" />

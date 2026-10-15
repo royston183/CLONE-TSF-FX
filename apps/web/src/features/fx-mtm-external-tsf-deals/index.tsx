@@ -268,7 +268,6 @@ export default function FxMtmExternalTsfDeals() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>FX MTM - External and TSF Deals</h1>
-            <p>Month-end mark-to-market valuation and FI posting for external and TSF FX deals</p>
           </div>
           <div className="header-actions">
             <BackButton className="btn btn-secondary" />

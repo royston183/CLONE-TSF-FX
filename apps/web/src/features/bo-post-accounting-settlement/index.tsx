@@ -407,9 +407,6 @@ export default function BoPostAccountingSettlement() {
         <img className="head-icon" src={COMPANY_LOGO} alt="Company logo" />
         <div className="title-wrap">
           <div className="page-title">BO: Post Accounting Entries for Settlement</div>
-          <div className="page-subtitle">
-            Transaction ZSGTSFR081 · Settle the FX deal and trade invoice legs for a single Deal ID
-          </div>
         </div>
         <div className="head-actions">
           <button type="button" className="btn-outline" title="Deal ID documents (DMS)" disabled={!deal} onClick={() => setDmsOpen(true)}>
@@ -444,7 +441,6 @@ export default function BoPostAccountingSettlement() {
           <div className="panel-body">
             <div className="search-row">
               <div className="search-box">
-                <span className="icon">{'🔍'}</span>
                 <input
                   type="text"
                   placeholder="Enter Deal ID..."

@@ -236,7 +236,6 @@ export default function InrHeadsUpReminder() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>MO: INR Head-Ups Reminder</h1>
-            <p>View deals due for heads-up and send reminder mails</p>
           </div>
           <div className="header-actions">
             <BackButton className="btn btn-secondary" />

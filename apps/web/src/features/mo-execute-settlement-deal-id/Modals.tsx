@@ -570,6 +570,7 @@ export function InvPostModal({
     <ModalFrame
       open={open}
       onClose={onClose}
+      size="compact"
       icon={<>&#129534;</>}
       title={<>Trade Invoice Settlement</>}
       subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; maintain the banking details and settle the leg</>}
@@ -585,7 +586,7 @@ export function InvPostModal({
         </>
       }
     >
-      <div className="form-grid">
+      <div className="form-grid three">
         <div className="ffield">
           <label>Value Date</label>
           <input type="text" disabled readOnly value={form.date} />
@@ -599,9 +600,9 @@ export function InvPostModal({
           <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.fiDoc} />
         </div>
       </div>
-      <div className="fbox" style={{ marginTop: '12px' }}>
+      <div className="fbox" style={{ marginTop: '10px', marginBottom: 0 }}>
         <div className="fbox-title">Sender / Receiver Details</div>
-        <div className="form-grid">
+        <div className="form-grid three">
           <div className="ffield">
             <label>Sender / Payer</label>
             <input type="text" disabled readOnly value={form.sender} />
@@ -638,10 +639,10 @@ export function InvPostModal({
           ) : null}
         </div>
       </div>
-      <div className="ffield" style={{ marginTop: '12px' }}>
+      <div className="ffield" style={{ marginTop: '10px' }}>
         <label>Doc Msg</label>
         <textarea
-          rows={2}
+          rows={1}
           placeholder="posting narration"
           value={form.docMsg}
           onChange={(e) => onField('docMsg', e.target.value)}

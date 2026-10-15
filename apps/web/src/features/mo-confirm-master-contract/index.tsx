@@ -380,7 +380,6 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
         <img className="head-icon" src={BRAND_LOGO} alt="Fourth Signal" />
         <div className="title-wrap">
           <div className="page-title">MO: Confirm Master Contract</div>
-          <div className="page-subtitle">Review Master Contracts released by Front Office, then confirm or reject them</div>
         </div>
         <div className="head-actions">
           <button className="btn-outline" type="button" title="Reload data" onClick={onRefresh}>

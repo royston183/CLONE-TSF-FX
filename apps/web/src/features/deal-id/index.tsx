@@ -286,7 +286,7 @@ export default function DealIdApp() {
             <BackButton />
             <img className="mark" alt="Fourth Signal" src={BRAND_LOGO} />
             <div className="title">
-              Deal ID Creation<small>ZFS_SB_DEALID_O4_API</small>
+              Deal ID Creation
             </div>
           </div>
           <div className="actions">
