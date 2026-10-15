@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
+import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import { demoKey, finishDemo, nextDemoDoc, postDemo, restoreDemo } from './demo.ts'
 import { markAccountingComplete } from './accounting.ts'
@@ -62,6 +63,7 @@ export default function BoPostAccountingSettlement() {
   const [suggestError, setSuggestError] = useState('')
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [suggestIdx, setSuggestIdx] = useState(-1)
+  const [pickerOpen, setPickerOpen] = useState(false)
   useEffect(() => {
     const ctrl = new AbortController()
     loadDealSuggestions(ctrl.signal)
@@ -504,16 +506,7 @@ export default function BoPostAccountingSettlement() {
                   </ul>
                 )}
               </div>
-              <button
-                type="button"
-                className="btn-go"
-                onClick={() => {
-                  setSuggestOpen(false)
-                  void load(dealInput)
-                }}
-              >
-                Go
-              </button>
+              <ViewDealsButton onClick={() => setPickerOpen(true)} />
             </div>
           </div>
         </div>
@@ -590,6 +583,19 @@ export default function BoPostAccountingSettlement() {
       />
       {deal ? <DealDmsModal open={dmsOpen} onClose={() => setDmsOpen(false)} dealId={deal.dealId} /> : null}
       <DocPreviewModal open={modal === 'doc'} preview={preview} deal={deal} onClose={closeAll} />
+      {pickerOpen ? (
+        <DealPickerModal
+          columns={['Deal ID', 'FX Model', 'Status']}
+          rows={suggestions.map((s) => ({ dealId: s.dealId, cells: [s.dealId, s.model, s.statusText], text: `${s.dealId} ${s.model} ${s.statusText}` }))}
+          emptyText={suggestError || 'No matching Deal IDs found.'}
+          hint="Click a deal row to load it."
+          onClose={() => setPickerOpen(false)}
+          onPick={(id) => {
+            setPickerOpen(false)
+            pickSuggestion(id)
+          }}
+        />
+      ) : null}
 
       <div className={`zfac-toast${toast.show ? ' show' : ''}${toast.show && toast.kind ? ` ${toast.kind}` : ''}`}>
         {toast.message}

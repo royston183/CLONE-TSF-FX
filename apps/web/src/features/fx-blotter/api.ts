@@ -1,5 +1,6 @@
 import { ApiError, apiFetch, apiRequest, createEntity, entityPath, list, odataString, service } from '@slc/api-client'
 import { ENTITIES, SPOT_TXN_TYPES, TRANSACTION_TYPES, entityOf, pairOf } from './data.ts'
+import { roundToCurrency } from '../../shared/fx/currency-decimals.ts'
 import { extendCreatePayload } from './extendedFields.ts'
 import { parseAmount, parseUiDate, toISO } from './format.ts'
 import type { AutoSpotForm, BlotterRow, BusinessPartner, Num } from './types.ts'
@@ -86,6 +87,9 @@ export type FxTransaction = {
   SpotRate?: number | string
   SwapRate?: number | string
   ForwardRate?: number | string
+  /** NDF only: the fixing date and reference the deal was created with. */
+  NdfFixingDate?: string | null
+  FixingReferenceId?: string | null
   /** '0' for a live deal; a reversed one comes back as '3' (seen after DELETE) and stays in the list. */
   ActiveStatus?: string
 }
@@ -97,8 +101,8 @@ const n = (v: unknown): number => {
   return Number.isFinite(x) ? x : 0
 }
 const num = (v: Num): number => (v === '' ? 0 : v)
-/** Amounts go out with the four decimals the service stores, not with floating-point noise. */
-const money = (v: Num): number => Math.round(num(v) * 10000) / 10000
+/** Amounts go out with the decimals of their own currency (INR 2, JPY 0, ...): the FTR BAPI refuses more places, and a rate-derived amount carries four. */
+const money = (v: Num, currency: string): number => roundToCurrency(num(v), currency)
 
 /** What an error message calls a row: its draft label, else its Auto Deal leg name. */
 const rowLabel = (r: BlotterRow): string => r.draftLabel || r.dealType || 'Row'
@@ -170,8 +174,8 @@ function dealBody(f: DealFields): Record<string, unknown> {
     ValueDate: toISO(f.valueDate),
     BuyCurrency: f.buyCurrency,
     SellCurrency: f.sellCurrency,
-    BuyAmount: money(f.buyAmount),
-    SellAmount: money(f.sellAmount),
+    BuyAmount: money(f.buyAmount, f.buyCurrency),
+    SellAmount: money(f.sellAmount, f.sellCurrency),
     LeadCurrency: lead,
     FollowCurrency: follow,
     TradedCurrency: f.tradedCurrency,
@@ -309,8 +313,8 @@ export function fromFxTransaction(
       swapPoints: n(d.SwapRate) * 100,
       totalRate: n(d.ForwardRate),
       valueDate: parseDay(d.ValueDate),
-      ndfDate: null,
-      ndfRef: '',
+      ndfDate: parseDay(d.NdfFixingDate),
+      ndfRef: d.FixingReferenceId ?? '',
       portfolio: '',
       assignment: '',
       profitCenter: entity.defaultProfitCenter,

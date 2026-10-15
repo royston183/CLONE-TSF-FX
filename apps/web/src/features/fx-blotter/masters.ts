@@ -1,4 +1,4 @@
-import { ApiError } from '@slc/api-client'
+import { ApiError, list, odataString, service } from '@slc/api-client'
 import { replaceInPlace, txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { dateFromIso, num } from '../../shared/fx/sap.ts'
@@ -267,12 +267,45 @@ export async function loadContractUsage(mcRefs: readonly string[], signal?: Abor
     .filter((a) => a.ZtsfMcRefNo && a.CompanyCode && a.FinancialTransaction)
     .map((a) => ({ mcRef: (a.ZtsfMcRefNo ?? '').trim(), companyCode: a.CompanyCode, transaction: a.FinancialTransaction }))
   if (!legs.length) return {}
-  const deals: FxRow[] = []
   const transactions = unique(legs.map((l) => l.transaction))
-  for (let i = 0; i < transactions.length; i += 100) {
-    deals.push(...(await read('tsfvFx', { 'RFHA[in]': transactions.slice(i, i + 100).join(',') }, signal)))
+  let deals: FxRow[]
+  try {
+    deals = await loadLegAmounts(transactions, signal)
+  } catch (error) {
+    if (isAbort(error)) throw error
+    throw new MasterLoadError('FxTransaction (Master Contract usage)', error)
   }
   return sumContractUsage(legs, deals)
+}
+
+const FX = service('fx')('FxTransaction')
+
+/**
+ * The amounts of the given transactions, read from SAP's FxTransaction in the row shape sumContractUsage takes.
+ * ZSGTSFV_FX (middleware "tsfvFx") is the legacy source but holds no rows here, so every leg found no amount and
+ * a contract always showed its full balance. A deal's two sides are its buy and sell currency and amount.
+ */
+export async function loadLegAmounts(transactions: readonly string[], signal?: AbortSignal): Promise<FxRow[]> {
+  const out: FxRow[] = []
+  for (let i = 0; i < transactions.length; i += 40) {
+    const filter = transactions.slice(i, i + 40).map((t) => `FinancialTransaction eq ${odataString(t)}`).join(' or ')
+    const rows = await list<{ CompanyCode: string; FinancialTransaction: string; BuyCurrency?: string; SellCurrency?: string; BuyAmount?: number | string; SellAmount?: number | string }>(
+      FX,
+      { filter, top: 1000 },
+      signal ? { signal } : undefined,
+    )
+    for (const d of rows) {
+      out.push({
+        BUKRS: d.CompanyCode,
+        RFHA: d.FinancialTransaction,
+        CURR1: d.BuyCurrency ?? '',
+        AMT1: String(d.BuyAmount ?? ''),
+        CURR2: d.SellCurrency ?? '',
+        AMT2: String(d.SellAmount ?? ''),
+      })
+    }
+  }
+  return out
 }
 
 // ---------------------------------------------------------------- loading
