@@ -1,5 +1,6 @@
 import { daysInMonth, leadingBlanks } from './logic.ts'
 import { MONTH_ABBR, fmtDate, parseDate } from './format.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
@@ -49,9 +50,7 @@ export function DateBox({
               <button type="button" onClick={() => onNav(-1)}>
                 &#8249;
               </button>
-              <span className="dp-month-label">
-                {MONTH_ABBR[viewMonth]} {viewYear}
-              </span>
+              <CalendarSelects year={viewYear} month={viewMonth} onChange={(y, m) => onNav((y - viewYear) * 12 + (m - viewMonth))} />
               <button type="button" onClick={() => onNav(1)}>
                 &#8250;
               </button>

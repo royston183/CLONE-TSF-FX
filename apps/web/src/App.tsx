@@ -4,6 +4,7 @@ import { AppShell, Button, EmptyState, Spinner, ToastProvider } from '@slc/ui'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ThemeProvider } from './shared/ThemeContext.tsx'
 import { SelectSearch } from './shared/SelectSearch.tsx'
+import { DatalistSuggest } from './shared/DatalistSuggest.tsx'
 import { LoginPage } from './auth/LoginPage.tsx'
 import { RequireAuth } from './auth/RequireAuth.tsx'
 import { MenuPage } from './menu/MenuPage.tsx'
@@ -11,6 +12,7 @@ import { FEATURES } from './features/registry.ts'
 import './app.css'
 import './shared/fx/alm-theme.css'
 import './shared/fx/office-theme.css'
+import './shared/fx/tf-theme.css'
 import './shared/master-contract/design.css'
 
 // First ALM styling pass: the implemented FX Master Contract / Front Office routes.
@@ -50,6 +52,8 @@ const ALM_FX_OFFICE_FEATURES = new Set([
   'bo-reverse-fx-mtm-oil-dmcc',
   'bo-reverse-fx-mtm-other-origins',
   'bo-reverse-fx-mtm-india',
+  'tf-upload',
+  'tf-manage',
 ])
 
 /**
@@ -63,6 +67,7 @@ export function App() {
       <ThemeProvider>
         {/* Adds a search box to every native <select> in every screen. */}
         <SelectSearch />
+        <DatalistSuggest />
         <AuthProvider>
           <ToastProvider>
             <Routes>

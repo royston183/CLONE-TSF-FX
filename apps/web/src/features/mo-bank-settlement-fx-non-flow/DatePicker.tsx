@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MONTH_ABBR, fmtDate, parseDMY } from './format.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 const DOW_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
@@ -58,9 +59,7 @@ export function DatePicker({
               <button type="button" onClick={() => setView(new Date(y, m - 1, 1))}>
                 ‹
               </button>
-              <span className="dp-month-label">
-                {MONTH_ABBR[m]} {y}
-              </span>
+              <CalendarSelects year={y} month={m} onChange={(year, month) => setView(new Date(year, month, 1))} />
               <button type="button" onClick={() => setView(new Date(y, m + 1, 1))}>
                 ›
               </button>

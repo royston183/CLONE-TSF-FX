@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { MONTH_NAMES, formatDMY, parseDMY } from './format.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -75,9 +76,7 @@ export function FixingDateField({
           <button type="button" className="cal-nav-btn" id="calPrev" onClick={() => setView(new Date(y, m - 1, 1))}>
             &#8249;
           </button>
-          <span className="cal-title">
-            {MONTH_NAMES[m]} {y}
-          </span>
+          <CalendarSelects year={y} month={m} onChange={(year, month) => setView(new Date(year, month, 1))} />
           <button type="button" className="cal-nav-btn" id="calNext" onClick={() => setView(new Date(y, m + 1, 1))}>
             &#8250;
           </button>

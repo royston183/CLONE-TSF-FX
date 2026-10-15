@@ -101,3 +101,76 @@
   #alm-fx-ui[data-office] :is(.app-title, .header-title) { font-size: 21px; }
 }
 #alm-fx-ui[data-office] .mo-confirm-fx-deal-id-ss .combo { max-width: 100%; min-width: 0; }
+
+/* ---- Inputs that carry an icon: keep the typed text clear of it ----
+ * The shared control rule above resets padding, which put search icons and calendar
+ * buttons on top of the text. Leading icons get a left inset, trailing icons a right one.
+ */
+#alm-fx-ui[data-office] :is(svg, .icon, .select-icon, .search-icon, .combo-icon, .input-icon) ~ input:not([type=checkbox]):not([type=radio]) { padding-left: 34px; }
+#alm-fx-ui[data-office] :is(.search-box, .search-wrap, .select-field, .search-field):has(:is(svg, .icon, .select-icon, .search-icon)) input:not([type=checkbox]):not([type=radio]) { padding-left: 34px; }
+#alm-fx-ui[data-office] :is(.date-field, .date-wrap, .date-picker, .date-cell, .dp) > input { padding-right: 30px; text-overflow: clip; }
+#alm-fx-ui[data-office] :is(.date-field, .date-wrap, .date-picker, .dp) > input { min-width: 118px; }
+#alm-fx-ui[data-office] .combo > input { padding-right: 30px; }
+#alm-fx-ui[data-office] :is(.date-icon, .date-icon-btn, .calendar-trigger, .calendar-btn, .dp-btn, .date-trigger) { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ---- One calendar, every date field ----
+ * Popup, month/year header and day grid share a single look. The popups are positioned
+ * by each screen's own script, so only paint, spacing and the header are set here.
+ */
+#alm-fx-ui[data-office] :is(.calendar-pop, .calendar-popup, .calendar-popover, .date-cell .calendar, .date-popup, .dp-popup) {
+  box-sizing: border-box; width: 272px; max-width: calc(100vw - 16px); padding: 10px;
+  background: var(--alm-surface); color: var(--alm-text);
+  border: 1px solid var(--alm-line); border-radius: 10px; box-shadow: var(--alm-popup-shadow);
+  font: 13px/1.35 var(--alm-font); z-index: 1000;
+}
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) {
+  display: flex; align-items: center; justify-content: flex-start; gap: 5px;
+  margin: 0 0 8px; padding: 0; background: none; border: 0; min-height: 32px;
+}
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) > button {
+  flex: 0 0 26px; width: 26px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: var(--alm-pale); color: var(--alm-blue);
+  font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer;
+}
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) > button:hover { filter: brightness(.95); }
+#alm-fx-ui[data-office] :is(.cal-selects, .cal-sels, .oc-selects) { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 5px; }
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) select {
+  appearance: none; -webkit-appearance: none; box-sizing: border-box; height: 32px; min-height: 32px; margin: 0;
+  padding: 0 22px 0 10px; border: 1px solid var(--alm-input-line); border-radius: 8px;
+  background-color: var(--alm-surface); color: var(--alm-heading);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2367768c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  font: 600 13px/1 var(--alm-font); text-overflow: clip; cursor: pointer; width: auto; max-width: none;
+}
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) select:is(.cal-month, .oc-month, [aria-label=Month], [data-role=month]) { flex: 1 1 auto; min-width: 104px; }
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) select:is(.cal-year, .oc-year, [aria-label=Year], [data-role=year]) { flex: 0 0 72px; min-width: 72px; }
+#alm-fx-ui[data-office] :is(.cal-head, .cal-header, .calendar-head, .dp-head) select:is(:focus, :focus-visible) {
+  outline: none; border-color: var(--alm-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--alm-blue) 30%, transparent);
+}
+#alm-fx-ui[data-office] :is(.cal-grid, .dp-grid, .cal-days, .cal-week) { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+#alm-fx-ui[data-office] :is(.cal-dow, .dow, .dp-dow, .cal-weekday) {
+  height: 24px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--alm-muted); background: none;
+}
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day) {
+  box-sizing: border-box; width: auto; height: 30px; min-width: 0; padding: 0; display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 6px; background: none; color: var(--alm-text);
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+}
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day):hover:not(.selected):not(.empty):not(.blank) { background: var(--alm-pale); }
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day):is(.muted, .out) { color: var(--alm-muted); opacity: .55; }
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day):is(.empty, .blank) { visibility: hidden; cursor: default; }
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day).today:not(.selected) { border-color: var(--alm-blue); color: var(--alm-blue); font-weight: 700; }
+#alm-fx-ui[data-office] :is(.cal-day, .day, .dp-day).selected { background: var(--alm-button); border-color: var(--alm-button); color: #fff; font-weight: 700; opacity: 1; }
+
+/* ---- Headings that carry a record count, and narrow selects ---- */
+#alm-fx-ui[data-office] :is(.table-heading, .table-title, .table-title-row, .card-head, .section-head) :is(.record-count, .rec-count, .count) { margin-left: 8px; }
+#alm-fx-ui[data-office] select { text-overflow: ellipsis; }
+#alm-fx-ui[data-office] select#filterCoArea { min-width: 136px; }
+#alm-fx-ui[data-office] :is(.select-wrap, .select-field, .sel-wrap) > select { padding-right: 28px; }
+#alm-fx-ui[data-office] :is(.back-btn, .header-btn, .hdr-btn, .icon-text-btn, .btn-outline-hd) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+@media (max-width: 750px) {
+  #alm-fx-ui[data-office] :is(.search-box, .search-wrap, .search-field):has(> .search-input), #alm-fx-ui[data-office] .search-input { min-width: 200px; }
+  #alm-fx-ui[data-office] :is(.table-heading, .table-title, .table-title-row, .app-title, .header-title, .brand-title) { white-space: normal; min-width: 0; overflow-wrap: anywhere; }
+  #alm-fx-ui[data-office] .record-count { display: inline-block; }
+}
