@@ -247,7 +247,6 @@ export default function TsfNdfFixing() {
           </div>
           <div className="titlewrap">
             <div className="title">UA1: TSF NDF Fixing</div>
-            <div className="subtitle">NDF deals released for fixing (status 07)</div>
           </div>
           <div className="spacer" />
           <div className="actions">

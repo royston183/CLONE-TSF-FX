@@ -288,7 +288,6 @@ export default function MoConfirmNdfFixing() {
           </div>
           <div>
             <div className="app-title">TSF MO - Confirm NDF Fixing</div>
-            <div className="app-subtitle">Treasury &middot; MO Confirmation</div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <SignOutButton className="btn btn-secondary" />

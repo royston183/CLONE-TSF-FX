@@ -376,6 +376,8 @@ export function BlDetailsPanel({
                       // it is, this row alone locks; every other still-unassigned row is
                       // unaffected.
                       const editable = committedDealId(row).trim() === ''
+                      const blNumber =
+                        String(row.Zblno ?? '').trim() || String(tfBlNumber ?? '').trim() || String(row.ZblNo ?? '').trim()
                       return (
                         <tr key={id} data-blid={row.ZblNo}>
                           <td>
@@ -394,11 +396,11 @@ export function BlDetailsPanel({
                                 type="text"
                                 className="bl-inline-input bl-inline-text"
                                 aria-label={`BL Number for BL ${row.ZblNo}`}
-                                value={row.Zblno ?? ''}
+                                value={blNumber}
                                 onChange={(event) => onTextInput(id, 'Zblno', event.target.value)}
                               />
                             ) : (
-                              String(row.Zblno ?? '').trim() || String(tfBlNumber ?? '').trim()
+                              blNumber
                             )}
                           </td>
                           <td>
@@ -593,7 +595,7 @@ export function BlDetailsPanel({
 
       {assignmentTargets.length > 0 ? (
         <AssignDealModal
-          key={assignmentTargets.map((row) => blRowId(row)).join(',')}
+          key={`assign-${assignmentTargets.map((row) => blRowId(row)).join(',')}`}
           open={assignOpen}
           selectedBlAmount={assignmentTargets.reduce((sum, row) => sum + blAmount(row), 0)}
           // Only a still-pending choice for this exact trade flow is offered back; once it's
@@ -631,7 +633,7 @@ export function BlDetailsPanel({
 
       {targetRow ? (
         <BlSplitModal
-          key={blRowId(targetRow)}
+          key={`split-${blRowId(targetRow)}`}
           open={splitOpen}
           blId={String(targetRow.ZblNo ?? '')}
           nextSplitId={nextBlSplitId(rows, String(targetRow.ZblNo ?? ''))}

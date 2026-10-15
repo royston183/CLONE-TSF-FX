@@ -282,7 +282,6 @@ function WorkbenchScreen({
         </div>
         <div className="title-wrap">
           <div className="page-title">Deal ID Analysis</div>
-          <div className="page-sub">FO · Create Deal ID Manually</div>
         </div>
         <div className="top-actions">
           <button className="btn primary" type="button" onClick={() => setCreateOpen(true)}>

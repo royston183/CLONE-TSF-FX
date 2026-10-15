@@ -306,7 +306,6 @@ export default function FoAdditionalSpotBooking() {
                 <span className="k" />
               </div>
               <div className="brand-title">Additional Spot Booking</div>
-              <div className="brand-sub">SPOT</div>
             </div>
           </div>
           <div className="header-right">

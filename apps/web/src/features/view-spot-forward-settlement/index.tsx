@@ -230,10 +230,6 @@ export default function ViewSpotForwardSettlement() {
         <img className="head-badge" src={FX_LOGO} alt="Company logo" />
         <div className="title-wrap">
           <div className="page-title">View Spot-Forward Deals Settlement</div>
-          <div className="page-subtitle">
-            FX deals due for settlement on a value date (or date range) &middot; actual settlement happens when the FX
-            Deal and its Trade Invoices settle together
-          </div>
         </div>
         <div className="head-actions">
           <span className="tcode-pill">ZSGTSFR062</span>

@@ -255,7 +255,6 @@ export default function BoReverseFxMtmOtherOrigins() {
               </svg>
               <div className="title-wrap">
                 <span className="page-title">Reverse FX MTM</span>
-                <span className="subtitle">Other Origins</span>
               </div>
             </div>
           </div>

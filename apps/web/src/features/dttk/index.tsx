@@ -494,7 +494,7 @@ export default function DttkApp() {
             <BackButton />
             <img className="mark" alt="Fourth Signal" src={BRAND_LOGO} />
             <div className="title">
-              Distribution Ticket <small>DTTK</small>
+              Distribution Ticket
             </div>
           </div>
           <div className="actions">

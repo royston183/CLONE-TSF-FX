@@ -206,7 +206,6 @@ export function DealWorkspace({
         </div>
         <div className="title-wrap">
           <h1>Deal ID Analysis</h1>
-          <span className="title-sub">ZSGTSF_PDEAL_ID_ANALYS</span>
         </div>
       </header>
       <main className="deal-workspace-main">

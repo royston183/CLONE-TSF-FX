@@ -442,7 +442,6 @@ export default function FxNdfSettlement() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>FX NDF Settlement</h1>
-            <p>Bank settlement of TSF NDF deals</p>
           </div>
           <div className="header-actions">
             <BackButton className="btn btn-secondary" />

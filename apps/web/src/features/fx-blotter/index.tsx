@@ -1031,10 +1031,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
           <div className="title-wrap">
             <div className="page-title-row">
               <div className="page-title">FX Deal Blotter</div>
-              <div className="page-code">DE6</div>
-            </div>
-            <div className="page-subtitle">
-              Create, review and release FX transactions in the same visual application style.
             </div>
           </div>
         </div>

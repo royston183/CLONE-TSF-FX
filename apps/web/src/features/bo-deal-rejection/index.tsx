@@ -343,7 +343,6 @@ export default function BoDealRejection() {
           <img className="logo-img" alt="Logo" src={logoUrl} />
           <div className="header-text">
             <h1>BO Deal Rejection</h1>
-            <p>Reject FX / Options deals and return them to Front Office for correction</p>
           </div>
           <div className="header-actions">
             <button
