@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MONTH_NAMES, fmtDate, parseDDMMYYYY } from './format.ts'
 import { calendarCells, shiftMonth } from './logic.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -82,9 +83,7 @@ export function BlotterDateField({
               <button type="button" id="calPrev" onClick={() => setView((v) => shiftMonth(v.year, v.month, -1))}>
                 &#8249;
               </button>
-              <div className="cal-title">
-                {MONTH_NAMES[view.month]} {view.year}
-              </div>
+              <CalendarSelects year={view.year} month={view.month} onChange={(year, month) => setView({ year, month })} />
               <button type="button" id="calNext" onClick={() => setView((v) => shiftMonth(v.year, v.month, 1))}>
                 &#8250;
               </button>

@@ -1,0 +1,59 @@
+/* The suggestion list DatalistSuggest.tsx draws for every <input list>. Portalled to <body>,
+   so it is styled here once; it matches BO: Post Accounting Entries for Settlement. */
+.slc-dl-suggest {
+  --dl-bg: #ffffff;
+  --dl-text: #22354c;
+  --dl-muted: #718096;
+  --dl-line: #d9e1eb;
+  --dl-active: #eaf3ff;
+  --dl-id: #0f4c9a;
+  position: fixed;
+  z-index: 100000;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--dl-bg);
+  color: var(--dl-text);
+  border: 1px solid var(--dl-line);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(34, 53, 72, 0.18);
+  font: 12.5px/1.35 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+}
+:root[data-theme='dark'] .slc-dl-suggest {
+  --dl-bg: #19293a;
+  --dl-text: #e6eef8;
+  --dl-muted: #96acc1;
+  --dl-line: #2a3e53;
+  --dl-active: #17304a;
+  --dl-id: #78b7ff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.slc-dl-suggest li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.slc-dl-suggest li.active {
+  background: var(--dl-active);
+}
+.slc-dl-id {
+  font-weight: 700;
+  color: var(--dl-id);
+  white-space: nowrap;
+}
+.slc-dl-status {
+  justify-self: end;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--dl-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

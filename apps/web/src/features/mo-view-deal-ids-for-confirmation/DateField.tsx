@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useFloatingPanel } from './floating.ts'
 import { fmtDate, parseDMY } from './format.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -77,9 +78,7 @@ export function DateField({
               <button type="button" onClick={() => setView(new Date(year, month - 1, 1))}>
                 ‹
               </button>
-              <span className="cal-title">
-                {MONTHS[month]} {year}
-              </span>
+              <CalendarSelects year={year} month={month} onChange={(y, m) => setView(new Date(y, m, 1))} />
               <button type="button" onClick={() => setView(new Date(year, month + 1, 1))}>
                 ›
               </button>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TODAY } from './data.ts'
 import { fmtDMY, sameDay } from './format.ts'
 import { MONTH_NAMES, monthGrid, navMonth, viewOf, type CalendarView } from './logic.ts'
+import { CalendarSelects } from '../../shared/fx/CalendarSelects.tsx'
 
 type Props = {
   /** DD-MM-YYYY. */
@@ -42,9 +43,7 @@ export function DatePicker({ value, initialView, open, onToggle, onPick, label }
               <button type="button" onClick={() => setView((v) => navMonth(v, -1))}>
                 &lsaquo;
               </button>
-              <span className="dp-month-label">
-                {MONTH_NAMES[view.m]} {view.y}
-              </span>
+              <CalendarSelects year={view.y} month={view.m} onChange={(y, m) => setView({ y, m })} />
               <button type="button" onClick={() => setView((v) => navMonth(v, 1))}>
                 &rsaquo;
               </button>
