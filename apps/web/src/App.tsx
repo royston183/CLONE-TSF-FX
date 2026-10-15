@@ -9,8 +9,17 @@ import { RequireAuth } from './auth/RequireAuth.tsx'
 import { MenuPage } from './menu/MenuPage.tsx'
 import { FEATURES } from './features/registry.ts'
 import './app.css'
-import './shared/front-office.css'
+import './shared/fx/alm-theme.css'
 import './shared/master-contract/design.css'
+
+// First ALM styling pass: the implemented FX Master Contract / Front Office routes.
+const ALM_FX_FEATURES = new Set([
+  'fo-create-master-contract', 'mo-confirm-master-contract', 'mo-update-mc-expiry',
+  'fo-mc-error-correction', 'mo-reject-mc-after-expiry', 'short-straddle-deal-id',
+  'fx-blotter', 'fo-fx-error-correction', 'fo-change-deal-id', 'fo-create-deal-id-manually',
+  'fo-early-delivery-unwind-rollover', 'fo-additional-spot-booking', 'fo-trader-workbench',
+  'tsf-ndf-fixing', 'fo-ndf-fixing-error-correction',
+])
 
 /**
  * One SPA on one origin, replacing seven pages served by seven proxy.py processes on
@@ -77,10 +86,7 @@ function FeatureRoute() {
         </div>
       }
     >
-      <div className={[
-        appId?.startsWith('fo-') || ['fx-blotter', 'tsf-ndf-fixing', 'short-straddle-deal-id'].includes(appId ?? '') ? 'front-office-ui' : '',
-        ['mo-confirm-master-contract', 'mo-update-mc-expiry', 'fo-mc-error-correction', 'mo-reject-mc-after-expiry', 'short-straddle-deal-id'].includes(appId ?? '') ? 'fx-master-ui' : '',
-      ].filter(Boolean).join(' ') || undefined}>
+      <div id={ALM_FX_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}>
         <Feature />
       </div>
     </Suspense>

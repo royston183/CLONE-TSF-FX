@@ -382,7 +382,7 @@ export default function MoFxDealConfirmation() {
               <span className="collapse-icon">&#9660;</span>
             </div>
             <div className="card-body">
-              <div className="form-grid">
+              <div className="selection-row">
                 <div className="field">
                   <label>
                     Company Code <span className="req">*</span>
@@ -453,10 +453,7 @@ export default function MoFxDealConfirmation() {
                     onChange={(e) => patchForm({ layout: e.target.value })}
                   />
                 </div>
-              </div>
-
-              <div className="form-grid" style={{ marginTop: 16 }}>
-                <div className="field">
+                <div className="field selection-display-type">
                   <label>Display Type</label>
                   <div className="radio-group" id="displayTypeGroup">
                     {displayTypes.map((t) => (
@@ -473,15 +470,14 @@ export default function MoFxDealConfirmation() {
                     ))}
                   </div>
                 </div>
-              </div>
-
-              <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
-                <button className="btn btn-primary" id="viewDealsBtn" type="button" onClick={viewDeals}>
-                  View Deals
-                </button>
-                <button className="btn btn-secondary" id="resetSelectionBtn" type="button" onClick={resetSelection}>
-                  Reset
-                </button>
+                <div className="selection-actions">
+                  <button className="btn btn-primary" id="viewDealsBtn" type="button" onClick={viewDeals}>
+                    View Deals
+                  </button>
+                  <button className="btn btn-secondary" id="resetSelectionBtn" type="button" onClick={resetSelection}>
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
           </section>

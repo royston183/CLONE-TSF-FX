@@ -6,7 +6,7 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CorrectionModal } from './CorrectionModal.tsx'
 import { correctTxn, loadQueue, patchLabels, reverseTxns, sapMessage, toCorrectionPatch } from './api.ts'
 import { DatePicker } from './DatePicker.tsx'
-import { fmtNum, parseAmountShorthand } from './format.ts'
+import { fmtNum, parseAmountShorthand, parseRate, safeParseDate } from './format.ts'
 import { FX_LOGO as COMPANY_LOGO } from '../../shared/fx/logo.ts'
 import {
   CSV_FILENAME,
@@ -237,6 +237,7 @@ export default function FoFxErrorCorrection() {
   const keyRef = useRef<(e: KeyboardEvent) => void>(() => {})
   keyRef.current = (e) => {
     if (e.key === 'Escape') {
+      if (openPicker) { setOpenPicker(null); return }
       correctionModal.close()
       reverseModal.close()
       setOpenPicker(null)
@@ -290,7 +291,12 @@ export default function FoFxErrorCorrection() {
   const onRateBlur = (key: 'allInRate' | 'swapRate' | 'spotRate') =>
     setForm((f) => {
       const next = { ...f, [key]: normaliseRate(f[key]) }
-      if (key === 'allInRate') next.amount2 = deriveAmount2(next.amount1, next.allInRate)
+      if (key === 'allInRate') {
+        if (correcting?.live && !correcting.buysLead) {
+          const rate = parseRate(next.allInRate)
+          if (rate > 0) next.amount1 = fmtNum(parseAmountShorthand(next.amount2) / rate)
+        } else next.amount2 = deriveAmount2(next.amount1, next.allInRate)
+      }
       return next
     })
 
@@ -300,6 +306,12 @@ export default function FoFxErrorCorrection() {
     const t = correcting ? txns.find((m) => m.rfha === correcting.rfha) : undefined
     if (!t || !isActionable(t)) {
       correctionModal.close()
+      return
+    }
+    const invalidDate = ([['Value Date', form.valueDate], ['Trade Date', form.tradeDate], ['Blotter Date', form.blotterDate]] as const)
+      .find(([label, value]) => (value || label !== 'Blotter Date' || t.blotterDate) && !safeParseDate(value))
+    if (invalidDate) {
+      showToast(`Enter a valid ${invalidDate[0]} in DD-MM-YYYY format.`, 'error')
       return
     }
     const patch = toCorrectionPatch(t, form)
@@ -313,14 +325,14 @@ export default function FoFxErrorCorrection() {
       await correctTxn(t, patch)
     } catch (e) {
       // SAP refused: the popup stays open with what was typed.
-      status.show({ tone: 'error', title: 'Correction Failed', message: `SAP did not change transaction ${t.rfha}: ${sapMessage(e)}` })
+      status.show({ tone: 'error', title: 'Correction Incomplete', message: `Could not finish correction for transaction ${t.rfha}: ${sapMessage(e)}` })
       busy.current = false
       return
     }
     try {
       setChecked((c) => c.filter((r) => r !== t.rfha))
       correctionModal.close()
-      const changed = Object.keys(patch).map((k) => patchLabels[k] ?? k).join(', ')
+      const changed = Object.keys(patch).map((k) => k === 'BuyAmount' && !t.buysLead ? 'Amount 2' : patchLabels[k] ?? k).join(', ')
       const refreshed = await loadRows()
       status.show({
         tone: refreshed ? 'success' : 'warning',
@@ -725,12 +737,10 @@ export default function FoFxErrorCorrection() {
             </div>
           </div>
           <div className="note">
-            <strong>Note:</strong> This list is read from <strong>SAP</strong> (the FX transaction service). The status comes from <strong>TXN_STATUS</strong> in ZSGTSFTR_APP_STR: <em>Correction Required</em> when Mid-Office sent the transaction
-            back (04), <strong>Reversed</strong> once reversed, <em>Released to MO</em> once corrected or released, and <strong>Open</strong>
-            for a transaction with no status there yet. The MO remark, trader, mode of
-            trade, account category, business area, profit center and blotter date are not held in SAP either, so they are blank
-            and cannot be edited here. <strong>FX Error Correction</strong> changes the rates, Amount 1, Value Date and Trade Date
-            in SAP; <strong>Reverse</strong> reverses the transaction in SAP.
+            <strong>Note:</strong> Select an <strong>Open</strong> or <strong>Correction Required</strong> transaction to edit its
+            rates, bought amount, Value Date, Trade Date and Blotter Date. The MO remark explains the requested correction.
+            Blotter Date shows the recorded application date when available. Other transaction attributes are read-only.
+            <strong> Reverse</strong> reverses the transaction in SAP.
             <br />
             <br />
             Each row here is one <strong>FX financial transaction</strong> (Transaction No), not a Master

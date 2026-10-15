@@ -522,6 +522,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
                   <div className="date-range">
                     <DatePicker
                       id="f-date-from"
+                      label="MC date from"
                       value={filters.dateFrom}
                       open={openPicker === 'from'}
                       onOpenChange={(o) => setOpenPicker(o ? 'from' : null)}
@@ -530,6 +531,7 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
                     <span>to</span>
                     <DatePicker
                       id="f-date-to"
+                      label="MC date to"
                       value={filters.dateTo}
                       open={openPicker === 'to'}
                       onOpenChange={(o) => setOpenPicker(o ? 'to' : null)}

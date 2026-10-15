@@ -65,7 +65,7 @@ export type Txn = {
   allInRate: number
   tradeDate: Date
   valueDate: Date
-  /** null for a live row: SAP keeps no blotter date on the transaction. */
+  /** APP_STR's recorded blotter date; null when the transaction has no application date. */
   blotterDate: Date | null
   busArea: string
   busAreaDesc: string
@@ -110,7 +110,7 @@ export type CorrectionForm = {
   swapRate: string
   spotRate: string
   amount1: string
-  /** Derived: recomputed from Amount 1 × Spot Rate when either loses focus. */
+  /** Derived for buy-led transactions; editable bought amount for a live sell-led transaction. */
   amount2: string
   valueDate: string
   busArea: string

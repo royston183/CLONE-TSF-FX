@@ -137,22 +137,20 @@ export function UploadModal({
           </div>
           <div className="section-label">Upload File</div>
           <div className="upload-file-row">
-            <div>
-              <input
-                key={s.fileKey}
-                id="upload-file"
-                type="file"
-                accept=".xls,.xlsx,.csv,.tsv,.txt"
-                disabled={s.reading || s.processing}
-                onChange={(e) => onFile(e.target.files?.[0])}
-              />
-              <div className="upload-hint">
-                XLS, XLSX, CSV or TSV. Use the first sheet with column headers in row 1. Dates: DD-MM-YYYY.
-              </div>
-            </div>
+            <input
+              key={s.fileKey}
+              id="upload-file"
+              type="file"
+              accept=".xls,.xlsx,.csv,.tsv,.txt"
+              disabled={s.reading || s.processing}
+              onChange={(e) => onFile(e.target.files?.[0])}
+            />
             <button type="button" className="tb-btn" onClick={onDownloadTemplate}>
               <Download size={14} aria-hidden="true" /> Download Template
             </button>
+          </div>
+          <div className="upload-hint">
+            XLS, XLSX, CSV or TSV. Use the first sheet with column headers in row 1. Dates: DD-MM-YYYY.
           </div>
           <div id="upload-validation">
             {s.reading ? (

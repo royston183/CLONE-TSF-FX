@@ -1,6 +1,6 @@
 import { ACCOUNT_CATS, BUSINESS_AREAS, MODE_OF_TRADE, PARTNERS, STATUS, STATUS_SHORT, acctCatDesc } from './data.ts'
 import { DatePicker } from './DatePicker.tsx'
-import { fmtDate, fmtNum, fmtRate } from './format.ts'
+import { fmtDate, fmtNum, fmtRate, parseAmountShorthand, parseRate } from './format.ts'
 import { isActionable } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
 import type { CorrectionForm, PickerId, Txn } from './types.ts'
@@ -47,6 +47,7 @@ export function CorrectionModal({
   const live = !!txn?.live
   /** SAP only takes Amount 1 when it is the amount bought. */
   const amountEditable = editable && (!live || !!txn?.buysLead)
+  const amount2Editable = editable && live && !txn?.buysLead
   const notInSap = (v: string) => (live && !v ? 'Not held in SAP' : v)
 
   const picker = (id: PickerId, key: 'valueDate' | 'tradeDate' | 'blotterDate') => (
@@ -58,7 +59,7 @@ export function CorrectionModal({
       onPick={(v) => onChange({ [key]: v })}
       icon={DP_ICON}
       inputStyle={DP_INPUT_STYLE}
-      disabled={!editable || (live && key === 'blotterDate')}
+      disabled={!editable}
     />
   )
 
@@ -113,7 +114,7 @@ export function CorrectionModal({
             </div>
           </div>
 
-          <div className="section-label">Update BP</div>
+          <div className="section-label">FX Structure</div>
           <div className="oldnew-grid">
             <div className="oldnew-col">
               <div className="oldnew-head">Old Details</div>
@@ -121,8 +122,8 @@ export function CorrectionModal({
               <Old id="old-allinrate" label="All in Rate" value={txn ? fmtRate(txn.allInRate) : ''} />
               <Old id="old-swaprate" label="Swap Rate" value={txn ? fmtRate(txn.swapRate) : ''} />
               <Old id="old-spotrate" label="Spot Rate" value={txn ? fmtRate(txn.spotRate) : ''} />
-              <Old id="old-amount1" label="Amount 1" value={txn ? `${txn.ccy1} ${fmtNum(txn.amt1)}` : ''} />
-              <Old id="old-amount2" label="Amount 2" value={txn ? `${txn.ccy2} ${fmtNum(txn.amt2)}` : ''} />
+              <Old id="old-amount1" label={`Amount 1 (${txn?.buySell1 ?? ''})`} value={txn ? `${txn.ccy1} ${fmtNum(txn.amt1)}` : ''} />
+              <Old id="old-amount2" label={`Amount 2 (${txn?.buySell2 ?? ''})`} value={txn ? `${txn.ccy2} ${fmtNum(txn.amt2)}` : ''} />
               <Old id="old-valuedate" label="Value Date" value={txn ? fmtDate(txn.valueDate) : ''} />
               <Old id="old-busarea" label="Business Area" value={txn ? notInSap(txn.busArea ? `${txn.busArea} - ${txn.busAreaDesc}` : '') : ''} />
               <Old id="old-profitcenter" label="Profit Center" value={notInSap(txn?.profitCenterDesc ?? '')} />
@@ -150,19 +151,19 @@ export function CorrectionModal({
                 )}
               </div>
               <div className="oldnew-row">
-                <label>All in Rate</label>
+                <label htmlFor="new-allinrate">All in Rate</label>
                 {rate('new-allinrate', 'allInRate')}
               </div>
               <div className="oldnew-row">
-                <label>Swap Rate</label>
+                <label htmlFor="new-swaprate">Swap Rate</label>
                 {rate('new-swaprate', 'swapRate')}
               </div>
               <div className="oldnew-row">
-                <label>Spot Rate</label>
+                <label htmlFor="new-spotrate">Spot Rate</label>
                 {rate('new-spotrate', 'spotRate')}
               </div>
               <div className="oldnew-row">
-                <label>Amount 1</label>
+                <label htmlFor="new-amount1">Amount 1 ({txn?.ccy1})</label>
                 <input
                   id="new-amount1"
                   type="text"
@@ -173,13 +174,20 @@ export function CorrectionModal({
                 />
               </div>
               <div className="oldnew-row">
-                <label>
-                  Amount 2{' '}
+                <label htmlFor="new-amount2">
+                  Amount 2 ({txn?.ccy2}){' '}
                   <span className="hint" style={{ fontWeight: 400 }}>
-                    (derived)
+                    {amount2Editable ? '' : '(derived)'}
                   </span>
                 </label>
-                <input id="new-amount2" className="readonly-input" disabled readOnly value={form.amount2} />
+                <input id="new-amount2" className={amount2Editable ? undefined : 'readonly-input'} disabled={!amount2Editable} readOnly={!amount2Editable} value={form.amount2}
+                  onChange={(e) => onChange({ amount2: e.target.value })}
+                  onBlur={() => {
+                    if (!amount2Editable) return
+                    const amount = parseAmountShorthand(form.amount2)
+                    const exchangeRate = parseRate(form.allInRate)
+                    onChange({ amount2: fmtNum(amount), ...(exchangeRate > 0 ? { amount1: fmtNum(amount / exchangeRate) } : {}) })
+                  }} />
               </div>
               <div className="oldnew-row">
                 <label>Value Date</label>
@@ -275,16 +283,12 @@ export function CorrectionModal({
           </div>
           {live ? (
             <div className="hint" style={{ marginTop: 10 }}>
-              <strong>Read from SAP.</strong> What can be changed here goes to SAP as a change of the transaction: the three rates,
-              Amount 1{txn && !txn.buysLead ? ' (not on this transaction: it sells the lead currency, which SAP does not take)' : ''}, Value
-              Date and Trade Date. Amount 2 is worked out by SAP (Amount 1 × All in Rate) and shown once saved. Everything marked{' '}
-              <em>Not held in SAP</em> has no field in the SAP service, so it is shown blank and cannot be changed here.
+              Edit the rates, bought amount ({txn?.buysLead ? 'Amount 1' : 'Amount 2'}), Value Date, Trade Date and Blotter Date.
+              SAP calculates the opposite amount when saved. Other transaction attributes remain read-only.
             </div>
           ) : null}
           <div className="hint" style={{ marginTop: 10 }}>
-            Tip: type a shorthand amount like <kbd>5M</kbd> (5 million) or <kbd>250T</kbd> (250 thousand) for Amount 1 and it
-            converts automatically, just like the SAP amount field. Amount 2 and Profit Center recompute from Amount 1/Rate and
-            Business Area, matching the SAP screen&apos;s derived fields.
+            Tip: type a shorthand amount like <kbd>5M</kbd> (5 million) or <kbd>250T</kbd> (250 thousand) in the editable amount field.
           </div>
         </div>
         <div className="modal-footer">

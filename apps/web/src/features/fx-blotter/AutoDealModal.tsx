@@ -3,6 +3,7 @@ import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModa
 import { entityOf, txnTypeOf } from './data.ts'
 import { fmtDate, fmtNum, RATE_DP } from './format.ts'
 import { CommitInput } from './inputs.tsx'
+import { DateField } from './DateField.tsx'
 import {
   autoBpOptions,
   autoEntityOptions,
@@ -124,7 +125,7 @@ export function AutoDealModal({
           <div className="section-label">Deal 1 / Deal 2 Details</div>
           <div id="auto-legs-table" className="auto-leg-stack">
             {mc && legs
-              ? legs.map((l, idx) => <LegBlock key={l.leg} l={l} idx={idx} partners={partners} onLeg={onLeg} />)
+              ? legs.map((l, idx) => <LegBlock key={l.leg} l={l} idx={idx} partners={partners} onLeg={onLeg} active={modals.isOpen('auto')} />)
               : AWAITING}
           </div>
           <div id="auto-validation">
@@ -181,12 +182,18 @@ function LegBlock({
   idx,
   partners,
   onLeg,
+  active,
 }: {
   l: AutoLeg
   idx: number
   partners: BusinessPartner[]
   onLeg: (index: number, field: AutoLegField, value: string) => void
+  active: boolean
 }) {
+  const date = (field: AutoLegField, label: string, value: Date | null) => (
+    <DateField label={`${l.leg} ${label}`} className="auto-control" value={fmtDate(value)}
+      active={active} onCommit={(v) => onLeg(idx, field, v)} />
+  )
   const input = (field: AutoLegField, value: string, cls = '') => (
     <CommitInput
       className={cls ? `auto-control ${cls}` : 'auto-control'}
@@ -209,8 +216,8 @@ function LegBlock({
   )
 
   const fields: Array<[string, ReactNode, boolean?]> = [
-    ['Trade Date', input('tradeDate', fmtDate(l.tradeDate))],
-    ['Value Date', input('valueDate', fmtDate(l.valueDate))],
+    ['Trade Date', date('tradeDate', 'Trade Date', l.tradeDate)],
+    ['Value Date', date('valueDate', 'Value Date', l.valueDate)],
     ['Company Code', lockedSelect(autoEntityOptions(), l.entity), true],
     ['Transaction Type', lockedSelect(txnTypeOptions(), l.txnType), true],
     ['Partner', select('partner', autoBpOptions(partners), l.partner)],
@@ -226,7 +233,7 @@ function LegBlock({
     ['Mode of Trade', select('mode', assignmentOptions(), l.mode)],
   ]
   if (txnTypeOf(l.txnType)?.ndf) {
-    fields.push(['NDF Fixing Date', input('fixingDate', l.fixingDate ? fmtDate(l.fixingDate) : '')])
+    fields.push(['NDF Fixing Date', date('fixingDate', 'NDF Fixing Date', l.fixingDate)])
     fields.push(['Fixing Ref. ID', select('fixRef', fixingRefOptions(), l.fixRef)])
   }
 

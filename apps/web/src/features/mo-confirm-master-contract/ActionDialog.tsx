@@ -1,10 +1,7 @@
 import type { Modal } from './modal.tsx'
 import { MasterContractConfirmation } from '../../shared/master-contract/Confirmation.tsx'
-import { ReviewDetails } from '../../shared/master-contract/ReviewDetails.tsx'
-import { fmtDate, fmtNum } from './format.ts'
+import { ContractReview } from './ContractReview.tsx'
 import type { MasterContract, McAction } from './types.ts'
-
-const reviewDate = (date: Date) => Number.isFinite(date.getTime()) ? fmtDate(date) : '—'
 
 /** The bulk (or single, from the child modal) Confirm / Reject confirmation dialog. */
 export function ActionDialog({
@@ -33,27 +30,7 @@ export function ActionDialog({
     iconId="action-icon" ids={{ overlay: 'action-overlay', title: 'action-title', body: 'action-body', confirm: 'action-confirm-btn', close: 'action-close-btn' }}
     confirmLabel={`${isReject ? 'Reject' : 'Confirm'} ${many ? `${mcs.length} Contracts` : 'Contract'}`} onCancel={modal.close} onConfirm={onProceed}>
           {mcs.map((mc, index) => (
-            <ReviewDetails key={mc.mcNumber} title={`MC ${mc.mcNumber} · ${mc.mcDescription}`} open={index === 0} rows={[
-              ['MC Number', mc.mcNumber],
-              ['Description', mc.mcDescription],
-              ['Current Status', mc.status],
-              ['MC Date', reviewDate(mc.mcDate)],
-              ['Origin Entity', mc.originEntity],
-              ['Contract Amount (USD)', `${fmtNum(mc.amtUSD)} USD`],
-              ['Contract Amount (Origin)', `${fmtNum(mc.amtOrigin)} ${mc.currOrigin}`],
-              ['Exchange Rate', mc.exRate.toFixed(7)],
-              ['Commodity', [mc.commodityCode, mc.commodityDesc].filter(Boolean).join(' · ')],
-              ['FX Model', [mc.fxModel, mc.modelDesc].filter(Boolean).join(' · ')],
-              ['Entity String', mc.entities.join(' → ')],
-              ['Currency String', mc.currChain.join(' / ')],
-              ['Shipment Window', `${reviewDate(mc.shipStart)} → ${reviewDate(mc.shipEnd)}`],
-              ['Payment Terms', mc.paymentTerms],
-              ['Payment Date', reviewDate(mc.paymentDate)],
-              ['Port of Shipment', mc.portOfShipment],
-              ['Port of Destination', mc.portOfDestination],
-              ['FO Remarks', mc.foRemarks],
-              ['MO Remarks', mc.moRemarks],
-            ]} />
+            <ContractReview key={mc.mcNumber} contract={mc} open={index === 0} />
           ))}
           {isReject ? (
             <div className="confirmation-review-form">
@@ -63,7 +40,7 @@ export function ActionDialog({
               </label>
               <textarea
                 id="action-remark"
-                rows={3}
+                rows={2}
                 maxLength={80}
                 aria-invalid={remarkError}
                 placeholder="Why is this Master Contract being rejected? This is recorded as the MO Remark."

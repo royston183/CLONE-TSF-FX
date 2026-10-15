@@ -1,0 +1,40 @@
+/* Feature layout exceptions to the generated legacy sheet. */
+#alm-fx-ui .fx-blotter .upload-file-row { align-items: center; }
+#alm-fx-ui .fx-blotter .upload-file-row > .tb-btn { white-space: nowrap; }
+
+.fx-date-field { position: relative; min-width: 0; width: 100%; }
+.fx-date-field > input { width: 100%; }
+#alm-fx-ui .fx-date-field > input { padding-right: 34px !important; }
+#alm-fx-ui .fx-date-trigger {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: 4px; background: transparent; color: var(--text-muted);
+}
+#alm-fx-ui .fx-date-trigger:hover { color: var(--primary); background: var(--primary-tint); }
+
+/* Calendars are body portals, so they stay clear of scrollable modal boundaries. */
+.fx-date-calendar {
+  --cal-surface: #fff; --cal-text: #22354c; --cal-muted: #718096; --cal-line: #e6ebf2;
+  --cal-blue: #1265c8; --cal-pale: #eaf3ff; --cal-button: #1265c8;
+  position: fixed; z-index: 11000; padding: 10px;
+  border: 1px solid var(--cal-line); border-radius: 8px;
+  background: var(--cal-surface); color: var(--cal-text);
+  box-shadow: 0 12px 32px -8px #0d243f40;
+  font: 12px/1.4 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+}
+:root[data-theme='dark'] .fx-date-calendar {
+  --cal-surface: #19293a; --cal-text: #e6eef8; --cal-muted: #96acc1; --cal-line: #2a3e53;
+  --cal-blue: #78b7ff; --cal-pale: #17304a; --cal-button: #2464a7;
+}
+.fx-date-calendar__heading { display: grid; grid-template-columns: 24px minmax(0, 1fr) 76px 24px; align-items: center; gap: 4px; margin-bottom: 8px; }
+.fx-date-calendar button, .fx-date-calendar select { font: inherit; color: inherit; }
+.fx-date-calendar select { width: 100%; min-width: 0; height: 30px; padding: 3px; border: 1px solid var(--cal-line); border-radius: 6px; background: var(--cal-surface); }
+.fx-date-calendar button { display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.fx-date-calendar__heading button { width: 24px; height: 28px; padding: 0; }
+.fx-date-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.fx-date-calendar__weekday { text-align: center; color: var(--cal-muted); font-size: 10px; font-weight: 600; padding: 4px 0; }
+.fx-date-calendar__grid button { min-width: 0; height: 30px; padding: 0; }
+.fx-date-calendar button:hover { background: var(--cal-pale); color: var(--cal-blue); }
+.fx-date-calendar button[aria-current=date] { box-shadow: inset 0 0 0 1px var(--cal-blue); }
+.fx-date-calendar button[aria-pressed=true] { background: var(--cal-button); color: white; }
+.fx-date-calendar :is(button, select):focus-visible { outline: 2px solid var(--cal-blue); outline-offset: 2px; }

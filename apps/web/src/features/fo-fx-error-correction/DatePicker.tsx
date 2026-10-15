@@ -59,8 +59,8 @@ export function DatePicker({
 
   return (
     <div className="dp">
-      <input id={id} type="text" value={value} readOnly disabled={disabled} onClick={toggle} style={inputStyle} />
-      <button type="button" className="dp-btn" onClick={toggle} aria-label="Open calendar">
+      <input id={id} type="text" value={value} disabled={disabled} placeholder="DD-MM-YYYY" aria-label={id === 'new-blotterdate' ? 'Blotter Date' : id === 'new-tradedate' ? 'Trade Date' : id === 'new-valuedate' ? 'Value Date' : undefined} aria-invalid={!!value && !safeParseDate(value)} onChange={e => onPick(e.target.value)} style={inputStyle} />
+      <button type="button" className="dp-btn" disabled={disabled} onClick={toggle} aria-label="Open calendar">
         {icon}
       </button>
       <div className={`dp-popup${open ? ' open' : ''}`} id={`${id}-cal`}>
@@ -70,9 +70,12 @@ export function DatePicker({
               <button type="button" onClick={() => setView(new Date(y, m - 1, 1))}>
                 ‹
               </button>
-              <span className="dp-month-label">
-                {MONTH_ABBR[m]} {y}
-              </span>
+              <select aria-label="Calendar month" data-no-search value={m} onChange={e => setView(new Date(y, Number(e.target.value), 1))}>
+                {MONTH_ABBR.map((month, index) => <option key={month} value={index}>{month}</option>)}
+              </select>
+              <select aria-label="Calendar year" data-no-search value={y} onChange={e => setView(new Date(Number(e.target.value), m, 1))}>
+                {Array.from({ length: Math.max(new Date().getFullYear() + 100, y) - Math.min(1900, y) + 1 }, (_, index) => Math.min(1900, y) + index).map(year => <option key={year} value={year}>{year}</option>)}
+              </select>
               <button type="button" onClick={() => setView(new Date(y, m + 1, 1))}>
                 ›
               </button>
@@ -92,16 +95,17 @@ export function DatePicker({
                 const d = i + 1
                 const cls = sameDay(selected, d) ? 'dp-day selected' : sameDay(today, d) ? 'dp-day today' : 'dp-day'
                 return (
-                  <div
+                  <button type="button"
                     key={d}
                     className={cls}
+                    aria-label={fmtDate(new Date(y, m, d))}
                     onClick={() => {
                       onPick(fmtDate(new Date(y, m, d)))
                       onOpenChange(false)
                     }}
                   >
                     {d}
-                  </div>
+                  </button>
                 )
               })}
               {Array.from({ length: trailing }, (_, i) => (

@@ -11,12 +11,14 @@ const DOW_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
  */
 export function DatePicker({
   id,
+  label,
   value,
   open,
   onOpenChange,
   onPick,
 }: {
   id: string
+  label: string
   value: string
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -44,7 +46,29 @@ export function DatePicker({
 
   return (
     <div className="dp">
-      <input id={id} type="text" value={value} readOnly onClick={toggle} />
+      <input
+        id={id}
+        aria-label={label}
+        type="text"
+        placeholder="DD-MM-YYYY"
+        maxLength={10}
+        value={value}
+        aria-invalid={value.trim() !== '' && !safeParseDate(value)}
+        onChange={(e) => {
+          onPick(e.target.value)
+          onOpenChange(false)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            const current = safeParseDate(value) ?? new Date()
+            setView(new Date(current.getFullYear(), current.getMonth(), 1))
+            onOpenChange(true)
+          } else if (e.key === 'Escape' || e.key === 'Enter') {
+            onOpenChange(false)
+          }
+        }}
+      />
       <button type="button" className="dp-btn" onClick={toggle} aria-label="Open calendar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.7" />

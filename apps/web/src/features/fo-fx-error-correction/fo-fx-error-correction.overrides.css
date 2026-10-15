@@ -34,6 +34,22 @@
   z-index: 80;
 }
 
+/* Align booked and changed fields row for row, using a compact FTR-style grid. */
+#alm-fx-ui .fo-fx-error-correction #correct-overlay .modal-card { border-radius: 4px !important; }
+.fo-fx-error-correction #correct-overlay .oldnew-col { border-radius: 2px; padding: 10px; }
+.fo-fx-error-correction #correct-overlay .oldnew-row { grid-template-columns: 118px minmax(0, 1fr); min-height: 32px; gap: 10px; margin-bottom: 8px; }
+.fo-fx-error-correction #correct-overlay .oldnew-row > label { margin: 0; line-height: 14px; }
+#alm-fx-ui .fo-fx-error-correction #correct-overlay .oldnew-row input { border-radius: 2px !important; font-variant-numeric: tabular-nums; }
+.fo-fx-error-correction #correct-overlay .oldnew-row input:not(:disabled) { background: var(--white); border-color: var(--primary); }
+.fo-fx-error-correction .dp input { cursor: text; }
+.fo-fx-error-correction .dp-head select { min-width: 0; width: auto; height: 26px; padding: 0 3px; font: inherit; background: var(--white); color: var(--text); border: 1px solid var(--border); }
+.fo-fx-error-correction .dp-grid button.dp-day { border: 0; font: inherit; color: inherit; background: transparent; }
+.fo-fx-error-correction .dp-grid button.dp-day.selected { color: #fff; background: var(--primary); }
+@media (max-width: 760px) {
+  .fo-fx-error-correction #correct-overlay .oldnew-grid { grid-template-columns: minmax(0, 1fr); }
+  .fo-fx-error-correction #correct-overlay .field-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
 /* OTTK theme (see the block at the end of the legacy sheet): the drop hint chip uses the
  * reference drag-ghost colours. Kept here because this rule must out-rank the one above. */
 .fo-fx-error-correction.row-dragging .drag-target::after {

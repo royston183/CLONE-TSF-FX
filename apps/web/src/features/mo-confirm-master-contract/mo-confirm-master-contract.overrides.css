@@ -53,3 +53,32 @@
 :root[data-theme='dark'] .mocmc #mc-table .sticky-col { border-left: 0 !important; border-right: 0 !important; }
 :root:not([data-theme='dark']) .mocmc .list-table thead th,
 :root:not([data-theme='dark']) .mocmc .list-table tbody td { border-bottom: 1px solid #E6E9EB !important; }
+
+/* Typed dates are filters, rather than read-only calendar triggers. */
+.mocmc .dp input { cursor: text; }
+
+/* Form groups follow the creation form, with matching column edges and square fields.
+   Long/batch reviews scroll at the overlay level, keeping every detail reachable. */
+#action-overlay:has(.mc-confirmation--review) { overflow-y: auto; align-items: safe center; }
+#action-overlay .mc-confirmation--review { width: min(1100px, 100%); max-height: none; overflow: visible; flex-shrink: 0; border-radius: 4px; }
+#action-overlay .mc-confirmation--review .confirmation-review-header { padding: 10px 60px 10px 24px; }
+#action-overlay .mc-confirmation--review .std-pop-body { overflow: visible; flex: none; padding: 10px 24px; }
+#action-overlay .mc-confirmation--review .std-pop-actions { padding: 10px 24px; }
+#action-overlay .mc-contract-review + .mc-contract-review { margin-top: 12px; }
+#action-overlay .mc-contract-review > summary { color: var(--sp-text); font-weight: 600; padding-bottom: 8px; cursor: pointer; overflow-wrap: anywhere; }
+#action-overlay .mc-review-groups { display: grid; gap: 4px; }
+#action-overlay .mc-confirmation--review :is(.std-pop-btn, .mc-confirm-close) { border-radius: 3px; }
+#action-overlay .mc-review-group h3 { margin: 0 0 4px; color: var(--sp-text); font-size: 12px; line-height: 16px; font-weight: 600; }
+#action-overlay .mc-review-group h3::before { content: '•'; color: var(--sp-primary); margin-right: 7px; }
+#action-overlay .mc-review-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
+#action-overlay .mc-review-field { min-width: 0; }
+#action-overlay .mc-review-span-2 { grid-column: span 2; }
+#action-overlay .mc-review-field dt { color: var(--sp-muted); font-size: 11px; line-height: 14px; margin-bottom: 4px; }
+#action-overlay .mc-review-field dd { box-sizing: border-box; margin: 0; min-height: 32px; padding: 7px 10px; border: 1px solid var(--sp-border); border-radius: 2px; background: var(--sp-card); color: var(--sp-text); font-size: 12px; line-height: 16px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+#action-overlay .confirmation-review-form { margin-top: 8px; padding-top: 8px; }
+#action-overlay .confirmation-review-form textarea { box-sizing: border-box; min-height: 54px; }
+@media (max-width: 599px) {
+  #action-overlay .mc-review-fields { grid-template-columns: minmax(0, 1fr); }
+  #action-overlay .mc-review-span-2 { grid-column: auto; }
+  #action-overlay .mc-confirmation--review .std-pop-actions { flex-wrap: wrap; }
+}

@@ -1,4 +1,5 @@
 import { isRateInput } from './format.ts'
+import { DateField } from './DateField.tsx'
 import { partnerLabel, spotEntities, spotTxnOptions } from './logic.ts'
 import { ModalHeader, Overlay, type ModalStack } from './modal.tsx'
 import type { AutoSpotForm, BusinessPartner } from './types.ts'
@@ -71,11 +72,11 @@ export function AutoSpotModal({
             </div>
             <div className="form-field">
               <label>Trade Date</label>
-              <input id="spot-trade-date" type="text" readOnly value={form.tradeDate} />
+              <DateField id="spot-trade-date" label="Spot Trade Date" value={form.tradeDate} active={modals.isOpen('autospot')} onCommit={(tradeDate) => onChange({ tradeDate })} />
             </div>
             <div className="form-field">
               <label>Value Date</label>
-              <input id="spot-value-date" type="text" readOnly value={form.valueDate} />
+              <DateField id="spot-value-date" label="Spot Value Date" value={form.valueDate} active={modals.isOpen('autospot')} onCommit={(valueDate) => onChange({ valueDate })} />
             </div>
             <div className="form-field span2">
               <label>

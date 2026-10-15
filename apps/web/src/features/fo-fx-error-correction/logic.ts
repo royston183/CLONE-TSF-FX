@@ -74,7 +74,7 @@ export function rowSearchValues(t: Txn): string[] {
 export function matchesFilters(t: Txn, f: Filters, status: StatusFilter): boolean {
   const from = safeParseDate(f.dateFrom) ?? new Date(1900, 0, 1)
   const to = safeParseDate(f.dateTo) ?? new Date(2999, 0, 1)
-  // SAP keeps no blotter date, so a live row has none to range-check and is never hidden by it.
+  // Older transactions without an APP_STR date remain visible until a date has been recorded.
   if (t.blotterDate && (t.blotterDate < from || t.blotterDate > to)) return false
   if (f.coCode !== 'ALL' && t.coCode !== f.coCode) return false
   if (f.trader !== 'ALL' && t.traderCode !== f.trader) return false

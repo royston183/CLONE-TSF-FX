@@ -97,6 +97,7 @@ import './fx-blotter.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fx-blotter.dark.css'
+import './fx-blotter.overrides.css'
 import type {
   AutoLeg,
   AutoSpotForm,
