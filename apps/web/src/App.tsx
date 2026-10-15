@@ -10,6 +10,7 @@ import { MenuPage } from './menu/MenuPage.tsx'
 import { FEATURES } from './features/registry.ts'
 import './app.css'
 import './shared/fx/alm-theme.css'
+import './shared/fx/office-theme.css'
 import './shared/master-contract/design.css'
 
 // First ALM styling pass: the implemented FX Master Contract / Front Office routes.
@@ -19,6 +20,36 @@ const ALM_FX_FEATURES = new Set([
   'fx-blotter', 'fo-fx-error-correction', 'fo-change-deal-id', 'fo-create-deal-id-manually',
   'fo-early-delivery-unwind-rollover', 'fo-additional-spot-booking', 'fo-trader-workbench',
   'tsf-ndf-fixing', 'fo-ndf-fixing-error-correction',
+])
+
+// Additional implemented routes in the FX Mid Office and Back Office menu groups.
+const ALM_FX_OFFICE_FEATURES = new Set([
+  'mo-fx-deal-confirmation',
+  'mo-confirm-ndf-fixing',
+  'mo-update-bank-reference',
+  'mo-view-deal-ids-for-confirmation',
+  'mo-confirm-fx-deal-id',
+  'mo-confirm-fx-deal-id-ss',
+  'mo-deal-id-invoice-status',
+  'mo-deal-id-invoice-mark',
+  'mo-deal-id-invoicing',
+  'mo-generate-invoices-deal-id',
+  'inr-heads-up-reminder',
+  'mo-view-deal-id-settlement-list',
+  'mo-execute-settlement-deal-id',
+  'mo-bank-settlement-fx-non-flow',
+  'bo-post-accounting-settlement',
+  'bo-bank-settlement-fx-non-flow',
+  'view-spot-forward-settlement',
+  'tbb1-post-flows',
+  'bo-deal-rejection',
+  'fx-ndf-settlement',
+  'post-fx-mtm-oil-dmcc',
+  'post-fx-mtm-other-origins',
+  'fx-mtm-external-tsf-deals',
+  'bo-reverse-fx-mtm-oil-dmcc',
+  'bo-reverse-fx-mtm-other-origins',
+  'bo-reverse-fx-mtm-india',
 ])
 
 /**
@@ -86,7 +117,10 @@ function FeatureRoute() {
         </div>
       }
     >
-      <div id={ALM_FX_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}>
+      <div
+        id={ALM_FX_FEATURES.has(appId ?? '') || ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}
+        data-office={ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'true' : undefined}
+      >
         <Feature />
       </div>
     </Suspense>
