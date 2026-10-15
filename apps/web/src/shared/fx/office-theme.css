@@ -1,0 +1,103 @@
+/* MO/BO structural adapters. Tokens and common controls come from alm-theme.css.
+ * The route attribute protects completed Master Contract and Front Office screens.
+ * Keep workflow visibility, sticky offsets, column widths and event handling intact.
+ */
+#alm-fx-ui[data-office] > * {
+  --danger: var(--alm-bad); --danger-tint: var(--alm-bad-bg);
+  --shadow-sm: var(--alm-shadow); --shadow-md: var(--alm-shadow);
+  --shadow-modal: var(--alm-popup-shadow);
+}
+#alm-fx-ui[data-office] :is(.app-header, .app-header-left, .app-header-right) {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+}
+#alm-fx-ui[data-office] .app-header {
+  margin-bottom: 18px; padding: 0; background: var(--alm-bg);
+  border-color: var(--alm-line); box-shadow: none;
+}
+#alm-fx-ui[data-office] .app-header-right { margin-left: auto; }
+#alm-fx-ui[data-office] :is(.app-title, .header-title) {
+  margin: 0 0 5px; font-size: 23px; font-weight: 800;
+  line-height: 1.3; letter-spacing: -.02em; color: var(--alm-heading);
+}
+#alm-fx-ui[data-office] :is(.app-title small, .app-subtitle, .header-subtitle, .title-sub, .subtitle) {
+  font-size: 12px; font-weight: 400; line-height: 1.6;
+  color: var(--alm-muted); letter-spacing: normal;
+}
+#alm-fx-ui[data-office] :is(.card-head, .card-header, .card-titlebar, .section-head, .table-head, .filter-card-head) {
+  height: auto; min-height: 44px; padding: 10px 16px;
+  flex-wrap: wrap; gap: 8px; background: var(--alm-surface);
+  border-color: var(--alm-line); color: var(--alm-heading);
+}
+#alm-fx-ui[data-office] :is(.card-head h2, .card-head h3, .table-title, .table-heading, .filter-title, .detail-section-title) {
+  font-size: 13px; font-weight: 700; letter-spacing: normal; color: var(--alm-heading);
+}
+#alm-fx-ui[data-office] :is(.table-card, .filter-card, .analysis-card, .subgrid-panel) {
+  min-width: 0; background: var(--alm-surface); border-color: var(--alm-line);
+  border-radius: 9px; box-shadow: var(--alm-shadow);
+}
+#alm-fx-ui[data-office] :is(.table-shell, .grid-wrap, .deal-table-scroll, .analysis-table-wrap) {
+  min-width: 0; max-width: 100%; overflow: auto; background: var(--alm-surface);
+}
+#alm-fx-ui[data-office] :is(.empty, .empty-state, .empty-row, .analysis-empty, .combo-empty, .dd-empty, .dropdown-empty) {
+  color: var(--alm-muted); font-size: 12px;
+}
+#alm-fx-ui[data-office] .field-label { font-size: 12px; font-weight: 600; color: var(--alm-label); }
+#alm-fx-ui[data-office] .combo > input { padding-left: 30px; }
+#alm-fx-ui[data-office] :is(.header-btn, .hdr-btn, .secondary-btn, .primary-btn, .action-btn, .small-btn, .btn-primary-inline, .btn-outline-hd, .btn-outline-blue, .btn-solid-danger, .btn-danger-solid) {
+  min-height: 32px; padding: 5px 14px; border: 1px solid var(--alm-input-line);
+  border-radius: 7px; font-size: 13px; font-weight: 600;
+  background: var(--alm-surface); color: var(--alm-label); box-shadow: none;
+}
+#alm-fx-ui[data-office] :is(.primary-btn, .btn-primary-inline) {
+  background: var(--alm-button); border-color: var(--alm-button); color: white;
+}
+#alm-fx-ui[data-office] :is(.btn-solid-danger, .btn-danger-solid) {
+  background: var(--alm-bad); border-color: var(--alm-bad); color: white;
+}
+#alm-fx-ui[data-office] :is(.primary-btn, .btn-primary-inline):hover:not(:disabled) { filter: brightness(.94); }
+#alm-fx-ui[data-office] :is(.icon-btn, .btn-icon, .reset-btn) {
+  border-color: var(--alm-input-line); border-radius: 6px;
+  background: var(--alm-surface); color: var(--alm-label);
+}
+#alm-fx-ui[data-office] :is(.status-filter, .tab-btn, .tab) {
+  border-color: var(--alm-line); background: var(--alm-surface); color: var(--alm-label);
+}
+#alm-fx-ui[data-office] :is(.status-filter, .tab-btn, .tab):is(.active, [aria-selected=true]) {
+  background: var(--alm-pale); border-color: var(--alm-blue); color: var(--alm-blue);
+}
+#alm-fx-ui[data-office] :is(.badge-blue, .keydate-badge) { background: var(--alm-pale); color: var(--alm-blue); }
+#alm-fx-ui[data-office] .badge-green { background: var(--alm-ok-bg); color: var(--alm-ok); }
+#alm-fx-ui[data-office] .badge-orange { background: var(--alm-warning-bg); color: var(--alm-warning); }
+#alm-fx-ui[data-office] :is(.dd-panel, .combo-panel, .ms-panel, .cal-pop, .calendar-popup) {
+  background: var(--alm-surface); color: var(--alm-text); border-color: var(--alm-line);
+  border-radius: 8px; box-shadow: var(--alm-popup-shadow);
+}
+#alm-fx-ui[data-office] :is(.modal-backdrop, .sub-modal-overlay) { background: #0b1a2b73; padding: 16px; }
+#alm-fx-ui[data-office] .sub-modal {
+  max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
+  background: var(--alm-surface); color: var(--alm-text); border-radius: 12px;
+}
+#alm-fx-ui[data-office] :is(.sub-modal-head, .sub-modal-foot) {
+  padding: 12px 18px; background: var(--alm-surface); border-color: var(--alm-line);
+}
+#alm-fx-ui[data-office] .sub-modal-body { padding: 14px 18px; overflow: auto; }
+#alm-fx-ui[data-office] ::-webkit-scrollbar-thumb { background: var(--alm-input-line); border-radius: 8px; }
+#alm-fx-ui[data-office] { scrollbar-color: var(--alm-input-line) transparent; }
+#alm-fx-ui[data-office] table th:is(.num, .numeric, .right, .amount, .rate, .text-right) { text-align: right !important; }
+@media (max-width: 750px) {
+  #alm-fx-ui[data-office] :is(.page-title, .page-code) { white-space: normal; overflow-wrap: anywhere; }
+  #alm-fx-ui[data-office] :is(.field-group, .deal-combo, .select-field) { min-width: 0; max-width: 100%; }
+  #alm-fx-ui[data-office] .field-group input { min-width: 0; width: 100%; }
+  #alm-fx-ui[data-office] :is(.title-wrap, .brand, .card-head, .head-meta, .table-head-right, .table-tools) {
+    flex-wrap: wrap; white-space: normal; min-width: 0; gap: 8px;
+  }
+  #alm-fx-ui[data-office] :is(.app-header-right, .app-header-left) { margin-left: 0; min-width: 0; }
+  #alm-fx-ui[data-office] :is(.filter-grid, .selection-grid, .basic-grid, .deal-grid, .info-grid, .hdr-grid, .field-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #alm-fx-ui[data-office] :is(.toolbar, .table-toolbar, .table-footer, .pager, .panel-title, .card-titlebar) { flex-wrap: wrap; height: auto; gap: 8px; }
+}
+@media (max-width: 600px) {
+  #alm-fx-ui[data-office] :is(.app-title, .header-title) { font-size: 21px; }
+}
+#alm-fx-ui[data-office] .mo-confirm-fx-deal-id-ss .combo { max-width: 100%; min-width: 0; }
