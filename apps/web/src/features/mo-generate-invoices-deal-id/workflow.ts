@@ -25,6 +25,35 @@ import { DEAL_INVOICE_STATUS, canReverseInvoice, isFinalInvoiceStatus, pcForStat
 import { dats, invoiceDifference } from './invoice.ts'
 import type { AdjRecord, Deal, InvRow } from './types.ts'
 
+/**
+ * Writes a row, and when the middleware refuses a decimal field for having more places than the
+ * column holds ("Invalid value for field 'ZINV_PRICE': '169453.1250' exceeds the 2 decimal
+ * place(s) allowed; refusing to round"), rounds just that field to the stated scale and writes
+ * again. The middleware never rounds for us and the BL columns are narrower than the invoice
+ * price they receive (the BL's ZINV_PRICE holds 2 places, the invoice's ZUSD_PRICE 4), so the
+ * scale is taken from its own message rather than guessed.
+ */
+export async function updateFitting(
+  update: (resource: string, key: Record<string, string>, changes: Record<string, string>) => Promise<unknown>,
+  resource: string,
+  key: Record<string, string>,
+  changes: Record<string, string>,
+): Promise<void> {
+  const fitted = { ...changes }
+  for (let attempt = 0; attempt < Object.keys(changes).length + 1; attempt++) {
+    try {
+      await update(resource, key, fitted)
+      return
+    } catch (error) {
+      const hit = /field '([A-Z0-9_]+)'.*exceeds the (\d+) decimal place/.exec(error instanceof Error ? error.message : String(error))
+      const field = hit?.[1]
+      const value = field ? fitted[field] : undefined
+      if (!hit || !field || value === undefined || !Number.isFinite(Number(value))) throw error
+      fitted[field] = Number(value).toFixed(Number(hit[2]))
+    }
+  }
+}
+
 /** Middleware resource names. Those not already used elsewhere in the app are unconfirmed (see RESOURCE_NOTE). */
 export const RESOURCE = {
   dealId: 'tsfDealId',
@@ -277,7 +306,7 @@ export async function confirmInvoiceGeneration(input: ConfirmInput, ports: Ports
               ZBL_STAT_ID: DEAL_BL_INVOICED,
               ...stamp,
             }
-            await ports.update(reused ? RESOURCE.blReuse : RESOURCE.bl, keyOf(b, reused ? KEY.blReuse : KEY.bl), changes)
+            await updateFitting(ports.update, reused ? RESOURCE.blReuse : RESOURCE.bl, keyOf(b, reused ? KEY.blReuse : KEY.bl), changes)
             n++
           }
         }
