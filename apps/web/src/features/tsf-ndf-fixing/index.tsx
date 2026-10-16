@@ -339,7 +339,7 @@ export default function TsfNdfFixing() {
                     }
                   }}
                 >
-                  ◆ NDF Rate Fixing
+                  NDF Rate Fixing
                 </button>
                 <button type="button" className="btn ghost" onClick={refreshAll}>
                   ↻ Refresh

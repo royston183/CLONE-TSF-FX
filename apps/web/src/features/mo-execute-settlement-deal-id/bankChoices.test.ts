@@ -9,10 +9,10 @@ import { updateFxLeg } from './settlement.ts'
 
 const account = (companyCode: string, houseBank = 'CHAUS', accountId = 'CHA00'): HouseBankAccount => ({ companyCode, houseBank, accountId, currency: 'USD', bankName: 'Chase', description: 'USD account', glAccount: '0000113100' })
 const form: FxPostForm = {
-  bukrs: 'SG03', rfha: '30001', dealType: 'D1', partner: '660000802',
+  bukrs: 'SG03', seq: '', rfha: '30001', dealType: 'D1', partner: '660000802',
   bAmt: '1,000 USD', bDoc: '', bBankType: '', bTrfType: '', bRecCoCode: 'SG03', bBankId: 'TSF-SLC', bPaymentId: 'USD1', bHouseBank: 'CHAUS', bAccountId: 'CHA00',
-  letterCode: '', letterName: '', subNo: false,
-  sAmt: '83,000 INR', sDoc: '', sBankType: '', sTrfType: '', sBankId: 'NFX', sPayCoCode: 'SG03', sPaymentId: 'INR1', sHouseBank: 'DBSSG', sAccountId: 'DBS00', remit: false,
+  letterCode: '', letterName: '', bSetDesc: '', subNo: false,
+  sAmt: '83,000 INR', sDoc: '', sBankType: '', sTrfType: '', sBankId: 'NFX', sPayCoCode: 'SG03', sPaymentId: 'INR1', sHouseBank: 'DBSSG', sAccountId: 'DBS00', sLetterCode: '', sSetDesc: '', remit: false,
 }
 
 describe('manual settlement bank selection', () => {

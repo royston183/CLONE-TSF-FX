@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FxLiveOverview, KpiDelta } from './FxLiveOverview.tsx'
 import { BarChart, DonutChart, LineChart, Sparkline } from '../charts/Charts.tsx'
 import {
   DEAL_STATUS,
@@ -28,14 +29,15 @@ type Scope = (typeof SCOPES)[number]
  * redraws the same numbers reads as four structures that happen to be identical.
  */
 export function OverviewView() {
-  const [scope, setScope] = useState<Scope>('All')
+  const [scope, setScope] = useState<Scope>('FX')
 
   return (
     <>
       <div className="hub-title">Overview</div>
       <div className="hub-sub">
-        Position and activity across the TSF estate. Figures on this page are placeholders and
-        are not read from SAP.
+        {scope === 'FX'
+          ? 'Position and activity across FX, read live from SAP.'
+          : 'Position and activity across the TSF estate. Figures for this structure are placeholders and are not read from SAP.'}
       </div>
 
       <div className="mp-scope-row" role="group" aria-label="Structure">
@@ -51,6 +53,15 @@ export function OverviewView() {
           </button>
         ))}
       </div>
+      {scope === 'FX' ? <FxLiveOverview /> : null}
+      {scope !== 'FX' ? <PlaceholderOverview scope={scope} /> : null}
+    </>
+  )
+}
+
+function PlaceholderOverview({ scope }: { scope: Scope }) {
+  return (
+    <>
       {scope !== 'All' ? (
         <p className="mp-scope-note">
           The figures below are not split by structure yet — this is the same placeholder set
@@ -64,17 +75,8 @@ export function OverviewView() {
           <div className="mp-kpi" key={kpi.label}>
             <div className="mp-kpi-label">{kpi.label}</div>
             <div className="mp-kpi-value">{kpi.value}</div>
-            <div
-              className={kpi.delta >= 0 ? 'mp-kpi-delta up' : 'mp-kpi-delta down'}
-              aria-label={`${kpi.delta >= 0 ? 'Up' : 'Down'} ${Math.abs(kpi.delta).toFixed(1)}% ${kpi.deltaNote}`}
-            >
-              {/* An arrow as well as the colour, so the direction survives a greyscale print
-                  or a red-green colour deficiency. The aria-label above says the direction in
-                  words, since Math.abs() below strips the sign a screen reader could otherwise use. */}
-              <span aria-hidden="true">{kpi.delta >= 0 ? '▲' : '▼'}</span>
-              {Math.abs(kpi.delta).toFixed(1)}% {kpi.deltaNote}
-            </div>
-            <Sparkline values={kpi.series} rising={kpi.delta >= 0} />
+            <KpiDelta kpi={kpi} />
+            <Sparkline values={kpi.series} rising={(kpi.delta ?? 0) >= 0} />
           </div>
         ))}
       </div>

@@ -125,6 +125,10 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
     curr === r.curr1 ? `${formatAmount(r.amt1)} ${r.curr1}` : `${formatAmount(r.amt2)} ${r.curr2}`
   const t = r.tsf
   return {
+    seq: r.seq,
+    bSetDesc: buy?.desc ?? '',
+    sSetDesc: sell?.desc ?? '',
+    sLetterCode: [sell?.letCode, sell?.letName].filter(Boolean).join(' - '),
     bukrs: r.bukrs,
     rfha: r.rfha,
     dealType: dealTypeLabel(r),
@@ -166,6 +170,18 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
  */
 export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
   return {
+    bukrs: r.bukrs ?? '',
+    seq: r.seq ?? '',
+    recPay: r.recPay,
+    tradeType: r.leg,
+    setDesc: r.trfDesc,
+    payAmt: `${formatAmount(r.payAmt)} ${r.setCurr || r.curr}`,
+    linkedFx: r.dMap ?? '',
+    settled: r.setCo,
+    trfType: TRANSFER_TYPES[r.trfType] ?? r.trfType,
+    postingType: [r.fiType, r.postDesc].filter(Boolean).join(' '),
+    fiPosting: !!r.postRequired,
+    partnerId: r.businessPartner ?? '',
     date: r.dueDate,
     sender: r.buy ?? '',
     senderHouseBank: r.senderHouseBank ?? '',

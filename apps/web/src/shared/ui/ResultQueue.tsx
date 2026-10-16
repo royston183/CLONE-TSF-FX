@@ -7,6 +7,8 @@ export type ResultItem = {
   message?: string | undefined
   /** Optional SAP reference (deal / contract / document number) shown in the highlighted box. */
   reference?: { label: string; value: string } | undefined
+  /** Runs once when this outcome is dismissed (OK, close or Escape), e.g. to close the popup behind it. */
+  onDismiss?: (() => void) | undefined
 }
 
 /**
@@ -23,7 +25,10 @@ export function ResultQueue({
 }) {
   const first = items[0]
   if (!first) return null
-  const close = () => onDismiss(first.id)
+  const close = () => {
+    onDismiss(first.id)
+    first.onDismiss?.()
+  }
   return (
     <ResultDialog
       key={first.id}

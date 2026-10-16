@@ -16,6 +16,35 @@ const EmptyRow = ({ span, text }: { span: number; text: string }) => (
   </tr>
 )
 
+/** The ALV "Accounting Details" / "Accounting Entry" grid of the SAP pop-up. The entries are BO's (ZSGTSFR081), so MO sees the columns and, until BO posts, no rows. */
+const ACCOUNTING_COLUMNS = ['D', 'CoCode', 'Document Date', 'Posting Date', 'G/L Acct', 'GL Description', 'Payment Amt', 'Pay Curr', 'Profit Center', 'Bus. Area']
+const INVOICE_ACCOUNTING_COLUMNS = ['D', 'Posting Date', 'Document Date', 'G/L Acc', 'GL Descrip', 'Vendor', 'Profit Ctr', 'Bus. Area', 'House Bank', 'Acct ID', 'Invoice Am', 'Invoice Cu', 'Payment Am', 'Pay Curr', 'Ex Rate', 'Account', 'Account Type']
+
+function AccountingTable({ title, columns, posted }: { title: string; columns: readonly string[]; posted: boolean }) {
+  return (
+    <div className="fbox" style={{ marginTop: '10px', marginBottom: 0 }}>
+      <div className="fbox-title">{title}</div>
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead>
+            <tr>
+              {columns.map((c) => (
+                <th key={c} className="left">{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <EmptyRow
+              span={columns.length}
+              text={posted ? 'Posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081) — the entries are not served to MO.' : 'No accounting entries yet: they are posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081).'}
+            />
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 const Cancel = ({ onClick, label = 'Cancel' }: { onClick: () => void; label?: string }) => (
   <button className="btn-cancel" type="button" onClick={onClick}>
     {label}
@@ -402,6 +431,10 @@ export function FxPostModal({
             <input type="text" disabled readOnly value={form.bukrs} />
           </div>
           <div className="ffield">
+            <label>Sequence</label>
+            <input type="text" disabled readOnly value={form.seq} />
+          </div>
+          <div className="ffield">
             <label>Transaction</label>
             <input type="text" disabled readOnly value={form.rfha} />
           </div>
@@ -445,12 +478,27 @@ export function FxPostModal({
             <label>Letter Code</label>
             <input type="text" disabled readOnly value={[form.letterCode, form.letterName].filter(Boolean).join(' - ')} />
           </div>
+          <div className="ffield">
+            <label>Letter Desc</label>
+            <input type="text" disabled readOnly value="" />
+          </div>
+          <div className="ffield">
+            <label>Settlement Desc</label>
+            <input type="text" disabled readOnly value={form.bSetDesc} />
+          </div>
         </div>
         <label className="check-row">
           <input type="checkbox" checked={form.subNo} onChange={(e) => onField('subNo', e.target.checked)} /> Print SSI
           Letter with Sub Account Number
         </label>
+        <label className="check-row">
+          <input type="checkbox" disabled readOnly checked={false} /> Beneficiary Address
+        </label>
+        <label className="check-row">
+          <input type="checkbox" disabled readOnly checked={false} /> Purpose Code
+        </label>
       </div>
+      <AccountingTable title="Accounting Details (Buy)" columns={ACCOUNTING_COLUMNS} posted={!!form.bDoc} />
       <div className="fbox">
         <div className="fbox-title">Sell Currency</div>
         <div className="form-grid">
@@ -483,12 +531,25 @@ export function FxPostModal({
           <CompanyField id="fx-sell-company" label="Pay Co Code" value={form.sPayCoCode} companies={companies} onChange={(v) => onField('sPayCoCode', v)} />
           <PartnerBankField id="fx-sell-payment" value={form.sPaymentId} choices={sell.choices} loading={sell.loading} onChange={(v) => onField('sPaymentId', v)} />
           <HouseBankFields id="fx-sell" company={form.sPayCoCode} houseBank={form.sHouseBank} accountId={form.sAccountId} choices={sell.choices} loading={sell.loading} disabled={form.remit} onBank={(v) => onField('sHouseBank', v)} onAccount={(v) => onField('sAccountId', v)} />
+          <div className="ffield">
+            <label>Letter Code</label>
+            <input type="text" disabled readOnly value={form.sLetterCode} />
+          </div>
+          <div className="ffield">
+            <label>Letter Desc</label>
+            <input type="text" disabled readOnly value="" />
+          </div>
+          <div className="ffield">
+            <label>Settlement Desc</label>
+            <input type="text" disabled readOnly value={form.sSetDesc} />
+          </div>
         </div>
         <label className="check-row">
           <input type="checkbox" checked={form.remit} onChange={(e) => onField('remit', e.target.checked)} /> I will
           Remit to You
         </label>
       </div>
+      <AccountingTable title="Accounting Details (Sell)" columns={ACCOUNTING_COLUMNS} posted={!!form.sDoc} />
       {error ? <div className="note-box" role="alert">{error}</div> : null}
       <div className="note-box">
         Select each side's house bank and account for its company code. Payment instruction IDs are maintained separately.
@@ -539,7 +600,7 @@ export function InvPostModal({
     <ModalFrame
       open={open}
       onClose={onClose}
-      size="compact"
+      size="wide"
       icon={<>&#129534;</>}
       title={<>Trade Invoice Settlement</>}
       subtitle={<>Invoice leg <span>{legLabel}</span> &ndash; maintain the banking details and settle the leg</>}
@@ -555,6 +616,65 @@ export function InvPostModal({
         </>
       }
     >
+      <div className="fbox" style={{ marginBottom: '10px' }}>
+        <div className="fbox-title">Basic Details</div>
+        <div className="form-grid three">
+          <div className="ffield">
+            <label>Company Code</label>
+            <input type="text" disabled readOnly value={form.bukrs} />
+          </div>
+          <div className="ffield">
+            <label>Sequence</label>
+            <input type="text" disabled readOnly value={form.seq} />
+          </div>
+          <div className="ffield">
+            <label>Receipt/Payment</label>
+            <input type="text" disabled readOnly value={form.recPay} />
+          </div>
+          <div className="ffield">
+            <label>Trade Type</label>
+            <input type="text" disabled readOnly value={form.tradeType} />
+          </div>
+          <div className="ffield" style={{ gridColumn: 'span 2' }}>
+            <label>Settlement Desc</label>
+            <input type="text" disabled readOnly value={form.setDesc} />
+          </div>
+          <div className="ffield">
+            <label>Payment Amount</label>
+            <input type="text" disabled readOnly value={form.payAmt} />
+          </div>
+          <div className="ffield">
+            <label>Premium Amount</label>
+            <input type="text" disabled readOnly value="" />
+          </div>
+          <div className="ffield">
+            <label>Linked FX Deal</label>
+            <input type="text" disabled readOnly value={form.linkedFx} />
+          </div>
+          <div className="ffield">
+            <label>Transfer Type</label>
+            <input type="text" disabled readOnly value={form.trfType} />
+          </div>
+          <div className="ffield">
+            <label>Posting Type</label>
+            <input type="text" disabled readOnly value={form.postingType} />
+          </div>
+          <div className="ffield">
+            <label>Letter Code</label>
+            <input type="text" disabled readOnly value="" />
+          </div>
+          <div className="ffield">
+            <label>Letter Desc</label>
+            <input type="text" disabled readOnly value="" />
+          </div>
+        </div>
+        <label className="check-row">
+          <input type="checkbox" disabled readOnly checked={form.settled} /> Settlement
+        </label>
+        <label className="check-row">
+          <input type="checkbox" disabled readOnly checked={form.fiPosting} /> FI Posting
+        </label>
+      </div>
       <div className="form-grid three">
         <div className="ffield">
           <label>Value Date</label>
@@ -582,6 +702,10 @@ export function InvPostModal({
             <input type="text" disabled readOnly value={form.receiver} />
           </div>
           <HouseBankFields id="inv-receiver" company={receiverCompany} houseBank={form.receiverHouseBank} accountId={form.receiverAccountId} choices={receiver.choices} loading={receiver.loading} disabled={receiverLocked} onBank={(v) => onField('receiverHouseBank', v)} onAccount={(v) => onField('receiverAccountId', v)} />
+          <div className="ffield">
+            <label>Partner ID</label>
+            <input type="text" disabled readOnly value={form.partnerId} />
+          </div>
           {row?.partnerBank ? (
             <div className="ffield">
               <label>Partner Bank (Generate Invoices)</label>
@@ -590,6 +714,7 @@ export function InvPostModal({
           ) : null}
         </div>
       </div>
+      <AccountingTable title="Accounting Entry" columns={INVOICE_ACCOUNTING_COLUMNS} posted={!!form.fiDoc} />
       <div className="ffield" style={{ marginTop: '10px' }}>
         <label>Doc Msg</label>
         <textarea
