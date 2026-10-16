@@ -4,7 +4,7 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
-import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
+import { bankCompanies, changeFxBankField, type BankCompany } from './bankChoices.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
@@ -191,22 +191,21 @@ export default function MoExecuteSettlementDealId() {
   const [diffError, setDiffError] = useState('')
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
-  // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP): suggestions for the bank fields.
-  const [houseBanks, setHouseBanks] = useState<HouseBankAccount[]>([])
+  const [companies, setCompanies] = useState<BankCompany[]>([])
   const [entityCompany, setEntityCompany] = useState<Record<string, string>>({})
   useEffect(() => {
-    let live = true
-    void Promise.all([loadHouseBankAccounts(), fxList('comp')])
-      .then(([accounts, comp]) => {
-        if (!live) return
-        setHouseBanks(accounts)
+    const controller = new AbortController()
+    void fxList('comp', {}, { signal: controller.signal })
+      .then((comp) => {
+        if (controller.signal.aborted) return
+        setCompanies(bankCompanies(comp))
         setEntityCompany(Object.fromEntries(comp.map((r) => [txt(r, 'ZCOM_ID'), txt(r, 'ZBUKRS')])))
       })
       .catch((error: unknown) => {
-        if (!isAbort(error)) console.warn('[execute-settlement] house bank accounts unavailable: the bank fields stay free text', error)
+        if (!isAbort(error)) console.warn('[execute-settlement] Company master unavailable', error)
       })
     return () => {
-      live = false
+      controller.abort()
     }
   }, [])
 
@@ -407,11 +406,12 @@ export default function MoExecuteSettlementDealId() {
     const r = fxDeals[idx]
     if (!r) return
     setActiveFx(idx)
-    setFxForm((f) => ({ ...f, ...fxPostDefaults(r) }))
+    const defaults = fxPostDefaults(r)
+    setFxForm({ ...BLANK_FX_FORM, ...defaults, bRecCoCode: defaults.bRecCoCode || r.bukrs, sPayCoCode: defaults.sPayCoCode || r.bukrs })
     modals.open('fxPost')
   }
   const setFxField = <K extends keyof FxPostForm>(key: K, value: FxPostForm[K]) =>
-    setFxForm((f) => ({ ...f, [key]: value }))
+    setFxForm((f) => changeFxBankField(f, key, value))
   const postFxAction = (kind: PostKind) => {
     const r = activeFx === null ? undefined : fxDeals[activeFx]
     if (activeFx === null || !r) return
@@ -430,7 +430,7 @@ export default function MoExecuteSettlementDealId() {
     modals.open('invPost')
   }
   const setInvField = <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) =>
-    setInvForm((f) => ({ ...f, [key]: value }))
+    setInvForm((f) => ({ ...f, [key]: value, ...(key === 'senderHouseBank' && value !== f.senderHouseBank ? { senderAccountId: '' } : {}), ...(key === 'receiverHouseBank' && value !== f.receiverHouseBank ? { receiverAccountId: '' } : {}) }))
   const postInvAction = (kind: Exclude<PostKind, 'print'>) => {
     const r = activeInv === null ? undefined : invoices[activeInv]
     if (activeInv === null || !r) return
@@ -650,6 +650,7 @@ export default function MoExecuteSettlementDealId() {
         form={fxForm}
         onField={setFxField}
         onAction={postFxAction}
+        companies={companies}
       />
       <InvPostModal
         open={modals.isOpen('invPost')}
@@ -659,7 +660,6 @@ export default function MoExecuteSettlementDealId() {
         form={invForm}
         onField={setInvField}
         onAction={postInvAction}
-        houseBanks={houseBanks}
         companyOf={(entity) => entityCompany[entity] ?? ''}
       />
       <ViewInvModal

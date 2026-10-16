@@ -161,8 +161,8 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
  * values (ZHBKID / ZHKTID, ZREC_HBKID / ZREC_HKTID); the receiver's falls back to the house bank assigned to the
  * invoice in Generate Invoices (api.ts). The FI document is BO's posting, shown read-only.
  *
- * SAP proposes the rest from VTBSTC1 (pay ID TRDINV) and T012K, which this app cannot read: those fields stay blank for
- * the user to fill, never a made-up bank. Update / Settlement Complete store whatever the pop-up holds.
+ * SAP proposes the rest from VTBSTC1 (pay ID TRDINV). Until that mapping is exposed, users select a company-scoped
+ * HouseBankAccount from OData. Update / Settlement Complete store the selected banks and accounts.
  */
 export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
   return {

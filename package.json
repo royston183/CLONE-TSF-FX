@@ -23,6 +23,7 @@
     "lint": "eslint .",
     "db:migrate": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts migrate",
     "db:seed": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts seed",
+    "db:seed:set-fx": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts seed-set-fx",
     "db:setup": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts setup",
     "gen:dark-css": "node tools/gen-dark-css.mjs",
     "verify": "npm run typecheck && npm test && node tools/gen-dark-css.mjs --check && npm run build"

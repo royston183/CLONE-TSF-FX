@@ -86,6 +86,7 @@ export function BlotterTable({
           </th>
           <th className="left sticky-col sticky-2">Status</th>
           {sortTh('transactionNumber', 'RFHA / Draft', 'left sortable sticky-col sticky-3')}
+          <th className="left">Deal ID</th>
           {sortTh('tradeDate', <>Trade Date<span className="req">*</span></>, 'sortable')}
           <th className="left">
             Company Code<span className="req">*</span>
@@ -121,7 +122,6 @@ export function BlotterTable({
           <th>NDF Fixing Date</th>
           <th className="left">NDF Fixing Ref</th>
           <th className="left">MC Ref</th>
-          <th className="left">Deal ID</th>
           <th className="left">Deal Type</th>
           <th className="left">Notes</th>
           <th className="left">Actions</th>
@@ -234,6 +234,7 @@ function Row({
           r.transactionNumber
         )}
       </td>
+      <td className="left">{r.dealId ? <span className="deal-id">{r.dealId}</span> : DASH}</td>
       <td>{date('tradeDate')}</td>
       <td className="left">{select('entity', entityOptions())}</td>
       <td className="left">{select('bp', bpOptions(partners))}</td>
@@ -282,7 +283,6 @@ function Row({
           DASH
         )}
       </td>
-      <td className="left">{r.dealId ? <span className="deal-id">{r.dealId}</span> : DASH}</td>
       <td className="left">{r.dealType || DASH}</td>
       <td className="left">{r.notes ? <span title={r.notes}>Note</span> : DASH}</td>
       <td className="left" style={{ display: 'flex', gap: 4 }}>

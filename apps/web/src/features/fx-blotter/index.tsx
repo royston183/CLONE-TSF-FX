@@ -114,7 +114,6 @@ import type {
 
 const DEFAULT_SORT: Sort = { key: 'seq', dir: -1 }
 const ALL_ROWS = 9999
-const loadedNote = (n: number) => `${n} transaction(s) loaded; 10 empty rows ready for new entries.`
 const DROP_LABEL: Record<DropAction, string> = {
   create: 'Create Transaction',
   release: 'Release to MO',
@@ -175,7 +174,6 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   /** The latest blotter, for handlers that run after an await or from a stored confirm. */
   const latest = useRef(b)
   latest.current = b
-  const [ctxNote, setCtxNote] = useState(() => loadedNote(2))
 
   // Table
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
@@ -239,6 +237,13 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
       })
     return () => ctl.abort()
   }, [lockKey, lockReads, showToast])
+  // The program reads the lock on every screen round trip. A lock another user made (or the previous day's, locked in
+  // another window) is picked up when this window is used again.
+  useEffect(() => {
+    const again = () => setLockReads((n) => n + 1)
+    window.addEventListener('focus', again)
+    return () => window.removeEventListener('focus', again)
+  }, [])
   const lockState = lock && lock.key === lockKey ? lock.state : null
   const closedWhy = closedReason(lockState)
   /** Locked, or the previous working day is not: nothing can be created, changed or released. */
@@ -397,20 +402,20 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // ------------------------------------------------------------------ context row
 
   const load = (from: Blotter) => {
+    setLockReads((n) => n + 1)
     const { blotter, loaded } = loadContext(from)
     commit(blotter)
-    setCtxNote(loadedNote(loaded))
     showToast(`Blotter loaded for ${blotter.ctx.trader} (${blotter.ctx.group}).`)
     void loadLive()
   }
 
   const reset = () => {
+    setLockReads((n) => n + 1)
     commit(hardReset(latest.current, new Date()))
     setStatusFilter('ALL')
     setSearch('')
     setSort(DEFAULT_SORT)
     setPageSize(ALL_ROWS)
-    setCtxNote(loadedNote(2))
     showToast('Blotter fully reset.')
     // The reset leaves the demo rows only; the day's deals come back from SAP, released ones as Released.
     void loadLive()
@@ -589,10 +594,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
   // LOCK (Lock Blotter): refused while a transaction is still Created or a row is started but not created; otherwise it asks
   // "Do you want to Lock the Blotter for the day?" and writes the day's lock row, after which the blotter is read-only for everyone.
   const lockBlotter = () => {
-    if (closed) {
-      showToast(closedWhy, 'warn')
-      return
-    }
+    // LOCK is never taken off the program's toolbar, closed or not: it is how the day before is locked to open this one.
     const why = lockBlocker(latest.current.rows)
     if (why) {
       showToast(why, 'error')
@@ -1143,7 +1145,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
         >
           Release to MO - SS
         </button>
-        <button type="button" className="tb-btn" id="btn-lock" disabled={closed} title={closed ? closedWhy : undefined} onClick={lockBlotter}>
+        <button type="button" className="tb-btn" id="btn-lock" onClick={lockBlotter}>
           Lock Blotter
         </button>
         <button type="button" className="tb-btn" id="btn-notes" onClick={openNotes}>
@@ -1238,7 +1240,7 @@ function FxBlotterScreen({ contracts }: { contracts: MasterContract[] }) {
               Load Blotter
             </button>
             <span className={closed ? 'context-lock-note is-locked' : 'context-lock-note'} id="ctx-note" role={closed ? 'status' : undefined}>
-              {closed ? closedWhy : ctxNote}
+              {closed ? closedWhy : null}
             </span>
           </div>
 

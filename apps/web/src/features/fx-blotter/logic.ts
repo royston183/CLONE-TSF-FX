@@ -535,7 +535,7 @@ function sortValue(r: BlotterRow, key: Sort['key']): number | string {
  * the chosen column orders rows within each block.
  */
 export function sortRows(rows: BlotterRow[], sort: Sort): BlotterRow[] {
-  return [...rows].sort((a, b) => {
+  return groupDealLegs([...rows].sort((a, b) => {
     const aDraft = a.status === 'DRAFT' ? 1 : 0
     const bDraft = b.status === 'DRAFT' ? 1 : 0
     if (aDraft !== bDraft) return aDraft - bDraft
@@ -549,7 +549,30 @@ export function sortRows(rows: BlotterRow[], sort: Sort): BlotterRow[] {
     if (av < bv) return -sort.dir
     if (av > bv) return sort.dir
     return 0
-  })
+  }))
+}
+
+/** The leg number a deal type names: D1 / Deal 1 -> 1, D2 / Deal 2 -> 2; anything else (a Short Straddle, SAP's text) has none. */
+const legNumber = (r: BlotterRow): number => Number(/^(?:D|Deal )([0-9])[^0-9]/.exec(`${r.dealType} `)?.[1] ?? 99)
+
+/**
+ * The legs of one Deal ID sit next to each other: each deal appears where its first row was sorted, with its other legs
+ * directly below it, Deal 1 above Deal 2. A row with no Deal ID (and every draft) keeps its place.
+ */
+export function groupDealLegs(rows: BlotterRow[]): BlotterRow[] {
+  const out: BlotterRow[] = []
+  const placed = new Set<string>()
+  for (const r of rows) {
+    if (!r.dealId || r.status === 'DRAFT') {
+      out.push(r)
+      continue
+    }
+    if (placed.has(r.dealId)) continue
+    placed.add(r.dealId)
+    const legs = rows.filter((x) => x.dealId === r.dealId && x.status !== 'DRAFT')
+    out.push(...legs.map((x, i) => ({ x, i })).sort((a, b) => legNumber(a.x) - legNumber(b.x) || a.i - b.i).map(({ x }) => x))
+  }
+  return out
 }
 
 /** Header clicks: the same column flips direction, a new one starts ascending. */

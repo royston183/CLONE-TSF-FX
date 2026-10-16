@@ -172,7 +172,7 @@ export type FxPostForm = {
   bRecCoCode: string
   bBankId: string
   bPaymentId: string
-  /** House bank / Account ID (ZTSF_BHBKID / ZTSF_BHKTID): output only, as on screen 9003. */
+  /** House bank / Account ID (ZTSF_BHBKID / ZTSF_BHKTID): manually selected for the receiving company. */
   bHouseBank: string
   bAccountId: string
   letterCode: string
@@ -186,7 +186,7 @@ export type FxPostForm = {
   sBankId: string
   sPayCoCode: string
   sPaymentId: string
-  /** House bank / Account ID (ZTSF_SHBKID / ZTSF_SHKTID): output only. */
+  /** House bank / Account ID (ZTSF_SHBKID / ZTSF_SHKTID): manually selected for the paying company. */
   sHouseBank: string
   sAccountId: string
   remit: boolean

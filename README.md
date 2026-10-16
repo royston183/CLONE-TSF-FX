@@ -95,6 +95,21 @@ React -> @slc/api-client -> Fastify gateway -+-> SAP OData      service('fx'), s
 npm run db:setup     # first time: migrate + seed
 npm run db:migrate   # apply new migration files only
 npm run db:seed      # re-run the seed; safe to repeat
+npm run db:seed:set-fx # migrate + seed only SET_FX, without reseeding other tables
+```
+
+`ZSGTSFTR_SET_FX` is the local copy of the supplied SET_FX Excel export: 54 rows for client
+100, keyed by `(client, zmod_id, zd_map, zbs)`. Migration `009_zsgtsftr_set_fx.sql` follows
+the supplied `SET_FX.json` DDIC schema (25 text columns). Codes retain leading zeroes;
+dates/times use SAP `YYYYMMDD` / `HHMMSS`. The repeatable seed lives in
+`database/seed/zsgtsftr_set_fx.json`. Reseeding upserts exported keys, restoring their
+spreadsheet values while leaving other keys and clients intact. Settlement screens still
+use their existing middleware SET_FX reads; this change adds SQLite storage and seeding.
+
+To regenerate the seed from a replacement export before running `db:seed:set-fx`:
+
+```powershell
+node tools/import-set-fx.mjs 'C:\path\EXPORT_set_fx.XLSX' 'C:\path\SET_FX.json'
 ```
 
 Change the schema by **adding a new migration file**, never by editing one already applied.

@@ -54,7 +54,7 @@ export const defaultDeps: SettlementDeps = {
   setDealStatus: async (deal, status) => {
     await fxUpdate('tsfDealId', dealKey(deal), { ZDEAL_STAT: status, ...(await changedStamp()) })
   },
-  updateFx: updateAppStrRecord,
+  updateFx: (company, transaction, fields) => updateAppStrRecord(company, transaction, fields, { preserveBlanks: true }),
 }
 
 export function dealKey(deal: Deal): Record<string, string> {
