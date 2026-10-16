@@ -79,6 +79,10 @@ import type {
 const TOAST_MS = 3800
 
 const BLANK_FX_FORM: FxPostForm = {
+  seq: '',
+  bSetDesc: '',
+  sSetDesc: '',
+  sLetterCode: '',
   bukrs: '',
   rfha: '',
   dealType: '',
@@ -133,6 +137,18 @@ const NO_INVOICES: TradeInvoice[] = []
 const NO_HEADSUPS: Headsup[] = []
 
 const BLANK_INV_FORM: InvPostForm = {
+  bukrs: '',
+  seq: '',
+  recPay: '',
+  tradeType: '',
+  setDesc: '',
+  payAmt: '',
+  linkedFx: '',
+  settled: false,
+  trfType: '',
+  postingType: '',
+  fiPosting: false,
+  partnerId: '',
   date: '',
   sender: '',
   senderHouseBank: '',
@@ -213,10 +229,10 @@ export default function MoExecuteSettlementDealId() {
   // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
   const [results, setResults] = useState<ResultItem[]>([])
   const resultId = useRef(0)
-  const showToast = useCallback((message: string, kind?: ToastKind) => {
+  const showToast = useCallback((message: string, kind?: ToastKind, onDismiss?: () => void) => {
     const tone = kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info'
     const title = tone === 'error' ? 'Error' : tone === 'success' ? 'Success' : 'Information'
-    setResults((r) => [...r, { id: ++resultId.current, tone, title, message }])
+    setResults((r) => [...r, { id: ++resultId.current, tone, title, message, onDismiss }])
   }, [])
 
   // Non-outcome chatter (screen refreshed, filter / download hints) stays the small auto-fading toast.
@@ -321,7 +337,7 @@ export default function MoExecuteSettlementDealId() {
   // Settlement writes (settlement.ts): one at a time, each followed by a re-read of the Deal ID so the
   // grids, badges and status show what was stored.
   const [writing, setWriting] = useState(false)
-  const runWrite = async (write: () => Promise<ActionResult>): Promise<DealScreen | null> => {
+  const runWrite = async (write: () => Promise<ActionResult>, onSuccessDismiss?: () => void): Promise<DealScreen | null> => {
     if (writing) return null
     setWriting(true)
     try {
@@ -331,7 +347,7 @@ export default function MoExecuteSettlementDealId() {
         return null
       }
       const screen = await executeSelection(deal.dealId)
-      showToast(result.message, 'success')
+      showToast(result.message, 'success', onSuccessDismiss)
       return screen
     } finally {
       setWriting(false)
@@ -417,7 +433,7 @@ export default function MoExecuteSettlementDealId() {
     if (activeFx === null || !r) return
     if (kind === 'print') showToast(ACTION_WAITING.fxPrint, 'error')
     else if (kind === 'update') void runWrite(() => updateFxLeg(r, fxDeals, fxForm))
-    else void runWrite(() => completeFxLeg(r, fxDeals, invoices, fxForm))
+    else void runWrite(() => completeFxLeg(r, fxDeals, invoices, fxForm), () => modals.close('fxPost'))
   }
 
   // ------------------------------------------------------------------ Trade invoice settlement pop-up (9002)
@@ -435,7 +451,7 @@ export default function MoExecuteSettlementDealId() {
     const r = activeInv === null ? undefined : invoices[activeInv]
     if (activeInv === null || !r) return
     if (kind === 'update') void runWrite(() => updateInvoiceLeg(deal, r, invoices, invForm))
-    else void runWrite(() => completeInvoiceLeg(deal, r, invoices, fxDeals, invForm))
+    else void runWrite(() => completeInvoiceLeg(deal, r, invoices, fxDeals, invForm), () => modals.close('invPost'))
   }
 
   // ------------------------------------------------------------------ derived

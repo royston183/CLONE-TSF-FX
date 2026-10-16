@@ -119,6 +119,7 @@ const SET_FX = [
 const fxLegs = (extra: Partial<FxDeal> = {}) => withSetFx([fxRow('D1', '3000000000030', extra), fxRow('D2', '2000000000036')], SET_FX)
 
 const invForm: InvPostForm = {
+  bukrs: '', seq: '', recPay: '', tradeType: '', setDesc: '', payAmt: '', linkedFx: '', settled: false, trfType: '', postingType: '', fiPosting: false, partnerId: '',
   date: '09-11-2026',
   sender: 'OGA',
   senderHouseBank: 'dbs03',

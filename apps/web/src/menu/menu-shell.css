@@ -966,3 +966,172 @@
     display: none;
   }
 }
+
+/* ---- Live FX overview: panel header with its own toggle, hover feedback, three-up rows ---- */
+.mp-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.mp-panel-head .mp-panel-title {
+  margin-bottom: 0;
+}
+.mp-panel-head .mp-scope-row {
+  margin: 0;
+}
+.mp-panel-head .mp-scope {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.mp-live-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 12px;
+}
+.mp-live-bar .mp-scope-row {
+  margin: 0;
+}
+.mp-live-stamp {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.mp-bar-row {
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.mp-bar-row:hover {
+  background: var(--blue-pale2);
+}
+.mp-bar-row:hover .mp-bar-fill {
+  filter: brightness(1.08);
+}
+.mp-donut-slice {
+  transition: opacity 0.15s ease;
+}
+.mp-donut:hover .mp-donut-slice {
+  opacity: 0.6;
+}
+.mp-donut .mp-donut-slice:hover {
+  opacity: 1;
+}
+.mp-legend li {
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.mp-legend li:hover {
+  background: var(--blue-pale2);
+}
+.mp-line-point circle:hover {
+  fill: var(--blue-dark);
+}
+.mp-activity tbody tr:hover td {
+  background: var(--blue-pale2);
+}
+
+/* ---- Live FX overview: every chart tile the same width and height ---- */
+.mp-live-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.mp-live-grid > .mp-panel {
+  flex: none;
+  min-width: 0;
+  min-height: 300px;
+  box-sizing: border-box;
+}
+@media (max-width: 1180px) {
+  .mp-live-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .mp-live-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Activity: the chart takes four fifths, the filters stack in the fifth beside it. */
+.mp-activity-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 8px;
+}
+.mp-activity-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+.mp-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.mp-scope-row.mp-scope-col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+}
+.mp-scope-col .mp-scope {
+  width: 100%;
+  text-align: left;
+}
+@media (max-width: 900px) {
+  .mp-activity-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Live FX overview: tighter tiles, title clear of the first bar, larger bars, full-width activity chart ---- */
+.mp-live-grid > .mp-panel {
+  min-height: 0;
+  padding-bottom: 14px;
+}
+.mp-live-grid .mp-panel-head {
+  margin-bottom: 12px;
+}
+.mp-live-grid .mp-bar-row {
+  grid-template-columns: 130px 1fr 96px;
+}
+.mp-live-grid .mp-bar-value {
+  white-space: nowrap;
+}
+.mp-bars.mp-bars-lg {
+  gap: 20px;
+}
+.mp-bars-lg .mp-bar-row {
+  grid-template-columns: 120px 1fr 104px;
+}
+.mp-bars-lg .mp-bar-track {
+  height: 18px;
+  border-radius: 9px;
+}
+.mp-bars-lg .mp-bar-fill {
+  border-radius: 9px;
+}
+.mp-bars-lg .mp-bar-label,
+.mp-bars-lg .mp-bar-value {
+  font-size: 12.5px;
+}
+.mp-activity-layout .mp-line-wrap,
+.mp-activity-layout .mp-line {
+  width: 100%;
+  max-width: none;
+}
+
+/* The company chips sat flush under the structure chips; a little air stops their borders touching. */
+.mp-live-bar {
+  margin-top: 8px;
+}

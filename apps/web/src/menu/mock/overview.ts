@@ -10,7 +10,7 @@ export type Kpi = {
   label: string
   value: string
   /** Period-over-period change, already a percentage. Sign drives the arrow and colour. */
-  delta: number
+  delta: number | null
   deltaNote: string
   series: number[]
 }

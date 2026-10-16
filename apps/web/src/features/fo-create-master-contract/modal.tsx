@@ -50,13 +50,20 @@ export function Overlay({
   onBackdrop?: (() => void) | undefined
   children: ReactNode
 }) {
+  const downOnBackdrop = useRef(false)
   const cls =
     modal.state === 'open' ? 'modal-overlay open' : modal.state === 'closing' ? 'modal-overlay open closing' : 'modal-overlay'
   return (
     <div
       className={cls}
+      onMouseDown={(e) => {
+        downOnBackdrop.current = e.target === e.currentTarget
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onBackdrop?.()
+        // Only a press that also started on the backdrop closes it; selecting text in a field and
+        // releasing the mouse outside the card fires a click on the backdrop but must not close.
+        if (e.target === e.currentTarget && downOnBackdrop.current) onBackdrop?.()
+        downOnBackdrop.current = false
       }}
     >
       {children}

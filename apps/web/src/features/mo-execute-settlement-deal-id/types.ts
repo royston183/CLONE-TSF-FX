@@ -91,6 +91,8 @@ export type SetFxSide = {
   bankId: string
   letCode: string
   letName: string
+  /** ZSGTSFTR_SET_FX ZSET_DESC, the side's settlement description (blank when the table does not carry it). */
+  desc?: string
 }
 
 
@@ -160,6 +162,13 @@ export type ModalId =
   | 'viewInv'
 
 export type FxPostForm = {
+  /** Sequence of the leg in the settlement (ZSGTSFTR_SET_FX ZSEQ). */
+  seq: string
+  /** Settlement Desc of the buy / sell side. */
+  bSetDesc: string
+  sSetDesc: string
+  /** Sell side Letter Code (SET_FX sell row). */
+  sLetterCode: string
   bukrs: string
   rfha: string
   dealType: string
@@ -193,6 +202,19 @@ export type FxPostForm = {
 }
 
 export type InvPostForm = {
+  /** Basic Details of screen 9002. */
+  bukrs: string
+  seq: string
+  recPay: string
+  tradeType: string
+  setDesc: string
+  payAmt: string
+  linkedFx: string
+  settled: boolean
+  trfType: string
+  postingType: string
+  fiPosting: boolean
+  partnerId: string
   date: string
   sender: string
   senderHouseBank: string
