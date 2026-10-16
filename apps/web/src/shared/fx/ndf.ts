@@ -278,6 +278,11 @@ async function pagedOData<T>(url: string, filter: string, signal?: AbortSignal):
   }
 }
 
+/** Every FX deal in FTR (forwards, spots, NDFs), for the Overview dashboard. */
+export function loadFxTransactions(signal?: AbortSignal): Promise<FxTransaction[]> {
+  return pagedOData<FxTransaction>(trmfx('FxTransaction'), '', signal)
+}
+
 /** TrmFxApp rows in the given TSF statuses. */
 export function loadTsfAppend(statuses: readonly string[], signal?: AbortSignal): Promise<TrmFxAppRow[]> {
   return pagedOData<TrmFxAppRow>(trmfxApp('TrmFxApp'), anyOf('TxnStatus', statuses), signal)

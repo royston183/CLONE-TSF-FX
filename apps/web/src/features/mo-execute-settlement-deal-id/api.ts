@@ -148,6 +148,7 @@ function toSetFxSide(r: FxRow): SetFxSide {
     bankId: txt(r, 'ZBANK_ID'),
     letCode: txt(r, 'ZLET_CODE'),
     letName: txt(r, 'ZLET_NAME'),
+    desc: txt(r, 'ZSET_DESC'),
   }
 }
 
