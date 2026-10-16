@@ -289,6 +289,14 @@ describe('putting the Deal ID back on a transaction', () => {
 })
 
 describe('Deal ID rows and slots', () => {
+  it('lists the transactions in its slots as its legs, so the assign dialog counts them', () => {
+    const row = { ZDEAL_ID: '7000000070', ZDEAL_STAT: '01', ZBUKRS1: 'IN11', ZRFHA1: '3000000000044', ZBUKRS2: 'SG03', ZRFHA2: '3000000000045' }
+    deepStrictEqual(toDealRecord(row)?.legs, ['3000000000044', '3000000000045'])
+    const settled = { ...row, ZBUKRS3: 'IN11', ZRFHA3: '3000000000050', ZRFHA8: '3000000000051' }
+    deepStrictEqual(toDealRecord(settled)?.legs.length, 4, 'Deal 1, Deal 2 and the settlement legs')
+    deepStrictEqual(toDealRecord({ ZDEAL_ID: '7000000071', ZDEAL_STAT: '01' })?.legs, [], 'an empty Deal ID has none')
+  })
+
   it('reads a cancelled Deal ID as reversed and a short straddle as SS', () => {
     strictEqual(toDealRecord({ ZDEAL_ID: '1', ZDEAL_STAT: '30' })?.type, 'REVERSED')
     strictEqual(toDealRecord({ ZDEAL_ID: '1', ZSS: 'X', ZDEAL_STAT: '01' })?.type, 'SS')

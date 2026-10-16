@@ -5,6 +5,7 @@ import { REPO_ROOT } from '../config.ts'
 import { ddicRepository, type DdicRow } from './repositories/ddic-table.ts'
 import { DMS_TYP_CLIENT, DMS_TYP_COLUMNS } from './repositories/dms-typ-columns.ts'
 import { TRD_ACC_CLIENT, TRD_ACC_COLUMNS } from './repositories/trd-acc-columns.ts'
+import { SET_FX_CLIENT, SET_FX_COLUMNS } from './repositories/set-fx-columns.ts'
 import type { LookupValue } from './schema.ts'
 
 /**
@@ -44,6 +45,30 @@ export function seedTrdAcc(db: Database): number {
     }
   })()
   return rows.length
+}
+
+/** Restores the Excel-exported settlement configuration by its full client/model/deal/side key. */
+export function seedSetFx(db: Database, rows = JSON.parse(readFileSync(resolve(REPO_ROOT, 'database/seed/zsgtsftr_set_fx.json'), 'utf8')) as DdicRow[]): number {
+  const columns = ['CLIENT', ...SET_FX_COLUMNS.map((c) => c.name)]
+  const repo = ddicRepository(db, { table: 'zsgtsftr_set_fx', client: SET_FX_CLIENT, columns: SET_FX_COLUMNS })
+  const seen = new Set<string>()
+  return db.transaction(() => {
+    for (const row of rows) {
+      if (Object.keys(row).length !== columns.length || columns.some((name) => typeof row[name] !== 'string') || Object.keys(row).some((name) => !columns.includes(name))) {
+        throw new Error('SET_FX seed requires exactly the DDIC columns, all stored as text.')
+      }
+      if (row['CLIENT'] !== SET_FX_CLIENT) throw new Error(`SET_FX seed requires client ${SET_FX_CLIENT}.`)
+      const { CLIENT: _client, ZMOD_ID, ZD_MAP, ZBS, ...fields } = row
+      if (typeof ZMOD_ID !== 'string' || typeof ZD_MAP !== 'string' || typeof ZBS !== 'string' || !['B', 'S'].includes(ZBS)) {
+        throw new Error('SET_FX seed requires model, deal and buy/sell keys.')
+      }
+      const signature = JSON.stringify([ZMOD_ID, ZD_MAP, ZBS])
+      if (seen.has(signature)) throw new Error(`Duplicate SET_FX seed key: ${signature}.`)
+      seen.add(signature)
+      repo.upsert({ ZMOD_ID, ZD_MAP, ZBS }, fields)
+    }
+    return rows.length
+  })()
 }
 
 /** Loads the exported DMS document types only when the table is empty. */

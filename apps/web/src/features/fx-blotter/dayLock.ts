@@ -58,17 +58,16 @@ export type DayLockState = {
 }
 
 /**
- * The state of `ctx` given the days its trader has locked. The previous-day rule only applies once this
- * group has locked at least one earlier day: a group that has never locked a day has no chain to continue,
- * and without that the first blotter of a new system would be read-only with no way to open it.
+ * The state of `ctx` given the days its trader has locked, as the program's PBO reads it: its own day locked, and the
+ * previous working day not locked, each close the blotter. There is no exception for a group that has never locked a
+ * day: its first blotter stays read-only until the day before it is locked, which LOCK allows even on a closed blotter.
  */
 export function dayLockState(locked: readonly LockedDay[], ctx: Ctx): DayLockState {
   const mine = locked.filter((l) => l.group === ctx.group).map((l) => l.date)
   const today = dats(ctx.date)
   const previousDate = previousWorkingDay(ctx.date)
   const previous = dats(previousDate)
-  const chainStarted = mine.some((d) => d < today)
-  return { locked: mine.includes(today), previousDate, previousOpen: chainStarted && !mine.includes(previous) }
+  return { locked: mine.includes(today), previousDate, previousOpen: !mine.includes(previous) }
 }
 
 /** Why the blotter cannot be edited, or '' when it is open. */

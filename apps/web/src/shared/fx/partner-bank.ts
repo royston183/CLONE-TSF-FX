@@ -62,8 +62,14 @@ export function partnerBanks(rows: readonly Row[]): PartnerBank[] {
 }
 
 /** The partner banks of one business partner. The partner filter is applied here as well as in the query. */
-export async function loadPartnerBanks(businessPartner: string, signal?: AbortSignal): Promise<PartnerBank[]> {
+export async function loadPartnerBanks(businessPartner: string, signal?: AbortSignal, companyCode = ''): Promise<PartnerBank[]> {
   if (!businessPartner) return []
-  const rows = await list<Row>(api('SlcTsfBpBank'), { filter: `BusinessPartner eq ${odataString(businessPartner)}`, top: 5000 }, signal ? { signal } : undefined)
-  return partnerBanks(rows).filter((b) => !b.businessPartner || b.businessPartner === businessPartner)
+  const filter = `BusinessPartner eq ${odataString(businessPartner)}` + (companyCode ? ` and CompanyCode eq ${odataString(companyCode)}` : '')
+  const rows = await list<Row>(api('SlcTsfBpBank'), { filter, top: 5000 }, signal ? { signal } : undefined)
+  // Scope before deduplicating IDs: the same USD1 ID can occur in different companies.
+  const scoped = rows.filter((r) => {
+    const bank = toPartnerBank(r)
+    return bank && (!bank.businessPartner || bank.businessPartner === businessPartner) && (!companyCode || bank.companyCode === companyCode)
+  })
+  return partnerBanks(scoped)
 }

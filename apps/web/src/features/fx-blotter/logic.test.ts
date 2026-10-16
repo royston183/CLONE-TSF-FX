@@ -439,3 +439,26 @@ describe('hard reset', () => {
     strictEqual(reset.rows.filter(isCompletelyBlankDraft).length, 10)
   })
 })
+
+describe('the legs of a deal stay together', () => {
+  const leg = (id: string, dealId: string, dealType: string, seq: number): BlotterRow => ({ ...firstBlank(fresh()), id, seq, status: 'CREATED', transactionNumber: `T${seq}`, dealId, dealType })
+
+  it('puts Deal 2 under Deal 1 even when other deals sort between them', () => {
+    const rows = [leg('a2', 'D-1', 'Deal 2 (Auto Deal)', 5), leg('b1', 'D-2', 'Deal 1 (Auto Deal)', 4), leg('a1', 'D-1', 'Deal 1 (Auto Deal)', 3), leg('b2', 'D-2', 'Deal 2 (Auto Deal)', 2)]
+    // Newest first: a2 (5), b1 (4), a1 (3), b2 (2). Deal D-1 takes a2's place with both legs, then D-2 follows with both.
+    deepStrictEqual(sortRows(rows, BY_SEQ).map((r) => r.id), ['a1', 'a2', 'b1', 'b2'])
+  })
+
+  it('a deal sits where its first row was sorted, Deal 1 above Deal 2, and rows with no Deal ID keep their place', () => {
+    const plain = leg('p', '', '', 4)
+    const rows = [leg('a2', 'D-1', 'D2 (Paired Model)', 6), plain, leg('a1', 'D-1', 'D1 (Paired Model)', 2)]
+    deepStrictEqual(sortRows(rows, BY_SEQ).map((r) => r.id), ['a1', 'a2', 'p'])
+  })
+
+  it('drafts and other legs are untouched, and a deal with no leg number keeps its sorted order', () => {
+    const rows = [leg('x', 'D-9', 'Short Straddle', 3), leg('y', 'D-9', 'Short Straddle', 8), firstBlank(fresh())]
+    const out = sortRows(rows, BY_SEQ)
+    deepStrictEqual(out.slice(0, 2).map((r) => r.id), ['y', 'x'])
+    strictEqual(out[2]?.status, 'DRAFT')
+  })
+})

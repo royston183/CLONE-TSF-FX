@@ -178,7 +178,10 @@ export function applyDealIds<T extends Omit<BlotterRow, 'id' | 'seq'>>(incoming:
   })
 }
 
-/** A Deal ID row as the assign dialog lists it. */
+/**
+ * A Deal ID row as the assign dialog lists it. Its legs are the transactions in its slots (ZRFHA1..8: Deal 1, Deal 2, then
+ * the settlement legs), as transaction numbers; a Deal ID made on this screen lists row ids until the next load reads it back.
+ */
 export function toDealRecord(r: FxRow): DealRecord | null {
   const dealId = txt(r, 'ZDEAL_ID')
   if (!dealId) return null
@@ -189,7 +192,7 @@ export function toDealRecord(r: FxRow): DealRecord | null {
     model: txt(r, 'ZTSF_MODEL'),
     // 30 is "Deal ID Cancelled" in ZSGTSFTR_DEAL_ST.
     type: stat === '30' ? 'REVERSED' : txt(r, 'ZSS') === 'X' ? 'SS' : 'PAIR',
-    legs: [],
+    legs: Array.from({ length: LAST_SLOT }, (_, i) => txt(r, `ZRFHA${i + 1}`)).filter(Boolean),
     createdOn: dateFromIso(r['ZCREATED_DATE']) ?? new Date(0),
   }
 }

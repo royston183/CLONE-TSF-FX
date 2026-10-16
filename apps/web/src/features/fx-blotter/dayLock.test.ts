@@ -43,16 +43,17 @@ describe('Lock Blotter: the day lock', () => {
     ok(dayLockState([day('20261015')], ctx(mon)).previousOpen)
   })
 
-  it('a group that has never locked a day has no chain to continue, so its first blotter is open', () => {
+  it('a group that has never locked a day is read-only until the day before is locked, as in the program', () => {
     const s = dayLockState([], ctx(fri))
-    deepStrictEqual([s.locked, s.previousOpen], [false, false])
-    strictEqual(closedReason(s), '')
-    ok(!dayLockState([day('20261020')], ctx(fri)).previousOpen, 'only EARLIER locks start the chain')
+    deepStrictEqual([s.locked, s.previousOpen], [false, true])
+    strictEqual(closedReason(s), 'The blotter of the previous working day (15-10-2026) is not locked. Lock it before working on this date.')
+    ok(dayLockState([day('20261020')], ctx(fri)).previousOpen, 'a lock on a LATER day does not open it')
+    ok(!dayLockState([day('20261015')], ctx(fri)).previousOpen, 'locking the day before opens it')
   })
 
-  it('another group\'s locks do not count', () => {
+  it('another group does not count: its locks leave this blotter as it was', () => {
     ok(!dayLockState([day('20261016', 'G02')], ctx(fri)).locked)
-    ok(!dayLockState([day('20261014', 'G02')], ctx(fri)).previousOpen)
+    ok(dayLockState([day('20261015', 'G02')], ctx(fri)).previousOpen, 'G02 locked its 15th, G01 did not')
   })
 
   it('no state yet (still loading, or unreadable) is not a reason to close the blotter', () => strictEqual(closedReason(null), ''))
