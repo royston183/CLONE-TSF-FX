@@ -1,12 +1,15 @@
-import { fxList, type FxRow } from '../../shared/fx/mw.ts'
+import { list, service } from '@slc/api-client'
+import type { FxTransaction } from '../../features/mo-fx-deal-confirmation/api.ts'
+import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { txt } from '../../shared/fx/masters.ts'
+import type { Gauge, ShipWindow, StackColumn, TreeGroup } from '../charts/MoreCharts.tsx'
 import type { Kpi, Slice } from '../mock/overview.ts'
 
 /**
- * The FX Overview, read from the SLC middleware (the SAP tables behind the FX screens):
+ * The FX Overview, read from SAP OData and FS Cloud middleware tables:
  *
- *   tsfvFx         ZSGTSFV_FX      the FX deals (spot / forward / NDF): amounts, rates, dates, company
+ *   FxTransaction  SAP OData       the FX deals (spot / forward / NDF): amounts, rates, dates, company
  *   masterContract ZSGTSFTR_MAS_CON  master contracts (status, USD amount, commodity, FX model, shipment dates)
  *   tsfDealId      ZSGTSFTR_DEALID   Deal IDs (status, model, amount, P&L)
  *   billOfLading   ZSGTSFTR_BL       bills of lading (trade value, business unit, status)
@@ -43,20 +46,30 @@ export const SERIES_LABEL: Record<SeriesKey, string> = {
 
 export type TableRow = { cells: string[] }
 
+
 export type FxOverview = {
   kpis: Kpi[]
   products: Slice[]
   exposureByCompany: Slice[]
   maturity: Slice[]
+  /** Open USD notional by company, then by currency pair (treemap). */
+  exposureTree: TreeGroup[]
+  /** The maturity ladder with each bucket split by product (stacked columns). */
+  maturityStack: StackColumn[]
+  /** Shipment start -> end of the master contracts that end soonest (Gantt). */
+  contractWindows: ShipWindow[]
+  /** Deal IDs that reached each stage or a later one (funnel). */
+  dealFunnel: Slice[]
+  /** Share of contracts in use, Deal IDs settled and bills of lading invoiced (radial). */
+  gauges: Gauge[]
+  /** Cumulative USD notional booked, per day (area). */
+  cumulative: { month: string; value: number }[]
   mcStatus: Slice[]
-  mcByCommodity: Slice[]
   mcByModel: Slice[]
-  invoicesByCommodity: Slice[]
   dealIdStatus: Slice[]
   dealIdByModel: Slice[]
   blByUnit: Slice[]
   blStatus: Slice[]
-  spotByType: Slice[]
   /** ISO day -> records created that day, per series: the activity chart windows it. */
   daily: Record<SeriesKey, Record<string, number>>
   upcoming: TableRow[]
@@ -65,7 +78,7 @@ export type FxOverview = {
 }
 
 const ENDPOINTS = [
-  ['fxDeals', 'tsfvFx', 'FX deals (ZSGTSFV_FX)'],
+  ['fxDeals', 'sapFx', 'FX deals (SAP FxTransaction)'],
   ['mcs', 'masterContract', 'master contracts (ZSGTSFTR_MAS_CON)'],
   ['dealIds', 'tsfDealId', 'Deal IDs (ZSGTSFTR_DEALID)'],
   ['bls', 'billOfLading', 'bills of lading (ZSGTSFTR_BL)'],
@@ -80,12 +93,50 @@ const TEXT_SOURCES = [
   ['models', 'fxModel', {}],
 ] as const
 
+/** Preserve both currencies and take USD notional only from an actual USD leg. */
+export function overviewDeal(f: FxTransaction & { NdfFixingDate?: string | null }): FxRow {
+  const lead = f.LeadCurrency || f.BuyCurrency || ''
+  const buysLead = lead === f.BuyCurrency
+  const usdAmount = f.BuyCurrency === 'USD' ? f.BuyAmount : f.SellCurrency === 'USD' ? f.SellAmount : null
+  return {
+    BUKRS: f.CompanyCode, ZCOM_ID: f.CompanyCode, RFHA: f.FinancialTransaction,
+    SAKTIV: f.ActiveStatus ?? '', SGSART: f.ProductType ?? '',
+    DCRDAT: f.ContractDate?.slice(0, 10) ?? '', DELFZ: f.ValueDate?.slice(0, 10) ?? '',
+    NDF_DATE: f.NdfFixingDate?.slice(0, 10) ?? '',
+    CURR1: lead, CURR2: f.FollowCurrency || (buysLead ? f.SellCurrency : f.BuyCurrency) || '',
+    AMT1: String((buysLead ? f.BuyAmount : f.SellAmount) ?? ''),
+    USD_NOTIONAL: usdAmount == null ? null : String(usdAmount),
+    BS_1: buysLead ? 'Buy' : 'Sell', T_RATE: String(f.ForwardRate || f.SpotRate || ''),
+  }
+}
+
+async function loadSapDeals(signal?: AbortSignal): Promise<FxRow[]> {
+  const rows: FxRow[] = []
+  for (let skip = 0; ; skip += 500) {
+    const page = await list<FxTransaction>(service('fx')('FxTransaction'),
+      { top: 500, skip, orderby: 'CompanyCode,FinancialTransaction' }, signal ? { signal } : undefined)
+    rows.push(...page.map(overviewDeal))
+    if (page.length < 500) return rows
+  }
+}
+
 export async function loadFxOverviewRaw(signal?: AbortSignal): Promise<FxOverviewRaw> {
-  const data = await Promise.allSettled(ENDPOINTS.map(([, resource]) => fxList(resource, {}, { signal })))
+  const problems: string[] = []
+  const deals = async () => {
+    try {
+      return await loadSapDeals(signal)
+    } catch (error) {
+      if (signal?.aborted || isAbort(error)) throw error
+      const rows = await fxList('tsfvFx', {}, { signal })
+      problems.push(`SAP FX transactions unavailable; using the live FS Cloud FX view. ${error instanceof Error ? error.message : String(error)}`)
+      return rows
+    }
+  }
+  const data = await Promise.allSettled(ENDPOINTS.map(([, resource]) =>
+    resource === 'sapFx' ? deals() : fxList(resource, {}, { signal })))
   const texts = await Promise.allSettled(TEXT_SOURCES.map(([, resource, filter]) => fxList(resource, { ...filter }, { signal })))
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
   const raw: Record<string, FxRow[] | null> = {}
-  const problems: string[] = []
   ENDPOINTS.forEach(([key, , label], i) => {
     const r = data[i]
     raw[key] = r?.status === 'fulfilled' ? r.value : null
@@ -140,7 +191,7 @@ const slices = (m: Map<string, number>, label: (k: string) => string): Slice[] =
   [...m].map(([k, value]) => ({ label: label(k), value }))
 
 const PRODUCT: Record<string, string> = { '12A': 'Spot', '12B': 'Forward', '12D': 'NDF' }
-const SPOT_TYPE: Record<string, string> = { D1: 'D1 · Forward', D2: 'D2 · NDF', DS1: 'DS1 · Spot (buy)', DS2: 'DS2 · Spot (sell)' }
+const PRODUCT_ORDER = ['Forward', 'NDF', 'Spot']
 
 /** An FX deal that has not been reversed (SAKTIV 3 = reversed). */
 const isLive = (r: FxRow) => txt(r, 'SAKTIV') !== '3'
@@ -154,7 +205,8 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
   const companies = [...new Set(allDeals.map((r) => txt(r, 'ZCOM_ID')).filter(Boolean))].sort()
   const deals = company === 'All' ? allDeals : allDeals.filter((r) => txt(r, 'ZCOM_ID') === company)
   const open = deals.filter((r) => txt(r, 'DELFZ') >= todayIso)
-  const notional = (r: FxRow) => Math.abs(num(r['AMT1']))
+  const notional = (r: FxRow) => Math.abs(num(r['USD_NOTIONAL'] ?? (txt(r, 'CURR1') === 'USD' ? r['AMT1'] : null)))
+  const unpriced = open.filter((r) => r['USD_NOTIONAL'] == null && txt(r, 'CURR1') !== 'USD').length
 
   // ---- FX deals
   const openNotional = open.reduce((s, r) => s + notional(r), 0)
@@ -186,7 +238,8 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
   // ---- master contracts
   const mcs = raw.mcs ?? []
   const mcStatusText = (code: string) => txt(raw.mcStatuses.find((s) => txt(s, 'ZMC_ID') === code) ?? {}, 'ZMC_STAT') || code
-  const mcSum = mcs.reduce((s, r) => s + num(r['ZAMT']), 0)
+  const usdMcs = mcs.filter((r) => txt(r, 'ZCURR') === 'USD')
+  const mcSum = usdMcs.reduce((s, r) => s + num(r['ZAMT']), 0)
   const mcNow = mcs.filter((r) => monthOf(txt(r, 'ZMC_DATE')) === thisMonth).length
   const mcBefore = mcs.filter((r) => monthOf(txt(r, 'ZMC_DATE')) === prevMonth).length
   const mcInUse = mcs.filter((r) => txt(r, 'ZMC_STAT') === '04').length
@@ -219,11 +272,74 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
   const have = (rows: unknown) => rows !== null
   const kpis: Kpi[] = [
     kpi('FX Deals', have(raw.fxDeals) ? deals.length.toLocaleString() : '—', change(dealsNow, dealsBefore), 'booked vs last month', spark(series(deals, 'DCRDAT'))),
-    kpi('Open USD Notional', have(raw.fxDeals) ? usd(openNotional) : '—', null, `${open.length} deals not yet matured`, spark(series(open, 'DCRDAT'))),
-    kpi('Maturing in 30 Days', have(raw.fxDeals) ? in30.length.toLocaleString() : '—', null, usd(in30.reduce((s, r) => s + notional(r), 0)), spark(series(in30, 'DCRDAT'))),
-    kpi('Master Contract Value', have(raw.mcs) ? usd(mcSum) : '—', null, `${mcInUse} in use`, spark(series(mcs, 'ZMC_DATE'))),
+    kpi('Open USD Notional', have(raw.fxDeals) ? usd(openNotional) : '—', null, raw.fxDeals === null ? 'Source unavailable' : `${open.length} deals not yet matured${unpriced ? `; ${unpriced} without a USD leg excluded` : ''}`, spark(series(open, 'DCRDAT'))),
+    kpi('Maturing in 30 Days', have(raw.fxDeals) ? in30.length.toLocaleString() : '—', null, raw.fxDeals === null ? 'Source unavailable' : usd(in30.reduce((s, r) => s + notional(r), 0)), spark(series(in30, 'DCRDAT'))),
+    kpi('Master Contract Value', have(raw.mcs) ? usd(mcSum) : '—', null, raw.mcs === null ? 'Source unavailable' : `${mcInUse} in use${usdMcs.length < mcs.length ? '; USD contracts only' : ''}`, spark(series(mcs, 'ZMC_DATE'))),
     kpi('Trade Flow Value', have(raw.bls) ? usd(blValue) : '—', null, `${bls.length} bills of lading`, spark(series(bls, 'ZCREATED_DATE'))),
   ]
+
+  // ---- shapes for the richer charts
+  const daysTo = (r: FxRow) => Math.round((new Date(`${txt(r, 'DELFZ')}T00:00:00`).getTime() - start) / 86_400_000)
+  const byCompany = new Map<string, Map<string, number>>()
+  for (const r of open) {
+    const c = txt(r, 'ZCOM_ID') || '—'
+    const pair = `${txt(r, 'CURR1')}/${txt(r, 'CURR2')}`
+    const pairs = byCompany.get(c) ?? new Map<string, number>()
+    pairs.set(pair, (pairs.get(pair) ?? 0) + notional(r))
+    byCompany.set(c, pairs)
+  }
+  const exposureTree: TreeGroup[] = [...byCompany]
+    .map(([label, pairs]) => {
+      const children = [...pairs].map(([l, value]) => ({ label: l, value })).sort((a, b) => b.value - a.value)
+      return { label, value: children.reduce((x, c) => x + c.value, 0), children }
+    })
+    .sort((a, b) => b.value - a.value)
+
+  const maturityStack: StackColumn[] = ladder.map((b) => ({
+    label: b.label,
+    parts: PRODUCT_ORDER.map((p) => ({
+      label: p,
+      value: open
+        .filter((r) => (PRODUCT[txt(r, 'SGSART')] ?? '') === p && daysTo(r) >= b.from && daysTo(r) <= b.to)
+        .reduce((x, r) => x + notional(r), 0),
+    })),
+  }))
+
+  const withWindow = mcs.filter((r) => txt(r, 'ZSHIP_START') && txt(r, 'ZSHIP_END'))
+  const upcomingWindows = withWindow.filter((r) => txt(r, 'ZSHIP_END') >= todayIso).sort((a, b) => txt(a, 'ZSHIP_END').localeCompare(txt(b, 'ZSHIP_END')))
+  const contractWindows: ShipWindow[] = (upcomingWindows.length ? upcomingWindows : withWindow)
+    .slice(0, 8)
+    .map((r) => ({
+      label: `${txt(r, 'ZMC_REF_NO')} · ${txt(r, 'ZCOM_DESC')}`,
+      sub: mcStatusText(txt(r, 'ZMC_STAT')),
+      start: txt(r, 'ZSHIP_START'),
+      end: txt(r, 'ZSHIP_END'),
+    }))
+
+  const stageCodes = [...new Set(liveDealIds.map((r) => txt(r, 'ZDEAL_STAT')))].sort()
+  const dealFunnel: Slice[] = stageCodes.map((code) => ({
+    label: dealStatusText(code),
+    value: liveDealIds.filter((r) => txt(r, 'ZDEAL_STAT') >= code).length,
+  }))
+
+  const gauges: Gauge[] = [
+    { label: 'Contracts in use', value: mcInUse, total: mcs.length, hint: 'master contracts at status 04' },
+    {
+      label: 'Deal IDs settled',
+      value: liveDealIds.filter((r) => txt(r, 'ZDEAL_STAT') >= '21').length,
+      total: liveDealIds.length,
+      hint: 'status 21 or later',
+    },
+    { label: 'BLs invoiced', value: bls.filter((r) => txt(r, 'ZBL_STAT_ID') === '05').length, total: bls.length, hint: 'bills of lading used for invoicing' },
+  ]
+
+  const window60 = lastDays(today, 60)
+  const perDay = tally(deals, (r) => txt(r, 'DCRDAT'), notional)
+  let running = deals.filter((r) => txt(r, 'DCRDAT') < (window60[0] ?? '')).reduce((x, r) => x + notional(r), 0)
+  const cumulative = window60.map((iso) => {
+    running += perDay.get(iso) ?? 0
+    return { month: `${iso.slice(8)}/${iso.slice(5, 7)}`, value: running }
+  })
 
   const upcoming = [...open]
     .sort((a, b) => txt(a, 'DELFZ').localeCompare(txt(b, 'DELFZ')))
@@ -246,7 +362,7 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
       cells: [
         txt(r, 'ZMC_REF_NO'),
         txt(r, 'ZCOM_DESC'),
-        `USD ${num(r['ZAMT']).toLocaleString()}`,
+        `${txt(r, 'ZCURR')} ${num(r['ZAMT']).toLocaleString()}`,
         dmy(txt(r, 'ZSHIP_END')),
         mcStatusText(txt(r, 'ZMC_STAT')),
       ],
@@ -257,13 +373,14 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
     products,
     exposureByCompany,
     maturity,
+    exposureTree,
+    maturityStack,
+    contractWindows,
+    dealFunnel,
+    gauges,
+    cumulative,
     mcStatus: top(slices(tally(mcs, (r) => txt(r, 'ZMC_STAT')), mcStatusText), 6),
-    mcByCommodity: top(slices(tally(mcs, (r) => txt(r, 'ZCOM_DESC') || '—'), (k) => k), 6),
     mcByModel: top(slices(tally(mcs, (r) => txt(r, 'ZMOD_DESC') || txt(r, 'ZMOD_ID') || '—'), (k) => k), 6),
-    invoicesByCommodity: top(
-      slices(tally(invoices, (r) => txt(r, 'ZINV_COMM').toLowerCase() || '—'), (k) => (k === '—' ? k : k.charAt(0).toUpperCase() + k.slice(1))),
-      6,
-    ),
     dealIdStatus: top(slices(tally(dealIds, (r) => txt(r, 'ZDEAL_STAT')), dealStatusText), 5),
     dealIdByModel: top(slices(tally(dealIds, (r) => txt(r, 'ZTSF_MODEL') || '—'), modelText), 6),
     blByUnit: top(slices(tally(bls, (r) => txt(r, 'ZBU') || '—', (r) => num(r['ZTTV'])), (k) => k), 6),
@@ -271,7 +388,6 @@ export function buildFxOverview(raw: FxOverviewRaw, company: string, today: Date
       slices(tally(bls, (r) => txt(r, 'ZBL_STAT_ID')), (k) => txt(raw.blStatuses.find((s) => txt(s, 'ZBL_ST_ID') === k) ?? {}, 'ZBL_ST_NAME') || k),
       5,
     ),
-    spotByType: slices(tally(raw.spots ?? [], (r) => txt(r, 'ZDEAL_TYPE')), (k) => SPOT_TYPE[k] ?? k).sort((a, b) => b.value - a.value),
     daily: {
       deals: daily(deals, 'DCRDAT'),
       contracts: daily(mcs, 'ZMC_DATE'),

@@ -8,7 +8,15 @@
       },
       {
         "label": "FX Front-Office",
-        "items": []
+        "items": [
+          {
+            "code": "ZSGTSF_RDEAL_ID_DETAIL",
+            "title": "Deal ID Details",
+            "tag": "Report",
+            "desc": "Deal IDs, Master Contracts, status, currencies and P&L",
+            "icon": "M4 3h16v18H4V3zm2 4v2h12V7H6zm0 4v2h12v-2H6zm0 4v2h8v-2H6z"
+          }
+        ]
       },
       {
         "label": "FX Mid-Office",
