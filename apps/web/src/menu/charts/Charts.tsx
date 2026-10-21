@@ -54,7 +54,7 @@ export function BarChart({
   return (
     <div className={large ? 'mp-bars mp-bars-lg' : 'mp-bars'} role="group" aria-label={title}>
       {data.map((slice, index) => (
-        <div className="mp-bar-row" key={slice.label} title={`${slice.label}: ${format ? format(slice.value) : `${slice.value.toLocaleString()} ${unit}`}`}>
+        <div className="mp-bar-row" key={slice.label} data-drill={slice.label} title={`${slice.label}: ${format ? format(slice.value) : `${slice.value.toLocaleString()} ${unit}`}`}>
           <div className="mp-bar-label">{slice.label}</div>
           <div className="mp-bar-track">
             <div
@@ -70,6 +70,11 @@ export function BarChart({
           </div>
         </div>
       ))}
+      {large && <div className="mp-bar-axis" aria-label="Value axis">
+        {[0, 0.25, 0.5, 0.75, 1].map(fraction => <span key={fraction}>
+          {format ? format(max * fraction) : Math.round(max * fraction).toLocaleString()}
+        </span>)}
+      </div>}
     </div>
   )
 }
@@ -89,7 +94,7 @@ export function DonutChart({ data, title, caption = 'DEALS' }: { data: Slice[]; 
       <svg className="mp-donut" viewBox="-70 -70 140 140" role="img" aria-label={title}>
         <title>{title}</title>
         {segments.map((segment) => (
-          <path key={segment.label} className="mp-donut-slice" d={segment.path} fill={segment.colour}>
+          <path key={segment.label} className="mp-donut-slice" data-drill={segment.label} d={segment.path} fill={segment.colour}>
             <title>{`${segment.label}: ${segment.value.toLocaleString()} (${Math.round(segment.fraction * 100)}%)`}</title>
           </path>
         ))}
@@ -102,7 +107,7 @@ export function DonutChart({ data, title, caption = 'DEALS' }: { data: Slice[]; 
       </svg>
       <ul className="mp-legend">
         {segments.map((segment) => (
-          <li key={segment.label} title={`${segment.label}: ${segment.value.toLocaleString()}`}>
+          <li key={segment.label} data-drill={segment.label} title={`${segment.label}: ${segment.value.toLocaleString()}`}>
             <span className="mp-legend-dot" style={{ background: segment.colour }} />
             <span className="mp-legend-label">{segment.label}</span>
             <span className="mp-legend-value">{segment.value.toLocaleString()} · {Math.round(segment.fraction * 100)}%</span>
@@ -166,7 +171,7 @@ export function LineChart({
         {data.map((point, index) => {
           const x = (index / Math.max(data.length - 1, 1)) * width
           return (
-            <g key={`${point.month}-${index}`} className="mp-line-point">
+            <g key={`${point.month}-${index}`} className="mp-line-point" data-drill={point.month}>
               <circle cx={x} cy={scaled[index] ?? height} r={dots ? 3.5 : 6} fill={dots ? 'var(--white)' : 'transparent'} stroke={dots ? 'var(--blue-dark)' : 'none'} strokeWidth="2">
                 <title>{`${point.month}: ${point.value.toLocaleString()}${unit}`}</title>
               </circle>

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAsync } from '@slc/api-client/react'
 import { BarChart, DonutChart, LineChart, Sparkline } from '../charts/Charts.tsx'
 import {
@@ -11,7 +11,11 @@ import {
   type SeriesKey,
   type TableRow,
 } from '../live/fxOverview.ts'
+import { Funnel, RadialGauges } from '../charts/MoreCharts.tsx'
+import { RankedChart } from '../charts/RankedChart.tsx'
 import type { Kpi } from '../mock/overview.ts'
+import { DetailCard, DrillContext } from '../charts/DetailCard.tsx'
+import { detailFor } from '../live/fxDrilldown.ts'
 
 export function KpiDelta({ kpi }: { kpi: Kpi }) {
   if (kpi.delta === null) return <div className="mp-kpi-delta">{kpi.deltaNote}</div>
@@ -68,13 +72,13 @@ function Chips<T extends string | number>({
 
 function Panel({ title, children, head }: { title: string; children: ReactNode; head?: ReactNode }) {
   return (
-    <div className="mp-panel">
+    <DetailCard title={title}><div className="mp-panel">
       <div className="mp-panel-head">
         <div className="mp-panel-title">{title}</div>
         {head}
       </div>
       {children}
-    </div>
+    </div></DetailCard>
   )
 }
 
@@ -108,20 +112,27 @@ function KpiRow({ kpis }: { kpis: Kpi[] }) {
   return (
     <div className="mp-kpi-grid">
       {kpis.map((kpi) => (
-        <div className="mp-kpi" key={kpi.label}>
+        <DetailCard title={kpi.label} key={kpi.label} kpi><div className="mp-kpi" title={`${kpi.label}: ${kpi.value}. ${kpi.deltaNote}`}>
           <div className="mp-kpi-label">{kpi.label}</div>
           <div className="mp-kpi-value">{kpi.value}</div>
           <KpiDelta kpi={kpi} />
           <Sparkline values={kpi.series} rising={(kpi.delta ?? 0) >= 0} />
-        </div>
+        </div></DetailCard>
       ))}
     </div>
   )
 }
 
-/** The FX scope: every figure is read from the SLC middleware (see live/fxOverview.ts). */
+/** Live SAP FX transactions and FS Cloud tables (see live/fxOverview.ts). */
 export function FxLiveOverview() {
   const overview = useAsync((signal) => loadFxOverviewRaw(signal), [])
+  useEffect(() => {
+    if (overview.loading) return
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') overview.reload()
+    }, 60_000)
+    return () => window.clearInterval(timer)
+  }, [overview.loading, overview.reload])
   const raw = overview.data
   const [company, setCompany] = useState('All')
   const [series, setSeries] = useState<SeriesKey>('deals')
@@ -150,7 +161,7 @@ export function FxLiveOverview() {
   const stamp = `${isoOf(raw.loadedAt).split('-').reverse().join('-')} ${raw.loadedAt.toTimeString().slice(0, 5)}`
 
   return (
-    <>
+    <DrillContext.Provider value={(title, mark) => detailFor(raw, company, new Date(), title, mark, series, days)}>
       <div className="mp-live-bar">
         <Chips options={companyOptions} value={company} onPick={setCompany} label="Company" />
         <button type="button" className="mp-scope" onClick={overview.reload} disabled={overview.loading}>
@@ -160,7 +171,7 @@ export function FxLiveOverview() {
       </div>
       {raw.problems.length ? (
         <p className="mp-scope-note">
-          Could not read {raw.problems.length} source{raw.problems.length > 1 ? 's' : ''}; the figures that depend on them show — or are left out.
+          Data source notices. Unavailable figures show —; fallback sources are listed below.
           {raw.problems.map((p) => (
             <span key={p} style={{ display: 'block' }}>
               · {p}
@@ -175,25 +186,13 @@ export function FxLiveOverview() {
       <div className="group-label">Key figures</div>
       <KpiRow kpis={data.kpis} />
 
-      <div className="group-label">Exposure</div>
+      <div className="group-label">FX and trade rankings</div>
       <div className="mp-live-grid">
-        <Panel title="Open exposure by company (USD)">
-          {data.exposureByCompany.length ? (
-            <BarChart large data={data.exposureByCompany} unit="USD" format={usd} title="Open USD notional by company" />
-          ) : (
-            none
-          )}
-        </Panel>
+        <RankedChart raw={raw} kind="trade" company={company} />
         <Panel title="Deals by product">
           {data.products.length ? <DonutChart data={data.products} caption="FX DEALS" title="FX deals by product" /> : none}
         </Panel>
-        <Panel title="Maturity ladder (USD)">
-          {data.maturity.some((m) => m.value > 0) ? (
-            <BarChart large data={data.maturity} unit="USD" format={usd} title="Open USD notional by time to value date" />
-          ) : (
-            none
-          )}
-        </Panel>
+        <RankedChart raw={raw} kind="fx" company={company} />
       </div>
 
       <div className="group-label">Master contracts</div>
@@ -201,15 +200,9 @@ export function FxLiveOverview() {
         <Panel title="Contracts by status">
           {data.mcStatus.length ? <DonutChart data={data.mcStatus} caption="CONTRACTS" title="Master contracts by status" /> : none}
         </Panel>
-        <Panel title="Contracts by commodity">
-          {data.mcByCommodity.length ? (
-            <BarChart data={data.mcByCommodity} unit="contracts" title="Master contracts by commodity" />
-          ) : (
-            none
-          )}
-        </Panel>
+        <RankedChart raw={raw} kind="contracts" company={company} />
         <Panel title="Contracts by FX model">
-          {data.mcByModel.length ? <BarChart data={data.mcByModel} unit="contracts" title="Master contracts by FX model" /> : none}
+          {data.mcByModel.length ? <BarChart large data={data.mcByModel} unit="contracts" title="Master contracts by FX model" /> : none}
         </Panel>
       </div>
 
@@ -219,10 +212,10 @@ export function FxLiveOverview() {
           {data.dealIdStatus.length ? <DonutChart data={data.dealIdStatus} caption="DEAL IDS" title="Deal IDs by status" /> : none}
         </Panel>
         <Panel title="Deal IDs by FX model">
-          {data.dealIdByModel.length ? <BarChart data={data.dealIdByModel} unit="deal IDs" title="Deal IDs by FX model" /> : none}
+          {data.dealIdByModel.length ? <BarChart large data={data.dealIdByModel} unit="deal IDs" title="Deal IDs by FX model" /> : none}
         </Panel>
-        <Panel title="Planned spot hedges by type">
-          {data.spotByType.length ? <BarChart data={data.spotByType} unit="rows" title="Planned spot hedge rows by deal type" /> : none}
+        <Panel title="Deal ID lifecycle">
+          {data.dealFunnel.length ? <Funnel stages={data.dealFunnel} title="Deal IDs that reached each stage or later" /> : none}
         </Panel>
       </div>
 
@@ -230,7 +223,7 @@ export function FxLiveOverview() {
       <div className="mp-live-grid">
         <Panel title="Trade value by business unit (USD)">
           {data.blByUnit.length ? (
-            <BarChart data={data.blByUnit} unit="USD" format={usd} title="Bill of lading value by business unit" />
+            <BarChart large data={data.blByUnit} unit="USD" format={usd} title="Bill of lading value by business unit" />
           ) : (
             none
           )}
@@ -238,17 +231,13 @@ export function FxLiveOverview() {
         <Panel title="Bills of lading by status">
           {data.blStatus.length ? <DonutChart data={data.blStatus} caption="BILLS" title="Bills of lading by status" /> : none}
         </Panel>
-        <Panel title="Invoices by commodity">
-          {data.invoicesByCommodity.length ? (
-            <BarChart data={data.invoicesByCommodity} unit="invoices" title="Trade invoices by commodity" />
-          ) : (
-            none
-          )}
+        <Panel title="Progress at a glance">
+          {data.gauges.some((g) => g.total > 0) ? <RadialGauges gauges={data.gauges} title="Share of contracts in use, Deal IDs settled and bills of lading invoiced" /> : none}
         </Panel>
       </div>
 
       <div className="group-label">Activity</div>
-      <div className="mp-panel">
+      <Panel title={`${SERIES_LABEL[series]} created per day, last ${days} days`}>
         <div className="mp-panel-title">
           {SERIES_LABEL[series]} created · {activityTotal.toLocaleString()} in the last {days} days
         </div>
@@ -267,7 +256,7 @@ export function FxLiveOverview() {
             <Chips vertical options={PERIODS} value={days} onPick={setDays} label="Period" />
           </div>
         </div>
-      </div>
+      </Panel>
 
       <div className="group-label">Upcoming maturities</div>
       <div className="mp-panel">
@@ -286,6 +275,6 @@ export function FxLiveOverview() {
           empty="No master contracts."
         />
       </div>
-    </>
+    </DrillContext.Provider>
   )
 }
