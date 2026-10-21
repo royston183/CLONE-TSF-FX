@@ -6,8 +6,8 @@
  *                   returns one row per FI document; the transaction's TXN_STATUS then moves to 50 on TrmFxApp
  *                   (POST_STAT_UPDATE).
  *   Trade invoice   ZFS_SB_FIACCDOC_O4_API, deep insert JournalEntry + _Item: BAPI_ACC_DOCUMENT_POST (BAPI_ACC_DOCUMENT_CHECK
- *                   for a test run). The lines come from the leg's ZSGTSFTR_TRD_POS row (the gateway's local SQLite) and
- *                   its ZSGTSFTR_TRD_ACC posting type (also local): ZBELNR, ZMSG are written back to that row.
+ *                   for a test run). The lines come from the leg's ZSGTSFTR_TRD_POS row (cloud trdPos) and
+ *                   its ZSGTSFTR_TRD_ACC posting type (cloud tsfTrdAcc): ZBELNR, ZMSG are written back to that row.
  *
  * Guarantees (docs/abap/BO-SETTLEMENT-POSTING-BLOCKER.md): the leg is re-read right before posting and refused when it
  * already has a document; a result the service did not confirm (timeout, 5xx) is stored as UNCONFIRMED and blocks a

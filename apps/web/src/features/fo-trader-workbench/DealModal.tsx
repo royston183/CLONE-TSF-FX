@@ -8,6 +8,7 @@ import type { ActionItem, TxnRow } from './types.ts'
 
 type TxnCol = {
   label: string
+  shortLabel?: string
   get?: (t: TxnRow) => string
   num?: boolean
   mono?: boolean
@@ -20,9 +21,9 @@ type TxnCol = {
 const TXN_COLS: readonly TxnCol[] = [
   { label: 'Co. Code', get: (t) => t.bukrs },
   { label: 'Deal Type', get: (t) => t.dealType, type: true },
-  { label: 'Transaction', link: true, get: (t) => t.rfha },
+  { label: 'Transaction', shortLabel: 'Txn No.', link: true, get: (t) => t.rfha },
   { label: 'Txn Type', get: (t) => `${t.sfhaart} · ${txnTypeText(t.sfhaart)}` },
-  { label: 'Counterparty', get: (t) => t.cptyName },
+  { label: 'Counterparty', shortLabel: 'Cpty', get: (t) => t.cptyName },
   { label: 'Trade Date', get: (t) => isoToDMY(t.tradeDate), mono: true },
   { label: 'Value Date', get: (t) => isoToDMY(t.valueDate), mono: true },
   { label: 'Exec. Date', get: (t) => isoToDMY(t.eDate), mono: true },
@@ -30,47 +31,48 @@ const TXN_COLS: readonly TxnCol[] = [
   { label: 'P/C', get: (t) => t.pc1 },
   { label: 'B/S 1', get: (t) => t.bs1 },
   { label: 'Curr 1', get: (t) => t.curr1 },
-  { label: 'Amount 1', num: true, get: (t) => formatAmount(t.amt1) },
+  { label: 'Amount 1', shortLabel: 'Amt 1', num: true, get: (t) => formatAmount(t.amt1) },
   { label: 'B/S 2', get: (t) => t.bs2 },
   { label: 'Curr 2', get: (t) => t.curr2 },
-  { label: 'Amount 2', num: true, get: (t) => formatAmount(t.amt2) },
+  { label: 'Amount 2', shortLabel: 'Amt 2', num: true, get: (t) => formatAmount(t.amt2) },
   { label: 'Strike', num: true, get: (t) => formatRate(t.strike) },
-  { label: 'All in Rate', num: true, get: (t) => formatRate(t.rate) },
+  { label: 'All in Rate', shortLabel: 'All-in', num: true, get: (t) => formatRate(t.rate) },
   { label: 'Premium', num: true, get: (t) => (t.preAmt ? `${formatAmount(t.preAmt)} ${t.preCurr}` : '') },
   { label: 'Txn Status', status: true, get: (t) => txnStatusInfo(t.status).desc },
-  { label: 'Sett Spot Amt', num: true, sd: true, get: (t) => (t.sdAmt !== '' ? formatAmount(t.sdAmt) : '') },
-  { label: 'Sett Spot Curr', sd: true, get: (t) => t.sdCurr },
-  { label: 'NDF Fix Date', get: (t) => isoToDMY(t.ndfDate), mono: true },
+  { label: 'Sett Spot Amt', shortLabel: 'Spot Amt', num: true, sd: true, get: (t) => (t.sdAmt !== '' ? formatAmount(t.sdAmt) : '') },
+  { label: 'Sett Spot Curr', shortLabel: 'Spot Ccy', sd: true, get: (t) => t.sdCurr },
+  { label: 'NDF Fix Date', shortLabel: 'Fix Date', get: (t) => isoToDMY(t.ndfDate), mono: true },
   { label: 'NDF Rate', num: true, get: (t) => formatRate(t.ndfRate) },
   { label: 'Cash Amt', num: true, get: (t) => (t.cashAmt && t.cashCurr === 'USD' ? `${formatAmount(t.cashAmt)} USD` : '') },
   {
     label: 'Sett Amt (Local)',
+    shortLabel: 'Local Amt',
     num: true,
     get: (t) => (t.cashAmt && t.cashCurr && t.cashCurr !== 'USD' ? `${formatAmount(t.cashAmt * 100)} ${t.cashCurr}` : ''),
   },
 ]
 
-type ActCol = { label: string; get?: (i: ActionItem) => string; num?: boolean; mono?: boolean; cls?: string; action?: boolean; btn?: boolean; status?: boolean }
+type ActCol = { label: string; shortLabel?: string; get?: (i: ActionItem) => string; num?: boolean; mono?: boolean; cls?: string; action?: boolean; btn?: boolean; status?: boolean }
 
 const ACT_COLS: readonly ActCol[] = [
-  { label: 'Transaction', get: (i) => i.rfha, mono: true },
+  { label: 'Transaction', shortLabel: 'Txn No.', get: (i) => i.rfha, mono: true },
   { label: 'Deal Type', get: (i) => i.dealType, cls: 'cell-type' },
   { label: 'Action Item', action: true, get: (i) => i.text },
   { label: 'Create', btn: true },
   { label: 'Co. Code', get: (i) => i.bukrs },
-  { label: 'Counterparty', get: (i) => i.cpty },
+  { label: 'Counterparty', shortLabel: 'Cpty', get: (i) => i.cpty },
   { label: 'Txn Type', get: (i) => `${i.sfhaart} · ${txnTypeText(i.sfhaart)}` },
   { label: 'Txn Status', status: true, get: (i) => txnStatusInfo(i.status).desc },
   { label: 'Value Date', mono: true, get: (i) => isoToDMY(i.valueDate) },
   { label: 'Exec. Date', mono: true, get: (i) => isoToDMY(i.eDate) },
   { label: 'P/C', get: (i) => i.pc1 },
   { label: 'Curr 1', get: (i) => i.curr1 },
-  { label: 'Amount 1', num: true, get: (i) => formatAmount(i.amt1) },
+  { label: 'Amount 1', shortLabel: 'Amt 1', num: true, get: (i) => formatAmount(i.amt1) },
   { label: 'Curr 2', get: (i) => i.curr2 },
-  { label: 'Buy/Sell', get: (i) => i.bs },
-  { label: 'Invoice Amt', num: true, get: (i) => (i.invAmt !== '' ? formatAmount(i.invAmt) : '') },
+  { label: 'Buy/Sell', shortLabel: 'B/S', get: (i) => i.bs },
+  { label: 'Invoice Amt', shortLabel: 'Inv Amt', num: true, get: (i) => (i.invAmt !== '' ? formatAmount(i.invAmt) : '') },
   { label: 'Inv Curr', get: (i) => i.invCurr },
-  { label: 'Invoice Diff.', num: true, get: (i) => (i.diffAmt !== '' ? formatAmount(i.diffAmt) : '') },
+  { label: 'Invoice Diff.', shortLabel: 'Inv Diff', num: true, get: (i) => (i.diffAmt !== '' ? formatAmount(i.diffAmt) : '') },
 ]
 
 const dsItem = (label: string, value: ReactNode) => (
@@ -81,7 +83,7 @@ const dsItem = (label: string, value: ReactNode) => (
 )
 
 /**
- * The deal popup (double-click a deal): FETCH_TXN_DATA and PROCESS_ACTION_ITEMS in two grids,
+ * The deal popup (click a Deal ID): FETCH_TXN_DATA and PROCESS_ACTION_ITEMS in two grids,
  * with Option Exercise/Expire, NDF Rate Fixing and Diff Spot acting on the selected transaction.
  */
 export function DealModal({
@@ -158,8 +160,8 @@ export function DealModal({
               <tr>
                 <th className="action-col"></th>
                 {TXN_COLS.map((c) => (
-                  <th key={c.label} className={c.num ? 'num' : ''}>
-                    {c.label}
+                  <th key={c.label} className={c.num ? 'num' : ''} title={c.label}>
+                    {c.shortLabel ?? c.label}
                   </th>
                 ))}
               </tr>
@@ -201,7 +203,7 @@ export function DealModal({
                       </td>
                       {TXN_COLS.map((c) => {
                         let cls = (c.num ? 'num ' : '') + (c.mono ? 'mono ' : '')
-                        if (c.link) cls += `${txnLinkClass(t)} `
+                        if (c.link) cls += `${txnLinkClass(t)} cell-id `
                         if (c.type) cls += 'cell-type '
                         if (c.sd && t.sdPending) cls += 'cell-pending '
                         const text = c.get ? c.get(t) : ''
@@ -221,7 +223,7 @@ export function DealModal({
                           )
                         if (c.status) inner = <span className={`status-text ${txnStatusInfo(t.status).cls}`}>{text}</span>
                         return (
-                          <td key={c.label} className={cls.trim() || undefined}>
+                          <td key={c.label} className={cls.trim() || undefined} title={text}>
                             {inner}
                           </td>
                         )
@@ -244,8 +246,8 @@ export function DealModal({
             <thead>
               <tr>
                 {ACT_COLS.map((c) => (
-                  <th key={c.label} className={c.num ? 'num' : ''}>
-                    {c.label}
+                  <th key={c.label} className={c.num ? 'num' : ''} title={c.label}>
+                    {c.shortLabel ?? c.label}
                   </th>
                 ))}
               </tr>
@@ -275,8 +277,8 @@ export function DealModal({
                       if (c.action) cls += it.state === 'done' ? 'cell-done ' : 'cell-pending '
                       const text = c.get ? c.get(it) : ''
                       return (
-                        <td key={c.label} className={cls.trim() || undefined}>
-                          {c.status ? <span className={`status-text ${txnStatusInfo(it.status).cls}`}>{text}</span> : text}
+                        <td key={c.label} className={cls.trim() || undefined} title={text}>
+                          {c.status ? <span className={`status-text ${txnStatusInfo(it.status).cls}`}>{text}</span> : c.action ? <span className="action-copy">{text}</span> : text}
                         </td>
                       )
                     })}

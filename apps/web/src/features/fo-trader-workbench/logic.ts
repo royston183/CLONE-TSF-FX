@@ -443,6 +443,45 @@ export function recalcSpotAmounts(s: SpotDraft): SpotDraft {
   return n
 }
 
+/** Screen 9011 CO_CODE_NDF / PROCESS_NDF_SPOT: invoice entity, amount and side, never the parent NDF's notional. */
+export function buildNdfSpot(txn: Txn, invoice: InSpot | null): SpotDraft {
+  // The invoice supplies the fixed amount and direction, not the source pair.
+  // Keep both currencies visible while the invoice settlement is still missing.
+  if (!invoice?.curr) return {
+    bukrs: '', bp: txn.cpty,
+    curr1: txn.curr1, curr2: txn.curr2, bs1: 'Buy', bs2: 'Sell',
+    amt1: 0, amt2: 0, base: 1, rate: 0, invText1: '', invText2: '',
+  }
+  const buying = invoice?.bs === 'Buy'
+  const currency = invoice?.curr ?? ''
+  const other = txn.curr1 === currency ? txn.curr2 : txn.curr1
+  return {
+    bukrs: invoice ? LOOKUPS.companies.find((c) => c.entity === invoice.entity)?.code ?? '' : '',
+    bp: txn.cpty,
+    curr1: buying ? currency : other,
+    curr2: buying ? other : currency,
+    bs1: 'Buy',
+    bs2: 'Sell',
+    amt1: buying ? Math.abs(invoice?.fAmt ?? 0) : 0,
+    amt2: buying ? 0 : Math.abs(invoice?.fAmt ?? 0),
+    base: buying ? 1 : 2,
+    rate: 0,
+    invText1: buying && invoice?.fAmt ? 'Invoice Value' : '',
+    invText2: !buying && invoice?.fAmt ? 'Invoice Value' : '',
+  }
+}
+
+/** Explain missing prerequisites before displaying an NDF spot as ready to book. */
+export function ndfSpotIssue(txn: Txn, invoice: InSpot | null): string {
+  if (!invoice) return 'No invoice settlement details are saved for this deal type. Save the FX–Invoice Difference on MO: Execute Settlement, then reopen Create Spot.'
+  if (!txn.curr1 || !txn.curr2 || txn.curr1 === txn.curr2) return 'The source NDF currency pair is incomplete. Refresh the workbench before creating its spot.'
+  if (!invoice.curr || ![txn.curr1, txn.curr2].includes(invoice.curr)) return 'The saved invoice currency is missing or does not match the NDF currency pair. Correct the FX–Invoice Difference on MO: Execute Settlement, then reopen Create Spot.'
+  if (invoice.bs !== 'Buy' && invoice.bs !== 'Sell') return 'The saved invoice buy/sell direction is missing. Save the FX–Invoice Difference on MO: Execute Settlement, then reopen Create Spot.'
+  if (!Number.isFinite(invoice.fAmt) || !invoice.fAmt) return 'No invoice amount is available for this NDF. Save the FX–Invoice Difference on MO: Execute Settlement, then reopen Create Spot.'
+  if (!invoice.entity || !LOOKUPS.companies.some((c) => c.entity === invoice.entity)) return 'The saved invoice entity has no company code. Correct its company configuration, then refresh the workbench.'
+  return ''
+}
+
 /** PROCESS_NDO_SPOT / NDO_SPOT — default values for the "Create Spot" popup. */
 export function buildNdoSpot(txn: Txn, ctx: { invoice: InSpot | null; rate: number }): SpotDraft {
   let s: SpotDraft = {

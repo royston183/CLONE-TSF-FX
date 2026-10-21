@@ -112,10 +112,42 @@ To regenerate the seed from a replacement export before running `db:seed:set-fx`
 node tools/import-set-fx.mjs 'C:\path\EXPORT_set_fx.XLSX' 'C:\path\SET_FX.json'
 ```
 
+`ZSGTSFTR_DAYLOCK` follows the supplied `SLC_SAP_METADATA_V2_1_daylock.json` export.
+Migration `010_zsgtsftr_daylock_ddic.sql` preserves existing rows while aligning all 15 columns,
+the eight-part primary key, field lengths and nullability. SAP codes, dates and times stay text.
+The relevant metadata is recorded in `database/metadata/zsgtsftr_daylock.json`.
+The blotter now reads and writes the cloud `daylock` resource through `/api/localdb/tsf-day-lock`.
+The local schema remains available as migration history.
+
 Change the schema by **adding a new migration file**, never by editing one already applied.
 To reset a local dev database, stop the gateway, delete `data/tsf-fx.db*` and run
 `npm run db:setup`. **Never commit `.db` files** (they are gitignored); the schema is the
-migrations. Until `db:setup` has run, `/api/localdb/*` answers 503 and everything else works.
+migrations. Until `db:setup` has run, SQLite-backed routes answer 503.
+
+The following routes now use the cloud middleware configured in `config/services.json`.
+Their `/api/localdb` URLs remain for client compatibility; they do not read or write SQLite
+and work without `db:setup`:
+
+| Route | Cloud resource | Table |
+|---|---|---|
+| `/api/localdb/tsf-trade-position` | `trdPos` | `zsgtsftr_trd_pos` |
+| `/api/localdb/tsf-posting-type` | `tsfTrdAcc` | `zsgtsftr_trd_acc` |
+| `/api/localdb/tsf-deal-document` | `tsfDealdms` | `zsgtsftr_dealdms` |
+| `/api/localdb/tsf-dms-type` | `dmsType` | `zsgtsftr_dms_typ` |
+| `/api/localdb/tsf-day-lock` | `daylock` | `zsgtsftr_daylock` |
+
+`packages/gateway/src/cloud/table.ts` handles each resource's column casing, paginates reads,
+preserves SAP date/time shapes and stamps writes with the signed-in user through the routes.
+Cloud failures are returned to callers without a SQLite fallback. Existing local database
+files and migration history remain available; starting the app does not copy or reseed cloud data.
+
+For another local database, first run `node --env-file-if-exists=.env tools/migrate-tsf-cloud.mjs`
+to compare it with cloud. Add `--apply` to copy missing keys. The script stops on conflicting
+shared data, snapshots the source rows under `data/cloud-migrations/`, and verifies each inserted
+row. Cloud middleware assigns audit times on writes; the snapshot retains the original times.
+Document types use the cloud configuration directly, including its current number-range settings;
+the local DMS seed is not copied over existing cloud configuration. Day-lock migration preserves
+missing local locks. The day-lock routes recognise both single-digit and padded month keys.
 
 **Endpoints** (signed-in session required, like every `/api/*` route):
 

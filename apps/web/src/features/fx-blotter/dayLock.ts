@@ -5,8 +5,8 @@ import type { BlotterRow, Ctx } from './types.ts'
 
 /**
  * Lock Blotter (function code LOCK of ZSGTSF_PFX_BLOTTER), kept in ZSGTSFTR_DAYLOCK (TRM Day Wise Locking):
- * one row per blotter date + trader group + trader code once that day is locked, in the gateway's local SQLite
- * (migration 008, /api/localdb/tsf-day-lock). It is shared by everyone, unlike the old per-browser flag.
+ * one row per blotter date + trader group + trader code once that day is locked, in cloud resource daylock
+ * (via /api/localdb/tsf-day-lock). The lock is shared by everyone.
  *
  * The program's rules, as pure functions below:
  *   - LOCK is refused while any transaction is still Created (TXN_STATUS 01), i.e. not yet released to MO;

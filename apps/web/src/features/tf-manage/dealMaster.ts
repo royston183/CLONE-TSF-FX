@@ -1,11 +1,13 @@
 import { list, odataString, runLimited, service, toNum } from '@slc/api-client'
 import { listDealIds } from '../../shared/fx/deal-id.ts'
+import { listMasterContracts } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import type { FxRow } from '../../shared/fx/mw.ts'
 import { mwList } from '../../shared/middleware.ts'
 import { UTILIZATION_DEAL_TYPE, loadFxLegs, toLink, txnKey } from '../mo-deal-id-invoice-mark/amount.ts'
 import type { AppStrLink, Leg } from '../mo-deal-id-invoice-mark/amount.ts'
+import { dealCommodity, type DealCommodity } from './assignmentCommodity.ts'
 
 /**
  * The deal master behind BL Data 1's "Assign Deal ID & Release for Invoicing" popup.
@@ -21,14 +23,10 @@ import type { AppStrLink, Leg } from '../mo-deal-id-invoice-mark/amount.ts'
  *
  * Read only. Nothing here writes a Deal ID, an APP_STR row or a Treasury transaction.
  */
-export type DealMasterRecord = {
-  dealId: string
+export type DealMasterRecord = DealCommodity & {
   dealStatus: string
   dealStatusText: string
-  /** The structure type (CT, SLC, ...) — what the popup's Deal Structure select holds. */
-  dealStructure: string
   dealAmount: number
-  mcRefNo: string
 }
 
 export type DealStructureOption = { key: string; text: string }
@@ -109,7 +107,7 @@ export function calculateDealAmounts(links: readonly AppStrLink[], legs: readonl
 type StructureRow = { Ztype?: string; Zdesc?: string; ZsubType?: string }
 
 export async function loadDealMaster(signal?: AbortSignal): Promise<DealMaster> {
-  const [dealRows, statusRows, structureRows] = await Promise.all([
+  const [dealRows, statusRows, structureRows, mcRows] = await Promise.all([
     listDealIds({}, signal),
     // Status text is decoration: without it a deal still lists, with its code.
     fxList('tsfDealStatus', {}, { signal }).catch((error) => {
@@ -118,6 +116,12 @@ export async function loadDealMaster(signal?: AbortSignal): Promise<DealMaster> 
     }),
     // Structure text is decoration too.
     mwList<StructureRow>('tsfStructure', undefined, signal).catch(() => [] as StructureRow[]),
+    // Required for the FX commodity gate: an unavailable MC must not become an allowed match.
+    listMasterContracts({}, signal).catch((error) => {
+      if (isAbort(error)) throw error
+      console.warn('[tf-manage] Master contract commodities unavailable; FX assignment remains blocked', error)
+      return [] as FxRow[]
+    }),
   ])
 
   const dealIds = [...new Set(dealRows.map((r) => txt(r, 'ZDEAL_ID')).filter(Boolean))]
@@ -131,7 +135,7 @@ export async function loadDealMaster(signal?: AbortSignal): Promise<DealMaster> 
     throw error
   }
 
-  return buildDealMaster(dealRows, statusRows, structureRows, amounts)
+  return buildDealMaster(dealRows, statusRows, structureRows, amounts, mcRows)
 }
 
 /** The pure half of loadDealMaster: deal, status, structure rows and amounts in, the popup's lists out. */
@@ -140,7 +144,9 @@ export function buildDealMaster(
   statusRows: readonly FxRow[],
   structureRows: readonly StructureRow[],
   amounts: ReadonlyMap<string, number>,
+  mcRows: readonly FxRow[] = [],
 ): DealMaster {
+  const contracts = new Map(mcRows.map((row) => [txt(row, 'ZMC_REF_NO'), row]))
   const typeOfSubType = new Map<string, string>()
   const structureText = new Map<string, string>()
   for (const row of structureRows) {
@@ -166,12 +172,10 @@ export function buildDealMaster(
       const subType = txt(row, 'ZSUB_TYPE')
       const status = txt(row, 'ZDEAL_STAT')
       return {
-        dealId,
+        ...dealCommodity(row, contracts.get(txt(row, 'ZMC_REF')), typeOfSubType.get(subType)),
         dealStatus: status,
         dealStatusText: statusText.get(`${subType}|${status}`) ?? '',
-        dealStructure: typeOfSubType.get(subType) ?? '',
         dealAmount: toNum(amounts.get(dealId)),
-        mcRefNo: txt(row, 'ZMC_REF'),
       }
     })
     .sort((a, b) => b.dealId.localeCompare(a.dealId))

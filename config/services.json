@@ -137,6 +137,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_hbkacct_o4_api/srvd_a2x/sap/zfs_sd_housebankaccount/0001",
       "description": "ZFS_SB_HBKACCT_O4_API — HouseBankAccount (company house banks and their accounts: T012 / T012K)"
     },
+    "exchangerate": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_exchangerate_o4_api/srvd_a2x/sap/zfs_sd_exchangerate/0001",
+      "description": "ZFS_SB_EXCHANGERATE_O4_API — ExchangeRate (TCURR rates and TCURF currency-unit factors)"
+    },
     "companycode": {
       "kind": "odata",
       "auth": "sap-ds4",

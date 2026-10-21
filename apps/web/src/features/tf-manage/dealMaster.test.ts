@@ -50,6 +50,18 @@ describe('buildDealMaster', () => {
     strictEqual(findDeal(master.deals, '7000000030')?.mcRefNo, '')
   })
 
+  it('joins the commodity by the parent MC reference, never by array order or the TF commodity', () => {
+    const joined = buildDealMaster(
+      [{ ZDEAL_ID: '7000000019', ZDEAL_TYPE: 'FX', ZSUB_TYPE: 'FX1', ZMC_REF: '2000000032' }],
+      STATUSES, STRUCTURES, new Map([['7000000019', 1000]]),
+      [{ ZMC_REF_NO: '2000000099', ZCOMMODITY: 'C108', ZCOM_DESC: 'RICE' },
+        { ZMC_REF_NO: '2000000032', ZCOMMODITY: 'C106', ZCOM_DESC: 'WHEAT' }],
+    )
+    strictEqual(joined.deals[0]?.mcCommodity, 'C106')
+    strictEqual(joined.deals[0]?.mcCommodityDescription, 'WHEAT')
+    strictEqual(joined.deals[0]?.mcRefNo, '2000000032')
+  })
+
   it('carries the computed amount', () => {
     strictEqual(findDeal(master.deals, '7000000019')?.dealAmount, 1000000)
     strictEqual(findDeal(master.deals, '7000000030')?.dealAmount, 250000)

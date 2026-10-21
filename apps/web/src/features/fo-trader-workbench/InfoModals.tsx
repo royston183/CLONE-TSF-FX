@@ -119,10 +119,23 @@ function KpiTable({ cols, rows, onOpen }: { cols: readonly KCol[]; rows: readonl
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={`${r.dealId}-${i}`} title="Double-click to open the deal" onDoubleClick={() => onOpen(r.dealId)}>
+            <tr key={`${r.dealId}-${i}`}>
               {cols.map((c) => (
                 <td key={c.key} className={`${c.num ? 'num mono ' : ''}${c.cls ?? ''}`.trim() || undefined}>
-                  {r.cells[c.key]}
+                  {c.key === 'id' ? (
+                    <a
+                      className="deal-id-link"
+                      href={`#deal-${encodeURIComponent(r.dealId)}`}
+                      aria-haspopup="dialog"
+                      title={`Open transactions and action items for deal ${r.dealId}`}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        onOpen(r.dealId)
+                      }}
+                    >
+                      {r.cells[c.key]}
+                    </a>
+                  ) : r.cells[c.key]}
                 </td>
               ))}
             </tr>

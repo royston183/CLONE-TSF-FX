@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "2.1",
+  "sourceFile": "SLC_SAP_METADATA_V2_1_daylock.json",
+  "generatedAt": "20261019061434.7237610",
+  "source": { "systemId": "DS4", "client": "100", "language": "E" },
+  "name": "ZSGTSFTR_DAYLOCK",
+  "description": "TRM-Day Wise Locking",
+  "primaryKey": ["CLIENT", "ZCO_AREA", "ZMONTH", "ZYEAR", "ZTYPE", "ZB_TYPE", "ZPDATE", "ZGRP"],
+  "fields": [
+    { "name": "CLIENT", "dataType": "CLNT", "length": 3, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZCO_AREA", "dataType": "CHAR", "length": 4, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZMONTH", "dataType": "CHAR", "length": 3, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZYEAR", "dataType": "NUMC", "length": 4, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZTYPE", "dataType": "CHAR", "length": 10, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZB_TYPE", "dataType": "CHAR", "length": 30, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZPDATE", "dataType": "DATS", "length": 8, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZGRP", "dataType": "CHAR", "length": 3, "isKey": true, "ddicNotNullIndicator": "X" },
+    { "name": "ZLOCKED", "dataType": "CHAR", "length": 1, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCREATED_BY", "dataType": "CHAR", "length": 12, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCREATED_DATE", "dataType": "DATS", "length": 8, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCREATED_TIME", "dataType": "TIMS", "length": 6, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCHANGED_BY", "dataType": "CHAR", "length": 12, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCHANGED_DATE", "dataType": "DATS", "length": 8, "isKey": false, "ddicNotNullIndicator": "" },
+    { "name": "ZCHANGED_TIME", "dataType": "TIMS", "length": 6, "isKey": false, "ddicNotNullIndicator": "" }
+  ]
+}

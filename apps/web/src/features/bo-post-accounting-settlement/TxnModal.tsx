@@ -27,6 +27,7 @@ export function TxnModal({
     <ModalShell
       open={open}
       size="wide"
+      className="transaction-posting-modal"
       icon={'⇄'}
       title="Transaction Settlement"
       subtitle={leg ? `Deal Type ${leg.dealType} · Transaction ${leg.rfha} · ${leg.entity}` : 'FX deal accounting entries'}

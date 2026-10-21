@@ -1,18 +1,15 @@
-import { apiFetch, service } from '@slc/api-client'
-import { txt } from './masters.ts'
+import { loadExchangeRate } from './exchange-rate-api.ts'
 import type { FxRow } from './mw.ts'
 import { num } from './sap.ts'
 
 /**
- * Exchange rates from TCURR, read through the middleware (`data/tcurr`). This stands in for
+ * Exchange rates from TCURR, read through SAP's ExchangeRate OData service. This stands in for
  * BAPI_EXCHANGERATE_GETDETAIL, which is not wired: it is the same table, read for one rate type and
  * date. The rate is the latest row dated on or before the requested day.
  *
- * TCURR-GDATU holds the inverted date (99999999 - yyyymmdd), so "latest on or before D" is "GDATU >= inverted(D)",
- * smallest first. A negative UKURS is SAP's indirect quotation: the rate is 1 / |UKURS|.
+ * The service exposes ordinary effective dates, ordered newest first.
+ * A negative ExchangeRate is SAP's indirect quotation: the rate is 1 / |ExchangeRate|.
  */
-const middleware = service('middleware')
-
 export const invertedDate = (iso: string): string => String(99999999 - Number(iso.replace(/-/g, '')))
 
 /** `from -> to` on `date` (YYYY-MM-DD): a lookup that answers null when there is no usable rate. */
@@ -24,11 +21,9 @@ export const rateOfRow = (row: FxRow): number => {
 }
 
 async function direct(from: string, to: string, date: string, rateType: string, signal?: AbortSignal): Promise<number | null> {
-  const params = new URLSearchParams({ KURST: rateType, FCURR: from, TCURR: to, 'GDATU[gte]': invertedDate(date), sort: 'GDATU', limit: '1' })
-  const body = await apiFetch<{ rows?: FxRow[] }>(`${middleware('data/tcurr')}?${params.toString()}`, signal ? { signal } : undefined)
-  const row = body?.rows?.[0]
-  const rate = row ? rateOfRow(row) : 0
-  return rate > 0 && row && txt(row, 'FCURR') ? rate : null
+  const row = await loadExchangeRate(from, to, date, rateType, signal)
+  const rate = row ? rateOfRow({ UKURS: String(row.ExchangeRate) }) : 0
+  return rate > 0 && row?.SourceCurrency ? rate : null
 }
 
 /** TCURR: the pair as asked, else its inverse (1 / rate). Same currency is 1. */

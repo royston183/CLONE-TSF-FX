@@ -1,7 +1,7 @@
 /**
  * ZSGTSFTR_TRD_POS for BO: Post Accounting Entries for Settlement (ZSGTSFR081). The rows are what MO: Execute
  * Settlement for Deal ID (ZSGTSFR060) stored at Initiate Settlement and on each leg's Update / Settlement Complete
- * (the gateway's local SQLite, /api/localdb/tsf-trade-position).
+ * (cloud trdPos through the compatibility route /api/localdb/tsf-trade-position).
  *
  * The indicators, as ZSGTSF_RDEAL_TRD_POST reads them, never one for another:
  *   ZEXE_CO      Settlement Complete (Execution), set by MO's Settlement Complete (gt_inv-set_co).

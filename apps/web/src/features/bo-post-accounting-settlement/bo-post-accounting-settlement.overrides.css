@@ -1,5 +1,5 @@
 /*
- * The only deviation from the generated legacy stylesheet.
+ * Deliberate changes to the generated legacy stylesheet.
  *
  * bo-post-accounting-settlement.legacy.css is produced by tools/scope-css.mjs from
  * legacy/bo-post-accounting-settlement.html. The original put a "row-dragging" class on <body>;
@@ -81,4 +81,57 @@
   cursor: default;
   color: var(--red);
   font-size: 11.5px;
+}
+
+/* Match Execute Settlement's contained dialogs; the shared FX theme otherwise
+   replaces the legacy max-width with the viewport width. */
+#alm-fx-ui .bo-post-accounting-settlement .modal-card.invoice-posting-modal,
+#alm-fx-ui .bo-post-accounting-settlement .modal-card.transaction-posting-modal {
+  max-width: 980px;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .modal-header,
+.bo-post-accounting-settlement .invoice-posting-modal .modal-footer {
+  flex-shrink: 0;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .posting-section {
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+}
+.bo-post-accounting-settlement .invoice-posting-modal .posting-section + .posting-section {
+  margin-top: 10px;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .section-label {
+  margin: 0 0 10px;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .field-grid.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 0;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .field,
+.bo-post-accounting-settlement .invoice-posting-modal .static {
+  min-width: 0;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .static {
+  height: auto;
+  min-height: 34px;
+  overflow-wrap: anywhere;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .posting-partner-bank {
+  grid-column: 1 / -1;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .posting-settlement {
+  gap: 8px;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .doc-link-pending {
+  margin: 0;
+}
+.bo-post-accounting-settlement .invoice-posting-modal .posting-accounting-table {
+  overflow-x: auto;
+}
+@media (max-width: 700px) {
+  .bo-post-accounting-settlement .invoice-posting-modal .field-grid.cols3 {
+    grid-template-columns: 1fr;
+  }
 }

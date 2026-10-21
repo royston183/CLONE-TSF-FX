@@ -142,7 +142,15 @@ export type TradeInvoice = {
 /** A fixture row of the legacy DMS list (tests only; the live panel is shared/fx/DealDmsModal.tsx). */
 export type DmsDoc = { type: string; file: string; date: string; by: string }
 
-export type Headsup = { date: string; cat: string; msg: string }
+export type Headsup = {
+  entity: string
+  tradeType: string
+  currency: string
+  dealAmount: number
+  finalAmount: number
+  difference: number
+  action: string
+}
 
 export type ToastKind = 'info' | 'success' | 'error'
 export type Toast = { message: string; kind: ToastKind | null; visible: boolean }

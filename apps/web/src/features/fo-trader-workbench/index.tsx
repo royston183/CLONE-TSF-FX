@@ -297,10 +297,13 @@ export default function FoTraderWorkbench() {
                 className={`kpi-card${def.tone ? ` tone-${def.tone}` : ''}`}
                 tabIndex={0}
                 role="button"
-                title="Double-click (or press Enter) for the breakdown"
-                onDoubleClick={() => openPopup({ kind: 'kpi', id: def.id as KpiId })}
+                title="Click for the breakdown"
+                onClick={() => openPopup({ kind: 'kpi', id: def.id as KpiId })}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') openPopup({ kind: 'kpi', id: def.id })
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    openPopup({ kind: 'kpi', id: def.id })
+                  }
                 }}
               >
                 <div className="kpi-label">{def.label}</div>
@@ -315,7 +318,7 @@ export default function FoTraderWorkbench() {
           <div className="card">
             <div className="section-title">
               <span className="dot"></span>Deal ID Details
-              <span className="section-hint">Double-click a deal to open its transactions and action items</span>
+              <span className="section-hint">Click a Deal ID to open its transactions and action items</span>
             </div>
 
             <div className="wb-toolbar">
@@ -432,10 +435,9 @@ export default function FoTraderWorkbench() {
                       <tr
                         key={d.id}
                         className={`${isSel ? 'selected' : ''}${dnd.dragging?.id === d.id ? ' dragging' : ''}`.trim() || undefined}
-                        title={'Click to select · double-click to open transactions'}
+                        title="Click to select"
                         draggable={isSel}
                         onClick={() => setSelectedDealId(isSel ? null : d.id)}
-                        onDoubleClick={() => openDealRow(d.id)}
                         onDragStart={(e) => {
                           if (!isSel) {
                             e.preventDefault()
@@ -457,7 +459,21 @@ export default function FoTraderWorkbench() {
                         </td>
                         {DEAL_COLS.map((c) => (
                           <td key={c.key} className={`${c.num ? 'num ' : ''}${c.cls ?? ''}${c.pin ? ' pin pin-2' : ''}`.trim() || undefined}>
-                            {c.status ? <span className={`status-text ${st.cls}`}>{st.desc}</span> : colText(c, d)}
+                            {c.key === 'id' ? (
+                              <a
+                                className="deal-id-link"
+                                href={`#deal-${encodeURIComponent(d.id)}`}
+                                aria-haspopup="dialog"
+                                title={`Open transactions and action items for deal ${d.id}`}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  openDealRow(d.id)
+                                }}
+                              >
+                                {d.id}
+                              </a>
+                            ) : c.status ? <span className={`status-text ${st.cls}`}>{st.desc}</span> : colText(c, d)}
                           </td>
                         ))}
                       </tr>
