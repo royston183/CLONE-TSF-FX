@@ -183,7 +183,8 @@ export default function FoCreateMasterContract() {
 
   const save = async () => {
     if (busy.current) return
-    const { valid, errors } = validateForm(formValues)
+    const originalMcDate = formMode === 'edit' ? (findContract(formSourceMc)?.mcDate ?? null) : null
+    const { valid, errors } = validateForm(formValues, { originalMcDate })
     setFormErrors(errors)
     if (!valid) {
       showToast('Please fix the highlighted fields before saving.', true)

@@ -12,6 +12,8 @@ export type DdicTable = {
   table: string
   /** The one client the gateway reads and writes. */
   client: string
+  /** The SQLite client column; SAP tables name it CLIENT (the default) or MANDT. */
+  clientColumn?: string
   /** Every column except CLIENT, in DDIC order. */
   columns: readonly DdicColumn[]
 }
@@ -23,23 +25,24 @@ export type DdicTable = {
  */
 export function createDdicRepository(db: Database, spec: DdicTable) {
   const { table, client, columns } = spec
+  const clientCol = spec.clientColumn ?? 'client'
   const keys = columns.filter((c) => c.key)
   const byName = new Map(columns.map((c) => [c.name, c]))
   const lower = (n: string) => n.toLowerCase()
-  const selectAll = `SELECT ${columns.map((c) => `${lower(c.name)} AS ${c.name}`).join(', ')} FROM ${table} WHERE client = '${client}'`
+  const selectAll = `SELECT ${columns.map((c) => `${lower(c.name)} AS ${c.name}`).join(', ')} FROM ${table} WHERE ${clientCol} = '${client}'`
   const keyWhere = keys.map((k) => `${lower(k.name)} = @${k.name}`).join(' AND ')
   const order = keys.map((k) => lower(k.name)).join(', ')
 
   const list = db.prepare<[], DdicRow>(`${selectAll} ORDER BY ${order}`)
   const one = db.prepare<Record<string, string>, DdicRow>(`${selectAll} AND ${keyWhere}`)
-  const remove = db.prepare(`DELETE FROM ${table} WHERE client = '${client}' AND ${keyWhere}`)
+  const remove = db.prepare(`DELETE FROM ${table} WHERE ${clientCol} = '${client}' AND ${keyWhere}`)
   const listBy = new Map<string, Statement<[{ value: string }], DdicRow>>()
 
   const upsertFor = (names: readonly string[]) =>
     db.prepare(
-      `INSERT INTO ${table} (client, ${keys.map((k) => lower(k.name)).join(', ')}${names.map((n) => `, ${lower(n)}`).join('')})
+      `INSERT INTO ${table} (${clientCol}, ${keys.map((k) => lower(k.name)).join(', ')}${names.map((n) => `, ${lower(n)}`).join('')})
        VALUES ('${client}', ${keys.map((k) => `@${k.name}`).join(', ')}${names.map((n) => `, @${n}`).join('')})
-       ON CONFLICT (client, ${keys.map((k) => lower(k.name)).join(', ')}) DO UPDATE SET ${
+       ON CONFLICT (${clientCol}, ${keys.map((k) => lower(k.name)).join(', ')}) DO UPDATE SET ${
          names.length ? names.map((n) => `${lower(n)} = excluded.${lower(n)}`).join(', ') : `${lower(keys[0]!.name)} = ${lower(keys[0]!.name)}`
        }`,
     )

@@ -7,6 +7,8 @@
 import { dmyFromIso } from '../../shared/fx/sap.ts'
 import { loadFxWithApp, allOf, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { odataString } from '@slc/api-client'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
+import type { FxRow as ViewRow } from '../../shared/fx/mw.ts'
 import type { FxRow } from './types.ts'
 
 export const WAITING_FX_LEGS_OPTION =
@@ -18,7 +20,7 @@ const n = (v: unknown): number => {
 }
 
 /** A transaction as one FX Deals row; a sold currency carries a negative amount (lead currency = leg 1). */
-export function toFxRow({ fx, app }: FxWithApp): FxRow {
+export function toFxRow({ fx, app }: FxWithApp, view?: ViewRow): FxRow {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
   const buysLead = fx.BuyCurrency === lead
@@ -47,11 +49,14 @@ export function toFxRow({ fx, app }: FxWithApp): FxRow {
     txnStatus: app.TxnStatus ?? '',
     premium: '',
     premiumCurr: '',
+    ndf: ndfExtras(fx, app, view),
   }
 }
 
 /** The Deal ID's FX legs, in transaction order; a reversed transaction (ActiveStatus 3) is not a leg. */
 export async function loadDealFxRows(dealId: string, signal?: AbortSignal): Promise<FxRow[]> {
   const rows = await loadFxWithApp(allOf(`ZtsfDealID eq ${odataString(dealId)}`), signal)
-  return rows.filter((r) => r.fx.ActiveStatus !== '3').map(toFxRow)
+  const live = rows.filter((r) => r.fx.ActiveStatus !== '3')
+  const views = viewsByKey(await loadNdfViews(live.map((r) => r.fx), signal))
+  return live.map((r) => toFxRow(r, views.get(ndfKey(r.fx.CompanyCode, r.fx.FinancialTransaction))))
 }

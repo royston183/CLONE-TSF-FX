@@ -12,6 +12,7 @@ import {
   findFxModel,
   findPaymentTerm,
 } from './data.ts'
+import { earliestMcDate } from '../../shared/fx/dates.ts'
 import { formatAmount, formatRate, formatTolerance, parseAmountInput, parseRateInput, parseDMY } from './format.ts'
 import type {
   ChildContract,
@@ -156,14 +157,29 @@ export function commodityDescription(values: FormValues): { value: string; title
   return { value: findCommodity(values.commodity)?.desc ?? '', title: '' }
 }
 
-export function validateForm(values: FormValues): { valid: boolean; errors: FieldErrors } {
+export const MC_DATE_TOO_OLD = "Master Contract Date cannot be earlier than one month before today's date."
+
+/** True when a well-formed MC Date is earlier than one calendar month before today. */
+export function isMcDateTooOld(value: string, today: Date = new Date()): boolean {
+  const date = parseDMY(value)
+  return !!date && date < earliestMcDate(today)
+}
+
+/**
+ * `today` is injectable for tests. `originalMcDate` is the date an edited contract already
+ * holds: it is only re-checked against the one-month window when the user changed it.
+ */
+export function validateForm(
+  values: FormValues,
+  { today = new Date(), originalMcDate = null }: { today?: Date; originalMcDate?: string | null } = {},
+): { valid: boolean; errors: FieldErrors } {
   const errors: FieldErrors = {}
   const req = (key: keyof FieldErrors, ok: boolean) => {
     if (!ok) errors[key] = true
   }
 
   req('originEntity', !!values.originEntity)
-  req('mcDate', !!parseDMY(values.mcDate))
+  req('mcDate', !!parseDMY(values.mcDate) && (values.mcDate === originalMcDate || !isMcDateTooOld(values.mcDate, today)))
 
   const usd = parseAmountInput(values.mcAmountUsd)
   req('mcAmountUsd', !Number.isNaN(usd) && usd > 0)
@@ -223,8 +239,8 @@ export function buildContract(values: FormValues, mcNumber: number, existing: Ma
     reference: values.mcReference || `MC/${entity.code}/2026/${String(mcNumber).slice(-3)}`,
     paymentTerms: values.paymentTerms || 'P01',
     paymentDate: values.paymentDate || values.shipEnd,
-    portShipment: values.portShipment || 'Mumbai',
-    portDestination: values.portDestination || 'Singapore',
+    portShipment: values.portShipment ?? '',
+    portDestination: values.portDestination ?? '',
     shipStart: values.shipStart,
     shipEnd: values.shipEnd,
     linkedDealId: existing ? (existing.linkedDealId ?? null) : null,

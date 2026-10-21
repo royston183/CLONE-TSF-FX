@@ -67,6 +67,7 @@ export function buildRows(source: readonly FxWithApp[], enrichment: Enrichment, 
     const product = txt(raw, 'LTX') || fx.ProductType || ''
     const pnlCurrency = txt(deal, 'ZPL_CURR'), localPnlCurrency = txt(deal, 'ZPL_LCURR')
     const ndf = fx.TransactionType === '631' || fx.TransactionType === '632'
+    const ndfFx = fx as typeof fx & { NdfFixingRate?: number | string; CashSettlementAmount?: number | string; CashSettlementCurrency?: string }
     const portfolio = (fx as typeof fx & { Portfolio?: string }).Portfolio ?? txt(raw, 'RPORTB')
     return [{
       id, rfha: fx.FinancialTransaction, bukrs: fx.CompanyCode,
@@ -90,6 +91,10 @@ export function buildRows(source: readonly FxWithApp[], enrichment: Enrichment, 
       model, modelDesc: txt(rule, 'ZMOD_DESC') || txt(mc, 'ZMOD_DESC'), subType: txt(rule, 'ZSUB_TYPE') || txt(deal, 'ZSUB_TYPE'),
       portfolio, businessArea: txt(raw, 'RBUSA'),
       foRemark: String((ndf ? app.NdfFoRem : app.FoRemark) ?? '').trim(), moRemark: String((ndf ? app.NdfMoRem : app.Remark) ?? '').trim(),
+      // NDF_DATE / NDF_REF from ZSGTSFV_FX; the settlement fields only once FxTransaction serves them (blank, never 0, until then).
+      ndfDate: date(raw['NDF_DATE']), ndfRef: txt(raw, 'NDF_REF'),
+      ndfRate: amount(ndfFx.NdfFixingRate), cashAmount: amount(ndfFx.CashSettlementAmount), cashCurrency: String(ndfFx.CashSettlementCurrency ?? '').trim(),
+      ndfFoRemark: String(app.NdfFoRem ?? '').trim(), ndfMoRemark: String(app.NdfMoRem ?? '').trim(),
       enteredBy: txt(raw, 'CRUSER'), created: date(raw['DCRDAT']), changedBy: txt(raw, 'UPUSER'), changed: date(raw['DUPDAT']),
     }]
   })

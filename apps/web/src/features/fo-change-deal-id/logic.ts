@@ -3,7 +3,7 @@
  * mutated the in-page deal table; here they return a new store instead.
  */
 import { CANCELLED_STATUS, MATCHED_COLOR, OPEN_STATUS, PL_ROW_FACTORS, PL_ROW_LABELS, STATUS_MAP } from './data.ts'
-import { fixed4, fmtAmt } from './format.ts'
+import { fixed4, fmtAmt, fmtRate } from './format.ts'
 import type { Deal, DealStore, Field, InvoiceLine, MasterContract, PlCell, PlTable, Premium, StatusMeta, TopRow } from './types.ts'
 
 export function statusMeta(code: string): StatusMeta {
@@ -149,6 +149,16 @@ export function summaryFields(d: Deal): Field[] {
 }
 
 export function txnFields(r: TopRow): Field[] {
+  const ndf: Field[] =
+    /NDF/i.test(r.xtext) || r.ndfDate || r.ndfRef || r.ndfRate || r.cashAmt || r.cashCurr
+      ? [
+          ['NDF Fixing Date', r.ndfDate ?? ''],
+          ['NDF Ref', r.ndfRef ?? ''],
+          ['NDF Settlement Rate', fmtRate(r.ndfRate ?? '')],
+          ['Cash Settlement Amount', fmtAmt(r.cashAmt)],
+          ['Cash Currency', r.cashCurr ?? ''],
+        ]
+      : []
   return [
     ['Company Code', r.bukrs],
     ['Transaction No', r.rfha],
@@ -162,6 +172,7 @@ export function txnFields(r: TopRow): Field[] {
     ['Amount 2', fmtAmt(r.amt2)],
     ['Deal Start', r.dblfz],
     ['Deal Valid To', r.delfz],
+    ...ndf,
   ]
 }
 

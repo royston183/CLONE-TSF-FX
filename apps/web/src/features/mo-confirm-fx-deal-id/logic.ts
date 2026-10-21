@@ -51,6 +51,11 @@ function sortValue(leg: Leg, key: SortKey): string | number | null | undefined {
   if (key === 'txnStatusDesc') return fxTxnStatusLabel(leg.txnStatus)
   // "MC Ref No" carries a data-key but is not a leg field, so every row compares equal.
   if (key === 'mcRef') return undefined
+  if (key === 'ndfDate') return leg.ndf?.ndfDate ?? ''
+  if (key === 'ndfRef') return leg.ndf?.ndfRef ?? ''
+  if (key === 'ndfRate') return leg.ndf?.ndfRate ?? null
+  if (key === 'cashAmount') return leg.ndf?.cashAmount ?? null
+  if (key === 'cashCurrency') return leg.ndf?.cashCurrency ?? ''
   return leg[key]
 }
 

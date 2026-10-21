@@ -31,6 +31,10 @@ export type Leg = {
   zroll: string
   ztsf_pre_mature: boolean
   ztsf_unwind: boolean
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR from FxTransaction; null / '' (shown blank) while the service does not serve them. */
+  ndf_rate?: number | null
+  zcash_amt?: number | null
+  cash_curr?: string
 }
 
 export type SortField = 'rfha' | 'bukrs' | 'bpName' | 'sfhaart' | 'dblfz' | 'delfz' | 'cpair' | 'otot_rate' | 'txnDesc'

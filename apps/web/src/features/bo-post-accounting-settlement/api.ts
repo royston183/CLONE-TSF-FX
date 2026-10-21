@@ -165,6 +165,10 @@ export function toLeg({ fx, app }: FxWithApp): FxLeg {
     settled: app.ZtsfExeCo === true,
     seq: '',
     txnStatus: (app.TxnStatus ?? '').trim(),
+    // Blank (undefined) until ZFS_SD_TRMFX serves the NDF fields; never 0 for an unserved value.
+    ndfRate: fx.NdfFixingRate === undefined || fx.NdfFixingRate === null || fx.NdfFixingRate === '' ? undefined : num(fx.NdfFixingRate),
+    cashAmt: fx.CashSettlementAmount === undefined || fx.CashSettlementAmount === null || fx.CashSettlementAmount === '' ? undefined : num(fx.CashSettlementAmount),
+    cashCurr: fx.CashSettlementCurrency ?? '',
   }
 }
 

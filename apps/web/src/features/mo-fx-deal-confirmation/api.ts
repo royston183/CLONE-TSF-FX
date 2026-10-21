@@ -44,6 +44,10 @@ export type FxTransaction = {
   ActivityCategory?: string
   /** Present once the SAP ExternalReference service extension is activated. */
   ExternalReference?: string
+  /** NDF fields, served once ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); absent until then. */
+  NdfFixingRate?: number | string
+  CashSettlementAmount?: number | string
+  CashSettlementCurrency?: string
 }
 
 const ACTIVE_REVERSED = '3'
@@ -151,6 +155,9 @@ export function toDeal(
     accounting: '',
     assignment: '',
     fixRefId: '',
+    ndfRate: isNdf && d.NdfFixingRate !== undefined && d.NdfFixingRate !== null ? n(d.NdfFixingRate) : null,
+    cashAmount: isNdf && d.CashSettlementAmount !== undefined && d.CashSettlementAmount !== null ? n(d.CashSettlementAmount) : null,
+    cashCurrency: (isNdf ? d.CashSettlementCurrency : '') ?? '',
     foRemark: (isNdf ? rec?.NdfFoRem : '') ?? '',
     moRemark: (isNdf ? rec?.NdfMoRem : '') ?? '',
     externalRef: d.ExternalReference ?? '',

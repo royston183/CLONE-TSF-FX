@@ -85,7 +85,7 @@ export const OP_FIELD_DEFS = parseDefs([
  * remaining ALV fields are shown in the Transaction Details popup.
  */
 export const TABLE_COLUMNS: Record<TxnType, string[]> = {
-  FX: ['bo_rem', 'rfha', 'txn_status', 'ext_stat_desc', 'bukrs', 'zcom_id', 'bp_name', 'xtext', 'blotter_date', 'dblfz', 'delfz', 'bs_1', 'curr1', 'amt1', 'curr2', 'amt2', 't_rate', 'spot', 'swap', 'ztsf_deal_id', 'ztsf_mc_ref_no', 'rdealer', 'fo_remark'],
+  FX: ['bo_rem', 'rfha', 'txn_status', 'ext_stat_desc', 'bukrs', 'zcom_id', 'bp_name', 'xtext', 'blotter_date', 'dblfz', 'delfz', 'ndf_date', 'ndf_ref', 'bs_1', 'curr1', 'amt1', 'curr2', 'amt2', 't_rate', 'spot', 'swap', 'ndf_rate', 'cash_curr', 'zcash_amt', 'ztsf_deal_id', 'ztsf_mc_ref_no', 'rdealer', 'fo_remark', 'ndf_fo_rem', 'ndf_mo_rem'],
   OP: ['bo_rem', 'rfha', 'txn_status', 'ext_stat_desc', 'bukrs', 'zcom_id', 'bp_name', 'xtext', 'blotter_date', 'dblfz', 'e_date', 'sputcal', 'curr1', 'amt1', 'curr2', 'amt2', 'kkurs', 'e_type', 's_type', 'ztsf_deal_id', 'ztsf_mc_ref_no', 'rdealer', 'fo_remark'],
 }
 

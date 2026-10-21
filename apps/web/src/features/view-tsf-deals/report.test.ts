@@ -40,6 +40,16 @@ describe('TSF report mapping', () => {
     strictEqual(r.enteredBy, 'BOOKER')
   })
 
+  it('maps the NDF columns from the view, TrmFxApp and FxTransaction, blank (never 0) when SAP does not serve them', () => {
+    const none = row()
+    deepStrictEqual([none.ndfDate, none.ndfRef, none.ndfRate, none.cashAmount, none.cashCurrency, none.ndfFoRemark], ['', '', null, null, '', ''])
+    strictEqual(cellValue(none, COLUMNS.find((c) => c.field === 'ndfRate')!), '—')
+    const s = source()
+    const withNdf = buildRows([{ fx: { ...s.fx, NdfFixingRate: '83.250000000', CashSettlementAmount: '5000.00', CashSettlementCurrency: 'USD' } as typeof s.fx, app: { ...s.app, NdfFoRem: 'fo', NdfMoRem: 'mo' } }],
+      { ...enrichment, view: [{ ...enrichment.view[0]!, NDF_DATE: '2026-12-18', NDF_REF: 'REF-1' }] }, lookups)[0]!
+    deepStrictEqual([withNdf.ndfDate, withNdf.ndfRef, withNdf.ndfRate, withNdf.cashAmount, withNdf.cashCurrency, withNdf.ndfFoRemark, withNdf.ndfMoRemark], ['2026-12-18', 'REF-1', 83.25, 5000, 'USD', 'fo', 'mo'])
+  })
+
   it('keeps a transaction without a matching Master Contract and leaves unsupported values empty', () => {
     const r = buildRows([source()], { contracts: [], deals: [], rules: [], view: [] }, lookups)[0]!
     strictEqual(r.mcRef, '2000000001')

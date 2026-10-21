@@ -151,7 +151,7 @@ describe('the queue screen rules for live rows', () => {
   })
 
   it('exports a live row with a blank blotter date', () => {
-    ok(buildCsv([txnOf()]).split('\n')[1]!.endsWith(',30-09-2026,30-10-2026,'))
+    ok(buildCsv([txnOf()]).split('\n')[1]!.endsWith(',30-09-2026,30-10-2026,,,,'))
   })
 })
 

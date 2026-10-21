@@ -117,6 +117,20 @@ describe('GET_DATA (ZSGTSFV_FX)', () => {
     strictEqual(d._checked, false)
   })
 
+  it('maps the NDF columns: view date / ref, FxTransaction rate / cash amount; blank (not 0) when not served', () => {
+    const view = { ...VIEW_ROW, NDF_DATE: '2026-10-07', NDF_REF: 'FIX-1' }
+    const served = dealFromView(view, undefined, { CompanyCode: 'AE13', FinancialTransaction: '5000000', TransactionType: '631', Partner: 'P', ProductType: '30D', NdfFixingRate: '94.1234', CashSettlementAmount: '1500.5', CashSettlementCurrency: 'USD' })
+    strictEqual(served.NDF_DATE, '07-10-2026')
+    strictEqual(served.NDF_REF, 'FIX-1')
+    strictEqual(served.NDF_RATE, 94.1234)
+    strictEqual(served.ZCASH_AMT, 1500.5)
+    strictEqual(served.CASH_CURR, 'USD')
+    const unserved = dealFromView(VIEW_ROW)
+    strictEqual(unserved.NDF_RATE, undefined)
+    strictEqual(unserved.ZCASH_AMT, undefined)
+    strictEqual(unserved.NDF_DATE, '')
+  })
+
   it('ALPHA output strips leading zeros of numeric keys only', () => {
     strictEqual(alphaOut('0000005000000'), '5000000')
     strictEqual(alphaOut('0000000000000'), '0')

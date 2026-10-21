@@ -46,6 +46,10 @@ export type Deal = {
   accounting: string
   assignment: string
   fixRefId: string
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR of an NDF; null / '' (shown blank) while the service does not serve them. */
+  ndfRate?: number | null
+  cashAmount?: number | null
+  cashCurrency?: string
   foRemark: string
   moRemark: string
   externalRef?: string

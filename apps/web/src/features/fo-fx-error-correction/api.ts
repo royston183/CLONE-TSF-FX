@@ -51,6 +51,9 @@ const parseDay = (v: string | null | undefined): Date | null => {
 const isoDay = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
+/** A field SAP may not serve yet: null (shown blank) when absent, never 0. */
+const servedNumber = (v: number | string | null | undefined): number | null => (v === undefined || v === null || v === '' ? null : n(v))
+
 /** The names the queue shows, each looked up once. Any map may be empty: the code then stands in for its name. */
 export type Names = {
   /** Company code -> its row in ZSGTSFTR_COMP. */
@@ -164,6 +167,9 @@ export function toTxn(
     acctCat: '',
     status: statusOf(d.ActiveStatus, app?.TxnStatus ?? txnStatuses.get(appKey(d.CompanyCode, d.FinancialTransaction))),
     moRemark: app?.Remark?.trim() || app?.NdfMoRem?.trim() || app?.OptMoRem?.trim() || '',
+    ndfRate: servedNumber(d.NdfFixingRate),
+    cashAmount: servedNumber(d.CashSettlementAmount),
+    cashCurrency: d.CashSettlementCurrency?.trim() ?? '',
     changedBy: app?.LocalLastChangedBy?.trim() ?? '',
     changedOn: parseDay(app?.LocalLastChangedAt),
     live: true,

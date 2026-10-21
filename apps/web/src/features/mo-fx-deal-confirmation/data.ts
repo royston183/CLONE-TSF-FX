@@ -136,6 +136,9 @@ export const COLUMNS: Column[] = [
   { key: 'assignment', label: 'Assignment' },
   { key: 'traderShort', label: 'Trader' },
   { key: 'fixRefId', label: 'Fix.Ref.ID' },
+  { key: 'ndfRate', label: 'NDF Settlement Rate', type: 'rate' },
+  { key: 'cashAmount', label: 'Cash Settlement Amount', type: 'amount' },
+  { key: 'cashCurrency', label: 'Cash Currency' },
   { key: 'foRemark', label: 'FO Remark' },
   { key: 'moRemark', label: 'MO Remark' },
 ]
