@@ -17,6 +17,7 @@
  *                           Enabled only once ZFS_SD_TRMFX declares NdfFixing (fixNdfAvailable in shared/fx/ndf.ts).
  */
 import { apiFetch, service } from '@slc/api-client'
+import { loadExchangeRate, loadExchangeRateFactors } from '../../shared/fx/exchange-rate-api.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { TXN, loadNdfQueue, statusLabel, type NdfRecord } from '../../shared/fx/ndf.ts'
@@ -24,7 +25,6 @@ import { dmyFromIso, num } from '../../shared/fx/sap.ts'
 import type { NdfDeal } from './types.ts'
 
 const companyApi = service('companycode')
-const middleware = service('middleware')
 
 /** GET_DATA's constants. */
 export const TXN_STATUS_TO_FIX = TXN.RELEASED
@@ -154,11 +154,9 @@ export async function loadWorklist(
 export async function loadRbiRate(deal: NdfDeal, fixingDateDmy: string, signal?: AbortSignal): Promise<number> {
   const iso = isoOf(fixingDateDmy)
   if (deal.cpair !== RBI_PAIR || !iso) return 0
-  const params = new URLSearchParams({ KURST: RBI, FCURR: deal.c1, TCURR: deal.c2, GDATU: invertedDate(iso), limit: '1' })
   try {
-    const body = await apiFetch<{ rows?: FxRow[] }>(`${middleware('data/tcurr')}?${params.toString()}`, signal ? { signal } : undefined)
-    const row = body?.rows?.[0]
-    return row ? num(row['UKURS']) : 0
+    const row = await loadExchangeRate(deal.c1, deal.c2, iso, RBI, signal, true)
+    return row ? num(row.ExchangeRate) : 0
   } catch (error) {
     if (isAbort(error)) throw error
     console.warn('[ndf-fixing] TCURR RBI unavailable', error)
@@ -170,7 +168,7 @@ export async function loadRbiRate(deal: NdfDeal, fixingDateDmy: string, signal?:
 export async function loadTcurf(signal?: AbortSignal): Promise<Record<string, { ffact: number; tfact: number }>> {
   const out: Record<string, { ffact: number; tfact: number }> = {}
   try {
-    for (const r of await fxList('tcurf', { KURST: 'MTM' }, { signal })) {
+    for (const r of await loadExchangeRateFactors('MTM', signal)) {
       const key = `${txt(r, 'FCURR')}>${txt(r, 'TCURR')}`
       if (!(key in out)) out[key] = { ffact: num(r['FFACT']), tfact: num(r['TFACT']) }
     }

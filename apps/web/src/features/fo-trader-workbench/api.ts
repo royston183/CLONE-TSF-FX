@@ -17,7 +17,8 @@
  *                    FxTransaction on CompanyCode + FinancialTransaction (shared/fx/app-str.ts).
  *                    ZSGTSFCDS_OPTION: no service -> WAITING FOR API (option transactions are not listed).
  */
-import { apiFetch, odataString, service } from '@slc/api-client'
+import { odataString } from '@slc/api-client'
+import { loadExchangeRate, loadExchangeRateFactors } from '../../shared/fx/exchange-rate-api.ts'
 import { FX_TXN_STATUS_LABEL } from '../../shared/fx/txn-status.ts'
 import { loadFxFor, joinFxWithApp, listTrmFxApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { txt } from '../../shared/fx/masters.ts'
@@ -26,8 +27,6 @@ import { num } from '../../shared/fx/sap.ts'
 import { emptyLookups, mkTxn } from './data.ts'
 import { leadCurr } from './logic.ts'
 import type { AppData, Deal, InSpot, Lookups, Txn } from './types.ts'
-
-const middleware = service('middleware')
 
 export const WAITING = 'WAITING FOR API'
 
@@ -270,10 +269,8 @@ async function loadNdfViews(rows: readonly FxWithApp[], signal?: AbortSignal): P
 
 /** TCURR kurst M for a pair: the latest row dated on or before `iso` (one row). */
 async function marketRateRow(lead: string, follow: string, iso: string, signal?: AbortSignal): Promise<{ d: string; r: number } | null> {
-  const params = new URLSearchParams({ KURST: 'M', FCURR: lead, TCURR: follow, 'GDATU[gte]': invertedDate(iso), sort: 'GDATU', limit: '1' })
-  const body = await apiFetch<{ rows?: FxRow[] }>(`${middleware('data/tcurr')}?${params.toString()}`, signal ? { signal } : undefined)
-  const row = body?.rows?.[0]
-  return row ? { d: isoFromInverted(txt(row, 'GDATU')), r: num(row['UKURS']) } : null
+  const row = await loadExchangeRate(lead, follow, iso, 'M', signal)
+  return row ? { d: row.ExchangeRateEffectiveDate, r: num(row.ExchangeRate) } : null
 }
 
 export type Loaded = { data: AppData; lookups: Lookups; txnWaiting: string }
@@ -290,7 +287,7 @@ export async function loadWorkbench(today: string, signal?: AbortSignal): Promis
     fxList('trmBpext', {}, o),
     fxList('trdwai', {}, o),
     fxList('ssSpot', {}, o),
-    fxList('tcurf', { KURST: 'MTM' }, o),
+    loadExchangeRateFactors('MTM', signal),
   ])
   const lookups = lookupsFrom({ comp, models, statuses, bpGrp, bpext, trdwai, ssSpot, tcurf })
   // txn_status texts: ZSGTSFTR_TXNSTAT (ZTYPE 01), as the shared status table names them.

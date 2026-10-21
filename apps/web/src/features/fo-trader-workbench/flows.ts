@@ -51,7 +51,7 @@ export function bookSpot(wb: Wb, p: SpotRequest): string {
   return rfha
 }
 
-/** Double-click on a deal: AUTHORITY-CHECK F_BKPF_BUK (ACTVT 03) for every company code first. */
+/** Open a Deal ID: AUTHORITY-CHECK F_BKPF_BUK (ACTVT 03) for every company code first. */
 export function openDeal(wb: Wb, dealId: string): boolean {
   if (!isAuthorized(fetchTransactions(wb.get(), dealId))) {
     wb.toast('You do not have an authorization for the given company code', 'error')

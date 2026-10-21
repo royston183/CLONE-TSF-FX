@@ -107,36 +107,46 @@ export function HeadsupModal({
   dealId,
   items,
   emptyText,
-}: Base & { dealId: string; items: readonly Headsup[]; emptyText: string }) {
+  loading,
+}: Base & { dealId: string; items: readonly Headsup[]; emptyText: string; loading: boolean }) {
   return (
     <ModalFrame
       open={open}
       onClose={onClose}
       icon={<>&#128276;</>}
       title="Heads Up"
-      subtitle={<>Reminders for Deal ID <span>{dealId}</span></>}
+      size="wide"
+      subtitle={<>Invoice and FX settlement actions for Deal ID <span>{dealId}</span></>}
       footer={<Cancel onClick={onClose} label="Close" />}
     >
-      <div className="table-wrap">
+      <div className="table-wrap" aria-busy={loading}>
         <table className="data-table">
           <thead>
             <tr>
-              <th className="left">Date</th>
-              <th className="left">Category</th>
-              <th className="left">Message</th>
+              <th className="left">Entity</th>
+              <th className="left">Trade Type</th>
+              <th>FX Deal Amount</th>
+              <th>Final Invoice Amount</th>
+              <th>Difference</th>
+              <th className="left">Currency</th>
+              <th className="left">Action FX</th>
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 ? (
+            {loading || items.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={3}>{emptyText}</td>
+                <td colSpan={7}>{loading ? 'Loading Heads Up…' : emptyText}</td>
               </tr>
             ) : (
-              items.map((h) => (
-                <tr key={`${h.date}-${h.cat}`}>
-                  <td className="left">{h.date}</td>
-                  <td className="left">{h.cat}</td>
-                  <td className="left">{h.msg}</td>
+              items.map((h, index) => (
+                <tr key={`${h.tradeType}-${index}`}>
+                  <td className="left">{h.entity}</td>
+                  <td className="left">{h.tradeType}</td>
+                  <td>{formatAmount(h.dealAmount)}</td>
+                  <td>{formatAmount(h.finalAmount)}</td>
+                  <td>{formatAmount(h.difference)}</td>
+                  <td className="left">{h.currency}</td>
+                  <td className="left" style={{ whiteSpace: 'normal', minWidth: 180 }}>{h.action || '—'}</td>
                 </tr>
               ))
             )}

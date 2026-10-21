@@ -13,7 +13,7 @@ export function ReportingView() {
       title="Reporting"
       sub="Reports, grouped by the structure they belong to."
       detail="Reports are grouped by structure — FX, SLC, XLC-CRP and ICFS. Pick one in the
-        sidebar under Reporting to see its report tree. None of them is set up yet."
+        sidebar under Reporting to browse the available reports."
     />
   )
 }

@@ -18,6 +18,7 @@ import {
 } from './fields.ts'
 import { EMPTY_FILTERS } from './types.ts'
 import type { TrdFlowRow } from './types.ts'
+import { assignmentCommodityError, dealCommodity } from './assignmentCommodity.ts'
 
 const ROWS: TrdFlowRow[] = [
   { ZtfNo: '0000000001', ZtfSplit: '01', Zbu: 'B01', Zcmmd: 'C106', ZflwCod1: '01', Zttv: 1000 },
@@ -203,6 +204,20 @@ describe('section structure matches legacy/Manage TF.html', () => {
 })
 
 describe('field descriptors', () => {
+  it('selects the GT code checked by FX assignment without changing the BU commodity text', () => {
+    const field = BASIC_FIELDS.find((f) => f.id === 'bdGtCommod')?.field
+    strictEqual(field, 'ZtrmComId')
+    const row: TrdFlowRow = { Zcmmd: 'WHEAT', ZtrmComId: '' }
+    const edited = withDerivedFields({ ...row, [field!]: 'C106' }, field!)
+    strictEqual(edited.Zcmmd, 'WHEAT')
+    strictEqual(edited.ZtrmComId, 'C106')
+    const deal = dealCommodity(
+      { ZDEAL_ID: '7000000019', ZDEAL_TYPE: 'FX', ZMC_REF: '2000000032' },
+      { ZCOMMODITY: 'C106' },
+    )
+    strictEqual(assignmentCommodityError(deal, edited.ZtrmComId!), '')
+  })
+
   it('maps the shipping fields the spec lists as live', () => {
     const byId = new Map(SHIPPING_FIELDS.map((f) => [f.id, f.field]))
     strictEqual(byId.get('shVessel'), 'ZblVsslName')

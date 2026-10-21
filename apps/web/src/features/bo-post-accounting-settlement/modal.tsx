@@ -15,6 +15,7 @@ export const SECONDARY_BTN: CSSProperties = {
 export function ModalShell({
   open,
   size,
+  className,
   icon,
   title,
   subtitle,
@@ -24,6 +25,7 @@ export function ModalShell({
 }: {
   open: boolean
   size: '' | 'wide' | 'narrow'
+  className?: string
   icon: string
   title: string
   subtitle: string
@@ -38,7 +40,7 @@ export function ModalShell({
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className={size ? `modal-card ${size}` : 'modal-card'}>
+      <div className={['modal-card', size, className].filter(Boolean).join(' ')}>
         <div className="modal-header">
           <div className="modal-icon">{icon}</div>
           <div className="modal-header-text">

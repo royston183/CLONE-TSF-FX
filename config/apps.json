@@ -14,6 +14,16 @@
   ],
   "apps": [
     {
+      "code": "ZSGTSF_RFX_BLOTTER_COMP",
+      "id": "view-tsf-deals",
+      "route": "/apps/view-tsf-deals",
+      "title": "View List of TSF Deals",
+      "status": "ready",
+      "services": ["fx", "trmfxapp", "middleware"],
+      "legacy": "legacy/ZSGTSF_RFX_BLOTTER_COMP_Demo.html",
+      "note": "Reporting > FX Structure > FX Front-Office. Read-only Forex report: TrmFxApp supplies TSF Deal ID, blotter date, trader and status; FxTransaction supplies current transaction amounts/rates. Cloud masterContract is a left join; tsfDealId and fxModel supply model/sub-type and saved Deal ID P&L. tsfvFx enriches descriptions/audit details. Company/date/trader selection, search, sorting, pagination, Excel export and read-only transaction details are implemented. Options, email/IHS delivery, SAP GUI launch and CDS rollover/P&L recalculation are omitted. Company access is that of the configured SAP technical identity; demo sign-in does not implement per-user F_BKPF_BUK authorization."
+    },
+    {
       "code": "ottk-dttk-console",
       "id": "ottk",
       "route": "/apps/ottk",

@@ -607,7 +607,7 @@ export function BlDetailsPanel({
               ? pendingAssignment.dealId
               : ''
           }
-          tfCommodity={String(tfCommodity ?? '')}
+          gtCommodity={String(tradeFlow?.['ZtrmComId'] ?? '').trim()}
           onCancel={() => setAssignOpen(false)}
           onAssign={(dealId, details) => {
             onPendingAssignmentChange({

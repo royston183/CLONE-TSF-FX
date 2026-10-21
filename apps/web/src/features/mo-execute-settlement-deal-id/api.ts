@@ -2,11 +2,8 @@
  * MO: Execute Settlement for Deal ID (Single Deal ID) — ZSGTSFR060 / ZSGTSF_RDEAL_TRD_INV,
  * against the SLC middleware.
  *
- * NOTES ONLY: the ABAP source is not exported. The program is known only from its dependency
- * note (scratchpad/bo/tracker/ABAP_Program_Dependency_Tracker_All/"deal trade invoice.txt"),
- * which lists tables, fields and BAPIs/FMs but NOT the WHERE clauses or in-program filters.
- * So only reads keyed by the Deal ID the user enters are made (source: dependency note
- * "deal trade invoice.txt"; WHERE not exported):
+ * Source: ZSGTSF_RDEAL_TRD_INV_UI_DATA_EXPORT_20261016_140702 (PBO / DIFF / DIFF_NEW).
+ * The screen reads the selected Deal ID and its model's settlement configuration:
  *
  *   Header            ZSGTSFTR_DEALID   WHERE zdeal_id = P_DEAL          middleware "tsfDealId"
  *   MC context        ZSGTSFTR_MAS_CON  by key ZMC_REF_NO = deal ZMC_REF "masterContract"
@@ -22,20 +19,15 @@
  *                            ZtsfDealID = P_DEAL (ZSGTSFTR_APP_STR, service "trmfxapp"), each joined on
  *                            CompanyCode + FinancialTransaction with its FxTransaction (service "fx");
  *                            reversed deals (ActiveStatus 3) are left out. Seq, Deal Type and MC Ref are
- *                            APP_STR's; counterparty, dates, currencies, amounts and rates are SAP's.
+ *                            APP_STR's; SET_FX supplies sequence and DSS links; other FX data is SAP's.
  *
- * Gated:
- *   FX leg columns with no source: Entity (ZSGTSFTR_COMP name) and Doc No 2 stay blank; Status is TXN_STATUS
- *   until the leg's local ZSGTSFTR_TRD_POS row (settlement.ts) marks it settled, and Doc No 1 is that row's
- *   ZBELNR. ZSGTSFCDS_OPTION (option legs) has no service -> WAITING FOR API.
- *   Trade Invoice grid       ZSGTSFTR_TRD_POS has no middleware resource ("tradePosition" is
- *                            ZSGSLCTR_TRD_POS, the SLC table) and its default rows come from
- *                            ZSGTSFTR_SET_TYP by a selection that is not exported.
- *   Headsup, DMS list, View Trade Invoice, P&L, FX-Invoice Difference, bank / transfer / DMS
- *   type value helps -> WAITING FOR API.
- *   Initiate Settlement, leg Update / Post / Settlement Complete and Execution Complete write ZSGTSFTR_TRD_POS
- *   and ZDEAL_STAT (settlement.ts); a posting is recorded there under a local document number, since there is no
- *   FI posting API. Every other action -> WAITING FOR ACTION API. Save Spot Data books the Spot through the
+ * Trade Invoice grid       SET_TYP + BIL_ADJ with stored settlement state in cloud TRD_POS.
+ * Headsup                  headsup.ts ports DIFF.PROCESS_DATA; its action text is SET_TYP's.
+ * FX-Invoice Difference    differenceApi.ts ports DIFF_NEW; this is separate from Headsup.
+ * Settlement               settlement.ts writes cloud TRD_POS, SAP APP_STR and cloud DEALID.
+ * Accounting               posted through BO, not from this MO screen. Option transactions
+ *                          (ZSGTSFCDS_OPTION) and SAP printing still have no API.
+ * Save Spot Data books the Spot through the
  *   Additional Spot Booking flow (standard FxTransaction + APP_STR + IN_SPOT ZSPOT_TXN/ZSPOT_CREATE); the
  *   entered rate is not stored in IN_SPOT. Its default rate is TCURR (type M, today).
  *
@@ -60,8 +52,6 @@ import type { Deal, FxDeal, SetFxSide, StatusMeta, TradeInvoice } from './types.
 
 export const WAITING = 'WAITING FOR API'
 export const WAITING_DEAL_ID_API = 'WAITING FOR DEAL ID API'
-const PROGRAM = 'ZSGTSF_RDEAL_TRD_INV'
-const NOT_EXPORTED = `${PROGRAM} source not exported (only dependency notes)`
 
 export const OPTION_LEGS_WAITING = `${WAITING} — ZSGTSFCDS_OPTION (option legs) has no service; only the FX legs are shown.`
 
@@ -195,10 +185,10 @@ export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<
  *  - Invoice Amount is the sum of ZSGTSFTR_BIL_ADJ.ZAMT whose ZINV_REF+11(2) equals the row's ZT_TYPE+0(2);
  *  - Due Date is the D1 transaction's maturity (the 2025 change), else BIL_ADJ's ZDUE_DATE;
  *  - Receipt / Payment is ZT_TYPE+3(1): S = Receipt, P = Payment;
- *  - ZSGTSFTR_TRD_POS (the gateway's local SQLite, migration 003, /api/localdb/tsf-trade-position) is a LEFT
+ *  - ZSGTSFTR_TRD_POS (cloud trdPos via /api/localdb/tsf-trade-position) is a LEFT
  *    join on ZT_TYPE: it only overlays what was saved before (settled flag, FI document, posting date).
  *
- * ZSGTSFTR_TRD_ACC (the gateway's local SQLite, migration 004, /api/localdb/tsf-posting-type) is joined on
+ * ZSGTSFTR_TRD_ACC (cloud tsfTrdAcc via /api/localdb/tsf-posting-type) is joined on
  * SET_TYP.ZFI_TYPE for the document type, the reference (ZXBLNR1) and the Dr / Cr line texts. The legacy join is an
  * INNER JOIN; here a leg with no TRD_ACC row is still shown (blank), with a note, so an unloaded configuration
  * table does not empty the grid.
@@ -210,7 +200,7 @@ export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<
 const tradePositionApi = service('localdb')('tsf-trade-position')
 const postingTypeApi = service('localdb')('tsf-posting-type')
 
-export const INVOICE_WAITING = `${WAITING} — ZSGTSFTR_SET_TYP has no leg for this Deal ID's model. ${NOT_EXPORTED} for anything beyond the SET_TYP selection.`
+export const INVOICE_WAITING = "ZSGTSFTR_SET_TYP has no leg for this Deal ID's model."
 export const invoicesUnavailable = (why: string): string => `${WAITING} — the Trade Invoice legs could not be read (ZSGTSFTR_SET_TYP / ZSGTSFTR_BIL_ADJ): ${why}`
 export const INVOICE_GAPS = `${WAITING} — Payment Amount of a leg whose settlement currency differs needs the mapped transaction's total rate and the premium adjustment.`
 export const noPostingType = (types: readonly string[]): string => ` No ZSGTSFTR_TRD_ACC row is loaded for posting type ${types.join(', ')}: its document type, reference and Dr / Cr texts are blank.`
@@ -298,20 +288,19 @@ export function buildTradeInvoices(
     })
 }
 
-/** Every posting type of ZSGTSFTR_TRD_ACC (local SQLite). */
+/** Every posting type of ZSGTSFTR_TRD_ACC (cloud tsfTrdAcc). */
 export async function loadPostingTypes(signal?: AbortSignal): Promise<Record<string, unknown>[]> {
   const body = await apiFetch<{ value?: Record<string, unknown>[] }>(postingTypeApi, signal ? { signal } : undefined)
   return body?.value ?? []
 }
 
-/** The Deal ID's stored trade positions (local SQLite), in sequence order. */
+/** The Deal ID's stored trade positions (cloud trdPos), in sequence order. */
 export async function loadTradePositions(dealId: string, signal?: AbortSignal): Promise<Record<string, unknown>[]> {
   const body = await apiFetch<{ value?: Record<string, unknown>[] }>(`${tradePositionApi}?ZDEAL_ID=${encodeURIComponent(dealId)}`, signal ? { signal } : undefined)
   return body?.value ?? []
 }
 
-export const HEADSUP_WAITING = `${WAITING} — ${NOT_EXPORTED}; the Headsup reminders (ZSGTSFTR_EMLBD / READ_TEXT) cannot be reproduced.`
-export const VIEW_INVOICE_WAITING = `${WAITING} — View Trade Invoice submits ZSGTSF_RDEAL_ID_INV (ZSGTSFTR_BIL_ADJ / ZSGTSFTR_BL / ZSGTSFTR_BL_RUSE); ${NOT_EXPORTED}.`
+export const VIEW_INVOICE_WAITING = 'No trade invoices are available for this Deal ID.'
 export const OPTIONS_WAITING = `${WAITING} — value help not exported`
 export const pnlWaiting = (legs: string) => `${legs} The P&L is computed from the FX legs.`
 export const diffWaiting = (legs: string) => `${legs} The FX-Invoice Difference is computed from the FX legs and ZSGTSFTR_IN_SPOT.`
@@ -555,7 +544,7 @@ async function invoicesOrWaiting(
       ;[positions, accounting] = await Promise.all([loadTradePositions(dealId, signal), loadPostingTypes(signal)])
     } catch (error) {
       if (isAbort(error)) throw error
-      note = ` The saved settlement state / posting types (local ZSGTSFTR_TRD_POS / ZSGTSFTR_TRD_ACC) could not be read: ${messageOf(error)}`
+      note = ` The saved settlement state / posting types (ZSGTSFTR_TRD_POS / ZSGTSFTR_TRD_ACC) could not be read: ${messageOf(error)}`
     }
     const d1 = fxDeals.find((f) => f.dealType === 'D1')
     const invoices = buildTradeInvoices(setTyp, billAdj, positions, accounting, d1?.valDate ?? '', fxDeals)

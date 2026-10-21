@@ -1,7 +1,7 @@
 /**
  * Accounting Completed: ZSGTSFTR_DEALID ZDEAL_STAT 21 -> 22 (Settlement Completed - Accounting).
  *
- * The legs' state is ZSGTSFTR_TRD_POS (the gateway's local SQLite, /api/localdb/tsf-trade-position). The rule is
+ * The legs' state is ZSGTSFTR_TRD_POS (cloud trdPos via /api/localdb/tsf-trade-position). The rule is
  * the screen's own (all FX deal and trade invoice documents posted before accounting is complete), on top of
  * execution being complete (21): every row, FX and trade invoice legs alike, has to be settled on MO
  * (Settlement Complete, ZEXE_CO = 'X'; ZSET_CHECK is only the SET_TYP configuration flag), and every leg that is posted to FI (an FX leg; an invoice leg with ZPOST_CHECK = 'X') has

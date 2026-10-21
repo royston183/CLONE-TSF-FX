@@ -39,7 +39,7 @@ export const BASIC_SECTIONS: readonly Section[] = [
     fields: [
       { id: 'bdBu', label: 'BU', field: 'Zbu', type: 'text', readOnly: true },
       { id: 'bdBuCode', label: 'BU Code', field: 'ZbuId', type: 'text', readOnly: true },
-      { id: 'bdGtCommod', label: 'GT Commodity', field: 'Zcmmd', type: 'text', control: 'select' },
+      { id: 'bdGtCommod', label: 'GT Commodity', field: 'ZtrmComId', type: 'text', control: 'select' },
       // Not a column: the commodity master's description, looked up (see masters.buCommodity).
       { id: 'bdBuCommodity', label: 'BU Commodity', type: 'text', readOnly: true, derived: true },
       { id: 'bdChild1', label: 'Child Comm: Name 1', field: 'ZchName1', type: 'text' },

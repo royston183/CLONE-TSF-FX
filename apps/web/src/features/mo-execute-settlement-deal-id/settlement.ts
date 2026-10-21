@@ -17,7 +17,7 @@
  *   Execution Complete    F01 'EXE_C': ZDEAL_STAT 21 when exactly six trade legs are complete and every FX leg they
  *                         map to is (no-invoice model: every mapped FX leg).
  *
- * Where it is written: ZSGTSFTR_TRD_POS is the gateway's local SQLite (/api/localdb/tsf-trade-position). The FX
+ * Where it is written: ZSGTSFTR_TRD_POS is cloud trdPos (via /api/localdb/tsf-trade-position). The FX
  * fields go to SAP through TrmFxApp (ZSGTSFTR_APP_STR), which holds the VTBFHA TSF fields this app reads; the
  * program itself writes them with ZSGTRMFM_VTBFHA_EXPORT + BAPI_FTR_FXT_CHANGE. ZDEAL_STAT goes through the
  * middleware ("tsfDealId").

@@ -11,7 +11,6 @@ import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModa
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
-  HEADSUP_WAITING,
   INVOICE_WAITING,
   VIEW_INVOICE_WAITING,
   WAITING_DEAL_ID_API,
@@ -24,6 +23,7 @@ import {
   type DealScreen,
 } from './api.ts'
 import { loadDifference, saveDifference, type DifferenceView } from './differenceApi.ts'
+import { loadHeadsup, type HeadsupView } from './headsup.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
 import {
   DEAL_ID_REQUIRED,
@@ -68,7 +68,6 @@ import type {
   Deal,
   FxDeal,
   FxPostForm,
-  Headsup,
   InvPostForm,
   StatusMeta,
   Toast,
@@ -131,10 +130,9 @@ const BLANK_DEAL: Deal = {
   noInvoiceFlag: false,
 }
 
-/** Never loaded: the invoice legs, headsups and DMS documents have no API (the FX legs are read in api.ts). */
+/** Empty grids until the selected Deal ID is loaded. */
 const NO_FX: FxDeal[] = []
 const NO_INVOICES: TradeInvoice[] = []
-const NO_HEADSUPS: Headsup[] = []
 
 const BLANK_INV_FORM: InvPostForm = {
   bukrs: '',
@@ -166,10 +164,9 @@ const BLANK_INV_FORM: InvPostForm = {
  * converted from legacy/mo-execute-settlement-deal-id.html.
  *
  * The selection screen takes P_DEAL; the header is read by that key from ZSGTSFTR_DEALID /
- * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). The ABAP source is not exported (only
- * its dependency note), so the FX legs come from TrmFxApp + FxTransaction by Deal ID (option legs, trade-invoice
- * legs, Headsup and DMS show WAITING FOR API), and every action validates as before and then says WAITING FOR
- * ACTION API without changing anything. No sample data at runtime (fixtures.ts is for tests).
+ * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). Headsup uses DIFF.PROCESS_DATA;
+ * invoice differences use DIFF_NEW.PROCESS_DATA_NEW. Settlement writes are in settlement.ts.
+ * Option transactions and SAP printing still require APIs. No sample data at runtime.
  */
 export default function MoExecuteSettlementDealId() {
   const [params] = useSearchParams()
@@ -201,6 +198,24 @@ export default function MoExecuteSettlementDealId() {
 
   // Popups and their forms
   const modals = useModals()
+  const headsupOpen = modals.isOpen('headsup')
+  const [headsupView, setHeadsupView] = useState<HeadsupView | null>(null)
+  const [headsupLoading, setHeadsupLoading] = useState(false)
+  const [headsupError, setHeadsupError] = useState('')
+  useEffect(() => {
+    if (!headsupOpen) return
+    const controller = new AbortController()
+    setHeadsupLoading(true)
+    setHeadsupError('')
+    setHeadsupView(null)
+    void loadHeadsup(deal, fxDeals, controller.signal)
+      .then((view) => { if (!controller.signal.aborted) setHeadsupView(view) })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted && !isAbort(error)) setHeadsupError(`Heads Up could not be loaded: ${messageOf(error)}`)
+      })
+      .finally(() => { if (!controller.signal.aborted) setHeadsupLoading(false) })
+    return () => controller.abort()
+  }, [headsupOpen, deal, fxDeals])
   const [amendDate, setAmendDate] = useState('')
   const [diffView, setDiffView] = useState<DifferenceView | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
@@ -638,8 +653,9 @@ export default function MoExecuteSettlementDealId() {
         open={modals.isOpen('headsup')}
         onClose={() => modals.close('headsup')}
         dealId={deal.dealId}
-        items={NO_HEADSUPS}
-        emptyText={HEADSUP_WAITING}
+        items={headsupView?.rows ?? []}
+        loading={headsupLoading}
+        emptyText={headsupError || headsupView?.notice || 'No DSS-linked invoice trades are configured for Heads Up on this deal.'}
       />
       <DiffModal
         open={modals.isOpen('diff')}

@@ -5,6 +5,8 @@ import { LOOKUPS } from './data.ts'
 import { loadPartners } from '../fo-additional-spot-booking/valueHelps.ts'
 import type { CodeLabel, ValueHelp } from '../fo-additional-spot-booking/types.ts'
 import { createNdfSpot } from './spotNdf.ts'
+import { inSpotFromRow } from './api.ts'
+import { fxList } from '../../shared/fx/mw.ts'
 import { bookSettlementSpot, defaultSpotRate, defaultTradeOf, prepareSettlementSpot, type PrepareResult } from './settlementSpot.ts'
 import { amountsView } from '../fo-additional-spot-booking/logic.ts'
 import { bookSpot, findDeal, findTxn, runExercise, runExpire, type Wb } from './flows.ts'
@@ -13,6 +15,7 @@ import {
   bpItemsForGroup,
   bpName,
   buildNdoSpot,
+  buildNdfSpot,
   calcCashSettlement,
   calcNdfSettlement,
   convertViaRate,
@@ -22,6 +25,7 @@ import {
   invoiceAmountFor,
   leadCurr,
   marketRate,
+  ndfSpotIssue,
   recalcSpotAmounts,
   setCoverTxn,
   spotRateFor,
@@ -300,9 +304,8 @@ function initialSpot(wb: Wb, spec: Extract<PopupSpec, { kind: 'spot' }>, txn: Tx
     })
   }
   const inv = invoiceAmountFor(wb.get(), spec.ctx.dealId, txn.dealType)
-  const sp = buildNdoSpot(txn, { invoice: inv && inv.fAmt ? inv : null, rate: spec.rate })
-  /* 9011: the rate is entered by the user */
-  return spec.variant === 'ndf' ? recalcSpotAmounts({ ...sp, rate: 0 }) : sp
+  if (spec.variant === 'ndf') return buildNdfSpot(txn, inv)
+  return buildNdoSpot(txn, { invoice: inv && inv.fAmt ? inv : null, rate: spec.rate })
 }
 
 export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract<PopupSpec, { kind: 'spot' }>; wb: Wb }) {
@@ -317,6 +320,29 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   const [busy, setBusy] = useState(false)
   /* NDF / DNDF book through FxTransaction, which only accepts a partner SAP holds for the company code. */
   const sapPartners = spec.variant !== 'ndo'
+  const [invoiceLoading, setInvoiceLoading] = useState(spec.variant === 'ndf')
+  const [invoiceIssue, setInvoiceIssue] = useState(() => txn && spec.variant === 'ndf'
+    ? ndfSpotIssue(txn, invoiceAmountFor(wb.get(), spec.ctx.dealId, txn.dealType)) : '')
+  useEffect(() => {
+    if (!txn || spec.variant !== 'ndf') return
+    let live = true
+    setInvoiceLoading(true)
+    void fxList('inSpot', { ZDEAL_ID: txn.dealId, ZDEAL_TYPE: txn.dealType === 'D3' ? 'D2' : txn.dealType }).then((rows) => {
+      if (!live) return
+      const invoice = rows.map(inSpotFromRow).find((row) => !row.rfha) ?? null
+      const draft = buildNdfSpot(txn, invoice)
+      setSp(draft)
+      setCo(draft.bukrs)
+      setRate(rateText(draft.rate))
+      setInvoiceIssue(ndfSpotIssue(txn, invoice))
+      setInvoiceLoading(false)
+    }).catch(() => {
+      if (!live) return
+      setInvoiceIssue('Invoice settlement details could not be loaded. Reopen Create Spot to try again.')
+      setInvoiceLoading(false)
+    })
+    return () => { live = false }
+  }, [txn, spec.variant])
   const [sapBps, setSapBps] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
   useEffect(() => {
     if (!sapPartners) return
@@ -342,6 +368,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   const variantText = spec.variant === 'ndo' ? 'Option settlement spot' : spec.variant === 'ndf' ? 'NDF settlement spot' : 'DNDF settlement spot'
 
   const create = () => {
+    if (invoiceLoading || invoiceIssue) return
     const errs: string[] = []
     if (!co) errs.push('Co. Code is required.')
     if (!bp) errs.push('BP is required.')
@@ -360,6 +387,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       if (busy) return
       setBusy(true)
       void createNdfSpot({
+        variant: spec.variant,
         bukrs: co,
         bp,
         source: { bukrs: txn.bukrs, rfha: txn.rfha },
@@ -414,9 +442,9 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} />}>
+    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} disabled={busy || invoiceLoading || !!invoiceIssue} />}>
       <SpotForm
-        msg={msg}
+        msg={invoiceLoading ? { text: 'Loading invoice settlement details …', kind: 'info' } : invoiceIssue ? { text: invoiceIssue, kind: 'error' } : msg}
         sp={sp}
         grp={txn.grp}
         co={co}
