@@ -45,6 +45,11 @@ export type Deal = {
   ndfDate: string | null
   ndfRef: string | null
   ndfRate: number | null
+  /** ZCASH_AMT / CASH_CURR / NDF_FO_REM / NDF_MO_REM: blank when SAP does not serve them. */
+  cashAmt?: number | null
+  cashCurr?: string
+  ndfFoRemark?: string
+  ndfMoRemark?: string
 }
 
 export type BankFilter = 'ALL' | BankStatus

@@ -168,3 +168,72 @@
 :root:not(.nogrid):not(.nogrid2) .modinvmark .deal-table td { border-left:none; border-right:none; }
 :root:not(.nogrid):not(.nogrid2) .modinvmark table { border:none; }
 :root:not([data-theme='dark']) .modinvmark .deal-table td { border-bottom:1px solid #E6E9EB; }
+
+/* 19. Create Master Contract alignment (CSS-ONLY, compact enterprise layout).
+   Mirrors fo-create-master-contract.legacy.css: blue page-header banner, 16px cards, 12.5px body text,
+   11px uppercase table headers, 32px toolbar controls, tight gutters, and a table that takes the free height. */
+.modinvmark { font-size:12.5px; line-height:1.5; }
+.modinvmark .main { padding:0 8px 8px; }
+.modinvmark .topbar { margin:6px 8px 10px; padding:10px 16px; min-height:0; border-radius:12px; gap:12px; flex-wrap:wrap; }
+:root:not([data-theme='dark']) .modinvmark .topbar { background:#EAF3FF; border:1px solid #D7E9FF; }
+.modinvmark .top-left { gap:12px; }
+.modinvmark .brand-title { font-size:19px; font-weight:700; letter-spacing:-.2px; line-height:1.2; }
+.modinvmark .brand-code { font-size:12.5px; }
+.modinvmark .workbench { border-radius:16px; }
+:root:not([data-theme='dark']) .modinvmark .workbench { border-color:#E1E9F2; box-shadow:0 1px 2px rgba(22,39,64,.04), 0 4px 14px rgba(22,39,64,.06); }
+.modinvmark .table-title-row { min-height:0; padding:10px 16px 6px; border-bottom:0; }
+.modinvmark .table-heading { font-size:14px; }
+.modinvmark .record-count { font-size:11.5px; }
+/* Filters wrap instead of scrolling sideways, and share the row width by data type. */
+.modinvmark .filter-toolbar { flex-wrap:wrap; overflow:visible; gap:8px 12px; padding:4px 16px 12px; }
+.modinvmark .field-group { flex:0 1 auto; min-width:0; }
+.modinvmark .field-label { margin-bottom:3px; font-size:11.5px; }
+.modinvmark .toolbar-search { flex:1 1 220px; min-width:180px; max-width:320px; }
+.modinvmark .date-wrap, .modinvmark .date-wrap .filter-input { width:128px; }
+.modinvmark .w-origin { width:132px; }
+.modinvmark .w-region { width:104px; }
+.modinvmark .w-model { width:128px; }
+.modinvmark .search-input, .modinvmark .filter-input, .modinvmark .filter-select { font-size:12.5px; }
+.modinvmark .toolbar-spacer { flex:1 0 8px; }
+.modinvmark .legend { padding:5px 16px; gap:12px; flex-wrap:wrap; }
+/* The table takes the remaining height and scrolls inside the card, not the page. */
+@media (min-width:1081px) {
+  .modinvmark .table-scroll { min-height:240px; max-height:calc(100vh - 330px); }
+}
+.modinvmark thead th { font-size:11px; letter-spacing:.4px; padding:9px 12px; }
+.modinvmark tbody td { font-size:12.5px; padding:7px 12px; }
+.modinvmark tbody tr:hover { transform:none; }
+:root:not([data-theme='dark']) .modinvmark thead th, :root:not([data-theme='dark']) .modinvmark thead .check-col, :root:not([data-theme='dark']) .modinvmark thead .deal-col { background:#F7FAFD; border-bottom-color:#E1E9F2; }
+.modinvmark .table-footer { min-height:0; padding:6px 16px; }
+.modinvmark .footer-copy { font-size:11.5px; }
+/* Pop-ups follow the same card language. */
+.modinvmark .modal, .modinvmark .sub-modal { border-radius:16px; }
+.modinvmark .deal-table th { font-size:11px; letter-spacing:.4px; }
+.modinvmark .deal-table td { font-size:12.5px; }
+.modinvmark .workflow-input { height:32px; font-size:12.5px; }
+.modinvmark .modal-title, .modinvmark .sub-modal-title { font-size:14px; }
+
+/* 20. FX Deal Confirmation alignment: table header / rows and the primary action button.
+   Mirrors table.deals-table and .btn-primary of mo-fx-deal-confirmation (see its overrides sheet). */
+.modinvmark table thead th {
+  font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.4px;
+  padding:9px 12px; white-space:nowrap; text-align:left;
+}
+.modinvmark table thead th .sort-arrow, .modinvmark table thead th svg { opacity:.7; }
+.modinvmark table thead th.num, .modinvmark table thead th.amount { text-align:right; }
+.modinvmark tbody td { font-size:13px; font-weight:400; padding:8px 12px; white-space:nowrap; }
+.modinvmark tbody td.amount, .modinvmark tbody td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.modinvmark tbody tr { cursor:pointer; }
+.modinvmark tbody tr:hover { transform:translateY(-1px); position:relative; z-index:2; }
+:root:not([data-theme='dark']) .modinvmark thead th, :root:not([data-theme='dark']) .modinvmark thead .check-col, :root:not([data-theme='dark']) .modinvmark thead .deal-col { background:#F2F4F5; color:#475E75; border-bottom:1px solid #E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark tbody td { border-bottom:1px solid #E6E9EB; }
+:root:not([data-theme='dark']) .modinvmark tbody td:not(.hotspot-deal):not(.status-marked):not(.status-ready):not(.days-negative) { color:#1D2D3E; }
+.modinvmark .check-col { width:38px; text-align:center; }
+.modinvmark .row-check, .modinvmark #checkAll { width:14px; height:14px; cursor:pointer; vertical-align:middle; }
+/* "Mark for Invoicing" / "Run Automatic Marking" look like the "View Deals" button. */
+.modinvmark .primary-btn {
+  height:36px; line-height:1; padding:0 18px; border-radius:6px; border:1.5px solid transparent;
+  font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px;
+}
+.modinvmark .primary-btn svg { margin-right:0; vertical-align:0; }
+:root:not([data-theme='dark']) .modinvmark .primary-btn:disabled:not(.drop-ready) { background:#F2F4F5; border-color:#D5DADD; color:#687B8D; cursor:not-allowed; box-shadow:none; }

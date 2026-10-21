@@ -51,6 +51,11 @@ export function DealTable({
           <th className="num">Swap</th>
           <th className="num">All-in Rate</th>
           <th className="num">Strike</th>
+          <th>NDF Fixing Date</th>
+          <th>NDF Ref</th>
+          <th className="num">NDF Rate</th>
+          <th className="num">Cash Amount</th>
+          <th>Cash Currency</th>
           <th>MC Ref No</th>
           <th>Status</th>
         </tr>
@@ -58,7 +63,7 @@ export function DealTable({
       <tbody>
         {rows.length === 0 ? (
           <tr>
-            <td className="empty-row" colSpan={23}>
+            <td className="empty-row" colSpan={28}>
               No FX deal legs found for this Deal ID.
             </td>
           </tr>
@@ -121,6 +126,11 @@ export function DealTable({
                 <td className="num">{fmtRate(r.oswap)}</td>
                 <td className="num">{fmtRate(r.otot_rate)}</td>
                 <td className="num">{fmtRate(r.strike)}</td>
+                <td>{r.ndfDate}</td>
+                <td>{r.ndfRef}</td>
+                <td className="num">{fmtRate(r.ndfRate ?? '')}</td>
+                <td className="num">{fmtAmt(r.cashAmt)}</td>
+                <td>{r.cashCurr}</td>
                 <td>{r.mcRefNo}</td>
                 <td>
                   <StatusPill code={legStatus(r)} />

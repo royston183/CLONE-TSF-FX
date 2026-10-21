@@ -12,9 +12,13 @@ import {
   originAmount,
   releaseToMO,
   seedChildStore,
-  validateForm,
+  validateForm as validateFormAt,
+  isMcDateTooOld,
 } from './logic.ts'
 import type { FormValues } from './types.ts'
+
+const TODAY = new Date(2026, 9, 21)
+const validateForm = (v: FormValues, opts: { originalMcDate?: string | null } = {}) => validateFormAt(v, { today: TODAY, ...opts })
 
 const filled = (overrides: Partial<FormValues> = {}): FormValues => ({
   ...blankForm('23-09-2026'),
@@ -181,5 +185,31 @@ describe('releaseToMO', () => {
     strictEqual(releaseToMO(created).status, 'Released to M.O.')
     const [inUse] = seedContracts()
     strictEqual(releaseToMO(inUse!), inUse)
+  })
+})
+
+describe('MC Date window (one calendar month before today)', () => {
+  const at = (mcDate: string, today = TODAY) => isMcDateTooOld(mcDate, today)
+  it('rejects 20-09-2026 and accepts 21-09-2026 onwards when today is 21-10-2026', () => {
+    strictEqual(at('20-09-2026'), true)
+    for (const ok of ['21-09-2026', '22-09-2026', '01-10-2026', '21-10-2026']) strictEqual(at(ok), false, ok)
+  })
+  it('clamps at month ends, leap years and year changes', () => {
+    strictEqual(at('28-02-2026', new Date(2026, 2, 31)), false)
+    strictEqual(at('27-02-2026', new Date(2026, 2, 31)), true)
+    strictEqual(at('29-02-2028', new Date(2028, 2, 31)), false)
+    strictEqual(at('28-02-2028', new Date(2028, 2, 31)), true)
+    strictEqual(at('15-12-2025', new Date(2026, 0, 15)), false)
+    strictEqual(at('14-12-2025', new Date(2026, 0, 15)), true)
+  })
+  it('ignores text that is not a date (that is the required-field error)', () => {
+    strictEqual(at('31-02-2026'), false)
+    strictEqual(at('2026'), false)
+  })
+  it('fails validateForm for an old date, and spares an edited contract that kept its date', () => {
+    deepStrictEqual(validateForm(filled({ mcDate: '20-09-2026' })).errors, { mcDate: true })
+    strictEqual(validateForm(filled({ mcDate: '21-09-2026' })).valid, true)
+    strictEqual(validateForm(filled({ mcDate: '20-09-2026' }), { originalMcDate: '20-09-2026' }).valid, true)
+    deepStrictEqual(validateForm(filled({ mcDate: '19-09-2026' }), { originalMcDate: '20-09-2026' }).errors, { mcDate: true })
   })
 })

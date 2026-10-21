@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 export type FxLeg = {
   type: 'D1' | 'D2'
   bukrs: string
@@ -9,6 +11,8 @@ export type FxLeg = {
   bp: string
   bpName: string
   rate: number
+  /** NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR; blank when SAP does not serve them. */
+  ndf?: NdfExtras
 }
 
 export type InvoiceLeg = {

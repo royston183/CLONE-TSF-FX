@@ -7,11 +7,14 @@ export function DateField({
   value,
   onChange,
   onPicked,
+  min,
 }: {
   value: string
   onChange: (value: string) => void
   /** A date was chosen from the calendar (the original clears the field's error then). */
   onPicked?: (() => void) | undefined
+  /** Earlier days are shown in the calendar but cannot be picked. */
+  min?: Date | undefined
 }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -36,6 +39,7 @@ export function DateField({
         anchorRef={wrapRef}
         value={parseDMY(value)}
         title="Date"
+        min={min}
         onSelect={(date) => {
           onChange(formatDMY(date))
           setOpen(false)

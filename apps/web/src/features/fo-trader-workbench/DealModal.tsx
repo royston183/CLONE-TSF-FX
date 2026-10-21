@@ -42,8 +42,10 @@ const TXN_COLS: readonly TxnCol[] = [
   { label: 'Sett Spot Amt', shortLabel: 'Spot Amt', num: true, sd: true, get: (t) => (t.sdAmt !== '' ? formatAmount(t.sdAmt) : '') },
   { label: 'Sett Spot Curr', shortLabel: 'Spot Ccy', sd: true, get: (t) => t.sdCurr },
   { label: 'NDF Fix Date', shortLabel: 'Fix Date', get: (t) => isoToDMY(t.ndfDate), mono: true },
+  { label: 'NDF Ref', get: (t) => t.ndfRef },
   { label: 'NDF Rate', num: true, get: (t) => formatRate(t.ndfRate) },
   { label: 'Cash Amt', num: true, get: (t) => (t.cashAmt && t.cashCurr === 'USD' ? `${formatAmount(t.cashAmt)} USD` : '') },
+  { label: 'Cash Curr', get: (t) => t.cashCurr },
   {
     label: 'Sett Amt (Local)',
     shortLabel: 'Local Amt',

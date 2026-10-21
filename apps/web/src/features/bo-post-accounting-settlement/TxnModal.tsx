@@ -60,6 +60,13 @@ export function TxnModal({
               {leg.dssDeal ? ` / ${leg.dssDeal}` : ''}
             </StaticField>
           </div>
+          {leg.sgsart.charAt(2) === 'D' ? (
+            <div className="field-grid cols3">
+              <StaticField label="NDF Settlement Rate">{leg.ndfRate ? fmtRate(leg.ndfRate) : ''}</StaticField>
+              <StaticField label="Cash Settlement Amount">{leg.cashAmt ? fmtMoney(leg.cashCurr ?? '', leg.cashAmt) : ''}</StaticField>
+              <StaticField label="Cash Currency">{leg.cashCurr ?? ''}</StaticField>
+            </div>
+          ) : null}
           <div className="buysell-box sell">
             <div className="buysell-head">Sell Currency</div>
             <div className="field-grid cols3">

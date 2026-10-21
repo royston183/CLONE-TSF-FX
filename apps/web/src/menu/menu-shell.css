@@ -1062,7 +1062,7 @@
 /* Activity: the chart takes four fifths, the filters stack in the fifth beside it. */
 .mp-activity-layout {
   display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 24px;
   align-items: start;
   margin-top: 8px;
@@ -1343,7 +1343,7 @@
 .mp-live-grid > .mp-detail-card > .mp-panel { display: flex; flex-direction: column; min-width: 0; min-height: 368px; padding: 16px 16px 30px; gap: 11px; }
 .mp-live-grid .mp-panel-head { flex: 0 0 auto; margin-bottom: 0; }
 .mp-live-grid .mp-donut-wrap { flex: 1; flex-direction: column; justify-content: center; gap: 11px; width: 100%; }
-.mp-live-grid .mp-donut { width: min(100%, 232px); height: auto; aspect-ratio: 1; }
+.mp-live-grid .mp-donut { width: min(100%, 300px); height: auto; aspect-ratio: 1; }
 .mp-live-grid .mp-donut-wrap .mp-legend { width: 100%; margin: 0; padding: 0; gap: 7px; }
 .mp-live-grid .mp-donut-wrap .mp-legend li { display: flex; gap: 8px; }
 .mp-live-grid .mp-donut-wrap .mp-legend-label { white-space: normal; overflow: visible; }
@@ -1402,27 +1402,27 @@
 .mp-live-grid .mp-funnel { gap: 5px; }
 .mp-live-grid .mp-funnel-bar { padding: 6px 10px; }
 
-/* Larger dashboard typography, including text inside the compact chart grid. */
-.mp :is(.mp-panel, .mp-kpi) { font-size: 14px; }
-.mp .mp-panel-title { font-size: 16px; line-height: 1.4; }
+/* Compact dashboard typography, matching the master contract screens. */
+.mp :is(.mp-panel, .mp-kpi) { font-size: 12.5px; }
+.mp .mp-panel-title { font-size: 14px; line-height: 1.4; }
 .mp .mp-kpi-label { font-size: 11px; }
-.mp .mp-kpi-value { font-size: 24px; }
+.mp .mp-kpi-value { font-size: 21px; }
 .mp .mp-kpi-delta { font-size: 12px; line-height: 1.4; }
-.mp .mp-detail-open { font-size: 14px; }
+.mp .mp-detail-open { font-size: 12.5px; }
 .mp .mp-panel :is(.mp-legend, .mp-legend-label, .mp-legend-value,
   .mp-bar-label, .mp-bar-value, .mp-radial-label, .mp-radial-sub,
   .mp-exposure-column, .mp-exposure-amount, .mp-deadline-row,
   .mp-funnel-bar, .mp-tree-head, .mp-tree-cell, .mp-gantt-label,
-  .mp-scope-note, .mp-filter-label, .mp-scope) { font-size: 14px; line-height: 1.4; }
+  .mp-scope-note, .mp-filter-label, .mp-scope) { font-size: 12.5px; line-height: 1.4; }
 .mp .mp-panel :is(.mp-bar-axis, .mp-exposure-scale, .mp-maturity-grid > strong,
   .mp-maturity-row > strong, .mp-maturity-cell, .mp-heat-legend,
   .mp-deadline-axis, .mp-gantt-axis) { font-size: 12.5px; line-height: 1.4; }
-.mp .mp-panel .mp-axis { font-size: 13px; }
-.mp .mp-panel .mp-donut-total { font-size: 21px; }
-.mp .mp-panel .mp-donut-cap { font-size: 8px; }
-.mp .mp-panel .mp-radial-pct { font-size: 21px; }
-.mp .mp-panel .mp-activity :is(th, td) { font-size: 14px; }
-.mp .mp-panel .mp-activity th { font-size: 13px; }
+.mp .mp-panel .mp-axis { font-size: 11.5px; }
+.mp .mp-panel .mp-donut-total { font-size: 16px; }
+.mp .mp-panel .mp-donut-cap { font-size: 6px; }
+.mp .mp-panel .mp-radial-pct { font-size: 19px; }
+.mp .mp-panel .mp-activity :is(th, td) { font-size: 12.5px; }
+.mp .mp-panel .mp-activity th { font-size: 11.5px; }
 .mp-live-grid .mp-panel .mp-legend li { align-items: start; }
 .mp-live-grid .mp-panel .mp-legend-label { min-width: 0; overflow-wrap: anywhere; }
 .mp-live-grid .mp-panel .mp-legend-value { flex-shrink: 0; }
@@ -1445,3 +1445,12 @@
 .mp-detail-chart .mp-donut-total { font-size: 17px; }
 .mp-detail-chart .mp-donut-cap { font-size: 6px; }
 .mp-detail-chart .mp-radial-pct { font-size: 17px; }
+
+.mp-n-backdrop { position: fixed; inset: 0; z-index: 10020; display: grid; place-items: center; background: #0006; }
+.mp-n-dialog { display: flex; flex-direction: column; gap: 14px; min-width: 260px; padding: 20px; border-radius: 10px; background: var(--white); color: var(--text); box-shadow: 0 10px 40px #0004; }
+.mp-n-dialog label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.mp-n-dialog input { height: 34px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--white); color: var(--text); font: inherit; }
+.mp-n-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.mp-n-actions button { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--white); color: var(--text); font: inherit; cursor: pointer; }
+.mp-n-actions button[type=submit] { background: var(--blue); border-color: var(--blue); color: #fff; }
+.mp-n-actions button:disabled { opacity: .5; cursor: default; }

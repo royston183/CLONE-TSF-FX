@@ -82,8 +82,13 @@ export function TxnModal({
                   <Leg side={d.bs2} amt={d.amt2} curr={d.curr2} />
                 </Cell>
                 <Cell label="Overall Rate">{fmtRate(d.overallRate)}</Cell>
-                <Cell label="NDF Date / Ref">{d.ndfDate ? `${fmtDate(d.ndfDate)} / ${d.ndfRef ?? ''}` : DASH}</Cell>
-                <Cell label="NDF Rate">{d.ndfRate ? fmtRate(d.ndfRate) : DASH}</Cell>
+                <Cell label="NDF Fixing Date">{d.ndfDate ? fmtDate(d.ndfDate) : DASH}</Cell>
+                <Cell label="NDF Ref">{d.ndfRef || DASH}</Cell>
+                <Cell label="NDF Settlement Rate">{d.ndfRate ? fmtRate(d.ndfRate) : DASH}</Cell>
+                <Cell label="Cash Settlement Amount">{d.cashAmt ? fmtNum(d.cashAmt) : DASH}</Cell>
+                <Cell label="Cash Currency">{d.cashCurr || DASH}</Cell>
+                <Cell label="NDF FO Remark">{d.ndfFoRemark || DASH}</Cell>
+                <Cell label="NDF MO Remark">{d.ndfMoRemark || DASH}</Cell>
                 <Cell label="Settlement Currency">{d.settleCurr}</Cell>
                 <Cell label="Settlement Amount">{fmtNum(d.settleAmt)}</Cell>
                 <Cell label="Settlement Document">{d.fiDoc || DASH}</Cell>

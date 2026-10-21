@@ -104,6 +104,9 @@ export function TxnTable({
           <th className="left">Mode Of Trade</th>
           <th className="left">Account Cat</th>
           <th className="left">MO Remark</th>
+          <th>NDF Settlement Rate</th>
+          <th>Cash Settlement Amount</th>
+          <th className="left">Cash Currency</th>
           <th className="left">Changed By</th>
           <th className="left">Changed On</th>
           <th className="left">Actions</th>
@@ -112,7 +115,7 @@ export function TxnTable({
       <tbody id="mc-tbody">
         {rows.length === 0 ? (
           <tr className="empty-row">
-            <td colSpan={35}>No transactions match the selection criteria.</td>
+            <td colSpan={38}>No transactions match the selection criteria.</td>
           </tr>
         ) : (
           rows.map((t) => {
@@ -181,6 +184,9 @@ export function TxnTable({
                 <td className="left">{t.modeOfTrade}</td>
                 <td className="left">{t.acctCat}</td>
                 <td className="left">{t.moRemark || <Dash />}</td>
+                <td className="num">{t.ndfRate != null ? fmtRate(t.ndfRate) : <Dash />}</td>
+                <td className="num">{t.cashAmount != null ? fmtNum(t.cashAmount) : <Dash />}</td>
+                <td className="left">{t.cashCurrency || <Dash />}</td>
                 <td className="left">{t.changedBy || <Dash />}</td>
                 <td className="left">{t.changedOn ? fmtDate(t.changedOn) : <Dash />}</td>
                 <td className="left">

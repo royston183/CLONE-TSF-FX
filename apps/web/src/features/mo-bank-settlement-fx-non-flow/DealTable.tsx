@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react'
-import { DASH, fmtDate, fmtNum } from './format.ts'
+import { DASH, fmtDate, fmtNum, fmtRate } from './format.ts'
 import { bankClass, bankLabel, statusClass } from './logic.ts'
 import type { Deal, Sort } from './types.ts'
 
@@ -68,12 +68,19 @@ export function DealTable({
             <th className="left">Bank Details</th>
             <th className="left">Sett. Doc</th>
             <th className="left">Status</th>
+            <th className="left">NDF Fixing Date</th>
+            <th className="left">NDF Ref</th>
+            <th className="left">NDF Settlement Rate</th>
+            <th className="left">Cash Settlement Amount</th>
+            <th className="left">Cash Currency</th>
+            <th className="left">NDF FO Remark</th>
+            <th className="left">NDF MO Remark</th>
           </tr>
         </thead>
         <tbody id="deal-tbody">
           {rows.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={15}>{emptyText}</td>
+              <td colSpan={22}>{emptyText}</td>
             </tr>
           ) : (
             rows.map((d) => {
@@ -149,6 +156,13 @@ export function DealTable({
                   <td className="left">
                     <span className={statusClass(d.status)}>{d.status}</span>
                   </td>
+                  <td className="left">{d.ndfDate ? fmtDate(d.ndfDate) : <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.ndfRef || <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.ndfRate ? fmtRate(d.ndfRate) : <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.cashAmt ? fmtNum(d.cashAmt) : <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.cashCurr || <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.ndfFoRemark || <span className="muted-dash">{DASH}</span>}</td>
+                  <td className="left">{d.ndfMoRemark || <span className="muted-dash">{DASH}</span>}</td>
                 </tr>
               )
             })

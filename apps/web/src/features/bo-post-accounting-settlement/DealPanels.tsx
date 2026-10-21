@@ -150,6 +150,9 @@ export function FxTable({
             <th className="left">Buy</th>
             <th className="left">Sell</th>
             <th>All-in Rate</th>
+            <th>NDF Rate</th>
+            <th className="left">Cash Amount</th>
+            <th className="left">Cash Currency</th>
             <th className="left">Status</th>
             <th className="left">FI Doc 1</th>
             <th className="left">FI Doc 2</th>
@@ -159,7 +162,7 @@ export function FxTable({
         <tbody>
           {deal.top.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={10}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
+              <td colSpan={13}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.top.map((r, idx) => {
@@ -192,6 +195,9 @@ export function FxTable({
                   <td className="left num">{fmtMoney(r.buyCurr, r.buyAmt)}</td>
                   <td className="left num">{fmtMoney(r.sellCurr, r.sellAmt)}</td>
                   <td className="num">{fmtRate(r.rate)}</td>
+                  <td className="num">{r.ndfRate ? fmtRate(r.ndfRate) : DASH}</td>
+                  <td className="left num">{r.cashAmt ? fmtAmt(r.cashAmt) : DASH}</td>
+                  <td className="left">{r.cashCurr || DASH}</td>
                   <td className="left">{r.status}</td>
                   <td className="left">
                     {r.doc1 ? <DocLink docNo={r.doc1} entity={r.entity} onPreview={onPreview} /> : posted ? DOC_UNKNOWN : PENDING}
@@ -206,7 +212,7 @@ export function FxTable({
           )}
           {deal.top.length > 0 && deal.fxWaiting ? (
             <tr className="empty-row">
-              <td colSpan={10}>{deal.fxWaiting}</td>
+              <td colSpan={13}>{deal.fxWaiting}</td>
             </tr>
           ) : null}
         </tbody>

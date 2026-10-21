@@ -186,6 +186,24 @@ export function ndfFields(fx: { TransactionType?: string; ValueDate?: string | n
   return { ndfDate: date, ndfRef: view ? txt(view, 'NDF_REF') : '' }
 }
 
+/**
+ * The fixing rate and cash settlement of an NDF / DNDF. FxTransaction serves them as NdfFixingRate / CashSettlementAmount /
+ * CashSettlementCurrency once the service declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); until then the same values are read
+ * from the ZSGTSFV_FX row (NDF_RATE, ZCASH_AMT, CASH_CURR). Nothing served leaves them 0 / ''.
+ */
+export function ndfSettlement(
+  fx: { TransactionType?: string },
+  view?: FxRow,
+): { ndfRate: number; cashAmt: number; cashCurr: string } {
+  if (fx.TransactionType !== '631' && fx.TransactionType !== '632') return { ndfRate: 0, cashAmt: 0, cashCurr: '' }
+  const f = fx as { NdfFixingRate?: number | string; CashSettlementAmount?: number | string; CashSettlementCurrency?: string }
+  return {
+    ndfRate: num(f.NdfFixingRate ?? 0) || (view ? num(view['NDF_RATE']) : 0),
+    cashAmt: num(f.CashSettlementAmount ?? 0) || (view ? num(view['ZCASH_AMT']) : 0),
+    cashCurr: (f.CashSettlementCurrency ?? '').trim() || (view ? txt(view, 'CASH_CURR') : ''),
+  }
+}
+
 /** One FxTransaction + its TrmFxApp row as a transaction of the workbench (a ZSGTSFCDS_FX row). */
 export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups(), view?: FxRow): Txn {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
@@ -222,9 +240,8 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     cpair: lead && follow ? `${lead}/${follow}` : '',
     portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
     seq: Number(app.ZtsfDealSq) || 1,
-    // NdfFixingRate (ZFS_SD_TRMFX NdfFixing): the rate FTR holds once the deal is fixed.
-    ndfRate: num((fx as { NdfFixingRate?: number | string }).NdfFixingRate ?? 0),
     ...ndfFields(fx, view),
+    ...ndfSettlement(fx, view),
     etag: (app as { '@odata.etag'?: string })['@odata.etag'] ?? '',
   })
 }

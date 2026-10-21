@@ -187,7 +187,7 @@ describe('modal content', () => {
   const d = deals[0]!
   it('builds the transaction display cells', () => {
     const cells = dealDetailCells(d, NAMES, 'Pending Settlement')
-    strictEqual(cells.length, 19)
+    strictEqual(cells.length, 24)
     strictEqual(cells.find((c) => c.label === 'Company Code')?.value, 'IN01 · Olam Agro India Pvt Ltd')
     strictEqual(cells.find((c) => c.label === 'FI Doc 1')?.value, '–')
     strictEqual(cells.find((c) => c.label === 'Deal ID')?.accent, true)

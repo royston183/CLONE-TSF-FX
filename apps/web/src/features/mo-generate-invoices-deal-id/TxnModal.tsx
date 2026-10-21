@@ -18,6 +18,11 @@ export function TxnModal({ row, onClose }: { row: FxRow; onClose: () => void }) 
     ['Amount 2', money(row.amt2, 2)],
     ['All in Rate', money(row.allIn, 4)],
     ['Strike', money(row.strike, 4)],
+    ['NDF Fixing Date', row.ndfDate ?? ''],
+    ['NDF Ref', row.ndfRef ?? ''],
+    ['NDF Settlement Rate', row.ndfRate === undefined || row.ndfRate === '' ? '' : money(row.ndfRate, 4)],
+    ['Cash Settlement Amount', row.cashAmt === undefined || row.cashAmt === '' ? '' : money(row.cashAmt, 2)],
+    ['Cash Currency', row.cashCurr ?? ''],
     ['MC Ref No', row.mc],
     ['Transaction Status', row.txn],
   ]

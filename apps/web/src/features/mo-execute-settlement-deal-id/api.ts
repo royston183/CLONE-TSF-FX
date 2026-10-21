@@ -38,6 +38,7 @@ import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { paymentAmount, type PayDeal } from '../../shared/fx/payment-amount.ts'
 import { apiFetch, odataString, service } from '@slc/api-client'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
@@ -73,7 +74,7 @@ const rate = (v: unknown): string => (v === undefined || v === null || v === '' 
  * An FX leg as a grid row. Leg 1 is the lead currency (FxTransaction's LeadCurrency), B/S is from the
  * transaction's own buy side, amounts are absolute. Entity and the FI document numbers have no source.
  */
-export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
+export function toFxDeal({ fx, app }: FxWithApp, view?: FxRow): FxDeal {
   const type = (app.ZtsfDealType ?? '').trim()
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
@@ -108,6 +109,7 @@ export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
     doc1: '',
     doc2: '',
     settled,
+    ndf: ndfExtras(fx, app, view),
     tsf: {
       bhbkid: s(app.ZtsfBhbkID),
       bhktid: s(app.ZtsfBhktID),
@@ -174,7 +176,9 @@ const bySeq = (a: FxDeal, b: FxDeal) => (a.seq + a.dealType + a.rfha < b.seq + b
 /** The Deal ID's FX legs, reversed deals dropped, ordered by Seq / Deal Type / transaction. */
 export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<FxDeal[]> {
   const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
-  return joined.filter(({ fx }) => fx.ActiveStatus !== '3').map(toFxDeal).sort(bySeq)
+  const live = joined.filter(({ fx }) => fx.ActiveStatus !== '3')
+  const views = viewsByKey(await loadNdfViews(live.map((r) => r.fx), signal))
+  return live.map((r) => toFxDeal(r, views.get(ndfKey(r.fx.CompanyCode, r.fx.FinancialTransaction)))).sort(bySeq)
 }
 
 /**

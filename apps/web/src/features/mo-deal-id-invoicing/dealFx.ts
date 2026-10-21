@@ -5,6 +5,8 @@
  */
 import { odataString } from '@slc/api-client'
 import { allOf, loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
+import type { FxRow } from '../../shared/fx/mw.ts'
 import type { FxLeg } from './types.ts'
 
 const n = (v: unknown): number => {
@@ -18,7 +20,7 @@ export const LEG_TYPES = ['D1', 'D2'] as const
 export const FX_LEG_FILTER = allOf("ZtsfDealID ne ''", LEG_TYPES.map((t) => `ZtsfDealType eq ${odataString(t)}`).join(' or '))
 
 /** A D1 / D2 transaction as a leg: leg 1 is the lead currency, a sold currency carries a negative amount. */
-export function toFxLeg({ fx, app }: FxWithApp): FxLeg | null {
+export function toFxLeg({ fx, app }: FxWithApp, view?: FxRow): FxLeg | null {
   const type = app.ZtsfDealType
   if (type !== 'D1' && type !== 'D2') return null
   if (fx.ActiveStatus === '3') return null
@@ -38,15 +40,17 @@ export function toFxLeg({ fx, app }: FxWithApp): FxLeg | null {
     bp: fx.Partner,
     bpName: '',
     rate: n(fx.ForwardRate),
+    ndf: ndfExtras(fx, app, view),
   }
 }
 
 /** The legs by Deal ID, D1 before D2; if a Deal ID carries several of a type, the first transaction number wins. */
-export function legsByDeal(rows: readonly FxWithApp[]): Map<string, FxLeg[]> {
+export function legsByDeal(rows: readonly FxWithApp[], views: readonly FxRow[] = []): Map<string, FxLeg[]> {
   const out = new Map<string, FxLeg[]>()
+  const viewBy = viewsByKey(views)
   for (const r of [...rows].sort((a, b) => (a.fx.FinancialTransaction < b.fx.FinancialTransaction ? -1 : 1))) {
     const id = r.app.ZtsfDealID ?? ''
-    const leg = toFxLeg(r)
+    const leg = toFxLeg(r, viewBy.get(ndfKey(r.fx.CompanyCode, r.fx.FinancialTransaction)))
     if (!id || !leg) continue
     const have = out.get(id) ?? []
     if (!have.some((l) => l.type === leg.type)) out.set(id, [...have, leg].sort((a, b) => (a.type < b.type ? -1 : 1)))
@@ -55,5 +59,6 @@ export function legsByDeal(rows: readonly FxWithApp[]): Map<string, FxLeg[]> {
 }
 
 export async function loadFxLegsByDeal(signal?: AbortSignal): Promise<Map<string, FxLeg[]>> {
-  return legsByDeal(await loadFxWithApp(FX_LEG_FILTER, signal))
+  const rows = await loadFxWithApp(FX_LEG_FILTER, signal)
+  return legsByDeal(rows, await loadNdfViews(rows.map((r) => r.fx), signal))
 }

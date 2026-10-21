@@ -1,3 +1,4 @@
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { formatAmount, formatRate } from './format.ts'
 import { buildBlRows } from './logic.ts'
 import type { SubModalState } from './types.ts'
@@ -62,6 +63,11 @@ function TxnBody({ state }: { state: Extract<NonNullable<SubModalState>, { kind:
     ['Currency 2', fx.curr2],
     ['Amount 2', formatAmount(fx.amt2)],
     ['All in Rate', formatRate(fx.allIn || fx.strike)],
+    ['NDF Fixing Date', fmtNdfDate(fx.ndf?.ndfDate ?? '')],
+    ['NDF Ref', fx.ndf?.ndfRef ?? ''],
+    ['NDF Settlement Rate', fmtNdfRate(fx.ndf?.ndfRate)],
+    ['Cash Settlement Amount', fmtNdfCash(fx.ndf?.cashAmount)],
+    ['Cash Currency', fx.ndf?.cashCurrency ?? ''],
     ['Transaction Status', fx.txnStatus],
   ]
   return (

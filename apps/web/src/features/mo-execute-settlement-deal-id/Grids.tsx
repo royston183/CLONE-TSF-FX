@@ -1,3 +1,4 @@
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { formatAmount } from './format.ts'
 import type { FxDeal, Indexed, ToastKind, TradeInvoice } from './types.ts'
 
@@ -134,6 +135,11 @@ export function FxGrid({
               <th>Amount 2</th>
               <th>Spot</th>
               <th>All-in Rate</th>
+              <th className="left">NDF Fixing Date</th>
+              <th className="left">NDF Ref</th>
+              <th>NDF Settlement Rate</th>
+              <th>Cash Settlement Amount</th>
+              <th className="left">Cash Currency</th>
               <th className="left">MC Ref No</th>
               <th className="left">Status</th>
               <th className="left">Doc No 1</th>
@@ -143,7 +149,7 @@ export function FxGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={19}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
+                <td colSpan={24}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -180,6 +186,11 @@ export function FxGrid({
                   <td className="num">{formatAmount(r.amt2)}</td>
                   <td className="num">{r.spot}</td>
                   <td className="num">{r.rate}</td>
+                  <td className="left">{fmtNdfDate(r.ndf?.ndfDate ?? '')}</td>
+                  <td className="left">{r.ndf?.ndfRef ?? ''}</td>
+                  <td className="num">{fmtNdfRate(r.ndf?.ndfRate)}</td>
+                  <td className="num">{fmtNdfCash(r.ndf?.cashAmount)}</td>
+                  <td className="left">{r.ndf?.cashCurrency ?? ''}</td>
                   <td className="left">{r.mcRefNo}</td>
                   <td className="left">
                     <span className={`chip ${r.statusChip}`}>{r.status}</span>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { WAITING_FX_LEGS_OPTION, loadDealFxRows } from './dealLegs.ts'
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { formatAmount, formatPoints, formatRate } from './format.ts'
 import { WAITING_VIEW_DEAL, buildViewDealData } from './logic.ts'
 import type { DealRow, FxRow, InvoiceRow } from './types.ts'
@@ -39,6 +40,11 @@ function FxDealsTable({ rows, onOpenTxn }: { rows: FxRow[]; onOpenTxn: (fx: FxRo
             <th>Swap</th>
             <th>All in Rate</th>
             <th>Strike</th>
+            <th>NDF Fixing Date</th>
+            <th>NDF Ref</th>
+            <th>NDF Settlement Rate</th>
+            <th>Cash Settlement Amount</th>
+            <th>Cash Currency</th>
             <th>MC Ref No</th>
             <th>Txn Status</th>
           </tr>
@@ -67,6 +73,11 @@ function FxDealsTable({ rows, onOpenTxn }: { rows: FxRow[]; onOpenTxn: (fx: FxRo
               <td className="num">{formatPoints(fx.swap)}</td>
               <td className="num">{formatRate(fx.allIn)}</td>
               <td className="num">{formatRate(fx.strike)}</td>
+              <td>{fmtNdfDate(fx.ndf?.ndfDate ?? '')}</td>
+              <td>{fx.ndf?.ndfRef ?? ''}</td>
+              <td className="num">{fmtNdfRate(fx.ndf?.ndfRate)}</td>
+              <td className="num">{fmtNdfCash(fx.ndf?.cashAmount)}</td>
+              <td>{fx.ndf?.cashCurrency ?? ''}</td>
               <td>{fx.mcRef}</td>
               <td>{fx.txnStatus}</td>
             </tr>

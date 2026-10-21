@@ -31,6 +31,12 @@ export type Deal = {
   trf2: string
   cruser: string
   status: Status
+  /** NDF fields (NDF_DATE DD-MM-YYYY, NDF_REF, NDF_RATE, ZCASH_AMT, CASH_CURR). Absent/null when SAP does not serve them: shown blank. */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: number | null
+  cashAmt?: number | null
+  cashCurr?: string
 }
 
 /** Lookup tables for descriptions (company, business partner, transfer type). */

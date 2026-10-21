@@ -22,6 +22,14 @@ describe('View Deal ID FX legs', () => {
     deepStrictEqual([r.start, r.end, r.spot, r.swap, r.allIn, r.strike, r.premium], ['15-09-2026', '18-09-2027', 89.5, '', 90, '', ''])
   })
 
+  it('maps the NDF columns of an NDF leg: view date / ref, rate and cash from FxTransaction; blank when not served', () => {
+    const served = toFxRow({ fx: { ...fx, NdfFixingRate: '94.5', CashSettlementAmount: '120', CashSettlementCurrency: 'USD' }, app }, { NDF_DATE: '2027-09-16', NDF_REF: 'R9' })
+    deepStrictEqual(served.ndf, { ndfDate: '2027-09-16', ndfRef: 'R9', ndfRate: 94.5, cashAmount: 120, cashCurrency: 'USD', ndfFoRem: '', ndfMoRem: '' })
+    const blank = toFxRow({ fx, app })
+    strictEqual(blank.ndf?.ndfRate, null)
+    strictEqual(blank.ndf?.cashAmount, null)
+  })
+
   it('asks TrmFxApp for the Deal ID, joins FxTransaction, and drops a reversed transaction', async () => {
     const urls: string[] = []
     globalThis.fetch = (async (input: RequestInfo | URL) => {

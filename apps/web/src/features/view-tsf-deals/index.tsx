@@ -16,9 +16,9 @@ const INITIAL_SORT: Sort = { field: 'blotter', direction: 'desc' }
 const detailGroups: { title: string; fields: readonly (keyof DealReportRow)[] }[] = [
   { title: 'Transaction', fields: ['rfha', 'bukrs', 'companyName', 'dealId', 'dealDesc', 'dealType', 'product', 'transactionType', 'activity', 'status', 'execution', 'trader'] },
   { title: 'Counterparty & master contract', fields: ['partner', 'bpName', 'externalRef', 'internalRef', 'mcRef', 'mcDesc', 'commodity', 'model', 'modelDesc', 'subType', 'portfolio', 'businessArea'] },
-  { title: 'Dates', fields: ['blotter', 'tradeDate', 'valueDate', 'created', 'changed'] },
-  { title: 'Amounts & rates', fields: ['bs1', 'curr1', 'amt1', 'bs2', 'curr2', 'amt2', 'spot', 'swap', 'allRate', 'rateBasis', 'pnl', 'localPnl'] },
-  { title: 'Remarks & administration', fields: ['foRemark', 'moRemark', 'enteredBy', 'changedBy'] },
+  { title: 'Dates', fields: ['blotter', 'tradeDate', 'valueDate', 'ndfDate', 'created', 'changed'] },
+  { title: 'Amounts & rates', fields: ['bs1', 'curr1', 'amt1', 'bs2', 'curr2', 'amt2', 'spot', 'swap', 'allRate', 'rateBasis', 'pnl', 'localPnl', 'ndfRef', 'ndfRate', 'cashAmount', 'cashCurrency'] },
+  { title: 'Remarks & administration', fields: ['foRemark', 'moRemark', 'ndfFoRemark', 'ndfMoRemark', 'enteredBy', 'changedBy'] },
 ]
 const detailLabels: Partial<Record<keyof DealReportRow, string>> = {
   companyName: 'Company Name', dealDesc: 'Deal Description', partner: 'Business Partner', activity: 'Activity Category',

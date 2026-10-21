@@ -70,6 +70,11 @@ const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'amt2', label: 'Amount 2', num: 2 },
   { key: 'allIn', label: 'All in Rate', num: 4 },
   { key: 'strike', label: 'Strike', num: 4 },
+  { key: 'ndfDate', label: 'NDF Fixing Date' },
+  { key: 'ndfRef', label: 'NDF Ref' },
+  { key: 'ndfRate', label: 'NDF Settlement Rate', num: 4 },
+  { key: 'cashAmt', label: 'Cash Settlement Amount', num: 2 },
+  { key: 'cashCurr', label: 'Cash Currency' },
   { key: 'mc', label: 'MC Ref No' },
   { key: 'txn', label: 'Txn Status' },
 ]
@@ -840,7 +845,7 @@ export default function MoGenerateInvoicesDealId() {
                               const val = r[c.key]
                               return (
                                 <td key={c.key} className={c.num != null ? 'num' : undefined}>
-                                  {c.num != null ? money(val as number, c.num) : String(val)}
+                                  {val === undefined || val === '' ? '' : c.num != null ? money(val as number, c.num) : String(val)}
                                 </td>
                               )
                             })}

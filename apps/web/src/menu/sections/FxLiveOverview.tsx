@@ -242,18 +242,17 @@ export function FxLiveOverview() {
           {SERIES_LABEL[series]} created · {activityTotal.toLocaleString()} in the last {days} days
         </div>
         <div className="mp-activity-layout">
-          <LineChart data={activity} plotHeight={92} unit=" created" title={`${SERIES_LABEL[series]} created per day, last ${days} days`} />
+          <LineChart data={activity} plotHeight={46} unit=" created" title={`${SERIES_LABEL[series]} created per day, last ${days} days`} />
           <div className="mp-activity-filters">
             <div className="mp-filter-label">Show</div>
             <Chips
-              vertical
               options={(Object.keys(SERIES_LABEL) as SeriesKey[]).map((k) => ({ id: k, label: SERIES_LABEL[k] }))}
               value={series}
               onPick={setSeries}
               label="Series"
             />
             <div className="mp-filter-label">Period</div>
-            <Chips vertical options={PERIODS} value={days} onPick={setDays} label="Period" />
+            <Chips options={PERIODS} value={days} onPick={setDays} label="Period" />
           </div>
         </div>
       </Panel>
