@@ -15,6 +15,13 @@
             "tag": "Report",
             "desc": "Read-only Forex deal report by company, blotter date and trader.",
             "icon": "M3 3h18v18H3V3zm2 2v3h14V5H5zm0 5v3h4v-3H5zm6 0v3h8v-3h-8zm-6 5v4h4v-4H5zm6 0v4h8v-4h-8z"
+          },
+          {
+            "code": "ZSGTSF_RDEAL_ID_DETAIL",
+            "title": "Deal ID Details",
+            "tag": "Report",
+            "desc": "Deal IDs, Master Contracts, status, currencies and P&L",
+            "icon": "M4 3h16v18H4V3zm2 4v2h12V7H6zm0 4v2h12v-2H6zm0 4v2h8v-2H6z"
           }
         ]
       },

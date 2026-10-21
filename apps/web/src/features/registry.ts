@@ -10,6 +10,7 @@ import type { ComponentType, LazyExoticComponent } from 'react'
  */
 export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'view-tsf-deals': lazy(() => import('./view-tsf-deals/index.tsx')),
+  'fo-deal-id-details': lazy(() => import('./fo-deal-id-details/index.tsx')),
   'ottk': lazy(() => import('./ottk/index.tsx')),
   'dttk': lazy(() => import('./dttk/index.tsx')),
   'deal-id': lazy(() => import('./deal-id/index.tsx')),

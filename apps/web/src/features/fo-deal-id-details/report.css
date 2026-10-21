@@ -1,0 +1,14 @@
+.fo-deal-id-details { min-width: 0; }
+.fo-deal-id-details .app { min-width: 0; }
+.fo-deal-id-details .table-wrap { max-height: calc(100vh - 360px); min-height: 160px; }
+.fo-deal-id-details .sort-button { background: transparent; border: 0; padding: 0; font: inherit; font-weight: inherit; white-space: nowrap; }
+.fo-deal-id-details button.link { background: transparent; padding: 0; border: 0; border-bottom: 1px dotted currentColor; font: inherit; font-weight: 700; }
+.fo-deal-id-details .field.model { max-width: 230px; }
+.fo-deal-id-details .field.status { max-width: 230px; }
+.fo-deal-id-details .field.search-field .control { padding-left: 10px; }
+.fo-deal-id-details .date-error, .fo-deal-id-details .report-error { padding: 12px; color: #c93e31; }
+.fo-deal-id-details .page-btn { padding-inline: 9px; }
+.fo-deal-id-details .pager { flex-wrap: wrap; }
+.fo-deal-id-details .brand-logo { width: 35px; height: 42px; object-fit: contain; }
+.fo-deal-id-details .slc-dialog .detail-list { max-height: 65vh; overflow: auto; }
+@media(max-width:720px) { .fo-deal-id-details .topbar { align-items: start; gap: 12px; flex-wrap: wrap; } .fo-deal-id-details .app { padding: 12px; } .fo-deal-id-details .kv .k { flex-basis: 40%; } }

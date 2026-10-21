@@ -36,7 +36,7 @@ export function ReportingStructureView({ structure, onLaunch, onToast, scrollToT
       title={`${structure} Reports`}
       sub={
         groups.length
-          ? `Browse ${structure} reports by business area.`
+          ? `Browse ${structure} reports by office using the folders below.`
           : `No reporting areas have been identified for ${structure} yet.`
       }
       groups={groups}

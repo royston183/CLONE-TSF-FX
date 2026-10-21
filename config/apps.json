@@ -679,6 +679,18 @@
       "services": [],
       "legacy": "legacy/inr-heads-up-reminder.html",
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSF_RDEAL_ID_DETAIL",
+      "id": "fo-deal-id-details",
+      "route": "/apps/fo-deal-id-details",
+      "title": "Deal ID Details",
+      "status": "ready",
+      "services": [
+        "middleware"
+      ],
+      "legacy": "legacy/ZSGTSF_RDEAL_ID_DETAIL_Demo.html",
+      "note": "Read-only React report. FS Cloud Deal IDs joined to Master Contracts, COMP, model configuration and subtype-specific status texts; linked FX partners use tsfvFx by company and transaction. CDS FX/Option utilization and option partners are unavailable and shown as missing. CO Area is a filter, not authorization."
     }
   ]
 }
