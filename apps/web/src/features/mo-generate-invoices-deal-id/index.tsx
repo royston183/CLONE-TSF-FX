@@ -99,6 +99,7 @@ const INV_COLS: Array<{ key: string; label: string }> = [
   { key: 'amtUsd', label: 'Inv Amt (USD)' },
   { key: 'planned', label: 'Planned Inv Amt' },
   { key: 'invNo', label: 'Invoice No' },
+  { key: 'invTrmRef', label: 'Inv TRM Ref No' },
   { key: 'pc', label: 'P/C' },
 ]
 
@@ -969,6 +970,7 @@ export default function MoGenerateInvoicesDealId() {
                             <td className="num">{money(r.amtUsd, 2)}</td>
                             <td className="num">{money(r.planned, 2)}</td>
                             <td>{r.invNo || '—'}</td>
+                            <td>{r.invTrmRef || '—'}</td>
                             <td>
                               <span className={`status-text ${r.pc === 'C' ? 'status-ok' : r.pc === 'P' ? 'status-warn' : 'status-info'}`}>{r.pc || '—'}</span>
                             </td>

@@ -123,6 +123,8 @@ describe('FORM sub_total / invoice_plan', () => {
     near(rows[1]!.rate, 83.7505)
     strictEqual(rows[1]!.planned, 835000)
     strictEqual(rows[1]!.rec['ZINV_REF'], '7000000009-T2')
+    strictEqual(rows[1]!.invTrmRef, '7000000009-T2')
+    strictEqual(rows[0]!.invTrmRef, '') // No INV_REF row for T1: do not invent a reference.
     strictEqual(rows[1]!.rec['ZPRATE'], 83.5)
   })
 
@@ -131,6 +133,7 @@ describe('FORM sub_total / invoice_plan', () => {
     const { rows } = buildInvoiceRows({ ...base, bilAdj: [saved], bls: [{ ...base.bls[0]!, ZINV_TYPE: 'I01' }] })
     const t2 = rows.find((r) => r.ttype === 'T2')!
     deepStrictEqual([t2.qty, t2.price, t2.amt, t2.invDate, t2.invNo, t2.pc, t2.locked, t2.rate], [90, 8350.12, 751510.8, '03-10-2026', '6000000001', 'C', true, 83.5])
+    strictEqual(t2.invTrmRef, '7000000009-T2')
   })
 
   it('Data migration (ZDM = X): the saved rows as they are, trade type from ZINV_REF+11(2)', () => {
@@ -140,6 +143,7 @@ describe('FORM sub_total / invoice_plan', () => {
       bilAdj: [{ ZINV_REF: '7000000009-T1', ZINV_TYPE: 'I01', ZQTY: '5.000', ZPRICE: '10.0000', ZUSD_PRICE: '10.0000', ZCURR: 'USD', ZRATE: '1.0000000', ZSELL: 'OGA' }],
     })
     deepStrictEqual(rows.map((r) => [r.ttype, r.qty, r.amt, r.locked]), [['T1', 5, 50, true]])
+    strictEqual(rows[0]!.invTrmRef, '7000000009-T1')
   })
 
   it('a roll-over deal plans each trade at its FX deal amount (curr1 <> USD ? amt1 : amt2)', () => {

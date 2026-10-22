@@ -12,7 +12,8 @@ import { dropCls, useDnd } from './dnd.ts'
 import { openDeal, type Wb } from './flows.ts'
 import { NDF_FIXING_API_MISSING, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { todayIso } from './format.ts'
-import { KpiDetailModal, TxnDetailsModal } from './InfoModals.tsx'
+import { KpiDetailModal } from './InfoModals.tsx'
+import { TxnDetailsModal } from './TxnDetailsModal.tsx'
 import {
   DEAL_COLS,
   actionEntryReason,
@@ -294,7 +295,7 @@ export default function FoTraderWorkbench() {
       case 'deal':
         return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} txnLoading={loading} txnError={txnError} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
       case 'txn':
-        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} dealId={s.dealId} wb={wb} />
+        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} bukrs={s.bukrs} />
       case 'rate':
         return <RatePopup key={p.key} frame={frame} spec={s} wb={wb} />
       case 'spot':

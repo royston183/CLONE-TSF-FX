@@ -259,7 +259,7 @@ export function DealModal({
                               title="Display transaction"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                wb.open({ kind: 'txn', rfha: t.rfha, dealId: t.dealId })
+                                wb.open({ kind: 'txn', rfha: t.rfha, bukrs: t.bukrs, dealId: t.dealId })
                               }}
                             >
                               {text}

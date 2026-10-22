@@ -11,7 +11,7 @@ const fx = (r: Partial<FxRow>): FxRow => ({
 
 const inv = (r: Partial<InvRow>): InvRow => ({
   ttype: '', invType: '', seller: '', buyer: '', bp: '', partnerBank: '', houseBank: '', accountId: '', invDate: '', dueDate: '', commodity: '',
-  gtComm: '', qty: 0, usdPrice: 0, rate: 0, price: 0, amt: 0, amtUsd: 0, planned: 0, invNo: '', pc: '', locked: false, curr: 'USD', dealType: '', rec: {}, ...r,
+  gtComm: '', qty: 0, usdPrice: 0, rate: 0, price: 0, amt: 0, amtUsd: 0, planned: 0, invNo: '', invTrmRef: '', pc: '', locked: false, curr: 'USD', dealType: '', rec: {}, ...r,
 })
 
 export const fxRow = fx

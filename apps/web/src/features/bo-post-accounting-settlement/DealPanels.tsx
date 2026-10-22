@@ -209,6 +209,9 @@ export function FxTable({
                     <button
                       type="button"
                       className="tbl-link"
+                      aria-haspopup="dialog"
+                      title={`Display transaction ${r.rfha} in company ${r.entity}`}
+                      onDoubleClick={(e) => e.stopPropagation()}
                       onClick={(e) => stop(e, () => onPreview({ kind: 'TXN', docNo: r.rfha, entity: r.entity }))}
                     >
                       {r.rfha}

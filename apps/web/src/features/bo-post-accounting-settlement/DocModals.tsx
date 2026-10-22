@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { TransactionDetailsDialog } from '../../shared/fx/TransactionDetails.tsx'
 import { fiscalYear, fmtMoney } from './format.ts'
 import { ModalShell, StaticField } from './modal.tsx'
 import type { Deal, DocPreview } from './types.ts'
@@ -15,26 +16,15 @@ export function DocPreviewModal({
   deal: Deal | null
   onClose: () => void
 }) {
+  if (open && preview?.kind === 'TXN') return (
+    <TransactionDetailsDialog key={`${preview.entity}/${preview.docNo}`} bukrs={preview.entity} rfha={preview.docNo} onClose={onClose} />
+  )
+
   let title = 'Document Display'
   let subtitle = 'External transaction preview'
   let body: ReactNode = null
 
-  if (preview?.kind === 'TXN') {
-    title = 'FX Transaction Display'
-    subtitle = 'Would open the Treasury transaction display (TBxx) for this deal'
-    body = (
-      <>
-        <div className="field-grid">
-          <StaticField label="Company Code">{preview.entity}</StaticField>
-          <StaticField label="Transaction No">{preview.docNo}</StaticField>
-        </div>
-        <p className="hint">
-          This hotspot calls function module <b>TB_TRANSACTION_TO_DISPLAY</b> in the real system, opening the Treasury
-          &amp; Risk transaction screen. Not reproduced in this demo.
-        </p>
-      </>
-    )
-  } else if (preview?.kind === 'FI') {
+  if (preview?.kind === 'FI') {
     title = 'Accounting Document Display'
     subtitle = 'Would open transaction FB03 for this document'
     body = (

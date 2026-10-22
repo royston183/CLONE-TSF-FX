@@ -25,10 +25,12 @@ let origin: string
 let cookie = ''
 const cloudRows = new Map<string, Record<string, unknown>[]>([
   ['trdPos', []], ['tsfTrdAcc', []], ['tsfDealdms', []], ['dmsType', []], ['daylock', []],
+  ['limMan', []], ['curpair', []], ['fields', []],
 ])
 const cloudKeys: Record<string, string[]> = {
   trdPos: ['zdeal_id', 'zseq'], tsfTrdAcc: ['zfi_type'], tsfDealdms: ['zdms_cat', 'zdms_type', 'zdeal_id'],
   dmsType: ['ZDMS_CAT', 'ZDMS_TYPE'], daylock: ['ZCO_AREA', 'ZMONTH', 'ZYEAR', 'ZTYPE', 'ZB_TYPE', 'ZPDATE', 'ZGRP'],
+  limMan: ['zyear', 'zcurr_pair', 'zlimit_startdt', 'zlimit_matdt'], curpair: ['f_curr', 't_curr'], fields: ['zfield'],
 }
 const cloudCalls: { method: string; resource: string; body: Record<string, unknown> }[] = []
 let cloudFailure = 0
@@ -387,6 +389,84 @@ describe('/api/localdb/tsf-day-lock (cloud; SQLite is not initialised)', () => {
   })
 })
 
+describe('/api/localdb limit resources (cloud; SQLite is not initialised)', () => {
+  const path = 'tsf-limit/2026/USD-INR/20261001/20261031'
+  const put = (route: string, body: unknown) => call(route, { method: 'PUT', body: json(body) })
+
+  it('requires a session for limits, pairs, fields and limit writes', async () => {
+    for (const route of ['tsf-limit', 'tsf-currency-pair', 'tsf-field-name']) {
+      strictEqual((await call(route, {}, false)).status, 401)
+    }
+    strictEqual((await call(path, { method: 'PUT', body: json({ ZUNAPROV_AMT: 50 }) }, false)).status, 401)
+  })
+
+  it('reads curpair and fields from cloud with SAP column names, without exposing client columns', async () => {
+    cloudRows.get('curpair')!.push({ mandt: '100', f_curr: 'USD', t_curr: 'INR', pair: 'USD-INR', div_ratio: '100' })
+    cloudRows.get('fields')!.push({ client: '100', zfield: 'ZDEAL_ID', zname: 'Treasury Deal', created_date: '2026-10-22' })
+    const pairs = await call('tsf-currency-pair')
+    strictEqual(pairs.status, 200)
+    const pair = ((await pairs.json()) as { value: Record<string, unknown>[] }).value[0]!
+    deepStrictEqual([pair['F_CURR'], pair['T_CURR'], pair['PAIR'], pair['DIV_RATIO']], ['USD', 'INR', 'USD-INR', 100])
+    ok(!('MANDT' in pair))
+    const fields = await call('tsf-field-name')
+    strictEqual(fields.status, 200)
+    const field = ((await fields.json()) as { value: Record<string, unknown>[] }).value[0]!
+    deepStrictEqual([field['ZFIELD'], field['ZNAME'], field['CREATED_DATE']], ['ZDEAL_ID', 'Treasury Deal', '20261022'])
+    ok(!('CLIENT' in field))
+  })
+
+  it('creates and updates limits by the full business key, preserving creation audit and partial fields', async () => {
+    const create = await put(path, { ZCURR: 'USD', ZUNAPROV_AMT: '1500.25', ZLIM_SET: 'X', ZCREATED_BY: 'spoof', ZCHANGED_BY: 'spoof' })
+    strictEqual(create.status, 201)
+    const first = await create.json() as Record<string, unknown>
+    deepStrictEqual([first['ZUNAPROV_AMT'], first['ZCREATED_BY'], first['ZCHANGED_BY']], [1500.25, 'demo', 'demo'])
+    ok(/^\d{8}$/.test(String(first['ZCREATED_DATE'])))
+    const write = cloudCalls.findLast((c) => c.resource === 'limMan' && c.method === 'POST')!.body['data'] as Record<string, unknown>
+    deepStrictEqual([write['zyear'], write['zcurr_pair'], write['zlimit_startdt'], write['zlimit_matdt']], ['2026', 'USD-INR', '20261001', '20261031'])
+    ok(/^\d{4}-\d{2}-\d{2}$/.test(String(write['zcreated_date'])))
+    ok(/^\d{2}:\d{2}:\d{2}$/.test(String(write['zchanged_time'])))
+    ok(!('client' in write))
+
+    const update = await put(path, { ZUNAPROV_AMT: 2000.5, ZLIM_ADDLIM: 'X', ZLIM_APP: '', ZCREATED_BY: 'spoof' })
+    strictEqual(update.status, 200)
+    const saved = await update.json() as Record<string, unknown>
+    deepStrictEqual([saved['ZUNAPROV_AMT'], saved['ZLIM_ADDLIM'], saved['ZLIM_SET'], saved['ZCURR']], [2000.5, 'X', 'X', 'USD'])
+    for (const stamp of ['ZCREATED_BY', 'ZCREATED_DATE', 'ZCREATED_TIME']) strictEqual(saved[stamp], first[stamp])
+    const patch = cloudCalls.findLast((c) => c.resource === 'limMan' && c.method === 'PATCH')!.body
+    deepStrictEqual(patch['key'], { zyear: '2026', zcurr_pair: 'USD-INR', zlimit_startdt: '20261001', zlimit_matdt: '20261031' })
+    ok(!('zcreated_by' in (patch['changes'] as Record<string, unknown>)))
+
+    strictEqual((await put(path.replace('/2026/', '/2027/'), { ZCURR: 'USD', ZUNAPROV_AMT: 30 })).status, 201)
+    strictEqual(cloudRows.get('limMan')!.length, 2)
+    const byYear = await (await call('tsf-limit?ZYEAR=2027')).json() as { value: Record<string, unknown>[] }
+    deepStrictEqual(byYear.value.map((r) => r['ZUNAPROV_AMT']), [30])
+    const byPair = await (await call('tsf-limit?ZCURR_PAIR=EUR-USD')).json() as { value: unknown[] }
+    strictEqual(byPair.value.length, 0)
+  })
+
+  it('rejects malformed keys, client overrides and invalid amounts without a cloud write', async () => {
+    const writes = () => cloudCalls.filter((c) => c.resource === 'limMan' && c.method !== 'GET').length
+    const before = writes()
+    for (const route of [path.replace('/2026/', '/26/'), path.replace('20261001', '2026-10-01'), path.replace('20261031', '20260901')]) {
+      strictEqual((await put(route, { ZUNAPROV_AMT: 10 })).status, 400)
+    }
+    for (const body of [{ CLIENT: '200' }, { ZYEAR: '2027' }, { ZUNAPROV_AMT: 'bad' }]) {
+      strictEqual((await put(path, body)).status, 400)
+    }
+    strictEqual(writes(), before)
+  })
+
+  it('returns middleware failures for every resource and limit writes', async () => {
+    cloudFailure = 503
+    try {
+      for (const route of ['tsf-limit', 'tsf-currency-pair', 'tsf-field-name']) strictEqual((await call(route)).status, 503)
+      strictEqual((await put(path, { ZUNAPROV_AMT: 40 })).status, 503)
+    } finally {
+      cloudFailure = 0
+    }
+  })
+})
+
 describe('/api/localdb/deal-metadata', () => {
   before(() => {
     runMigrations(getDb())
@@ -451,8 +531,8 @@ describe('/api/localdb/deal-metadata', () => {
     strictEqual((await call('deal-metadata/9990/1/extra')).status, 404)
   })
 
-  it('has not written the five migrated tables in SQLite', () => {
-    for (const table of ['zsgtsftr_trd_pos', 'zsgtsftr_trd_acc', 'zsgtsftr_dealdms', 'zsgtsftr_dms_typ', 'zsgtsftr_daylock']) {
+  it('has not written the migrated tables in SQLite', () => {
+    for (const table of ['zsgtsftr_trd_pos', 'zsgtsftr_trd_acc', 'zsgtsftr_dealdms', 'zsgtsftr_dms_typ', 'zsgtsftr_daylock', 'zsgtsftr_lim_man', 'zsgtrmtr_curpair', 'zsgtrmtr_fields']) {
       strictEqual(getDb().prepare(`SELECT COUNT(*) FROM ${table}`).pluck().get(), 0)
     }
   })

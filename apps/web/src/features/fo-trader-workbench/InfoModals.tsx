@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 import { KPI_DUE_DAYS } from './data.ts'
-import { findTxn, type Wb } from './flows.ts'
 import { formatAmount, formatRate, isoToDMY, kpiCompact, todayIso } from './format.ts'
-import { KPI_DEFS, companyName, dealStatusInfo, kpiCountRows, kpiToUsd, leadCurr, modelDesc, spotRateFor, txnStatusInfo, txnTypeText, type KpiId, type Kpis } from './logic.ts'
+import { KPI_DEFS, dealStatusInfo, kpiCountRows, kpiToUsd, leadCurr, modelDesc, spotRateFor, txnTypeText, type KpiId, type Kpis } from './logic.ts'
 import { ModalFrame, type FrameProps } from './modal.tsx'
 import type { Deal } from './types.ts'
 
@@ -11,67 +10,6 @@ const closeBtn = (frame: FrameProps) => (
     Close
   </button>
 )
-
-/* ---------------- ZSGSLCFM_DISPLAY: the transaction hotspot ---------------- */
-
-const kv = (l: string, v: string | number | null | undefined) => (
-  <div className="detail-item" key={l}>
-    <span className="detail-label">{l}</span>
-    <span className="detail-value">{v === undefined || v === null || v === '' ? '—' : v}</span>
-  </div>
-)
-
-export function TxnDetailsModal({ frame, rfha, dealId, wb }: { frame: FrameProps; rfha: string; dealId: string; wb: Wb }) {
-  const t = findTxn(wb.get(), rfha, { dealId })
-  if (!t) return null
-  return (
-    <ModalFrame
-      frame={frame}
-      title={`Transaction ${t.rfha}`}
-      sub={`${txnTypeText(t.sfhaart) || t.sfhaart} · ${companyName(t.bukrs)}`}
-      cls="md-modal"
-      actions={closeBtn(frame)}
-    >
-      <div className="detail-section">
-        <div className="detail-section-title">General</div>
-        <div className="kv-grid">
-          {kv('Company Code', `${t.bukrs} · ${companyName(t.bukrs)}`)}
-          {kv('Transaction', t.rfha)}
-          {kv('Status', txnStatusInfo(t.status).desc)}
-          {kv('Deal ID', t.dealId)}
-          {kv('Deal Type', t.dealType)}
-          {kv('Counterparty', t.cptyName)}
-          {kv('Trade Date', isoToDMY(t.tradeDate))}
-          {kv('Value Date', isoToDMY(t.valueDate))}
-          {kv('Execution Date', isoToDMY(t.eDate))}
-        </div>
-      </div>
-      <div className="detail-section">
-        <div className="detail-section-title">Amounts</div>
-        <div className="kv-grid">
-          {kv('Leg 1', `${t.bs1 ? `${t.bs1} ` : ''}${t.curr1} ${formatAmount(t.amt1)}`)}
-          {kv('Leg 2', `${t.bs2 ? `${t.bs2} ` : ''}${t.curr2} ${formatAmount(t.amt2)}`)}
-          {kv('All in Rate', formatRate(t.rate))}
-          {kv('Strike', formatRate(t.strike))}
-          {kv('Premium', t.preAmt ? `${formatAmount(t.preAmt)} ${t.preCurr}` : '')}
-          {kv('Put / Call', t.pc1)}
-          {kv('Portfolio', t.portfolio)}
-          {kv('Master Contract', t.mcRef)}
-        </div>
-      </div>
-      {t.ndfRef ? (
-        <div className="detail-section">
-          <div className="detail-section-title">NDF</div>
-          <div className="kv-grid">
-            {kv('Fixing Date', isoToDMY(t.ndfDate))}
-            {kv('Fixing Reference', t.ndfRef)}
-            {kv('Fixing Rate', formatRate(t.ndfRate))}
-          </div>
-        </div>
-      ) : null}
-    </ModalFrame>
-  )
-}
 
 /* ---------------- KPI breakdown (openKpiDetail) ---------------- */
 
@@ -119,7 +57,7 @@ function KpiDonut({ rows, total }: { rows: readonly { label: string; value: numb
           const len = (sl.value / total) * C
           const el = (
             <circle key={sl.label} cx="50" cy="50" r={R} fill="none" stroke={sl.color} strokeWidth="16" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-offset} transform="rotate(-90 50 50)">
-              <title>{`${sl.label}: ${sl.value} (${Math.round((sl.value / total) * 100)}%)`}</title>
+              <title>{`${sl.label}: ${sl.value}`}</title>
             </circle>
           )
           offset += len
@@ -133,7 +71,7 @@ function KpiDonut({ rows, total }: { rows: readonly { label: string; value: numb
           <li key={sl.label}>
             <span className="swatch" style={{ background: sl.color }}></span>
             <span className="lg-label" title={sl.label}>{sl.label}</span>
-            <span className="lg-val">{sl.value} · {Math.round((sl.value / total) * 100)}%</span>
+            <span className="lg-val">{sl.value}</span>
           </li>
         ))}
       </ul>
@@ -216,19 +154,16 @@ export function KpiDetailModal({ frame, id, k, onOpenDeal }: { frame: FrameProps
 
   if (id === 'deals') {
     const notional = new Map(k.deals.map((d) => [d.id, kpiToUsd(d.mcAmt, d.mcAmtCurr)]))
-    const pct = (n: number) => Math.round((n / (k.count || 1)) * 100)
     const exposures = k.deals
       .filter((d) => notional.get(d.id)! > 0)
       .sort((a, b) => notional.get(b.id)! - notional.get(a.id)!)
       .slice(0, 6)
     const noRate = k.deals.filter((d) => d.mcAmt && !notional.get(d.id)).length
-    const topShare = k.notionalUsd ? Math.round((exposures.reduce((sum, d) => sum + notional.get(d.id)!, 0) / k.notionalUsd) * 100) : 0
     const expCols: KCol[] = [
       { key: 'id', label: 'Deal ID', cls: 'mono strong' },
       { key: 'model', label: 'Model' },
       { key: 'mc', label: 'MC Amount', num: true },
       { key: 'usd', label: 'USD Equiv.', num: true },
-      { key: 'share', label: '% of Total', num: true },
     ]
     const expRows: KRow[] = exposures.map((d) => ({
       dealId: d.id,
@@ -237,18 +172,17 @@ export function KpiDetailModal({ frame, id, k, onOpenDeal }: { frame: FrameProps
         model: d.model,
         mc: `${d.mcAmtCurr} ${kpiCompact(d.mcAmt)}`,
         usd: kpiCompact(notional.get(d.id)!),
-        share: k.notionalUsd ? `${((notional.get(d.id)! / k.notionalUsd) * 100).toFixed(1)}%` : '–',
       },
     }))
     body = (
       <>
-        <Section title="By deal status" hint="Number of deals at each workflow status, and its share of the deals in view.">
-          <KpiBars rows={kpiCountRows(k.byStatus).map((r) => ({ ...r, text: `${r.value} · ${pct(r.value)}%` }))} />
+        <Section title="By deal status" hint="Number of deals at each workflow status.">
+          <KpiBars rows={kpiCountRows(k.byStatus).map((r) => ({ ...r, text: `${r.value}` }))} />
         </Section>
-        <Section title="By FX model" hint="Share of the deals in view on each FX model.">
+        <Section title="By FX model" hint="Number of deals in view on each FX model.">
           <KpiDonut rows={kpiCountRows(k.byModel).map((r) => ({ label: `${r.label} · ${modelDesc(r.label)}`, value: r.value }))} total={k.count} />
         </Section>
-        <Section title="Largest exposures (USD equivalent)" hint={exposures.length ? `The six deals with the largest MC amount, converted to USD at today's rate. Together they are ${topShare}% of the total notional.` : undefined}>
+        <Section title="Largest exposures (USD equivalent)" hint={exposures.length ? `The six deals with the largest MC amount, converted to USD at today's rate.` : undefined}>
           <KpiTable cols={expCols} rows={expRows} onOpen={onOpenDeal} />
           {noRate ? <p className="sub-hint">{noRate} deal{noRate === 1 ? '' : 's'} not shown: no MC amount or no USD conversion rate.</p> : null}
         </Section>
