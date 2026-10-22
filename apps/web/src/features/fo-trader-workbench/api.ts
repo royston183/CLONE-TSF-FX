@@ -186,6 +186,13 @@ export function ndfFields(fx: { TransactionType?: string; ValueDate?: string | n
   return { ndfDate: date, ndfRef: view ? txt(view, 'NDF_REF') : '' }
 }
 
+/** A field FxTransaction only carries once SAP exposes it, under either spelling; '' while it does not. */
+const extra = (fx: object, ...names: string[]): string => {
+  const row = fx as Record<string, unknown>
+  for (const n of names) if (typeof row[n] === 'string' && row[n]) return (row[n] as string).trim()
+  return ''
+}
+
 /**
  * The fixing rate and cash settlement of an NDF / DNDF. FxTransaction serves them as NdfFixingRate / CashSettlementAmount /
  * CashSettlementCurrency once the service declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); until then the same values are read
@@ -239,6 +246,9 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     mcRef: app.ZtsfMcRefNo ?? '',
     cpair: lead && follow ? `${lead}/${follow}` : '',
     portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
+    prctr: extra(fx, 'ProfitCenter', 'Prctr'),
+    rbusa: extra(fx, 'BusinessArea', 'Rbusa'),
+    settled: app.ZtsfExeCo === true,
     seq: Number(app.ZtsfDealSq) || 1,
     ...ndfFields(fx, view),
     ...ndfSettlement(fx, view),

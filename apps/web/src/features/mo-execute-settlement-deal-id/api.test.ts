@@ -111,7 +111,7 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
       seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', txnType: '600', bp: '400000002', txnDate: '30-09-2026',
       valDate: '30-10-2026', entity: '', bs1: 'Buy', curr1: 'USD', amt1: 1000, bs2: 'Sell', curr2: 'INR', amt2: 83000,
       spot: '82.5000', rate: '83.0000', mcRefNo: '2000000005', status: 'MO: Match & Release for Settlement',
-      statusChip: 'chip-open', doc1: '', doc2: '', settled: false,
+      statusChip: 'chip-open', doc1: '', doc2: '', settled: false, txnStatus: '07', busArea: '', profitCenter: '',
       ndf: { ndfDate: '', ndfRef: '', ndfRate: null, cashAmount: null, cashCurrency: '', ndfFoRem: '', ndfMoRem: '' },
       tsf: { bhbkid: '', bhktid: '', shbkid: '', shktid: '', bpayid: '', spayid: '', rbukrs: '', rpayid: '', pbukrs: '', ppayid: '' },
     })
@@ -135,6 +135,33 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
     const legs = await loadFxLegs('7000000006')
     deepStrictEqual(legs.map((l) => l.rfha), ['1', '2'])
     ok(urls[0]?.includes("ZtsfDealID eq '7000000006'"))
+  })
+
+  it('keeps names, accounting fields and roll types alongside NDF settlement data', async () => {
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const u = decodeURIComponent(String(input))
+      if (u.includes('/api/trmfxapp/TrmFxApp')) return json({ value: [app('1', { TxnStatus: '61', NdfFoRem: 'Fixed' })] })
+      if (u.includes('/api/fx/FxTransaction')) return json({ value: [fx('1', {
+        ProductType: '12D', TransactionType: '631', BusinessArea: 'BA01', ProfitCenter: 'PC01',
+        NdfFixingRate: '83.25', CashSettlementAmount: '250', CashSettlementCurrency: 'INR',
+      })] })
+      if (u.includes('TransactionType')) return json({ value: [{ ProductType: '12D', TransactionType: '631', TransactionTypeName: 'NDF' }] })
+      if (u.includes('A_BusinessPartner')) return json({ d: { results: [{ BusinessPartner: '400000002', BusinessPartnerFullName: 'Settlement Bank' }] } })
+      if (u.includes('/data/tsfvFx')) return json({ rows: [{ BUKRS: 'SG03', RFHA: '1', NDF_DATE: '2026-10-28', NDF_REF: 'FIX01' }] })
+      throw new Error(`Unexpected request: ${u}`)
+    }) as typeof fetch
+
+    const legs = await loadFxLegs('7000000006')
+    strictEqual(legs.length, 1)
+    const leg = legs[0]!
+    deepStrictEqual(
+      [leg.bpName, leg.txnTypeDesc, leg.busArea, leg.profitCenter, leg.txnStatus, leg.rollType],
+      ['400000002 - Settlement Bank', 'NDF', 'BA01', 'PC01', '61', 'R1-D1'],
+    )
+    deepStrictEqual(leg.ndf, {
+      ndfDate: '2026-10-28', ndfRef: 'FIX01', ndfRate: 83.25, cashAmount: 250,
+      cashCurrency: 'INR', ndfFoRem: 'Fixed', ndfMoRem: '',
+    })
   })
 
   it('narrows the waiting text to the option legs, or names the unreadable service', () => {

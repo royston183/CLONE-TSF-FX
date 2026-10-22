@@ -135,3 +135,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Checkbox columns: header and cell both centred (the shared theme otherwise centres only the header). */
+.bo-post-accounting-settlement .list-table :is(th, td).chk-col {
+  text-align: center !important;
+}

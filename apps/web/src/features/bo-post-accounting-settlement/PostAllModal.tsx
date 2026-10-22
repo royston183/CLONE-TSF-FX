@@ -43,7 +43,7 @@ export function PostAllModal({
             <th className="left">D/C</th>
             <th className="left">Account</th>
             <th className="left">Trade Type</th>
-            <th>Amount</th>
+            <th className="num">Amount</th>
           </tr>
         </thead>
         <tbody>

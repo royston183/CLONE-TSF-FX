@@ -6,6 +6,7 @@ import { buildNdoSpot, createSpotTransaction, fetchTransactions, inScope, isAuth
 import type { PopupSpec } from './modal.tsx'
 import type { StatusOptions } from '../../shared/popup/Popup.tsx'
 import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './types.ts'
+import { actionItemEntry, type EntryAction, type WriteAction } from './logic.ts'
 
 /**
  * The SAP postings each workbench action makes (ZSGTSFR_SET_WSPACE). NDF fixing is live: the NDF
@@ -13,18 +14,11 @@ import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './typ
  * TrmFxApp (shared/fx/ndf.ts fixNdf), as UA1 does. No service exposes the others, so they are
  * WAITING FOR API and nothing is posted.
  */
-export const WRITE_ACTIONS = {
-  exercise: 'Option exercise — BAPI_FTR_EXERCISE_FXOPTIONS (TI86 for cash settlement, BAPI_FTR_SETTLE_FXOPTIONS)',
-  expire: 'Option expiry — BAPI_FTR_EXPIRE_FXOPTIONS (+ BAPI_FTR_SETTLE_FXOPTIONS)',
-  ndfFixing: 'NDF fixing — BAPI_FTR_FXT_NDF_FIXING (+ TX02)',
-  spotOrder: 'Spot creation — BAPI_FTR_FXT_ORDERCREATE + BAPI_FTR_FXT_ORDEREXECUTE with ZSGTRMFM_VTBFHA_EXPORT and the ZSGTSFTR_IN_SPOT update',
-  spotNdf: 'NDF/DNDF spot — BAPI_FTR_FXT_GETDETAIL + BAPI_FTR_FXT_CREATE with ZSGTRMFM_VTBFHA_EXPORT',
-  settlementSpot: 'Settlement spot — SUBMIT ZSGTSFR_SPOT_CREATE (FORM create_sett_spot)',
-} as const
-export type WriteAction = keyof typeof WRITE_ACTIONS
+export { WRITE_ACTIONS, type WriteAction } from './logic.ts'
 
 /** What the flows and popups need from the screen. */
 export type Wb = {
+  entryReason: (action: EntryAction, txn: Txn | undefined) => string
   /** Posts an action to SAP; false (with the reason shown) while no API exposes it. */
   post: (action: WriteAction) => boolean
   get: () => AppData
@@ -64,16 +58,18 @@ export function openDeal(wb: Wb, dealId: string): boolean {
 /* ---------------- toolbar actions (EX / NDF / DIFF) ---------------- */
 
 export function actionOptionExercise(wb: Wb, t: Txn) {
-  if (t.sgsart.substring(0, 2) !== '14') {
-    wb.toast('Please select the Option/NDO deal', 'error') /* TEXT-017 */
+  const reason = wb.entryReason('rate', t)
+  if (reason) {
+    wb.toast(reason, 'error')
     return
   }
   wb.open({ kind: 'rate', ctx: { dealId: t.dealId, rfha: t.rfha, fromAction: false } })
 }
 
 export function actionNdfFixing(wb: Wb, t: Txn) {
-  if (t.sgsart.substring(0, 2) !== '12') {
-    wb.toast('Please select the NDF/DNDF deal', 'error') /* TEXT-018 */
+  const reason = wb.entryReason('ndf', t)
+  if (reason) {
+    wb.toast(reason, 'error')
     return
   }
   wb.open({ kind: 'ndf', ctx: { dealId: t.dealId, rfha: t.rfha, fromAction: false } })
@@ -90,26 +86,14 @@ export function actionItemCreate(wb: Wb, it: ActionItem) {
   const t = findTxn(data, it.rfha, { dealId: it.dealId, bukrs: it.bukrs })
   const deal = t ? findDeal(data, t.dealId) : undefined
   if (!t || !deal) return
-  const ctx: ActionCtx = { dealId: t.dealId, rfha: t.rfha, fromAction: true }
-  switch (it.sfhaart) {
-    case '619':
-      if (deal.ss !== 'X') wb.open({ kind: 'settlementSpot', ctx })
-      else if (t.dealType === '00' || t.dealType === '') wb.open({ kind: 'fwdSsSpot', ctx })
-      else wb.open({ kind: 'settlementSpot', ctx })
-      break
-    case '604':
-      wb.open({ kind: 'settlementSpot', ctx })
-      break
-    case '631':
-    case '632':
-      if (t.sgsart.substring(0, 2) === '12') wb.open({ kind: 'ndf', ctx })
-      else wb.toast('Please select the NDF/DNDF deal', 'error')
-      break
-    default:
-      if (t.status > '07') wb.open({ kind: 'settlementSpot', ctx })
-      else if (t.sgsart.substring(0, 2) === '14') wb.open({ kind: 'rate', ctx })
-      else wb.toast('Please select the Option/NDO deal', 'error')
+  const entry = actionItemEntry(it, deal, t)
+  const reason = wb.entryReason(entry, t)
+  if (reason) {
+    wb.toast(reason, 'error')
+    return
   }
+  const ctx: ActionCtx = { dealId: t.dealId, rfha: t.rfha, fromAction: true }
+  wb.open(entry === 'spotOrder' ? { kind: 'fwdSsSpot', ctx } : { kind: entry, ctx })
 }
 
 /* ---------------- exercise / expire (screen 9001 follow-ups) ---------------- */

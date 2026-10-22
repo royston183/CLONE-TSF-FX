@@ -26,6 +26,17 @@ export type FxLeg = {
   seq?: string
   /** TXN_STATUS of the transaction: the FX popup's Test Run / Post need '07' or later. */
   txnStatus?: string
+  /** Grid-only columns of gt_top: dates (DD.MM.YYYY), transaction type, partner, spot / swap, profit center, business area. */
+  tradeDate?: string
+  valueDate?: string
+  txnType?: string
+  txnTypeDesc?: string
+  partner?: string
+  partnerName?: string
+  spot?: number
+  swap?: number
+  profitCenter?: string
+  busArea?: string
   /** NDF_RATE / ZCASH_AMT / CASH_CURR of the transaction (FxTransaction NdfFixingRate / CashSettlementAmount / CashSettlementCurrency); undefined / '' while the service does not serve them. */
   ndfRate?: number | undefined
   cashAmt?: number | undefined
@@ -58,6 +69,11 @@ export type InvLeg = {
   exeCo?: boolean
   /** ZSGTSFTR_SET_TYP ZDSS_DEAL of the leg: the DSS deal type whose FX documents Accounting Completed checks too. */
   dssDealType?: string
+  /** Grid-only columns of gt_inv (TRD_POS): company code, posting / due date (DD.MM.YYYY), posting type description. */
+  bukrs?: string
+  postDate?: string
+  dueDate?: string
+  postDesc?: string
   senderHouseBank?: string
   senderAccountId?: string
   receiverHouseBank?: string

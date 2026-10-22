@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { KPI_DUE_DAYS } from './data.ts'
 import { findTxn, type Wb } from './flows.ts'
-import { formatAmount, formatRate, isoToDMY, todayIso } from './format.ts'
-import { KPI_DEFS, companyName, dealStatusInfo, kpiCountRows, kpiToUsd, modelDesc, txnStatusInfo, txnTypeText, type KpiId, type Kpis } from './logic.ts'
+import { formatAmount, formatRate, isoToDMY, kpiCompact, todayIso } from './format.ts'
+import { KPI_DEFS, companyName, dealStatusInfo, kpiCountRows, kpiToUsd, leadCurr, modelDesc, spotRateFor, txnStatusInfo, txnTypeText, type KpiId, type Kpis } from './logic.ts'
 import { ModalFrame, type FrameProps } from './modal.tsx'
 import type { Deal } from './types.ts'
 
@@ -100,6 +100,47 @@ function KpiBars({ rows }: { rows: readonly Bar[] }) {
   )
 }
 
+const DONUT_COLORS = ['#0A6ED1', '#E9730C', '#107E3E', '#6C4BC1', '#0097A7', '#BB0000']
+const DONUT_OTHER = '#8396A8'
+
+/** Share-of-total donut with a legend; more than six slices fold the smallest into "Other". */
+function KpiDonut({ rows, total }: { rows: readonly { label: string; value: number }[]; total: number }) {
+  if (!rows.length || !total) return <div className="kpi-empty">Nothing to show for the current filters.</div>
+  const head = rows.slice(0, DONUT_COLORS.length)
+  const rest = rows.slice(DONUT_COLORS.length).reduce((sum, r) => sum + r.value, 0)
+  const slices = [...head.map((r, i) => ({ ...r, color: DONUT_COLORS[i]! })), ...(rest ? [{ label: 'Other', value: rest, color: DONUT_OTHER }] : [])]
+  const R = 40
+  const C = 2 * Math.PI * R
+  let offset = 0
+  return (
+    <div className="kpi-donut">
+      <svg viewBox="0 0 100 100" width="150" height="150" role="img" aria-label="Deals by FX model">
+        {slices.map((sl) => {
+          const len = (sl.value / total) * C
+          const el = (
+            <circle key={sl.label} cx="50" cy="50" r={R} fill="none" stroke={sl.color} strokeWidth="16" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-offset} transform="rotate(-90 50 50)">
+              <title>{`${sl.label}: ${sl.value} (${Math.round((sl.value / total) * 100)}%)`}</title>
+            </circle>
+          )
+          offset += len
+          return el
+        })}
+        <text x="50" y="49" textAnchor="middle" className="donut-total">{total}</text>
+        <text x="50" y="61" textAnchor="middle" className="donut-caption">deals</text>
+      </svg>
+      <ul className="kpi-legend">
+        {slices.map((sl) => (
+          <li key={sl.label}>
+            <span className="swatch" style={{ background: sl.color }}></span>
+            <span className="lg-label" title={sl.label}>{sl.label}</span>
+            <span className="lg-val">{sl.value} · {Math.round((sl.value / total) * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 type KCol = { key: string; label: string; num?: boolean; cls?: string }
 type KRow = { dealId: string; cells: Record<string, ReactNode> }
 
@@ -146,12 +187,13 @@ function KpiTable({ cols, rows, onOpen }: { cols: readonly KCol[]; rows: readonl
   )
 }
 
-const Section = ({ title, children }: { title: string; children: ReactNode }) => (
+const Section = ({ title, hint, children }: { title: string; hint?: string | undefined; children: ReactNode }) => (
   <div className="sub-section">
     <div className="sub-title">
       <span className="dot"></span>
       {title}
     </div>
+    {hint ? <p className="sub-hint">{hint}</p> : null}
     {children}
   </div>
 )
@@ -173,23 +215,42 @@ export function KpiDetailModal({ frame, id, k, onOpenDeal }: { frame: FrameProps
   let body: ReactNode = null
 
   if (id === 'deals') {
-    const notional = new Map(k.deals.map((d) => [d.id, kpiToUsd(d.mcAmt, d.mcCurr)]))
+    const notional = new Map(k.deals.map((d) => [d.id, kpiToUsd(d.mcAmt, d.mcAmtCurr)]))
+    const pct = (n: number) => Math.round((n / (k.count || 1)) * 100)
+    const exposures = k.deals
+      .filter((d) => notional.get(d.id)! > 0)
+      .sort((a, b) => notional.get(b.id)! - notional.get(a.id)!)
+      .slice(0, 6)
+    const noRate = k.deals.filter((d) => d.mcAmt && !notional.get(d.id)).length
+    const topShare = k.notionalUsd ? Math.round((exposures.reduce((sum, d) => sum + notional.get(d.id)!, 0) / k.notionalUsd) * 100) : 0
+    const expCols: KCol[] = [
+      { key: 'id', label: 'Deal ID', cls: 'mono strong' },
+      { key: 'model', label: 'Model' },
+      { key: 'mc', label: 'MC Amount', num: true },
+      { key: 'usd', label: 'USD Equiv.', num: true },
+      { key: 'share', label: '% of Total', num: true },
+    ]
+    const expRows: KRow[] = exposures.map((d) => ({
+      dealId: d.id,
+      cells: {
+        id: d.id,
+        model: d.model,
+        mc: `${d.mcAmtCurr} ${kpiCompact(d.mcAmt)}`,
+        usd: kpiCompact(notional.get(d.id)!),
+        share: k.notionalUsd ? `${((notional.get(d.id)! / k.notionalUsd) * 100).toFixed(1)}%` : '–',
+      },
+    }))
     body = (
       <>
-        <Section title="By deal status">
-          <KpiBars rows={kpiCountRows(k.byStatus)} />
+        <Section title="By deal status" hint="Number of deals at each workflow status, and its share of the deals in view.">
+          <KpiBars rows={kpiCountRows(k.byStatus).map((r) => ({ ...r, text: `${r.value} · ${pct(r.value)}%` }))} />
         </Section>
-        <Section title="By FX model">
-          <KpiBars rows={kpiCountRows(k.byModel).map((r) => ({ ...r, label: `${r.label} · ${modelDesc(r.label)}` }))} />
+        <Section title="By FX model" hint="Share of the deals in view on each FX model.">
+          <KpiDonut rows={kpiCountRows(k.byModel).map((r) => ({ label: `${r.label} · ${modelDesc(r.label)}`, value: r.value }))} total={k.count} />
         </Section>
-        <Section title="Largest exposures (USD equivalent)">
-          <KpiBars
-            rows={k.deals
-              .slice()
-              .sort((a, b) => notional.get(b.id)! - notional.get(a.id)!)
-              .slice(0, 6)
-              .map((d) => ({ label: d.id, value: notional.get(d.id)!, text: formatAmount(notional.get(d.id)!, 0) }))}
-          />
+        <Section title="Largest exposures (USD equivalent)" hint={exposures.length ? `The six deals with the largest MC amount, converted to USD at today's rate. Together they are ${topShare}% of the total notional.` : undefined}>
+          <KpiTable cols={expCols} rows={expRows} onOpen={onOpenDeal} />
+          {noRate ? <p className="sub-hint">{noRate} deal{noRate === 1 ? '' : 's'} not shown: no MC amount or no USD conversion rate.</p> : null}
         </Section>
       </>
     )
@@ -275,24 +336,67 @@ export function KpiDetailModal({ frame, id, k, onOpenDeal }: { frame: FrameProps
       </>
     )
   } else if (id === 'pl') {
-    const byModel: Record<string, number> = {}
-    for (const p of k.pl) byModel[p.deal.model] = (byModel[p.deal.model] || 0) + p.usd
+    const asOf = todayIso()
+    const rows = k.pl.slice().sort((x, y) => y.usd - x.usd)
+    const gainsUsd = rows.filter((p) => p.usd >= 0).reduce((sum, p) => sum + p.usd, 0)
+    const lossesUsd = rows.filter((p) => p.usd < 0).reduce((sum, p) => sum + p.usd, 0)
+    const rateText = (p: (typeof rows)[number]) => {
+      if (!p.deal.plCurr || p.deal.plCurr === 'USD') return '–'
+      const lc = leadCurr(p.deal.plCurr, 'USD')
+      const r = spotRateFor(p.deal.plCurr, 'USD', asOf)
+      return r ? `1 ${lc.lead} = ${formatRate(r)} ${lc.follow}` : 'No rate'
+    }
+    const tone = (n: number) => (n > 0 ? 'kpi-pos' : n < 0 ? 'kpi-neg' : '')
+    const dealCols: KCol[] = [
+      { key: 'id', label: 'Deal ID', cls: 'mono strong' },
+      { key: 'model', label: 'Model' },
+      { key: 'pl', label: 'P&L (booked)', num: true },
+      { key: 'rate', label: 'Rate Used' },
+      { key: 'usd', label: 'P&L (USD)', num: true },
+    ]
+    const dealRows: KRow[] = rows.map((p) => ({
+      dealId: p.deal.id,
+      cells: {
+        id: p.deal.id,
+        model: p.deal.model,
+        pl: `${p.deal.plCurr} ${signed(p.deal.pl)}`,
+        rate: rateText(p),
+        usd: <span className={tone(p.usd)}>{signed(p.usd)}</span>,
+      },
+    }))
+    const models = [...new Set(rows.map((p) => p.deal.model))].sort()
+    const modelCols: KCol[] = [
+      { key: 'model', label: 'FX Model' },
+      { key: 'n', label: 'Deals', num: true },
+      { key: 'usd', label: 'P&L (USD)', num: true },
+    ]
+    const modelRows: KRow[] = models.map((m) => {
+      const part = rows.filter((p) => p.deal.model === m)
+      const sum = part.reduce((acc, p) => acc + p.usd, 0)
+      return { dealId: '', cells: { model: m, n: part.length, usd: <span className={tone(sum)}>{signed(sum)}</span> } }
+    })
+    const excluded = k.count - rows.length
     body = (
       <>
-        <Section title="P&L by deal (USD)">
-          <KpiBars
-            rows={k.pl
-              .slice()
-              .sort((a, b) => b.usd - a.usd)
-              .map((p) => ({ label: p.deal.id, value: p.usd, text: signed(p.usd), cls: p.usd >= 0 ? 'pos' : 'neg' }))}
-          />
+        <div className="pl-summary">
+          <div className="pl-stat"><span>Net P&amp;L</span><strong className={tone(k.plTotal)}>{signed(k.plTotal)}</strong></div>
+          <div className="pl-stat"><span>Gains · {k.gains} deal{k.gains === 1 ? '' : 's'}</span><strong className="kpi-pos">{signed(gainsUsd)}</strong></div>
+          <div className="pl-stat"><span>Losses · {k.losses} deal{k.losses === 1 ? '' : 's'}</span><strong className="kpi-neg">{signed(lossesUsd)}</strong></div>
+        </div>
+        <Section title="P&L by deal">
+          <KpiTable cols={dealCols} rows={dealRows} onOpen={onOpenDeal} />
         </Section>
-        <Section title="P&L by FX model (USD)">
-          <KpiBars
-            rows={Object.keys(byModel)
-              .sort()
-              .map((m) => ({ label: m, value: byModel[m]!, text: signed(byModel[m]!), cls: byModel[m]! >= 0 ? 'pos' : 'neg' }))}
-          />
+        <Section title="P&L by FX model">
+          <KpiTable cols={modelCols} rows={modelRows} onOpen={onOpenDeal} />
+        </Section>
+        <Section title="How it is calculated">
+          <div className="pl-formula">
+            <p><strong>Net P&amp;L (USD)</strong> = sum of each deal's P&amp;L in USD</p>
+            <p><strong>P&amp;L in USD</strong> = booked P&amp;L (ZPL) when its currency is USD; otherwise the booked P&amp;L × the rate, or ÷ the rate when USD is the lead currency of the pair.</p>
+            <p><strong>Rate</strong> = today's market rate (TCURR rate type M, {isoToDMY(asOf)}) for the P&amp;L currency against USD.</p>
+            <p><strong>Gain</strong> = P&amp;L ≥ 0 · <strong>Loss</strong> = P&amp;L &lt; 0 · deals with no booked P&amp;L are left out{excluded > 0 ? ` (${excluded} of ${k.count} here)` : ''}.</p>
+            {rows.length ? <p className="pl-sum">{rows.map((p, i) => `${i && p.usd >= 0 ? '+ ' : ''}${i && p.usd < 0 ? '− ' : ''}${formatAmount(i && p.usd < 0 ? -p.usd : p.usd)}`).join(' ')} = <strong className={tone(k.plTotal)}>{signed(k.plTotal)} USD</strong></p> : null}
+          </div>
         </Section>
       </>
     )

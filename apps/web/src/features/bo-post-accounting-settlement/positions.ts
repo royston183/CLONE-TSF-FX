@@ -33,6 +33,12 @@ const amount = (r: PositionRow, k: string): number => {
   return Number.isFinite(n) ? n : 0
 }
 
+/** A stored date (YYYYMMDD, or ISO) as DD.MM.YYYY; '' for none. */
+const dmyFromStored = (v: string): string => {
+  const m = /^(\d{4})-?(\d{2})-?(\d{2})/.exec(v)
+  return m && v.slice(0, 8) !== '00000000' ? `${m[3]}.${m[2]}.${m[1]}` : ''
+}
+
 /** The trade invoice legs, by settlement sequence. */
 export function toInvLegs(rows: readonly PositionRow[]): InvLeg[] {
   return rows
@@ -56,6 +62,10 @@ export function toInvLegs(rows: readonly PositionRow[]): InvLeg[] {
       exeCo: text(r, 'ZEXE_CO') === 'X',
       fiDoc: text(r, 'ZBELNR'),
       docMsg: text(r, 'ZMSG'),
+      bukrs: text(r, 'ZBUKRS'),
+      postDate: dmyFromStored(text(r, 'ZP_DATE')),
+      dueDate: dmyFromStored(text(r, 'ZDUE_DATE')),
+      postDesc: text(r, 'ZPOST_DESC'),
       buy: text(r, 'ZBUY'),
       sell: text(r, 'ZSELL'),
       senderHouseBank: text(r, 'ZHBKID'),

@@ -9,6 +9,7 @@ import type { ComponentType, LazyExoticComponent } from 'react'
  * config/apps.json. Nothing else in the shell changes.
  */
 export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
+  'view-all-transactions': lazy(() => import('./view-all-transactions/index.tsx')),
   'view-tsf-deals': lazy(() => import('./view-tsf-deals/index.tsx')),
   'fo-deal-id-details': lazy(() => import('./fo-deal-id-details/index.tsx')),
   'ottk': lazy(() => import('./ottk/index.tsx')),

@@ -48,6 +48,8 @@ import { createAdditionalSpot, defaultTradeDate, type SpotPorts } from '../fo-ad
 import { spotPorts } from '../fo-additional-spot-booking/spotPorts.ts'
 import { toSpotRow } from '../fo-additional-spot-booking/spotList.ts'
 import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
+import { loadNames, typeKey } from '../../shared/fx/names.ts'
+import { assignRollTypes } from '../fo-early-delivery-unwind-rollover/api.ts'
 import { statusClass } from './logic.ts'
 import type { Deal, FxDeal, SetFxSide, StatusMeta, TradeInvoice } from './types.ts'
 
@@ -109,6 +111,9 @@ export function toFxDeal({ fx, app }: FxWithApp, view?: FxRow): FxDeal {
     doc1: '',
     doc2: '',
     settled,
+    txnStatus: status,
+    busArea: extra(fx, 'BusinessArea', 'Rbusa'),
+    profitCenter: extra(fx, 'ProfitCenter', 'Prctr'),
     ndf: ndfExtras(fx, app, view),
     tsf: {
       bhbkid: s(app.ZtsfBhbkID),
@@ -126,6 +131,13 @@ export function toFxDeal({ fx, app }: FxWithApp, view?: FxRow): FxDeal {
 }
 
 const s = (v: string | null | undefined): string => (v ?? '').trim()
+
+/** A field FxTransaction only carries once SAP exposes it, under either spelling; '' while it does not. */
+const extra = (fx: object, ...names: string[]): string => {
+  const row = fx as Record<string, unknown>
+  for (const n of names) if (typeof row[n] === 'string' && row[n]) return (row[n] as string).trim()
+  return ''
+}
 
 /** One ZSGTSFTR_SET_FX row as a side of a leg. */
 function toSetFxSide(r: FxRow): SetFxSide {
@@ -175,10 +187,21 @@ const bySeq = (a: FxDeal, b: FxDeal) => (a.seq + a.dealType + a.rfha < b.seq + b
 
 /** The Deal ID's FX legs, reversed deals dropped, ordered by Seq / Deal Type / transaction. */
 export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<FxDeal[]> {
-  const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
-  const live = joined.filter(({ fx }) => fx.ActiveStatus !== '3')
-  const views = viewsByKey(await loadNdfViews(live.map((r) => r.fx), signal))
-  return live.map((r) => toFxDeal(r, views.get(ndfKey(r.fx.CompanyCode, r.fx.FinancialTransaction)))).sort(bySeq)
+  const joined = (await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)).filter(({ fx }) => fx.ActiveStatus !== '3')
+  // Names are a soft lookup (loadNames never throws except on abort): a failed one leaves the codes unnamed.
+  const [names, ndfViews] = await Promise.all([
+    loadNames(joined.map((j) => j.fx), signal),
+    loadNdfViews(joined.map((j) => j.fx), signal),
+  ])
+  const views = viewsByKey(ndfViews)
+  const legs = joined.map((j) => {
+    const leg = toFxDeal(j, views.get(ndfKey(j.fx.CompanyCode, j.fx.FinancialTransaction)))
+    const bpName = names.partners.get(j.fx.Partner)
+    return { ...leg, bpName: bpName ? `${j.fx.Partner} - ${bpName}` : j.fx.Partner, txnTypeDesc: names.txnTypes.get(typeKey(j.fx.ProductType ?? '', j.fx.TransactionType)) ?? '' }
+  })
+  // ZROLL_DEAL_TYPE: the same numbering as the pre-mature screen (PBO scope 4000029736).
+  const rolled = assignRollTypes(legs.map((l) => ({ ...l, txnStatus: l.txnStatus ?? '', zroll: '' })))
+  return rolled.map(({ zroll, ...leg }) => ({ ...leg, rollType: zroll })).sort(bySeq)
 }
 
 /**

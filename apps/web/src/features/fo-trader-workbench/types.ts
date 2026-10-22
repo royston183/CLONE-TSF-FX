@@ -75,6 +75,10 @@ export type Txn = {
   cashCurr: string
   coverTxn: string
   portfolio: string
+  /** PRCTR / RBUSA (when FxTransaction serves them) and Settlement Complete (TrmFxApp ZtsfExeCo). */
+  prctr: string
+  rbusa: string
+  settled: boolean
   seq: number
   /** TrmFxApp ETag, sent as If-Match when the TSF status changes; '' for a row not read from SAP. */
   etag: string
@@ -112,14 +116,18 @@ export type ActionItem = {
   dealType: string
   cpty: string
   sfhaart: string
+  tradeDate: string
   valueDate: string
   eDate: string
+  ndfDate: string
   status: string
   curr1: string
   amt1: number
   curr2: string
   pc1: string
+  pc2: string
   bs1: string
+  bs2: string
   coverTxn: string
   text: string
   textCode: string
