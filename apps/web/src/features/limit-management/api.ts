@@ -1,4 +1,4 @@
-import { apiFetch, service } from '@slc/api-client'
+import { apiFetch, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
@@ -21,6 +21,7 @@ import type { LimitDeal, RawLimit } from './types.ts'
  */
 const limitApi = service('localdb')('tsf-limit')
 const pairApi = service('localdb')('tsf-currency-pair')
+const exchangeApi = service('exchangerate')
 
 export type Loaded<T> = { rows: T[]; unavailable: string | null }
 
@@ -64,19 +65,61 @@ export async function loadLimits(signal?: AbortSignal): Promise<Loaded<RawLimit>
   }
 }
 
-/** Currency pairs with a USD leg (ZSGTRMTR_CURPAIR: F_CURR, T_CURR, PAIR). */
-export async function loadCurrencyPairs(signal?: AbortSignal): Promise<string[]> {
+/** The rate type the program reads (TCURR-KURST 'M', get_exch_rate). */
+const RATE_TYPE = 'M'
+
+/** Pairs with a USD leg from the SAP exchange-rate service (TCURR), in the direction SAP holds them. */
+async function pairsFromExchangeRates(signal?: AbortSignal): Promise<string[]> {
+  const found = new Set<string>()
+  for (const side of ['SourceCurrency', 'TargetCurrency'] as const) {
+    const rows = await list<{ SourceCurrency?: string; TargetCurrency?: string }>(
+      exchangeApi('ExchangeRate'),
+      {
+        filter: `RateType eq ${odataString(RATE_TYPE)} and ${side} eq 'USD'`,
+        select: ['SourceCurrency', 'TargetCurrency'],
+        orderby: 'ExchangeRateEffectiveDate desc',
+        top: 500,
+      },
+      signal ? { signal } : undefined,
+    )
+    for (const r of rows) {
+      const pair = normalisePair(`${r.SourceCurrency ?? ''}-${r.TargetCurrency ?? ''}`)
+      if (/^[A-Z]{3}-[A-Z]{3}$/.test(pair) && pair.slice(0, 3) !== pair.slice(4)) found.add(pair)
+    }
+  }
+  return [...found].sort()
+}
+
+export type PairList = { pairs: string[]; /** Set when the list is not ZSGTRMTR_CURPAIR itself. */ note: string | null }
+
+/**
+ * Currency pairs with a USD leg. ZSGTRMTR_CURPAIR (local SQLite table: F_CURR, T_CURR, PAIR) is the program's own list; none of the
+ * configured OData services exposes that table, so while it is empty the pairs come from the SAP exchange rates (ExchangeRate
+ * service, TCURR type M): real SAP pairs, but every pair that has a rate, not only the ones set up for trading.
+ */
+export async function loadCurrencyPairs(signal?: AbortSignal): Promise<PairList> {
+  let table: string[] = []
   try {
     const body = await apiFetch<{ value?: LimitRow[] }>(pairApi, signal ? { signal } : undefined)
-    const pairs = (body?.value ?? [])
-      .filter((r) => str(r, 'F_CURR') === 'USD' || str(r, 'T_CURR') === 'USD')
-      .map((r) => normalisePair(str(r, 'PAIR') || `${str(r, 'F_CURR')}-${str(r, 'T_CURR')}`))
-      .filter(Boolean)
-    return [...new Set(pairs)].sort()
+    table = [
+      ...new Set(
+        (body?.value ?? [])
+          .filter((r) => str(r, 'F_CURR') === 'USD' || str(r, 'T_CURR') === 'USD')
+          .map((r) => normalisePair(str(r, 'PAIR') || `${str(r, 'F_CURR')}-${str(r, 'T_CURR')}`))
+          .filter(Boolean),
+      ),
+    ].sort()
   } catch (error) {
     if (isAbort(error)) throw error
-    return []
   }
+  if (table.length) return { pairs: table, note: null }
+  try {
+    const pairs = await pairsFromExchangeRates(signal)
+    if (pairs.length) return { pairs, note: 'ZSGTRMTR_CURPAIR has no rows here, so the currency pairs are the USD pairs that have SAP exchange rates (TCURR, rate type M).' }
+  } catch (error) {
+    if (isAbort(error)) throw error
+  }
+  return { pairs: [], note: 'No currency pairs could be read (ZSGTRMTR_CURPAIR is empty and the SAP exchange-rate service did not answer).' }
 }
 
 const stripZeros = (v: string) => v.replace(/^0+/, '')

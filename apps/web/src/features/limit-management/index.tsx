@@ -53,6 +53,7 @@ export default function LimitManagement() {
   const [limits, setLimits] = useState<RawLimit[]>([])
   const [deals, setDeals] = useState<LimitDeal[] | null>(null)
   const [pairMaster, setPairMaster] = useState<string[]>([])
+  const [pairNote, setPairNote] = useState<string | null>(null)
   const [notices, setNotices] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [generation, setGeneration] = useState(0)
@@ -91,7 +92,8 @@ export default function LimitManagement() {
       .then(([l, d, p]) => {
         setLimits(l.rows)
         setDeals(d.unavailable ? null : d.rows)
-        setPairMaster(p)
+        setPairMaster(p.pairs)
+        setPairNote(p.note)
         setNotices([l.unavailable, d.unavailable].filter((n): n is string => !!n))
         setLoading(false)
       })
@@ -251,6 +253,12 @@ export default function LimitManagement() {
             <span>WAITING FOR API &mdash; {n}</span>
           </div>
         ))}
+
+        {pairNote && (
+          <div className="inline-alert show info" role="status" style={{ margin: '0 0 10px' }}>
+            <span>{pairNote}</span>
+          </div>
+        )}
 
         <div className="table-col">
           <div className="card">
