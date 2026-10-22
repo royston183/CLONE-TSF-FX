@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CompanyField, HouseBankFields, PartnerBankField, useBankChoices } from './BankFields.tsx'
-import { InvoiceAccountingTable } from './AccountingPreview.tsx'
+import { FxAccountingTable, InvoiceAccountingTable, useFxEntries } from './AccountingPreview.tsx'
 import { bankSelectionError, type BankCompany } from './bankChoices.ts'
 import { formatAmount } from './format.ts'
 import { invBankRequired, plAmount } from './logic.ts'
@@ -16,34 +16,6 @@ const EmptyRow = ({ span, text }: { span: number; text: string }) => (
     <td colSpan={span}>{text}</td>
   </tr>
 )
-
-/** The ALV "Accounting Details" / "Accounting Entry" grid of the SAP pop-up. The entries are BO's (ZSGTSFR081), so MO sees the columns and, until BO posts, no rows. */
-const ACCOUNTING_COLUMNS = ['D', 'CoCode', 'Document Date', 'Posting Date', 'G/L Acct', 'GL Description', 'Payment Amt', 'Pay Curr', 'Profit Center', 'Bus. Area']
-
-function AccountingTable({ title, columns, posted }: { title: string; columns: readonly string[]; posted: boolean }) {
-  return (
-    <div className="fbox" style={{ marginTop: '10px', marginBottom: 0 }}>
-      <div className="fbox-title">{title}</div>
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead>
-            <tr>
-              {columns.map((c) => (
-                <th key={c} className="left">{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <EmptyRow
-              span={columns.length}
-              text={posted ? 'Posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081) — the entries are not served to MO.' : 'No accounting entries yet: they are posted on BO: Post Accounting Entries for Settlement (ZSGTSFR081).'}
-            />
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
 
 const Cancel = ({ onClick, label = 'Cancel' }: { onClick: () => void; label?: string }) => (
   <button className="btn-cancel" type="button" onClick={onClick}>
@@ -403,6 +375,7 @@ export function FxPostModal({
   const sell = useBankChoices(open, form.sPayCoCode, companies.find((c) => c.code === form.sPayCoCode)?.businessPartner)
   const [error, setError] = useState('')
   useEffect(() => setError(''), [open, form])
+  const entries = useFxEntries(open, row)
   const submit = (kind: PostKind) => {
     const buyError = bankSelectionError(form.bRecCoCode, form.bHouseBank, form.bAccountId, buy.choices, buy.loading, row?.setFxBuy?.acc === '01')
     const sellError = form.remit ? '' : bankSelectionError(form.sPayCoCode, form.sHouseBank, form.sAccountId, sell.choices, sell.loading, row?.setFxSell?.acc === '01')
@@ -467,7 +440,7 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.bDoc} />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.bDoc || entries.entries?.buy?.document || ''} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
@@ -508,7 +481,7 @@ export function FxPostModal({
           <input type="checkbox" disabled readOnly checked={false} /> Purpose Code
         </label>
       </div>
-      <AccountingTable title="Accounting Details (Buy)" columns={ACCOUNTING_COLUMNS} posted={!!form.bDoc} />
+      <FxAccountingTable title="Accounting Details (Buy)" state={entries} side="buy" />
       <div className="fbox">
         <div className="fbox-title">Sell Currency</div>
         <div className="form-grid">
@@ -518,7 +491,7 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.sDoc} />
+            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.sDoc || entries.entries?.sell?.document || ''} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
@@ -559,7 +532,7 @@ export function FxPostModal({
           Remit to You
         </label>
       </div>
-      <AccountingTable title="Accounting Details (Sell)" columns={ACCOUNTING_COLUMNS} posted={!!form.sDoc} />
+      <FxAccountingTable title="Accounting Details (Sell)" state={entries} side="sell" />
       {error ? <div className="note-box" role="alert">{error}</div> : null}
       <div className="note-box">
         Select each side's house bank and account for its company code. Payment instruction IDs are maintained separately.

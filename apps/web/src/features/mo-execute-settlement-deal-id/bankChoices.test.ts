@@ -49,6 +49,12 @@ describe('manual settlement bank selection', () => {
     match(bankSelectionError('SG03', 'CHAUS', 'CHA00', { ...choices, accountError: 'Unavailable' }, false), /Unavailable/)
   })
 
+  it('does not block a required bank on a company that has no house bank accounts', () => {
+    strictEqual(bankSelectionError('IN11', '', '', EMPTY_BANK_CHOICES, false, true), '')
+    match(bankSelectionError('IN11', '', '', EMPTY_BANK_CHOICES, true, true), /both/)
+    match(bankSelectionError('IN11', '', '', { ...EMPTY_BANK_CHOICES, accountError: 'Unavailable' }, false, true), /Unavailable|both/)
+  })
+
   it('scopes both OData reads and preserves accounts when BP bank details fail', async () => {
     const calls: unknown[] = []
     const choices = await loadBankChoices('SG03', '100', undefined, {

@@ -125,12 +125,24 @@ export function AssignDealModal({
       setFormError('Enter a Deal ID before assigning.')
       return
     }
+    if (!soPoDate) {
+      setFormError('Enter the SO/PO Date before assigning.')
+      return
+    }
+    if (!proposedInvDate) {
+      setFormError('Enter the Proposed Inv Date before assigning.')
+      return
+    }
     if (!invCommodity.trim()) {
       setFormError('Enter an Inv Commodity before assigning.')
       return
     }
     if (!incoTerms) {
       setFormError('Select Inco Terms before assigning.')
+      return
+    }
+    if (!exceptionNotes.trim()) {
+      setFormError('Enter the Exception Notes before assigning.')
       return
     }
     const target = findDeal(deals, trimmed)
@@ -324,11 +336,15 @@ export function AssignDealModal({
               <div className="section-head">Invoice Details</div>
               <div className="section-body field-grid">
                 <div className="field">
-                  <label htmlFor="adSoPoDate">SO/PO Date</label>
+                  <label htmlFor="adSoPoDate">
+                    SO/PO Date<span className="req">*</span>
+                  </label>
                   <DateField id="adSoPoDate" iso={soPoDate} onChange={setSoPoDate} />
                 </div>
                 <div className="field">
-                  <label htmlFor="adProposedInvDate">Proposed Inv Date</label>
+                  <label htmlFor="adProposedInvDate">
+                    Proposed Inv Date<span className="req">*</span>
+                  </label>
                   <DateField id="adProposedInvDate" iso={proposedInvDate} onChange={setProposedInvDate} />
                 </div>
                 <div className="field">
@@ -363,7 +379,9 @@ export function AssignDealModal({
             <div className="section-head">Exception Notes</div>
             <div className="section-body field-grid single">
               <div className="field">
-                <label htmlFor="adExceptionNotes">Notes</label>
+                <label htmlFor="adExceptionNotes">
+                  Notes<span className="req">*</span>
+                </label>
                 <input
                   type="text"
                   id="adExceptionNotes"

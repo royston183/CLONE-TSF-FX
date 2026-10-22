@@ -4,7 +4,10 @@ import { ACTION_WAITING, INVOICE_WAITING, LEGS_STILL_WAITING, gateOutcome, legsW
 import { DEAL_LIBRARY, INITIAL_DOC_COUNTER } from './fixtures.ts'
 import { fiscalYear, fmtAmt, fmtMoney, fmtRate } from './format.ts'
 import {
+  NOT_INITIATED,
+  NO_SETTLEMENT_HERE,
   accountingCompleted,
+  accountingRefusal,
   allFxPosted,
   allInvPosted,
   canPostTradeInvoice,
@@ -16,7 +19,6 @@ import {
   pendingPostAll,
   postAllConfirm,
   postFxDeal,
-  NOT_SETTLED,
   fxPostingPlan,
   invPostingPlan,
   postingAction,
@@ -32,6 +34,13 @@ const fresh = (): Deal => structuredClone(DEAL_LIBRARY['TSF-9081']!)
 const initiated = (): Deal => initiateSettlement(fresh()).deal
 /** Every leg settled on MO (ZSGTSFR060), which BO posting needs first. */
 const settled = (d: Deal): Deal => ({ ...d, top: d.top.map((r) => ({ ...r, settled: true })), inv: d.inv.map((r) => ({ ...r, setCheck: true })) })
+/** Execution complete (21) with every transaction at TXN_STATUS 07, which BO's FX and invoice posting need. */
+const executed = (): Deal => {
+  const d = settled(initiated())
+  return { ...d, status: 21, statusCode: '21', top: d.top.map((r) => ({ ...r, txnStatus: '07' })) }
+}
+/** All six trade legs settled on MO (ZEXE_CO). */
+const sixDone = (d: Deal): Deal => ({ ...d, inv: [...d.inv, ...d.inv].slice(0, 6).map((r) => ({ ...r, exeCo: true })) })
 const fxPosted = (): Deal => postFxDeal(settled(initiated()), docCounter(INITIAL_DOC_COUNTER)).deal
 const allPosted = (): Deal => postAllConfirm(fxPosted(), docCounter(1900020001)).deal
 
@@ -319,7 +328,9 @@ describe('api (SAP header by key, legs and actions waiting)', () => {
   it('maps a TrmFxApp row joined to its FxTransaction as an FX leg; documents and DSS deal have no source', () => {
     const fx = { CompanyCode: 'SG03', FinancialTransaction: '3000000000005', ProductType: '12B', TransactionType: '619', Partner: '4', BuyCurrency: 'USD', SellCurrency: 'INR', BuyAmount: '1000', SellAmount: '-83000', ForwardRate: '83' }
     const app = { CompanyCode: 'SG03', FinancialTransaction: '3000000000005', ZtsfDealType: 'D1' }
-    deepStrictEqual(toLeg({ fx, app }), {
+    const { seq, settled, txnStatus, tradeDate, valueDate, txnType, partner, spot, swap, profitCenter, busArea, ndfRate, cashAmt, cashCurr, ...core } = toLeg({ fx, app })
+    deepStrictEqual([seq, settled, txnStatus, txnType, partner], ['', false, '', '619', '4'])
+    deepStrictEqual(core, {
       entity: 'SG03', dealType: 'D1', rfha: '3000000000005', buyCurr: 'USD', buyAmt: 1000, sellCurr: 'INR', sellAmt: 83000, rate: 83,
       status: 'Confirmed', doc1: '', doc2: '', dssDeal: '', sgsart: '12B',
     })

@@ -53,9 +53,14 @@ export function changeFxBankField<K extends keyof FxPostForm>(form: FxPostForm, 
   return { ...form, [key]: value }
 }
 
-/** Empty banks are valid for clearing/BP routes; a selected bank always needs a real account in its company. */
+/**
+ * Empty banks are valid for clearing/BP routes; a selected bank always needs a real account in its company. A required bank
+ * is only enforced while the company has accounts to pick from: SAP holds no house bank for some companies (e.g. IN11), and
+ * blocking Settlement Complete on a field that has no options would make the leg impossible to settle.
+ */
 export function bankSelectionError(company: string, houseBank: string, accountId: string, choices: BankChoices, loading: boolean, required = false): string {
   if (!houseBank && !accountId && !required) return ''
+  if (!houseBank && !accountId && company && !loading && !choices.accountError && !choices.accounts.length) return ''
   if (!company) return 'Select a company code before selecting its bank account.'
   if (!houseBank || !accountId) return 'Select both a house bank and an account ID.'
   if (loading) return 'Bank accounts are still loading. Try again once they are available.'

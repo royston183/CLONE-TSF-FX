@@ -67,6 +67,12 @@ export function deriveNdfSpotType(pay: readonly FxRow[], companies: readonly FxR
   return ''
 }
 
+/** The companies TSF_PAY routes an NDF spot to for these currencies, as the hint of a refused company. */
+export function configuredCompanies(pay: readonly FxRow[], companies: readonly FxRow[], currencies: readonly string[]): string {
+  const found = companies.map((r) => txt(r, 'ZBUKRS')).filter((code) => code && deriveNdfSpotType(pay, companies, code, currencies))
+  return found.length ? `Select ${found.join(' or ')} (configured in TSF_PAY).` : 'No company is configured in TSF_PAY for these currencies.'
+}
+
 type Source = { fx: FxTransaction & Record<string, unknown>; app: Record<string, unknown> | undefined }
 export type NdfSpotPorts = {
   source: (key: NdfSpotRequest['source']) => Promise<Source>
@@ -116,7 +122,7 @@ async function validatedSpotType(req: NdfSpotRequest, { fx, app }: Source, deps:
     ? [fx.FollowCurrency || fx.SellCurrency || '', fx.LeadCurrency || fx.BuyCurrency || '']
     : [fx.BuyCurrency || '']
   const type = deriveNdfSpotType(pay, companies, req.bukrs, currencies)
-  if (!type) throw new Error(`Model ${model} has no NDF spot routing for company ${req.bukrs} and ${currencies.filter(Boolean).join(' / ')}. Select the company configured in TSF_PAY.`)
+  if (!type) throw new Error(`Model ${model} has no NDF spot routing for company ${req.bukrs} and ${currencies.filter(Boolean).join(' / ')}. ${configuredCompanies(pay, companies, currencies)}`)
   const mapping = setFx.filter((r) => txt(r, 'ZD_MAP') === type && txt(r, 'ZBUKRS') === req.bukrs)
   const buyCurrency = req.bs1 === 'Buy' ? req.curr1 : req.curr2
   const sellCurrency = req.bs1 === 'Buy' ? req.curr2 : req.curr1

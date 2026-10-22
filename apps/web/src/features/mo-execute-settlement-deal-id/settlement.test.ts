@@ -189,8 +189,8 @@ describe('trade leg Settlement Complete (SET_EXE -> set_complete / set_update)',
     ok((await completeInvoiceLeg(at('20'), inv[0]!, inv, fxLegs(), invForm, deps)).ok)
     const r = rows.get('7000000032/1')
     strictEqual(r?.['ZEXE_CO'], 'X')
-    // No FI document, message or posting date: those belong to the posting step.
-    deepStrictEqual([r?.['ZBELNR'], r?.['ZMSG'], r?.['ZP_DATE']], [undefined, undefined, undefined])
+    // No FI document or message: those belong to the posting step. ZP_DATE is NOT NULL in the cloud table, so a new row takes the due date (as Initiate does).
+    deepStrictEqual([r?.['ZBELNR'], r?.['ZMSG'], r?.['ZP_DATE']], [undefined, undefined, '20261109'])
     // But not a bare row: the description, type and amounts BO: Post Accounting Entries reads are there.
     deepStrictEqual([r?.['ZT_TYPE'], r?.['ZSET_DESC'], r?.['ZAMT'], r?.['ZTRF_TYPE']], [inv[0]!.leg, inv[0]!.trfDesc, inv[0]!.invAmt, inv[0]!.trfType])
   })

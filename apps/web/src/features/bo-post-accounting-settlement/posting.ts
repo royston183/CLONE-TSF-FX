@@ -23,9 +23,6 @@ import { messageOf } from '../../shared/fx/master-contract.ts'
 import { updateAppStrRecord, type AppStrFields } from '../fx-blotter/appStr.ts'
 import type { FxLeg } from './types.ts'
 
-/** Off by default: the screen keeps its browser-only demo posting until this is switched on (VITE_BO_LIVE_POSTING=true). */
-export const LIVE_POSTING = (import.meta as { env?: Record<string, string | undefined> }).env?.['VITE_BO_LIVE_POSTING'] === 'true'
-
 const flowApi = service('trmflowpost')
 const fiApi = service('fiaccdoc')
 const tradePositionApi = service('localdb')('tsf-trade-position')
