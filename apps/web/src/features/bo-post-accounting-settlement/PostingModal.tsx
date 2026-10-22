@@ -1,6 +1,6 @@
 import { fmtAmt, fmtMoney } from './format.ts'
-import { invoiceEntry, isInvPosted, type PostingAction } from './logic.ts'
-import { EntryTable, ModalShell, SECONDARY_BTN, StaticField } from './modal.tsx'
+import { isInvPosted, type PostingAction } from './logic.ts'
+import { ModalShell, SECONDARY_BTN, StaticField } from './modal.tsx'
 import type { InvLeg } from './types.ts'
 
 const DASH = '–'
@@ -12,12 +12,9 @@ export function PostingModal({
   seq,
   onClose,
   onAction,
-  live = false,
 }: {
   open: boolean
   leg: InvLeg | null
-  /** Live posting: the lines are the leg's TRD_POS posting keys / accounts, not the illustrative entry. */
-  live?: boolean
   /** 1-based position of the leg in the grid. */
   seq: number
   onClose: () => void
@@ -92,13 +89,7 @@ export function PostingModal({
           </div>
           <div className="posting-section">
             <div className="section-label">Accounting Entry</div>
-            {live ? (
-              <p className="doc-link-pending">The debit / credit lines are the leg's posting keys and accounts stored on MO: Execute Settlement for Deal ID.</p>
-            ) : (
-              <div className="posting-accounting-table">
-                <EntryTable lines={invoiceEntry(leg)} />
-              </div>
-            )}
+            <p className="doc-link-pending">The debit / credit lines are the leg's posting keys and accounts stored on MO: Execute Settlement for Deal ID.</p>
           </div>
         </>
       )}

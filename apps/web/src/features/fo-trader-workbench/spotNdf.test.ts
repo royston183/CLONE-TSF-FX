@@ -160,6 +160,8 @@ describe('ABAP NDF / DNDF spot routing', () => {
     const { deps, writes } = fakePorts()
     const result = await createNdfSpot(req, deps)
     ok(!result.ok && result.message.includes('no NDF spot routing'))
+    // The refusal names the company TSF_PAY does route to, so the user is not left guessing.
+    ok(!result.ok && /Select \w+( or \w+)* \(configured in TSF_PAY\)/.test(result.message))
     strictEqual(writes.length, 0)
   })
 
