@@ -5,7 +5,7 @@ import { getDb } from '../sqlite/db.ts'
 import { dealMetadataRepository } from '../sqlite/repositories/deal-metadata.ts'
 import { DdicInputError, ddicRepository } from '../sqlite/repositories/ddic-table.ts'
 import { DAYLOCK_BLOTTER, DAYLOCK_COLUMNS, DAYLOCK_CO_AREA } from '../sqlite/repositories/daylock-columns.ts'
-import { CURPAIR_CLIENT, CURPAIR_COLUMNS, FIELDS_CLIENT, FIELDS_COLUMNS, LIMIT_CLIENT, LIM_MAN_COLUMNS } from '../sqlite/repositories/limit-columns.ts'
+import { CURPAIR_COLUMNS, FIELDS_COLUMNS, LIM_MAN_COLUMNS } from '../sqlite/repositories/limit-columns.ts'
 import { DMS_TYP_COLUMNS } from '../sqlite/repositories/dms-typ-columns.ts'
 import { DEALDMS_COLUMNS, DEALDMS_DATES, DEALDMS_TIMES } from '../sqlite/repositories/dealdms-columns.ts'
 import { FX_POST_DOC_CLIENT, FX_POST_DOC_COLUMNS } from '../sqlite/repositories/fx-post-doc-columns.ts'
@@ -15,7 +15,7 @@ import type { DealMetadataFields } from '../sqlite/schema.ts'
 import { requireSession } from './auth.ts'
 
 /**
- * Business-specific persistence routes. TRD_POS, TRD_ACC, DEALDMS, DMS_TYP and DAYLOCK use cloud middleware;
+ * Business-specific persistence routes. TRD_POS, TRD_ACC, DEALDMS, DMS_TYP, DAYLOCK, LIM_MAN, CURPAIR and FIELDS use cloud middleware;
  * their /api/localdb paths remain compatible with existing clients. Other resources use SQLite.
  * No route accepts a table name or SQL. Resource names and allowed fields are fixed here;
  * SQLite repositories use prepared statements.
@@ -396,9 +396,9 @@ export async function localdbRoutes(app: FastifyInstance, services: Map<string, 
     }),
   )
 
-  // ZSGTSFTR_LIM_MAN — the FX limits of the Limit Management dashboard (tcode ZSGTSFP021), in the local SQLite database.
+  // ZSGTSFTR_LIM_MAN — the FX limits of the Limit Management dashboard (tcode ZSGTSFP021), middleware resource limMan.
   // Keyed by year + currency pair + validity start + end (YYYYMMDD). The created / changed stamps are the gateway's.
-  const limMan = () => ddicRepository(getDb(), { table: 'zsgtsftr_lim_man', client: LIMIT_CLIENT, columns: LIM_MAN_COLUMNS })
+  const limMan = cloudTable(services.get('middleware'), 'limMan', LIM_MAN_COLUMNS)
   const limKey = (req: FastifyRequest) => {
     const p = req.params as { year: string; pair: string; start: string; end: string }
     const date = (v: string, name: string) => {
@@ -417,30 +417,30 @@ export async function localdbRoutes(app: FastifyInstance, services: Map<string, 
 
   app.get(
     '/api/localdb/tsf-limit',
-    guarded((req) => {
+    guarded(async (req) => {
       const q = req.query as { ZYEAR?: unknown; ZCURR_PAIR?: unknown }
       const filter = [['ZYEAR', q.ZYEAR], ['ZCURR_PAIR', q.ZCURR_PAIR]].find(([, v]) => v !== undefined)
       if (filter && typeof filter[1] !== 'string') throw new BadRequest(`${filter[0]} must be a single value.`)
-      return { value: limMan().list(filter ? { column: filter[0] as string, value: filter[1] as string } : undefined) }
+      return { value: await limMan.list(filter ? { column: filter[0] as string, value: filter[1] as string } : undefined) }
     }),
   )
 
   app.put(
     '/api/localdb/tsf-limit/:year/:pair/:start/:end',
-    guarded((req, reply) => {
+    guarded(async (req, reply) => {
       const user = requireSession(req, reply)?.username ?? ''
       const key = limKey(req)
       const body = jsonObject(req.body)
       for (const stamp of ['ZCREATED_BY', 'ZCREATED_DATE', 'ZCREATED_TIME', 'ZCHANGED_BY', 'ZCHANGED_DATE', 'ZCHANGED_TIME']) delete body[stamp]
       const { date, time } = sapStamp()
-      const existing = limMan().get(key)
+      const existing = await limMan.get(key)
       const stamps = {
         ...(existing ? {} : { ZCREATED_BY: user.slice(0, 12), ZCREATED_DATE: date, ZCREATED_TIME: time }),
         ZCHANGED_BY: user.slice(0, 12),
         ZCHANGED_DATE: date,
         ZCHANGED_TIME: time,
       }
-      const row = limMan().upsert(key, { ...body, ...stamps })
+      const row = await limMan.upsert(key, { ...body, ...stamps }, existing)
       return reply.code(existing ? 200 : 201).send(row)
     }),
   )
@@ -448,13 +448,13 @@ export async function localdbRoutes(app: FastifyInstance, services: Map<string, 
   // ZSGTRMTR_CURPAIR — the currency pairs offered for trading (read-only here; the Limit Management dropdown lists those with a USD leg).
   app.get(
     '/api/localdb/tsf-currency-pair',
-    guarded(() => ({ value: ddicRepository(getDb(), { table: 'zsgtrmtr_curpair', client: CURPAIR_CLIENT, clientColumn: 'mandt', columns: CURPAIR_COLUMNS }).list() })),
+    guarded(async () => ({ value: await cloudTable(services.get('middleware'), 'curpair', CURPAIR_COLUMNS).list() })),
   )
 
   // ZSGTRMTR_FIELDS — the field names (ZFIELD / ZNAME) that configure the Deal ID Details list of the Limit Management dashboard. Read-only here.
   app.get(
     '/api/localdb/tsf-field-name',
-    guarded(() => ({ value: ddicRepository(getDb(), { table: 'zsgtrmtr_fields', client: FIELDS_CLIENT, columns: FIELDS_COLUMNS }).list() })),
+    guarded(async () => ({ value: await cloudTable(services.get('middleware'), 'fields', FIELDS_COLUMNS).list() })),
   )
 
   // ZSGTSFTR_DMS_TYP — DMS document types per category, keyed by ZDMS_CAT + ZDMS_TYPE. Read by the Deal ID

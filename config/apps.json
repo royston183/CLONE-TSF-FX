@@ -271,7 +271,7 @@
         "middleware"
       ],
       "legacy": "legacy/limit-management-dashboard.html",
-      "note": "Converted from the supplied dashboard. Limits (ZSGTSFTR_LIM_MAN) and currency pairs (ZSGTRMTR_CURPAIR) are local SQLite tables behind /api/localdb/tsf-limit and /tsf-currency-pair (migrations 011 / 012; the LIM_MAN DDIC export was empty, so its key and lengths are assumed). Utilised amount is ZUTL_AMT; the bank-wise summary reads the real D1 Deal IDs. The approval e-mail is a preview only."
+      "note": "Converted from the supplied dashboard. Limits (ZSGTSFTR_LIM_MAN), currency pairs (ZSGTRMTR_CURPAIR) and field names (ZSGTRMTR_FIELDS) use middleware resources limMan, curpair and fields through the existing /api/localdb compatibility routes. Limit writes use the business key ZYEAR + ZCURR_PAIR + ZLIMIT_STARTDT + ZLIMIT_MATDT and gateway audit stamps. Utilised amount is ZUTL_AMT; the bank-wise summary reads the real D1 Deal IDs. The approval e-mail is a preview only."
     },
     {
       "code": "ZSGTSFP001",

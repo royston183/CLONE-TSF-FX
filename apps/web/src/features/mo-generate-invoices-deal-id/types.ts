@@ -62,6 +62,8 @@ export type InvRow = {
   amtUsd: number
   planned: number
   invNo: string
+  /** ZINV_REF, copied from INV_REF-ZINV_TRM_NO: the trade invoice reference, separate from ZINV_NO. */
+  invTrmRef: string
   pc: string
   /** cinv_type is set (the BL already carries an invoice type): the row's cells are disabled. */
   locked: boolean

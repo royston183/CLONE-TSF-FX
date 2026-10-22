@@ -1,6 +1,6 @@
 import { apiFetch, list, odataString, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
-import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
+import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { regionText } from '../../shared/fx/deal-id.ts'
 import { normalisePair, splitDeal } from './logic.ts'
@@ -9,7 +9,8 @@ import type { LimitDeal, RawLimit } from './types.ts'
 /*
  * Limit Management data layer.
  *
- * LIMITS and CURRENCY PAIRS live in the gateway's local SQLite database (migrations 011 / 012), spoken in SAP's field names:
+ * LIMITS and CURRENCY PAIRS use middleware resources limMan / curpair through the gateway's compatibility routes,
+ * spoken in SAP's field names. The gateway maps lowercase cloud columns and maintains limit audit stamps:
  *   ZSGTSFTR_LIM_MAN   /api/localdb/tsf-limit            ZYEAR, ZCURR_PAIR, ZLIMIT_STARTDT, ZLIMIT_MATDT (key), ZCURR, ZINI_AAMT,
  *                                                        ZAD_AAMT, ZUNAPROV_AMT, ZUTL_AMT, ZLIM_SET / _APP / _REJ / _ADDLIM
  *   ZSGTRMTR_CURPAIR   /api/localdb/tsf-currency-pair    F_CURR, T_CURR, PAIR (pairs where one leg is USD)
@@ -27,7 +28,7 @@ export type Loaded<T> = { rows: T[]; unavailable: string | null }
 
 const failure = (what: string, error: unknown) => `${what}: ${error instanceof Error ? error.message : String(error)}`
 /** SAP DATS (YYYYMMDD) -> ISO, for the screen's date handling. */
-const isoOf = (dats: string): string => (/^d{8}$/.test(dats) ? `${dats.slice(0, 4)}-${dats.slice(4, 6)}-${dats.slice(6, 8)}` : dats.slice(0, 10))
+const isoOf = (dats: string): string => (/^\d{8}$/.test(dats) ? `${dats.slice(0, 4)}-${dats.slice(4, 6)}-${dats.slice(6, 8)}` : dats.slice(0, 10))
 const datsOf = (iso: string): string => iso.replace(/-/g, '')
 
 type LimitRow = Record<string, string | number | null | undefined>

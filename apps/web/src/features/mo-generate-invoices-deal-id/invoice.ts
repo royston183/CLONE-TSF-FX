@@ -493,6 +493,7 @@ function toInvRow(w: Work, dealId: string): InvRow {
     amtUsd: n(r, 'ZAMT_USD'),
     planned: w.invAmt,
     invNo: s('ZINV_NO'),
+    invTrmRef: s('ZINV_REF'),
     pc: s('ZPC'),
     locked: w.cinvType !== '',
     curr: s('ZCURR'),

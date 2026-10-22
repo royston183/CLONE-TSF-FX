@@ -129,19 +129,17 @@ export default function ViewAllTransactions() {
       {notice && <p className="tsf-message" role="status">{notice}</p>}
       {dirty && <p className="tsf-message" role="status">Selection changed. Run the report to update these results.</p>}
 
-      <div className="tsf-table-toolbar">
+      <div className="tsf-filters dump-toolbar">
         <label className="tsf-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search all columns" placeholder="Search all columns…" value={filters.search} onChange={(e) => filter('search', e.target.value)} /></label>
+        <label className="dump-type-filter">Type<select aria-label="Type" value={filters.type} onChange={(e) => filter('type', e.target.value)}><option value="">All</option><option>Internal</option><option>External</option><option value="TSF-linked">TSF-linked</option></select></label>
+        <label className="dump-status-filter">Transaction Status<select aria-label="Transaction Status" value={filters.status} onChange={(e) => filter('status', e.target.value)}><option value="">All statuses</option>{choices('statusCode').map((code) => <option key={code} value={code}>{code} · {rows.find((r) => r.statusCode === code)?.status || code}</option>)}</select></label>
+        <div className="tsf-filter-actions"><button className="btn btn-secondary" type="button" aria-expanded={advanced} aria-controls="dump-advanced" onClick={() => setAdvanced((v) => !v)}>{advanced ? 'Fewer filters' : 'More filters'}</button><button className="btn btn-secondary" type="button" onClick={() => { setFilters({ ...EMPTY_FILTERS }); setPage(1); setSelected(null) }}>Clear filters</button></div>
         <div className="tsf-table-actions">
           <button className="btn btn-primary" type="button" disabled={!selectedRow || loading || dirty} onClick={() => selectedRow && setDetail(selectedRow)}><Eye size={15} />View Transaction</button>
           <button className="btn btn-secondary" type="button" onClick={downloadCsv} disabled={exportDisabled}><Download size={15} />Download CSV</button>
           <button className="btn btn-secondary" type="button" onClick={() => void downloadExcel()} disabled={exportDisabled}>{exporting ? 'Exporting…' : 'Export Excel'}</button>
           <button className="btn btn-secondary" type="button" onClick={() => setColumnsOpen(true)}><Columns3 size={15} />Columns</button>
         </div>
-      </div>
-      <div className="tsf-filters dump-quick-filters">
-        <label>Type<select aria-label="Type" value={filters.type} onChange={(e) => filter('type', e.target.value)}><option value="">All</option><option>Internal</option><option>External</option><option value="TSF-linked">TSF-linked</option></select></label>
-        <label>Transaction Status<select aria-label="Transaction Status" value={filters.status} onChange={(e) => filter('status', e.target.value)}><option value="">All statuses</option>{choices('statusCode').map((code) => <option key={code} value={code}>{code} · {rows.find((r) => r.statusCode === code)?.status || code}</option>)}</select></label>
-        <div className="tsf-filter-actions"><button className="btn btn-secondary" type="button" aria-expanded={advanced} aria-controls="dump-advanced" onClick={() => setAdvanced((v) => !v)}>{advanced ? 'Fewer filters' : 'More filters'}</button><button className="btn btn-secondary" type="button" onClick={() => { setFilters({ ...EMPTY_FILTERS }); setPage(1); setSelected(null) }}>Clear filters</button></div>
       </div>
       {advanced && <div className="tsf-filters dump-advanced" id="dump-advanced">
         <label>Trader<select aria-label="Trader" value={filters.trader} onChange={(e) => filter('trader', e.target.value)}><option value="">All traders</option>{traderChoices.map((t) => <option key={t.code} value={t.code}>{t.code} · {t.name}</option>)}</select></label>

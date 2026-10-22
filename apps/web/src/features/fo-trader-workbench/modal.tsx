@@ -7,7 +7,7 @@ import { useDialogFocus, usePortalFocus } from './focus.ts'
 /** Every popup the workbench opens. They stack: the newest sits on top and Escape closes it. */
 export type PopupSpec =
   | { kind: 'deal'; dealId: string; selectedRfha: string | null }
-  | { kind: 'txn'; rfha: string; dealId: string }
+  | { kind: 'txn'; rfha: string; bukrs: string; dealId: string }
   | { kind: 'rate'; ctx: ActionCtx }
   | { kind: 'spot'; ctx: ActionCtx; variant: SpotVariant; sfhaart: string; rate: number }
   | { kind: 'ssSpot'; ctx: ActionCtx; sfhaart: string; rate: number }
