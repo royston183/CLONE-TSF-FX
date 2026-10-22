@@ -52,7 +52,7 @@ export const defaultTradeOf = (ctx: Pick<SpotContext, 'valueDate'>): Date => def
 export type SettlementSpotResult = { ok: true; transaction: string; message: string } | { ok: false; message: string }
 
 /** Books the spot. SAP's booking is real once it returns a number, so a failed follow-up write is reported as such, never as "not created". */
-export async function bookSettlementSpot(row: SpotRow, input: { partner: string; tradeDate: Date; rate: number }, ports: SpotPorts = spotPorts): Promise<SettlementSpotResult> {
+export async function bookSettlementSpot(row: SpotRow, input: { partner: string; tradeDate: Date; rate: number; valueDate?: Date }, ports: SpotPorts = spotPorts): Promise<SettlementSpotResult> {
   const out = await createAdditionalSpot(ports, row, input)
   if (out.stage === 'refused') return { ok: false, message: out.messages.join(' ') }
   if (out.persist.appStr === 'done' && out.persist.inSpot === 'done') {

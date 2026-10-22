@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { CompanyField, HouseBankFields, PartnerBankField, useBankChoices } from './BankFields.tsx'
+import { InvoiceAccountingTable } from './AccountingPreview.tsx'
 import { bankSelectionError, type BankCompany } from './bankChoices.ts'
 import { formatAmount } from './format.ts'
-import { plAmount } from './logic.ts'
+import { invBankRequired, plAmount } from './logic.ts'
 import type { DiffRow } from './invoiceDifference.ts'
 import { ModalFrame } from './modal.tsx'
 import type { FxDeal, FxPostForm, Headsup, InvPostForm, TradeInvoice } from './types.ts'
@@ -18,7 +19,6 @@ const EmptyRow = ({ span, text }: { span: number; text: string }) => (
 
 /** The ALV "Accounting Details" / "Accounting Entry" grid of the SAP pop-up. The entries are BO's (ZSGTSFR081), so MO sees the columns and, until BO posts, no rows. */
 const ACCOUNTING_COLUMNS = ['D', 'CoCode', 'Document Date', 'Posting Date', 'G/L Acct', 'GL Description', 'Payment Amt', 'Pay Curr', 'Profit Center', 'Bus. Area']
-const INVOICE_ACCOUNTING_COLUMNS = ['D', 'Posting Date', 'Document Date', 'G/L Acc', 'GL Descrip', 'Vendor', 'Profit Ctr', 'Bus. Area', 'House Bank', 'Acct ID', 'Invoice Am', 'Invoice Cu', 'Payment Am', 'Pay Curr', 'Ex Rate', 'Account', 'Account Type']
 
 function AccountingTable({ title, columns, posted }: { title: string; columns: readonly string[]; posted: boolean }) {
   return (
@@ -580,8 +580,13 @@ export function InvPostModal({
   onField,
   onAction,
   companyOf = () => '',
+  rows = [],
+  dealId = '',
 }: Base & {
   row: TradeInvoice | undefined
+  /** Every invoice leg, to find a Payment leg's paired Receipt leg. */
+  rows?: readonly TradeInvoice[]
+  dealId?: string
   legLabel: string
   form: InvPostForm
   onField: <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) => void
@@ -599,9 +604,10 @@ export function InvPostModal({
   const receipt = row?.recPay === 'Receipt'
   const senderLocked = receipt
   const receiverLocked = receipt || !!row?.fiDoc
+  const required = invBankRequired(row, rows)
   const submit = (kind: Exclude<PostKind, 'print'>) => {
-    const senderError = senderLocked ? '' : bankSelectionError(senderCompany, form.senderHouseBank, form.senderAccountId, sender.choices, sender.loading)
-    const receiverError = receiverLocked ? '' : bankSelectionError(receiverCompany, form.receiverHouseBank, form.receiverAccountId, receiver.choices, receiver.loading)
+    const senderError = senderLocked ? '' : bankSelectionError(senderCompany, form.senderHouseBank, form.senderAccountId, sender.choices, sender.loading, required.sender)
+    const receiverError = receiverLocked ? '' : bankSelectionError(receiverCompany, form.receiverHouseBank, form.receiverAccountId, receiver.choices, receiver.loading, required.receiver)
     if (senderError || receiverError) { setError(`${senderError ? 'Sender' : 'Receiver'}: ${senderError || receiverError}`); return }
     setError('')
     onAction(kind)
@@ -706,12 +712,12 @@ export function InvPostModal({
             <label>Sender / Payer {senderCompany ? `(${senderCompany})` : ''}</label>
             <input type="text" disabled readOnly value={form.sender} />
           </div>
-          <HouseBankFields id="inv-sender" company={senderCompany} houseBank={form.senderHouseBank} accountId={form.senderAccountId} choices={sender.choices} loading={sender.loading} disabled={senderLocked} onBank={(v) => onField('senderHouseBank', v)} onAccount={(v) => onField('senderAccountId', v)} />
+          <HouseBankFields id="inv-sender" company={senderCompany} houseBank={form.senderHouseBank} accountId={form.senderAccountId} choices={sender.choices} loading={sender.loading} disabled={senderLocked} required={required.sender} onBank={(v) => onField('senderHouseBank', v)} onAccount={(v) => onField('senderAccountId', v)} />
           <div className="ffield bank-entity">
             <label>Receiver / Payee {receiverCompany ? `(${receiverCompany})` : ''}</label>
             <input type="text" disabled readOnly value={form.receiver} />
           </div>
-          <HouseBankFields id="inv-receiver" company={receiverCompany} houseBank={form.receiverHouseBank} accountId={form.receiverAccountId} choices={receiver.choices} loading={receiver.loading} disabled={receiverLocked} onBank={(v) => onField('receiverHouseBank', v)} onAccount={(v) => onField('receiverAccountId', v)} />
+          <HouseBankFields id="inv-receiver" company={receiverCompany} houseBank={form.receiverHouseBank} accountId={form.receiverAccountId} choices={receiver.choices} loading={receiver.loading} disabled={receiverLocked} required={required.receiver} onBank={(v) => onField('receiverHouseBank', v)} onAccount={(v) => onField('receiverAccountId', v)} />
           <div className="ffield">
             <label>Partner ID</label>
             <input type="text" disabled readOnly value={form.partnerId} />
@@ -724,7 +730,7 @@ export function InvPostModal({
           ) : null}
         </div>
       </div>
-      <AccountingTable title="Accounting Entry" columns={INVOICE_ACCOUNTING_COLUMNS} posted={!!form.fiDoc} />
+      <InvoiceAccountingTable open={open} row={row} form={form} dealId={dealId} />
       <div className="ffield" style={{ marginTop: '10px' }}>
         <label>Doc Msg</label>
         <textarea

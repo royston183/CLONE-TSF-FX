@@ -31,8 +31,8 @@ export function CompanyField({ id, label, value, companies, onChange }: { id: st
   </div>
 }
 
-export function HouseBankFields({ id, company, houseBank, accountId, choices, loading, disabled = false, onBank, onAccount }: {
-  id: string; company: string; houseBank: string; accountId: string; choices: BankChoices; loading: boolean; disabled?: boolean
+export function HouseBankFields({ id, company, houseBank, accountId, choices, loading, disabled = false, required = false, onBank, onAccount }: {
+  id: string; company: string; houseBank: string; accountId: string; choices: BankChoices; loading: boolean; disabled?: boolean; required?: boolean
   onBank: (value: string) => void; onAccount: (value: string) => void
 }) {
   const banks = [...new Map(choices.accounts.map((r) => [r.houseBank, r.bankName])).entries()]
@@ -41,7 +41,7 @@ export function HouseBankFields({ id, company, houseBank, accountId, choices, lo
   const locked = disabled || loading || !company || !!choices.accountError
   return <>
     <div className="ffield">
-      <label htmlFor={`${id}-house-bank`}>House Bank</label>
+      <label htmlFor={`${id}-house-bank`}>House Bank{required ? <span className="req">*</span> : null}</label>
       <select id={`${id}-house-bank`} value={houseBank} disabled={locked} onChange={(e) => onBank(e.target.value)}>
         <option value="">{loading ? 'Loading banks...' : 'Select house bank...'}</option>
         {houseBank && !banks.some(([bank]) => bank === houseBank) ? <option value={houseBank} disabled>{houseBank} · saved value</option> : null}
@@ -49,7 +49,7 @@ export function HouseBankFields({ id, company, houseBank, accountId, choices, lo
       </select>
     </div>
     <div className="ffield">
-      <label htmlFor={`${id}-account`}>Account ID</label>
+      <label htmlFor={`${id}-account`}>Account ID{required ? <span className="req">*</span> : null}</label>
       <select id={`${id}-account`} value={accountId} disabled={locked || !houseBank} onChange={(e) => onAccount(e.target.value)}>
         <option value="">Select account...</option>
         {accountId && !selected ? <option value={accountId} disabled>{accountId} · saved value</option> : null}

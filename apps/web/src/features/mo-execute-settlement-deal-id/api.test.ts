@@ -111,7 +111,7 @@ describe('FX legs from TrmFxApp + FxTransaction', () => {
       seq: '01', dealType: 'D1', dealTypeChip: 'chip-d1', rfha: '1', bukrs: 'SG03', txnType: '600', bp: '400000002', txnDate: '30-09-2026',
       valDate: '30-10-2026', entity: '', bs1: 'Buy', curr1: 'USD', amt1: 1000, bs2: 'Sell', curr2: 'INR', amt2: 83000,
       spot: '82.5000', rate: '83.0000', mcRefNo: '2000000005', status: 'MO: Match & Release for Settlement',
-      statusChip: 'chip-open', doc1: '', doc2: '', settled: false,
+      statusChip: 'chip-open', doc1: '', doc2: '', settled: false, txnStatus: '07', busArea: '', profitCenter: '',
       tsf: { bhbkid: '', bhktid: '', shbkid: '', shktid: '', bpayid: '', spayid: '', rbukrs: '', rpayid: '', pbukrs: '', ppayid: '' },
     })
     const done = toFxDeal({ fx: fx('1'), app: app('1', { ZtsfExeCo: true, ZtsfBhbkID: 'SCB01' }) })

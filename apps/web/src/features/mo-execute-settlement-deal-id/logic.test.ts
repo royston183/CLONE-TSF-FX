@@ -9,6 +9,7 @@ import {
   filterFxDeals,
   filterInvoices,
   fxPostDefaults,
+  invBankRequired,
   invPostDefaults,
   normalizeDealId,
   plAmount,
@@ -148,5 +149,27 @@ describe('invoice settlement pop-up', () => {
       [stored.senderHouseBank, stored.senderAccountId, stored.receiverHouseBank, stored.receiverAccountId],
       ['SCB01', 'USD01', 'HDF01', 'INR01'],
     )
+  })
+})
+
+describe('invBankRequired', () => {
+  const leg = (name: string, fiType: string, recPay: string, fiDoc = ''): TradeInvoice => ({ ...(seedTradeInvoices()[0] as TradeInvoice), leg: name, fiType, recPay, fiDoc })
+  const rows = [
+    leg('T3-P', '02', 'Payment'), leg('T3-S', '03', 'Receipt'),
+    leg('T2-P', '04', 'Payment'), leg('T2-S', '01', 'Receipt'),
+    leg('T1-P', '02', 'Payment'), leg('T1-S', '05', 'Receipt'),
+  ]
+  const of = (name: string) => invBankRequired(rows.find((r) => r.leg === name), rows)
+
+  it('requires the sender bank on a type 02 payment and the receiver bank when the paired receipt is 01', () => {
+    deepStrictEqual(of('T3-P'), { sender: true, receiver: false })
+    deepStrictEqual(of('T2-P'), { sender: false, receiver: true })
+    deepStrictEqual(of('T1-P'), { sender: true, receiver: false })
+  })
+
+  it('requires nothing on a receipt leg or a posted leg', () => {
+    deepStrictEqual(of('T2-S'), { sender: false, receiver: false })
+    deepStrictEqual(invBankRequired({ ...rows[0]!, fiDoc: '100001' }, rows), { sender: false, receiver: false })
+    deepStrictEqual(invBankRequired(undefined, rows), { sender: false, receiver: false })
   })
 })

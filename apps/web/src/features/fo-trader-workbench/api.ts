@@ -186,6 +186,13 @@ export function ndfFields(fx: { TransactionType?: string; ValueDate?: string | n
   return { ndfDate: date, ndfRef: view ? txt(view, 'NDF_REF') : '' }
 }
 
+/** A field FxTransaction only carries once SAP exposes it, under either spelling; '' while it does not. */
+const extra = (fx: object, ...names: string[]): string => {
+  const row = fx as Record<string, unknown>
+  for (const n of names) if (typeof row[n] === 'string' && row[n]) return (row[n] as string).trim()
+  return ''
+}
+
 /** One FxTransaction + its TrmFxApp row as a transaction of the workbench (a ZSGTSFCDS_FX row). */
 export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups(), view?: FxRow): Txn {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
@@ -221,6 +228,9 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     mcRef: app.ZtsfMcRefNo ?? '',
     cpair: lead && follow ? `${lead}/${follow}` : '',
     portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
+    prctr: extra(fx, 'ProfitCenter', 'Prctr'),
+    rbusa: extra(fx, 'BusinessArea', 'Rbusa'),
+    settled: app.ZtsfExeCo === true,
     seq: Number(app.ZtsfDealSq) || 1,
     // NdfFixingRate (ZFS_SD_TRMFX NdfFixing): the rate FTR holds once the deal is fixed.
     ndfRate: num((fx as { NdfFixingRate?: number | string }).NdfFixingRate ?? 0),

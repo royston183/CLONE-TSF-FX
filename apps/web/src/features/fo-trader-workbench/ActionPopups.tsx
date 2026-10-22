@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { NDF_FIXING_API_MISSING, TXN, fixNdf, fixNdfAvailable } from '../../shared/fx/ndf.ts'
+import { TXN, fixNdf } from '../../shared/fx/ndf.ts'
 import { Dropdown, DateField } from './controls.tsx'
 import { LOOKUPS } from './data.ts'
 import { loadPartners } from '../fo-additional-spot-booking/valueHelps.ts'
@@ -13,6 +13,7 @@ import { bookSpot, findDeal, findTxn, runExercise, runExpire, type Wb } from './
 import { dmyToIso, formatAmount, formatDMY, formatRate, isoToDMY, numStr, parseDMY, parseNum } from './format.ts'
 import {
   bpItemsForGroup,
+  blockedWriteReason,
   bpName,
   buildNdoSpot,
   buildNdfSpot,
@@ -33,7 +34,7 @@ import {
   txnTypeText,
   updateTxnStatus,
 } from './logic.ts'
-import { Fld, InlineMsg, ModalFrame, type FrameProps, type PopupSpec } from './modal.tsx'
+import { Fld, InlineMsg, ModalFrame, usePosting, type FrameProps, type PopupSpec } from './modal.tsx'
 import type { SpotDraft, Txn } from './types.ts'
 
 type Msg = { text: string; kind: 'error' | 'info' } | null
@@ -181,12 +182,13 @@ function SpotForm({
   )
 }
 
-const Buttons = ({ frame, label, onOk, okCls = 'btn-primary', disabled = false }: { frame: FrameProps; label: string; onOk: () => void; okCls?: string; disabled?: boolean }) => (
+const Buttons = ({ frame, label, onOk, okCls = 'btn-primary', disabled = false, reason = '' }: { frame: FrameProps; label: string; onOk: () => void; okCls?: string; disabled?: boolean; reason?: string }) => (
   <>
-    <button type="button" className="btn btn-secondary" onClick={frame.onClose}>
+    {reason ? <span className="hint" role="status">{reason}</span> : null}
+    <button type="button" className="btn btn-secondary" disabled={frame.busy} onClick={frame.onClose}>
       Cancel
     </button>
-    <button type="button" className={`btn ${okCls}`} disabled={disabled} onClick={onOk}>
+    <button type="button" className={`btn ${okCls}`} disabled={disabled || !!reason} onClick={onOk}>
       {label}
     </button>
   </>
@@ -242,7 +244,7 @@ export function RatePopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       title="Update Rate"
       sub={`Option ${txn.rfha} · ${txn.pc1 || ''} strike ${formatRate(txn.strike)}`}
       cls="sm-modal"
-      actions={<Buttons frame={frame} label="Update" onOk={update} />}
+      actions={<Buttons frame={frame} label="Update" onOk={update} reason={wb.entryReason('rate', txn)} />}
     >
       <InlineMsg msg={msg} />
       <div className="pf-row c2">
@@ -317,10 +319,11 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   const [rate, setRate] = useState(rateText(sp?.rate ?? 0))
   const [rateError, setRateError] = useState('')
   const [msg, setMsg] = useState<Msg>(null)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = usePosting(frame)
   /* NDF / DNDF book through FxTransaction, which only accepts a partner SAP holds for the company code. */
   const sapPartners = spec.variant !== 'ndo'
   const [invoiceLoading, setInvoiceLoading] = useState(spec.variant === 'ndf')
+  const [invoiceAttempt, setInvoiceAttempt] = useState(0)
   const [invoiceIssue, setInvoiceIssue] = useState(() => txn && spec.variant === 'ndf'
     ? ndfSpotIssue(txn, invoiceAmountFor(wb.get(), spec.ctx.dealId, txn.dealType)) : '')
   useEffect(() => {
@@ -342,7 +345,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
       setInvoiceLoading(false)
     })
     return () => { live = false }
-  }, [txn, spec.variant])
+  }, [txn, spec.variant, invoiceAttempt])
   const [sapBps, setSapBps] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
   useEffect(() => {
     if (!sapPartners) return
@@ -415,6 +418,9 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
           message: res.appDataError ?? `Spot Transaction created Successfully: ${res.transaction}`,
         })
         wb.reload()
+      }).catch((error: unknown) => {
+        setBusy(false)
+        setMsg({ text: error instanceof Error ? error.message : 'The spot request failed. Please try again.', kind: 'error' })
       })
       return
     }
@@ -442,7 +448,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} disabled={busy || invoiceLoading || !!invoiceIssue} />}>
+    <ModalFrame frame={frame} busy={busy} title="Create Spot" sub={`Transaction ${txn.rfha} · ${variantText}`} cls="md-modal" actions={<Buttons frame={frame} label={busy ? 'Creating …' : 'Create Spot'} onOk={create} disabled={busy || invoiceLoading || !!invoiceIssue} reason={spec.variant === 'ndo' ? blockedWriteReason('spotOrder') : ''} />}>
       <SpotForm
         msg={invoiceLoading ? { text: 'Loading invoice settlement details …', kind: 'info' } : invoiceIssue ? { text: invoiceIssue, kind: 'error' } : msg}
         sp={sp}
@@ -463,6 +469,7 @@ export function SpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extrac
           setSp(recalcSpotAmounts({ ...sp, rate: rateOf(v) }))
         }}
       />
+      {invoiceIssue ? <button type="button" className="btn btn-secondary" disabled={invoiceLoading} onClick={() => setInvoiceAttempt((n) => n + 1)}>Retry loading invoice details</button> : null}
     </ModalFrame>
   )
 }
@@ -579,7 +586,7 @@ export function SsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extr
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Short straddle · Transaction ${txn.rfha}`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} />}>
+    <ModalFrame frame={frame} title="Create Spot" sub={`Short straddle · Transaction ${txn.rfha}`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} reason={blockedWriteReason('spotOrder')} />}>
       <SpotForm
         msg={msg}
         sp={sp}
@@ -719,7 +726,7 @@ export function FwdSsSpotPopup({ frame, spec, wb }: { frame: FrameProps; spec: E
   }
 
   return (
-    <ModalFrame frame={frame} title="Create Spot" sub={`Forward cover ${txn.rfha} · opposite spot`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} />}>
+    <ModalFrame frame={frame} title="Create Spot" sub={`Forward cover ${txn.rfha} · opposite spot`} cls="md-modal" actions={<Buttons frame={frame} label="Create Spot" onOk={create} reason={blockedWriteReason('spotOrder')} />}>
       <SpotForm
         msg={msg}
         sp={sp}
@@ -753,17 +760,9 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
   })
   const [rateError, setRateError] = useState('')
   const [msg, setMsg] = useState<Msg>(null)
-  const [busy, setBusy] = useState(false)
-  // ZFS_SD_TRMFX NdfFixing (BAPI_FTR_FXT_NDF_FIXING): null while the service's $metadata is read.
-  const [canFix, setCanFix] = useState<boolean | null>(null)
-  useEffect(() => {
-    let live = true
-    fixNdfAvailable().then((ok) => live && setCanFix(ok))
-    return () => {
-      live = false
-    }
-  }, [])
+  const [busy, setBusy] = usePosting(frame)
   if (!txn) return null
+  const reason = wb.entryReason('ndf', txn)
   const isDndf = txn.sfhaart === '632'
   const r = rateOf(rate)
   const res = calcNdfSettlement(txn, r)
@@ -777,18 +776,19 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
       setMsg({ text: 'Enter the fixing rate to update the transaction.', kind: 'error' })
       return
     }
-    if (!canFix) {
-      setMsg({ text: NDF_FIXING_API_MISSING, kind: 'error' })
-      return
-    }
-    if (!txn.etag) {
-      setMsg({ text: `Transaction ${txn.rfha} has no TSF record (TrmFxApp) to set its status on; reload the workbench.`, kind: 'error' })
+    if (reason) {
+      setMsg({ text: reason, kind: 'error' })
       return
     }
     // BAPI_FTR_FXT_NDF_FIXING through FxTransaction/NdfFixing, then TXN_STATUS 10 on the TSF append.
     setBusy(true)
-    const result = await fixNdf({ bukrs: txn.bukrs, rfha: txn.rfha, etag: txn.etag }, rv, TXN.FIXED)
-    setBusy(false)
+    let result
+    try {
+      result = await fixNdf({ bukrs: txn.bukrs, rfha: txn.rfha, etag: txn.etag }, rv, TXN.FIXED)
+    } catch (error) {
+      setMsg({ text: error instanceof Error ? error.message : 'The fixing request failed. Please try again.', kind: 'error' })
+      return
+    } finally { setBusy(false) }
     if (!result.ok) {
       setMsg({ text: result.message, kind: 'error' })
       return
@@ -797,10 +797,12 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
     // The ETag changed with the update: a second change needs the row read again.
     wb.set(updateTxnStatus(wb.get(), txn.rfha, TXN.FIXED, { ndfRate: rv, cashAmt: isDndf ? out.dndf : out.ndf, cashCurr: isDndf ? out.scurr2 : out.scurr, etag: '' }, { dealId: txn.dealId, bukrs: txn.bukrs }))
     frame.onClose()
-    wb.toast(`Confirmation Sent — ${result.message}`, 'success') /* TEXT-003 */
-    wb.confirm({ title: 'Create Spot', message: 'Do you want to create the Spot?' }, () =>
-      wb.open({ kind: 'spot', ctx: spec.ctx, variant: isDndf ? 'dndf' : 'ndf', sfhaart: '605', rate: 0 }),
-    )
+    wb.outcome({
+      tone: 'success', title: 'NDF Fixing Sent', message: result.message,
+      onClose: () => wb.confirm({ title: 'Create Spot', message: 'Do you want to create the Spot?' }, () =>
+        wb.open({ kind: 'spot', ctx: spec.ctx, variant: isDndf ? 'dndf' : 'ndf', sfhaart: '605', rate: 0 }),
+      ),
+    })
   }
 
   return (
@@ -809,9 +811,10 @@ export function NdfPopup({ frame, spec, wb }: { frame: FrameProps; spec: Extract
       title="NDF Details"
       sub={`Transaction ${txn.rfha} · ${txnTypeText(txn.sfhaart)}`}
       cls="md-modal"
-      actions={<Buttons frame={frame} label={busy ? 'Updating …' : 'Update'} onOk={() => void update()} />}
+      busy={busy}
+      actions={<Buttons frame={frame} label={busy ? 'Updating …' : 'Update'} onOk={() => void update()} disabled={busy} reason={reason} />}
     >
-      <InlineMsg msg={msg ?? (canFix === false ? { text: NDF_FIXING_API_MISSING, kind: 'error' } : null)} />
+      <InlineMsg msg={msg} />
       <div className="pf-row c2">
         <Fld label="Fixing Date">
           <input className="control mono" readOnly value={isoToDMY(txn.ndfDate)} />
@@ -864,11 +867,13 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
   const deal = findDeal(data, spec.ctx.dealId)
   // What ZSGTSFR_SPOT_CREATE derives for this leg (settlementSpot.ts): the open IN_SPOT row, the spot's company and type.
   const [prep, setPrep] = useState<PrepareResult | 'loading'>('loading')
+  const [attempt, setAttempt] = useState(0)
   const [partners, setPartners] = useState<ValueHelp<CodeLabel>>({ state: 'loading' })
   const [partner, setPartner] = useState(txn?.cpty ?? '')
   const [rate, setRate] = useState('')
   const [trade, setTrade] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = usePosting(frame)
   const [msg, setMsg] = useState<Msg>(null)
   const key = txn ? `${txn.dealId}|${txn.dealType}|${txn.rfha}` : ''
   useEffect(() => {
@@ -880,6 +885,7 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
       setPrep(r)
       if (!r.ok) return
       setTrade(formatDMY(defaultTradeOf(r.value.ctx)))
+      setValue(formatDMY(r.value.ctx.valueDate))
       const [list, tcurr] = await Promise.all([loadPartners(r.value.ctx.companyCode), defaultSpotRate(r.value.row, r.value.ctx)])
       if (!live) return
       // The original transaction's own partner is always offered, as the legacy default.
@@ -892,14 +898,16 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
       live = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, attempt])
   if (!txn || !deal) return null
 
   const rec = inSpotFor(data, deal.id, txn.dealType)
   const created = !!rec && rec.spotCreate === 'X'
   const ready = prep !== 'loading' && prep.ok ? prep.value : null
   const info: Msg =
-    prep !== 'loading' && !prep.ok
+    prep === 'loading'
+      ? { text: 'Loading settlement details…', kind: 'info' }
+      : !prep.ok
       ? { text: prep.reason, kind: 'info' }
       : created
         ? { text: 'The settlement spot for this deal type has already been created.', kind: 'info' }
@@ -918,15 +926,23 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
     const tradeDate = parseDMY(trade)
     const errs: string[] = []
     if (!partner) errs.push('BP is required.')
+    const valueDate = parseDMY(value)
     if (!tradeDate) errs.push('Enter a valid trade date (dd-mm-yyyy).')
+    if (!valueDate) errs.push('Enter a valid value date (dd-mm-yyyy).')
+    else if (tradeDate && valueDate < tradeDate) errs.push('Value date cannot be before the trade date.')
     if (!(rateNum > 0)) errs.push('Rate is required.')
-    if (errs.length || !tradeDate) {
+    if (errs.length || !tradeDate || !valueDate) {
       setMsg({ text: errs.join(' '), kind: 'error' })
       return
     }
     setBusy(true)
-    const out = await bookSettlementSpot(ready.row, { partner, tradeDate, rate: rateNum })
-    setBusy(false)
+    let out
+    try {
+      out = await bookSettlementSpot(ready.row, { partner, tradeDate, rate: rateNum, valueDate })
+    } catch (error) {
+      setMsg({ text: error instanceof Error ? error.message : 'The settlement request failed. Please try again.', kind: 'error' })
+      return
+    } finally { setBusy(false) }
     if (!out.ok) {
       setMsg({ text: out.message, kind: 'error' })
       return
@@ -939,12 +955,13 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
   return (
     <ModalFrame
       frame={frame}
+      busy={busy}
       title="Settlement Spot"
       sub={`Deal ${deal.id} · Deal Type ${txn.dealType || '—'}`}
       cls="md-modal"
       actions={
         <>
-          <button type="button" className="btn btn-secondary" onClick={frame.onClose}>
+          <button type="button" className="btn btn-secondary" disabled={busy} onClick={frame.onClose}>
             Close
           </button>
           <button type="button" className="btn btn-primary" disabled={!ready || created || busy} onClick={() => void create()}>
@@ -954,6 +971,7 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
       }
     >
       <InlineMsg msg={msg ?? info} />
+      {prep !== 'loading' && !prep.ok ? <button type="button" className="btn btn-secondary" onClick={() => setAttempt((n) => n + 1)}>Retry loading settlement details</button> : null}
       <div className="kv-grid">
         {kvItem('Date', todayDmy())}
         {kvItem('Deal ID', deal.id)}
@@ -976,6 +994,9 @@ export function SettlementSpotPopup({ frame, spec, wb }: { frame: FrameProps; sp
           </Fld>
           <Fld label="Trade Date" req>
             <DateField value={trade} onCommit={(v) => setTrade(v)} />
+          </Fld>
+          <Fld label="Value Date" req>
+            <DateField value={value} onCommit={(v) => setValue(v)} />
           </Fld>
           <Fld label="Rate" req>
             <input

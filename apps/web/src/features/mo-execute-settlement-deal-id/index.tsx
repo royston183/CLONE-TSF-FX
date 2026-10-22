@@ -693,6 +693,8 @@ export default function MoExecuteSettlementDealId() {
         onField={setInvField}
         onAction={postInvAction}
         companyOf={(entity) => entityCompany[entity] ?? ''}
+        rows={invoices}
+        dealId={deal.dealId}
       />
       <ViewInvModal
         open={modals.isOpen('viewInv')}

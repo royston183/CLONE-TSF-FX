@@ -56,6 +56,21 @@ export type FxDeal = {
   settled?: boolean
   /** ZSGTSFTR_SET_FX ZDSS_DEAL of the leg's deal type: the DSS deal type settled together with it. */
   dssDeal?: string
+  /** TXN_STATUS code (gt_top-txn_status): 03, 07, 10 ... */
+  txnStatus?: string
+  /** Partner Name (gt_top-bp_name, A_BusinessPartner BusinessPartnerFullName). */
+  bpName?: string
+  /** Transaction Type Desc (gt_top-xtext, trmmaster TransactionTypeName). */
+  txnTypeDesc?: string
+  /** ZROLL_DEAL_TYPE: R<n>-D1 / C<n>-D2 ... (rollover numbering of PBO). */
+  rollType?: string
+  /** RBUSA / PRCTR, when FxTransaction serves them. */
+  busArea?: string
+  profitCenter?: string
+  /** PC1 / PC2 / STRIKE: option fields; no service serves them for the FX legs yet. */
+  putCall1?: string
+  putCall2?: string
+  strike?: string
   /** The transaction's TSF bank fields (VTBFHA ZTSF_*), as TrmFxApp serves them. */
   tsf?: FxTsf
   /** ZSGTSFTR_SET_FX of the leg's deal type: its buy (ZBS 'B') and sell (ZBS 'S') rows. */

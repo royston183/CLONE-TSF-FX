@@ -3,9 +3,48 @@
  * legacy/trader-workbench.html (which mirrors ZSGTSFR_SET_WSPACE). Pure: every function takes
  * the data it reads, and the mutations return a new AppData instead of editing in place.
  */
-import { KPI_DUE_DAYS, LOOKUPS, mkTxn } from './data.ts'
-import { dmyToIso, formatAmount, formatRate, isoToDMY, kpiCompact, parseDMY, todayIso } from './format.ts'
+import { DEFAULT_FILTERS, KPI_DUE_DAYS, LOOKUPS, mkTxn } from './data.ts'
+import { dmyToIso, formatAmount, formatDMY, formatRate, isoToDMY, kpiCompact, parseDMY, todayIso } from './format.ts'
 import type { ActionItem, AppData, Deal, Filters, InSpot, Sort, SpotDraft, StatusInfo, Txn, TxnRow } from './types.ts'
+import { buildSpotBody } from './spotNdf.ts'
+import { buildSpotCreatePayload, calculateSpotAmounts, type SpotContext } from '../fo-additional-spot-booking/spotCreate.ts'
+import type { SpotRow } from '../fo-additional-spot-booking/types.ts'
+
+export const WRITE_ACTIONS = {
+  exercise: 'Option exercise — BAPI_FTR_EXERCISE_FXOPTIONS (TI86 for cash settlement, BAPI_FTR_SETTLE_FXOPTIONS)',
+  expire: 'Option expiry — BAPI_FTR_EXPIRE_FXOPTIONS (+ BAPI_FTR_SETTLE_FXOPTIONS)',
+  ndfFixing: 'NDF fixing — BAPI_FTR_FXT_NDF_FIXING (+ TX02)',
+  spotOrder: 'Spot creation — BAPI_FTR_FXT_ORDERCREATE + BAPI_FTR_FXT_ORDEREXECUTE with ZSGTRMFM_VTBFHA_EXPORT and the ZSGTSFTR_IN_SPOT update',
+  spotNdf: 'NDF/DNDF spot — BAPI_FTR_FXT_GETDETAIL + BAPI_FTR_FXT_CREATE with ZSGTRMFM_VTBFHA_EXPORT',
+  settlementSpot: 'Settlement spot — SUBMIT ZSGTSFR_SPOT_CREATE (FORM create_sett_spot)',
+} as const
+export type WriteAction = keyof typeof WRITE_ACTIONS
+
+/** The legacy posting guard; the live NDF and settlement paths do not call this stub. */
+export const blockedWriteReason = (action: WriteAction) => `WAITING FOR API — ${WRITE_ACTIONS[action]}. Nothing was posted to SAP.`
+
+export type EntryAction = 'rate' | 'ndf' | 'settlementSpot' | 'spotOrder'
+
+/** The same prerequisites are used at entry and again by the action handler. */
+export function actionEntryReason(action: EntryAction, txn: Pick<Txn, 'sgsart' | 'etag' | 'rfha'> | undefined, canFix: boolean | null, fixingMissing: string): string {
+  if (!txn) return 'Select a transaction first.'
+  if (action === 'rate') return txn.sgsart.substring(0, 2) !== '14' ? 'Please select the Option/NDO deal' : blockedWriteReason('exercise')
+  if (action === 'spotOrder') return blockedWriteReason('spotOrder')
+  if (action === 'ndf') {
+    if (txn.sgsart.substring(0, 2) !== '12') return 'Please select the NDF/DNDF deal'
+    if (canFix === null) return 'Checking NDF fixing availability…'
+    if (!canFix) return fixingMissing
+    if (!txn.etag) return `Transaction ${txn.rfha} has no TSF record (TrmFxApp) to set its status on; reload the workbench.`
+  }
+  return ''
+}
+
+export function actionItemEntry(it: Pick<ActionItem, 'sfhaart' | 'status'>, deal: Pick<Deal, 'ss'>, txn: Pick<Txn, 'dealType'>): EntryAction {
+  if (it.sfhaart === '619') return deal.ss === 'X' && (!txn.dealType || txn.dealType === '00') ? 'spotOrder' : 'settlementSpot'
+  if (it.sfhaart === '604') return 'settlementSpot'
+  if (it.sfhaart === '631' || it.sfhaart === '632') return 'ndf'
+  return it.status > '07' ? 'settlementSpot' : 'rate'
+}
 
 /* ---------------- lookups ---------------- */
 
@@ -18,6 +57,12 @@ export const txnStatusInfo = (code: string): StatusInfo => LOOKUPS.txnStatus[cod
 export const companyName = (code: string) => LOOKUPS.companies.find((c) => c.code === code)?.name ?? ''
 export const bpName = (bp: string) => LOOKUPS.bps.find((b) => b.bp === bp)?.name ?? bp
 export const txnTypeText = (sfhaart: string) => LOOKUPS.txnTypes[sfhaart] ?? ''
+
+/** Keep supplied descriptions; the documented FX types still have a label without master texts. */
+export function txnTypeDescription(sfhaart: string): string {
+  const fxLabels: Record<string, string> = { '604': 'FX Spot', '605': 'FX Spot', '609': 'FX Spot', '619': 'FX Forward', '631': 'NDF', '632': 'DNDF' }
+  return txnTypeText(sfhaart).trim() || fxLabels[sfhaart] || ''
+}
 
 /** ZSGTRMFM_LEAD_CURR — lead / following currency of a pair (ranking is an assumption). */
 export function leadCurr(c1: string, c2: string): { lead: string; follow: string } {
@@ -105,6 +150,8 @@ export type DealCol = {
 
 export const DEAL_COLS: readonly DealCol[] = [
   { key: 'id', label: 'Deal ID', pin: true, cls: 'mono strong', val: (d) => d.id },
+  { key: 'type', label: 'Type', val: (d) => d.type },
+  { key: 'subType', label: 'Sub Type', val: (d) => d.subType },
   { key: 'desc', label: 'Description', val: (d) => d.desc },
   { key: 'model', label: 'Model', val: (d) => d.model },
   { key: 'modelDesc', label: 'Model Description', val: (d) => modelDesc(d.model) },
@@ -113,6 +160,7 @@ export const DEAL_COLS: readonly DealCol[] = [
   { key: 'mcRef', label: 'MC Reference', cls: 'mono', val: (d) => d.mcRef },
   { key: 'start', label: 'Start Date', cls: 'mono', val: (d) => d.start, text: (d) => isoToDMY(d.start) },
   { key: 'end', label: 'End Date', cls: 'mono', val: (d) => d.end, text: (d) => isoToDMY(d.end) },
+  { key: 'mcDate', label: 'MC Date', cls: 'mono', val: (d) => d.mcDate, text: (d) => isoToDMY(d.mcDate) },
   { key: 'mcCurr', label: 'MC Curr', val: (d) => d.mcCurr },
   { key: 'dealCurr', label: 'Deal Curr', val: (d) => d.dealCurr },
   { key: 'mcAmt', label: 'MC Amount', num: true, cls: 'mono', val: (d) => d.mcAmt, text: (d) => formatAmount(d.mcAmt) },
@@ -151,6 +199,106 @@ export function filterSortDeals(deals: readonly Deal[], filters: Filters, search
 
 export const nextSort = (s: Sort, field: string): Sort =>
   s.field === field ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { field, dir: 'asc' }
+
+export const PAGE_SIZES = [8, 12, 20, 50] as const
+export const DEFAULT_SORT: Sort = { field: 'id', dir: 'asc' }
+export type WorkbenchPrefs = { filters: Filters; search: string; sort: Sort; pageSize: number }
+export const defaultPrefs = (): WorkbenchPrefs => ({ filters: { ...DEFAULT_FILTERS }, search: '', sort: { ...DEFAULT_SORT }, pageSize: 20 })
+type PrefOptions = { models: readonly string[]; statuses: readonly string[]; deals: readonly string[] }
+
+/** Only known columns, page sizes and currently offered filter values survive a reload. */
+export function validatePrefs(value: unknown, options: PrefOptions): WorkbenchPrefs {
+  const result = defaultPrefs()
+  if (!value || typeof value !== 'object') return result
+  const input = value as Record<string, unknown>
+  if (typeof input.search === 'string') result.search = input.search
+  if (typeof input.pageSize === 'number' && PAGE_SIZES.some((n) => n === input.pageSize)) result.pageSize = input.pageSize
+  if (input.sort && typeof input.sort === 'object') {
+    const sort = input.sort as Record<string, unknown>
+    if (DEAL_COLS.some((c) => c.key === sort.field) && (sort.dir === 'asc' || sort.dir === 'desc')) result.sort = { field: sort.field as string, dir: sort.dir }
+  }
+  if (input.filters && typeof input.filters === 'object') {
+    const f = input.filters as Record<string, unknown>
+    if (typeof f.from === 'string' && typeof f.to === 'string' && !dateErrors({ from: f.from, to: f.to }).from && !dateErrors({ from: f.from, to: f.to }).to) {
+      result.filters.from = f.from
+      result.filters.to = f.to
+    }
+    for (const [field, values] of [['model', options.models], ['status', options.statuses], ['deal', options.deals]] as const) {
+      const v = f[field]
+      if (typeof v === 'string' && values.includes(v)) result.filters[field] = v
+    }
+  }
+  return result
+}
+
+export function parsePrefs(text: string | null, options: PrefOptions): WorkbenchPrefs {
+  try { return validatePrefs(JSON.parse(text ?? 'null'), options) } catch { return defaultPrefs() }
+}
+
+export function readState(loading: boolean, error: string, count: number): 'loading' | 'failed' | 'empty' | 'ready' {
+  return loading ? 'loading' : error ? 'failed' : count === 0 ? 'empty' : 'ready'
+}
+
+export type BookingField = { label: string; value: string; changed: boolean }
+
+export function bookingFields(values: readonly (readonly [string, string])[], baseline: readonly BookingField[] = []): BookingField[] {
+  return values.map(([label, value]) => ({ label, value: value || '—', changed: baseline.some((field) => field.label === label && field.value !== (value || '—')) }))
+}
+
+export function spotBookingSummary(txn: Txn, draft: SpotDraft, company: string, partner: string, trade: string | null, variant: 'ndf' | 'dndf', baseline: readonly BookingField[] = []): BookingField[] {
+  try {
+    const body = buildSpotBody({ ...draft, variant, bukrs: company, bp: partner, source: { bukrs: txn.bukrs, rfha: txn.rfha }, tradeDate: trade === null ? '' : dmyToIso(trade), ndfDate: txn.ndfDate, valueDate: txn.valueDate, dealType: txn.dealType }, '', { ContractDate: txn.tradeDate, ValueDate: txn.valueDate, LeadCurrency: txn.curr1, FollowCurrency: txn.curr2 } as Parameters<typeof buildSpotBody>[2])
+    return spotBodyFields(body, baseline)
+  } catch { return [] }
+}
+
+function spotBodyFields(body: Record<string, unknown> | ReturnType<typeof buildSpotCreatePayload>, baseline: readonly BookingField[]): BookingField[] {
+  return bookingFields([
+    ['Company', String(body.CompanyCode || '')], ['Counterparty', bpName(String(body.Partner || ''))],
+    ['Buy', `${formatAmount(Number(body.BuyAmount))} ${body.BuyCurrency}`], ['Sell', `${formatAmount(Number(body.SellAmount))} ${body.SellCurrency}`],
+    ['Rate', formatRate(Number(body.SpotRate))], ['Trade Date', isoToDMY(String(body.ContractDate || ''))], ['Value Date', isoToDMY(String(body.ValueDate || ''))],
+  ], baseline)
+}
+
+export function fixingBookingSummary(txn: Txn, rate: number, baseline: readonly BookingField[] = []): BookingField[] {
+  const settlement = calcNdfSettlement(txn, rate)
+  return bookingFields([
+    ['Company', txn.bukrs], ['Counterparty', txn.cptyName || txn.cpty],
+    ['Leg 1', `${txn.bs1} ${formatAmount(txn.amt1)} ${txn.curr1}`], ['Leg 2', `${txn.bs2} ${formatAmount(txn.amt2)} ${txn.curr2}`],
+    ['Contract Rate', formatRate(txn.rate)], ['Fixing Rate', formatRate(rate)],
+    ['Trade Date', isoToDMY(txn.tradeDate)], ['Value Date', isoToDMY(txn.valueDate)], ['Fixing Date', isoToDMY(txn.ndfDate)], ['Fixing Reference', txn.ndfRef],
+    ['Settlement', rate ? `${formatAmount(txn.sfhaart === '632' ? settlement.dndf : settlement.ndf)} ${txn.sfhaart === '632' ? settlement.scurr2 : settlement.scurr}` : ''],
+  ], baseline)
+}
+
+export function settlementBookingSummary(row: SpotRow, ctx: SpotContext, partner: string, trade: string, rate: number, baseline: readonly BookingField[] = []): BookingField[] {
+  const date = parseDMY(trade)
+  const amounts = calculateSpotAmounts({ diffAmt: row.diffAmt, diffCurrency: row.currency, direction: ctx.direction, otherCurrency: ctx.otherCurrency, rate })
+  if (!date || !amounts) return bookingFields([['Company', ctx.companyCode], ['Counterparty', bpName(partner)], ['Rate', formatRate(rate)], ['Trade Date', trade], ['Value Date', formatDMY(ctx.valueDate)]], baseline)
+  const body = buildSpotCreatePayload({ companyCode: ctx.companyCode, txnType: ctx.txnType, partner, tradeDate: date, valueDate: ctx.valueDate, rate, amounts, diffCurrency: row.currency })
+  return spotBodyFields(body, baseline)
+}
+
+/** Describe coverage separately from the unchanged KPI arithmetic. */
+export function kpiPresentation(id: KpiId, k: Kpis, loading: boolean, error: string, txnError: string, asOf: string = todayIso()): { value: string; description: string; blocked: boolean; retry: boolean } {
+  const def = KPI_DEFS.find((d) => d.id === id)!
+  if (loading) return { value: 'Loading…', description: 'Reading workbench data.', blocked: true, retry: false }
+  if (error) return { value: 'Unavailable', description: error, blocked: true, retry: true }
+  if (id === 'pending' || id === 'progress') {
+    if (txnError) return { value: 'Unavailable', description: 'FX transactions could not be loaded. Retry to check outstanding actions.', blocked: true, retry: true }
+    return { value: def.value(k), description: `FX only · ${def.desc(k)}`, blocked: false, retry: false }
+  }
+  const currencies = new Set<string>()
+  if (id === 'deals' || id === 'pl') {
+    for (const deal of k.deals) {
+      const amount = id === 'deals' ? deal.mcAmt : deal.pl
+      const curr = id === 'deals' ? deal.mcAmtCurr : deal.plCurr
+      if (amount && curr !== 'USD' && (!curr || !spotRateFor(curr, 'USD', asOf))) currencies.add(curr || 'unknown currency')
+    }
+  }
+  if (currencies.size) return { value: id === 'deals' ? def.value(k) : 'Incomplete', description: `${id === 'deals' ? 'Incomplete USD notional' : 'Incomplete USD P&L'} — missing conversion rate: ${[...currencies].join(', ')}.`, blocked: true, retry: true }
+  return { value: def.value(k), description: def.desc(k), blocked: false, retry: false }
+}
 
 /* ---------------- transactions (FETCH_TXN_DATA) ---------------- */
 
@@ -199,14 +347,18 @@ export function fetchActionItems(data: AppData, deal: Deal, txns: readonly TxnRo
     dealType: t.dealType,
     cpty: t.cptyName,
     sfhaart: t.sfhaart,
+    tradeDate: t.tradeDate,
     valueDate: t.valueDate,
     eDate: t.eDate,
+    ndfDate: t.ndfDate,
     status: t.status,
     curr1: t.curr1,
     amt1: t.amt1,
     curr2: t.curr2,
     pc1: t.pc1,
+    pc2: t.pc2,
     bs1: t.bs1,
+    bs2: t.bs2,
     coverTxn: t.coverTxn,
     text: '',
     textCode: '',

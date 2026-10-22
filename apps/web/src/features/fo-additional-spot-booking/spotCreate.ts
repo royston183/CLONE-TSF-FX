@@ -371,7 +371,8 @@ export type CreateSpotResult =
   | { stage: 'refused'; messages: string[] }
   | { stage: 'booked'; created: CreatedSpot; persist: PersistState }
 
-export type SpotInput = { partner: string; tradeDate: Date; rate: number }
+/** `valueDate` overrides the original transaction's Value Date; omitted, the original's is used. */
+export type SpotInput = { partner: string; tradeDate: Date; rate: number; valueDate?: Date }
 
 /**
  * Books the additional Spot. Nothing is sent to SAP when the row is no longer eligible, when the
@@ -404,7 +405,7 @@ export async function createAdditionalSpot(ports: SpotPorts, row: SpotRow, input
         txnType: ctx.txnType,
         partner: input.partner,
         tradeDate: input.tradeDate,
-        valueDate: ctx.valueDate,
+        valueDate: input.valueDate ?? ctx.valueDate,
         rate: input.rate,
         amounts,
         diffCurrency: fresh.currency,

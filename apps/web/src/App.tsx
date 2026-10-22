@@ -17,6 +17,7 @@ import './shared/master-contract/design.css'
 
 // First ALM styling pass: the implemented FX Master Contract / Front Office routes.
 const ALM_FX_FEATURES = new Set([
+  'view-all-transactions',
   'view-tsf-deals',
   'fo-deal-id-details',
   'fo-create-master-contract', 'mo-confirm-master-contract', 'mo-update-mc-expiry',

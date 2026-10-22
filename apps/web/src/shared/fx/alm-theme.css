@@ -161,6 +161,9 @@
 #alm-fx-ui table :is(.mc-link, .hotspot, .ref-link, .deal-link):hover { text-decoration: underline; text-underline-offset: 2px; }
 #alm-fx-ui table :is(.sortable, .sort-th):hover { color: var(--alm-blue); }
 #alm-fx-ui table :is(.sort-th, .th-inner) { justify-content: center; text-align: center; }
+/* A header follows its column: text columns (.left) start-aligned, amount columns (.num) end-aligned, as their cells are. */
+#alm-fx-ui table thead th.left { text-align: left !important; }
+#alm-fx-ui table thead th:is(.num, .numeric, .right, .amount, .rate, .text-right) { text-align: right !important; }
 
 /* Editable blotter columns share the alignment of their values and controls. */
 #alm-fx-ui #fx-table thead th,

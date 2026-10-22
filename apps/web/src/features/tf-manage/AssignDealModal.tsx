@@ -125,6 +125,14 @@ export function AssignDealModal({
       setFormError('Enter a Deal ID before assigning.')
       return
     }
+    if (!invCommodity.trim()) {
+      setFormError('Enter an Inv Commodity before assigning.')
+      return
+    }
+    if (!incoTerms) {
+      setFormError('Select Inco Terms before assigning.')
+      return
+    }
     const target = findDeal(deals, trimmed)
     if (!target) {
       setFormError(master.loading ? 'Deal IDs are still loading.' : `Deal ID ${trimmed} does not exist.`)
@@ -324,7 +332,9 @@ export function AssignDealModal({
                   <DateField id="adProposedInvDate" iso={proposedInvDate} onChange={setProposedInvDate} />
                 </div>
                 <div className="field">
-                  <label htmlFor="adInvCommodity">Inv Commodity</label>
+                  <label htmlFor="adInvCommodity">
+                    Inv Commodity<span className="req">*</span>
+                  </label>
                   <input
                     type="text"
                     id="adInvCommodity"
@@ -333,7 +343,9 @@ export function AssignDealModal({
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="adIncoTerms">Inco Terms</label>
+                  <label htmlFor="adIncoTerms">
+                    Inco Terms<span className="req">*</span>
+                  </label>
                   <select id="adIncoTerms" value={incoTerms} onChange={(event) => setIncoTerms(event.target.value)}>
                     <option value="">Select...</option>
                     {INCO_TERMS.map((option) => (

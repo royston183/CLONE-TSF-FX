@@ -65,7 +65,7 @@ export function DocPreviewModal({
             <tr>
               <th className="left">Trade Type</th>
               <th className="left">Settlement Desc</th>
-              <th>Invoice Amount</th>
+              <th className="num">Invoice Amount</th>
               <th className="left">FI Document</th>
             </tr>
           </thead>
@@ -74,7 +74,7 @@ export function DocPreviewModal({
               <tr key={r.tType}>
                 <td className="left">{r.tradeType}</td>
                 <td className="left">{r.setDesc}</td>
-                <td className="left num">{fmtMoney(r.invCurr, r.invAmt)}</td>
+                <td className="num">{fmtMoney(r.invCurr, r.invAmt)}</td>
                 <td className="left">{r.fiDoc || <span className="doc-link-pending">not posted</span>}</td>
               </tr>
             ))}

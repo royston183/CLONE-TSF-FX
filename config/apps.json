@@ -14,6 +14,16 @@
   ],
   "apps": [
     {
+      "code": "ZSGTRM_RFX_BLOTTER_LIST",
+      "id": "view-all-transactions",
+      "route": "/apps/view-all-transactions",
+      "title": "View List of All Transactions",
+      "status": "ready",
+      "services": ["fx", "trmfxapp", "middleware"],
+      "legacy": "legacy/ZSGTRM_RFX_BLOTTER_DEAL_DUMP_MODERN_v2.html",
+      "note": "Reporting > FX Structure > FX Front-Office. Deal Dump UI adapted from the supplied HTML. Live read-only FX report using FxTransaction + TrmFxApp, with optional tsfvFx descriptions. Blotter selection starts with TrmFxApp; trade/value selections start with Treasury and retain transactions without append records or TSF Deal IDs. Search, sort, column chooser, details, pagination, CSV and Excel implemented. Exact ZSGOELVW_DELDUMP / INT_FX / EXT_FX / FX_STAT / FIELDS parity is not available: unsupported columns stay blank; type uses explicit product descriptions, TSF-linked uses a nonblank Deal ID. No email, FTP/IHSM, server upload or SAP GUI launch. Uses existing gateway technical identity, not per-user SAP company/business-area/profit-center authorization."
+    },
+    {
       "code": "ZSGTSF_RFX_BLOTTER_COMP",
       "id": "view-tsf-deals",
       "route": "/apps/view-tsf-deals",

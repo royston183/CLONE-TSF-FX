@@ -86,6 +86,9 @@ export function legFromFx({ fx, app }: FxWithApp, names: Names = NO_NAMES, compa
   }
 }
 
+/** The leg fields the roll numbering reads, so other Deal ID screens can reuse it. */
+export type RollLeg = Pick<Leg, 'rfha' | 'dealType' | 'txnStatus' | 'bs1' | 'curr1' | 'bs2' | 'curr2' | 'zroll'>
+
 /** deal_details' selection on the joined rows: the five transaction types, reversed deals (saktiv 3) out. */
 export const isDealLeg = ({ fx }: FxWithApp): boolean =>
   (DEAL_TXN_TYPES as readonly string[]).includes(fx.TransactionType) && fx.ActiveStatus !== ACTIVE_REVERSED
@@ -97,13 +100,13 @@ export const isDealLeg = ({ fx }: FxWithApp): boolean =>
  * legs that are not 61 are the cancellations (C<n>-D2 on the D2 side, else C<n>-D1). Each
  * range is sorted by RFHA and numbered from 1; C<n> is only assigned while R<n> exists.
  */
-export function assignRollTypes(legs: readonly Leg[]): Leg[] {
+export function assignRollTypes<L extends RollLeg>(legs: readonly L[]): L[] {
   const out = legs.map((l) => ({ ...l }))
   const n1 = out.find((l) => l.dealType === 'D1')
   if (!n1) return out
 
-  const side1 = (l: Leg) => `${l.bs1}-${l.curr1}`
-  const side2 = (l: Leg) => `${l.bs2}-${l.curr2}`
+  const side1 = (l: RollLeg) => `${l.bs1}-${l.curr1}`
+  const side2 = (l: RollLeg) => `${l.bs2}-${l.curr2}`
   const txnD1: string[] = []
   const txnD2: string[] = []
   const rollD1: string[] = []

@@ -194,3 +194,15 @@ export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
     docMsg: `${r.trfDesc} - ${r.leg} settlement for Deal ID ${dealId}`,
   }
 }
+
+/**
+ * modify_screen_9002 on a Payment leg: the Sender's house bank / account is mandatory when the leg's own posting
+ * type is 02 (Post to Bank Account, P1); the Receiver's when the paired Receipt leg (T2-P -> T2-S) is 01
+ * (Post to Bank Account, S1). Types 03 / 04 / 05 post to clearing or a business partner and need no bank.
+ * Receipt legs are display only, so nothing is required there.
+ */
+export function invBankRequired(r: TradeInvoice | undefined, rows: readonly TradeInvoice[]): { sender: boolean; receiver: boolean } {
+  if (!r || r.recPay !== 'Payment' || r.fiDoc) return { sender: false, receiver: false }
+  const receipt = rows.find((x) => x.leg === `${r.leg.slice(0, 2)}-S`)
+  return { sender: r.fiType === '02', receiver: receipt?.fiType === '01' }
+}
