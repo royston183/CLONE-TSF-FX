@@ -17,6 +17,9 @@ const COLUMNS: readonly Column[] = [
   { label: 'Buy', cls: 'no-sort' },
   { label: 'Sell', cls: 'no-sort' },
   { label: 'All in Rate', sort: 'otot_rate', cls: 'num' },
+  { label: 'NDF Settlement Rate', cls: 'no-sort num' },
+  { label: 'Cash Settlement Amount', cls: 'no-sort num' },
+  { label: 'Cash Currency', cls: 'no-sort' },
   { label: 'Orig Txn', cls: 'no-sort' },
   { label: 'Roll Type', cls: 'no-sort' },
   { label: 'Status', sort: 'txnDesc' },
@@ -125,6 +128,9 @@ export function DealTable({
                 {l.bs2} {l.curr2} {fmtAmt(l.amt2)}
               </td>
               <td className="num mono">{l.otot_rate.toFixed(4)}</td>
+              <td className="num mono">{l.ndf_rate != null ? l.ndf_rate.toFixed(4) : '-'}</td>
+              <td className="num mono">{l.zcash_amt != null ? fmtAmt(l.zcash_amt) : '-'}</td>
+              <td>{l.cash_curr || '-'}</td>
               <td className="mono">{l.zuonr}</td>
               <td>{l.zroll || '-'}</td>
               <td>

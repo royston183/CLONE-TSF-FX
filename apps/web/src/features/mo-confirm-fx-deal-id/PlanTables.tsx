@@ -5,7 +5,10 @@ import type { ConfirmPreview } from './Modals.tsx'
 import type { Deal, Invoice } from './types.ts'
 
 /** The invoice plan saved for the deal (ZSGTSFTR_INV_REF). A deal that was never confirmed has none. */
-export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
+/** Shown in place of an empty plan when the model is configured without one (ZNO_INV), so the card is never silently missing. */
+export const NO_INV_NOTE = 'This FX model is configured without an invoice plan (ZNO_INV), so no planned trade invoices or P&L are created for it.'
+
+export function InvoiceTable({ rows, notice }: { rows: readonly Invoice[]; notice?: string | undefined }) {
   return (
     <div className="card" id="invoiceCard">
       <div className="card-head">
@@ -41,7 +44,7 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
             ) : (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 20 }}>
-                  No invoice plan is saved for this Deal ID yet. It is created when the deal is confirmed.
+                  {notice ?? 'No invoice plan is saved for this Deal ID yet. It is created when the deal is confirmed.'}
                 </td>
               </tr>
             )}
@@ -53,12 +56,12 @@ export function InvoiceTable({ rows }: { rows: readonly Invoice[] }) {
 }
 
 /** The P&L stored on the Deal ID at confirmation, with the reason a planned P&L cannot be shown. */
-export function PlTable({ deal, planned }: { deal: Deal; planned?: { loading: boolean; reason: string | null; preview: ConfirmPreview | null } | null }) {
+export function PlTable({ deal, planned, notice }: { deal: Deal; notice?: string | undefined; planned?: { loading: boolean; reason: string | null; preview: ConfirmPreview | null } | null }) {
   const rows = storedPlRows(deal)
   const calc = planned?.preview
   const plRows = rows.length
     ? rows
-    : calc
+    : calc && !notice
       ? [
           { type: 'P&L (USD)', value: fmtAmt(calc.pl.amount) },
           { type: `P&L Local (${calc.pl.localCurrency || '—'})`, value: fmtAmt(calc.pl.localAmount) },
@@ -70,7 +73,7 @@ export function PlTable({ deal, planned }: { deal: Deal; planned?: { loading: bo
       <div className="card-head">
         <h3>Deal ID: P&amp;L</h3>
         <span className="hint">
-          {rows.length ? GAPS.pl : calc ? `Planned P&L, calculated now: TCURR type M rate ${fmtRate(calc.rate)} (${calc.rateDate}), the currency string and the origin profit margin. Not saved until the deal is confirmed.` : planned?.loading ? 'Calculating the planned P&L…' : (planned?.reason ?? GAPS.pl)}
+          {rows.length ? GAPS.pl : notice ? notice : calc ? `Planned P&L, calculated now: TCURR type M rate ${fmtRate(calc.rate)} (${calc.rateDate}), the currency string and the origin profit margin. Not saved until the deal is confirmed.` : planned?.loading ? 'Calculating the planned P&L…' : (planned?.reason ?? GAPS.pl)}
         </span>
       </div>
       <div className="table-scroll">
@@ -92,7 +95,7 @@ export function PlTable({ deal, planned }: { deal: Deal; planned?: { loading: bo
             ) : (
               <tr>
                 <td colSpan={2} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 20 }}>
-                  {planned?.loading ? 'Calculating…' : 'No P&L is stored: this Deal ID has not been confirmed.'}
+                  {notice ?? (planned?.loading ? 'Calculating…' : planned?.reason ?? 'No P&L is stored: this Deal ID has not been confirmed.')}
                 </td>
               </tr>
             )}

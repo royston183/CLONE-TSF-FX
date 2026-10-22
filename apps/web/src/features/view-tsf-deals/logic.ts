@@ -15,6 +15,10 @@ export const COLUMNS: readonly Column[] = [
   { field: 'trader', label: 'Trader' }, { field: 'externalRef', label: 'External Reference' },
   { field: 'internalRef', label: 'Internal Reference' }, { field: 'status', label: 'Status' },
   { field: 'mcRef', label: 'MC Ref No' }, { field: 'foRemark', label: 'FO Remark' }, { field: 'moRemark', label: 'MO Remark' },
+  { field: 'ndfDate', label: 'NDF Fixing Date', kind: 'date' }, { field: 'ndfRef', label: 'NDF Ref' },
+  { field: 'ndfRate', label: 'NDF Settlement Rate', kind: 'ndfRate' },
+  { field: 'cashAmount', label: 'Cash Settlement Amount', kind: 'amount' }, { field: 'cashCurrency', label: 'Cash Currency' },
+  { field: 'ndfFoRemark', label: 'NDF FO Remark' }, { field: 'ndfMoRemark', label: 'NDF MO Remark' },
 ]
 
 /** Native date controls use ISO values. Validate the calendar day as well as its spelling. */
@@ -45,7 +49,7 @@ export function cellValue(row: DealReportRow, column: Column): string {
   const value = row[column.field]
   if (value === null || value === undefined || value === '') return '—'
   if (column.kind === 'date') return displayDate(String(value))
-  if (column.kind === 'rate') return Number(value).toFixed(6)
+  if (column.kind === 'rate' || column.kind === 'ndfRate') return Number(value).toFixed(6)
   if (column.kind === 'amount') return numberFormat.format(Number(value))
   if (column.kind === 'pnl' || column.kind === 'localPnl') {
     return `${numberFormat.format(Number(value))} ${column.kind === 'pnl' ? row.pnlCurrency : row.localPnlCurrency}`.trim()
@@ -79,6 +83,6 @@ export function filterSortRows(rows: readonly DealReportRow[], search: string, s
 export function exportRecords(rows: readonly DealReportRow[]): Record<string, string | number>[] {
   return rows.map((row) => Object.fromEntries(COLUMNS.map((column) => {
     const value = row[column.field]
-    return [column.label, column.kind === 'amount' || column.kind === 'rate' ? value ?? '' : cellValue(row, column)]
+    return [column.label, column.kind === 'amount' || column.kind === 'rate' || column.kind === 'ndfRate' ? value ?? '' : cellValue(row, column)]
   })) as Record<string, string | number>)
 }

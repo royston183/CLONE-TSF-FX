@@ -5,6 +5,7 @@ import { fxList, type FxRow } from '../../shared/fx/mw.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { SLOT_NAMES, inChunks, liveLegs, toDeal as toChangeDeal, type Related } from '../fo-change-deal-id/api.ts'
 import type { Deal as ChangeDeal, TopRow } from '../fo-change-deal-id/types.ts'
+import { loadNdfExtras, ndfKey } from '../../shared/fx/ndf-columns.ts'
 import { loadAppStrRecords, type AppStrRecord } from '../fx-blotter/appStr.ts'
 import { cancelDealId } from './analysis.ts'
 import { STATUS_META } from './data.ts'
@@ -194,7 +195,9 @@ export async function loadDeal(dealId: string, signal?: AbortSignal): Promise<Lo
   }
   const screenDeal = toScreenDeal(row, toChangeDeal(row, rel), model)
   const records = await loadAppStrRecords(screenDeal.legs.map((l) => ({ CompanyCode: l.bukrs, FinancialTransaction: l.rfha })), signal)
-  return { deal: withPersistedStatus(screenDeal, records), row }
+  const ndf = await loadNdfExtras(screenDeal.legs.map((l) => ({ CompanyCode: l.bukrs, FinancialTransaction: l.rfha })), { views: view, ...(signal ? { signal } : {}) })
+  const withNdf: Deal = { ...screenDeal, legs: screenDeal.legs.map((l) => ({ ...l, ...(ndf.has(ndfKey(l.bukrs, l.rfha)) ? { ndf: ndf.get(ndfKey(l.bukrs, l.rfha))! } : {}) })) }
+  return { deal: withPersistedStatus(withNdf, records), row }
 }
 
 /** Cancel Deal ID: ZDEAL_STAT = 30 and nothing else. Throws the reason it could not be saved. */

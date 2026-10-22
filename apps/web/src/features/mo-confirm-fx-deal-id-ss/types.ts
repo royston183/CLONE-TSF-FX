@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 /** Deal ID status code (ZSGTSFTR_DEALID-ZDEAL_STAT). 01 is the only editable one. */
 export type DealStatus = string
 
@@ -32,6 +34,8 @@ export type Leg = {
   premAmt: number
   premCurr: string
   pInr: number
+  /** NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR as ZSGTSFCDS_FX shows them; blank when not served. */
+  ndf?: NdfExtras
 }
 
 export type LegInput = Omit<Leg, 'totPl'>

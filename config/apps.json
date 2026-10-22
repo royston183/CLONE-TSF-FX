@@ -262,6 +262,18 @@
       "note": "Legacy page never called an API — no fetch, no XMLHttpRequest. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
     },
     {
+      "code": "ZSGTSFP021",
+      "id": "limit-management",
+      "route": "/apps/limit-management",
+      "title": "Merchanting Dashboard: Limit Management",
+      "status": "scaffold",
+      "services": [
+        "middleware"
+      ],
+      "legacy": "legacy/limit-management-dashboard.html",
+      "note": "Converted from the supplied dashboard. Limits (ZSGTSFTR_LIM_MAN) and currency pairs (ZSGTRMTR_CURPAIR) are local SQLite tables behind /api/localdb/tsf-limit and /tsf-currency-pair (migrations 011 / 012; the LIM_MAN DDIC export was empty, so its key and lengths are assumed). Utilised amount is ZUTL_AMT; the bank-wise summary reads the real D1 Deal IDs. The approval e-mail is a preview only."
+    },
+    {
       "code": "ZSGTSFP001",
       "id": "fo-create-master-contract",
       "route": "/apps/fo-create-master-contract",

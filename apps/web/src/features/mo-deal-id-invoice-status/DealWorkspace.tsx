@@ -40,13 +40,18 @@ function FxTable({ rows, emptyText }: { rows: FxRow[]; emptyText: string }) {
             <th>Curr 2</th>
             <th className="num">Amount 2</th>
             <th className="num">All in Rate</th>
+            <th>NDF Fixing Date</th>
+            <th>NDF Ref</th>
+            <th className="num">NDF Settlement Rate</th>
+            <th className="num">Cash Settlement Amount</th>
+            <th>Cash Currency</th>
             <th>Txn Status</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td className="analysis-empty" colSpan={17}>
+              <td className="analysis-empty" colSpan={22}>
                 {emptyText}
               </td>
             </tr>
@@ -69,6 +74,11 @@ function FxTable({ rows, emptyText }: { rows: FxRow[]; emptyText: string }) {
                 <td>{r.curr2}</td>
                 <td className="num">{r.amt2}</td>
                 <td className="num">{formatRate(r.rate)}</td>
+                <td>{r.ndfDate ?? ''}</td>
+                <td>{r.ndfRef ?? ''}</td>
+                <td className="num">{r.ndfRate ?? ''}</td>
+                <td className="num">{r.cashAmt ?? ''}</td>
+                <td>{r.cashCurr ?? ''}</td>
                 <td>{r.status}</td>
               </tr>
             ))

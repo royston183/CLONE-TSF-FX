@@ -58,6 +58,7 @@ const TXN_COLS: readonly TxnCol[] = [
   { label: 'Currency Pair', shortLabel: 'Pair', get: (t) => t.cpair },
   { label: 'NDF Rate', num: true, get: (t) => formatRate(t.ndfRate) },
   { label: 'Cash Amt', num: true, get: (t) => (t.cashAmt && t.cashCurr === 'USD' ? `${formatAmount(t.cashAmt)} USD` : '') },
+  { label: 'Cash Curr', get: (t) => t.cashCurr },
   {
     label: 'Sett Amt (Local)',
     shortLabel: 'Local Amt',

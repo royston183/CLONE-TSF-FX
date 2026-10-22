@@ -196,6 +196,10 @@ export function dealFromFxApp({ fx, app }: FxWithApp, names: Names = NO_NAMES, d
     ZTSF_TRFTYPE: app.ZtsfTrftype,
     ZTSF_TRFTYPE2: app.ZtsfTrftype2,
     ZTSF_EXE_CO: flag(app.ZtsfExeCo),
+    // Served by FxTransaction once ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); blank until then.
+    NDF_RATE: (fx as { NdfFixingRate?: number | string }).NdfFixingRate,
+    ZCASH_AMT: (fx as { CashSettlementAmount?: number | string }).CashSettlementAmount,
+    CASH_CURR: (fx as { CashSettlementCurrency?: string }).CashSettlementCurrency,
     NDF_FO_REM: app.NdfFoRem,
     NDF_MO_REM: app.NdfMoRem,
   }

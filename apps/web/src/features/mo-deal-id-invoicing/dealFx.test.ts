@@ -1,5 +1,6 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
+import { NO_NDF_EXTRAS } from '../../shared/fx/ndf-columns.ts'
 import { FX_LEG_FILTER, legsByDeal, loadFxLegsByDeal, toFxLeg } from './dealFx.ts'
 import { fxUtilAmt, utilizationKnown } from './logic.ts'
 import { buildDeals } from './fixtures.ts'
@@ -18,8 +19,13 @@ describe('D1 / D2 legs from TrmFxApp + FxTransaction', () => {
 
   it('maps a leg with signed amounts and the partner code (the name has no service)', () => {
     deepStrictEqual(toFxLeg({ fx: fx(), app: app() }), {
-      type: 'D1', bukrs: 'SG03', rfha: '5000456830', curr1: 'USD', curr2: 'INR', amt1: 1000, amt2: -90000, bp: 'BARC', bpName: '', rate: 90,
+      type: 'D1', bukrs: 'SG03', rfha: '5000456830', curr1: 'USD', curr2: 'INR', amt1: 1000, amt2: -90000, bp: 'BARC', bpName: '', rate: 90, ndf: NO_NDF_EXTRAS,
     })
+  })
+  it('carries the NDF columns of an NDF leg: view date / ref, FxTransaction rate and cash; blank when not served', () => {
+    const ndf = toFxLeg({ fx: fx({ ProductType: '30D', NdfFixingRate: '94.5', CashSettlementAmount: '120', CashSettlementCurrency: 'USD' }), app: app() }, { NDF_DATE: '2026-10-07', NDF_REF: 'R1' })!.ndf!
+    deepStrictEqual(ndf, { ndfDate: '2026-10-07', ndfRef: 'R1', ndfRate: 94.5, cashAmount: 120, cashCurrency: 'USD', ndfFoRem: '', ndfMoRem: '' })
+    strictEqual(toFxLeg({ fx: fx({ ProductType: '30D' }), app: app() })!.ndf!.ndfRate, null)
   })
   it('ignores other deal types and reversed transactions; groups by Deal ID, D1 first', () => {
     strictEqual(toFxLeg({ fx: fx(), app: app({ ZtsfDealType: 'D3' }) }), null)

@@ -33,6 +33,12 @@ export type Deal = {
   /** Int Ref (editable). */
   ZOLAM_DEAL_NO: string
   _checked: boolean
+  /** NDF columns (ZSGTSFV_FX NDF_DATE / NDF_REF; FxTransaction NdfFixingRate / CashSettlementAmount / CashSettlementCurrency). Blank when not served. */
+  NDF_DATE?: string
+  NDF_REF?: string
+  NDF_RATE?: number
+  ZCASH_AMT?: number
+  CASH_CURR?: string
   // Forex only
   BS_2?: string
   CURR2?: string

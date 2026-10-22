@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 export type StatusMeta = { code: string; text: string; cls: string }
 
 export type Deal = {
@@ -73,6 +75,8 @@ export type FxDeal = {
   strike?: string
   /** The transaction's TSF bank fields (VTBFHA ZTSF_*), as TrmFxApp serves them. */
   tsf?: FxTsf
+  /** NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR; blank when SAP does not serve them. */
+  ndf?: NdfExtras
   /** ZSGTSFTR_SET_FX of the leg's deal type: its buy (ZBS 'B') and sell (ZBS 'S') rows. */
   setFxBuy?: SetFxSide
   setFxSell?: SetFxSide

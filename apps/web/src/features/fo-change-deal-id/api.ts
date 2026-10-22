@@ -211,7 +211,7 @@ export function legs(d: DealRow, rel: Pick<Related, 'fxByKey' | 'live' | 'names'
     const bukrs = txt(d, `ZBUKRS${i + 1}`)
     const liveLeg = rel.live?.get(fxKey(bukrs, rfha))
     if (liveLeg) {
-      out.push(liveLeg_(slot, liveLeg, txt(d, 'ZMC_REF'), rel))
+      out.push(liveLeg_(slot, liveLeg, txt(d, 'ZMC_REF'), rel, rel.fxByKey.get(fxKey(bukrs, rfha))))
       return
     }
     const v = rel.fxByKey.get(fxKey(bukrs, rfha))
@@ -242,6 +242,7 @@ export function legs(d: DealRow, rel: Pick<Related, 'fxByKey' | 'live' | 'names'
       mcRefNo: txt(d, 'ZMC_REF'),
       // ZSGTSFV_FX has no TXN_STATUS yet; a view that gains the column fills this in.
       txnStatus: v ? txt(v, 'TXN_STATUS') : '',
+      ...ndfFromView(v),
     })
   })
   return out
@@ -249,11 +250,24 @@ export function legs(d: DealRow, rel: Pick<Related, 'fxByKey' | 'live' | 'names'
 
 const day = (v: string | null | undefined): string => (v ? dmyFromIso(v) : '')
 
+const numOrBlank = (v: string | number | null | undefined): number | '' => (v === undefined || v === null || v === '' ? '' : num(v))
+
+/** NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR of a ZSGTSFV_FX row; blank when the row or column is missing. */
+function ndfFromView(v: FxRow | undefined): { ndfDate: string; ndfRef: string; ndfRate: number | ''; cashAmt: number | ''; cashCurr: string } {
+  return {
+    ndfDate: v ? day(txt(v, 'NDF_DATE')) : '',
+    ndfRef: v ? txt(v, 'NDF_REF') : '',
+    ndfRate: v ? numOrBlank(txt(v, 'NDF_RATE')) : '',
+    cashAmt: v ? numOrBlank(txt(v, 'ZCASH_AMT')) : '',
+    cashCurr: v ? txt(v, 'CASH_CURR') : '',
+  }
+}
+
 /** TXN_STATUS stand-in: Confirmed once SAP settled the leg (the MO screen's Match & Release), Open before. */
 export const liveTxnStatus = (t: FxTransaction): string => (t.ActivityCategory === '30' ? '03' : '01')
 
 /** A leg from the live FxTransaction; amounts are signed (a sold currency is negative) like the view's. */
-function liveLeg_(slot: string, t: FxTransaction, mcRef: string, rel: Pick<Related, 'names' | 'entities'>): TopRow {
+function liveLeg_(slot: string, t: FxTransaction, mcRef: string, rel: Pick<Related, 'names' | 'entities'>, view?: FxRow): TopRow {
   const lead = t.LeadCurrency || t.BuyCurrency || ''
   const follow = t.FollowCurrency || t.SellCurrency || ''
   const buysLead = t.BuyCurrency === lead
@@ -287,6 +301,17 @@ function liveLeg_(slot: string, t: FxTransaction, mcRef: string, rel: Pick<Relat
     strike: '',
     mcRefNo: mcRef,
     txnStatus: liveTxnStatus(t),
+    // Date and reference come from the view; the rate and cash settlement from FxTransaction once it serves them, else the view.
+    ...(() => {
+      const v = ndfFromView(view)
+      return {
+        ndfDate: v.ndfDate ?? '',
+        ndfRef: v.ndfRef ?? '',
+        ndfRate: t.NdfFixingRate !== undefined ? numOrBlank(t.NdfFixingRate) : (v.ndfRate ?? ''),
+        cashAmt: t.CashSettlementAmount !== undefined ? numOrBlank(t.CashSettlementAmount) : (v.cashAmt ?? ''),
+        cashCurr: t.CashSettlementCurrency ?? v.cashCurr ?? '',
+      }
+    })(),
   }
 }
 

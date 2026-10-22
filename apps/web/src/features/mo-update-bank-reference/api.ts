@@ -23,7 +23,9 @@ import { apiFetch, service } from '@slc/api-client'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxColumns, fxList, isAbort, type FxFilter, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
-import { attachTrmFxApp, type TrmFxApp } from '../../shared/fx/app-str.ts'
+import { attachTrmFxApp, loadFxFor, type TrmFxApp } from '../../shared/fx/app-str.ts'
+import type { FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
+import { ndfExtras } from '../../shared/fx/ndf-columns.ts'
 import type { Company, Deal, DealType } from './types.ts'
 
 const companyApi = service('companycode')
@@ -111,7 +113,9 @@ export function eligible(rows: readonly FxRow[], withRef: boolean): FxRow[] {
  * One ZSGTSFV_FX row as a grid row. BUKRS+RFHA+REFNR is the view's row key. `app` is the row's TrmFxApp record
  * (company code + transaction), if it has one; without it the application columns are blank.
  */
-export function dealFromView(r: FxRow, app?: TrmFxApp): Deal {
+export function dealFromView(r: FxRow, app?: TrmFxApp, fx?: FxTransaction): Deal {
+  // NDF_DATE / NDF_REF come from the view row; rate and cash settlement from FxTransaction (blank, never 0, until served).
+  const ndf = ndfExtras(fx, app, r)
   return {
     _id: `${txt(r, 'BUKRS')}-${txt(r, 'RFHA')}-${txt(r, 'REFNR')}`,
     RFHA: alphaOut(txt(r, 'RFHA')),
@@ -129,6 +133,11 @@ export function dealFromView(r: FxRow, app?: TrmFxApp): Deal {
     SPOT: num(r['OSPOT']),
     SWAP: num(r['OSWAP']),
     TOT_RATE: num(r['OTOT_RATE']),
+    NDF_DATE: dmyFromIso(ndf.ndfDate),
+    NDF_REF: ndf.ndfRef,
+    ...(ndf.ndfRate !== null ? { NDF_RATE: ndf.ndfRate } : {}),
+    ...(ndf.cashAmount !== null ? { ZCASH_AMT: ndf.cashAmount } : {}),
+    CASH_CURR: ndf.cashCurrency,
     DBLFZ: dmyFromIso(txt(r, 'DBLFZ')),
     DELFZ: dmyFromIso(txt(r, 'DELFZ')),
     RDEALER: txt(r, 'RDEALER'),
@@ -208,7 +217,21 @@ export async function loadDeals(
       rows.map((r) => ({ CompanyCode: txt(r, 'BUKRS'), FinancialTransaction: txt(r, 'RFHA'), row: r })),
       signal,
     )
-    return { state: 'ok', value: joined.map(({ fx, app }) => dealFromView(fx.row, app)), note: BLANK_COLUMNS_NOTE }
+    // Display-only: rate / cash settlement stay blank when FxTransaction cannot be read or does not serve them.
+    const fxByKey = new Map<string, FxTransaction>()
+    try {
+      for (const f of await loadFxFor(joined.map(({ fx }) => ({ CompanyCode: fx.CompanyCode, FinancialTransaction: fx.FinancialTransaction })), signal)) {
+        fxByKey.set(`${f.CompanyCode}|${f.FinancialTransaction}`, f)
+      }
+    } catch (error) {
+      if (isAbort(error)) throw error
+      console.warn('[update-bank-reference] FxTransaction unavailable for the NDF columns', error)
+    }
+    return {
+      state: 'ok',
+      value: joined.map(({ fx, app }) => dealFromView(fx.row, app, fxByKey.get(`${fx.CompanyCode}|${fx.FinancialTransaction}`))),
+      note: BLANK_COLUMNS_NOTE,
+    }
   } catch (error) {
     const failed = failure<never>('ZSGTSFV_FX', error)
     return failed.state === 'ok' ? { state: 'error', reason: 'ZSGTSFV_FX could not be read.' } : failed

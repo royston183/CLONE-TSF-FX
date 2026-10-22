@@ -77,6 +77,10 @@ export type Txn = {
   acctCat: string
   status: StatusValue
   moRemark: string
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR; null / '' (shown blank) while FxTransaction does not serve them or the deal is not an NDF. */
+  ndfRate?: number | null
+  cashAmount?: number | null
+  cashCurrency?: string
   changedBy: string
   changedOn: Date | null
   /** True for a row read from SAP; its fields SAP has no home for are blank and read-only. */

@@ -167,13 +167,16 @@ export function FxTable({
             <th className="left">Profit Center</th>
             <th className="left">Counterparty</th>
             <th className="left">Bus. Area</th>
+            <th>NDF Rate</th>
+            <th className="left">Cash Amount</th>
+            <th className="left">Cash Currency</th>
             <th className="left">Status</th>
           </tr>
         </thead>
         <tbody>
           {deal.top.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={23}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
+              <td colSpan={26}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.top.map((r, idx) => {
@@ -225,6 +228,9 @@ export function FxTable({
                   <td className="left">{r.profitCenter || DASH}</td>
                   <td className="left">{r.partner || DASH}</td>
                   <td className="left">{r.busArea || DASH}</td>
+                  <td className="num">{r.ndfRate ? fmtRate(r.ndfRate) : DASH}</td>
+                  <td className="left num">{r.cashAmt ? fmtAmt(r.cashAmt) : DASH}</td>
+                  <td className="left">{r.cashCurr || DASH}</td>
                   <td className="left">{r.status}</td>
                 </tr>
               )
@@ -232,7 +238,7 @@ export function FxTable({
           )}
           {deal.top.length > 0 && deal.fxWaiting ? (
             <tr className="empty-row">
-              <td colSpan={23}>{deal.fxWaiting}</td>
+              <td colSpan={26}>{deal.fxWaiting}</td>
             </tr>
           ) : null}
         </tbody>

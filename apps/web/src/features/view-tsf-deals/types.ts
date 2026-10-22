@@ -51,11 +51,18 @@ export type DealReportRow = {
   businessArea: string
   foRemark: string
   moRemark: string
+  ndfDate: string
+  ndfRef: string
+  ndfRate: number | null
+  cashAmount: number | null
+  cashCurrency: string
+  ndfFoRemark: string
+  ndfMoRemark: string
   enteredBy: string
   created: string
   changedBy: string
   changed: string
 }
 
-export type Column = { field: keyof DealReportRow; label: string; kind?: 'date' | 'amount' | 'rate' | 'pnl' | 'localPnl' }
+export type Column = { field: keyof DealReportRow; label: string; kind?: 'date' | 'amount' | 'rate' | 'pnl' | 'localPnl' | 'ndfRate' }
 export type Sort = { field: keyof DealReportRow; direction: 'asc' | 'desc' }

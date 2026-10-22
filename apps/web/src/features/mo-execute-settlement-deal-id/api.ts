@@ -38,6 +38,7 @@ import { messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { paymentAmount, type PayDeal } from '../../shared/fx/payment-amount.ts'
 import { apiFetch, odataString, service } from '@slc/api-client'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
@@ -75,7 +76,7 @@ const rate = (v: unknown): string => (v === undefined || v === null || v === '' 
  * An FX leg as a grid row. Leg 1 is the lead currency (FxTransaction's LeadCurrency), B/S is from the
  * transaction's own buy side, amounts are absolute. Entity and the FI document numbers have no source.
  */
-export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
+export function toFxDeal({ fx, app }: FxWithApp, view?: FxRow): FxDeal {
   const type = (app.ZtsfDealType ?? '').trim()
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
@@ -113,6 +114,7 @@ export function toFxDeal({ fx, app }: FxWithApp): FxDeal {
     txnStatus: status,
     busArea: extra(fx, 'BusinessArea', 'Rbusa'),
     profitCenter: extra(fx, 'ProfitCenter', 'Prctr'),
+    ndf: ndfExtras(fx, app, view),
     tsf: {
       bhbkid: s(app.ZtsfBhbkID),
       bhktid: s(app.ZtsfBhktID),
@@ -187,9 +189,13 @@ const bySeq = (a: FxDeal, b: FxDeal) => (a.seq + a.dealType + a.rfha < b.seq + b
 export async function loadFxLegs(dealId: string, signal?: AbortSignal): Promise<FxDeal[]> {
   const joined = (await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)).filter(({ fx }) => fx.ActiveStatus !== '3')
   // Names are a soft lookup (loadNames never throws except on abort): a failed one leaves the codes unnamed.
-  const names = await loadNames(joined.map((j) => j.fx), signal)
+  const [names, ndfViews] = await Promise.all([
+    loadNames(joined.map((j) => j.fx), signal),
+    loadNdfViews(joined.map((j) => j.fx), signal),
+  ])
+  const views = viewsByKey(ndfViews)
   const legs = joined.map((j) => {
-    const leg = toFxDeal(j)
+    const leg = toFxDeal(j, views.get(ndfKey(j.fx.CompanyCode, j.fx.FinancialTransaction)))
     const bpName = names.partners.get(j.fx.Partner)
     return { ...leg, bpName: bpName ? `${j.fx.Partner} - ${bpName}` : j.fx.Partner, txnTypeDesc: names.txnTypes.get(typeKey(j.fx.ProductType ?? '', j.fx.TransactionType)) ?? '' }
   })

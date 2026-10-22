@@ -1,3 +1,4 @@
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { formatAmount } from './format.ts'
 import { TRANSFER_TYPES } from './logic.ts'
 import type { FxDeal, Indexed, ToastKind, TradeInvoice } from './types.ts'
@@ -145,6 +146,11 @@ export function FxGrid({
               <th className="left">Bus. Area</th>
               <th className="left">Profit Center</th>
               <th className="left">Txn Status</th>
+              <th className="left">NDF Fixing Date</th>
+              <th className="left">NDF Ref</th>
+              <th>NDF Settlement Rate</th>
+              <th>Cash Settlement Amount</th>
+              <th className="left">Cash Currency</th>
               <th className="left">MC Ref No</th>
               <th className="left">Status</th>
               <th className="left">Doc No 1</th>
@@ -154,7 +160,7 @@ export function FxGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={29}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
+                <td colSpan={34}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -201,6 +207,11 @@ export function FxGrid({
                   <td className="left">{r.busArea || <Dash />}</td>
                   <td className="left">{r.profitCenter || <Dash />}</td>
                   <td className="left">{r.txnStatus || <Dash />}</td>
+                  <td className="left">{fmtNdfDate(r.ndf?.ndfDate ?? '')}</td>
+                  <td className="left">{r.ndf?.ndfRef ?? ''}</td>
+                  <td className="num">{fmtNdfRate(r.ndf?.ndfRate)}</td>
+                  <td className="num">{fmtNdfCash(r.ndf?.cashAmount)}</td>
+                  <td className="left">{r.ndf?.cashCurrency ?? ''}</td>
                   <td className="left">{r.mcRefNo}</td>
                   <td className="left">
                     <span className={`chip ${r.statusChip}`}>{r.status}</span>

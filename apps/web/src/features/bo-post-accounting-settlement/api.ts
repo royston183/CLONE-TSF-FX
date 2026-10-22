@@ -174,6 +174,10 @@ export function toLeg({ fx, app }: FxWithApp): FxLeg {
     swap: num(fx.SwapRate),
     profitCenter: extra(fx, 'ProfitCenter', 'Prctr'),
     busArea: extra(fx, 'BusinessArea', 'Rbusa'),
+    // Blank (undefined) until ZFS_SD_TRMFX serves the NDF fields; never 0 for an unserved value.
+    ndfRate: fx.NdfFixingRate === undefined || fx.NdfFixingRate === null || fx.NdfFixingRate === '' ? undefined : num(fx.NdfFixingRate),
+    cashAmt: fx.CashSettlementAmount === undefined || fx.CashSettlementAmount === null || fx.CashSettlementAmount === '' ? undefined : num(fx.CashSettlementAmount),
+    cashCurr: fx.CashSettlementCurrency ?? '',
   }
 }
 

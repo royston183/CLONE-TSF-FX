@@ -42,6 +42,9 @@ const amount = (v: unknown): number => {
   return Number.isFinite(x) ? x : 0
 }
 
+/** A field SAP may not serve yet: null when absent or blank, never 0. */
+const served = (v: number | string | null | undefined): number | null => (v === undefined || v === null || v === '' ? null : amount(v))
+
 /**
  * One FxTransaction + its TrmFxApp row as a leg, field for field as deal_details fills gs_top. Leg 1 is the
  * lead-currency side; as in ZSGTSFCDS_FX the sell side's amount is negative.
@@ -56,6 +59,7 @@ export function legFromFx({ fx, app }: FxWithApp, names: Names = NO_NAMES, compa
   const productType = fx.ProductType ?? ''
   const typeName = names.txnTypes.get(`${productType}/${fx.TransactionType}`)
   const status = app.TxnStatus ?? ''
+  const ndf = fx as { NdfFixingRate?: number | string | null; CashSettlementAmount?: number | string | null; CashSettlementCurrency?: string }
   return {
     rfha: fx.FinancialTransaction,
     bukrs: fx.CompanyCode,
@@ -83,6 +87,10 @@ export function legFromFx({ fx, app }: FxWithApp, names: Names = NO_NAMES, compa
     zroll: '',
     ztsf_pre_mature: app.ZtsfPreMature === true,
     ztsf_unwind: app.ZtsfUnwind === true,
+    // Served once ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); blank until then, never 0.
+    ndf_rate: served(ndf.NdfFixingRate),
+    zcash_amt: served(ndf.CashSettlementAmount),
+    cash_curr: ndf.CashSettlementCurrency ?? '',
   }
 }
 

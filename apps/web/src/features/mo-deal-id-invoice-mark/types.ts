@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 export type DealStatusCode = '02' | '03' | '05'
 
 /** One row of FORM get_data's GT_DATA: a Deal ID eligible for manual invoice marking. */
@@ -60,6 +62,8 @@ export type FxRow = {
   txnStatus: string
   premium: number | ''
   premiumCurr: string
+  /** NDF columns; blank when SAP does not serve them. */
+  ndf?: NdfExtras
 }
 
 export type InvoiceRow = {

@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 /** The Deal ID status codes the page colours (STATUS_META's keys); SAP's own texts replace the descriptions. */
 export type StatusCode = '01' | '02' | '03' | '07' | '30'
 
@@ -28,6 +30,8 @@ export type Leg = {
   txnStatus: string
   /** null: the NDF fixing profit is not in the FX service. */
   fxPl: number | null
+  /** The NDF columns standard SAP shows (NDF_DATE, NDF_REF, NDF_RATE, ZCASH_AMT, CASH_CURR); blank when not served. */
+  ndf?: NdfExtras
 }
 
 /** The P&L stored on the Deal ID when it was confirmed (ZPL, ZPL_LAMT, ZPL_CURR, ZPL_LCURR, ZPL_RATE). */
@@ -59,7 +63,7 @@ export type Deal = {
   status: string
   /** FX1 forwards, FX2 options (ZSGTSFTR_RULE_BT-ZSUB_TYPE). */
   subType: string
-  /** Model configured without an invoice plan (ZNO_INV): the invoice and P&L cards are hidden. */
+  /** Model configured without an invoice plan (ZNO_INV): the invoice and P&L cards say so instead of showing a plan. */
   noInv: boolean
   /** Short-straddle model (ZSS): shows "Confirm & Save SS Deal ID". */
   ssDeal: boolean
@@ -96,6 +100,11 @@ export type SortKey =
   | 'mcRef'
   | 'txnStatusDesc'
   | 'fxPl'
+  | 'ndfDate'
+  | 'ndfRef'
+  | 'ndfRate'
+  | 'cashAmount'
+  | 'cashCurrency'
 
 export type Sort = { key: SortKey | null; dir: 1 | -1 }
 

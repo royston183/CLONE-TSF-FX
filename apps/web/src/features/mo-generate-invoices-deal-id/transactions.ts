@@ -17,6 +17,8 @@
  */
 import { list, odataString, service } from '@slc/api-client'
 import { dmyFromIso, num } from '../../shared/fx/sap.ts'
+import type { FxRow as ViewRow } from '../../shared/fx/mw.ts'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
 import type { FxRow } from './types.ts'
 
 const APP = service('trmfxapp')('TrmFxApp')
@@ -56,6 +58,11 @@ export type FxTxnEntity = {
   ForwardRate?: number | string
   /** '3' once reversed (SAKTIV = 3). */
   ActiveStatus?: string
+  ProductType?: string
+  /** Served once ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md). */
+  NdfFixingRate?: number | string
+  CashSettlementAmount?: number | string
+  CashSettlementCurrency?: string
 }
 
 /** BUKRS + RFHA as one key. */
@@ -68,8 +75,9 @@ const clean = (v: string | null | undefined): string => (v ?? '').trim()
  * convention of the MO confirmation screen, which keeps CURR1 / AMT1 / CURR2 / AMT2 comparable with
  * the CDS view). A reversed transaction (SAKTIV = 3) is not a row.
  */
-export function mergedRow(app: AppStrEntity, t: FxTxnEntity, entityOf: (companyCode: string) => string = () => ''): FxRow | null {
+export function mergedRow(app: AppStrEntity, t: FxTxnEntity, entityOf: (companyCode: string) => string = () => '', view?: ViewRow): FxRow | null {
   if (t.ActiveStatus === '3') return null
+  const ndf = ndfExtras(t, undefined, view)
   const lead = t.LeadCurrency || t.BuyCurrency || ''
   const follow = t.FollowCurrency || t.SellCurrency || ''
   const buysLead = t.BuyCurrency === lead
@@ -99,6 +107,11 @@ export function mergedRow(app: AppStrEntity, t: FxTxnEntity, entityOf: (companyC
     preAmt: 0,
     mc: clean(app.ZtsfMcRefNo),
     txn: clean(app.TxnStatus),
+    ndfDate: dmyFromIso(ndf.ndfDate),
+    ndfRef: ndf.ndfRef,
+    ndfRate: ndf.ndfRate ?? '',
+    cashAmt: ndf.cashAmount ?? '',
+    cashCurr: ndf.cashCurrency,
   }
 }
 
@@ -110,12 +123,14 @@ export function mergeDealTransactions(
   links: readonly AppStrEntity[],
   txns: readonly FxTxnEntity[],
   entityOf?: (companyCode: string) => string,
+  views: readonly ViewRow[] = [],
 ): FxRow[] {
+  const viewBy = viewsByKey(views)
   const byKey = new Map(txns.map((t) => [txnKey(t.CompanyCode, t.FinancialTransaction), t]))
   const rows: FxRow[] = []
   for (const link of links) {
     const t = byKey.get(txnKey(link.CompanyCode, link.FinancialTransaction))
-    const row = t ? mergedRow(link, t, entityOf) : null
+    const row = t ? mergedRow(link, t, entityOf, viewBy.get(ndfKey(link.CompanyCode, link.FinancialTransaction))) : null
     if (row) rows.push(row)
   }
   return rows
@@ -147,5 +162,6 @@ export async function loadFxTransactions(links: readonly AppStrEntity[], signal?
 export async function loadDealTransactions(dealId: string, entityOf?: (companyCode: string) => string, signal?: AbortSignal): Promise<FxRow[]> {
   const links = await loadAppStrForDeal(dealId, signal)
   if (!links.length) return []
-  return mergeDealTransactions(links, await loadFxTransactions(links, signal), entityOf)
+  const txns = await loadFxTransactions(links, signal)
+  return mergeDealTransactions(links, txns, entityOf, await loadNdfViews(txns, signal))
 }

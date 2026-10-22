@@ -19,6 +19,11 @@ const COLUMNS: Column[] = [
   { key: 'spotTxn', label: 'Spot Txn' },
   { key: 'tradeDate', label: 'Trade Date' },
   { key: 'valueDate', label: 'Value Date' },
+  { key: 'ndfDate', label: 'NDF Fixing Date' },
+  { key: 'ndfRef', label: 'NDF Ref' },
+  { key: 'ndfRate', label: 'NDF Settlement Rate', num: true },
+  { key: 'cashAmt', label: 'Cash Settlement Amount', num: true },
+  { key: 'cashCurr', label: 'Cash Currency' },
   { key: 'partner', label: 'Business Partner' },
   { key: 'group', label: 'Group' },
   { key: 'companyName', label: 'Company Name' },
@@ -122,6 +127,11 @@ export function SpotTable({
                 </td>
                 <td>{r.tradeDate}</td>
                 <td>{r.valueDate}</td>
+                <td>{r.ndfDate ? r.ndfDate : <span className="muted">—</span>}</td>
+                <td>{r.ndfRef ? r.ndfRef : <span className="muted">—</span>}</td>
+                <td className="num">{r.ndfRate != null ? r.ndfRate.toFixed(4) : <span className="muted">—</span>}</td>
+                <td className="num">{r.cashAmt != null ? fmtAmount(r.cashAmt) : <span className="muted">—</span>}</td>
+                <td>{r.cashCurr ? r.cashCurr : <span className="muted">—</span>}</td>
                 <td title={r.partnerName}>{r.partner}</td>
                 <td>{r.group}</td>
                 <td>{r.companyName}</td>

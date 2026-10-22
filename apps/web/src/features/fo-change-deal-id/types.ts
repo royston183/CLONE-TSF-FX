@@ -43,6 +43,15 @@ export type TopRow = {
   mcRefNo: string
   /** TXN_STATUS of the leg; '' when the source does not carry it (ZSGTSFV_FX has no TXN_STATUS yet). */
   txnStatus: string
+  /**
+   * NDF fields (NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR). '' when the source does not serve them
+   * (blank, never 0): the view gives the date and reference, FxTransaction the rate and cash settlement once served.
+   */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: number | ''
+  cashAmt?: number | ''
+  cashCurr?: string
 }
 
 /** One planned trade invoice leg. */

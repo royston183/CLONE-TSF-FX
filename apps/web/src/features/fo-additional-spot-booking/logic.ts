@@ -145,12 +145,25 @@ export function detailItems(r: SpotRow, kind: 'original' | 'spot'): Array<[strin
     ['Currency', r.currency],
     ['Amount', fmtAmount(amount)],
     ['TSF Entity', r.tsfEntity],
+    ...(kind === 'original' ? ndfDetailItems(r) : []),
+  ]
+}
+
+/** The original deal's NDF fields, listed only when the view served any of them. */
+function ndfDetailItems(r: SpotRow): Array<[string, string]> {
+  if (!r.ndfDate && !r.ndfRef && r.ndfRate == null && r.cashAmt == null && !r.cashCurr) return []
+  return [
+    ['NDF Fixing Date', r.ndfDate ?? ''],
+    ['NDF Ref', r.ndfRef ?? ''],
+    ['NDF Settlement Rate', r.ndfRate != null ? r.ndfRate.toFixed(4) : ''],
+    ['Cash Settlement Amount', r.cashAmt != null ? fmtAmount(r.cashAmt) : ''],
+    ['Cash Currency', r.cashCurr ?? ''],
   ]
 }
 
 // ---------------------------------------------------------------- CSV export
 
-const CSV_COLUMNS: Array<{ header: string; key: keyof SpotRow; amount?: boolean }> = [
+const CSV_COLUMNS: Array<{ header: string; key: keyof SpotRow; amount?: boolean; rate?: boolean }> = [
   { header: 'Deal ID', key: 'dealId' },
   { header: 'Model', key: 'modelId' },
   { header: 'FX Deal', key: 'dealType' },
@@ -165,6 +178,11 @@ const CSV_COLUMNS: Array<{ header: string; key: keyof SpotRow; amount?: boolean 
   { header: 'Spot Txn', key: 'spotTxn' },
   { header: 'Trade Date', key: 'tradeDate' },
   { header: 'Value Date', key: 'valueDate' },
+  { header: 'NDF Fixing Date', key: 'ndfDate' },
+  { header: 'NDF Ref', key: 'ndfRef' },
+  { header: 'NDF Settlement Rate', key: 'ndfRate', rate: true },
+  { header: 'Cash Settlement Amount', key: 'cashAmt', amount: true },
+  { header: 'Cash Currency', key: 'cashCurr' },
   { header: 'Business Partner', key: 'partner' },
   { header: 'Group', key: 'group' },
   { header: 'Company Name', key: 'companyName' },
@@ -182,7 +200,14 @@ function csvCell(v: string | number): string {
 export function buildCsv(rows: readonly SpotRow[]): string {
   const lines = [CSV_COLUMNS.map((c) => csvCell(c.header)).join(',')]
   for (const r of rows) {
-    lines.push(CSV_COLUMNS.map((c) => csvCell(c.amount ? (Number(r[c.key]) || 0).toFixed(2) : (r[c.key] as string | number))).join(','))
+    lines.push(
+      CSV_COLUMNS.map((c) => {
+        const v = r[c.key]
+        // The NDF numbers are blank, not 0.00, while the view does not serve them.
+        if (c.key === 'ndfRate' || c.key === 'cashAmt') return csvCell(v == null ? '' : Number(v).toFixed(c.rate ? 4 : 2))
+        return csvCell(c.amount ? (Number(v) || 0).toFixed(2) : ((v ?? '') as string | number))
+      }).join(','),
+    )
   }
   return lines.join('\r\n')
 }

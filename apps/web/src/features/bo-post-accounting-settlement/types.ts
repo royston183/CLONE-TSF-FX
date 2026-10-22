@@ -37,6 +37,10 @@ export type FxLeg = {
   swap?: number
   profitCenter?: string
   busArea?: string
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR of the transaction (FxTransaction NdfFixingRate / CashSettlementAmount / CashSettlementCurrency); undefined / '' while the service does not serve them. */
+  ndfRate?: number | undefined
+  cashAmt?: number | undefined
+  cashCurr?: string | undefined
 }
 
 /** One trade invoice leg (T1/T2/T3) in the "Trade Invoice Settlement" grid. */

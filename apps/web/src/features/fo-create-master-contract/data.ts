@@ -6,6 +6,7 @@
  * once the middleware answers, and seedContracts() is only shown when it cannot be reached.
  * A master that is registered but still empty in MySQL keeps these values.
  */
+import type { PortGroup } from '../../shared/fx/ports.ts'
 import type { Commodity, FxModel, MasterContract, OriginEntity, PaymentTerm, StatusMeta } from './types.ts'
 
 export const ORIGIN_ENTITIES: OriginEntity[] = [
@@ -51,7 +52,7 @@ export const PAYMENT_TERMS: PaymentTerm[] = [
   { code: 'P06', label: 'P06 - On or Before due date' },
 ]
 
-export const PORTS = ['Mumbai', 'Mundra', 'Chennai', 'Singapore', 'Dubai', 'Rotterdam', 'Hamburg', 'Bangkok', 'Ho Chi Minh City']
+export const PORTS: PortGroup[] = []
 
 /**
  * ZCURR_ID for a currency string. There is no currency-string master in MySQL, so this is the
@@ -156,8 +157,8 @@ function mkContract(
     reference: ref,
     paymentTerms: 'P01',
     paymentDate: shipEnd,
-    portShipment: 'Mumbai',
-    portDestination: 'Singapore',
+    portShipment: '',
+    portDestination: '',
     shipStart,
     shipEnd,
   }

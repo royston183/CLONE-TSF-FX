@@ -26,6 +26,12 @@ export type FxRow = {
   preAmt: number
   mc: string
   txn: string
+  /** NDF_DATE (DD-MM-YYYY) / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR; '' when SAP does not serve them (never 0). */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: number | ''
+  cashAmt?: number | ''
+  cashCurr?: string
 }
 
 /**

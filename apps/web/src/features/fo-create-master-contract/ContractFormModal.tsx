@@ -13,7 +13,9 @@ import {
 } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { commitAmount } from './format.ts'
-import { commodityDescription, originAmount } from './logic.ts'
+import { commodityDescription, isMcDateTooOld, MC_DATE_TOO_OLD, originAmount } from './logic.ts'
+import { earliestMcDate } from '../../shared/fx/dates.ts'
+import { matchPortGroup, portValue, type PortGroup } from '../../shared/fx/ports.ts'
 import { Overlay, useModal, type Modal } from './modal.tsx'
 import { SearchDropdown } from './SearchDropdown.tsx'
 import type { FieldErrors, FieldKey, FormMode, FormValues } from './types.ts'
@@ -49,8 +51,17 @@ export function ContractFormModal({
   onSave: () => void
 }) {
   const commodityModal = useModal()
-  // Built per render: PORTS is swapped for ZSGTSFTR_PORTGRP's rows once they load.
-  const portItems = PORTS.map((name) => ({ name }))
+  // PORTS is swapped for ZSGTSFTR_PORTGRP's rows once they load. The program stores a group's
+  // final description in ZPOS / ZPOD, so a stored value is matched back to its group; one that
+  // matches nothing (an older contract) stays selectable as plain text.
+  const portItemFor = (stored: string | null) => {
+    if (!stored) return undefined
+    return matchPortGroup(stored, PORTS) ?? { code: '', label: stored }
+  }
+  const portItems: PortGroup[] = [...PORTS]
+  const portDisplay = (p: PortGroup) => (p.code ? `${p.code} - ${p.label}` : p.label)
+  const mcDateTooOld = isMcDateTooOld(values.mcDate)
+  const mcDateError = errors.mcDate || mcDateTooOld
 
   const set =(patch: Partial<FormValues>, clear?: FieldKey) => {
     onChange(patch)
@@ -118,7 +129,7 @@ export function ContractFormModal({
               </div>
               <div className="section-body">
                 <div className="form-grid-12">
-                  <div className={fieldCls('mcDate', 'gc-4')}>
+                  <div className={`field gc-4${mcDateError ? ' has-error' : ''}`}>
                     <label>
                       MC Date<span className="req">*</span>
                     </label>
@@ -126,8 +137,9 @@ export function ContractFormModal({
                       value={values.mcDate}
                       onChange={(v) => set({ mcDate: v })}
                       onPicked={() => onClearError('mcDate')}
+                      min={earliestMcDate()}
                     />
-                    <div className="error-msg">MC Date is required.</div>
+                    <div className="error-msg">{mcDateTooOld ? MC_DATE_TOO_OLD : 'MC Date is required.'}</div>
                   </div>
 
                   <div className={fieldCls('mcAmountUsd', 'gc-4')}>
@@ -322,13 +334,13 @@ export function ContractFormModal({
                     <label>Port of Shipment</label>
                     <SearchDropdown
                       items={portItems}
-                      selected={portItems.find((p) => p.name === values.portShipment)}
-                      keyOf={(p) => p.name}
-                      searchText={(p) => p.name}
-                      primaryText={(p) => p.name}
-                      displayText={(p) => p.name}
-                      placeholder="Select port"
-                      onSelect={(p) => set({ portShipment: p.name })}
+                      selected={portItemFor(values.portShipment)}
+                      keyOf={(p) => p.code || p.label}
+                      searchText={(p) => `${p.code} ${p.label} ${p.desc ?? ''}`}
+                      primaryText={portDisplay}
+                      displayText={portDisplay}
+                      placeholder={portItems.length ? 'Select port' : 'No ports available'}
+                      onSelect={(p) => set({ portShipment: portValue(p) })}
                       onClear={() => set({ portShipment: null })}
                     />
                   </div>
@@ -337,13 +349,13 @@ export function ContractFormModal({
                     <label>Port of Destination</label>
                     <SearchDropdown
                       items={portItems}
-                      selected={portItems.find((p) => p.name === values.portDestination)}
-                      keyOf={(p) => p.name}
-                      searchText={(p) => p.name}
-                      primaryText={(p) => p.name}
-                      displayText={(p) => p.name}
-                      placeholder="Select port"
-                      onSelect={(p) => set({ portDestination: p.name })}
+                      selected={portItemFor(values.portDestination)}
+                      keyOf={(p) => p.code || p.label}
+                      searchText={(p) => `${p.code} ${p.label} ${p.desc ?? ''}`}
+                      primaryText={portDisplay}
+                      displayText={portDisplay}
+                      placeholder={portItems.length ? 'Select port' : 'No ports available'}
+                      onSelect={(p) => set({ portDestination: portValue(p) })}
                       onClear={() => set({ portDestination: null })}
                     />
                   </div>

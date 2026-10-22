@@ -69,6 +69,11 @@ export function DealTable({ rows, emptyText, selected, sort, onSort, onToggleRow
             <th>Buy Trf</th>
             <th>Sell Trf</th>
             <th>Entered By</th>
+            <th>NDF Fixing Date</th>
+            <th>NDF Ref</th>
+            <th>NDF Settlement Rate</th>
+            <th>Cash Settlement Amount</th>
+            <th>Cash Currency</th>
           </tr>
         </thead>
         <tbody>
@@ -138,12 +143,17 @@ export function DealTable({ rows, emptyText, selected, sort, onSort, onToggleRow
                 <td>{NAMES.transfer[d.trf1] ?? d.trf1}</td>
                 <td>{NAMES.transfer[d.trf2] ?? d.trf2}</td>
                 <td>{d.cruser}</td>
+                <td>{d.ndfDate || <Dash />}</td>
+                <td>{d.ndfRef || <Dash />}</td>
+                <td>{d.ndfRate ? fmtRate(d.ndfRate) : <Dash />}</td>
+                <td>{d.cashAmt ? fmtAmt(d.cashAmt) : <Dash />}</td>
+                <td>{d.cashCurr || <Dash />}</td>
               </tr>
             )
           })}
           {!rows.length && (
             <tr>
-              <td colSpan={21} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 26 }}>
+              <td colSpan={26} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 26 }}>
                 {emptyText}
               </td>
             </tr>
