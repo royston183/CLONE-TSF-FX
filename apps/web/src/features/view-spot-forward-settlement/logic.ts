@@ -202,6 +202,11 @@ export function dealDetailCells(d: Deal, names: Names, statusLabel: string): Det
     { label: 'Trader', value: d.trader },
     { label: 'FI Doc 1', value: d.doc1 || DASH },
     { label: 'FI Doc 2', value: d.doc2 || DASH },
+    { label: 'NDF Fixing Date', value: d.ndfDate || DASH },
+    { label: 'NDF Ref', value: d.ndfRef || DASH },
+    { label: 'NDF Settlement Rate', value: d.ndfRate ? fmtRate(d.ndfRate) : DASH },
+    { label: 'Cash Settlement Amount', value: d.cashAmt ? fmtAmt(d.cashAmt) : DASH },
+    { label: 'Cash Currency', value: d.cashCurr || DASH },
   ]
 }
 

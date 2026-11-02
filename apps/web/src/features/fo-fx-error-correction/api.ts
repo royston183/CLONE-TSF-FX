@@ -2,7 +2,8 @@ import { apiFetch, entityPath, list, odataString, service } from '@slc/api-clien
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { FX_TXN_STATUS, blotterStageOf } from '../../shared/fx/txn-status.ts'
-import { appKey, listTrmFxApp } from '../../shared/fx/app-str.ts'
+import { appKey, listTrmFxApp, type TrmFxApp } from '../../shared/fx/app-str.ts'
+import { createAppStrRecord, getAppStrRecord, updateAppStrRecord } from '../fx-blotter/appStr.ts'
 import { dealKey, dealIdsByTransaction, sapMessage, type FxTransaction } from '../mo-fx-deal-confirmation/api.ts'
 import { STATUS } from './data.ts'
 import { parseAmountShorthand, parseRate, safeParseDate } from './format.ts'
@@ -14,13 +15,14 @@ import type { CorrectionForm, Txn } from './types.ts'
  * What SAP can do here, and what it cannot:
  *
  *   Reverse   DELETE FxTransaction = BAPI_FTR_FXT_REVERSE (reason 04).
- *   Correct   PATCH FxTransaction = BAPI_FTR_FXT_DEALCHANGE: rates, Amount 1, value date and trade date (ContractDate).
- *             SAP works Amount 2 out itself (Buy Amount x Forward Rate), so it is never sent.
+ *   Correct   PATCH FxTransaction = BAPI_FTR_FXT_DEALCHANGE: rates, bought amount, value date and trade date (ContractDate).
+ *             SAP calculates the opposite amount; it is never sent.
  *
  * What the service has no field for, and the screen therefore shows blank and read-only instead of inventing:
  * the MO remark,
- * trader, mode of trade, account category, business area and profit center of the transaction, blotter date, and
- * who changed it. The Deal ID and Master Contract come from ZSGTSFTR_DEALID; the names from the TRM and
+ * mode of trade, account category, business area and profit center of the transaction.
+ * Blotter date, trader and audit data come from APP_STR; blotter date edits are saved there.
+ * The Deal ID and Master Contract come from ZSGTSFTR_DEALID; the names from the TRM and
  * business-partner masters. Options are not part of this service and stay out.
  */
 export { sapMessage }
@@ -42,12 +44,15 @@ const n = (v: unknown): number => {
 
 const parseDay = (v: string | null | undefined): Date | null => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v ?? '')
-  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
+  return m ? safeParseDate(`${m[3]}-${m[2]}-${m[1]}`) : null
 }
 
 /** A date as the service takes it: YYYY-MM-DD from the pickers' DD-MM-YYYY. */
 const isoDay = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+/** A field SAP may not serve yet: null (shown blank) when absent, never 0. */
+const servedNumber = (v: number | string | null | undefined): number | null => (v === undefined || v === null || v === '' ? null : n(v))
 
 /** The names the queue shows, each looked up once. Any map may be empty: the code then stands in for its name. */
 export type Names = {
@@ -111,6 +116,7 @@ export function toTxn(
   deals: ReadonlyMap<string, { dealId: string; desc: string; mc: string }>,
   names: Names,
   txnStatuses: ReadonlyMap<string, string> = new Map(),
+  appRows: ReadonlyMap<string, TrmFxApp> = new Map(),
 ): Txn | null {
   const tradeDate = parseDay(d.ContractDate)
   const valueDate = parseDay(d.ValueDate)
@@ -124,6 +130,7 @@ export function toTxn(
   const company = names.companies.get(d.CompanyCode)
   const deal = deals.get(dealKey(d.CompanyCode, d.FinancialTransaction))
   const productType = d.ProductType ?? ''
+  const app = appRows.get(appKey(d.CompanyCode, d.FinancialTransaction))
   return {
     rfha: d.FinancialTransaction,
     dealId: deal?.dealId ?? '',
@@ -149,19 +156,22 @@ export function toTxn(
     allInRate: n(d.ForwardRate),
     tradeDate,
     valueDate,
-    blotterDate: null,
+    blotterDate: parseDay(app?.BlotterDate),
     busArea: '',
     busAreaDesc: '',
     profitCenter: '',
     profitCenterDesc: '',
-    traderCode: '',
+    traderCode: app?.Ztrcode?.trim() ?? '',
     traderName: '',
     modeOfTrade: '',
     acctCat: '',
-    status: statusOf(d.ActiveStatus, txnStatuses.get(appKey(d.CompanyCode, d.FinancialTransaction))),
-    moRemark: '',
-    changedBy: '',
-    changedOn: null,
+    status: statusOf(d.ActiveStatus, app?.TxnStatus ?? txnStatuses.get(appKey(d.CompanyCode, d.FinancialTransaction))),
+    moRemark: app?.Remark?.trim() || app?.NdfMoRem?.trim() || app?.OptMoRem?.trim() || '',
+    ndfRate: servedNumber(d.NdfFixingRate),
+    cashAmount: servedNumber(d.CashSettlementAmount),
+    cashCurrency: d.CashSettlementCurrency?.trim() ?? '',
+    changedBy: app?.LocalLastChangedBy?.trim() ?? '',
+    changedOn: parseDay(app?.LocalLastChangedAt),
     live: true,
     buysLead,
   }
@@ -217,13 +227,19 @@ export async function loadNames(rows: readonly FxTransaction[], companies: Map<s
 
 /** TXN_STATUS of each transaction that has an APP_STR record. Never stops the queue: without it every row is Open. */
 export async function loadTxnStatuses(companyCodes: readonly string[], signal?: AbortSignal): Promise<Map<string, string>> {
-  const out = new Map<string, string>()
+  const rows = await loadApplicationData(companyCodes, signal)
+  return new Map([...rows].flatMap(([key, r]) => r.TxnStatus?.trim() ? [[key, r.TxnStatus.trim()]] : []))
+}
+
+/** Keep the whole APP_STR record, so dates and remarks are not discarded when reading status. */
+async function loadApplicationData(companyCodes: readonly string[], signal?: AbortSignal): Promise<Map<string, TrmFxApp>> {
+  const out = new Map<string, TrmFxApp>()
   try {
     const filter = companyCodes.map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
-    for (const r of await listTrmFxApp(filter, signal)) if (r.TxnStatus?.trim()) out.set(appKey(r.CompanyCode, r.FinancialTransaction), r.TxnStatus.trim())
+    for (const r of await listTrmFxApp(filter, signal)) out.set(appKey(r.CompanyCode, r.FinancialTransaction), r)
   } catch (error) {
     if (isAbort(error)) throw error
-    console.warn('[ec2] transaction status unavailable', error)
+    console.warn('[ec2] transaction application data unavailable', error)
   }
   return out
 }
@@ -236,33 +252,35 @@ export async function loadQueue(signal?: AbortSignal): Promise<Txn[]> {
   if (!companies.size) throw new Error('No TSF company code (ZSGTSFTR_COMP) was returned, so there is nothing to list.')
   const filter = [...companies.keys()].map((c) => `CompanyCode eq ${odataString(c)}`).join(' or ')
   const rows = await list<FxTransaction>(FX, { filter, top: 1000 }, opts)
-  const [names, txnStatuses] = await Promise.all([loadNames(rows, companies, signal), loadTxnStatuses([...companies.keys()], signal)])
+  const [names, appRows] = await Promise.all([loadNames(rows, companies, signal), loadApplicationData([...companies.keys()], signal)])
   const deals = dealInfoByTransaction(dealRows)
-  return rows.map((d) => toTxn(d, deals, names, txnStatuses)).filter((t): t is Txn => t !== null)
+  return rows.map((d) => toTxn(d, deals, names, undefined, appRows)).filter((t): t is Txn => t !== null)
 }
 
 /**
- * The PATCH body for a correction: only the fields that changed, in the service's own names. Nothing for Amount 2
- * (SAP derives it) and nothing for the fields SAP has no home for. Amount 1 is only sent when it is the amount bought,
- * as that is the one SAP takes; the screen leaves it read-only otherwise.
+ * The PATCH body for a correction: only changed fields, in the service's own names. Nothing for the
+ * amount sold (SAP derives it) or fields without a save path. BuyAmount maps to the
+ * appropriate lead/follow field. BlotterDate is routed separately to APP_STR by correctTxn.
  */
 export function toCorrectionPatch(old: Txn, form: CorrectionForm): Record<string, string | number> {
   const patch: Record<string, string | number> = {}
   const rate = (text: string, was: number, key: string) => {
     const v = parseRate(text)
-    if (Number.isFinite(v) && v > 0 && v !== was) patch[key] = v
+    if (Number.isFinite(v) && v > 0 && v !== Number(was.toFixed(4))) patch[key] = v
   }
   rate(form.allInRate, old.allInRate, 'ForwardRate')
   rate(form.spotRate, old.spotRate, 'SpotRate')
   // A swap rate may be 0, so it is not held to > 0.
   const swap = parseRate(form.swapRate)
-  if (Number.isFinite(swap) && swap !== old.swapRate) patch.SwapRate = swap
-  const amount = parseAmountShorthand(form.amount1)
-  if (old.buysLead && amount > 0 && amount !== old.amt1) patch.BuyAmount = amount
+  if (Number.isFinite(swap) && swap !== Number(old.swapRate.toFixed(4))) patch.SwapRate = swap
+  const amount = parseAmountShorthand(old.buysLead ? form.amount1 : form.amount2)
+  if (amount > 0 && amount !== (old.buysLead ? old.amt1 : old.amt2)) patch.BuyAmount = amount
   const value = safeParseDate(form.valueDate)
   if (value && isoDay(value) !== isoDay(old.valueDate)) patch.ValueDate = isoDay(value)
   const trade = safeParseDate(form.tradeDate)
   if (trade && isoDay(trade) !== isoDay(old.tradeDate)) patch.ContractDate = isoDay(trade)
+  const blotter = safeParseDate(form.blotterDate)
+  if (blotter && (!old.blotterDate || isoDay(blotter) !== isoDay(old.blotterDate))) patch.BlotterDate = isoDay(blotter)
   return patch
 }
 
@@ -274,13 +292,26 @@ export const patchLabels: Record<string, string> = {
   BuyAmount: 'Amount 1',
   ValueDate: 'Value Date',
   ContractDate: 'Trade Date',
+  BlotterDate: 'Blotter Date',
 }
 
 const keyOf = (t: Pick<Txn, 'coCode' | 'rfha'>) => fxApi(entityPath('FxTransaction', { CompanyCode: t.coCode, FinancialTransaction: t.rfha }))
 
 /** Changes one transaction in SAP (BAPI_FTR_FXT_DEALCHANGE through PATCH). */
 export async function correctTxn(t: Txn, patch: Record<string, string | number>): Promise<void> {
-  await apiFetch(keyOf(t), { method: 'PATCH', body: patch })
+  const { BlotterDate, ...fxPatch } = patch
+  const hasFxChanges = Object.keys(fxPatch).length > 0
+  if (hasFxChanges) await apiFetch(keyOf(t), { method: 'PATCH', body: fxPatch })
+  if (typeof BlotterDate === 'string') {
+    try {
+      const existing = await getAppStrRecord(t.coCode, t.rfha)
+      const fields = { BlotterDate }
+      if (existing) await updateAppStrRecord(t.coCode, t.rfha, fields)
+      else await createAppStrRecord(t.coCode, t.rfha, fields)
+    } catch (error) {
+      throw new Error(`${hasFxChanges ? 'Transaction changes were saved, but Blotter Date was not saved.' : 'Blotter Date was not saved.'} ${sapMessage(error)} Retry Update to save the date.`)
+    }
+  }
 }
 
 /** Reverses one transaction in SAP (BAPI_FTR_FXT_REVERSE through DELETE). */

@@ -1,0 +1,27 @@
+.fx-transaction-details.txn-detail-content { color: var(--text); }
+.fx-transaction-details .txn-detail-header { padding: 14px 16px; background: var(--primary-tint); border: 1px solid var(--border-strong); border-radius: 8px; }
+.fx-transaction-details .txn-detail-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; margin: 0; }
+.fx-transaction-details .txn-detail-fields > div { display: grid; grid-template-columns: minmax(110px, 42%) minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.fx-transaction-details .txn-detail-fields dt { margin: 0; color: var(--text-muted); font-size: 12px; }
+.fx-transaction-details .txn-detail-fields dd { margin: 0; font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; white-space: pre-wrap; }
+.fx-transaction-details .txn-detail-header dd { font-weight: 600; }
+.fx-transaction-details .txn-detail-tabs { display: flex; gap: 6px; margin: 20px 0 16px; border-bottom: 1px solid var(--border-strong); }
+.fx-transaction-details .txn-detail-tabs button { padding: 10px 16px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--text-muted); cursor: pointer; font: inherit; font-weight: 600; }
+.fx-transaction-details .txn-detail-tabs button[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+.fx-transaction-details .txn-detail-section { border: 1px solid var(--border-strong); border-radius: 8px; margin: 0 0 16px; overflow: hidden; }
+.fx-transaction-details .txn-detail-section h3 { font-size: 13px; margin: 0; padding: 9px 16px; background: var(--primary-tint); border-bottom: 1px solid var(--border-strong); color: var(--text); }
+.fx-transaction-details .txn-detail-section .txn-detail-fields { padding: 16px; }
+.fx-transaction-details .txn-detail-section[aria-label="Settlement"] { margin-left: 20px; }
+.fx-transaction-details .txn-detail-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 12px 0; }
+.fx-transaction-details .txn-detail-message { padding: 32px 16px; }
+.fx-transaction-details .txn-detail-error { color: var(--error); }
+.fx-transaction-details .txn-detail-blank { color: var(--text-muted); }
+@media (max-width: 700px) {
+  .fx-transaction-details .txn-detail-fields { grid-template-columns: minmax(0, 1fr); }
+  .fx-transaction-details .txn-detail-section[aria-label="Settlement"] { margin-left: 0; }
+}
+
+/* Keep native dialogs centered within screens whose legacy reset clears margins. */
+.fx-transaction-dialog { --text-sub: var(--text); }
+.fx-transaction-dialog > .slc-dialog { margin: auto; }
+.fx-transaction-details .slc-btn { color: var(--text); }

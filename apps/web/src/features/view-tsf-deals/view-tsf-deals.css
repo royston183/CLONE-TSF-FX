@@ -1,0 +1,85 @@
+.tsf-deals *, .tsf-deals { box-sizing: border-box; }
+.tsf-deals .tsf-breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; color: var(--alm-muted); font-size: 11px; margin-bottom: 16px; }
+.tsf-deals .tsf-breadcrumb a { color: var(--alm-blue); text-decoration: none; }
+.tsf-deals .header-text { flex: 1; min-width: 230px; }
+.tsf-deals .header-text h1 { margin: 0; }
+.tsf-deals .header-text p { margin: 3px 0 0; }
+.tsf-deals .logo-img { width: 31px; height: 44px; object-fit: contain; }
+.tsf-deals .tsf-header-actions, .tsf-deals .tsf-filter-actions, .tsf-deals .tsf-table-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tsf-deals button { cursor: pointer; }
+.tsf-deals button:disabled { opacity: .5; cursor: not-allowed; }
+.tsf-deals .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 13px; min-height: 34px; border: 1px solid var(--alm-input-line); background: var(--alm-surface); color: var(--alm-text); border-radius: 6px; font-size: 12px; font-weight: 600; }
+.tsf-deals .tsf-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.tsf-deals .tsf-kpi { padding: 16px 18px; display: flex; flex-direction: column; gap: 3px; }
+.tsf-deals .tsf-kpi strong { color: var(--alm-heading); font-size: 25px; line-height: 1.25; font-weight: 700; }
+.tsf-deals .tsf-kpi span { font-weight: 600; font-size: 12px; }
+.tsf-deals .tsf-kpi small { color: var(--alm-muted); font-size: 11px; }
+.tsf-deals .tsf-report-card { overflow: hidden; }
+.tsf-deals .tsf-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--alm-line); }
+.tsf-deals .tsf-section-head h2 { margin: 0; font-size: 15px; color: var(--alm-heading); }
+.tsf-deals .tsf-section-head p { margin: 4px 0 0; color: var(--alm-muted); font-size: 11px; }
+.tsf-deals .tsf-readonly { display: inline-flex; white-space: nowrap; align-items: center; border-radius: 20px; background: var(--alm-pale); color: var(--alm-blue); padding: 4px 11px; font-size: 11px; font-weight: 600; }
+.tsf-deals .tsf-filters { display: grid; grid-template-columns: minmax(200px, 1.5fr) repeat(2, minmax(145px, .8fr)) minmax(190px, 1.1fr) auto; gap: 14px; padding: 18px 20px; align-items: end; border-bottom: 1px solid var(--alm-line); }
+.tsf-deals .tsf-filters label { display: block; color: var(--alm-label); font-size: 11px; font-weight: 600; }
+.tsf-deals .tsf-filters label > span { color: var(--alm-bad); }
+.tsf-deals :is(.tsf-filters input, .tsf-filters select, .tsf-search input, .tsf-pagination select) { width: 100%; min-height: 35px; border: 1px solid var(--alm-input-line); border-radius: 6px; background: var(--alm-surface); color: var(--alm-text); padding: 7px 10px; font-size: 12px; outline-offset: 2px; }
+.tsf-deals .tsf-filters :is(input, select) { display: block; margin-top: 6px; }
+.tsf-deals .tsf-table-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 20px 10px; }
+.tsf-deals .tsf-search { position: relative; flex: 1 1 270px; max-width: 500px; }
+.tsf-deals .tsf-search svg { position: absolute; top: 10px; left: 11px; color: var(--alm-muted); }
+#alm-fx-ui .tsf-deals .tsf-search input { padding-left: 35px !important; }
+.tsf-deals .tsf-table-hint { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 0 20px 12px; font-size: 11px; color: var(--alm-muted); }
+.tsf-deals .tsf-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.tsf-deals .tsf-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tsf-deals .tsf-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.tsf-deals .tsf-legend .internal { background: var(--alm-warning); }
+.tsf-deals .tsf-legend .external { background: var(--alm-muted); }
+.tsf-deals .tsf-legend .reversed { background: var(--alm-bad); }
+.tsf-deals .tsf-table-scroll { max-height: min(560px, 60vh); min-height: 180px; overflow: auto; border-block: 1px solid var(--alm-line); }
+.tsf-deals .tsf-deal-table { width: 100%; min-width: 3700px; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+.tsf-deals .tsf-deal-table :is(th, td) { white-space: nowrap; text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--alm-line); max-width: 300px; overflow: hidden; text-overflow: ellipsis; background: var(--alm-surface); }
+.tsf-deals .tsf-deal-table th { position: sticky; top: 0; z-index: 2; background: var(--alm-bg); color: var(--alm-label); font-size: 11px; }
+.tsf-deals .tsf-deal-table th button { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; font: inherit; color: inherit; font-weight: 600; white-space: nowrap; }
+.tsf-deals .tsf-deal-table th button span { color: var(--alm-muted); }
+.tsf-deals .tsf-deal-table .tsf-num { text-align: right; font-variant-numeric: tabular-nums; }
+.tsf-deals .tsf-deal-table .tsf-check-col { position: sticky; left: 0; width: 42px; min-width: 42px; text-align: center; z-index: 1; padding-inline: 12px; }
+.tsf-deals .tsf-deal-table .tsf-transaction-col { position: sticky; left: 42px; min-width: 155px; z-index: 1; border-right: 1px solid var(--alm-line); }
+.tsf-deals .tsf-deal-table thead :is(.tsf-check-col, .tsf-transaction-col) { z-index: 3; background: var(--alm-bg); }
+.tsf-deals .tsf-deal-table input[type='checkbox'] { accent-color: var(--alm-blue); cursor: pointer; }
+.tsf-deals .tsf-deal-table tr:hover td { background: var(--alm-row); }
+.tsf-deals .tsf-deal-table tr.selected td { background: var(--alm-pale); }
+.tsf-deals .tsf-deal-table .tsf-txn-link { color: var(--alm-blue); background: none; border: 0; padding: 0; font-size: 12px; font-weight: 600; }
+.tsf-deals .tsf-deal-table .tsf-txn-link:hover { text-decoration: underline; }
+.tsf-deals .tsf-deal-table .is-internal .tsf-transaction-col { box-shadow: inset 3px 0 var(--alm-warning); }
+.tsf-deals .tsf-deal-table .is-reversed .tsf-transaction-col { box-shadow: inset 3px 0 var(--alm-bad); }
+.tsf-deals .tsf-deal-table .is-reversed .tsf-status { color: var(--alm-bad); }
+.tsf-deals .tsf-deal-table .tsf-empty { padding: 50px 24px; max-width: none; white-space: normal; text-align: left; }
+.tsf-deals .tsf-empty :is(strong, span) { display: block; width: min(600px, 70vw); }
+.tsf-deals .tsf-empty span { color: var(--alm-muted); margin-top: 7px; }
+.tsf-deals .tsf-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 20px; font-size: 11px; color: var(--alm-muted); }
+.tsf-deals .tsf-pagination > div, .tsf-deals .tsf-pagination label { display: flex; align-items: center; gap: 6px; }
+.tsf-deals .tsf-pagination label { gap: 9px; margin-right: 8px; }
+.tsf-deals .tsf-pagination select { width: 65px; min-height: 30px; padding: 4px 7px; }
+.tsf-deals .tsf-pagination button { display: grid; place-items: center; min-width: 30px; height: 30px; background: var(--alm-surface); color: var(--alm-text); border: 1px solid var(--alm-line); border-radius: 5px; font-size: 11px; }
+.tsf-deals .tsf-pagination button[aria-current='page'] { background: var(--alm-pale); border-color: var(--alm-blue); color: var(--alm-blue); font-weight: 600; }
+.tsf-deals .tsf-message { padding: 10px 14px; margin: 12px 20px; border: 1px solid var(--alm-line); background: var(--alm-pale); border-radius: 6px; color: var(--alm-text); font-size: 12px; }
+.tsf-deals .tsf-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--alm-bad); background: var(--alm-bad-bg); }
+.tsf-deals .tsf-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.tsf-deals .slc-dialog { padding: 0; max-height: calc(100vh - 48px); background: var(--alm-surface); color: var(--alm-text); border: 1px solid var(--alm-line); border-radius: 12px; box-shadow: var(--alm-popup-shadow); }
+.tsf-deals .slc-dialog::backdrop { background: #0b1a2b70; }
+.tsf-deals :is(.slc-dialog__head, .slc-dialog__footer) { padding: 16px 22px; border-color: var(--alm-line); background: var(--alm-surface); }
+.tsf-deals .slc-dialog__title { font-size: 17px; color: var(--alm-heading); }
+.tsf-deals .slc-dialog__close { color: var(--alm-muted); }
+.tsf-deals .slc-dialog__body { padding: 0 22px 20px; }
+.tsf-deals .tsf-detail-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 16px 0; color: var(--alm-muted); font-size: 12px; }
+.tsf-deals .tsf-detail-summary strong { color: var(--alm-heading); }
+.tsf-deals .tsf-detail-summary .tsf-readonly { margin-left: auto; }
+.tsf-deals .tsf-detail-section { border: 1px solid var(--alm-line); border-radius: 8px; margin-top: 14px; padding: 15px 18px; }
+.tsf-deals .tsf-detail-section h3 { margin: 0 0 12px; color: var(--alm-heading); font-size: 12px; font-weight: 700; }
+.tsf-deals .tsf-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 22px; margin: 0; }
+.tsf-deals .tsf-detail-grid dt { color: var(--alm-muted); font-size: 11px; margin-bottom: 4px; }
+.tsf-deals .tsf-detail-grid dd { margin: 0; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.tsf-deals .tsf-detail-note { margin: 16px 0 0; color: var(--alm-muted); font-size: 11px; }
+@media (max-width: 1250px) { .tsf-deals .tsf-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } .tsf-deals .tsf-filter-actions { grid-column: 1 / -1; } }
+@media (max-width: 720px) { .tsf-deals .tsf-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .tsf-deals .tsf-kpi { padding: 13px; } .tsf-deals .tsf-kpi small { display: none; } .tsf-deals .tsf-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; } .tsf-deals .tsf-section-head, .tsf-deals .tsf-table-toolbar, .tsf-deals .tsf-pagination { padding-inline: 16px; } .tsf-deals .tsf-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tsf-deals .tsf-header-actions { width: 100%; } }
+@media (max-width: 440px) { .tsf-deals .tsf-filters { grid-template-columns: 1fr; } .tsf-deals .tsf-table-actions { width: 100%; } .tsf-deals .tsf-pagination > div { flex-wrap: wrap; } .tsf-deals .tsf-detail-grid { grid-template-columns: 1fr; } }

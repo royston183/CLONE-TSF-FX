@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { DateInput } from '../../shared/ui/DateInput.tsx'
 import { formatAmount, formatAmountWhileTyping, parseAmount } from '@slc/api-client'
 import {
   applyBankSelection,
@@ -299,12 +300,12 @@ export function DttkModal(props: DttkModalProps) {
             <div className="field field-duo">
               <div className="duo-item">
                 <label htmlFor="lcdate">Expected LC Date</label>
-                <input
+                <DateInput
                   id="lcdate"
-                  type="date"
+                  aria-label="Expected LC Date"
                   disabled={locked}
                   value={form.lcdate}
-                  onChange={(e) => set('lcdate', e.target.value)}
+                  onChange={(v) => set('lcdate', v)}
                 />
               </div>
               <div className="duo-item duo-narrow">
@@ -587,33 +588,33 @@ export function DttkModal(props: DttkModalProps) {
               />
             </Field>
             <Field label="Commitment End Date">
-              <input
-                type="date"
+              <DateInput
+                aria-label="Commitment End Date"
                 value={form.commitmentEndDate}
-                onChange={(e) => set('commitmentEndDate', e.target.value)}
+                onChange={(v) => set('commitmentEndDate', v)}
               />
             </Field>
             <Field label="Commitment Fee">
               <input {...amountProps('commitmentFee')} placeholder="0.00" />
             </Field>
             <Field label="Reservation Start Date">
-              <input
-                type="date"
+              <DateInput
+                aria-label="Reservation Start Date"
                 value={form.reservationStartDate}
-                onChange={(e) => set('reservationStartDate', e.target.value)}
+                onChange={(v) => set('reservationStartDate', v)}
               />
             </Field>
             <Field label="LC Issuance Latest Date">
-              <input type="date" value={form.lcIssuanceDate} onChange={(e) => set('lcIssuanceDate', e.target.value)} />
+              <DateInput aria-label="LC Issuance Latest Date" value={form.lcIssuanceDate} onChange={(v) => set('lcIssuanceDate', v)} />
             </Field>
             <Field label="Doc Pres. Latest Date">
-              <input type="date" value={form.docPresDate} onChange={(e) => set('docPresDate', e.target.value)} />
+              <DateInput aria-label="Doc Pres. Latest Date" value={form.docPresDate} onChange={(v) => set('docPresDate', v)} />
             </Field>
             <Field label="Repay. of Prev LC Date">
-              <input
-                type="date"
+              <DateInput
+                aria-label="Repay. of Prev LC Date"
                 value={form.repayPrevLcDate}
-                onChange={(e) => set('repayPrevLcDate', e.target.value)}
+                onChange={(v) => set('repayPrevLcDate', v)}
               />
             </Field>
           </Section>

@@ -33,6 +33,12 @@ export type SpotRow = {
   createdBy: string
   createdDate: string
   defaultTxnType: string
+  /** The original deal's NDF fields (ZSGTSFV_FX NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR); '' / null (shown blank) when the view does not serve them. */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: number | null
+  cashAmt?: number | null
+  cashCurr?: string
 }
 
 export type CodeLabel = { key: string; text: string }
@@ -58,6 +64,11 @@ export type SortKey =
   | 'spotTxn'
   | 'tradeDate'
   | 'valueDate'
+  | 'ndfDate'
+  | 'ndfRef'
+  | 'ndfRate'
+  | 'cashAmt'
+  | 'cashCurr'
   | 'partner'
   | 'group'
   | 'companyName'

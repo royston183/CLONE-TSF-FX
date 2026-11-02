@@ -109,6 +109,14 @@ describe('gt_top = APP_STR + FxTransaction on BUKRS + RFHA', () => {
     deepStrictEqual([r!.dealType, r!.mc, r!.txn, r!.curr1, r!.amt1, r!.curr2, r!.amt2, r!.allIn, r!.entity], ['D1', '2000000028', '03', 'USD', 1000, 'AED', -3672.5, 3.6725, 'OGA'])
   })
 
+  it('maps the NDF columns: view date / ref, rate and cash from FxTransaction; blank (not 0) when not served', () => {
+    const view = [{ BUKRS: 'AE13', RFHA: '22', NDF_DATE: '2026-12-29', NDF_REF: 'FIX-7' }]
+    const [r] = mergeDealTransactions([app('AE13', '22', 'D1')], [tx('AE13', '22', { ProductType: '30D', NdfFixingRate: '3.6710', CashSettlementAmount: '25', CashSettlementCurrency: 'USD' })], undefined, view)
+    deepStrictEqual([r!.ndfDate, r!.ndfRef, r!.ndfRate, r!.cashAmt, r!.cashCurr], ['29-12-2026', 'FIX-7', 3.671, 25, 'USD'])
+    const [u] = mergeDealTransactions([app('AE13', '22', 'D1')], [tx('AE13', '22', { ProductType: '30D' })])
+    deepStrictEqual([u!.ndfDate, u!.ndfRef, u!.ndfRate, u!.cashAmt, u!.cashCurr], ['', '', '', '', ''])
+  })
+
   it('never joins on RFHA alone: the same number under another company code is another transaction', () => {
     const rows = mergeDealTransactions([app('AE13', '22', 'D1'), app('SG10', '22', 'D2')], [tx('AE13', '22', { BuyAmount: 1 }), tx('SG10', '22', { BuyAmount: 2 })])
     deepStrictEqual(rows.map((r) => [r.bukrs, r.dealType, r.amt1]), [['AE13', 'D1', 1], ['SG10', 'D2', 2]])

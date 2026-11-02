@@ -1,6 +1,7 @@
 import { ApiError, apiFetch, entityPath, list, odataString, service } from '@slc/api-client'
 import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
 import type { Deal } from './types.ts'
+import { INTERNAL_REFERENCE_MAX_LENGTH } from './references.ts'
 
 /**
  * The MO side of ZSGTSFTR_APP_STR, served as the TrmFxApp entity of ZFS_SB_TRMFXAPP_O4_API (service key
@@ -11,9 +12,8 @@ import type { Deal } from './types.ts'
  * A record is tied to its SAP transaction by BUKRS + RFHA (CompanyCode + FinancialTransaction), both
  * together. Nothing here creates a record: FO's blotter does, and MO only moves the status on.
  *
- * Property names follow the service's camel-case convention (ZTSF_DEAL_ID is ZtsfDealID). The ones marked
- * unverified below are not yet seen in this service's $metadata anywhere in the repository: they come from
- * the legacy field names and must be checked before the first live save that sends them.
+ * Property names follow the service's camel-case convention (ZTSF_DEAL_ID is ZtsfDealID).
+ * Reference and remark properties were checked against live service metadata on 15 October 2026.
  */
 const appApi = service('trmfxapp')
 const APP = appApi('TrmFxApp')
@@ -28,11 +28,11 @@ export type MoAppRecord = {
   ZtsfMcRefNo?: string
   NdfFoRem?: string
   NdfMoRem?: string
-  /** Unverified name for OPT_FO_REM. */
+  /** OPT_FO_REM. */
   OptFoRem?: string
-  /** Unverified name for OPT_MO_REM. */
+  /** OPT_MO_REM. */
   OptMoRem?: string
-  /** Unverified name for ZOLAM_DEAL_NO (Internal Ref). */
+  /** ZOLAM_DEAL_NO (Internal Ref), CHAR(15). */
   ZolamDealNo?: string
   /** Unverified name for ZTRCODE (trader). Only read: a record without it simply has no trader. */
   Ztrcode?: string
@@ -55,7 +55,7 @@ export const MO_WORKLIST_STATUSES: readonly string[] = [S.FO_TO_MO_UNMATCHED, S.
 /** The statuses MO can act on. 04 is already with FO and only comes back as 06. */
 export const MO_ACTIONABLE_STATUSES: readonly string[] = [S.FO_TO_MO_UNMATCHED, S.CORRECTED]
 
-/** Maximum lengths from the service where known; the remarks are assumed to match NDF_MO_REM until checked. */
+/** Remark and status lengths declared by the service. References are validated without truncation below. */
 const LENGTH: Record<string, number> = { NdfMoRem: 80, OptMoRem: 80, TxnStatus: 2 }
 
 /** BUKRS + RFHA as one map key. */
@@ -99,6 +99,9 @@ export async function getAppStrRecord(companyCode: string, transaction: string):
  * dropped, not sent.
  */
 export async function updateAppStrRecord(companyCode: string, transaction: string, patch: MoPatch): Promise<void> {
+  if ((patch.ZolamDealNo?.trim().length ?? 0) > INTERNAL_REFERENCE_MAX_LENGTH) {
+    throw new Error(`Internal Ref must be at most ${INTERNAL_REFERENCE_MAX_LENGTH} characters.`)
+  }
   const body: Record<string, string> = {}
   for (const [name, value] of Object.entries(patch)) {
     if (typeof value !== 'string' || !value.trim()) continue

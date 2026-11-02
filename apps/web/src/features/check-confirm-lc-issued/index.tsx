@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConfirmDetails } from '../../shared/ui/ConfirmDetails.tsx'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { Calendar } from './Calendar.tsx'
 import { COLUMNS } from './columns.ts'
 import { COMPANY_OPTIONS, LC_ROWS } from './data.ts'
-import { formatDate, money, parseDate, sortRows } from './format.ts'
+import { money, parseDate, sortRows } from './format.ts'
 import type { LcRow, SortDirection, StatusFilter } from './types.ts'
 import './check-confirm-lc-issued.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -13,8 +13,6 @@ import './check-confirm-lc-issued.legacy.css'
 import './check-confirm-lc-issued.dark.css'
 
 const PAGE_SIZE = 12
-
-type CalendarMode = 'days' | 'years'
 
 type SortState = { index: number; direction: SortDirection } | null
 
@@ -46,9 +44,7 @@ export default function CheckConfirmLcIssued() {
 
   // Calendar popup.
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [calendarMode, setCalendarMode] = useState<CalendarMode>('days')
-  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 8, 18))
-  const [calendarViewYear, setCalendarViewYear] = useState(2026)
+  const dateShellRef = useRef<HTMLDivElement>(null)
 
   const readyToLoad = companyCode !== '' && parseDate(keyDate) !== null
 
@@ -117,7 +113,6 @@ export default function CheckConfirmLcIssued() {
       if (event.key === 'Escape') {
         setSettleOpen(false)
         setCalendarOpen(false)
-        setCalendarMode('days')
         setTransactionListOpen(false)
       }
     }
@@ -209,80 +204,13 @@ export default function CheckConfirmLcIssued() {
     if (statusFilter === 'CONTRACT') resetSelection()
   }
 
-  function openCalendar() {
-    const parsed = parseDate(keyDate)
-    if (parsed) {
-      setCalendarViewDate(parsed)
-      setCalendarViewYear(parsed.getFullYear())
-    }
-    setCalendarMode('days')
-    setCalendarOpen(true)
-  }
-
-  function closeCalendar() {
-    setCalendarMode('days')
-    setCalendarOpen(false)
-  }
+  const closeCalendar = useCallback(() => setCalendarOpen(false), [])
 
   function onCalendarPickDate(text: string) {
     setKeyDate(text)
-    const parsed = parseDate(text)
-    if (parsed) {
-      setCalendarViewDate(parsed)
-      setCalendarViewYear(parsed.getFullYear())
-    }
     closeCalendar()
     setPage(1)
     resetSelection()
-  }
-
-  function onCalendarClear() {
-    setKeyDate('')
-    closeCalendar()
-    setPage(1)
-    resetSelection()
-  }
-
-  function onCalendarToday() {
-    const today = new Date()
-    setKeyDate(formatDate(today))
-    setCalendarViewDate(today)
-    setCalendarViewYear(today.getFullYear())
-    closeCalendar()
-    setPage(1)
-    resetSelection()
-  }
-
-  function onCalendarPrevMonth() {
-    setCalendarViewDate((current) => {
-      const next = new Date(current.getFullYear(), current.getMonth() - 1, 1)
-      setCalendarViewYear(next.getFullYear())
-      return next
-    })
-  }
-
-  function onCalendarNextMonth() {
-    setCalendarViewDate((current) => {
-      const next = new Date(current.getFullYear(), current.getMonth() + 1, 1)
-      setCalendarViewYear(next.getFullYear())
-      return next
-    })
-  }
-
-  function onCalendarToggleMode() {
-    setCalendarMode((current) => (current === 'days' ? 'years' : 'days'))
-    setCalendarViewYear(calendarViewDate.getFullYear())
-  }
-
-  function onCalendarPickYear(year: number) {
-    setCalendarViewYear(year)
-    setCalendarViewDate((current) => new Date(year, current.getMonth(), 1))
-    setCalendarMode('years')
-  }
-
-  function onCalendarPickMonth(month: number) {
-    setCalendarViewDate(new Date(calendarViewYear, month, 1))
-    setCalendarMode('days')
   }
 
   const startPageRaw = Math.max(1, currentPage - 1)
@@ -335,7 +263,7 @@ export default function CheckConfirmLcIssued() {
                     <label htmlFor="keyDate">
                       Key Date <span className="required">*</span>
                     </label>
-                    <div className="date-shell">
+                    <div className="date-shell" ref={dateShellRef}>
                       <input
                         id="keyDate"
                         className="input date-input"
@@ -350,22 +278,14 @@ export default function CheckConfirmLcIssued() {
                         className="calendar-btn"
                         type="button"
                         title="Open calendar"
-                        onClick={() => (calendarOpen ? closeCalendar() : openCalendar())}
+                        onClick={() => setCalendarOpen((open) => !open)}
                       />
                       <Calendar
                         open={calendarOpen}
-                        mode={calendarMode}
-                        viewDate={calendarViewDate}
-                        viewYear={calendarViewYear}
+                        anchorRef={dateShellRef}
                         selected={parseDate(keyDate)}
-                        onToggleMode={onCalendarToggleMode}
-                        onPrevMonth={onCalendarPrevMonth}
-                        onNextMonth={onCalendarNextMonth}
-                        onClear={onCalendarClear}
-                        onToday={onCalendarToday}
                         onPickDate={onCalendarPickDate}
-                        onPickYear={onCalendarPickYear}
-                        onPickMonth={onCalendarPickMonth}
+                        onClose={closeCalendar}
                       />
                     </div>
                   </div>

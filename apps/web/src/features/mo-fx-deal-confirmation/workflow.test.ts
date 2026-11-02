@@ -3,6 +3,7 @@ import { afterEach, describe, it } from 'node:test'
 import { toDeal, type FxTransaction } from './api.ts'
 import { moRemarkField, moRemarkPatch, transactionKey, worklistFilter, type MoAppRecord } from './appStr.ts'
 import type { Deal } from './types.ts'
+import { supportsExternalReference } from './references.ts'
 import {
   CORRECTION_REMARK_REQUIRED,
   canMoAct,
@@ -43,7 +44,7 @@ const INPUT = { externalRef: '', internalRef: '', moRemark: '' }
 type Call = { method: string; url: string; body: unknown; ifMatch: string | null }
 
 /** Fakes the two services and records every call in order; the stored status is what a GET of the record returns. */
-function backend(opts: { stored?: Partial<MoAppRecord> | null; settle?: 'ok' | 'fail'; patch?: 'ok' | 'fail' } = {}) {
+function backend(opts: { stored?: Partial<MoAppRecord> | null; settle?: 'ok' | 'fail'; patch?: 'ok' | 'fail'; externalSupport?: boolean; externalPatch?: 'ok' | 'fail'; metadataFail?: boolean } = {}) {
   const calls: Call[] = []
   const realFetch = globalThis.fetch
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -52,11 +53,16 @@ function backend(opts: { stored?: Partial<MoAppRecord> | null; settle?: 'ok' | '
     const headers = new Headers(init?.headers)
     calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined, ifMatch: headers.get('If-Match') })
     const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+    if (url.endsWith('/$metadata')) {
+      if (opts.metadataFail) return json(503, { error: { message: 'SAP unavailable' } })
+      return new Response(`<Schema><EntityType Name="FxTransactionType">${opts.externalSupport ? '<Property Name="ExternalReference" Type="Edm.String" MaxLength="16"/>' : ''}</EntityType></Schema>`, { headers: { 'content-type': 'application/xml' } })
+    }
     if (url.endsWith('.Settle')) {
       return opts.settle === 'fail'
         ? json(400, { error: { message: 'BAPI processing was terminated', details: [{ code: 'FTR0/007', message: 'Not yet due for settlement' }] } })
         : json(200, {})
     }
+    if (method === 'PATCH' && url.startsWith('/api/fx/')) return opts.externalPatch === 'fail' ? json(400, { error: { message: 'External reference change refused' } }) : json(200, {})
     if (method === 'PATCH') return opts.patch === 'fail' ? json(500, { error: { message: 'APP_STR is locked' } }) : json(200, {})
     if (opts.stored === null) return json(404, { error: { message: 'not found' } })
     return json(200, rec(opts.stored ?? {}))
@@ -194,11 +200,54 @@ describe('Match & Release', () => {
     strictEqual(settles(calls).length, 1)
   })
 
-  it('does not store the External Ref (no FX service property) and says so', async () => {
+  it('refuses an unsupported External Ref before settling or writing workflow data', async () => {
     const { calls } = fake()
     const out = await matchAndReleaseDeals([deal({ TransactionType: '631' })], { ...INPUT, externalRef: 'EXT-9' })
-    ok(out.notStored.some((n) => n.startsWith('External Ref')))
-    ok(!JSON.stringify(patches(calls)[0]!.body).includes('EXT-9'))
+    strictEqual(out.failed?.stage, 'validate')
+    ok(out.failed?.reason.includes('External Ref cannot be saved'))
+    strictEqual(settles(calls).length, 0)
+    strictEqual(patches(calls).length, 0)
+    deepStrictEqual(out.done, [])
+  })
+
+  it('writes External Ref to the exact SAP transaction and Internal Ref to its application record', async () => {
+    const { calls } = fake({ externalSupport: true })
+    const out = await matchAndReleaseDeals([deal()], { externalRef: ' EXT-9 ', internalRef: ' INT-1 ', moRemark: '' })
+    strictEqual(out.done.length, 1)
+    deepStrictEqual(out.notStored, [])
+    const writes = calls.filter((c) => c.method !== 'GET')
+    deepStrictEqual(writes.map(c => c.method), ['POST', 'PATCH', 'PATCH'])
+    ok(writes[0]!.url.endsWith('.Settle'))
+    strictEqual(writes[1]!.url, "/api/fx/FxTransaction(CompanyCode='SG03',FinancialTransaction='7000000000001')")
+    strictEqual(writes[1]!.ifMatch, '*')
+    deepStrictEqual(writes[1]!.body, { ExternalReference: 'EXT-9' })
+    ok(writes[2]!.url.startsWith('/api/trmfxapp/'))
+    deepStrictEqual(writes[2]!.body, { TxnStatus: '07', ZolamDealNo: 'INT-1' })
+  })
+
+  it('refuses references beyond the SAP field limits before any requests', async () => {
+    const { calls } = fake({ externalSupport: true })
+    for (const input of [{ ...INPUT, externalRef: 'X'.repeat(17) }, { ...INPUT, internalRef: 'I'.repeat(16) }]) {
+      const out = await matchAndReleaseDeals([deal()], input)
+      strictEqual(out.failed?.stage, 'validate')
+    }
+    strictEqual(calls.length, 0)
+  })
+
+  it('accepts the maximum 16-character External Ref and 15-character Internal Ref without truncation', async () => {
+    const { calls } = fake({ externalSupport: true })
+    const out = await matchAndReleaseDeals([deal()], { externalRef: 'X'.repeat(16), internalRef: 'I'.repeat(15), moRemark: '' })
+    strictEqual(out.failed, undefined)
+    deepStrictEqual(patches(calls).map(c => c.body), [{ ExternalReference: 'X'.repeat(16) }, { TxnStatus: '07', ZolamDealNo: 'I'.repeat(15) }])
+  })
+
+  it('does not settle when External Ref support cannot be checked', async () => {
+    const { calls } = fake({ metadataFail: true })
+    const out = await matchAndReleaseDeals([deal()], { ...INPUT, externalRef: 'EXT-1' })
+    strictEqual(out.failed?.stage, 'validate')
+    ok(out.failed?.reason.includes('could not be checked'))
+    strictEqual(settles(calls).length, 0)
+    strictEqual(patches(calls).length, 0)
   })
 
   it('says a plain forward\'s MO remark is not stored, since APP_STR has no field for it', async () => {
@@ -209,6 +258,34 @@ describe('Match & Release', () => {
 })
 
 describe('SAP settled but the workflow save failed', () => {
+  it('keeps both references after an external-reference failure and retries without settling again', async () => {
+    const { calls } = fake({ externalSupport: true, externalPatch: 'fail' })
+    const out = await matchAndReleaseDeals([deal()], { externalRef: 'EXT-1', internalRef: 'INT-1', moRemark: '' })
+    strictEqual(out.failed?.stage, 'workflow')
+    ok(out.failed?.reason.includes('External reference change refused'))
+    strictEqual(out.failed?.pending?.externalRef, 'EXT-1')
+    strictEqual(out.failed?.pending?.patch.ZolamDealNo, 'INT-1')
+    strictEqual(settles(calls).length, 1)
+    strictEqual(patches(calls).length, 1, 'workflow status must stay open until the reference is saved')
+    current?.restore()
+    const again = fake({ externalSupport: true })
+    const retried = await retryWorkflowSave(out.failed!.pending!)
+    ok(retried.ok)
+    strictEqual(settles(again.calls).length, 0)
+    deepStrictEqual(patches(again.calls).map(c => c.body), [{ ExternalReference: 'EXT-1' }, { TxnStatus: '07', ZolamDealNo: 'INT-1' }])
+  })
+
+  it('can retry after External Ref succeeded but Internal Ref or workflow failed', async () => {
+    fake({ externalSupport: true, patch: 'fail' })
+    const out = await matchAndReleaseDeals([deal()], { externalRef: 'EXT-1', internalRef: 'INT-1', moRemark: '' })
+    strictEqual(out.failed?.stage, 'workflow')
+    current?.restore()
+    const again = fake({ externalSupport: true })
+    ok((await retryWorkflowSave(out.failed!.pending!)).ok)
+    strictEqual(settles(again.calls).length, 0)
+    strictEqual(patches(again.calls).length, 2)
+  })
+
   it('reports it, keeps what is needed to save again, and does not settle again on retry', async () => {
     const { calls } = fake({ patch: 'fail' })
     const out = await matchAndReleaseDeals([deal({ TransactionType: '631' })], { externalRef: '', internalRef: 'INT-1', moRemark: 'matched' })
@@ -249,6 +326,13 @@ describe('SAP settled but the workflow save failed', () => {
     strictEqual(out.done[0]!.txnStatus, '07')
     strictEqual(settles(calls).length, 0)
     strictEqual(patches(calls).length, 1)
+  })
+})
+
+describe('External Ref metadata', () => {
+  it('accepts only the field on FxTransactionType, including prefixed XML', () => {
+    strictEqual(supportsExternalReference('<Schema><EntityType Name="OtherType"><Property Name="ExternalReference"/></EntityType><EntityType Name="FxTransactionType"></EntityType></Schema>'), false)
+    strictEqual(supportsExternalReference('<edm:Schema><edm:EntityType Name="FxTransactionType"><edm:Property Name="ExternalReference" Type="Edm.String"/></edm:EntityType></edm:Schema>'), true)
   })
 })
 

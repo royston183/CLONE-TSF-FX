@@ -473,7 +473,7 @@ export default function OttkApp() {
             <BackButton />
             <img className="mark" alt="Fourth Signal" src={BRAND_LOGO} />
             <div className="title">
-              Origination Ticket <small>OTTK</small>
+              Origination Ticket
             </div>
           </div>
           <div className="actions">

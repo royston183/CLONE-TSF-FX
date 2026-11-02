@@ -1,4 +1,6 @@
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { formatAmount } from './format.ts'
+import { TRANSFER_TYPES } from './logic.ts'
 import type { FxDeal, Indexed, ToastKind, TradeInvoice } from './types.ts'
 
 const Dash = () => <span className="mut">-</span>
@@ -120,20 +122,35 @@ export function FxGrid({
           <thead>
             <tr>
               <th className="left">Seq</th>
+              <th className="left">CoCode</th>
               <th className="left">Deal Type</th>
+              <th className="left">Roll Type</th>
+              <th className="left">DSS Deal</th>
               <th className="left">Transaction</th>
-              <th className="left">Counterparty</th>
+              <th className="left">Partner Name</th>
               <th className="left">Txn Date</th>
               <th className="left">Value Date</th>
               <th className="left">Entity</th>
+              <th className="left">Put/Call 1</th>
               <th className="left">B/S 1</th>
               <th className="left">Curr 1</th>
               <th>Amount 1</th>
+              <th className="left">Put/Call 2</th>
               <th className="left">B/S 2</th>
               <th className="left">Curr 2</th>
               <th>Amount 2</th>
               <th>Spot</th>
               <th>All-in Rate</th>
+              <th>Strike</th>
+              <th className="left">Txn Type Desc</th>
+              <th className="left">Bus. Area</th>
+              <th className="left">Profit Center</th>
+              <th className="left">Txn Status</th>
+              <th className="left">NDF Fixing Date</th>
+              <th className="left">NDF Ref</th>
+              <th>NDF Settlement Rate</th>
+              <th>Cash Settlement Amount</th>
+              <th className="left">Cash Currency</th>
               <th className="left">MC Ref No</th>
               <th className="left">Status</th>
               <th className="left">Doc No 1</th>
@@ -143,7 +160,7 @@ export function FxGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={19}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
+                <td colSpan={34}>{emptyText ?? 'No FX deal transactions for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -154,9 +171,12 @@ export function FxGrid({
                   onDoubleClick={() => onOpen(idx)}
                 >
                   <td className="left">{r.seq}</td>
+                  <td className="left">{r.bukrs}</td>
                   <td className="left">
                     <span className={`chip ${r.dealTypeChip}`}>{r.dealType}</span>
                   </td>
+                  <td className="left">{r.rollType || <Dash />}</td>
+                  <td className="left">{r.dssDeal || <Dash />}</td>
                   <td className="left">
                     <span
                       className="hotspot"
@@ -168,18 +188,30 @@ export function FxGrid({
                       {r.rfha}
                     </span>
                   </td>
-                  <td className="left">{r.bp}</td>
+                  <td className="left">{r.bpName || r.bp}</td>
                   <td className="left">{r.txnDate}</td>
                   <td className="left">{r.valDate}</td>
                   <td className="left">{r.entity}</td>
+                  <td className="left">{r.putCall1 || <Dash />}</td>
                   <td className="left">{r.bs1}</td>
                   <td className="left">{r.curr1}</td>
                   <td className="num">{formatAmount(r.amt1)}</td>
+                  <td className="left">{r.putCall2 || <Dash />}</td>
                   <td className="left">{r.bs2}</td>
                   <td className="left">{r.curr2}</td>
                   <td className="num">{formatAmount(r.amt2)}</td>
                   <td className="num">{r.spot}</td>
                   <td className="num">{r.rate}</td>
+                  <td className="num">{r.strike || <Dash />}</td>
+                  <td className="left">{r.txnType ? `${r.txnType}${r.txnTypeDesc ? ` - ${r.txnTypeDesc}` : ''}` : <Dash />}</td>
+                  <td className="left">{r.busArea || <Dash />}</td>
+                  <td className="left">{r.profitCenter || <Dash />}</td>
+                  <td className="left">{r.txnStatus || <Dash />}</td>
+                  <td className="left">{fmtNdfDate(r.ndf?.ndfDate ?? '')}</td>
+                  <td className="left">{r.ndf?.ndfRef ?? ''}</td>
+                  <td className="num">{fmtNdfRate(r.ndf?.ndfRate)}</td>
+                  <td className="num">{fmtNdfCash(r.ndf?.cashAmount)}</td>
+                  <td className="left">{r.ndf?.cashCurrency ?? ''}</td>
                   <td className="left">{r.mcRefNo}</td>
                   <td className="left">
                     <span className={`chip ${r.statusChip}`}>{r.status}</span>
@@ -246,7 +278,10 @@ export function InvGrid({
             <tr>
               <th className="left">Sequence</th>
               <th className="left">Leg</th>
-              <th className="left">Transfer Desc</th>
+              <th className="left">CoCode</th>
+              <th className="left">Seller</th>
+              <th className="left">Buyer</th>
+              <th className="left">Settlement Desc</th>
               <th className="left">Doc Type</th>
               <th className="left">Reference</th>
               <th className="left">Debit Posting</th>
@@ -254,9 +289,14 @@ export function InvGrid({
               <th className="left">Due Date</th>
               <th className="left">Posting Date</th>
               <th>Invoice Amt</th>
-              <th className="left">Curr</th>
+              <th className="left">Inv Curr</th>
               <th>Payment Amt</th>
+              <th className="left">Pay Curr</th>
               <th className="left">Rec/Pay</th>
+              <th className="left">FX Deal</th>
+              <th className="left">DSS Deal</th>
+              <th className="left">Settlement</th>
+              <th className="left">Transfer Desc</th>
               <th className="left">Transfer Type</th>
               <th className="left">FI Doc</th>
               <th className="left">Settled</th>
@@ -265,7 +305,7 @@ export function InvGrid({
           <tbody>
             {rows.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={16}>{emptyText ?? 'No trade invoice legs for this Deal ID.'}</td>
+                <td colSpan={24}>{emptyText ?? 'No trade invoice legs for this Deal ID.'}</td>
               </tr>
             ) : (
               rows.map(({ row: r, idx }) => (
@@ -279,6 +319,9 @@ export function InvGrid({
                   <td className="left">
                     <span className="chip chip-t">{r.leg}</span>
                   </td>
+                  <td className="left">{r.bukrs || <Dash />}</td>
+                  <td className="left">{r.sell || <Dash />}</td>
+                  <td className="left">{r.buy || <Dash />}</td>
                   <td className="left">{r.trfDesc}</td>
                   <td className="left">{r.docType}</td>
                   <td className="left">{r.xblnr}</td>
@@ -289,7 +332,14 @@ export function InvGrid({
                   <td className="num">{formatAmount(r.invAmt)}</td>
                   <td className="left">{r.curr}</td>
                   <td className="num">{formatAmount(r.payAmt)}</td>
+                  <td className="left">{r.setCurr || r.curr}</td>
                   <td className="left">{r.recPay}</td>
+                  <td className="left">{r.dMap || <Dash />}</td>
+                  <td className="left">{r.dssDeal || <Dash />}</td>
+                  <td className="left">
+                    {r.setCheck ? <span className="chip chip-done">Yes</span> : <span className="chip chip-open">No</span>}
+                  </td>
+                  <td className="left">{TRANSFER_TYPES[r.trfType] ?? <Dash />}</td>
                   <td className="left">{r.trfType}</td>
                   <td className="left">
                     {r.fiDoc ? (

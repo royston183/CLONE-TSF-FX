@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-10-16T08:41:42.684Z",
+  "method": "GET only; no posting, test posting, PATCH, or SAP data changes",
+  "results": [
+    {
+      "key": "businesspartner",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    },
+    {
+      "key": "fiaccdoc",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    },
+    {
+      "key": "housebank",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    },
+    {
+      "key": "trmflowpost",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    },
+    {
+      "key": "trmfx",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    },
+    {
+      "key": "trmfxapp",
+      "status": 401,
+      "entitySets": [],
+      "actions": [],
+      "error": "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=windows-1252\"><title>Anmeldung fehlgeschlagen</title><style>body { background: #ffffff; text-align: center; width:100%; height:100%; overflow:hidden; }.content { display: table; position:absolute; width:100%; height:80%; }.valigned { display: table-cell; vertical-align: middle; }.lowerCenter { display: table-cell; vertical-align: bottom; }.footer { position: absolute; bottom: 0; left: 0; width: 100%; z-index: -1; }.footerLef"
+    }
+  ]
+}

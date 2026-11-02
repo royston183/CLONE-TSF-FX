@@ -106,16 +106,17 @@ const clip = (v: string, n: number): string => v.trim().slice(0, n)
 
 /**
  * Drops blank values and cuts each to the length the service stores, so a long remark cannot fail the whole save.
+ * Settlement forms can opt into keeping explicit blanks so changing bank/company can clear saved values.
  * A flag (boolean) is kept as given, false included: clearing a flag is a write like any other.
  */
-export function cleanFields(fields: AppStrFields): AppStrFields {
+export function cleanFields(fields: AppStrFields, preserveBlanks = false): AppStrFields {
   const out: Record<string, string | boolean> = {}
   for (const [name, value] of Object.entries(fields)) {
     if (typeof value === 'boolean') {
       out[name] = value
       continue
     }
-    if (typeof value !== 'string' || !value.trim()) continue
+    if (typeof value !== 'string' || (!value.trim() && !preserveBlanks)) continue
     out[name] = clip(value, LENGTH[name as keyof AppStrFields] ?? 255)
   }
   return out as AppStrFields
@@ -223,11 +224,11 @@ export async function createAppStrRecord(companyCode: string, transaction: strin
  * PATCH by composite key. `If-Match: *` because the service guards LocalLastChangedAt as its ETag and the
  * blotter's change is a status / field overwrite, not an edit made against a version the user was looking at.
  */
-export async function updateAppStrRecord(companyCode: string, transaction: string, fields: AppStrFields): Promise<void> {
+export async function updateAppStrRecord(companyCode: string, transaction: string, fields: AppStrFields, options?: { preserveBlanks?: boolean }): Promise<void> {
   await apiFetch(pathOf(companyCode, transaction), {
     method: 'PATCH',
     headers: { 'If-Match': '*' },
-    body: cleanFields(fields),
+    body: cleanFields(fields, options?.preserveBlanks),
   })
 }
 

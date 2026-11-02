@@ -40,6 +40,10 @@ describe('ndfRecord', () => {
     deepStrictEqual([r.fwd, r.txnStatus, r.traderCode, r.etag], [83.2, '07', 'C14', 'W/"20261006120000"'])
   })
 
+  it('falls back to FxTransaction NdfFixingDate before the value date', () => {
+    strictEqual(ndfRecord({ ...fx, NdfFixingDate: '2026-10-28' }, app).fixingDate, '2026-10-28')
+  })
+
   it('takes NDF_DATE / NDF_REF / names from the view, and the value date when NDF_DATE is blank', () => {
     strictEqual(ndfRecord(fx, app).fixingDate, '2026-11-03')
     const v = ndfRecord(fx, app, { BUKRS: 'SG03', RFHA: '2000000000001', NDF_DATE: '2026-10-30', NDF_REF: 'RBI', BP_NAME: '0400000002 - FMC Corporation' })

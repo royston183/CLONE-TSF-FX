@@ -9,7 +9,7 @@
  *   ZSGTSFTR_ORG_PRO   middleware orgPro         ZPRO_MARG_INV of the Deal origin
  *   ZSGTSFTR_INV_REF   middleware invRef         the saved rows, reused
  *   ZSGTSFV_FX         middleware tsfvFx         strike, premium and the currency pair of a leg, when it has a row
- *   TCURR (type M)     middleware data/tcurr     the P&L rate; BAPI_EXCHANGERATE_GETDETAIL is not wired
+ *   TCURR (type M)     SAP ExchangeRate OData   the P&L rate; BAPI_EXCHANGERATE_GETDETAIL is not wired
  *
  * Not available, and said so when it matters: option legs (ZSGTSFCDS_OPTION), so FX2 / Short Straddle
  * deals are refused with that reason, and the premium-adjustment interest rate (ZIRATE), which is simply

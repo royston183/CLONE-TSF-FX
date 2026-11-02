@@ -167,3 +167,19 @@
 .mo-fx-deal-confirmation table { border: none; }
 .mo-fx-deal-confirmation table th,
 .mo-fx-deal-confirmation table td { border-left: none; border-right: none; }
+
+/* Keep the complete basic selection on one baseline at desktop widths. */
+.mo-fx-deal-confirmation #selectionCard .selection-row { display: grid; grid-template-columns: minmax(240px, 1.6fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(130px, .8fr) 140px auto; gap: 14px; align-items: end; }
+.mo-fx-deal-confirmation #selectionCard .field { min-width: 0; position: relative; }
+.mo-fx-deal-confirmation #selectionCard .field-row > .combo { flex: 1; min-width: 0; }
+.mo-fx-deal-confirmation #selectionCard .radio-group { height: 36px; padding: 0; gap: 12px; }
+.mo-fx-deal-confirmation #selectionCard .radio-opt { margin: 0; white-space: nowrap; }
+.mo-fx-deal-confirmation #selectionCard .selection-actions { display: flex; gap: 8px; }
+.mo-fx-deal-confirmation #selectionCard .selection-actions .btn { height: 36px; white-space: nowrap; }
+.mo-fx-deal-confirmation #selectionCard .field-error { position: absolute; top: 100%; }
+@media (max-width: 1199px) {
+  .mo-fx-deal-confirmation #selectionCard .selection-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
+}
+@media (max-width: 699px) {
+  .mo-fx-deal-confirmation #selectionCard .selection-row { grid-template-columns: minmax(0, 1fr); }
+}

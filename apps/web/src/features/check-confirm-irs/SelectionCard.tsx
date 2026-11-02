@@ -1,6 +1,7 @@
+import { useRef } from 'react'
 import { CalendarPopup } from './CalendarPopup.tsx'
 import { ComboField } from './ComboField.tsx'
-import type { CalendarMode, ComboKind, IrsStatus } from './types.ts'
+import type { ComboKind, IrsStatus } from './types.ts'
 
 export type CompanyOption = { code: string; name: string }
 
@@ -14,17 +15,9 @@ export type SelectionCardProps = {
   onKeyDateCommit(): void
 
   calendarOpen: boolean
-  calendarMode: CalendarMode
-  calendarViewDate: Date
-  calendarYear: number
   onCalendarToggle(): void
-  onCalendarStep(months: number): void
-  onCalendarToggleMode(): void
   onCalendarPickDate(date: string): void
-  onCalendarPickYear(year: number): void
-  onCalendarPickMonth(month: number): void
-  onCalendarClear(): void
-  onCalendarToday(): void
+  onCalendarClose(): void
 
   filterOpen: boolean
   onFilterToggle(): void
@@ -47,6 +40,7 @@ export type SelectionCardProps = {
 }
 
 export function SelectionCard(props: SelectionCardProps) {
+  const dateShellRef = useRef<HTMLDivElement>(null)
   return (
     <div className="card">
       <div className="card-head">
@@ -77,7 +71,7 @@ export function SelectionCard(props: SelectionCardProps) {
             <label htmlFor="keyDate">
               Key Date <span className="required">*</span>
             </label>
-            <div className="date-shell">
+            <div className="date-shell" ref={dateShellRef}>
               <input
                 id="keyDate"
                 className="input date-input"
@@ -100,17 +94,10 @@ export function SelectionCard(props: SelectionCardProps) {
               ></button>
               <CalendarPopup
                 open={props.calendarOpen}
-                mode={props.calendarMode}
-                viewDate={props.calendarViewDate}
-                year={props.calendarYear}
+                anchorRef={dateShellRef}
                 value={props.keyDate}
-                onStep={props.onCalendarStep}
-                onToggleMode={props.onCalendarToggleMode}
                 onPickDate={props.onCalendarPickDate}
-                onPickYear={props.onCalendarPickYear}
-                onPickMonth={props.onCalendarPickMonth}
-                onClear={props.onCalendarClear}
-                onToday={props.onCalendarToday}
+                onClose={props.onCalendarClose}
               />
             </div>
           </div>

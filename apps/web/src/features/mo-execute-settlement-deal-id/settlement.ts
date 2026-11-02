@@ -17,7 +17,7 @@
  *   Execution Complete    F01 'EXE_C': ZDEAL_STAT 21 when exactly six trade legs are complete and every FX leg they
  *                         map to is (no-invoice model: every mapped FX leg).
  *
- * Where it is written: ZSGTSFTR_TRD_POS is the gateway's local SQLite (/api/localdb/tsf-trade-position). The FX
+ * Where it is written: ZSGTSFTR_TRD_POS is cloud trdPos (via /api/localdb/tsf-trade-position). The FX
  * fields go to SAP through TrmFxApp (ZSGTSFTR_APP_STR), which holds the VTBFHA TSF fields this app reads; the
  * program itself writes them with ZSGTRMFM_VTBFHA_EXPORT + BAPI_FTR_FXT_CHANGE. ZDEAL_STAT goes through the
  * middleware ("tsfDealId").
@@ -54,7 +54,7 @@ export const defaultDeps: SettlementDeps = {
   setDealStatus: async (deal, status) => {
     await fxUpdate('tsfDealId', dealKey(deal), { ZDEAL_STAT: status, ...(await changedStamp()) })
   },
-  updateFx: updateAppStrRecord,
+  updateFx: (company, transaction, fields) => updateAppStrRecord(company, transaction, fields, { preserveBlanks: true }),
 }
 
 export function dealKey(deal: Deal): Record<string, string> {
@@ -215,7 +215,9 @@ async function saveBankData(deal: Deal, r: TradeInvoice, invoices: readonly Trad
   for (const [idx, leg] of invoices.entries()) {
     // The leg's configuration rides along with the banks: a row created here (no Initiate row for that sequence) would otherwise hold
     // only the banks, and every screen that reads the row (BO: Post Accounting Entries) would show blank descriptions and 0.00 amounts.
-    if (leg.leg.slice(0, 2) === type) await deps.putPosition(deal.dealId, { seq: invoiceSeq(leg, idx), fields: { ...positionConfig(leg, idx), ...fields } })
+    // ZP_DATE is NOT NULL in the cloud table, so a row created here takes the due date as Initiate does; a stored posting date is left alone.
+    const postDate = leg.postDate ? {} : { ZP_DATE: sapDate(leg.dueDate) }
+    if (leg.leg.slice(0, 2) === type) await deps.putPosition(deal.dealId, { seq: invoiceSeq(leg, idx), fields: { ...positionConfig(leg, idx), ...postDate, ...fields } })
   }
 }
 

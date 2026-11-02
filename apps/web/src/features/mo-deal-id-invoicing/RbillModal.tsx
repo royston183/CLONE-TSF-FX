@@ -1,4 +1,5 @@
 import { FX_MODELS, STATUS_META, TRADERS, currStr, entStr } from './data.ts'
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { fmtAmt } from './format.ts'
 import { canAmendDeal, canLetters, canReverse, fxUtilAmt, uninvoicedExists } from './logic.ts'
 import type { Deal } from './types.ts'
@@ -216,6 +217,11 @@ export function RbillModal({
                     <th>Amount 2</th>
                     <th className="left">Counterparty</th>
                     <th>Rate</th>
+                    <th className="left">NDF Fixing Date</th>
+                    <th className="left">NDF Ref</th>
+                    <th>NDF Settlement Rate</th>
+                    <th>Cash Settlement Amount</th>
+                    <th className="left">Cash Currency</th>
                     <th className="left">&nbsp;</th>
                   </tr>
                 </thead>
@@ -239,6 +245,11 @@ export function RbillModal({
                         {f.bpName ? `${f.bp} - ${f.bpName}` : f.bp}
                       </td>
                       <td className="num">{f.rate.toFixed(4)}</td>
+                      <td className="left">{fmtNdfDate(f.ndf?.ndfDate ?? '')}</td>
+                      <td className="left">{f.ndf?.ndfRef ?? ''}</td>
+                      <td className="num">{fmtNdfRate(f.ndf?.ndfRate)}</td>
+                      <td className="num">{fmtNdfCash(f.ndf?.cashAmount)}</td>
+                      <td className="left">{f.ndf?.cashCurrency ?? ''}</td>
                       <td className="left">
                         <button className="tbtn" style={{ height: 26, padding: '0 8px', fontSize: 11 }} onClick={() => onViewTxn(f.bukrs, f.rfha)}>
                           View

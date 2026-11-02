@@ -321,9 +321,8 @@ export default function MoUpdateBankReference() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>
-              External Deals: Update Bank Reference <span className="tcode-chip">ZSGTSFR002</span>
+              External Deals: Update Bank Reference
             </h1>
-            <p>External Reference Type</p>
           </div>
           <div className="header-actions">
             <button type="button" className="btn btn-secondary" onClick={refresh}>

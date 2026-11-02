@@ -4,6 +4,7 @@ import { useAsync } from '@slc/api-client/react'
 import { loadDealAssignedTotals } from './api.ts'
 import { DateField } from './DateField.tsx'
 import { findDeal, loadDealMaster } from './dealMaster.ts'
+import { assignmentCommodityError } from './assignmentCommodity.ts'
 import type { BlInvoiceDetails } from './types.ts'
 
 /** legacy/Manage TF.html's #assignDealOverlay Inco Terms list, verbatim. */
@@ -26,7 +27,8 @@ export type AssignDealModalProps = {
   open: boolean
   selectedBlAmount: number
   initialDealId: string
-  tfCommodity: string
+  /** Trade flow ZTRM_COM_ID, not its grade/description or the free-text invoice commodity. */
+  gtCommodity: string
   onCancel: () => void
   /** The Deal ID with the Invoice Details entered here (ZTRM_COM_ID is added by the caller). */
   onAssign: (dealId: string, details: Omit<BlInvoiceDetails, 'ZtrmComId'>) => void
@@ -42,7 +44,7 @@ export function AssignDealModal({
   open,
   selectedBlAmount,
   initialDealId,
-  tfCommodity,
+  gtCommodity,
   onCancel,
   onAssign,
 }: AssignDealModalProps) {
@@ -111,6 +113,7 @@ export function AssignDealModal({
   // assigned Deal ID (picked from the list, typed by hand, or left over from before this
   // popup filtered its suggestions) never just sits there looking selectable.
   const dealFullyAssigned = !!deal && assignedEarlier >= dealAmount
+  const commodityError = deal ? assignmentCommodityError(deal, gtCommodity) : ''
 
   function handleAssign() {
     if (!dealStructure) {
@@ -122,9 +125,34 @@ export function AssignDealModal({
       setFormError('Enter a Deal ID before assigning.')
       return
     }
+    if (!soPoDate) {
+      setFormError('Enter the SO/PO Date before assigning.')
+      return
+    }
+    if (!proposedInvDate) {
+      setFormError('Enter the Proposed Inv Date before assigning.')
+      return
+    }
+    if (!invCommodity.trim()) {
+      setFormError('Enter an Inv Commodity before assigning.')
+      return
+    }
+    if (!incoTerms) {
+      setFormError('Select Inco Terms before assigning.')
+      return
+    }
+    if (!exceptionNotes.trim()) {
+      setFormError('Enter the Exception Notes before assigning.')
+      return
+    }
     const target = findDeal(deals, trimmed)
     if (!target) {
       setFormError(master.loading ? 'Deal IDs are still loading.' : `Deal ID ${trimmed} does not exist.`)
+      return
+    }
+    const commodityError = assignmentCommodityError(target, gtCommodity)
+    if (commodityError) {
+      setFormError(commodityError)
       return
     }
     // Same rule the Deal ID suggestions are filtered by: a Deal ID with no remaining value
@@ -300,8 +328,7 @@ export function AssignDealModal({
                 </div>
                 <div className="field">
                   <label htmlFor="adMcCommodity">MC Commodity</label>
-                  {/* Left blank, not auto-populated from the trade flow's own commodity. */}
-                  <input type="text" id="adMcCommodity" readOnly value="" />
+                  <input type="text" id="adMcCommodity" readOnly value={deal?.mcCommodity ? [deal.mcCommodity, deal.mcCommodityDescription].filter(Boolean).join(' — ') : ''} />
                 </div>
               </div>
             </div>
@@ -309,15 +336,21 @@ export function AssignDealModal({
               <div className="section-head">Invoice Details</div>
               <div className="section-body field-grid">
                 <div className="field">
-                  <label htmlFor="adSoPoDate">SO/PO Date</label>
+                  <label htmlFor="adSoPoDate">
+                    SO/PO Date<span className="req">*</span>
+                  </label>
                   <DateField id="adSoPoDate" iso={soPoDate} onChange={setSoPoDate} />
                 </div>
                 <div className="field">
-                  <label htmlFor="adProposedInvDate">Proposed Inv Date</label>
+                  <label htmlFor="adProposedInvDate">
+                    Proposed Inv Date<span className="req">*</span>
+                  </label>
                   <DateField id="adProposedInvDate" iso={proposedInvDate} onChange={setProposedInvDate} />
                 </div>
                 <div className="field">
-                  <label htmlFor="adInvCommodity">Inv Commodity</label>
+                  <label htmlFor="adInvCommodity">
+                    Inv Commodity<span className="req">*</span>
+                  </label>
                   <input
                     type="text"
                     id="adInvCommodity"
@@ -326,7 +359,9 @@ export function AssignDealModal({
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="adIncoTerms">Inco Terms</label>
+                  <label htmlFor="adIncoTerms">
+                    Inco Terms<span className="req">*</span>
+                  </label>
                   <select id="adIncoTerms" value={incoTerms} onChange={(event) => setIncoTerms(event.target.value)}>
                     <option value="">Select...</option>
                     {INCO_TERMS.map((option) => (
@@ -344,7 +379,9 @@ export function AssignDealModal({
             <div className="section-head">Exception Notes</div>
             <div className="section-body field-grid single">
               <div className="field">
-                <label htmlFor="adExceptionNotes">Notes</label>
+                <label htmlFor="adExceptionNotes">
+                  Notes<span className="req">*</span>
+                </label>
                 <input
                   type="text"
                   id="adExceptionNotes"
@@ -360,6 +397,7 @@ export function AssignDealModal({
           <span className="field-hint">
             {formError ||
               (master.error ? `Could not read the Deal IDs: ${master.error.message}` : '') ||
+              commodityError ||
               (dealFullyAssigned
                 ? `Deal ID ${deal?.dealId} is already fully assigned and cannot take on more BLs.`
                 : '')}

@@ -56,7 +56,7 @@ export async function build() {
   })
 
   await authRoutes(app)
-  await localdbRoutes(app)
+  await localdbRoutes(app, services)
   await apiRoutes(app, services)
 
   // Startup must say plainly which backends are usable. A service silently doing nothing

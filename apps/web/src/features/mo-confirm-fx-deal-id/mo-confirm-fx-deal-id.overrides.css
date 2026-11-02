@@ -7,6 +7,12 @@
 .mo-confirm-fx-deal-id table th,
 .mo-confirm-fx-deal-id table td { border-left: 0; border-right: 0; }
 
+/* Planned Trade Invoices and P&L: the shared ALM theme centres every header, so text columns drifted off their
+   left-aligned values. Headers follow their column: text left, numbers right. */
+#alm-fx-ui .mo-confirm-fx-deal-id :is(#invTable, #plTable) thead th { text-align: left !important; }
+#alm-fx-ui .mo-confirm-fx-deal-id :is(#invTable, #plTable) :is(thead th, tbody td).num { text-align: right !important; }
+#alm-fx-ui .mo-confirm-fx-deal-id :is(#invTable, #plTable) :is(thead th, tbody td) { padding-left: 12px; padding-right: 12px; }
+
 /* Deal Selection before a deal is loaded: a compact card; the page background shows to its right. */
 .mo-confirm-fx-deal-id .selection-compact { max-width: 620px; }
 .mo-confirm-fx-deal-id .selection-compact .card-head { padding-top: 10px; padding-bottom: 10px; }

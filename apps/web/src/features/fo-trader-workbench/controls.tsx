@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useFloatingPanel } from './floating.ts'
-import { formatDMY, parseDMY } from './format.ts'
+import { formatDMY, moveCalendarDate, optionIndex, parseDMY } from './format.ts'
+import { FieldContext } from './modal.tsx'
 
 /**
  * The original's createDropdown: a text box that opens a filterable list on focus or click.
@@ -18,6 +19,7 @@ export function Dropdown<T>({
   display,
   search,
   disabled = false,
+  ariaLabel,
   onChange,
 }: {
   items: readonly T[]
@@ -30,6 +32,7 @@ export function Dropdown<T>({
   display: (item: T) => string
   search: (item: T) => string
   disabled?: boolean
+  ariaLabel?: string
   onChange: (value: string) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -38,6 +41,8 @@ export function Dropdown<T>({
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const id = useId(), field = useContext(FieldContext)
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   const close = useCallback(() => {
     setOpen(false)
@@ -59,6 +64,11 @@ export function Dropdown<T>({
   const filter = (typed ?? '').toLowerCase()
   const visible = items.filter((it) => !filter || search(it).toLowerCase().includes(filter))
   const showEmpty = !!emptyLabel && filter === ''
+  const count = visible.length + (showEmpty ? 1 : 0)
+  const highlighted = activeIndex < count ? activeIndex : -1
+  useEffect(() => {
+    if (open && highlighted >= 0) panelRef.current?.querySelector(`[id="${id}-option-${highlighted}"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [open, highlighted, id])
 
   const choose = (v: string) => {
     setOpen(false)
@@ -68,6 +78,7 @@ export function Dropdown<T>({
   const openList = (text: string | null) => {
     if (disabled) return
     setTyped(text)
+    setActiveIndex(-1)
     setOpen(true)
   }
 
@@ -75,6 +86,15 @@ export function Dropdown<T>({
     <div ref={wrapRef} className={`dd${open ? ' open' : ''}${disabled ? ' disabled' : ''}`}>
       <input
         ref={inputRef}
+        id={field?.id}
+        role="combobox"
+        aria-label={ariaLabel}
+        aria-labelledby={field?.labelId}
+        aria-required={field?.required}
+        aria-expanded={open}
+        aria-controls={`${id}-list`}
+        aria-autocomplete="list"
+        aria-activedescendant={open && highlighted >= 0 ? `${id}-option-${highlighted}` : undefined}
         className="dd-input"
         autoComplete="off"
         placeholder={placeholder}
@@ -89,22 +109,32 @@ export function Dropdown<T>({
           if (!open) openList(null)
         }}
         onChange={(e) => openList(e.target.value)}
+        onBlur={close}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') {
+          if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
             e.preventDefault()
-            if (showEmpty) choose('')
-            else if (visible[0]) choose(valueOf(visible[0]))
-          } else if (e.key === 'Escape') {
+            setOpen(true)
+            setActiveIndex(optionIndex(highlighted, e.key, count))
+          } else if (e.key === 'Enter') {
+            e.preventDefault()
+            if (!open) { openList(null); return }
+            const index = highlighted < 0 ? 0 : highlighted
+            if (showEmpty && index === 0) choose('')
+            else {
+              const item = visible[index - (showEmpty ? 1 : 0)]
+              if (item) choose(valueOf(item))
+            }
+          } else if (e.key === 'Escape' && open) {
             e.stopPropagation()
             close()
-            inputRef.current?.blur()
           }
         }}
       />
-      <div ref={panelRef} className="dd-panel">
+      <div ref={panelRef} id={`${id}-list`} role="listbox" className="dd-panel" aria-label={ariaLabel} aria-labelledby={field?.labelId}>
         {showEmpty ? (
           <div
-            className={`dd-item${value === '' ? ' active' : ''}`}
+            id={`${id}-option-0`} role="option" aria-selected={value === ''}
+            className={`dd-item${value === '' ? ' active' : ''}${highlighted === 0 ? ' dd-highlight' : ''}`}
             onMouseDown={(e) => {
               e.preventDefault()
               choose('')
@@ -115,10 +145,11 @@ export function Dropdown<T>({
             </span>
           </div>
         ) : null}
-        {visible.map((it) => (
+        {visible.map((it, i) => (
           <div
             key={valueOf(it)}
-            className={`dd-item${valueOf(it) === value ? ' active' : ''}`}
+            id={`${id}-option-${i + (showEmpty ? 1 : 0)}`} role="option" aria-selected={valueOf(it) === value}
+            className={`dd-item${valueOf(it) === value ? ' active' : ''}${highlighted === i + (showEmpty ? 1 : 0) ? ' dd-highlight' : ''}`}
             onMouseDown={(e) => {
               e.preventDefault()
               choose(valueOf(it))
@@ -142,7 +173,11 @@ const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
  * a month calendar (month and year pickers) that opens on the shown date. A value is
  * committed on a pick, on blur, or once ten characters are typed; only then is it checked.
  */
-export function DateField({ value, onCommit }: { value: string; onCommit: (value: string, ok: boolean) => void }) {
+export function DateField({ value, onCommit, ariaLabel }: { value: string; onCommit: (value: string, ok: boolean) => void; ariaLabel?: string }) {
+  const id = useId(), field = useContext(FieldContext)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [focused, setFocused] = useState(() => parseDMY(value) ?? new Date())
+  const [keyboardCal, setKeyboardCal] = useState(false)
   const [text, setTextState] = useState(value)
   const [bad, setBad] = useState(false)
   /** The latest text, for the delayed blur commit (a calendar pick may land in between). */
@@ -155,6 +190,9 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
   const [view, setView] = useState(() => new Date())
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (open && keyboardCal) panelRef.current?.querySelector<HTMLButtonElement>(`[data-date="${formatDMY(focused)}"]`)?.focus({ preventScroll: true })
+  }, [open, keyboardCal, focused])
 
   // A reset from outside (Reset, Refresh) replaces what was typed; an echo of our own commit does not.
   useEffect(() => {
@@ -181,10 +219,12 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
     setBad(!ok)
     onCommit(t, ok)
   }
-  const openCal = () => {
+  const openCal = (keyboard = false) => {
     const sel = parseDMY(text)
     setView(sel ? new Date(sel.getFullYear(), sel.getMonth(), 1) : new Date())
     setOpen(true)
+    setFocused(sel ?? new Date())
+    setKeyboardCal(keyboard)
   }
 
   const selected = parseDMY(text)
@@ -196,10 +236,24 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
   const trailing = (7 - ((off + dim) % 7)) % 7
   const today = new Date().toDateString()
   const years = Array.from({ length: 17 }, (_, i) => year - 8 + i)
+  const showMonth = (date: Date) => {
+    setKeyboardCal(false)
+    setView(date)
+    setFocused(new Date(date.getFullYear(), date.getMonth(), Math.min(focused.getDate(), new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate())))
+  }
 
   return (
     <div ref={wrapRef} className={`date-field${bad ? ' bad-date' : ''}`}>
       <input
+        ref={inputRef}
+        id={field?.id}
+        aria-label={ariaLabel}
+        aria-labelledby={field?.labelId}
+        aria-required={field?.required}
+        aria-invalid={bad}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={`${id}-calendar`}
         className="control"
         placeholder="dd-mm-yyyy"
         maxLength={10}
@@ -216,26 +270,35 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
           if (v.length === 10) commit(v)
         }}
         onBlur={() => setTimeout(() => commit(textRef.current), 120)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') { e.preventDefault(); openCal(true) }
+          else if (e.key === 'Escape' && open) { e.stopPropagation(); close() }
+        }}
       />
-      <button type="button" className="date-icon" aria-label="Open calendar" onClick={() => (open ? close() : openCal())}>
+      <button type="button" className="date-icon" aria-label={ariaLabel ? `Open ${ariaLabel} calendar` : 'Open calendar'} onClick={(e) => (open ? close() : openCal(e.detail === 0))}>
         📅
       </button>
-      <div ref={panelRef} className={`date-popup${open ? ' open' : ''}`}>
+      <div ref={panelRef} id={`${id}-calendar`} role="dialog" aria-label={ariaLabel ? `${ariaLabel} calendar` : 'Choose date'} className={`date-popup${open ? ' open' : ''}`} onKeyDown={(e) => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); inputRef.current?.focus(); return }
+        if (!(e.target instanceof HTMLElement) || !e.target.matches('button.day')) return
+        const next = moveCalendarDate(focused, e.key, e.shiftKey)
+        if (next) { e.preventDefault(); setKeyboardCal(true); setFocused(next); setView(new Date(next.getFullYear(), next.getMonth(), 1)) }
+      }}>
         {open ? (
           <>
             <div className="cal-head">
-              <button type="button" onClick={() => setView(new Date(year, month - 1, 1))}>
+              <button type="button" aria-label="Previous month" onClick={() => showMonth(new Date(year, month - 1, 1))}>
                 ‹
               </button>
               <span className="cal-title">
-                <select className="cal-sel" value={month} onChange={(e) => setView(new Date(year, Number(e.target.value), 1))}>
+                <select className="cal-sel" aria-label="Calendar month" value={month} onChange={(e) => showMonth(new Date(year, Number(e.target.value), 1))}>
                   {MONTHS.map((m, i) => (
                     <option key={m} value={i}>
                       {m}
                     </option>
                   ))}
                 </select>{' '}
-                <select className="cal-sel" value={year} onChange={(e) => setView(new Date(Number(e.target.value), month, 1))}>
+                <select className="cal-sel" aria-label="Calendar year" value={year} onChange={(e) => showMonth(new Date(Number(e.target.value), month, 1))}>
                   {years.map((y) => (
                     <option key={y} value={y}>
                       {y}
@@ -243,7 +306,7 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
                   ))}
                 </select>
               </span>
-              <button type="button" onClick={() => setView(new Date(year, month + 1, 1))}>
+              <button type="button" aria-label="Next month" onClick={() => showMonth(new Date(year, month + 1, 1))}>
                 ›
               </button>
             </div>
@@ -266,18 +329,23 @@ export function DateField({ value, onCommit }: { value: string; onCommit: (value
                   cls += ' selected'
                 if (dt.toDateString() === today) cls += ' today'
                 return (
-                  <div
+                  <button type="button"
                     key={day}
                     className={cls}
+                    data-date={formatDMY(dt)}
+                    aria-label={formatDMY(dt)}
+                    aria-pressed={!!selected && formatDMY(selected) === formatDMY(dt)}
+                    tabIndex={formatDMY(focused) === formatDMY(dt) ? 0 : -1}
                     onClick={() => {
                       const v = formatDMY(dt)
                       setText(v)
                       setOpen(false)
                       commit(v)
+                      inputRef.current?.focus()
                     }}
                   >
                     {day}
-                  </div>
+                  </button>
                 )
               })}
               {Array.from({ length: trailing }, (_, i) => (

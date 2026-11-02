@@ -26,6 +26,12 @@ export type FxRow = {
   preAmt: number
   mc: string
   txn: string
+  /** NDF_DATE (DD-MM-YYYY) / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR; '' when SAP does not serve them (never 0). */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: number | ''
+  cashAmt?: number | ''
+  cashCurr?: string
 }
 
 /**
@@ -56,6 +62,8 @@ export type InvRow = {
   amtUsd: number
   planned: number
   invNo: string
+  /** ZINV_REF, copied from INV_REF-ZINV_TRM_NO: the trade invoice reference, separate from ZINV_NO. */
+  invTrmRef: string
   pc: string
   /** cinv_type is set (the BL already carries an invoice type): the row's cells are disabled. */
   locked: boolean

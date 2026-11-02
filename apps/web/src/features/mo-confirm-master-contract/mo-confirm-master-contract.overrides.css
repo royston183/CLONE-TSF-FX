@@ -53,3 +53,6 @@
 :root[data-theme='dark'] .mocmc #mc-table .sticky-col { border-left: 0 !important; border-right: 0 !important; }
 :root:not([data-theme='dark']) .mocmc .list-table thead th,
 :root:not([data-theme='dark']) .mocmc .list-table tbody td { border-bottom: 1px solid #E6E9EB !important; }
+
+/* Typed dates are filters, rather than read-only calendar triggers. */
+.mocmc .dp input { cursor: text; }

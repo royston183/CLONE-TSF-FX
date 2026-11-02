@@ -1,14 +1,16 @@
-import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
+import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import { clearDealLink, clearDealLinkBody } from '../fx-blotter/appStr.ts'
 import { DEAL_STATUS } from '../../shared/fx/deal-status.ts'
 import { fxDelete, type FxRow } from '../../shared/fx/mw.ts'
+import type { FxTransaction } from '../../shared/fx/ndf.ts'
 import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
 import { dealRow, fake, rec } from './analysisTestKit.ts'
 import {
   cancelDealId,
   confirmDealId,
   loadReplacementCandidates,
+  loadReplacementReference,
   partialFailureMessage,
   replaceDealTransaction,
   reverseMoConfirmation,
@@ -67,21 +69,40 @@ describe('analysis rules', () => {
     ok(!exchangeRateEditable('02') && !exchangeRateEditable('03') && !exchangeRateEditable('30'))
   })
 
-  const old: FxRow = { BUKRS: 'SG03', RFHA: '100001', SFHAART: '619', DELFZ: '2026-10-30', BS_1: 'B', CURR1: 'USD', AMT1: '1000.00', SAKTIV: '1' }
+  const old: FxTransaction = {
+    CompanyCode: 'SG03',
+    FinancialTransaction: '100001',
+    TransactionType: '619',
+    ValueDate: '2026-10-30',
+    LeadCurrency: 'USD',
+    BuyCurrency: 'USD',
+    SellCurrency: 'INR',
+    BuyAmount: '1000.00',
+    SellAmount: '83000.00',
+    ActiveStatus: '0',
+  }
   const ref = referenceOf(old)
-  const cand = (over: FxRow = {}): FxRow => ({ ...old, RFHA: '100005', ...over })
+  const cand = (over: Partial<FxTransaction> = {}): FxTransaction => ({ ...old, FinancialTransaction: '100005', ...over })
+  const sold = { BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: '83000.00', SellAmount: '1000.00' }
+
+  it('reads the reference from FxTransaction: lead currency, its side and its amount', () => {
+    deepStrictEqual(ref, { bukrs: 'SG03', rfha: '100001', sfhaart: '619', delfz: '2026-10-30', side: 'B', currency: 'USD', amount: 1000 })
+    const s = referenceOf({ ...old, ...sold })
+    deepStrictEqual([s.side, s.currency, s.amount], ['S', 'USD', 1000])
+    strictEqual(referenceOf({ ...old, ValueDate: '2026-10-30T00:00:00Z' }).delfz, '2026-10-30')
+  })
 
   it('replacement filters follow the legacy rules one by one', () => {
     ok(isEligibleReplacement(ref, cand(), '03'))
     ok(isEligibleReplacement(ref, cand(), '07'))
-    ok(!isEligibleReplacement(ref, cand({ RFHA: '100001' }), '03'), 'same RFHA')
-    ok(!isEligibleReplacement(ref, cand({ BUKRS: 'IN11' }), '03'), 'company code')
-    ok(!isEligibleReplacement(ref, cand({ SFHAART: '620' }), '03'), 'transaction type')
-    ok(!isEligibleReplacement(ref, cand({ DELFZ: '2026-11-30' }), '03'), 'value date')
-    ok(!isEligibleReplacement(ref, cand({ BS_1: 'S' }), '03'), 'buy / sell')
-    ok(!isEligibleReplacement(ref, cand({ CURR1: 'EUR' }), '03'), 'currency')
-    ok(!isEligibleReplacement(ref, cand({ AMT1: '1001.00' }), '03'), 'amount')
-    ok(!isEligibleReplacement(ref, cand({ SAKTIV: '3' }), '03'), 'SAKTIV = 3')
+    ok(!isEligibleReplacement(ref, cand({ FinancialTransaction: '100001' }), '03'), 'same RFHA')
+    ok(!isEligibleReplacement(ref, cand({ CompanyCode: 'IN11' }), '03'), 'company code')
+    ok(!isEligibleReplacement(ref, cand({ TransactionType: '620' }), '03'), 'transaction type')
+    ok(!isEligibleReplacement(ref, cand({ ValueDate: '2026-11-30' }), '03'), 'value date')
+    ok(!isEligibleReplacement(ref, cand(sold), '03'), 'buy / sell')
+    ok(!isEligibleReplacement(ref, cand({ LeadCurrency: 'EUR', BuyCurrency: 'EUR' }), '03'), 'currency')
+    ok(!isEligibleReplacement(ref, cand({ BuyAmount: '1001.00' }), '03'), 'amount')
+    ok(!isEligibleReplacement(ref, cand({ ActiveStatus: '3' }), '03'), 'reversed (SAKTIV = 3)')
     ok(!isEligibleReplacement(ref, cand(), '01'), 'status 01')
     ok(!isEligibleReplacement(ref, cand(), ''), 'no APP_STR status')
     ok(!isEligibleReplacement(ref, cand(), '50'), 'status 50')
@@ -314,22 +335,38 @@ describe('against the services', () => {
     deepStrictEqual(calls[0]!.body, { key: { ZDEAL_ID: '1000000231', ZINV_TRM_NO: 'A' } })
   })
 
-  it('replacement candidates take their status from APP_STR by BUKRS + RFHA and apply the filters', async () => {
-    const old: FxRow = { BUKRS: 'SG03', RFHA: '100001', SFHAART: '619', DELFZ: '2026-10-30', BS_1: 'B', CURR1: 'USD', AMT1: '1000.00', SAKTIV: '1' }
-    const view: FxRow[] = [
-      { ...old, RFHA: '100005', XTEXT: 'a' },
-      { ...old, RFHA: '100006', XTEXT: 'b' },
-      { ...old, RFHA: '100007', XTEXT: 'c' },
-      { ...old, BUKRS: 'IN11', RFHA: '100005', XTEXT: 'other company, same RFHA' },
+  it('replacement candidates come from FxTransaction, take their status from APP_STR by BUKRS + RFHA and apply the filters', async () => {
+    const old: FxTransaction = {
+      CompanyCode: 'SG03',
+      FinancialTransaction: '100001',
+      TransactionType: '619',
+      ValueDate: '2026-10-30',
+      LeadCurrency: 'USD',
+      BuyCurrency: 'USD',
+      SellCurrency: 'INR',
+      BuyAmount: '1000.00',
+      SellAmount: '83000.00',
+      ActiveStatus: '0',
+    }
+    const fx: FxTransaction[] = [
+      { ...old, FinancialTransaction: '100005' },
+      { ...old, FinancialTransaction: '100006' },
+      { ...old, FinancialTransaction: '100007' },
+      { ...old, FinancialTransaction: '100008', ActiveStatus: '3' },
+      { ...old, CompanyCode: 'IN11', FinancialTransaction: '100005' },
     ]
+    const urls: string[] = []
     globalThis.fetch = (async (input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url.includes('/data/tsfvFx')) return json(200, { rows: view })
+      // URLSearchParams writes a space as "+", which decodeURIComponent leaves alone.
+      const url = decodeURIComponent(String(input).split('+').join(' '))
+      urls.push(url)
+      if (url.includes('/FxTransaction')) return json(200, { value: fx.filter((r) => url.includes(`CompanyCode eq '${r.CompanyCode}'`)) })
       if (url.includes('/trmfxapp/')) {
         return json(200, {
           value: [
-            { CompanyCode: 'SG03', FinancialTransaction: '100005', TxnStatus: '03' },
+            { CompanyCode: 'SG03', FinancialTransaction: '100005', TxnStatus: '03', ZtsfDealID: '' },
             { CompanyCode: 'SG03', FinancialTransaction: '100006', TxnStatus: '01' },
+            { CompanyCode: 'SG03', FinancialTransaction: '100008', TxnStatus: '03' },
             { CompanyCode: 'IN11', FinancialTransaction: '100005', TxnStatus: '07' },
           ],
         })
@@ -338,5 +375,16 @@ describe('against the services', () => {
     }) as typeof fetch
     const out = await loadReplacementCandidates(referenceOf(old))
     deepStrictEqual(out.map((c) => `${c.bukrs}|${c.rfha}|${c.txnStatus}`), ['SG03|100005|03'])
+    ok(!urls.some((u) => u.includes('tsfvFx')), 'the stale ZSGTSFV_FX copy is not read')
+  })
+
+  it('finds a transaction only FxTransaction has (IN11 3000000000044) and reports a missing one', async () => {
+    const found: FxTransaction = { CompanyCode: 'IN11', FinancialTransaction: '3000000000044', TransactionType: '619', ValueDate: '2026-11-16', LeadCurrency: 'USD', BuyCurrency: 'USD', BuyAmount: '200000.00', SellCurrency: 'INR', SellAmount: '17000000.00' }
+    globalThis.fetch = (async () => json(200, { value: [found] })) as typeof fetch
+    deepStrictEqual(await loadReplacementReference({ bukrs: 'IN11', rfha: '3000000000044' }), {
+      bukrs: 'IN11', rfha: '3000000000044', sfhaart: '619', delfz: '2026-11-16', side: 'B', currency: 'USD', amount: 200000,
+    })
+    globalThis.fetch = (async () => json(200, { value: [] })) as typeof fetch
+    await rejects(loadReplacementReference({ bukrs: 'IN11', rfha: '1' }), /not found in FxTransaction/)
   })
 })

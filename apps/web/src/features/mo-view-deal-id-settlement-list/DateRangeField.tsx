@@ -1,7 +1,6 @@
-import { daysInMonth, leadingBlanks } from './logic.ts'
-import { MONTH_ABBR, fmtDate, parseDate } from './format.ts'
-
-const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+import { useRef } from 'react'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
+import { fmtDate, parseDate } from './format.ts'
 
 const CalendarIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -12,75 +11,46 @@ const CalendarIcon = () => (
 
 /**
  * One date box of the Value Date range: a read-only DD.MM.YYYY input, a calendar button and
- * the pop-up month calendar. The open state and the month on show are the page's, because
- * only one popup is open at a time and Escape / outside click close it from there.
+ * the shared pop-up calendar. The open state is the page's, because only one popup is open at a
+ * time. (viewYear / viewMonth / onNav are still passed by the page but the shared popup keeps its
+ * own month view, so they are unused here.)
  */
 export function DateBox({
   placeholder,
   value,
   open,
-  viewYear,
-  viewMonth,
   onToggle,
-  onNav,
   onPick,
 }: {
   placeholder: string
   value: string
   open: boolean
-  viewYear: number
-  viewMonth: number
+  viewYear?: number
+  viewMonth?: number
   onToggle: () => void
-  onNav: (delta: number) => void
+  onNav?: (delta: number) => void
   onPick: (value: string) => void
 }) {
-  const selected = value ? parseDate(value) : null
-  const today = new Date()
+  const wrapRef = useRef<HTMLDivElement>(null)
   return (
-    <div className="dp">
+    <div className="dp" ref={wrapRef}>
       <input type="text" value={value} placeholder={placeholder} readOnly onClick={onToggle} />
       <button type="button" className="dp-btn" onClick={onToggle} aria-label="Open calendar">
         <CalendarIcon />
       </button>
-      <div className={open ? 'dp-popup open' : 'dp-popup'}>
-        {open ? (
-          <>
-            <div className="dp-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button type="button" onClick={() => onNav(-1)}>
-                &#8249;
-              </button>
-              <span className="dp-month-label">
-                {MONTH_ABBR[viewMonth]} {viewYear}
-              </span>
-              <button type="button" onClick={() => onNav(1)}>
-                &#8250;
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', textAlign: 'center' }}>
-              {DOW.map((d, i) => (
-                <div key={i} className="dp-dow">
-                  {d}
-                </div>
-              ))}
-              {Array.from({ length: leadingBlanks(viewYear, viewMonth) }, (_, i) => (
-                <div key={`b${i}`} />
-              ))}
-              {Array.from({ length: daysInMonth(viewYear, viewMonth) }, (_, i) => {
-                const day = i + 1
-                const d = new Date(viewYear, viewMonth, day)
-                let cls = 'dp-day'
-                if (selected && d.getTime() === selected.getTime()) cls += ' selected'
-                if (d.toDateString() === today.toDateString()) cls += ' today'
-                return (
-                  <div key={day} className={cls} onClick={() => onPick(fmtDate(d))}>
-                    {day}
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        ) : null}
-      </div>
+      {/* The page closes the calendar on any document click outside `.dp`; the portal is outside it. */}
+      <span style={{ display: 'contents' }} onClick={(e) => e.stopPropagation()}>
+        <DatePopup
+          open={open}
+          anchorRef={wrapRef}
+          value={value ? parseDate(value) : null}
+          title={placeholder}
+          onSelect={(d) => onPick(fmtDate(d))}
+          onClose={() => {
+            if (open) onToggle()
+          }}
+        />
+      </span>
     </div>
   )
 }

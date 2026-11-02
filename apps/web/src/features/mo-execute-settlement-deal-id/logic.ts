@@ -125,6 +125,10 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
     curr === r.curr1 ? `${formatAmount(r.amt1)} ${r.curr1}` : `${formatAmount(r.amt2)} ${r.curr2}`
   const t = r.tsf
   return {
+    seq: r.seq,
+    bSetDesc: buy?.desc ?? '',
+    sSetDesc: sell?.desc ?? '',
+    sLetterCode: [sell?.letCode, sell?.letName].filter(Boolean).join(' - '),
     bukrs: r.bukrs,
     rfha: r.rfha,
     dealType: dealTypeLabel(r),
@@ -161,11 +165,23 @@ export function fxPostDefaults(r: FxDeal): FxPostDefaults {
  * values (ZHBKID / ZHKTID, ZREC_HBKID / ZREC_HKTID); the receiver's falls back to the house bank assigned to the
  * invoice in Generate Invoices (api.ts). The FI document is BO's posting, shown read-only.
  *
- * SAP proposes the rest from VTBSTC1 (pay ID TRDINV) and T012K, which this app cannot read: those fields stay blank for
- * the user to fill, never a made-up bank. Update / Settlement Complete store whatever the pop-up holds.
+ * SAP proposes the rest from VTBSTC1 (pay ID TRDINV). Until that mapping is exposed, users select a company-scoped
+ * HouseBankAccount from OData. Update / Settlement Complete store the selected banks and accounts.
  */
 export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
   return {
+    bukrs: r.bukrs ?? '',
+    seq: r.seq ?? '',
+    recPay: r.recPay,
+    tradeType: r.leg,
+    setDesc: r.trfDesc,
+    payAmt: `${formatAmount(r.payAmt)} ${r.setCurr || r.curr}`,
+    linkedFx: r.dMap ?? '',
+    settled: r.setCo,
+    trfType: TRANSFER_TYPES[r.trfType] ?? r.trfType,
+    postingType: [r.fiType, r.postDesc].filter(Boolean).join(' '),
+    fiPosting: !!r.postRequired,
+    partnerId: r.businessPartner ?? '',
     date: r.dueDate,
     sender: r.buy ?? '',
     senderHouseBank: r.senderHouseBank ?? '',
@@ -177,4 +193,16 @@ export function invPostDefaults(r: TradeInvoice, dealId: string): InvPostForm {
     fiDoc: r.fiDoc || '',
     docMsg: `${r.trfDesc} - ${r.leg} settlement for Deal ID ${dealId}`,
   }
+}
+
+/**
+ * modify_screen_9002 on a Payment leg: the Sender's house bank / account is mandatory when the leg's own posting
+ * type is 02 (Post to Bank Account, P1); the Receiver's when the paired Receipt leg (T2-P -> T2-S) is 01
+ * (Post to Bank Account, S1). Types 03 / 04 / 05 post to clearing or a business partner and need no bank.
+ * Receipt legs are display only, so nothing is required there.
+ */
+export function invBankRequired(r: TradeInvoice | undefined, rows: readonly TradeInvoice[]): { sender: boolean; receiver: boolean } {
+  if (!r || r.recPay !== 'Payment' || r.fiDoc) return { sender: false, receiver: false }
+  const receipt = rows.find((x) => x.leg === `${r.leg.slice(0, 2)}-S`)
+  return { sender: r.fiType === '02', receiver: receipt?.fiType === '01' }
 }

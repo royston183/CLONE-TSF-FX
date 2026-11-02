@@ -1,11 +1,11 @@
 import { fmtMoney, fmtRate } from './format.ts'
-import { buyEntry, isFxPosted, sellEntry, type TxnAction } from './logic.ts'
-import { EntryTable, ModalShell, SECONDARY_BTN, StaticField } from './modal.tsx'
+import { isFxPosted, type TxnAction } from './logic.ts'
+import { ModalShell, SECONDARY_BTN, StaticField } from './modal.tsx'
 import type { FxLeg } from './types.ts'
 
 const NOT_POSTED = '– not posted –'
 
-/** Live posting: TBB1 determines the lines, so the illustrative entries and bank type are not shown. */
+/** TBB1 determines the lines, so no illustrative entries are shown. */
 const SAP_LINES = <p className="doc-link-pending">The accounting lines are determined by SAP (TBB1 account determination) when the flows are posted.</p>
 
 /** Modal 9003: Transactions Posting (FX leg). */
@@ -14,11 +14,9 @@ export function TxnModal({
   leg,
   onClose,
   onAction,
-  live = false,
 }: {
   open: boolean
   leg: FxLeg | null
-  live?: boolean
   onClose: () => void
   onAction: (action: TxnAction) => void
 }) {
@@ -27,6 +25,7 @@ export function TxnModal({
     <ModalShell
       open={open}
       size="wide"
+      className="transaction-posting-modal"
       icon={'⇄'}
       title="Transaction Settlement"
       subtitle={leg ? `Deal Type ${leg.dealType} · Transaction ${leg.rfha} · ${leg.entity}` : 'FX deal accounting entries'}
@@ -59,14 +58,20 @@ export function TxnModal({
               {leg.dssDeal ? ` / ${leg.dssDeal}` : ''}
             </StaticField>
           </div>
+          {leg.sgsart.charAt(2) === 'D' ? (
+            <div className="field-grid cols3">
+              <StaticField label="NDF Settlement Rate">{leg.ndfRate ? fmtRate(leg.ndfRate) : ''}</StaticField>
+              <StaticField label="Cash Settlement Amount">{leg.cashAmt ? fmtMoney(leg.cashCurr ?? '', leg.cashAmt) : ''}</StaticField>
+              <StaticField label="Cash Currency">{leg.cashCurr ?? ''}</StaticField>
+            </div>
+          ) : null}
           <div className="buysell-box sell">
             <div className="buysell-head">Sell Currency</div>
             <div className="field-grid cols3">
               <StaticField label="Sell Amount">{fmtMoney(leg.sellCurr, leg.sellAmt)}</StaticField>
-              {live ? null : <StaticField label="Bank Type">House Bank · Correspondent</StaticField>}
               <StaticField label="FI Document">{leg.doc1 || NOT_POSTED}</StaticField>
             </div>
-            {live ? SAP_LINES : <EntryTable lines={sellEntry(leg)} />}
+            {SAP_LINES}
           </div>
           <div className="buysell-box buy">
             <div className="buysell-head">Buy Currency</div>
@@ -75,7 +80,7 @@ export function TxnModal({
               <StaticField label="All-in Rate">{fmtRate(leg.rate)}</StaticField>
               <StaticField label="FI Document">{leg.doc2 || NOT_POSTED}</StaticField>
             </div>
-            {live ? SAP_LINES : <EntryTable lines={buyEntry(leg)} />}
+            {SAP_LINES}
           </div>
         </>
       )}

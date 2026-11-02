@@ -1,0 +1,95 @@
+/* Feature layout exceptions to the generated legacy sheet. */
+#alm-fx-ui .fx-blotter .upload-file-row { align-items: center; }
+#alm-fx-ui .fx-blotter .upload-file-row > .tb-btn { white-space: nowrap; }
+
+.fx-date-field { position: relative; min-width: 0; width: 100%; }
+.fx-date-field > input { width: 100%; }
+#alm-fx-ui .fx-date-field > input { padding-right: 34px !important; }
+#alm-fx-ui .fx-date-trigger {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: 4px; background: transparent; color: var(--text-muted);
+}
+#alm-fx-ui .fx-date-trigger:hover { color: var(--primary); background: var(--primary-tint); }
+
+/* Calendars are body portals, so they stay clear of scrollable modal boundaries. */
+.fx-date-calendar {
+  --cal-surface: #fff; --cal-text: #22354c; --cal-muted: #718096; --cal-line: #e6ebf2;
+  --cal-blue: #1265c8; --cal-pale: #eaf3ff; --cal-button: #1265c8;
+  position: fixed; z-index: 11000; padding: 10px;
+  border: 1px solid var(--cal-line); border-radius: 8px;
+  background: var(--cal-surface); color: var(--cal-text);
+  box-shadow: 0 12px 32px -8px #0d243f40;
+  font: 12px/1.4 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+}
+:root[data-theme='dark'] .fx-date-calendar {
+  --cal-surface: #19293a; --cal-text: #e6eef8; --cal-muted: #96acc1; --cal-line: #2a3e53;
+  --cal-blue: #78b7ff; --cal-pale: #17304a; --cal-button: #2464a7;
+}
+.fx-date-calendar__heading { display: grid; grid-template-columns: 24px minmax(0, 1fr) 76px 24px; align-items: center; gap: 4px; margin-bottom: 8px; }
+.fx-date-calendar button, .fx-date-calendar select { font: inherit; color: inherit; }
+.fx-date-calendar select { width: 100%; min-width: 0; height: 30px; padding: 3px; border: 1px solid var(--cal-line); border-radius: 6px; background: var(--cal-surface); }
+.fx-date-calendar button { display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.fx-date-calendar__heading button { width: 24px; height: 28px; padding: 0; }
+.fx-date-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.fx-date-calendar__weekday { text-align: center; color: var(--cal-muted); font-size: 10px; font-weight: 600; padding: 4px 0; }
+.fx-date-calendar__grid button { min-width: 0; height: 30px; padding: 0; }
+.fx-date-calendar button:hover { background: var(--cal-pale); color: var(--cal-blue); }
+.fx-date-calendar button[aria-current=date] { box-shadow: inset 0 0 0 1px var(--cal-blue); }
+.fx-date-calendar button[aria-pressed=true] { background: var(--cal-button); color: white; }
+.fx-date-calendar :is(button, select):focus-visible { outline: 2px solid var(--cal-blue); outline-offset: 2px; }
+
+/* Lock Blotter: the context line says why the blotter is read-only (its own day is locked, or the previous working day is not). */
+.fx-blotter .context-lock-note.is-locked { color: #b3261e !important; font-weight: 600 !important; }
+:root[data-theme='dark'] .fx-blotter .context-lock-note.is-locked { color: #ff8a80 !important; }
+
+/* ---- Compact input grid ---------------------------------------------------------------------------------
+   The DE6 blotter is a data-entry grid, so it trades air for reach: rows about 32px tall instead of 46, 26px controls,
+   11px text and slimmer columns, which puts most of the 28 columns on screen at once. Colours stay the theme's. The legacy
+   sheet states its sizes with !important, so these do too; they load last. */
+.fx-blotter #fx-table { font-size: 11px !important; }
+.fx-blotter #fx-table thead th { padding: 6px 6px !important; font-size: 10px !important; line-height: 1.2 !important; }
+.fx-blotter #fx-table tbody td { padding: 3px 5px !important; font-size: 11px !important; line-height: 1.2 !important; }
+.fx-blotter #fx-table .cell-input,
+.fx-blotter #fx-table .cell-select {
+  height: 26px !important; padding: 0 6px !important; border-radius: 5px !important;
+  font-size: 11px !important; min-width: 62px !important; text-overflow: ellipsis;
+}
+.fx-blotter #fx-table .cell-select { padding-right: 18px !important; }
+.fx-blotter #fx-table .rowaction-btn { min-height: 24px !important; height: 24px !important; padding: 0 7px !important; border-radius: 6px !important; font-size: 10px !important; }
+.fx-blotter #fx-table .status-cell { min-height: 20px !important; padding: 0 8px !important; font-size: 10px !important; }
+.fx-blotter #fx-table #fx-tbody .fx-date-field > input { padding-right: 26px !important; }
+.fx-blotter #fx-table .fx-date-trigger { width: 20px !important; height: 20px !important; right: 3px !important; }
+
+/* Pinned columns: checkbox, status, RFHA. */
+.fx-blotter #fx-table .sticky-1 { width: 30px !important; min-width: 30px !important; max-width: 30px !important; }
+.fx-blotter #fx-table .sticky-2 { left: 30px !important; width: 84px !important; min-width: 84px !important; max-width: 84px !important; }
+.fx-blotter #fx-table .sticky-3 { left: 114px !important; width: 108px !important; min-width: 108px !important; max-width: 108px !important; }
+
+/* Column widths (1 select, 2 status, 3 RFHA, 4 Deal ID ... 28 actions). Only the minimum: a long value still widens its column. */
+.fx-blotter #fx-table td:nth-child(5)  .cell-input { min-width: 94px !important; }  /* Trade Date */
+.fx-blotter #fx-table td:nth-child(6)  .cell-select { min-width: 118px !important; } /* Company Code */
+.fx-blotter #fx-table td:nth-child(7)  .cell-select { min-width: 88px !important; }  /* Bank BP */
+.fx-blotter #fx-table td:nth-child(8)  .cell-select { min-width: 84px !important; }  /* Txn Type */
+.fx-blotter #fx-table td:nth-child(9)  .cell-select,
+.fx-blotter #fx-table td:nth-child(12) .cell-select { min-width: 54px !important; }  /* B/S 1, B/S 2 */
+.fx-blotter #fx-table td:nth-child(10)  .cell-select,
+.fx-blotter #fx-table td:nth-child(13) .cell-select { min-width: 62px !important; }  /* Curr 1, Curr 2 */
+.fx-blotter #fx-table td:nth-child(11) .cell-input,
+.fx-blotter #fx-table td:nth-child(14) .cell-input { min-width: 100px !important; }  /* Amount 1, Amount 2 */
+.fx-blotter #fx-table td:nth-child(15) .cell-input,
+.fx-blotter #fx-table td:nth-child(16) .cell-input,
+.fx-blotter #fx-table td:nth-child(17) .cell-input { min-width: 74px !important; }   /* All in, Swap, Spot */
+.fx-blotter #fx-table td:nth-child(18) .cell-input { min-width: 94px !important; }  /* Value Date */
+.fx-blotter #fx-table td:nth-child(19) .cell-select,
+.fx-blotter #fx-table td:nth-child(20) .cell-select { min-width: 84px !important; }  /* Mode of Trade, Acc Category */
+.fx-blotter #fx-table td:nth-child(21) .cell-select { min-width: 88px !important; }  /* Profit Center */
+.fx-blotter #fx-table td:nth-child(22) .cell-select { min-width: 130px !important; } /* Unit (BA) */
+.fx-blotter #fx-table td:nth-child(23) .cell-input { min-width: 94px !important; }  /* NDF Fixing Date */
+.fx-blotter #fx-table td:nth-child(24) .cell-select { min-width: 88px !important; }  /* NDF Fixing Ref */
+.fx-blotter #fx-table td:nth-child(4) { min-width: 84px !important; }  /* Deal ID */
+
+/* Date columns (Trade Date, Value Date, NDF Fixing Date): dd-mm-yyyy needs about 70px, so the column is only as wide as its
+   box (text + the calendar button) and takes none of the table's spare width. width:1% makes an auto-layout column shrink to its content. */
+.fx-blotter #fx-table :is(th, td):is(:nth-child(5), :nth-child(18), :nth-child(23)) { width: 1% !important; }
+.fx-blotter #fx-table :is(td:nth-child(5), td:nth-child(18), td:nth-child(23)) .fx-date-field > input { padding-left: 6px !important; padding-right: 24px !important; }

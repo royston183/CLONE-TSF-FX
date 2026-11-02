@@ -42,6 +42,12 @@ export function spotKey(row: Pick<SpotRow, 'modelId' | 'dealId' | 'dealType' | '
   return { ZMOD_ID: row.modelId, ZDEAL_ID: row.dealId, ZDEAL_TYPE: row.dealType, ZDSS_TYPE: row.dssType }
 }
 
+/** A DECIMAL column of the view that may be missing or blank: null (shown blank), never 0. */
+const servedNum = (v: string | number | null | undefined): number | null => {
+  const x = num(v)
+  return x === 0 ? null : x
+}
+
 export function toSpotRow(r: FxRow, ctx: SpotContext): SpotRow {
   const bukrs = txt(r, 'ZBUKRS')
   const rfha = txt(r, 'ZRFHA')
@@ -70,6 +76,11 @@ export function toSpotRow(r: FxRow, ctx: SpotContext): SpotRow {
     spotTxn: txt(r, 'ZSPOT_TXN'),
     tradeDate: fx ? dmyFromIso(fx['DBLFZ']) : '',
     valueDate: fx ? dmyFromIso(fx['DELFZ']) : '',
+    ndfDate: fx ? dmyFromIso(fx['NDF_DATE']) : '',
+    ndfRef: fx ? txt(fx, 'NDF_REF') : '',
+    ndfRate: fx ? servedNum(fx['NDF_RATE']) : null,
+    cashAmt: fx ? servedNum(fx['ZCASH_AMT']) : null,
+    cashCurr: fx ? txt(fx, 'CASH_CURR') : '',
     partner: (fx && txt(fx, 'KONTRH')) || partner.code,
     partnerName: partner.name,
     // ZSGTSFV_FX carries no group yet (ZGRP is a TSF append not migrated).

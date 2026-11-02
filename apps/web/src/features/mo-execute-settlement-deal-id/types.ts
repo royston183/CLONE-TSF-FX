@@ -1,3 +1,5 @@
+import type { NdfExtras } from '../../shared/fx/ndf-columns.ts'
+
 export type StatusMeta = { code: string; text: string; cls: string }
 
 export type Deal = {
@@ -56,8 +58,25 @@ export type FxDeal = {
   settled?: boolean
   /** ZSGTSFTR_SET_FX ZDSS_DEAL of the leg's deal type: the DSS deal type settled together with it. */
   dssDeal?: string
+  /** TXN_STATUS code (gt_top-txn_status): 03, 07, 10 ... */
+  txnStatus?: string
+  /** Partner Name (gt_top-bp_name, A_BusinessPartner BusinessPartnerFullName). */
+  bpName?: string
+  /** Transaction Type Desc (gt_top-xtext, trmmaster TransactionTypeName). */
+  txnTypeDesc?: string
+  /** ZROLL_DEAL_TYPE: R<n>-D1 / C<n>-D2 ... (rollover numbering of PBO). */
+  rollType?: string
+  /** RBUSA / PRCTR, when FxTransaction serves them. */
+  busArea?: string
+  profitCenter?: string
+  /** PC1 / PC2 / STRIKE: option fields; no service serves them for the FX legs yet. */
+  putCall1?: string
+  putCall2?: string
+  strike?: string
   /** The transaction's TSF bank fields (VTBFHA ZTSF_*), as TrmFxApp serves them. */
   tsf?: FxTsf
+  /** NDF_DATE / NDF_REF / NDF_RATE / ZCASH_AMT / CASH_CURR; blank when SAP does not serve them. */
+  ndf?: NdfExtras
   /** ZSGTSFTR_SET_FX of the leg's deal type: its buy (ZBS 'B') and sell (ZBS 'S') rows. */
   setFxBuy?: SetFxSide
   setFxSell?: SetFxSide
@@ -91,6 +110,8 @@ export type SetFxSide = {
   bankId: string
   letCode: string
   letName: string
+  /** ZSGTSFTR_SET_FX ZSET_DESC, the side's settlement description (blank when the table does not carry it). */
+  desc?: string
 }
 
 
@@ -140,7 +161,15 @@ export type TradeInvoice = {
 /** A fixture row of the legacy DMS list (tests only; the live panel is shared/fx/DealDmsModal.tsx). */
 export type DmsDoc = { type: string; file: string; date: string; by: string }
 
-export type Headsup = { date: string; cat: string; msg: string }
+export type Headsup = {
+  entity: string
+  tradeType: string
+  currency: string
+  dealAmount: number
+  finalAmount: number
+  difference: number
+  action: string
+}
 
 export type ToastKind = 'info' | 'success' | 'error'
 export type Toast = { message: string; kind: ToastKind | null; visible: boolean }
@@ -160,6 +189,13 @@ export type ModalId =
   | 'viewInv'
 
 export type FxPostForm = {
+  /** Sequence of the leg in the settlement (ZSGTSFTR_SET_FX ZSEQ). */
+  seq: string
+  /** Settlement Desc of the buy / sell side. */
+  bSetDesc: string
+  sSetDesc: string
+  /** Sell side Letter Code (SET_FX sell row). */
+  sLetterCode: string
   bukrs: string
   rfha: string
   dealType: string
@@ -172,7 +208,7 @@ export type FxPostForm = {
   bRecCoCode: string
   bBankId: string
   bPaymentId: string
-  /** House bank / Account ID (ZTSF_BHBKID / ZTSF_BHKTID): output only, as on screen 9003. */
+  /** House bank / Account ID (ZTSF_BHBKID / ZTSF_BHKTID): manually selected for the receiving company. */
   bHouseBank: string
   bAccountId: string
   letterCode: string
@@ -186,13 +222,26 @@ export type FxPostForm = {
   sBankId: string
   sPayCoCode: string
   sPaymentId: string
-  /** House bank / Account ID (ZTSF_SHBKID / ZTSF_SHKTID): output only. */
+  /** House bank / Account ID (ZTSF_SHBKID / ZTSF_SHKTID): manually selected for the paying company. */
   sHouseBank: string
   sAccountId: string
   remit: boolean
 }
 
 export type InvPostForm = {
+  /** Basic Details of screen 9002. */
+  bukrs: string
+  seq: string
+  recPay: string
+  tradeType: string
+  setDesc: string
+  payAmt: string
+  linkedFx: string
+  settled: boolean
+  trfType: string
+  postingType: string
+  fiPosting: boolean
+  partnerId: string
   date: string
   sender: string
   senderHouseBank: string

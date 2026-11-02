@@ -1,0 +1,72 @@
+{
+  "checkedAt": "2026-10-16T11:58:03.777Z",
+  "method": "GET metadata only",
+  "results": [
+    {
+      "service": "housebank",
+      "status": 200,
+      "entitySets": [
+        "HouseBankAccount"
+      ],
+      "fields": [
+        "CompanyCode",
+        "HouseBank",
+        "HouseBankAccount",
+        "BankAccountInternalID",
+        "BankInternalID",
+        "BankCountry",
+        "SWIFTCode",
+        "BankName",
+        "BankNumber",
+        "BankAccount",
+        "BankAccountAlternative",
+        "ReferenceInfo",
+        "BankControlKey",
+        "BankAccountCurrency",
+        "IBAN",
+        "BankAccountDescription",
+        "GLAccount",
+        "BankAccountHolderName",
+        "BankAccountNumber"
+      ]
+    },
+    {
+      "service": "slctsfbpbank",
+      "status": 200,
+      "entitySets": [
+        "SlcTsfBpBank"
+      ],
+      "fields": [
+        "BusinessPartner",
+        "CompanyCode",
+        "BankIdentification",
+        "BankCountryKey",
+        "BankNumber",
+        "BankName",
+        "BankAccount"
+      ]
+    },
+    {
+      "service": "businesspartner",
+      "status": 200,
+      "entitySets": [
+        "A_BPFinancialServicesExtn",
+        "A_BPFinancialServicesReporting",
+        "A_BusinessPartnerBank",
+        "A_BusinessPartnerIsBank",
+        "A_CustomerCompany",
+        "A_CustomerCompanyText",
+        "A_SupplierCompany",
+        "A_SupplierCompanyText"
+      ]
+    },
+    {
+      "service": "trmfx",
+      "status": 200,
+      "entitySets": [
+        "FxTransaction"
+      ]
+    }
+  ],
+  "finding": "The checked services cover house-bank and BP-bank master reads. No Treasury standing-instruction entity exposes the full VTBSTC1 partner/company/currency/payment-details-ID to house-bank/account mapping."
+}

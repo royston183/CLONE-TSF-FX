@@ -1,3 +1,4 @@
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { LegStatusBadge } from './DetailTables.tsx'
 import { fmtAmt, fmtRate } from './format.ts'
 import { legRowClass } from './logic.ts'
@@ -15,6 +16,11 @@ const COLUMNS: readonly { key: SortKey; label: string; num?: true; arrow: boolea
   { key: 'bs2', label: 'Sell', arrow: false },
   { key: 'amt2', label: 'Amount', num: true, arrow: true },
   { key: 'rateVal', label: 'Rate', num: true, arrow: true },
+  { key: 'ndfDate', label: 'NDF Fixing Date', arrow: true },
+  { key: 'ndfRef', label: 'NDF Ref', arrow: true },
+  { key: 'ndfRate', label: 'NDF Settlement Rate', num: true, arrow: true },
+  { key: 'cashAmount', label: 'Cash Settlement Amount', num: true, arrow: true },
+  { key: 'cashCurrency', label: 'Cash Currency', arrow: true },
   { key: 'mcRef', label: 'MC Ref No', arrow: false },
   { key: 'txnStatusDesc', label: 'Status', arrow: true },
   { key: 'fxPl', label: 'FX P&L', num: true, arrow: true },
@@ -87,6 +93,11 @@ export function FxLegTable({
                     {fmtRate(l.rateVal)}
                     <div style={{ fontSize: '9.5px', color: 'var(--text-faint)', textAlign: 'right' }}>{l.rateLabel}</div>
                   </td>
+                  <td>{fmtNdfDate(l.ndf?.ndfDate ?? '')}</td>
+                  <td>{l.ndf?.ndfRef ?? ''}</td>
+                  <td className="num mono">{fmtNdfRate(l.ndf?.ndfRate)}</td>
+                  <td className="num mono">{fmtNdfCash(l.ndf?.cashAmount)}</td>
+                  <td>{l.ndf?.cashCurrency ?? ''}</td>
                   <td>{mcRef}</td>
                   <td>
                     <LegStatusBadge code={l.txnStatus} />
@@ -102,7 +113,7 @@ export function FxLegTable({
             })
           ) : (
             <tr>
-              <td colSpan={14} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 24 }}>
+              <td colSpan={19} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: 24 }}>
                 No matching deal legs.
               </td>
             </tr>

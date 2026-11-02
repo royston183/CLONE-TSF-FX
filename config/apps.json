@@ -14,6 +14,26 @@
   ],
   "apps": [
     {
+      "code": "ZSGTRM_RFX_BLOTTER_LIST",
+      "id": "view-all-transactions",
+      "route": "/apps/view-all-transactions",
+      "title": "View List of All Transactions",
+      "status": "ready",
+      "services": ["fx", "trmfxapp", "middleware"],
+      "legacy": "legacy/ZSGTRM_RFX_BLOTTER_DEAL_DUMP_MODERN_v2.html",
+      "note": "Reporting > FX Structure > FX Front-Office. Deal Dump UI adapted from the supplied HTML. Live read-only FX report using FxTransaction + TrmFxApp, with optional tsfvFx descriptions. Blotter selection starts with TrmFxApp; trade/value selections start with Treasury and retain transactions without append records or TSF Deal IDs. Search, sort, column chooser, details, pagination, CSV and Excel implemented. Exact ZSGOELVW_DELDUMP / INT_FX / EXT_FX / FX_STAT / FIELDS parity is not available: unsupported columns stay blank; type uses explicit product descriptions, TSF-linked uses a nonblank Deal ID. No email, FTP/IHSM, server upload or SAP GUI launch. Uses existing gateway technical identity, not per-user SAP company/business-area/profit-center authorization."
+    },
+    {
+      "code": "ZSGTSF_RFX_BLOTTER_COMP",
+      "id": "view-tsf-deals",
+      "route": "/apps/view-tsf-deals",
+      "title": "View List of TSF Deals",
+      "status": "ready",
+      "services": ["fx", "trmfxapp", "middleware"],
+      "legacy": "legacy/ZSGTSF_RFX_BLOTTER_COMP_Demo.html",
+      "note": "Reporting > FX Structure > FX Front-Office. Read-only Forex report: TrmFxApp supplies TSF Deal ID, blotter date, trader and status; FxTransaction supplies current transaction amounts/rates. Cloud masterContract is a left join; tsfDealId and fxModel supply model/sub-type and saved Deal ID P&L. tsfvFx enriches descriptions/audit details. Company/date/trader selection, search, sorting, pagination, Excel export and read-only transaction details are implemented. Options, email/IHS delivery, SAP GUI launch and CDS rollover/P&L recalculation are omitted. Company access is that of the configured SAP technical identity; demo sign-in does not implement per-user F_BKPF_BUK authorization."
+    },
+    {
       "code": "ottk-dttk-console",
       "id": "ottk",
       "route": "/apps/ottk",
@@ -242,6 +262,18 @@
       "note": "Legacy page never called an API — no fetch, no XMLHttpRequest. Converted as a UI-only React shell with its seed data quarantined in data.ts; SAP OData wiring is a follow-up once the entity is defined."
     },
     {
+      "code": "ZSGTSFP021",
+      "id": "limit-management",
+      "route": "/apps/limit-management",
+      "title": "Merchanting Dashboard: Limit Management",
+      "status": "scaffold",
+      "services": [
+        "middleware"
+      ],
+      "legacy": "legacy/limit-management-dashboard.html",
+      "note": "Converted from the supplied dashboard. Limits (ZSGTSFTR_LIM_MAN), currency pairs (ZSGTRMTR_CURPAIR) and field names (ZSGTRMTR_FIELDS) use middleware resources limMan, curpair and fields through the existing /api/localdb compatibility routes. Limit writes use the business key ZYEAR + ZCURR_PAIR + ZLIMIT_STARTDT + ZLIMIT_MATDT and gateway audit stamps. Utilised amount is ZUTL_AMT; the bank-wise summary reads the real D1 Deal IDs. The approval e-mail is a preview only."
+    },
+    {
       "code": "ZSGTSFP001",
       "id": "fo-create-master-contract",
       "route": "/apps/fo-create-master-contract",
@@ -468,7 +500,7 @@
         "fx"
       ],
       "legacy": "legacy/fx-deal-confirmation.html",
-      "note": "FX deals are read from the FxTransaction OData service (ZFS_SB_TRMFX_O4_API) and Match & Release settles them through its Settle action (BAPI_FTR_FXT_SETTLE); activity category 20 is Unmatched and 30 Matched & Released. Not covered by that service, so not saved: the External / Internal Ref and remark (BAPI_FTR_FXT_CHANGE) and Correction Required, which stays on this screen only. The Options rows are still dummy data; the options BAPIs are out of scope."
+      "note": "FX deals join FxTransaction with TrmFxApp workflow data. Match & Release settles once, then saves references and workflow status; Correction Required saves workflow status 04. Internal Ref is read and saved as ZolamDealNo (15 characters). External Ref is wired to FxTransaction.ExternalReference (16 characters) but requires the SAP service extension in docs/abap/ZFS_SD_TRMFX-ExternalReference.md; until live metadata exposes it, entering External Ref stops confirmation before settlement. Failed reference/workflow saves can be retried without settling again. General forward MO Remarks still has no exposed field. The Options rows are sample data."
     },
     {
       "code": "ZSGTSFR026",
@@ -669,6 +701,18 @@
       "services": [],
       "legacy": "legacy/inr-heads-up-reminder.html",
       "note": "Converted from the legacy HTML as a UI-only React screen with its dummy data quarantined in data.ts. No SAP / middleware wiring yet."
+    },
+    {
+      "code": "ZSGTSF_RDEAL_ID_DETAIL",
+      "id": "fo-deal-id-details",
+      "route": "/apps/fo-deal-id-details",
+      "title": "Deal ID Details",
+      "status": "ready",
+      "services": [
+        "middleware"
+      ],
+      "legacy": "legacy/ZSGTSF_RDEAL_ID_DETAIL_Demo.html",
+      "note": "Read-only React report. FS Cloud Deal IDs joined to Master Contracts, COMP, model configuration and subtype-specific status texts; linked FX partners use tsfvFx by company and transaction. CDS FX/Option utilization and option partners are unavailable and shown as missing. CO Area is a filter, not authorization."
     }
   ]
 }

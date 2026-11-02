@@ -5,15 +5,25 @@ import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
 import { FwdSsSpotPopup, NdfPopup, RatePopup, SettlementSpotPopup, SpotPopup, SsSpotPopup } from './ActionPopups.tsx'
 import { DateField, Dropdown } from './controls.tsx'
-import { loadWorkbench } from './api.ts'
+import { loadWorkbench, TXN_FAILED } from './api.ts'
 import { DEFAULT_FILTERS, LOOKUPS, emptyData, setLookups } from './data.ts'
 import { DealModal } from './DealModal.tsx'
 import { dropCls, useDnd } from './dnd.ts'
-import { WRITE_ACTIONS, openDeal, type Wb } from './flows.ts'
+import { openDeal, type Wb } from './flows.ts'
+import { NDF_FIXING_API_MISSING, fixNdfAvailable } from '../../shared/fx/ndf.ts'
 import { todayIso } from './format.ts'
-import { KpiDetailModal, TxnDetailsModal } from './InfoModals.tsx'
+import { KpiDetailModal } from './InfoModals.tsx'
+import { TxnDetailsModal } from './TxnDetailsModal.tsx'
 import {
   DEAL_COLS,
+  actionEntryReason,
+  blockedWriteReason,
+  DEFAULT_SORT,
+  PAGE_SIZES,
+  parsePrefs,
+  validatePrefs,
+  readState,
+  kpiPresentation,
   KPI_DEFS,
   colText,
   computeKpis,
@@ -24,7 +34,7 @@ import {
   nextSort,
   type KpiId,
 } from './logic.ts'
-import { ConfirmModal, type FrameProps, type Popup, type PopupSpec } from './modal.tsx'
+import { ConfirmModal, OutcomeFocus, type FrameProps, type Popup, type PopupSpec } from './modal.tsx'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import './fo-trader-workbench.legacy.css'
@@ -33,8 +43,7 @@ import './fo-trader-workbench.legacy.css'
 import './fo-trader-workbench.dark.css'
 import type { AppData, Filters, Sort, Toast, ToastKind } from './types.ts'
 
-const PAGE_SIZES = [8, 12, 20, 50] as const
-const DEFAULT_SORT: Sort = { field: 'id', dir: 'asc' }
+const PREFS_KEY = 'fo-trader-workbench.prefs.v1'
 const CLOSE_MS = 150
 
 /**
@@ -75,9 +84,18 @@ export default function FoTraderWorkbench() {
 
   /* ---------- outcome popup (standard StatusPopup, reports a finished SAP write) ---------- */
   const status = useStatusPopup()
+  const statusOpener = useRef<HTMLElement | null>(null)
+  const [canFix, setCanFix] = useState<boolean | null>(null)
+  useEffect(() => {
+    let live = true
+    fixNdfAvailable().then((ok) => live && setCanFix(ok)).catch(() => live && setCanFix(false))
+    return () => { live = false }
+  }, [])
 
   /* ---------- popup stack ---------- */
   const [popups, setPopups] = useState<Popup[]>([])
+  const postingRef = useRef(new Set<number>())
+  const [posting, setPosting] = useState(false)
   /** The stack as last rendered, for handlers that act on it (Escape, replacing a deal popup). */
   const popupsRef = useRef(popups)
   useEffect(() => {
@@ -86,6 +104,7 @@ export default function FoTraderWorkbench() {
   const popupKey = useRef(0)
   const closeTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
   const closePopup = useCallback((key: number) => {
+    if (postingRef.current.has(key)) return
     setPopups((all) => all.map((p) => (p.key === key ? { ...p, closing: true } : p)))
     const timer = setTimeout(() => {
       closeTimers.current.delete(timer)
@@ -99,7 +118,9 @@ export default function FoTraderWorkbench() {
       const key = popupKey.current
       // A deal popup replaces the one already open (dealModalApi.close() in the original).
       if (spec.kind === 'deal') for (const p of popupsRef.current) if (p.spec.kind === 'deal' && !p.closing) closePopup(p.key)
-      setPopups((all) => [...all, { key, closing: false, spec }])
+      const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      const opener = focused?.closest('.std-pop') ? statusOpener.current ?? popupsRef.current.at(-1)?.opener ?? null : focused
+      setPopups((all) => [...all, { key, closing: false, spec, opener }])
     },
     [closePopup],
   )
@@ -141,7 +162,6 @@ export default function FoTraderWorkbench() {
       } catch (error) {
         if (isAbort(error)) return
         console.error('[trader-workbench] load failed', error)
-        setAppData(emptyData())
         setLoadError('The Deal IDs could not be read from the SLC middleware.')
         showToast('The Deal IDs could not be read from the SLC middleware.', 'error')
       } finally {
@@ -156,14 +176,18 @@ export default function FoTraderWorkbench() {
   }, [reload])
 
   const wb: Wb = {
+    entryReason: (action, txn) => loading ? 'Loading workbench data…' : loadError || actionEntryReason(action, txn, canFix, NDF_FIXING_API_MISSING),
     post: (action) => {
-      showToast(`WAITING FOR API — ${WRITE_ACTIONS[action]}. Nothing was posted to SAP.`, 'error')
+      showToast(blockedWriteReason(action), 'error')
       return false
     },
     get: () => dataRef.current,
     set: setAppData,
     toast: showToast,
-    outcome: status.show,
+    outcome: (opts) => {
+      statusOpener.current = popupsRef.current.at(-1)?.opener ?? null
+      status.show(opts)
+    },
     open: openPopup,
     confirm: (opts, onYes) => openPopup({ kind: 'confirm', ...opts, onYes }),
     today: todayIso,
@@ -177,12 +201,37 @@ export default function FoTraderWorkbench() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
+  const [prefsReady, setPrefsReady] = useState(false)
   const dnd = useDnd(rootRef)
+
+  useEffect(() => {
+    if (loading || loadError) return
+    const options = { models: LOOKUPS.models.map((m) => m.id), statuses: LOOKUPS.dealStatus.map((s) => s.code), deals: dealOptions(data.deals).map((d) => d.id) }
+    if (!prefsReady) {
+      let stored: string | null = null
+      try { stored = window.localStorage.getItem(PREFS_KEY) } catch { /* Storage may be unavailable. */ }
+      const prefs = parsePrefs(stored, options)
+      setFilters(prefs.filters)
+      setSearch(prefs.search)
+      setSort(prefs.sort)
+      setPageSize(prefs.pageSize)
+      setPrefsReady(true)
+    } else {
+      setFilters((filters) => validatePrefs({ filters }, options).filters)
+    }
+  }, [loading, loadError, data.deals, prefsReady])
+
+  useEffect(() => {
+    if (!prefsReady || loading || loadError || dateErrors(filters).from || dateErrors(filters).to) return
+    try { window.localStorage.setItem(PREFS_KEY, JSON.stringify({ filters, search, sort, pageSize })) } catch { /* Preferences remain usable in memory. */ }
+  }, [prefsReady, loading, loadError, filters, search, sort, pageSize])
 
   const list = useMemo(() => filterSortDeals(data.deals, filters, search, sort), [data, filters, search, sort])
   const kpis = useMemo(() => computeKpis(data, list), [data, list])
   const errs = dateErrors(filters)
   const datesOk = !errs.from && !errs.to
+  const txnError = loadError || (txnNote === TXN_FAILED ? txnNote : '')
+  const gridState = readState(loading, loadError, list.length)
   const total = list.length
   const pages = Math.max(1, Math.ceil(total / pageSize))
   const curPage = Math.min(page, pages)
@@ -205,12 +254,11 @@ export default function FoTraderWorkbench() {
     setSort(DEFAULT_SORT)
     setPage(1)
     setSelectedDealId(null)
+    setPageSize(20)
   }
-  /* Refresh = reload the whole workbench: reset data mutations + filters + open popups */
+  /* Reload data while keeping the trader's view and open work. */
   const refreshWorkbench = () => {
-    setPopups([])
-    resetFilters()
-    void reload(() => showToast('Workbench refreshed'))
+    void reload(() => showToast('Workbench reloaded'))
   }
 
   const viewSettlement = () => {
@@ -232,13 +280,22 @@ export default function FoTraderWorkbench() {
 
   /* ---------- popups ---------- */
   const renderPopup = (p: Popup, depth: number) => {
-    const frame: FrameProps = { depth, closing: p.closing, onClose: () => closePopup(p.key) }
+    const frame: FrameProps = {
+      depth, closing: p.closing, busy: postingRef.current.has(p.key), onClose: () => closePopup(p.key),
+      active: !status.element && p.key === [...popups].reverse().find((p) => !p.closing)?.key,
+      opener: p.opener ?? null,
+      setBusy: (busy) => {
+        if (busy) postingRef.current.add(p.key)
+        else postingRef.current.delete(p.key)
+        setPosting(postingRef.current.size > 0)
+      },
+    }
     const s = p.spec
     switch (s.kind) {
       case 'deal':
-        return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
+        return <DealModal key={p.key} frame={frame} spec={s} wb={wb} dnd={dnd} txnNote={txnNote} txnLoading={loading} txnError={txnError} onSelectTxn={(rfha) => updateSpec(p.key, { ...s, selectedRfha: rfha })} />
       case 'txn':
-        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} dealId={s.dealId} wb={wb} />
+        return <TxnDetailsModal key={p.key} frame={frame} rfha={s.rfha} bukrs={s.bukrs} />
       case 'rate':
         return <RatePopup key={p.key} frame={frame} spec={s} wb={wb} />
       case 'spot':
@@ -273,17 +330,16 @@ export default function FoTraderWorkbench() {
 
   return (
     <div className="fo-trader-workbench" ref={rootRef}>
-      <div className="app">
+      <div className="app" inert={popups.some((p) => !p.closing) || !!status.element}>
         <div className="page-header">
           <BackButton className="fx-back-btn" />
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Trader Workbench</h1>
-            <p>Settle FX deals, options and NDFs</p>
           </div>
           <div className="header-actions">
-            <button className="btn btn-secondary" type="button" title="Reload the workbench and reset all demo changes" onClick={refreshWorkbench}>
-              &#8635; Refresh
+            <button className="btn btn-secondary" type="button" title="Reload data and keep the current view" disabled={loading || posting} onClick={refreshWorkbench}>
+              &#8635; Reload
             </button>
             <SignOutButton className="btn btn-secondary" />
           </div>
@@ -292,21 +348,24 @@ export default function FoTraderWorkbench() {
         <div className="kpi-row" aria-label="Key indicators">
           {KPI_DEFS.map((def) => {
             const cls = def.valueCls?.(kpis)
+            const view = kpiPresentation(def.id, kpis, loading, loadError, txnError)
+            const open = () => view.blocked ? showToast(view.description, 'error') : openPopup({ kind: 'kpi', id: def.id as KpiId })
             return (
               <div
                 key={def.id}
                 className={`kpi-card${def.tone ? ` tone-${def.tone}` : ''}`}
-                tabIndex={0}
-                role="button"
-                title="Double-click (or press Enter) for the breakdown"
-                onDoubleClick={() => openPopup({ kind: 'kpi', id: def.id as KpiId })}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') openPopup({ kind: 'kpi', id: def.id })
-                }}
+                aria-disabled={view.blocked}
+                aria-busy={loading}
               >
-                <div className="kpi-label">{def.label}</div>
-                <div className={`kpi-value${cls ? ` ${cls}` : ''}`}>{def.value(kpis)}</div>
-                <div className="kpi-description">{def.desc(kpis)}</div>
+                <button type="button" className="kpi-open" aria-disabled={view.blocked}
+                title={view.blocked ? view.description : 'Click for the breakdown'}
+                onClick={open}
+                >
+                  <span className="kpi-label">{def.label}</span>
+                  <span className={`kpi-value${!view.blocked && cls ? ` ${cls}` : ''}`}>{view.value}</span>
+                  <span className="kpi-description">{view.description}</span>
+                </button>
+                {view.retry ? <button type="button" className="btn btn-secondary" disabled={loading} onKeyDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void reload() }}>Retry</button> : null}
               </div>
             )
           })}
@@ -316,7 +375,7 @@ export default function FoTraderWorkbench() {
           <div className="card">
             <div className="section-title">
               <span className="dot"></span>Deal ID Details
-              <span className="section-hint">Double-click a deal to open its transactions and action items</span>
+              <span className="section-hint">Click a Deal ID to open its transactions and action items</span>
             </div>
 
             <div className="wb-toolbar">
@@ -337,20 +396,21 @@ export default function FoTraderWorkbench() {
                 <label>
                   Settlement Date From<span className="req">*</span>
                 </label>
-                <DateField value={filters.from} onCommit={(v) => setFilter({ from: v })} />
+                <DateField ariaLabel="Settlement Date From" value={filters.from} onCommit={(v) => setFilter({ from: v })} />
                 <div className="error-msg">{errs.from}</div>
               </div>
               <div className={`field f-date${errs.to ? ' has-error' : ''}`}>
                 <label>
                   To<span className="req">*</span>
                 </label>
-                <DateField value={filters.to} onCommit={(v) => setFilter({ to: v })} />
+                <DateField ariaLabel="Settlement Date To" value={filters.to} onCommit={(v) => setFilter({ to: v })} />
                 <div className="error-msg">{errs.to}</div>
               </div>
               <div className="field f-dd">
                 <label>Model</label>
                 <Dropdown
                   items={LOOKUPS.models}
+                  ariaLabel="Model"
                   value={filters.model}
                   placeholder="All models"
                   emptyLabel="All models"
@@ -365,6 +425,7 @@ export default function FoTraderWorkbench() {
                 <label>Deal ID</label>
                 <Dropdown
                   items={dealOptions(data.deals)}
+                  ariaLabel="Deal ID"
                   value={filters.deal}
                   placeholder="All deals"
                   emptyLabel="All deals"
@@ -380,6 +441,7 @@ export default function FoTraderWorkbench() {
                 <label>Deal Status</label>
                 <Dropdown
                   items={LOOKUPS.dealStatus}
+                  ariaLabel="Deal Status"
                   value={filters.status}
                   placeholder="All statuses"
                   emptyLabel="All statuses"
@@ -405,11 +467,11 @@ export default function FoTraderWorkbench() {
                 View Settlement Data
               </button>
               <div className="toolbar-gap"></div>
-              <span className="result-count">{total + (total === 1 ? ' deal' : ' deals')}</span>
+              <span className="result-count">{loading ? 'Loading…' : loadError ? 'Unavailable' : total + (total === 1 ? ' deal' : ' deals')}</span>
             </div>
 
             <div className="table-scroll">
-              <table className="mc-table" style={{ minWidth: 2200, display: total === 0 ? 'none' : 'table' }}>
+              <table className="mc-table" style={{ minWidth: 2200, display: gridState === 'ready' ? 'table' : 'none' }}>
                 <thead>
                   <tr>
                     <th className="no-sort action-col pin pin-1"></th>
@@ -417,9 +479,10 @@ export default function FoTraderWorkbench() {
                       const sorted = sort.field === c.key
                       const cls = `${c.num ? 'num ' : ''}${c.pin ? 'pin pin-2 ' : ''}${sorted ? 'sorted' : ''}`.trim()
                       return (
-                        <th key={c.key} className={cls || undefined} onClick={() => setSort((s) => nextSort(s, c.key))}>
-                          {c.label}
+                        <th key={c.key} className={cls || undefined} aria-sort={sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                          <button className="sort-button" type="button" onClick={() => setSort((s) => nextSort(s, c.key))}>{c.label}
                           <span className="sort-ind">{sorted ? (sort.dir === 'asc' ? '▲' : '▼') : ''}</span>
+                          </button>
                         </th>
                       )
                     })}
@@ -433,10 +496,9 @@ export default function FoTraderWorkbench() {
                       <tr
                         key={d.id}
                         className={`${isSel ? 'selected' : ''}${dnd.dragging?.id === d.id ? ' dragging' : ''}`.trim() || undefined}
-                        title={'Click to select · double-click to open transactions'}
+                        title="Click to select"
                         draggable={isSel}
                         onClick={() => setSelectedDealId(isSel ? null : d.id)}
-                        onDoubleClick={() => openDealRow(d.id)}
                         onDragStart={(e) => {
                           if (!isSel) {
                             e.preventDefault()
@@ -458,7 +520,21 @@ export default function FoTraderWorkbench() {
                         </td>
                         {DEAL_COLS.map((c) => (
                           <td key={c.key} className={`${c.num ? 'num ' : ''}${c.cls ?? ''}${c.pin ? ' pin pin-2' : ''}`.trim() || undefined}>
-                            {c.status ? <span className={`status-text ${st.cls}`}>{st.desc}</span> : colText(c, d)}
+                            {c.key === 'id' ? (
+                              <a
+                                className="deal-id-link"
+                                href={`#deal-${encodeURIComponent(d.id)}`}
+                                aria-haspopup="dialog"
+                                title={`Open transactions and action items for deal ${d.id}`}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  openDealRow(d.id)
+                                }}
+                              >
+                                {d.id}
+                              </a>
+                            ) : c.status ? <span className={`status-text ${st.cls}`}>{st.desc}</span> : colText(c, d)}
                           </td>
                         ))}
                       </tr>
@@ -467,16 +543,17 @@ export default function FoTraderWorkbench() {
                 </tbody>
               </table>
             </div>
-            <div className="empty-state" style={{ display: total === 0 ? 'block' : 'none' }}>
+            <div className="empty-state" role="status" aria-busy={loading} style={{ display: gridState !== 'ready' ? 'block' : 'none' }}>
               <div className="big">&#128196;</div>
               <span>
                 {loading
                   ? 'Loading Deal IDs from SAP…'
                   : loadError || (datesOk ? 'No deals match the selected settlement dates, filters or search.' : 'Enter a valid settlement date range to list deals.')}
               </span>
+              {gridState === 'failed' ? <button type="button" className="btn btn-secondary" onClick={() => void reload()}>Retry loading deals</button> : null}
             </div>
 
-            <div className="table-footer">
+            <div className="table-footer" style={{ display: loading || loadError ? 'none' : undefined }}>
               <div className="page-size-select">
                 Rows per page
                 <select
@@ -513,7 +590,7 @@ export default function FoTraderWorkbench() {
       </div>
 
       {popups.map((p, i) => renderPopup(p, i))}
-      {status.element}
+      {status.element ? <OutcomeFocus opener={statusOpener.current}>{status.element}</OutcomeFocus> : null}
 
       <div className={toastCls} role="status" aria-live="polite">
         {toast.msg}

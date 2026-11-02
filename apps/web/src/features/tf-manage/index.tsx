@@ -5,6 +5,7 @@ import type { SelectOption } from './masters.ts'
 import { BlDetailsPanel } from './BlDetailsPanel.tsx'
 import { DealSuccessModal } from './DealSuccessModal.tsx'
 import { loadDealMaster } from './dealMaster.ts'
+import { validateAssignmentCommodity } from './assignmentCommodity.ts'
 import { loadDttk } from '../dttk/api.ts'
 import { loadOttk } from '../ottk/api.ts'
 import { BackButton } from '../../auth/BackButton.tsx'
@@ -141,7 +142,7 @@ export default function TfManageApp() {
     if (field === 'ZtfType') return TF_TYPE_OPTIONS
     // GT Commodity: ZSGTSFTR_COMODIT's own commodity codes, not just whichever ones happen to
     // appear among the trade flows already loaded.
-    if (field === 'Zcmmd') {
+    if (field === 'ZtrmComId') {
       return (commodities.data ?? []).map((c) => {
         const value = String(c.ZcomId ?? '').trim()
         const desc = String(c.ZcomDesc ?? c.ZcomSdesc ?? '').trim()
@@ -202,6 +203,20 @@ export default function TfManageApp() {
     if (pending && pending.totalQuantity > (Number(selected.Zquantity) || 0)) {
       setError('Total quantity is more than the TF quantity')
       return
+    }
+    if (pending) {
+      setError(undefined)
+      setBusy(true)
+      try {
+        // Check again before any BL write, including new/split BL inserts. The MC may have
+        // changed since Assign was pressed; compliance exceptions do not waive this rule.
+        await validateAssignmentCommodity(pending.dealId, pending.details.ZtrmComId)
+      } catch (err) {
+        setError(errorText(err))
+        return
+      } finally {
+        setBusy(false)
+      }
     }
     // A target the grid holds but ZSGTSFTR_BL does not (Create BL, BL Split) has no stored key
     // to update, and a Create BL row has no BL ID at all until its insert draws one from the
@@ -296,6 +311,10 @@ export default function TfManageApp() {
     if (changes.ZogbsStatId !== undefined) changes.ZogbsStatDesc = nameOf(changes.ZogbsStatId)
     if (changes.ZflwCod1 !== undefined) changes.ZflwStas1 = nameOf(changes.ZflwCod1)
     if (changes.ZflwCod2 !== undefined) changes.ZflwStas2 = nameOf(changes.ZflwCod2)
+    if (changes.ZtrmComId !== undefined) {
+      const commodity = commodities.data?.find((row) => String(row.ZcomId ?? '').trim() === changes.ZtrmComId)
+      changes.ZtrmComDesc = String(commodity?.ZcomDesc ?? commodity?.ZcomSdesc ?? '').trim()
+    }
     if (Object.keys(changes).length === 0) {
       setSaved(true)
       return
@@ -343,7 +362,6 @@ export default function TfManageApp() {
             <BackButton className="hdr-btn" />
             <img className="ds-mark" alt="Fourth Signal" src={BRAND_LOGO} />
             <div className="app-title">Manage Trade Flows</div>
-            <span className="ds-code">TF</span>
           </div>
           <div className="ds-header-right">
             <span className="ds-conn" title="System connected" />

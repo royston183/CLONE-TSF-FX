@@ -3,9 +3,9 @@
  * FM ZSGTSFFM_DMS with IM_DEAL / IM_CAT '10') and BO Posting Accounting Entries (ZSGTSF_RDEAL_TRD_POST). One client, so a
  * Deal ID shows the same attachments in both.
  *
- *   Document types   ZSGTSFTR_DMS_TYP  (local SQLite, /api/localdb/tsf-dms-type) WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
- *   Deal link        ZSGTSFTR_DEALDMS  (the gateway's local SQLite, /api/localdb/tsf-deal-document: the middleware has no
- *                    resource for it) ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
+ *   Document types   ZSGTSFTR_DMS_TYP  (cloud dmsType via /api/localdb/tsf-dms-type) WHERE ZDMS_CAT; category 10 leaves out D07 / D08 / D10 / D16
+ *   Deal link        ZSGTSFTR_DEALDMS  (cloud tsfDealdms through /api/localdb/tsf-deal-document)
+ *                    ZDEAL_ID + ZDMS_CAT + ZDMS_TYPE: one slot per type
  *   Metadata         ZSGTSFTR_TSF_DMS  (middleware "tsfDocument")  ZTSF_DMS_CODE (the custom code) + ZSTND_DMS
  *   The document     SAP DMS, document type TRM / part 000, through ZFS_SB_ALMDMSDOC_O4_API (service "almdmsdoc"):
  *                    Upload, CreateNewVersion (the replacement original: the document number stays), GetOriginal
@@ -35,10 +35,10 @@ export const RES = { type: 'dmsType', meta: 'tsfDocument', link: 'dealDocument' 
 
 const docApi = service('almdmsdoc')('Document')
 const linkApi = service('localdb')('tsf-deal-document')
-/** ZSGTSFTR_DMS_TYP lives in the gateway's local SQLite (migration 007), not behind the middleware. */
+/** Compatibility route backed by cloud dmsType, including its current number-range configuration. */
 const dmsTypeApi = service('localdb')('tsf-dms-type')
 
-/** ZSGTSFTR_DEALDMS lives in the gateway's local SQLite; every other DMS table is read through the middleware. */
+/** Compatibility route backed by cloud tsfDealdms; the gateway translates its lowercase columns. */
 const linkPath = (key: Record<string, string>) =>
   `${linkApi}/${encodeURIComponent(key['ZDEAL_ID'] ?? '')}/${encodeURIComponent(key['ZDMS_CAT'] ?? '')}/${encodeURIComponent(key['ZDMS_TYPE'] ?? '')}`
 const LINK_KEY = ['ZDEAL_ID', 'ZDMS_CAT', 'ZDMS_TYPE'] as const

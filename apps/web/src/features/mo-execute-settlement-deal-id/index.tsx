@@ -4,14 +4,13 @@ import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { DealDmsModal } from '../../shared/fx/DealDmsModal.tsx'
 import { messageOf } from '../../shared/fx/master-contract.ts'
-import { loadHouseBankAccounts, type HouseBankAccount } from '../../shared/fx/house-bank.ts'
+import { bankCompanies, changeFxBankField, type BankCompany } from './bankChoices.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, isAbort } from '../../shared/fx/mw.ts'
 import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
 import { ResultQueue, type ResultItem } from '../../shared/ui/ResultQueue.tsx'
 import {
   ACTION_WAITING,
-  HEADSUP_WAITING,
   INVOICE_WAITING,
   VIEW_INVOICE_WAITING,
   WAITING_DEAL_ID_API,
@@ -24,6 +23,7 @@ import {
   type DealScreen,
 } from './api.ts'
 import { loadDifference, saveDifference, type DifferenceView } from './differenceApi.ts'
+import { loadHeadsup, type HeadsupView } from './headsup.ts'
 import { FxGrid, InvGrid } from './Grids.tsx'
 import {
   DEAL_ID_REQUIRED,
@@ -68,7 +68,6 @@ import type {
   Deal,
   FxDeal,
   FxPostForm,
-  Headsup,
   InvPostForm,
   StatusMeta,
   Toast,
@@ -79,6 +78,10 @@ import type {
 const TOAST_MS = 3800
 
 const BLANK_FX_FORM: FxPostForm = {
+  seq: '',
+  bSetDesc: '',
+  sSetDesc: '',
+  sLetterCode: '',
   bukrs: '',
   rfha: '',
   dealType: '',
@@ -127,12 +130,23 @@ const BLANK_DEAL: Deal = {
   noInvoiceFlag: false,
 }
 
-/** Never loaded: the invoice legs, headsups and DMS documents have no API (the FX legs are read in api.ts). */
+/** Empty grids until the selected Deal ID is loaded. */
 const NO_FX: FxDeal[] = []
 const NO_INVOICES: TradeInvoice[] = []
-const NO_HEADSUPS: Headsup[] = []
 
 const BLANK_INV_FORM: InvPostForm = {
+  bukrs: '',
+  seq: '',
+  recPay: '',
+  tradeType: '',
+  setDesc: '',
+  payAmt: '',
+  linkedFx: '',
+  settled: false,
+  trfType: '',
+  postingType: '',
+  fiPosting: false,
+  partnerId: '',
   date: '',
   sender: '',
   senderHouseBank: '',
@@ -150,10 +164,9 @@ const BLANK_INV_FORM: InvPostForm = {
  * converted from legacy/mo-execute-settlement-deal-id.html.
  *
  * The selection screen takes P_DEAL; the header is read by that key from ZSGTSFTR_DEALID /
- * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). The ABAP source is not exported (only
- * its dependency note), so the FX legs come from TrmFxApp + FxTransaction by Deal ID (option legs, trade-invoice
- * legs, Headsup and DMS show WAITING FOR API), and every action validates as before and then says WAITING FOR
- * ACTION API without changing anything. No sample data at runtime (fixtures.ts is for tests).
+ * MAS_CON / RULE_BT / ZSGTRMTR_TRADER / DEAL_ST (api.ts). Headsup uses DIFF.PROCESS_DATA;
+ * invoice differences use DIFF_NEW.PROCESS_DATA_NEW. Settlement writes are in settlement.ts.
+ * Option transactions and SAP printing still require APIs. No sample data at runtime.
  */
 export default function MoExecuteSettlementDealId() {
   const [params] = useSearchParams()
@@ -170,7 +183,6 @@ export default function MoExecuteSettlementDealId() {
   const [dealIdInput, setDealIdInput] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [selError, setSelError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
   const [list, setList] = useState<DealList | null>(null)
   const loadCtrl = useRef<AbortController | null>(null)
   const [mainShown, setMainShown] = useState(false)
@@ -186,38 +198,55 @@ export default function MoExecuteSettlementDealId() {
 
   // Popups and their forms
   const modals = useModals()
+  const headsupOpen = modals.isOpen('headsup')
+  const [headsupView, setHeadsupView] = useState<HeadsupView | null>(null)
+  const [headsupLoading, setHeadsupLoading] = useState(false)
+  const [headsupError, setHeadsupError] = useState('')
+  useEffect(() => {
+    if (!headsupOpen) return
+    const controller = new AbortController()
+    setHeadsupLoading(true)
+    setHeadsupError('')
+    setHeadsupView(null)
+    void loadHeadsup(deal, fxDeals, controller.signal)
+      .then((view) => { if (!controller.signal.aborted) setHeadsupView(view) })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted && !isAbort(error)) setHeadsupError(`Heads Up could not be loaded: ${messageOf(error)}`)
+      })
+      .finally(() => { if (!controller.signal.aborted) setHeadsupLoading(false) })
+    return () => controller.abort()
+  }, [headsupOpen, deal, fxDeals])
   const [amendDate, setAmendDate] = useState('')
   const [diffView, setDiffView] = useState<DifferenceView | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
   const [diffError, setDiffError] = useState('')
   const [fxForm, setFxForm] = useState(BLANK_FX_FORM)
   const [invForm, setInvForm] = useState(BLANK_INV_FORM)
-  // House bank accounts (HouseBankAccount) and each entity's company code (ZSGTSFTR_COMP): suggestions for the bank fields.
-  const [houseBanks, setHouseBanks] = useState<HouseBankAccount[]>([])
+  const [companies, setCompanies] = useState<BankCompany[]>([])
   const [entityCompany, setEntityCompany] = useState<Record<string, string>>({})
   useEffect(() => {
-    let live = true
-    void Promise.all([loadHouseBankAccounts(), fxList('comp')])
-      .then(([accounts, comp]) => {
-        if (!live) return
-        setHouseBanks(accounts)
+    const controller = new AbortController()
+    void fxList('comp', {}, { signal: controller.signal })
+      .then((comp) => {
+        if (controller.signal.aborted) return
+        setCompanies(bankCompanies(comp))
         setEntityCompany(Object.fromEntries(comp.map((r) => [txt(r, 'ZCOM_ID'), txt(r, 'ZBUKRS')])))
       })
       .catch((error: unknown) => {
-        if (!isAbort(error)) console.warn('[execute-settlement] house bank accounts unavailable: the bank fields stay free text', error)
+        if (!isAbort(error)) console.warn('[execute-settlement] Company master unavailable', error)
       })
     return () => {
-      live = false
+      controller.abort()
     }
   }, [])
 
   // Outcomes (SAP results, validation, not-yet-wired actions) queue as the standard ResultDialog.
   const [results, setResults] = useState<ResultItem[]>([])
   const resultId = useRef(0)
-  const showToast = useCallback((message: string, kind?: ToastKind) => {
+  const showToast = useCallback((message: string, kind?: ToastKind, onDismiss?: () => void) => {
     const tone = kind === 'error' ? 'error' : kind === 'success' ? 'success' : 'info'
     const title = tone === 'error' ? 'Error' : tone === 'success' ? 'Success' : 'Information'
-    setResults((r) => [...r, { id: ++resultId.current, tone, title, message }])
+    setResults((r) => [...r, { id: ++resultId.current, tone, title, message, onDismiss }])
   }, [])
 
   // Non-outcome chatter (screen refreshed, filter / download hints) stays the small auto-fading toast.
@@ -266,7 +295,6 @@ export default function MoExecuteSettlementDealId() {
     loadCtrl.current?.abort()
     const ctrl = new AbortController()
     loadCtrl.current = ctrl
-    setLoading(true)
     try {
       const screen = await loadDealScreen(id, ctrl.signal)
       if (!screen) {
@@ -288,8 +316,6 @@ export default function MoExecuteSettlementDealId() {
     } catch (error) {
       if (isAbort(error)) return null
       setSelError(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID (middleware "tsfDealId") could not be read: ${messageOf(error)}`)
-    } finally {
-      if (loadCtrl.current === ctrl) setLoading(false)
     }
     return null
   }, [])
@@ -325,7 +351,7 @@ export default function MoExecuteSettlementDealId() {
   // Settlement writes (settlement.ts): one at a time, each followed by a re-read of the Deal ID so the
   // grids, badges and status show what was stored.
   const [writing, setWriting] = useState(false)
-  const runWrite = async (write: () => Promise<ActionResult>): Promise<DealScreen | null> => {
+  const runWrite = async (write: () => Promise<ActionResult>, onSuccessDismiss?: () => void): Promise<DealScreen | null> => {
     if (writing) return null
     setWriting(true)
     try {
@@ -335,7 +361,7 @@ export default function MoExecuteSettlementDealId() {
         return null
       }
       const screen = await executeSelection(deal.dealId)
-      showToast(result.message, 'success')
+      showToast(result.message, 'success', onSuccessDismiss)
       return screen
     } finally {
       setWriting(false)
@@ -411,17 +437,18 @@ export default function MoExecuteSettlementDealId() {
     const r = fxDeals[idx]
     if (!r) return
     setActiveFx(idx)
-    setFxForm((f) => ({ ...f, ...fxPostDefaults(r) }))
+    const defaults = fxPostDefaults(r)
+    setFxForm({ ...BLANK_FX_FORM, ...defaults, bRecCoCode: defaults.bRecCoCode || r.bukrs, sPayCoCode: defaults.sPayCoCode || r.bukrs })
     modals.open('fxPost')
   }
   const setFxField = <K extends keyof FxPostForm>(key: K, value: FxPostForm[K]) =>
-    setFxForm((f) => ({ ...f, [key]: value }))
+    setFxForm((f) => changeFxBankField(f, key, value))
   const postFxAction = (kind: PostKind) => {
     const r = activeFx === null ? undefined : fxDeals[activeFx]
     if (activeFx === null || !r) return
     if (kind === 'print') showToast(ACTION_WAITING.fxPrint, 'error')
     else if (kind === 'update') void runWrite(() => updateFxLeg(r, fxDeals, fxForm))
-    else void runWrite(() => completeFxLeg(r, fxDeals, invoices, fxForm))
+    else void runWrite(() => completeFxLeg(r, fxDeals, invoices, fxForm), () => modals.close('fxPost'))
   }
 
   // ------------------------------------------------------------------ Trade invoice settlement pop-up (9002)
@@ -434,12 +461,12 @@ export default function MoExecuteSettlementDealId() {
     modals.open('invPost')
   }
   const setInvField = <K extends keyof InvPostForm>(key: K, value: InvPostForm[K]) =>
-    setInvForm((f) => ({ ...f, [key]: value }))
+    setInvForm((f) => ({ ...f, [key]: value, ...(key === 'senderHouseBank' && value !== f.senderHouseBank ? { senderAccountId: '' } : {}), ...(key === 'receiverHouseBank' && value !== f.receiverHouseBank ? { receiverAccountId: '' } : {}) }))
   const postInvAction = (kind: Exclude<PostKind, 'print'>) => {
     const r = activeInv === null ? undefined : invoices[activeInv]
     if (activeInv === null || !r) return
     if (kind === 'update') void runWrite(() => updateInvoiceLeg(deal, r, invoices, invForm))
-    else void runWrite(() => completeInvoiceLeg(deal, r, invoices, fxDeals, invForm))
+    else void runWrite(() => completeInvoiceLeg(deal, r, invoices, fxDeals, invForm), () => modals.close('invPost'))
   }
 
   // ------------------------------------------------------------------ derived
@@ -457,7 +484,6 @@ export default function MoExecuteSettlementDealId() {
         <div className="head-badge"></div>
         <div className="title-wrap">
           <div className="page-title">Execute Settlement for Deal ID</div>
-          <span className="page-code">ZSGTSF_RDEAL_TRD_INV &middot; R060</span>
         </div>
         <div className="head-actions">
           <span className="live-dot" title="Connected"></span>
@@ -487,7 +513,6 @@ export default function MoExecuteSettlementDealId() {
           <div className="panel-body">
             <div className="select-row">
               <div className="select-field">
-                <span className="select-icon">&#128269;</span>
                 <input
                   id="selDealId"
                   ref={dealInputRef}
@@ -512,14 +537,6 @@ export default function MoExecuteSettlementDealId() {
                     : null}
                 </datalist>
               </div>
-              <button
-                className="btn-primary-inline"
-                type="button"
-                disabled={loading}
-                onClick={() => void executeSelection(dealIdInput)}
-              >
-                Go
-              </button>
               <ViewDealsButton onClick={() => setPickerOpen(true)} />
             </div>
             <div className={selError || list?.state === 'unavailable' ? 'select-err show' : 'select-err'} id="selErr">
@@ -636,8 +653,9 @@ export default function MoExecuteSettlementDealId() {
         open={modals.isOpen('headsup')}
         onClose={() => modals.close('headsup')}
         dealId={deal.dealId}
-        items={NO_HEADSUPS}
-        emptyText={HEADSUP_WAITING}
+        items={headsupView?.rows ?? []}
+        loading={headsupLoading}
+        emptyText={headsupError || headsupView?.notice || 'No DSS-linked invoice trades are configured for Heads Up on this deal.'}
       />
       <DiffModal
         open={modals.isOpen('diff')}
@@ -664,6 +682,7 @@ export default function MoExecuteSettlementDealId() {
         form={fxForm}
         onField={setFxField}
         onAction={postFxAction}
+        companies={companies}
       />
       <InvPostModal
         open={modals.isOpen('invPost')}
@@ -673,8 +692,9 @@ export default function MoExecuteSettlementDealId() {
         form={invForm}
         onField={setInvField}
         onAction={postInvAction}
-        houseBanks={houseBanks}
         companyOf={(entity) => entityCompany[entity] ?? ''}
+        rows={invoices}
+        dealId={deal.dealId}
       />
       <ViewInvModal
         open={modals.isOpen('viewInv')}

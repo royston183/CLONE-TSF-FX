@@ -1,0 +1,236 @@
+/* Night mode for fo-deal-id-details, derived from fo-deal-id-details.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .fo-deal-id-details {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .fo-deal-id-details input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .fo-deal-id-details select,
+:root[data-theme='dark'] .fo-deal-id-details textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details {
+  background: #0d1724;
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .back-btn,
+:root[data-theme='dark'] .fo-deal-id-details .icon-btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .back-btn:hover,
+:root[data-theme='dark'] .fo-deal-id-details .icon-btn:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details .page-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .page-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .btn {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .btn:hover:not(:disabled) {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details .btn:disabled {
+  background: #1b2b3d;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .card {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fo-deal-id-details .section-head {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-deal-id-details .section-title {
+  color: #e6eef8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .section-meta {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .toolbar {
+  border-bottom: 1px solid #2a3d52;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details .label {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .search-icon,
+:root[data-theme='dark'] .fo-deal-id-details .cal-icon {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .info-strip {
+  background: #1b2b3d;
+  border-bottom: 1px solid #2a3d52;
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .info-strip strong {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .validation {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details table {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details thead th {
+  background: #1b2b3d;
+  color: #a9c2dd;
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fo-deal-id-details thead th.sortable:after {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details thead th.sortable.asc:after {
+  color: #699ff2;
+}
+:root[data-theme='dark'] .fo-deal-id-details thead th.sortable.desc:after {
+  color: #699ff2;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody td {
+  border-bottom: 1px solid #2a3d52;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody tr:hover td {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody tr.selected td {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-deal-id-details .sticky-id {
+  box-shadow: 1px 0 0 #17304a;
+}
+:root[data-theme='dark'] .fo-deal-id-details .sticky-mc {
+  box-shadow: 1px 0 0 #17304a;
+}
+:root[data-theme='dark'] .fo-deal-id-details thead .sticky-select,
+:root[data-theme='dark'] .fo-deal-id-details thead .sticky-id,
+:root[data-theme='dark'] .fo-deal-id-details thead .sticky-mc {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody tr td.sticky-select,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr td.sticky-id,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr td.sticky-mc {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody tr:hover td.sticky-select,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr:hover td.sticky-id,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr:hover td.sticky-mc {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details tbody tr.selected td.sticky-select,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr.selected td.sticky-id,
+:root[data-theme='dark'] .fo-deal-id-details tbody tr.selected td.sticky-mc {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-deal-id-details .link.deal {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .link.mc {
+  color: #699ff2;
+}
+:root[data-theme='dark'] .fo-deal-id-details .status.good {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .status.warn {
+  color: #ffb25c;
+}
+:root[data-theme='dark'] .fo-deal-id-details .status.bad {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .status.info {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .footer {
+  border-top: 1px solid #2d4a6b;
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details .showing {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .page-btn {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .rows-select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .empty {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .empty strong {
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .modal {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fo-deal-id-details .modal-head {
+  border-bottom: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fo-deal-id-details .modal-sub {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .close {
+  background: #1b2b3d;
+  color: #a9c2dd;
+}
+:root[data-theme='dark'] .fo-deal-id-details .modal-body {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .fo-deal-id-details .modal-foot {
+  border-top: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .detail-section {
+  color: #e6eef8;
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-deal-id-details .kv {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-deal-id-details .kv .k {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .calendar-pop {
+  background: #14212f;
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-nav {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-head select {
+  border: 1px solid #2d4a6b;
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-week div {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-day {
+  background: #14212f;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-day:hover {
+  background: #17304a;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-day.muted {
+  color: #7f9bb8;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-foot {
+  border-top: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .fo-deal-id-details .cal-link {
+  color: #699ff2;
+}

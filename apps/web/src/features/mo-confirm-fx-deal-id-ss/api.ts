@@ -34,6 +34,7 @@ import { txt } from '../../shared/fx/masters.ts'
 import { fxColumns, fxList, isAbort, type FxRow } from '../../shared/fx/mw.ts'
 import { dmyFromIso, num, sapUser } from '../../shared/fx/sap.ts'
 import { loadFxWithApp, type FxWithApp } from '../../shared/fx/app-str.ts'
+import { loadNdfViews, ndfExtras, ndfKey, viewsByKey } from '../../shared/fx/ndf-columns.ts'
 import { leg } from './data.ts'
 import type { Deal, DealDb, Invoice, Leg } from './types.ts'
 
@@ -71,7 +72,7 @@ export const LEG_APP_FILTER = "ZtsfDealID ne ''"
 const day = (v: string | null | undefined): string => (v ? dmyFromIso(v) : '')
 
 /** One FX Deals row (gt_top) from a TrmFxApp row and its FxTransaction; amounts are signed, a sold currency negative. */
-export function toLeg({ fx, app }: FxWithApp): Leg {
+export function toLeg({ fx, app }: FxWithApp, view?: FxRow): Leg {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
   const follow = fx.FollowCurrency || fx.SellCurrency || ''
   const buysLead = fx.BuyCurrency === lead
@@ -100,16 +101,18 @@ export function toLeg({ fx, app }: FxWithApp): Leg {
     premAmt: 0,
     premCurr: '',
     pInr: 0,
+    ndf: ndfExtras(fx, app, view),
   })
 }
 
 /** The legs by Deal ID, in transaction order. A reversed transaction (ActiveStatus 3) is not a leg. */
-export function legsByDeal(rows: readonly FxWithApp[]): Map<string, Leg[]> {
+export function legsByDeal(rows: readonly FxWithApp[], views: readonly FxRow[] = []): Map<string, Leg[]> {
   const out = new Map<string, Leg[]>()
+  const viewBy = viewsByKey(views)
   for (const r of rows) {
     const id = r.app.ZtsfDealID ?? ''
     if (!id || r.fx.ActiveStatus === '3') continue
-    out.set(id, [...(out.get(id) ?? []), toLeg(r)])
+    out.set(id, [...(out.get(id) ?? []), toLeg(r, viewBy.get(ndfKey(r.fx.CompanyCode, r.fx.FinancialTransaction)))])
   }
   return out
 }
@@ -421,7 +424,8 @@ export async function loadScreen(signal?: AbortSignal): Promise<Loaded> {
     let legs: ReadonlyMap<string, readonly Leg[]> = new Map()
     let legsError: string | null = null
     try {
-      legs = legsByDeal(await loadFxWithApp(LEG_APP_FILTER, signal))
+      const legRows = await loadFxWithApp(LEG_APP_FILTER, signal)
+      legs = legsByDeal(legRows, await loadNdfViews(legRows.map((r) => r.fx), signal))
     } catch (error) {
       if (isAbort(error)) throw error
       legsError = messageOf(error)

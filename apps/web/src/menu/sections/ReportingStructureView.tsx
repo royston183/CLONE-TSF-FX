@@ -25,12 +25,7 @@ export function ReportingStructureView({ structure, onLaunch, onToast, scrollToT
 }) {
   const menu = useAsync<MenuNode[]>(() => apiFetch<MenuNode[]>('/config/reporting-menu.json'), [])
 
-  // The structure's areas are handed over as one group's subgroups, not as the groups
-  // themselves. MenuBrowser draws a group as a heading over a grid of what is inside it, and
-  // what is inside these areas is nothing yet — as groups they would each be a heading over
-  // empty space. As subgroups they are folder tiles that say "Not set up yet." and can be
-  // opened, which is both visible and true. A structure with no areas gets no group at all,
-  // so the page is its title and lead-in rather than an empty heading.
+  // Keep each report area as a browsable folder, including areas with no reports yet.
   const groups = useMemo(() => {
     const areas = menu.data?.find((node) => node.label === structure)?.subgroups ?? []
     return areas.length ? [{ label: 'Report areas', subgroups: areas }] : []
@@ -41,7 +36,7 @@ export function ReportingStructureView({ structure, onLaunch, onToast, scrollToT
       title={`${structure} Reports`}
       sub={
         groups.length
-          ? `No ${structure} report is set up yet — the folders below are the shape the reporting tree will take.`
+          ? `Browse ${structure} reports by office using the folders below.`
           : `No reporting areas have been identified for ${structure} yet.`
       }
       groups={groups}

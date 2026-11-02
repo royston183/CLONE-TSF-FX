@@ -46,8 +46,14 @@ export type Deal = {
   accounting: string
   assignment: string
   fixRefId: string
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR of an NDF; null / '' (shown blank) while the service does not serve them. */
+  ndfRate?: number | null
+  cashAmount?: number | null
+  cashCurrency?: string
   foRemark: string
   moRemark: string
+  externalRef?: string
+  internalRef?: string
   /** True for a deal read from SAP (FxTransaction); the Options rows are dummy data. */
   live?: boolean
   /** APP_STR ZTSF_DEAL_TYPE; '00' marks a cancellation deal, which Match & Release writes as 59. */

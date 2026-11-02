@@ -32,6 +32,7 @@
  * API. Nothing is written to the middleware and no local state changes.
  */
 import { dealStatusText, listDealIds } from '../../shared/fx/deal-id.ts'
+import { loadNames, typeKey } from '../../shared/fx/names.ts'
 import { listMasterContracts, messageOf } from '../../shared/fx/master-contract.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { odataString } from '@slc/api-client'
@@ -165,7 +166,26 @@ export function toLeg({ fx, app }: FxWithApp): FxLeg {
     settled: app.ZtsfExeCo === true,
     seq: '',
     txnStatus: (app.TxnStatus ?? '').trim(),
+    tradeDate: dmyFromIso(fx.ContractDate, '.'),
+    valueDate: dmyFromIso(fx.ValueDate, '.'),
+    txnType: fx.TransactionType ?? '',
+    partner: fx.Partner ?? '',
+    spot: num(fx.SpotRate),
+    swap: num(fx.SwapRate),
+    profitCenter: extra(fx, 'ProfitCenter', 'Prctr'),
+    busArea: extra(fx, 'BusinessArea', 'Rbusa'),
+    // Blank (undefined) until ZFS_SD_TRMFX serves the NDF fields; never 0 for an unserved value.
+    ndfRate: fx.NdfFixingRate === undefined || fx.NdfFixingRate === null || fx.NdfFixingRate === '' ? undefined : num(fx.NdfFixingRate),
+    cashAmt: fx.CashSettlementAmount === undefined || fx.CashSettlementAmount === null || fx.CashSettlementAmount === '' ? undefined : num(fx.CashSettlementAmount),
+    cashCurr: fx.CashSettlementCurrency ?? '',
   }
+}
+
+/** A field FxTransaction only carries once SAP exposes it, under either spelling; '' while it does not. */
+const extra = (fx: object, ...names: string[]): string => {
+  const row = fx as Record<string, unknown>
+  for (const n of names) if (typeof row[n] === 'string' && row[n]) return (row[n] as string).trim()
+  return ''
 }
 
 export type FxDocSources = {
@@ -196,8 +216,14 @@ export async function withPostedDocs(legs: readonly FxLeg[], src: FxDocSources =
 /** The FX legs of a Deal ID: its TrmFxApp rows with their transactions, by deal type then transaction number. */
 export async function loadLegs(dealId: string, signal?: AbortSignal): Promise<FxLeg[]> {
   const joined = await loadFxWithApp(`ZtsfDealID eq ${odataString(dealId)}`, signal)
+  // Partner / transaction type names are a soft lookup: a failed one leaves the codes unnamed.
+  const names = await loadNames(joined.map((j) => j.fx), signal)
   return joined
-    .map(toLeg)
+    .map((j) => ({
+      ...toLeg(j),
+      partnerName: names.partners.get(j.fx.Partner) ?? '',
+      txnTypeDesc: names.txnTypes.get(typeKey(j.fx.ProductType ?? '', j.fx.TransactionType)) ?? '',
+    }))
     .sort((a, b) => a.dealType.localeCompare(b.dealType) || a.rfha.localeCompare(b.rfha))
 }
 

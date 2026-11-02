@@ -67,3 +67,25 @@ export function kpiCompact(n: number): string {
   if (a >= 1e3) return s + (a / 1e3).toFixed(1).replace(/\.?0+$/, '') + 'K'
   return s + Math.round(a)
 }
+
+export function optionIndex(index: number, key: string, count: number): number {
+  if (!count) return -1
+  if (key === 'Home') return 0
+  if (key === 'End') return count - 1
+  if (key === 'ArrowDown') return Math.min(count - 1, index + 1)
+  if (key === 'ArrowUp') return index < 0 ? count - 1 : Math.max(0, index - 1)
+  return index
+}
+
+/** Calendar navigation changes focus only; it does not change settlement rules. */
+export function moveCalendarDate(date: Date, key: string, shift = false): Date | null {
+  const day = date.getDate(), month = date.getMonth(), year = date.getFullYear()
+  const days: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -date.getDay(), End: 6 - date.getDay() }
+  if (key in days) return new Date(year, month, day + days[key]!)
+  if (key === 'PageUp' || key === 'PageDown') {
+    const target = new Date(year, month + (key === 'PageUp' ? -1 : 1) * (shift ? 12 : 1), 1)
+    target.setDate(Math.min(day, new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()))
+    return target
+  }
+  return null
+}

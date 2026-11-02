@@ -17,7 +17,8 @@
  *                    FxTransaction on CompanyCode + FinancialTransaction (shared/fx/app-str.ts).
  *                    ZSGTSFCDS_OPTION: no service -> WAITING FOR API (option transactions are not listed).
  */
-import { apiFetch, odataString, service } from '@slc/api-client'
+import { odataString } from '@slc/api-client'
+import { loadExchangeRate, loadExchangeRateFactors } from '../../shared/fx/exchange-rate-api.ts'
 import { FX_TXN_STATUS_LABEL } from '../../shared/fx/txn-status.ts'
 import { loadFxFor, joinFxWithApp, listTrmFxApp, type FxWithApp } from '../../shared/fx/app-str.ts'
 import { txt } from '../../shared/fx/masters.ts'
@@ -26,8 +27,6 @@ import { num } from '../../shared/fx/sap.ts'
 import { emptyLookups, mkTxn } from './data.ts'
 import { leadCurr } from './logic.ts'
 import type { AppData, Deal, InSpot, Lookups, Txn } from './types.ts'
-
-const middleware = service('middleware')
 
 export const WAITING = 'WAITING FOR API'
 
@@ -187,6 +186,31 @@ export function ndfFields(fx: { TransactionType?: string; ValueDate?: string | n
   return { ndfDate: date, ndfRef: view ? txt(view, 'NDF_REF') : '' }
 }
 
+/** A field FxTransaction only carries once SAP exposes it, under either spelling; '' while it does not. */
+const extra = (fx: object, ...names: string[]): string => {
+  const row = fx as Record<string, unknown>
+  for (const n of names) if (typeof row[n] === 'string' && row[n]) return (row[n] as string).trim()
+  return ''
+}
+
+/**
+ * The fixing rate and cash settlement of an NDF / DNDF. FxTransaction serves them as NdfFixingRate / CashSettlementAmount /
+ * CashSettlementCurrency once the service declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); until then the same values are read
+ * from the ZSGTSFV_FX row (NDF_RATE, ZCASH_AMT, CASH_CURR). Nothing served leaves them 0 / ''.
+ */
+export function ndfSettlement(
+  fx: { TransactionType?: string },
+  view?: FxRow,
+): { ndfRate: number; cashAmt: number; cashCurr: string } {
+  if (fx.TransactionType !== '631' && fx.TransactionType !== '632') return { ndfRate: 0, cashAmt: 0, cashCurr: '' }
+  const f = fx as { NdfFixingRate?: number | string; CashSettlementAmount?: number | string; CashSettlementCurrency?: string }
+  return {
+    ndfRate: num(f.NdfFixingRate ?? 0) || (view ? num(view['NDF_RATE']) : 0),
+    cashAmt: num(f.CashSettlementAmount ?? 0) || (view ? num(view['ZCASH_AMT']) : 0),
+    cashCurr: (f.CashSettlementCurrency ?? '').trim() || (view ? txt(view, 'CASH_CURR') : ''),
+  }
+}
+
 /** One FxTransaction + its TrmFxApp row as a transaction of the workbench (a ZSGTSFCDS_FX row). */
 export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookups(), view?: FxRow): Txn {
   const lead = fx.LeadCurrency || fx.BuyCurrency || ''
@@ -222,10 +246,12 @@ export function txnFromFx({ fx, app }: FxWithApp, lookups: Lookups = emptyLookup
     mcRef: app.ZtsfMcRefNo ?? '',
     cpair: lead && follow ? `${lead}/${follow}` : '',
     portfolio: (fx as { Portfolio?: string }).Portfolio ?? '',
+    prctr: extra(fx, 'ProfitCenter', 'Prctr'),
+    rbusa: extra(fx, 'BusinessArea', 'Rbusa'),
+    settled: app.ZtsfExeCo === true,
     seq: Number(app.ZtsfDealSq) || 1,
-    // NdfFixingRate (ZFS_SD_TRMFX NdfFixing): the rate FTR holds once the deal is fixed.
-    ndfRate: num((fx as { NdfFixingRate?: number | string }).NdfFixingRate ?? 0),
     ...ndfFields(fx, view),
+    ...ndfSettlement(fx, view),
     etag: (app as { '@odata.etag'?: string })['@odata.etag'] ?? '',
   })
 }
@@ -270,10 +296,8 @@ async function loadNdfViews(rows: readonly FxWithApp[], signal?: AbortSignal): P
 
 /** TCURR kurst M for a pair: the latest row dated on or before `iso` (one row). */
 async function marketRateRow(lead: string, follow: string, iso: string, signal?: AbortSignal): Promise<{ d: string; r: number } | null> {
-  const params = new URLSearchParams({ KURST: 'M', FCURR: lead, TCURR: follow, 'GDATU[gte]': invertedDate(iso), sort: 'GDATU', limit: '1' })
-  const body = await apiFetch<{ rows?: FxRow[] }>(`${middleware('data/tcurr')}?${params.toString()}`, signal ? { signal } : undefined)
-  const row = body?.rows?.[0]
-  return row ? { d: isoFromInverted(txt(row, 'GDATU')), r: num(row['UKURS']) } : null
+  const row = await loadExchangeRate(lead, follow, iso, 'M', signal)
+  return row ? { d: row.ExchangeRateEffectiveDate, r: num(row.ExchangeRate) } : null
 }
 
 export type Loaded = { data: AppData; lookups: Lookups; txnWaiting: string }
@@ -290,7 +314,7 @@ export async function loadWorkbench(today: string, signal?: AbortSignal): Promis
     fxList('trmBpext', {}, o),
     fxList('trdwai', {}, o),
     fxList('ssSpot', {}, o),
-    fxList('tcurf', { KURST: 'MTM' }, o),
+    loadExchangeRateFactors('MTM', signal),
   ])
   const lookups = lookupsFrom({ comp, models, statuses, bpGrp, bpext, trdwai, ssSpot, tcurf })
   // txn_status texts: ZSGTSFTR_TXNSTAT (ZTYPE 01), as the shared status table names them.

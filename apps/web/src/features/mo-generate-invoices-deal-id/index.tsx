@@ -70,6 +70,11 @@ const FX_COLS: Array<{ key: keyof FxRow; label: string; num?: number }> = [
   { key: 'amt2', label: 'Amount 2', num: 2 },
   { key: 'allIn', label: 'All in Rate', num: 4 },
   { key: 'strike', label: 'Strike', num: 4 },
+  { key: 'ndfDate', label: 'NDF Fixing Date' },
+  { key: 'ndfRef', label: 'NDF Ref' },
+  { key: 'ndfRate', label: 'NDF Settlement Rate', num: 4 },
+  { key: 'cashAmt', label: 'Cash Settlement Amount', num: 2 },
+  { key: 'cashCurr', label: 'Cash Currency' },
   { key: 'mc', label: 'MC Ref No' },
   { key: 'txn', label: 'Txn Status' },
 ]
@@ -94,6 +99,7 @@ const INV_COLS: Array<{ key: string; label: string }> = [
   { key: 'amtUsd', label: 'Inv Amt (USD)' },
   { key: 'planned', label: 'Planned Inv Amt' },
   { key: 'invNo', label: 'Invoice No' },
+  { key: 'invTrmRef', label: 'Inv TRM Ref No' },
   { key: 'pc', label: 'P/C' },
 ]
 
@@ -840,7 +846,7 @@ export default function MoGenerateInvoicesDealId() {
                               const val = r[c.key]
                               return (
                                 <td key={c.key} className={c.num != null ? 'num' : undefined}>
-                                  {c.num != null ? money(val as number, c.num) : String(val)}
+                                  {val === undefined || val === '' ? '' : c.num != null ? money(val as number, c.num) : String(val)}
                                 </td>
                               )
                             })}
@@ -964,6 +970,7 @@ export default function MoGenerateInvoicesDealId() {
                             <td className="num">{money(r.amtUsd, 2)}</td>
                             <td className="num">{money(r.planned, 2)}</td>
                             <td>{r.invNo || '—'}</td>
+                            <td>{r.invTrmRef || '—'}</td>
                             <td>
                               <span className={`status-text ${r.pc === 'C' ? 'status-ok' : r.pc === 'P' ? 'status-warn' : 'status-info'}`}>{r.pc || '—'}</span>
                             </td>

@@ -18,6 +18,24 @@ type Open = { select: HTMLSelectElement; options: SelectOption[]; query: string;
 let openSeq = 0
 
 const POPUP_MAX_HEIGHT = 300
+/** The popup grows to fit its longest option up to this width; a longer one is cut with "…" and shows in full on hover. */
+const POPUP_MAX_WIDTH = 460
+
+let canvas: HTMLCanvasElement | null = null
+/** The width the text takes in the given font, or 0 where the browser cannot measure it. */
+function textWidth(text: string, font: string): number {
+  canvas ??= document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return 0
+  ctx.font = font
+  return ctx.measureText(text).width
+}
+
+/** The font a control is drawn in, written out as the canvas wants it (the font shorthand is empty in some browsers). */
+function fontOf(el: Element): string {
+  const cs = getComputedStyle(el)
+  return `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+}
 
 function isSearchable(el: EventTarget | null): el is HTMLSelectElement {
   return (
@@ -78,11 +96,30 @@ export function SelectSearch() {
       e.stopPropagation()
       show(select, typed ? e.key : '')
     }
+    // A select too narrow for what it shows (a long company name in a grid column) says it in full on hover. Only a title
+    // this code set is ever changed, so a screen's own tooltip is left alone.
+    const onOver = (e: MouseEvent) => {
+      const el = e.target
+      if (!(el instanceof HTMLSelectElement) || el.multiple || el.size > 1) return
+      const text = el.selectedOptions[0]?.text.trim() ?? ''
+      const cs = getComputedStyle(el)
+      const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+      const cutOff = !!text && textWidth(text, fontOf(el)) > room
+      if (cutOff && (!el.title || el.dataset['slcTitle'])) {
+        el.title = text
+        el.dataset['slcTitle'] = '1'
+      } else if (!cutOff && el.dataset['slcTitle']) {
+        el.removeAttribute('title')
+        delete el.dataset['slcTitle']
+      }
+    }
     window.addEventListener('mousedown', onMouseDown, true)
     window.addEventListener('keydown', onKeyDown, true)
+    window.addEventListener('mouseover', onOver, true)
     return () => {
       window.removeEventListener('mousedown', onMouseDown, true)
       window.removeEventListener('keydown', onKeyDown, true)
+      window.removeEventListener('mouseover', onOver, true)
     }
   }, [show])
 
@@ -133,7 +170,10 @@ function SearchPopup({
     const r = select.getBoundingClientRect()
     const below = window.innerHeight - r.bottom - 8
     const above = r.top - 8
-    const width = Math.max(r.width, 220)
+    // Wide enough for the longest option when that fits under the cap, so names read in full; the select's own width is the floor.
+    const font = rootRef.current ? fontOf(rootRef.current) : fontOf(select)
+    const longest = Math.max(0, ...options.map((o) => textWidth(o.label, font)))
+    const width = Math.min(window.innerWidth - 16, Math.max(r.width, 220, Math.min(POPUP_MAX_WIDTH, Math.ceil(longest) + 44)))
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
     setPos(
       below >= Math.min(POPUP_MAX_HEIGHT, 160) || below >= above
@@ -141,7 +181,7 @@ function SearchPopup({
         : { left, bottom: window.innerHeight - r.top + 2, width, maxHeight: Math.min(POPUP_MAX_HEIGHT, above) },
     )
     inputRef.current?.focus()
-  }, [select])
+  }, [select, options])
 
   useEffect(() => {
     listRef.current?.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' })
@@ -242,7 +282,11 @@ function SearchPopup({
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onMouseEnter={() => setActive(i)}
+              onMouseEnter={(e) => {
+                setActive(i)
+                const li = e.currentTarget
+                li.title = li.scrollWidth > li.clientWidth ? o.label : ''
+              }}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 if (!o.disabled) onPick(o.value)

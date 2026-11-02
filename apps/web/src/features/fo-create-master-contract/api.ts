@@ -10,6 +10,7 @@
  * T001/ADRC's Operating Unit filter (standard tables, not in MySQL), and the whole contract
  * list when the middleware cannot be reached at all.
  */
+import { toPortGroups } from '../../shared/fx/ports.ts'
 import { distinctBy, entityIdFor, loadMaster, replaceInPlace, txt, type MasterSource } from '../../shared/fx/masters.ts'
 import {
   createChildren,
@@ -95,12 +96,8 @@ export async function loadMasters(signal?: AbortSignal): Promise<MasterSources> 
       PAYMENT_TERMS,
       { signal },
     ),
-    loadMaster(
-      'portGroup',
-      (rows) => rows.map((r) => txt(r, 'ZPORT_GRP_DESC') || txt(r, 'ZPORT_GRP_SDESC')).filter(Boolean),
-      PORTS,
-      { signal },
-    ),
+    // No dummy list: a port is a real ZSGTSFTR_PORTGRP row or it is not offered.
+    loadMaster('portGroup', toPortGroups, [], { signal }),
     loadMaster('fxModel', toFxModels, FX_MODELS, { signal }),
     // The program reads tolerance ID T01 as the Master Contract tolerance.
     loadMaster('tolerance', (rows) => rows.filter((r) => txt(r, 'ZTOL_ID') === 'T01').map((r) => num(r['ZTOL_PER'])), [DEFAULT_TOLERANCE.T01]),

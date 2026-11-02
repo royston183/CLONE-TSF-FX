@@ -1,4 +1,6 @@
 import type { DragEvent, MouseEvent } from 'react'
+import { fxTxnStatusLabel } from '../../shared/fx/txn-status.ts'
+import { TRANSFER_TYPES } from '../mo-execute-settlement-deal-id/logic.ts'
 import { fmtAmt, fmtMoney, fmtRate } from './format.ts'
 import { detailCells, isFxPosted, isInvPosted, isRowDraggable, statusInfo, toolbarState } from './logic.ts'
 import type { Deal, DragKind, DragState, DocPreview } from './types.ts'
@@ -144,22 +146,37 @@ export function FxTable({
       <table className="list-table">
         <thead>
           <tr>
-            <th className="left">Entity</th>
+            <th className="left">Sequence</th>
+            <th className="left">CoCode</th>
             <th className="left">Deal Type</th>
-            <th className="left">Transaction No</th>
-            <th className="left">Buy</th>
-            <th className="left">Sell</th>
-            <th>All-in Rate</th>
-            <th className="left">Status</th>
+            <th className="left">DSS Deal</th>
             <th className="left">FI Doc 1</th>
             <th className="left">FI Doc 2</th>
-            <th className="left">DSS Deal</th>
+            <th className="left">Transaction No</th>
+            <th className="left">Txn Type</th>
+            <th className="left">Trade Date</th>
+            <th className="left">Value Date</th>
+            <th className="num">Buy</th>
+            <th className="num">Sell</th>
+            <th className="num">All-in Rate</th>
+            <th className="num">Spot</th>
+            <th className="num">Swap Rate</th>
+            <th className="left">Partner Name</th>
+            <th className="left">Txn Status</th>
+            <th className="left">Txn Status Desc</th>
+            <th className="left">Profit Center</th>
+            <th className="left">Counterparty</th>
+            <th className="left">Bus. Area</th>
+            <th>NDF Rate</th>
+            <th className="left">Cash Amount</th>
+            <th className="left">Cash Currency</th>
+            <th className="left">Status</th>
           </tr>
         </thead>
         <tbody>
           {deal.top.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={10}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
+              <td colSpan={26}>{deal.fxWaiting ?? 'No FX deal legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.top.map((r, idx) => {
@@ -176,37 +193,55 @@ export function FxTable({
                   onDoubleClick={() => onOpen(idx)}
                   title="Double-click to open posting details"
                 >
+                  <td className="left">{r.seq || DASH}</td>
                   <td className="left">{r.entity}</td>
                   <td className="left">
                     <span className="deal-type-chip">{r.dealType}</span>
                   </td>
-                  <td className="left">
-                    <button
-                      type="button"
-                      className="tbl-link"
-                      onClick={(e) => stop(e, () => onPreview({ kind: 'TXN', docNo: r.rfha, entity: r.entity }))}
-                    >
-                      {r.rfha}
-                    </button>
-                  </td>
-                  <td className="left num">{fmtMoney(r.buyCurr, r.buyAmt)}</td>
-                  <td className="left num">{fmtMoney(r.sellCurr, r.sellAmt)}</td>
-                  <td className="num">{fmtRate(r.rate)}</td>
-                  <td className="left">{r.status}</td>
+                  <td className="left">{r.dssDeal || DASH}</td>
                   <td className="left">
                     {r.doc1 ? <DocLink docNo={r.doc1} entity={r.entity} onPreview={onPreview} /> : posted ? DOC_UNKNOWN : PENDING}
                   </td>
                   <td className="left">
                     {r.doc2 ? <DocLink docNo={r.doc2} entity={r.entity} onPreview={onPreview} /> : posted && !r.doc1 ? DOC_UNKNOWN : posted ? DASH : PENDING}
                   </td>
-                  <td className="left">{r.dssDeal || DASH}</td>
+                  <td className="left">
+                    <button
+                      type="button"
+                      className="tbl-link"
+                      aria-haspopup="dialog"
+                      title={`Display transaction ${r.rfha} in company ${r.entity}`}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                      onClick={(e) => stop(e, () => onPreview({ kind: 'TXN', docNo: r.rfha, entity: r.entity }))}
+                    >
+                      {r.rfha}
+                    </button>
+                  </td>
+                  <td className="left">{r.txnType ? `${r.txnType}${r.txnTypeDesc ? ` - ${r.txnTypeDesc}` : ''}` : DASH}</td>
+                  <td className="left">{r.tradeDate || DASH}</td>
+                  <td className="left">{r.valueDate || DASH}</td>
+                  <td className="num">{fmtMoney(r.buyCurr, r.buyAmt)}</td>
+                  <td className="num">{fmtMoney(r.sellCurr, r.sellAmt)}</td>
+                  <td className="num">{fmtRate(r.rate)}</td>
+                  <td className="num">{r.spot ? fmtRate(r.spot) : DASH}</td>
+                  <td className="num">{r.swap ? fmtRate(r.swap) : DASH}</td>
+                  <td className="left">{r.partner ? `${r.partner}${r.partnerName ? ` - ${r.partnerName}` : ''}` : DASH}</td>
+                  <td className="left">{r.txnStatus || DASH}</td>
+                  <td className="left">{r.txnStatus ? fxTxnStatusLabel(r.txnStatus) : DASH}</td>
+                  <td className="left">{r.profitCenter || DASH}</td>
+                  <td className="left">{r.partner || DASH}</td>
+                  <td className="left">{r.busArea || DASH}</td>
+                  <td className="num">{r.ndfRate ? fmtRate(r.ndfRate) : DASH}</td>
+                  <td className="left num">{r.cashAmt ? fmtAmt(r.cashAmt) : DASH}</td>
+                  <td className="left">{r.cashCurr || DASH}</td>
+                  <td className="left">{r.status}</td>
                 </tr>
               )
             })
           )}
           {deal.top.length > 0 && deal.fxWaiting ? (
             <tr className="empty-row">
-              <td colSpan={10}>{deal.fxWaiting}</td>
+              <td colSpan={26}>{deal.fxWaiting}</td>
             </tr>
           ) : null}
         </tbody>
@@ -232,21 +267,32 @@ export function InvTable({
         <thead>
           <tr>
             <th>Post</th>
-            <th>Settle</th>
+            <th className="chk-col">Settle</th>
+            <th className="left">Sequence</th>
+            <th className="left">CoCode</th>
             <th className="left">Trade Type</th>
+            <th className="left">Seller</th>
+            <th className="left">Receipt/Pay</th>
+            <th className="left">Buyer</th>
             <th className="left">Settlement Desc</th>
+            <th className="left">Posting Date</th>
+            <th className="left">Due Date</th>
             <th className="left">Linked FX Deal</th>
+            <th className="left">DSS Deal</th>
+            <th className="left">Transfer Desc</th>
             <th className="left">Transfer Type</th>
-            <th className="left">Invoice Amount</th>
-            <th className="left">Payment Amount</th>
-            <th className="left">Premium</th>
+            <th className="left">Posting Type</th>
+            <th className="num">Invoice Amount</th>
+            <th className="num">Payment Amount</th>
+            <th className="num">Premium</th>
             <th className="left">FI Document</th>
+            <th className="left">Doc Msg</th>
           </tr>
         </thead>
         <tbody>
           {deal.inv.length === 0 ? (
             <tr className="empty-row">
-              <td colSpan={10}>{deal.invWaiting ?? 'No trade invoice legs found for this Deal ID.'}</td>
+              <td colSpan={21}>{deal.invWaiting ?? 'No trade invoice legs found for this Deal ID.'}</td>
             </tr>
           ) : (
             deal.inv.map((r, idx) => {
@@ -266,19 +312,30 @@ export function InvTable({
                   <td>
                     <input className="chk" type="checkbox" checked={r.postCheck} disabled readOnly />
                   </td>
-                  <td>
+                  <td className="chk-col">
                     <input className="chk" type="checkbox" checked={r.setCheck} disabled readOnly />
                   </td>
+                  <td className="left">{r.seq || DASH}</td>
+                  <td className="left">{r.bukrs || DASH}</td>
                   <td className="left">{r.tradeType}</td>
+                  <td className="left">{r.sell || DASH}</td>
+                  <td className="left">{r.tType.charAt(3) === 'P' ? 'Payment' : r.tType.charAt(3) === 'S' ? 'Receipt' : DASH}</td>
+                  <td className="left">{r.buy || DASH}</td>
                   <td className="left">{r.setDesc}</td>
+                  <td className="left">{r.postDate || DASH}</td>
+                  <td className="left">{r.dueDate || DASH}</td>
                   <td className="left">{r.dMap ? <span className="deal-type-chip">{r.dMap}</span> : DASH}</td>
+                  <td className="left">{r.dssDeal || r.dssDealType || DASH}</td>
+                  <td className="left">{TRANSFER_TYPES[r.trfType] ?? DASH}</td>
                   <td className="left">{r.trfType}</td>
-                  <td className="left num emph-amt">{fmtMoney(r.invCurr, r.invAmt)}</td>
-                  <td className="left num emph-pay">{fmtMoney(r.payCurr, r.payAmt)}</td>
-                  <td className="left num">{r.preAmt ? fmtAmt(r.preAmt) : DASH}</td>
+                  <td className="left">{r.postDesc || DASH}</td>
+                  <td className="num emph-amt">{fmtMoney(r.invCurr, r.invAmt)}</td>
+                  <td className="num emph-pay">{fmtMoney(r.payCurr, r.payAmt)}</td>
+                  <td className="num">{r.preAmt ? fmtAmt(r.preAmt) : DASH}</td>
                   <td className="left">
                     {r.fiDoc ? <DocLink docNo={r.fiDoc} entity={r.buy} onPreview={onPreview} /> : PENDING}
                   </td>
+                  <td className="left">{r.docMsg || DASH}</td>
                 </tr>
               )
             })

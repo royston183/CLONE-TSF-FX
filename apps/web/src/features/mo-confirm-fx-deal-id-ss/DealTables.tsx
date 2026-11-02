@@ -1,4 +1,5 @@
 import type { DragEvent } from 'react'
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { fmtAmt, plClass } from './format.ts'
 import { LEGS_PARTIAL_NOTE, PL_WAITING } from './api.ts'
 import { invoicesEditable, invoicesVisible } from './logic.ts'
@@ -96,6 +97,11 @@ export function LegTable({
               <th className="num">Buy</th>
               <th className="num">Sell</th>
               <th className="num">All-in Rate / Strike</th>
+              <th>NDF Fixing Date</th>
+              <th>NDF Ref</th>
+              <th className="num">NDF Settlement Rate</th>
+              <th className="num">Cash Settlement Amount</th>
+              <th>Cash Currency</th>
               <th>MC Ref No</th>
               <th>Txn Status</th>
               <th className="num">FX P&amp;L</th>
@@ -106,7 +112,7 @@ export function LegTable({
           <tbody>
             {legs.length === 0 ? (
               <tr>
-                <td colSpan={14}>
+                <td colSpan={19}>
                   <div className="empty-state" style={{ padding: 20 }}>
                     {waiting || 'No FX deals for this Deal ID'}
                   </div>
@@ -161,6 +167,11 @@ export function LegTable({
                     {l.bs2} {l.curr2} {fmtAmt(l.amt2)}
                   </td>
                   <td className="num">{fmtAmt(l.strike || l.allInRate, 4)}</td>
+                  <td>{fmtNdfDate(l.ndf?.ndfDate ?? '')}</td>
+                  <td>{l.ndf?.ndfRef ?? ''}</td>
+                  <td className="num">{fmtNdfRate(l.ndf?.ndfRate)}</td>
+                  <td className="num">{fmtNdfCash(l.ndf?.cashAmount)}</td>
+                  <td>{l.ndf?.cashCurrency ?? ''}</td>
                   <td>{l.mcRef}</td>
                   <td>
                     <TxnStatusBadge code={l.txnStatus} />

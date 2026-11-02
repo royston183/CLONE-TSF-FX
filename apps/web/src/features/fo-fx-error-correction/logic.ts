@@ -74,7 +74,7 @@ export function rowSearchValues(t: Txn): string[] {
 export function matchesFilters(t: Txn, f: Filters, status: StatusFilter): boolean {
   const from = safeParseDate(f.dateFrom) ?? new Date(1900, 0, 1)
   const to = safeParseDate(f.dateTo) ?? new Date(2999, 0, 1)
-  // SAP keeps no blotter date, so a live row has none to range-check and is never hidden by it.
+  // Older transactions without an APP_STR date remain visible until a date has been recorded.
   if (t.blotterDate && (t.blotterDate < from || t.blotterDate > to)) return false
   if (f.coCode !== 'ALL' && t.coCode !== f.coCode) return false
   if (f.trader !== 'ALL' && t.traderCode !== f.trader) return false
@@ -350,6 +350,7 @@ const CSV_HEADER = [
   'Product ty', 'Product Type Desc', 'Transactio', 'Transaction Type Description', 'Partner', 'Partner Name', 'Currency 1',
   'Amount 1', 'Currency 2', 'Amount 2', 'Spot Rate', 'Swap Rate', 'All in Rate', 'Bus. Area', 'Bus. Area Desc', 'Profit Center',
   'Trader Cod', 'Trader Name', 'Mode Of Trade', 'Account Cat', 'MO Remark', 'Txn Status Desc', 'Trade Date', 'Value Date', 'Blotter Date',
+  'NDF Settlement Rate', 'Cash Settlement Amount', 'Cash Currency',
 ]
 
 export const CSV_FILENAME = 'fx-error-correction-export.csv'
@@ -367,6 +368,7 @@ export function buildCsv(rows: Txn[]): string {
   for (const t of rows) {
     const row = CSV_COLS.map((c) => csvEsc(CSV_RATE_COLS.has(c) ? fmtRate(t[c] as number) : t[c]))
     row.push(csvEsc(STATUS_SHORT[t.status]), csvEsc(fmtDate(t.tradeDate)), csvEsc(fmtDate(t.valueDate)), csvEsc(t.blotterDate ? fmtDate(t.blotterDate) : ''))
+    row.push(csvEsc(t.ndfRate != null ? fmtRate(t.ndfRate) : ''), csvEsc(t.cashAmount != null ? t.cashAmount : ''), csvEsc(t.cashCurrency ?? ''))
     lines.push(row.join(','))
   }
   return lines.join('\n')

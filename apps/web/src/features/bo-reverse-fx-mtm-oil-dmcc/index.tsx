@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { Calendar } from './Calendar.tsx'
@@ -39,7 +39,6 @@ import {
   totalPages,
   uniqueSorted,
   validKeyDate,
-  type CalendarView,
 } from './logic.ts'
 import { DocumentModal, MessageLogModal, TransactionModal } from './Modals.tsx'
 import './bo-reverse-fx-mtm-oil-dmcc.legacy.css'
@@ -86,10 +85,10 @@ export default function BoReverseFxMtmOilDmcc() {
   const [dropHover, setDropHover] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
   const [toast, setToast] = useState<Toast>(null)
-  const [calendar, setCalendar] = useState<{ view: CalendarView; left: number; top: number } | null>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const closeCalendar = useCallback(() => setCalendarOpen(false), [])
 
   const dateFieldRef = useRef<HTMLDivElement>(null)
-  const calendarRef = useRef<HTMLDivElement>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const rows = useMemo(() => applyKeyDate(baseRows, appliedKey), [baseRows, appliedKey])
@@ -126,20 +125,11 @@ export default function BoReverseFxMtmOilDmcc() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setModal(null)
-        setCalendar(null)
       }
     }
-    const onClick = (e: MouseEvent) => {
-      const t = e.target as Node | null
-      if (!t) return
-      if (calendarRef.current?.contains(t) || dateFieldRef.current?.contains(t)) return
-      setCalendar(null)
-    }
     document.addEventListener('keydown', onKey)
-    document.addEventListener('click', onClick)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('click', onClick)
     }
   }, [])
 
@@ -181,21 +171,12 @@ export default function BoReverseFxMtmOilDmcc() {
     showToast(REFRESHED_MESSAGE, 'success')
   }
 
-  const toggleCalendar = () => {
-    if (calendar) {
-      setCalendar(null)
-      return
-    }
-    const d = parseDisplayDate(keyText) ?? new Date()
-    const rect = dateFieldRef.current?.getBoundingClientRect()
-    const left = rect ? Math.max(8, Math.min(window.innerWidth - 286, rect.left)) : 8
-    setCalendar({ view: { year: d.getFullYear(), month: d.getMonth() }, left, top: (rect?.bottom ?? 0) + 4 })
-  }
+  const toggleCalendar = () => setCalendarOpen((o) => !o)
 
   const pickDate = (d: Date) => {
     const text = toDisplay(d)
     setKeyText(text)
-    setCalendar(null)
+    closeCalendar()
     commitKeyDate(text)
   }
 
@@ -260,7 +241,6 @@ export default function BoReverseFxMtmOilDmcc() {
               </svg>
               <div className="title-wrap">
                 <span className="page-title">Reverse FX MTM</span>
-                <span className="subtitle">OIL / OGA / DMCC (USD)</span>
               </div>
             </div>
           </div>
@@ -327,14 +307,14 @@ export default function BoReverseFxMtmOilDmcc() {
                   ))}
                 </select>
               </div>
-              <div className="field" ref={dateFieldRef}>
+              <div className="field">
                 <label htmlFor="keyDateInput">
                   Key Date<span className="required">*</span>{' '}
                   <span title="Key Date is the Month End Date" style={{ cursor: 'help', color: '#0874D1' }}>
                     ⓘ
                   </span>
                 </label>
-                <div className="date-wrap">
+                <div className="date-wrap" ref={dateFieldRef}>
                   <input
                     id="keyDateInput"
                     className="control"
@@ -347,7 +327,7 @@ export default function BoReverseFxMtmOilDmcc() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         commitKeyDate(keyText)
-                        setCalendar(null)
+                        closeCalendar()
                       }
                     }}
                   />
@@ -518,17 +498,8 @@ export default function BoReverseFxMtmOilDmcc() {
         </main>
       </div>
 
-      {calendar && (
-        <Calendar
-          ref={calendarRef}
-          view={calendar.view}
-          selected={parseDisplayDate(keyText)}
-          today={new Date()}
-          left={calendar.left}
-          top={calendar.top}
-          onView={(view) => setCalendar((c) => (c ? { ...c, view } : c))}
-          onPick={pickDate}
-        />
+      {calendarOpen && (
+        <Calendar anchorRef={dateFieldRef} selected={parseDisplayDate(keyText)} onPick={pickDate} onClose={closeCalendar} />
       )}
 
       {modal?.kind === 'txn' && modalRow(modal.id) && (

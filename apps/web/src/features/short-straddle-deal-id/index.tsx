@@ -7,6 +7,7 @@ import { messageOf } from '../../shared/fx/master-contract.ts'
 import type { MasterSource } from '../../shared/fx/masters.ts'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { sapUser } from '../../shared/fx/sap.ts'
+import { DateInput } from '../../shared/ui/DateInput.tsx'
 import { bookDeal, loadContracts, loadMasters, markInUse, reverseContract, saveEdit as saveEditToMysql } from './api.ts'
 import { CreateDealModal } from './CreateDealModal.tsx'
 import { ENTITIES, FX_MODELS, INITIAL_DEAL_SEQ, REGIONS, STATUS_CODES, STATUS_MASTER } from './data.ts'
@@ -463,11 +464,11 @@ function Workbench({ onRefresh }: { onRefresh: () => void }) {
                 <div className="date-range">
                   <span>Ship End Date</span>
                   <div className="dp">
-                    <input
-                      type="date"
+                    <DateInput
+                      aria-label="Ship End Date"
                       value={filters.asOf}
                       title="Filters on Ship End Date: WHERE zship_end > p_date"
-                      onChange={(e) => setFilter('asOf', e.target.value)}
+                      onChange={(v) => setFilter('asOf', v)}
                     />
                   </div>
                 </div>

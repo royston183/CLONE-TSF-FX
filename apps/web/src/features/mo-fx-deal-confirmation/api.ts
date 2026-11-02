@@ -11,7 +11,7 @@ import type { Deal } from './types.ts'
  * FxTransaction OData service (ZFS_SB_TRMFX_O4_API). Match & Release runs that service's bound `Settle` action,
  * which calls BAPI_FTR_FXT_SETTLE; nothing else the original program does is exposed by it:
  *
- *   - BAPI_FTR_FXT_CHANGE (the external reference) has no action, and the entity has no external reference field;
+ *   - External Ref uses PATCH only once SAP exposes ExternalReference (see references.ts);
  *   - the workflow status, remarks and Internal Ref are APP_STR data (see appStr.ts / workflow.ts).
  *
  * The Options half stays on its own dummy rows: the options BAPIs are not part of this service.
@@ -42,6 +42,12 @@ export type FxTransaction = {
   ActiveStatus?: string
   /** 20 once created and not yet settled; 30 after Settle (seen on a test deal). */
   ActivityCategory?: string
+  /** Present once the SAP ExternalReference service extension is activated. */
+  ExternalReference?: string
+  /** NDF fields, served once ZFS_SD_TRMFX declares them (docs/abap/ZFS_SD_TRMFX-NdfSettlement.md); absent until then. */
+  NdfFixingRate?: number | string
+  CashSettlementAmount?: number | string
+  CashSettlementCurrency?: string
 }
 
 const ACTIVE_REVERSED = '3'
@@ -149,8 +155,13 @@ export function toDeal(
     accounting: '',
     assignment: '',
     fixRefId: '',
+    ndfRate: isNdf && d.NdfFixingRate !== undefined && d.NdfFixingRate !== null ? n(d.NdfFixingRate) : null,
+    cashAmount: isNdf && d.CashSettlementAmount !== undefined && d.CashSettlementAmount !== null ? n(d.CashSettlementAmount) : null,
+    cashCurrency: (isNdf ? d.CashSettlementCurrency : '') ?? '',
     foRemark: (isNdf ? rec?.NdfFoRem : '') ?? '',
     moRemark: (isNdf ? rec?.NdfMoRem : '') ?? '',
+    externalRef: d.ExternalReference ?? '',
+    internalRef: rec?.ZolamDealNo ?? '',
     live: true,
   }
 }

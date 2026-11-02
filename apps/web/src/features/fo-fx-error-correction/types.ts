@@ -65,7 +65,7 @@ export type Txn = {
   allInRate: number
   tradeDate: Date
   valueDate: Date
-  /** null for a live row: SAP keeps no blotter date on the transaction. */
+  /** APP_STR's recorded blotter date; null when the transaction has no application date. */
   blotterDate: Date | null
   busArea: string
   busAreaDesc: string
@@ -77,6 +77,10 @@ export type Txn = {
   acctCat: string
   status: StatusValue
   moRemark: string
+  /** NDF_RATE / ZCASH_AMT / CASH_CURR; null / '' (shown blank) while FxTransaction does not serve them or the deal is not an NDF. */
+  ndfRate?: number | null
+  cashAmount?: number | null
+  cashCurrency?: string
   changedBy: string
   changedOn: Date | null
   /** True for a row read from SAP; its fields SAP has no home for are blank and read-only. */
@@ -110,7 +114,7 @@ export type CorrectionForm = {
   swapRate: string
   spotRate: string
   amount1: string
-  /** Derived: recomputed from Amount 1 × Spot Rate when either loses focus. */
+  /** Derived for buy-led transactions; editable bought amount for a live sell-led transaction. */
   amount2: string
   valueDate: string
   busArea: string

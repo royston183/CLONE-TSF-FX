@@ -280,9 +280,6 @@ export default function MoBankSettlementFxNonFlow() {
         <img className="head-icon" src={FX_LOGO} alt="Company logo" />
         <div className="title-wrap">
           <div className="page-title">Bank Settlement: FX Non-Flow Deals</div>
-          <div className="page-subtitle">
-            Assign house bank &amp; account details, then test-run or post the cash settlement for FX non-flow deals
-          </div>
         </div>
         <div className="head-actions">
           <button className="btn-icon" type="button" title="Refresh" onClick={onRefresh}>

@@ -1,0 +1,92 @@
+/* Night mode for limit-management, derived from limit-management.legacy.css.
+ * Generated — do not hand-edit; re-run `node tools/gen-dark-css.mjs`.
+ *
+ * Only the declarations whose colour changes at night are here; everything else is inherited
+ * from the light stylesheet. Brand and status colours are deliberately absent because they
+ * keep their identity in both themes — see tools/dark-palette.mjs for the rules.
+ */
+:root[data-theme='dark'] .limitmgmt {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .limitmgmt input:not([type='checkbox']):not([type='radio']),
+:root[data-theme='dark'] .limitmgmt select,
+:root[data-theme='dark'] .limitmgmt textarea {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt {
+  --bg: #0d1724;
+  --card: #14212f;
+  --text: #e6eef8;
+  --border: #2a3d52;
+  --border-strong: #3d5670;
+  --primary-tint: #17304a;
+  --success-tint: #14321f;
+  --warning-tint: #3a2a12;
+  --error-tint: #3a1b1e;
+  --gray-tint: #1b2b3d;
+}
+:root[data-theme='dark'] .limitmgmt .control {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt .control:hover {
+  border-color: #3d5670;
+}
+:root[data-theme='dark'] .limitmgmt select.control {
+  background: #14212f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23475E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 11px center;
+}
+:root[data-theme='dark'] .limitmgmt .btn-secondary {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt .btn-danger {
+  background: #14212f;
+  border-color: #5c2b30;
+}
+:root[data-theme='dark'] .limitmgmt .inline-alert.warn {
+  color: #ffc95c;
+}
+:root[data-theme='dark'] .limitmgmt .inline-alert.info {
+  border-color: #2d4a6b;
+}
+:root[data-theme='dark'] .limitmgmt table.mc-table thead th {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .limitmgmt table.mc-table tbody td {
+  border-bottom: 1px solid #2a3d52;
+}
+:root[data-theme='dark'] .limitmgmt table.mc-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .limitmgmt .st-wait {
+  color: #ffcc5c;
+}
+:root[data-theme='dark'] .limitmgmt .light.wait {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt .pagination button {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt .modal {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt .ctx-box {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .limitmgmt .summary-line {
+  border: 1px solid #2d4a6b;
+}
+:root[data-theme='dark'] .limitmgmt table.popup-table tbody tr:hover {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .limitmgmt table.popup-table th.pin,
+:root[data-theme='dark'] .limitmgmt table.popup-table td.pin {
+  background: #14212f;
+}
+:root[data-theme='dark'] .limitmgmt table.popup-table tbody tr:hover td.pin {
+  background: #1b2b3d;
+}
+:root[data-theme='dark'] .limitmgmt .mail-body td {
+  border: 2px solid #2a3d52;
+}
+:root[data-theme='dark'] .limitmgmt .mail-body td.lg {
+  background: #1b2b3d;
+}

@@ -3,6 +3,7 @@ import { ReviewDetails } from '../../shared/master-contract/ReviewDetails.tsx'
 import { fmtAmount, fmtDate, fmtRate } from './format.ts'
 import type { Modal } from './modal.tsx'
 import type { Deal, DealSummary } from './types.ts'
+import { EXTERNAL_REFERENCE_MAX_LENGTH, INTERNAL_REFERENCE_MAX_LENGTH } from './references.ts'
 
 export type MatchReleaseValues = { externalRef: string; internalRef: string; remarks: string }
 
@@ -60,6 +61,7 @@ export function MatchReleaseModal({
             <label htmlFor="mrExternalRef">External Ref</label>
             <input
               id="mrExternalRef"
+              maxLength={EXTERNAL_REFERENCE_MAX_LENGTH}
               placeholder="Enter external reference"
               value={values.externalRef}
               onChange={(e) => onChange({ externalRef: e.target.value })}
@@ -69,6 +71,7 @@ export function MatchReleaseModal({
             <label htmlFor="mrInternalRef">Internal Ref</label>
             <input
               id="mrInternalRef"
+              maxLength={INTERNAL_REFERENCE_MAX_LENGTH}
               placeholder="Enter internal reference"
               value={values.internalRef}
               onChange={(e) => onChange({ internalRef: e.target.value })}

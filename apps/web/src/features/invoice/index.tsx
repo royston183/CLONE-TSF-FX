@@ -80,7 +80,6 @@ export default function InvoiceApp() {
                     <BackButton className="tool-btn" />
                     <img className="ds-mark" alt="Fourth Signal" src={BRAND_LOGO} />
                     <div className="header-title">Amend BLs &amp; Finalise Trade Invoices</div>
-                    <span className="ds-code">INVOICE</span>
                   </div>
                 </td>
                 <td className="header-right">

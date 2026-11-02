@@ -365,10 +365,6 @@ export default function MoConfirmFxDealIdSs() {
               <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
               <div className="page-title-block">
                 <h1>Confirm FX Deal ID</h1>
-                <div className="subtitle">
-                  <span>Middle Office single-deal confirmation workflow</span>
-                  <span className="tcode-chip">{deal?.noInvoiceModel ? 'ZSGTSFP018' : 'ZSGTSFP017'}</span>
-                </div>
               </div>
             </div>
           </div>

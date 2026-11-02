@@ -32,4 +32,4 @@ export function points(n: number): string {
 }
 
 /** The Fixing Rate field mid-typing: digits and no more than 4 decimals. */
-export const isRateInput = (v: string): boolean => /^d*.?d{0,4}$/.test(v)
+export const isRateInput = (v: string): boolean => /^\d*\.?\d{0,4}$/.test(v)

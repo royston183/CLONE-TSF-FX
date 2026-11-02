@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { CalendarPopup } from './CalendarPopup.tsx'
@@ -72,7 +72,7 @@ export default function BoReverseFxMtmIndia() {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dropReady, setDropReady] = useState(false)
   const [dropHover, setDropHover] = useState(false)
-  const [cal, setCal] = useState({ open: false, left: 0, top: 0, year: 2026, month: 8 })
+  const [calOpen, setCalOpen] = useState(false)
 
   const [toast, setToast] = useState<ToastState>({ text: '', kind: 'info', show: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -100,7 +100,7 @@ export default function BoReverseFxMtmIndia() {
   const headerKey = parseDisplayDate(appliedKey)
 
   // ---------------------------------------------------- global listeners
-  const closeCalendar = () => setCal((c) => ({ ...c, open: false }))
+  const closeCalendar = useCallback(() => setCalOpen(false), [])
   const closeRef = useRef(() => {})
   closeRef.current = () => {
     setModal(null)
@@ -110,15 +110,9 @@ export default function BoReverseFxMtmIndia() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeRef.current()
     }
-    const onClick = (e: MouseEvent) => {
-      const t = e.target as Element | null
-      if (!t?.closest('#dateField, #calendarPop')) setCal((c) => (c.open ? { ...c, open: false } : c))
-    }
     document.addEventListener('keydown', onKey)
-    document.addEventListener('click', onClick)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('click', onClick)
     }
   }, [])
 
@@ -162,36 +156,7 @@ export default function BoReverseFxMtmIndia() {
     setPage(1)
   }
 
-  const toggleCalendar = () => {
-    if (cal.open) {
-      closeCalendar()
-      return
-    }
-    const d = parseDisplayDate(keyText) ?? new Date()
-    const rect = dateFieldRef.current?.getBoundingClientRect()
-    setCal({
-      open: true,
-      year: d.getFullYear(),
-      month: d.getMonth(),
-      left: rect ? Math.max(8, Math.min(window.innerWidth - 286, rect.left)) : 8,
-      top: rect ? rect.bottom + 4 : 0,
-    })
-  }
-
-  const shiftCalendar = (delta: number) =>
-    setCal((c) => {
-      let month = c.month + delta
-      let year = c.year
-      if (month < 0) {
-        month = 11
-        year--
-      }
-      if (month > 11) {
-        month = 0
-        year++
-      }
-      return { ...c, month, year }
-    })
+  const toggleCalendar = () => setCalOpen((o) => !o)
 
   const onSort = (field: ColumnField) => {
     setSort((s) => nextSort(s, field))
@@ -253,7 +218,6 @@ export default function BoReverseFxMtmIndia() {
               </svg>
               <div className="title-wrap">
                 <span className="page-title">Reverse FX MTM</span>
-                <span className="subtitle">India / INR</span>
               </div>
             </div>
           </div>
@@ -324,14 +288,14 @@ export default function BoReverseFxMtmIndia() {
                   ))}
                 </select>
               </div>
-              <div className="field" id="dateField" ref={dateFieldRef}>
+              <div className="field" id="dateField">
                 <label htmlFor="keyDateInput">
                   Key Date<span className="required">*</span>{' '}
                   <span title="Key Date is the Month End Date" style={{ cursor: 'help', color: '#0874D1' }}>
                     ⓘ
                   </span>
                 </label>
-                <div className="date-wrap">
+                <div className="date-wrap" ref={dateFieldRef}>
                   <input
                     id="keyDateInput"
                     className="control"
@@ -505,15 +469,10 @@ export default function BoReverseFxMtmIndia() {
       </div>
 
       <CalendarPopup
-        open={cal.open}
-        left={cal.left}
-        top={cal.top}
-        year={cal.year}
-        month={cal.month}
+        open={calOpen}
+        anchorRef={dateFieldRef}
         selected={parseDisplayDate(keyText)}
-        onShift={shiftCalendar}
-        onMonth={(month) => setCal((c) => ({ ...c, month }))}
-        onYear={(year) => setCal((c) => ({ ...c, year }))}
+        onClose={closeCalendar}
         onPick={(date) => {
           const text = toDisplay(date)
           setKeyText(text)

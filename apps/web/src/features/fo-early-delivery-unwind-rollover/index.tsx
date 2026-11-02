@@ -398,7 +398,6 @@ export default function FoEarlyDeliveryUnwindRollover() {
           <img className="logo-img" src={FS_SHORT_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Premature Settlement</h1>
-            <p>Original Deal — Early Delivery / Unwinding / Rollover</p>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <SignOutButton className="btn btn-secondary" />

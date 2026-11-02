@@ -256,7 +256,6 @@ export default function MoDealIdInvoicing() {
           <div className="title-wrap">
             <div className="page-title">View List of Deal IDs for Invoicing</div>
           </div>
-          <div className="page-subtitle">Track FX Utilization and Trade Invoicing progress per Deal ID</div>
         </div>
         <div className="head-actions">
           <span className="status-live" title="Connected" />

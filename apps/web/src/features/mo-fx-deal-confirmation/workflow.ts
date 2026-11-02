@@ -9,6 +9,7 @@ import {
   type MoPatch,
 } from './appStr.ts'
 import type { Deal } from './types.ts'
+import { assertExternalReferenceSupported, EXTERNAL_REFERENCE_MAX_LENGTH, INTERNAL_REFERENCE_MAX_LENGTH, saveExternalReference } from './references.ts'
 
 /**
  * The MO actions on FX deals. Match & Release runs the SAP settlement first and writes the workflow status to
@@ -22,7 +23,7 @@ export const CORRECTION_REMARK_REQUIRED = 'Please fill the MO Remarks and Update
 export type MoInput = { externalRef: string; internalRef: string; moRemark: string }
 
 /** A workflow save SAP has already earned: the transaction is settled, the status is not yet written. */
-export type PendingSave = { id: string; companyCode: string; transaction: string; patch: MoPatch }
+export type PendingSave = { id: string; companyCode: string; transaction: string; patch: MoPatch; externalRef?: string }
 
 export type MoFailure = {
   id: string
@@ -84,6 +85,18 @@ async function currentRecord(deal: Deal): Promise<{ dealTypeCode: string | undef
  * save that failed earlier is completed after a reload.
  */
 export async function matchAndReleaseDeal(deal: Deal, input: MoInput): Promise<{ ok: true; done: MoDone } | { ok: false; failure: MoFailure }> {
+  const externalRef = input.externalRef.trim()
+  const internalRef = input.internalRef.trim()
+  if (externalRef.length > EXTERNAL_REFERENCE_MAX_LENGTH || internalRef.length > INTERNAL_REFERENCE_MAX_LENGTH) {
+    return { ok: false, failure: { id: deal.id, stage: 'validate', reason: `External Ref must be at most ${EXTERNAL_REFERENCE_MAX_LENGTH} characters and Internal Ref at most ${INTERNAL_REFERENCE_MAX_LENGTH} characters.` } }
+  }
+  if (externalRef) {
+    try {
+      await assertExternalReferenceSupported()
+    } catch (e) {
+      return { ok: false, failure: { id: deal.id, stage: 'validate', reason: sapMessage(e) } }
+    }
+  }
   const checked = await currentRecord(deal)
   if ('stage' in checked) return { ok: false, failure: checked }
 
@@ -99,10 +112,11 @@ export async function matchAndReleaseDeal(deal: Deal, input: MoInput): Promise<{
   const patch: MoPatch = {
     TxnStatus: txnStatus,
     ...moRemarkPatch(deal, input.moRemark),
-    ...(input.internalRef.trim() ? { ZolamDealNo: input.internalRef.trim() } : {}),
+    ...(internalRef ? { ZolamDealNo: internalRef } : {}),
   }
-  const pending: PendingSave = { id: deal.id, companyCode: deal.coCode, transaction: deal.transaction, patch }
+  const pending: PendingSave = { id: deal.id, companyCode: deal.coCode, transaction: deal.transaction, patch, ...(externalRef ? { externalRef } : {}) }
   try {
+    if (externalRef) await saveExternalReference(deal.coCode, deal.transaction, externalRef)
     await updateAppStrRecord(deal.coCode, deal.transaction, patch)
   } catch (e) {
     return {
@@ -110,7 +124,7 @@ export async function matchAndReleaseDeal(deal: Deal, input: MoInput): Promise<{
       failure: {
         id: deal.id,
         stage: 'workflow',
-        reason: `SAP transaction ${deal.transaction} was settled successfully, but the MO workflow data could not be updated (${sapMessage(e)}). Retry the workflow-data save; the transaction is not settled again.`,
+        reason: `SAP transaction ${deal.transaction} was settled successfully, but its references or MO workflow data could not be updated (${sapMessage(e)}). Retry the save; the transaction is not settled again.`,
         pending,
       },
     }
@@ -121,7 +135,6 @@ export async function matchAndReleaseDeal(deal: Deal, input: MoInput): Promise<{
 /** What the screen collected that no SAP FX service property takes. */
 function notStoredFor(deals: readonly Deal[], input: MoInput, remarkField: boolean): string[] {
   const out: string[] = []
-  if (input.externalRef.trim()) out.push('External Ref (the FX service exposes no property or action for it)')
   if (remarkField && input.moRemark.trim() && deals.some((d) => moRemarkField(d) === null)) {
     out.push('MO Remarks on a plain forward (APP_STR has no MO remark field for it)')
   }
@@ -141,6 +154,10 @@ export async function matchAndReleaseDeals(deals: readonly Deal[], input: MoInpu
 /** Saves the status of a deal SAP has already settled. Only the save is repeated. */
 export async function retryWorkflowSave(pending: PendingSave): Promise<{ ok: true; done: MoDone } | { ok: false; reason: string }> {
   try {
+    if (pending.externalRef) {
+      await assertExternalReferenceSupported()
+      await saveExternalReference(pending.companyCode, pending.transaction, pending.externalRef)
+    }
     await updateAppStrRecord(pending.companyCode, pending.transaction, pending.patch)
     return { ok: true, done: { id: pending.id, txnStatus: pending.patch.TxnStatus, moRemark: pending.patch.NdfMoRem ?? pending.patch.OptMoRem ?? '' } }
   } catch (e) {

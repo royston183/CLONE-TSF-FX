@@ -173,7 +173,7 @@ describe('fromFxTransaction', () => {
 })
 
 describe('applyCreated / mergeLiveRows', () => {
-  const start = () => initialBlotter(new Date(2026, 8, 30), buildMasterContracts(new Date(2026, 8, 30), MC_SEED), [...BUSINESS_PARTNERS])
+  const start = () => initialBlotter(new Date(2026, 8, 30), buildMasterContracts(new Date(2026, 8, 30), MC_SEED), [...BUSINESS_PARTNERS], { demoLegs: true })
 
   it('gives an accepted draft its SAP number and leaves the others alone', () => {
     const b = start()

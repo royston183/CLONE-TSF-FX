@@ -23,8 +23,13 @@ describe('legFromFx', () => {
       delfz: '2027-02-01', cpair: 'USD/INR', bs1: 'Buy', curr1: 'USD', amt1: 1000000, bs2: 'Sell', curr2: 'INR',
       amt2: -89650000, otot_rate: 89.65, kontrh: '0220136244', bpName: 'MUFG BANK LTD', txnStatus: '03',
       txnDesc: 'FO->MO: Unmatched', dealType: 'D1', zgrp: '', zuonr: '1000000123', zroll: '', ztsf_pre_mature: true,
-      ztsf_unwind: false,
+      ztsf_unwind: false, ndf_rate: null, zcash_amt: null, cash_curr: '',
     })
+  })
+
+  it('carries the NDF settlement fields once FxTransaction serves them, and never shows 0 for an unserved one', () => {
+    const l = legFromFx({ fx: { ...FX, NdfFixingRate: '83.1', CashSettlementAmount: '12345.6', CashSettlementCurrency: 'USD' } as typeof FX, app: APP })
+    deepStrictEqual([l.ndf_rate, l.zcash_amt, l.cash_curr], [83.1, 12345.6, 'USD'])
   })
 
   it('puts the lead currency first when the deal sells it, and falls back to the partner number for the name', () => {

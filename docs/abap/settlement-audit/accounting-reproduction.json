@@ -1,0 +1,20 @@
+[
+  {
+    "name": "posted invoice leg; no FX document evidence supplied",
+    "result": {
+      "ok": true,
+      "message": "Deal ID AUDIT marked Accounting Complete: status 22 - Settlement Completed - Accounting."
+    },
+    "capturedStatusWrites": [
+      "22"
+    ]
+  },
+  {
+    "name": "no-invoice model with no trade positions",
+    "result": {
+      "ok": false,
+      "error": "No settlement legs are stored for this Deal ID: settle them on MO: Execute Settlement for Deal ID first."
+    },
+    "capturedStatusWrites": []
+  }
+]

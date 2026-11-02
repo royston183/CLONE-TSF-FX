@@ -74,9 +74,7 @@ export const seedTradeInvoices = (): TradeInvoice[] => [
 ]
 
 export const HEADSUP_DATA: readonly Headsup[] = [
-  { date: '01-03-2026', cat: 'Shipment', msg: 'Shipment window for MC-7001 closes on 28-02-2026 - confirm Bill of Lading has been attached to this Deal ID.' },
-  { date: '10-03-2026', cat: 'Settlement', msg: 'FX deal value date (15-03-2026) is approaching - initiate settlement once trade invoices are posted.' },
-  { date: '12-03-2026', cat: 'Documentation', msg: 'SSI / bank letter for the DMCC leg has not yet been generated.' },
+  { entity: 'OGA-DMCC', tradeType: 'T1', currency: 'USD', dealAmount: 1000000, finalAmount: 950000, difference: 50000, action: 'Book Spot For USD 50,000.00' },
 ]
 
 export const seedDms = (): DmsDoc[] => [

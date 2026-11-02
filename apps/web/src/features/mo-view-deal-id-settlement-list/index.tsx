@@ -196,9 +196,6 @@ export default function MoViewDealIdSettlementList() {
         <img className="head-icon" src={FX_LOGO} alt="" />
         <div className="title-wrap">
           <div className="page-title">MO: View List of Deal IDs for Settlement</div>
-          <div className="page-subtitle">
-            Deal IDs booked against Master Contracts, tracked from booking through to same-day settlement
-          </div>
         </div>
         <div className="head-actions">
           <button className="btn-icon" title="Refresh" onClick={refresh}>

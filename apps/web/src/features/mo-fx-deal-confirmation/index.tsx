@@ -248,7 +248,11 @@ export default function MoFxDealConfirmation() {
     if (list.length === 0 || blocked(list)) return
     setMrSummary(dealSummary(list))
     setMrDeals(list)
-    setMrValues(EMPTY_MR)
+    const commonReference = (field: 'externalRef' | 'internalRef') => {
+      const value = list[0]?.[field] ?? ''
+      return list.every((deal) => (deal[field] ?? '') === value) ? value : ''
+    }
+    setMrValues({ externalRef: commonReference('externalRef'), internalRef: commonReference('internalRef'), remarks: '' })
     mrModal.open()
   }
 
@@ -264,7 +268,7 @@ export default function MoFxDealConfirmation() {
     setStatus({
       type: 'error',
       title,
-      heading: f.stage === 'settle' ? `SAP did not settle ${f.id}` : f.stage === 'workflow' ? 'Workflow data not saved' : 'Not processed',
+      heading: f.stage === 'settle' ? `SAP did not settle ${f.id}` : f.stage === 'workflow' ? 'References or workflow data not saved' : 'Not processed',
       message: (outcome.done.length ? `${outcome.done.length} deal(s) were completed before it. ` : '') + f.reason,
     })
     statusModal.open()
@@ -307,10 +311,10 @@ export default function MoFxDealConfirmation() {
       setPending((all) => all.filter((_, i) => !results[i]?.ok))
       const failed = results.find((r) => !r.ok)
       if (failed && !failed.ok) {
-        setStatus({ type: 'error', title: 'Retry failed', heading: 'Workflow data still not saved', message: failed.reason })
+        setStatus({ type: 'error', title: 'Retry failed', heading: 'References or workflow data still not saved', message: failed.reason })
         statusModal.open()
       } else {
-        showToast('success', 'Workflow data saved', `${ok.length} deal(s) saved; SAP was not asked to settle them again.`)
+        showToast('success', 'Reference and workflow data saved', `${ok.length} deal(s) saved; SAP was not asked to settle them again.`)
       }
     } finally {
       busy.current = false
@@ -367,7 +371,6 @@ export default function MoFxDealConfirmation() {
           </div>
           <div className="app-title">
             FX Deal Confirmation - FX&amp;Options
-            <small>Review, match and release FX &amp; Options deal confirmations</small>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <SignOutButton className="btn btn-secondary" />
@@ -382,7 +385,7 @@ export default function MoFxDealConfirmation() {
               <span className="collapse-icon">&#9660;</span>
             </div>
             <div className="card-body">
-              <div className="form-grid">
+              <div className="selection-row">
                 <div className="field">
                   <label>
                     Company Code <span className="req">*</span>
@@ -453,10 +456,7 @@ export default function MoFxDealConfirmation() {
                     onChange={(e) => patchForm({ layout: e.target.value })}
                   />
                 </div>
-              </div>
-
-              <div className="form-grid" style={{ marginTop: 16 }}>
-                <div className="field">
+                <div className="field selection-display-type">
                   <label>Display Type</label>
                   <div className="radio-group" id="displayTypeGroup">
                     {displayTypes.map((t) => (
@@ -473,15 +473,14 @@ export default function MoFxDealConfirmation() {
                     ))}
                   </div>
                 </div>
-              </div>
-
-              <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
-                <button className="btn btn-primary" id="viewDealsBtn" type="button" onClick={viewDeals}>
-                  View Deals
-                </button>
-                <button className="btn btn-secondary" id="resetSelectionBtn" type="button" onClick={resetSelection}>
-                  Reset
-                </button>
+                <div className="selection-actions">
+                  <button className="btn btn-primary" id="viewDealsBtn" type="button" onClick={viewDeals}>
+                    View Deals
+                  </button>
+                  <button className="btn btn-secondary" id="resetSelectionBtn" type="button" onClick={resetSelection}>
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
           </section>
@@ -558,7 +557,7 @@ export default function MoFxDealConfirmation() {
                 </button>
                 {pending.length > 0 && (
                   <button className="btn btn-primary" id="retrySaveBtn" type="button" onClick={retrySaves}>
-                    Retry workflow save ({pending.length})
+                    Retry save ({pending.length})
                   </button>
                 )}
                 <span className="spacer" />

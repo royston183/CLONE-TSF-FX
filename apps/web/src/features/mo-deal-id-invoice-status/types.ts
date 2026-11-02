@@ -69,6 +69,12 @@ export type FxRow = {
   amt2: string
   rate: string
   status: string
+  /** NDF columns, display text; blank when SAP does not serve them. The grid has no rows until the Deal ID Analysis reads exist. */
+  ndfDate?: string
+  ndfRef?: string
+  ndfRate?: string
+  cashAmt?: string
+  cashCurr?: string
 }
 
 /** One planned Trade Invoice leg (T1/T2). */

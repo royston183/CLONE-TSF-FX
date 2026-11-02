@@ -134,6 +134,8 @@ export type FxTransaction = {
   ForwardRate?: number | string
   ActiveStatus?: string
   ActivityCategory?: string
+  /** The deal's NDF fixing date (FTR), served by FxTransaction; the SAP screen's "Fixing Date". */
+  NdfFixingDate?: string | null
   /*
    * Settlement fields proposed in docs/abap/ZFS_SD_TRMFX-NdfSettlement.md. Absent from the service until the
    * SAP team adds them; then FX NDF Settlement, MO's NDF Value and AE1's Old Fixing Rate use them.
@@ -200,7 +202,7 @@ export function ndfRecord(fx: FxTransaction, app: TrmFxAppRow, view?: FxRow): Nd
     fwd: num(fx.ForwardRate),
     contractDate: String(fx.ContractDate ?? ''),
     valueDate,
-    fixingDate: ndfDate || valueDate,
+    fixingDate: ndfDate || String(fx.NdfFixingDate ?? '') || valueDate,
     ndfRef: view ? txt(view, 'NDF_REF') : '',
     activeStatus: fx.ActiveStatus ?? '',
     activityCategory: fx.ActivityCategory ?? '',
@@ -276,6 +278,11 @@ async function pagedOData<T>(url: string, filter: string, signal?: AbortSignal):
     rows.push(...page)
     if (page.length < PAGE) return rows
   }
+}
+
+/** Every FX deal in FTR (forwards, spots, NDFs), for the Overview dashboard. */
+export function loadFxTransactions(signal?: AbortSignal): Promise<FxTransaction[]> {
+  return pagedOData<FxTransaction>(trmfx('FxTransaction'), '', signal)
 }
 
 /** TrmFxApp rows in the given TSF statuses. */

@@ -83,6 +83,13 @@ export function ViewTxnModal({
                   )}
                   {isFx ? <DetailItem label="Swap Points" value={fmtNum(row.SWAP, 4)} /> : null}
                   {isFx ? <DetailItem label="All-in Rate" value={fmtNum(row.TOT_RATE, 4)} /> : null}
+                  {isFx ? <DetailItem label="NDF Fixing Date" value={row.NDF_DATE} /> : null}
+                  {isFx ? <DetailItem label="NDF Ref" value={row.NDF_REF} /> : null}
+                  {isFx ? <DetailItem label="NDF Settlement Rate" value={row.NDF_RATE === undefined ? '' : fmtNum(row.NDF_RATE, 4)} /> : null}
+                  {isFx ? (
+                    <DetailItem label="Cash Settlement Amount" value={row.ZCASH_AMT === undefined ? '' : fmtNum(row.ZCASH_AMT, 2)} />
+                  ) : null}
+                  {isFx ? <DetailItem label="Cash Currency" value={row.CASH_CURR} /> : null}
                 </div>
               </div>
 

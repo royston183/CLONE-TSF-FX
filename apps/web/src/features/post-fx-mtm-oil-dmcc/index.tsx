@@ -273,7 +273,6 @@ export default function PostFxMtmOilDmcc() {
           <img className="logo-img" src={PAGE_LOGO} alt="FS logo" />
           <div className="header-text">
             <h1>Post FX MTM to Accounting</h1>
-            <p>OIL, OGA &amp; DMCC (USD) — month-end FX valuation and accounting postings</p>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
             <BackButton className="btn btn-secondary" />

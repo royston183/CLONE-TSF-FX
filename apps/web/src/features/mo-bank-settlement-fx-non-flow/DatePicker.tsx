@@ -1,12 +1,11 @@
-import { useState } from 'react'
-import { MONTH_ABBR, fmtDate, parseDMY } from './format.ts'
-
-const DOW_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+import { useCallback, useRef } from 'react'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
+import { fmtDate, parseDMY } from './format.ts'
 
 /**
- * The page's custom DD-MM-YYYY date picker (.dp) used on the Value Date range. Which picker is
- * open is owned by the parent, because opening one closes the other and an outside click or
- * Escape closes both.
+ * The page's DD-MM-YYYY date picker (.dp) used on the Value Date range, drawn with the shared
+ * DatePopup. Which picker is open is owned by the parent, because opening one closes the other
+ * and an outside click or Escape closes both.
  */
 export function DatePicker({
   id,
@@ -21,29 +20,12 @@ export function DatePicker({
   onOpenChange: (open: boolean) => void
   onPick: (value: string) => void
 }) {
-  const [view, setView] = useState(() => new Date())
-
-  const toggle = () => {
-    if (!open) {
-      const current = parseDMY(value) ?? new Date()
-      setView(new Date(current.getFullYear(), current.getMonth(), 1))
-    }
-    onOpenChange(!open)
-  }
-
-  const y = view.getFullYear()
-  const m = view.getMonth()
-  const firstDow = new Date(y, m, 1).getDay()
-  const totalDays = new Date(y, m + 1, 0).getDate()
-  const prevMonthDays = new Date(y, m, 0).getDate()
-  const trailing = (7 - ((firstDow + totalDays) % 7)) % 7
-  const selected = parseDMY(value)
-  const today = new Date()
-  const sameDay = (d: Date | null, day: number) =>
-    !!d && d.getFullYear() === y && d.getMonth() === m && d.getDate() === day
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const toggle = () => onOpenChange(!open)
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
 
   return (
-    <div className="dp">
+    <div className="dp" ref={wrapRef}>
       <input id={id} type="text" value={value} readOnly onClick={toggle} />
       <button type="button" className="dp-btn" onClick={toggle} aria-label="Open calendar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -51,56 +33,20 @@ export function DatePicker({
           <path d="M7 2v4M17 2v4M3 9h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
       </button>
-      <div className={`dp-popup${open ? ' open' : ''}`} id={`dp-popup-${id}`}>
-        {open ? (
-          <>
-            <div className="dp-head">
-              <button type="button" onClick={() => setView(new Date(y, m - 1, 1))}>
-                ‹
-              </button>
-              <span className="dp-month-label">
-                {MONTH_ABBR[m]} {y}
-              </span>
-              <button type="button" onClick={() => setView(new Date(y, m + 1, 1))}>
-                ›
-              </button>
-            </div>
-            <div className="dp-grid">
-              {DOW_LABELS.map((dw, i) => (
-                <div key={i} className="dp-dow">
-                  {dw}
-                </div>
-              ))}
-              {Array.from({ length: firstDow }, (_, i) => (
-                <div key={`p${i}`} className="dp-day muted">
-                  {prevMonthDays - firstDow + 1 + i}
-                </div>
-              ))}
-              {Array.from({ length: totalDays }, (_, i) => {
-                const d = i + 1
-                const cls = sameDay(selected, d) ? 'dp-day selected' : sameDay(today, d) ? 'dp-day today' : 'dp-day'
-                return (
-                  <div
-                    key={d}
-                    className={cls}
-                    onClick={() => {
-                      onPick(fmtDate(new Date(y, m, d)))
-                      onOpenChange(false)
-                    }}
-                  >
-                    {d}
-                  </div>
-                )
-              })}
-              {Array.from({ length: trailing }, (_, i) => (
-                <div key={`n${i}`} className="dp-day muted">
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </div>
+      {/* The parent closes every picker on a document click outside `.dp`; the popup lives in a
+          portal outside it, so its clicks are stopped here (React bubbles portal events to this span). */}
+      <span style={{ display: 'contents' }} onClick={(e) => e.stopPropagation()}>
+        <DatePopup
+          open={open}
+          anchorRef={wrapRef}
+          value={parseDMY(value)}
+          onSelect={(d) => {
+            onPick(fmtDate(d))
+            onOpenChange(false)
+          }}
+          onClose={close}
+        />
+      </span>
     </div>
   )
 }

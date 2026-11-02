@@ -8,6 +8,7 @@
  */
 import { txt } from '../../shared/fx/masters.ts'
 import type { FxRow } from '../../shared/fx/mw.ts'
+import type { FxTransaction } from '../../shared/fx/ndf.ts'
 import { num } from '../../shared/fx/sap.ts'
 import { FX_TXN_STATUS } from '../../shared/fx/txn-status.ts'
 
@@ -63,7 +64,7 @@ export const exchangeRateEditable = (dealStatus: string): boolean => dealStatus 
 /** The statuses a replacement transaction may be in: FO -> MO Unmatched or MO Match & Release. */
 export const REPLACEMENT_TXN_STATUSES: readonly string[] = [FX_TXN_STATUS.FO_TO_MO_UNMATCHED, FX_TXN_STATUS.MO_MATCH_RELEASE]
 
-/** What a replacement is compared with: the transaction being replaced, as ZSGTSFV_FX reports it. */
+/** What a replacement is compared with: the transaction being replaced, as FxTransaction reports it. */
 export type ReplacementReference = {
   bukrs: string
   rfha: string
@@ -74,26 +75,36 @@ export type ReplacementReference = {
   amount: number
 }
 
-export function referenceOf(view: FxRow): ReplacementReference {
+/** FxTransaction.ActiveStatus of a reversed (deleted) transaction: the legacy view's SAKTIV = 3. */
+const REVERSED = '3'
+
+/**
+ * The legacy view columns, read from the live FxTransaction instead: CURR1 is the lead currency, BS_1 is
+ * B when that leg is the bought one, AMT1 is that leg's amount, SFHAART is TransactionType and DELFZ is
+ * ValueDate.
+ */
+export function referenceOf(fx: FxTransaction): ReplacementReference {
+  const lead = fx.LeadCurrency || fx.BuyCurrency || ''
+  const buysLead = fx.BuyCurrency === lead
   return {
-    bukrs: txt(view, 'BUKRS'),
-    rfha: txt(view, 'RFHA'),
-    sfhaart: txt(view, 'SFHAART'),
-    delfz: txt(view, 'DELFZ'),
-    side: txt(view, 'BS_1'),
-    currency: txt(view, 'CURR1'),
-    amount: num(view['AMT1']),
+    bukrs: fx.CompanyCode,
+    rfha: fx.FinancialTransaction,
+    sfhaart: fx.TransactionType ?? '',
+    delfz: String(fx.ValueDate ?? '').slice(0, 10),
+    side: buysLead ? 'B' : 'S',
+    currency: lead,
+    amount: Math.abs(num(buysLead ? fx.BuyAmount : fx.SellAmount)),
   }
 }
 
 /**
  * Legacy candidate filter for Edit Deal Pair: same company code, a different transaction, same
- * transaction type, end / value date, buy / sell side, currency and amount, not deactivated
+ * transaction type, end / value date, buy / sell side, currency and amount, not reversed
  * (SAKTIV <> 3) and status 03 or 07. `txnStatus` is the persisted APP_STR status; a candidate without
  * one is not eligible.
  */
-export function isEligibleReplacement(ref: ReplacementReference, view: FxRow, txnStatus: string): boolean {
-  const c = referenceOf(view)
+export function isEligibleReplacement(ref: ReplacementReference, fx: FxTransaction, txnStatus: string): boolean {
+  const c = referenceOf(fx)
   return (
     c.bukrs === ref.bukrs &&
     c.rfha !== ref.rfha &&
@@ -101,8 +112,8 @@ export function isEligibleReplacement(ref: ReplacementReference, view: FxRow, tx
     c.delfz === ref.delfz &&
     c.side === ref.side &&
     c.currency === ref.currency &&
-    c.amount === ref.amount &&
-    txt(view, 'SAKTIV') !== '3' &&
+    Math.round(c.amount * 100) === Math.round(ref.amount * 100) &&
+    fx.ActiveStatus !== REVERSED &&
     REPLACEMENT_TXN_STATUSES.includes(txnStatus.trim())
   )
 }

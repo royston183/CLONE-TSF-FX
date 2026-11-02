@@ -3,9 +3,12 @@
  * component only holds state. Nothing here talks to the middleware: api.ts writes a correction
  * or reversal to ZSGTSFTR_MAS_CON first, and these functions then change the row on screen.
  */
+import { oneMonthBefore } from '../../shared/fx/dates.ts'
 import { COLUMN_DEFS, findBizRegion, findEntity, findPaymentTerm, findRegion } from './data.ts'
 import { formatAmount, formatDMY, formatRate, parseDMY, parseLooseAmount } from './format.ts'
 import type { CodeLabel, ColumnKey, CorrectionForm, ErrorRow, FieldErrors, Filters, McStatus, Picks, Sort } from './types.ts'
+
+export { oneMonthBefore }
 
 // ---------------------------------------------------------------- filters
 
@@ -178,18 +181,6 @@ export function calcOrigin(amountUsd: string, exRate: string): string {
   const usd = parseLooseAmount(amountUsd)
   const rate = parseFloat(exRate)
   return !Number.isNaN(usd) && !Number.isNaN(rate) && usd > 0 && rate > 0 ? formatAmount(usd * rate) : ''
-}
-
-/** The same calendar day one month earlier, clamped to that month's last day (31-03 → 28/29-02). */
-export function oneMonthBefore(date: Date): Date {
-  let y = date.getFullYear()
-  let prevMonth = date.getMonth() - 1
-  if (prevMonth < 0) {
-    prevMonth = 11
-    y--
-  }
-  const lastDay = new Date(y, prevMonth + 1, 0).getDate()
-  return new Date(y, prevMonth, Math.min(date.getDate(), lastDay))
 }
 
 /**

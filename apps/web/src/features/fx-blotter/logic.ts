@@ -383,10 +383,11 @@ export function settle(b: Blotter): Blotter {
 }
 
 /**
- * Load Blotter: the two seeded Created legs for the selected group / trader plus ten empty
- * rows. Every load draws new RFHA numbers, as the original did.
+ * Load Blotter: ten empty draft rows for the selected group / trader. The original also laid out two example Created
+ * legs (the demo's OGA / DMCC pair, RFHA 8100001...); the screen no longer shows them, since every real transaction
+ * comes from SAP. `demoLegs` brings them back for the tests that need example data to work on.
  */
-export function loadContext(b: Blotter): { blotter: Blotter; loaded: number } {
+export function loadContext(b: Blotter, opts: { demoLegs?: boolean } = {}): { blotter: Blotter; loaded: number } {
   const c = { ...b.counters }
   const { group, trader } = b.ctx
   // The two seeded legs belong to the OGA-DMCC model; the first loaded model with that start stands in for it.
@@ -401,10 +402,12 @@ export function loadContext(b: Blotter): { blotter: Blotter; loaded: number } {
     group,
     trader,
   }
-  const existing = [
-    makeRow(c, b.ctx, { ...seeded, entity: 'OGA', bp: 'BP1005', buySell: 'S', valueDateOffsetDays: 32 }),
-    makeRow(c, b.ctx, { ...seeded, entity: 'DMCC', bp: 'BP1006', buySell: 'B', valueDateOffsetDays: 33 }),
-  ]
+  const existing = opts.demoLegs
+    ? [
+        makeRow(c, b.ctx, { ...seeded, entity: 'OGA', bp: 'BP1005', buySell: 'S', valueDateOffsetDays: 32 }),
+        makeRow(c, b.ctx, { ...seeded, entity: 'DMCC', bp: 'BP1006', buySell: 'B', valueDateOffsetDays: 33 }),
+      ]
+    : []
   const blanks = Array.from({ length: 10 }, () => newBlankRow(c, group, trader))
   return {
     blotter: settle({ ...b, rows: [...existing, ...blanks], counters: c, checked: [] }),
@@ -418,17 +421,20 @@ const freshCtx = (now: Date): Ctx => {
 }
 
 /** The page as it first opens: the first group and trader, loaded. */
-export function initialBlotter(now: Date, contracts: MasterContract[], partners: BusinessPartner[]): Blotter {
-  return loadContext({
-    rows: [],
-    contracts,
-    deals: [],
-    partners,
-    counters: { ...INITIAL_COUNTERS },
-    ctx: freshCtx(now),
-    checked: [],
-    locked: false,
-  }).blotter
+export function initialBlotter(now: Date, contracts: MasterContract[], partners: BusinessPartner[], opts: { demoLegs?: boolean } = {}): Blotter {
+  return loadContext(
+    {
+      rows: [],
+      contracts,
+      deals: [],
+      partners,
+      counters: { ...INITIAL_COUNTERS },
+      ctx: freshCtx(now),
+      checked: [],
+      locked: false,
+    },
+    opts,
+  ).blotter
 }
 
 /**
@@ -529,7 +535,7 @@ function sortValue(r: BlotterRow, key: Sort['key']): number | string {
  * the chosen column orders rows within each block.
  */
 export function sortRows(rows: BlotterRow[], sort: Sort): BlotterRow[] {
-  return [...rows].sort((a, b) => {
+  return groupDealLegs([...rows].sort((a, b) => {
     const aDraft = a.status === 'DRAFT' ? 1 : 0
     const bDraft = b.status === 'DRAFT' ? 1 : 0
     if (aDraft !== bDraft) return aDraft - bDraft
@@ -543,7 +549,30 @@ export function sortRows(rows: BlotterRow[], sort: Sort): BlotterRow[] {
     if (av < bv) return -sort.dir
     if (av > bv) return sort.dir
     return 0
-  })
+  }))
+}
+
+/** The leg number a deal type names: D1 / Deal 1 -> 1, D2 / Deal 2 -> 2; anything else (a Short Straddle, SAP's text) has none. */
+const legNumber = (r: BlotterRow): number => Number(/^(?:D|Deal )([0-9])[^0-9]/.exec(`${r.dealType} `)?.[1] ?? 99)
+
+/**
+ * The legs of one Deal ID sit next to each other: each deal appears where its first row was sorted, with its other legs
+ * directly below it, Deal 1 above Deal 2. A row with no Deal ID (and every draft) keeps its place.
+ */
+export function groupDealLegs(rows: BlotterRow[]): BlotterRow[] {
+  const out: BlotterRow[] = []
+  const placed = new Set<string>()
+  for (const r of rows) {
+    if (!r.dealId || r.status === 'DRAFT') {
+      out.push(r)
+      continue
+    }
+    if (placed.has(r.dealId)) continue
+    placed.add(r.dealId)
+    const legs = rows.filter((x) => x.dealId === r.dealId && x.status !== 'DRAFT')
+    out.push(...legs.map((x, i) => ({ x, i })).sort((a, b) => legNumber(a.x) - legNumber(b.x) || a.i - b.i).map(({ x }) => x))
+  }
+  return out
 }
 
 /** Header clicks: the same column flips direction, a new one starts ascending. */
@@ -989,14 +1018,15 @@ export function recalcAutoLeg(input: AutoLeg): AutoLeg {
   return l
 }
 
-/** Deal 1 / Deal 2 from the MC's model: D1 half the spread under the base rate, D2 half over. */
+/**
+ * Deal 1 / Deal 2 from the MC's model. The rates are left for the trader to enter: there is no rate source to fill them
+ * from, and a made-up base rate would be booked in SAP as typed.
+ */
 export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
   const m = modelOf(mc.fxModel)
   const p = pairOf(mc.currPair)
   if (!m || !p) return []
   const amt = Math.min(mcBalance(mc), mc.amtUSD * 0.4)
-  const d1Rate = roundRate(p.baseRate * (1 - m.spreadBp / 2 / 10000))
-  const d2Rate = roundRate(p.baseRate * (1 + m.spreadBp / 2 / 10000))
   const valueDate = nextWorkingDay(addDays(ctxDate, 32))
   const base = {
     // The legs are booked in SAP, where only a real partner number is accepted.
@@ -1020,8 +1050,8 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
       txnType: m.d1.txnType ?? 'FWD',
       bs: m.d1.bs1,
       bs2: m.d1.bs2,
-      rate: d1Rate,
-      spot: d1Rate,
+      rate: 0,
+      spot: 0,
     }),
     recalcAutoLeg({
       ...base,
@@ -1032,8 +1062,8 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
       txnType: m.d2.txnType ?? 'FWD',
       bs: m.d2.bs1,
       bs2: m.d2.bs2,
-      rate: d2Rate,
-      spot: d2Rate,
+      rate: 0,
+      spot: 0,
     }),
   ]
 }

@@ -3,6 +3,7 @@ import { TXN_STATUS_META } from './data.ts'
 import { fmtAmt } from './format.ts'
 import { invoicesEditable, legForInvoice } from './logic.ts'
 import { Field, ModalHeader, Overlay, type Modal } from './modal.tsx'
+import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { ICON_UPLOAD, TxnStatusBadge } from './parts.tsx'
 import type { BadgeMeta, Deal, DmsDoc, Leg, ReplacementTxn } from './types.ts'
 
@@ -371,6 +372,11 @@ export function TxnViewModal({ modal, deal, leg }: { modal: Modal; deal: Deal | 
         ['Buy', `${leg.bs1} ${leg.curr1} ${fmtAmt(leg.amt1)}`],
         ['Sell', `${leg.bs2} ${leg.curr2} ${fmtAmt(leg.amt2)}`],
         ['All-in Rate / Strike', fmtAmt(leg.strike || leg.allInRate, 4)],
+        ['NDF Fixing Date', fmtNdfDate(leg.ndf?.ndfDate ?? '')],
+        ['NDF Ref', leg.ndf?.ndfRef ?? ''],
+        ['NDF Settlement Rate', fmtNdfRate(leg.ndf?.ndfRate)],
+        ['Cash Settlement Amount', fmtNdfCash(leg.ndf?.cashAmount)],
+        ['Cash Currency', leg.ndf?.cashCurrency ?? ''],
         ['Txn Status', (TXN_STATUS_META as Record<string, BadgeMeta | undefined>)[leg.txnStatus]?.text || leg.txnStatus],
         ['Premium', `${fmtAmt(leg.premAmt)} ${leg.premCurr}`],
         ['Total P&L', fmtAmt(leg.totPl)],

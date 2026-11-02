@@ -1,9 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import { useFloatingPanel } from './floating.ts'
+import { DatePopup } from '../../shared/ui/DatePopup.tsx'
 import { formatDMY, parseDMY } from './format.ts'
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 /**
  * A DD-MM-YYYY text box with the original's pop-up month calendar.
@@ -38,31 +35,12 @@ export function DateField({
   iconLabel?: string | undefined
 }) {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState(() => new Date())
   const wrapRef = useRef<HTMLDivElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
   /** The text when the box gained focus, to tell whether leaving it is a "change". */
   const focusValue = useRef(value)
 
   const close = useCallback(() => setOpen(false), [])
-  useFloatingPanel({
-    open,
-    wrapRef,
-    panelRef,
-    options: { alignRight: true, gap: 6 },
-    onOutside: close,
-    contentKey: `${view.getFullYear()}-${view.getMonth()}`,
-  })
-
-  const toggle = () => {
-    if (open) {
-      setOpen(false)
-      return
-    }
-    const base = parseDMY(value) ?? new Date()
-    setView(new Date(base.getFullYear(), base.getMonth(), 1))
-    setOpen(true)
-  }
+  const toggle = () => setOpen((o) => !o)
 
   const pick = (date: Date) => {
     const picked = formatDMY(date)
@@ -72,15 +50,6 @@ export function DateField({
     if (onPick) onPick(picked)
     else onCommit?.(picked)
   }
-
-  const selected = parseDMY(value)
-  const year = view.getFullYear()
-  const month = view.getMonth()
-  const startOffset = new Date(year, month, 1).getDay()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const daysInPrevMonth = new Date(year, month, 0).getDate()
-  const trailing = (7 - ((startOffset + daysInMonth) % 7)) % 7
-  const today = new Date().toDateString()
 
   return (
     <div ref={wrapRef} className={`date-field${className ? ` ${className}` : ''}`}>
@@ -105,53 +74,7 @@ export function DateField({
       <button type="button" className="date-icon" aria-label={iconLabel} onClick={toggle}>
         {iconText}
       </button>
-      <div ref={panelRef} className={`date-popup${open ? ' open' : ''}`}>
-        {open ? (
-          <>
-            <div className="cal-head">
-              <button type="button" onClick={() => setView(new Date(year, month - 1, 1))}>
-                ‹
-              </button>
-              <span className="cal-title">
-                {MONTHS[month]} {year}
-              </span>
-              <button type="button" onClick={() => setView(new Date(year, month + 1, 1))}>
-                ›
-              </button>
-            </div>
-            <div className="cal-grid">
-              {DOW.map((d) => (
-                <div key={d} className="dow">
-                  {d}
-                </div>
-              ))}
-              {Array.from({ length: startOffset }, (_, i) => (
-                <div key={`p${i}`} className="day muted">
-                  {daysInPrevMonth - startOffset + 1 + i}
-                </div>
-              ))}
-              {Array.from({ length: daysInMonth }, (_, i) => {
-                const day = i + 1
-                const date = new Date(year, month, day)
-                let cls = 'day'
-                if (selected && date.getTime() === new Date(selected.getFullYear(), selected.getMonth(), selected.getDate()).getTime())
-                  cls += ' selected'
-                if (date.toDateString() === today) cls += ' today'
-                return (
-                  <div key={day} className={cls} onClick={() => pick(date)}>
-                    {day}
-                  </div>
-                )
-              })}
-              {Array.from({ length: trailing }, (_, i) => (
-                <div key={`n${i}`} className="day muted">
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </div>
+      <DatePopup open={open} anchorRef={wrapRef} value={parseDMY(value)} title={title ?? 'Date'} onSelect={pick} onClose={close} />
     </div>
   )
 }

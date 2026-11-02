@@ -100,6 +100,19 @@ describe('toTxn', () => {
     ok(t)
     deepStrictEqual([t.dealId, t.mc, t.companyName, t.prodTypeDesc, t.partnerName], ['', '', '', '', ''])
   })
+
+  it('restores the application date, remark and audit data using both company and transaction', () => {
+    const rows = new Map([
+      ['SG03::7000000000001', { CompanyCode: 'SG03', FinancialTransaction: '7000000000001', BlotterDate: '2026-10-15', TxnStatus: '04', NdfMoRem: 'Check value date', Ztrcode: 'NS', LocalLastChangedBy: 'MO', LocalLastChangedAt: '2026-10-16T10:00:00Z' }],
+      ['AE13::7000000000001', { CompanyCode: 'AE13', FinancialTransaction: '7000000000001', BlotterDate: '2026-09-01' }],
+    ])
+    const t = toTxn(sap(), deals, names, undefined, rows)!
+    strictEqual(formFromTxn(t).blotterDate, '15-10-2026')
+    strictEqual(t.moRemark, 'Check value date')
+    strictEqual(t.traderCode, 'NS')
+    strictEqual(t.changedBy, 'MO')
+    strictEqual(t.status, STATUS.ERRCORR)
+  })
 })
 
 describe('statusOf', () => {
@@ -138,7 +151,7 @@ describe('the queue screen rules for live rows', () => {
   })
 
   it('exports a live row with a blank blotter date', () => {
-    ok(buildCsv([txnOf()]).split('\n')[1]!.endsWith(',30-09-2026,30-10-2026,'))
+    ok(buildCsv([txnOf()]).split('\n')[1]!.endsWith(',30-09-2026,30-10-2026,,,,'))
   })
 })
 
@@ -160,14 +173,29 @@ describe('toCorrectionPatch', () => {
     deepStrictEqual(toCorrectionPatch(t, { ...form(), allInRate: '0.0000', spotRate: 'abc' }), {})
   })
 
-  it('never sends Amount 2, or the fields SAP has no home for', () => {
-    const f = { ...form(), amount2: '1', partner: 'X', busArea: '0223', mc: '1', dealId: '2', acctCat: '1000', modeOfTrade: 'BARX', blotterDate: '01-01-2027' }
+  it('never sends the sold amount or fields without a save path', () => {
+    const f = { ...form(), amount2: '1', partner: 'X', busArea: '0223', mc: '1', dealId: '2', acctCat: '1000', modeOfTrade: 'BARX' }
     deepStrictEqual(toCorrectionPatch(t, f), {})
   })
 
   it('does not send Amount 1 for a transaction that sells the lead currency', () => {
     const sell = txnOf({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 83000, SellAmount: 1000 })
     deepStrictEqual(toCorrectionPatch(sell, { ...formFromTxn(sell), amount1: '5,000.00' }), {})
+  })
+
+  it('sends the bought Amount 2 for a transaction that sells the lead currency', () => {
+    const sell = txnOf({ BuyCurrency: 'INR', SellCurrency: 'USD', BuyAmount: 83000, SellAmount: 1000 })
+    deepStrictEqual(toCorrectionPatch(sell, { ...formFromTxn(sell), amount2: '166T' }), { BuyAmount: 166000 })
+  })
+
+  it('does not silently round stored rates just because the form displays four decimal places', () => {
+    const precise = txnOf({ ForwardRate: 83.1234567, SwapRate: 0.1234567, SpotRate: 83.1234567 })
+    deepStrictEqual(toCorrectionPatch(precise, formFromTxn(precise)), {})
+  })
+
+  it('includes a changed application date and ignores invalid dates', () => {
+    deepStrictEqual(toCorrectionPatch(t, { ...form(), blotterDate: '15-10-2026' }), { BlotterDate: '2026-10-15' })
+    deepStrictEqual(toCorrectionPatch(t, { ...form(), blotterDate: '31-02-2026' }), {})
   })
 })
 
@@ -189,6 +217,44 @@ describe('talking to SAP', () => {
     strictEqual(calls[0]!.method, 'PATCH')
     strictEqual(calls[0]!.url, "/api/fx/FxTransaction(CompanyCode='SG03',FinancialTransaction='7000000000001')")
     strictEqual(calls[0]!.body, '{"ForwardRate":84}')
+  })
+
+  it('routes date-only corrections to APP_STR without changing the transaction or workflow status', async () => {
+    const calls: Array<{ url: string; method: string; body: unknown }> = []
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: decodeURIComponent(String(input)), method: init?.method ?? 'GET', body: init?.body ? JSON.parse(String(init.body)) : null })
+      return json(200, { CompanyCode: 'SG03', FinancialTransaction: '7000000000001', TxnStatus: '04' })
+    }) as typeof fetch
+    await correctTxn(txnOf(), { BlotterDate: '2026-10-15' })
+    deepStrictEqual(calls.map(c => c.method), ['GET', 'PATCH'])
+    ok(calls.every(c => c.url.includes('/api/trmfxapp/TrmFxApp(')))
+    deepStrictEqual(calls[1]!.body, { BlotterDate: '2026-10-15' })
+  })
+
+  it('records a blotter date for an older transaction without an APP_STR row', async () => {
+    const writes: Array<{ method: string; body: unknown }> = []
+    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (!init?.method || init.method === 'GET') return json(404, { error: { message: 'Not found' } })
+      writes.push({ method: init.method, body: JSON.parse(String(init.body)) })
+      return json(201, {})
+    }) as typeof fetch
+    await correctTxn(txnOf(), { BlotterDate: '2026-10-15' })
+    deepStrictEqual(writes, [{ method: 'POST', body: { CompanyCode: 'SG03', FinancialTransaction: '7000000000001', BlotterDate: '2026-10-15' } }])
+  })
+
+  it('keeps the date out of the FX patch and reports a partial save if its own write fails', async () => {
+    const bodies: unknown[] = []
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/api/fx/')) {
+        bodies.push(JSON.parse(String(init?.body)))
+        return json(200, {})
+      }
+      return json(500, { error: { message: 'Application data unavailable' } })
+    }) as typeof fetch
+    let message = ''
+    try { await correctTxn(txnOf(), { ForwardRate: 84, BlotterDate: '2026-10-15' }) } catch (e) { message = (e as Error).message }
+    deepStrictEqual(bodies, [{ ForwardRate: 84 }])
+    ok(message.includes('Transaction changes were saved, but Blotter Date was not saved.'))
   })
 
   it('reverses in order with DELETE and stops at the first refusal, giving SAP\'s cause', async () => {
@@ -216,6 +282,7 @@ describe('talking to SAP', () => {
         fxUrl = u
         return json(200, { value: [sap(), sap({ FinancialTransaction: '2', ActiveStatus: '3' })] })
       }
+      if (u.includes('/api/trmfxapp/')) return json(200, { value: [{ CompanyCode: 'SG03', FinancialTransaction: '7000000000001', TxnStatus: '04', BlotterDate: '2026-10-15' }] })
       if (u.includes('/data/comp')) return json(200, { ok: true, rows: comp })
       if (u.includes('/data/tsfDealId')) return json(200, { ok: true, rows: dealRows })
       if (u.includes('/api/trmmaster/ProductType')) return json(200, { value: [{ ProductType: '12B', ProductTypeName: 'FX Forwards: External' }] })
@@ -224,7 +291,8 @@ describe('talking to SAP', () => {
       return json(200, { ok: true, rows: [] })
     }) as typeof fetch
     const rows = await loadQueue()
-    deepStrictEqual(rows.map((t) => [t.rfha, t.status]), [['7000000000001', STATUS.OPEN], ['2', STATUS.REVERSED]])
+    deepStrictEqual(rows.map((t) => [t.rfha, t.status]), [['7000000000001', STATUS.ERRCORR], ['2', STATUS.REVERSED]])
+    strictEqual(formFromTxn(rows[0]!).blotterDate, '15-10-2026')
     strictEqual(rows[0]!.partnerName, 'Barclays')
     strictEqual(rows[0]!.dealId, '7000000006')
     for (const c of ['SG03', 'AE13']) ok(fxUrl.includes(`CompanyCode eq '${c}'`))

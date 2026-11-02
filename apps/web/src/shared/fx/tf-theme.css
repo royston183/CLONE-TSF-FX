@@ -1,0 +1,103 @@
+/* Trade Flow Upload (.tfupload) and Manage Trade Flows (.tfmanage).
+ * Both sit inside the office wrapper (#alm-fx-ui[data-office]), which supplies the ALM
+ * tokens, header, buttons, inputs, popup calendar and table density. This sheet only
+ * closes the gaps those two legacy-derived pages leave: page height, select chrome, icon
+ * buttons, tabs, the detail dialog's footer and a few clipped fields. Scoped to the two
+ * page roots so no other screen is touched.
+ */
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) { min-height: 0; }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.app-shell, .page) { min-height: 0; }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) .app-header { border-bottom: 0; }
+
+/* Native selects: the reference control (1px line, 7px radius, 32px, caret inside the box). */
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) select {
+  appearance: none; -webkit-appearance: none; box-sizing: border-box; min-height: 32px; height: 32px;
+  padding: 0 28px 0 10px; border: 1px solid var(--alm-input-line); border-radius: 7px;
+  background-color: var(--alm-surface); color: var(--alm-text);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2367768c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  font: 400 13px/1.2 var(--alm-font); text-overflow: ellipsis;
+}
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) select:focus {
+  outline: none; border-color: var(--alm-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--alm-blue) 25%, transparent);
+}
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) select:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Icon-only buttons: the office button padding left no room for the icon. */
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.hdr-btn, .header-btn, .btn).icon-btn { width: 32px; padding: 0; }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) .icon-btn svg { flex: none; }
+
+/* Tabs: the same pale-blue active state as the other office screens. */
+#alm-fx-ui[data-office] .tfupload .tf-tabs { display: flex; gap: 6px; margin: 4px 0 14px; border-bottom: 1px solid var(--alm-line); }
+#alm-fx-ui[data-office] .tfupload .tf-tab {
+  height: 34px; padding: 0 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0;
+  background: none; color: var(--alm-label); font: 600 13px/1 var(--alm-font); cursor: pointer;
+}
+#alm-fx-ui[data-office] .tfupload .tf-tab:hover { background: var(--alm-row); }
+#alm-fx-ui[data-office] .tfupload .tf-tab.active { background: var(--alm-pale); color: var(--alm-blue); border-color: var(--alm-line); box-shadow: inset 0 -2px 0 var(--alm-blue); }
+
+/* Cards and panels: the reference radius, border and shadow. */
+#alm-fx-ui[data-office] .tfupload .card, #alm-fx-ui[data-office] .tfmanage .ds-panel {
+  background: var(--alm-surface); border: 1px solid var(--alm-line); border-radius: 9px; box-shadow: var(--alm-shadow); overflow: hidden;
+}
+#alm-fx-ui[data-office] .tfupload .card-head, #alm-fx-ui[data-office] .tfmanage .panel-title {
+  padding: 10px 16px; background: var(--alm-surface); border-bottom: 1px solid var(--alm-line);
+  font-size: 13px; font-weight: 700; color: var(--alm-heading);
+}
+#alm-fx-ui[data-office] .tfupload .card-title { font-size: 13px; font-weight: 700; color: var(--alm-heading); }
+#alm-fx-ui[data-office] .tfupload :is(.field label, label.field-label) { font-size: 12px; font-weight: 600; color: var(--alm-label); }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.req, .required) { color: var(--alm-bad); }
+
+/* Upload zone, selected file and result badges. */
+#alm-fx-ui[data-office] .tfupload .drop-zone { border: 1px dashed var(--alm-input-line); border-radius: 8px; background: var(--alm-row); }
+#alm-fx-ui[data-office] .tfupload .drop-zone:is(:hover, .dragover, .has-file) { border-color: var(--alm-blue); background: var(--alm-pale); }
+#alm-fx-ui[data-office] .tfupload .browse-link { color: var(--alm-blue); }
+#alm-fx-ui[data-office] .tfupload .file-name { color: var(--alm-heading); font-weight: 600; }
+#alm-fx-ui[data-office] .tfupload .btn.primary, #alm-fx-ui[data-office] .tfmanage .hdr-btn.primary {
+  background: var(--alm-button); border-color: var(--alm-button); color: #fff;
+}
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.btn, .hdr-btn):disabled { opacity: .5; cursor: not-allowed; }
+#alm-fx-ui[data-office] .tfupload .tf-status-success, #alm-fx-ui[data-office] .tfupload .eligibility-ready { background: var(--alm-ok-bg); color: var(--alm-ok); }
+#alm-fx-ui[data-office] .tfupload .tf-status-error, #alm-fx-ui[data-office] .tfupload .eligibility-skipped { background: var(--alm-bad-bg); color: var(--alm-bad); }
+#alm-fx-ui[data-office] .tfupload .tf-status-pending { background: var(--alm-warning-bg); color: var(--alm-warning); }
+#alm-fx-ui[data-office] .tfupload .tf-status-skipped { background: var(--alm-row); color: var(--alm-muted); }
+#alm-fx-ui[data-office] .tfupload .message.error { color: var(--alm-bad); background: var(--alm-bad-bg); border-radius: 7px; }
+
+/* Tables: ALM header/cell type and row states on the upload preview, view list and trade-flow list. */
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.preview-table, .view-table, .data-table) thead th {
+  background: var(--alm-row); color: var(--alm-label); border-color: var(--alm-line); font-size: 11.5px; font-weight: 600;
+}
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.preview-table, .view-table, .data-table) tbody td {
+  border-color: var(--alm-line); color: var(--alm-text); font-size: 12.5px;
+}
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.preview-table, .view-table, .data-table) tbody tr:hover td { background: var(--alm-row); }
+#alm-fx-ui[data-office] .tfmanage .data-table tbody tr.row-selected td { background: var(--alm-pale); }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.page-btn, .pagination button) { border-color: var(--alm-line); border-radius: 6px; background: var(--alm-surface); color: var(--alm-label); }
+#alm-fx-ui[data-office] :is(.tfupload, .tfmanage) .page-btn.active { border-color: var(--alm-blue); color: var(--alm-blue); background: var(--alm-pale); }
+
+/* Manage detail dialog: nested .modal-actions inherited the footer's padding and border
+ * from the shared dialog rule, pushing Cancel/Update out of the box. */
+#alm-fx-ui[data-office] .tfmanage .modal-footer { align-items: center; justify-content: space-between; flex-wrap: nowrap; }
+#alm-fx-ui[data-office] .tfmanage .modal-footer .modal-actions { padding: 0; border: 0; background: none; flex-wrap: nowrap; margin-left: auto; }
+#alm-fx-ui[data-office] .tfmanage #screenWorkspace .ws-modal-box { background: var(--alm-surface); border: 1px solid var(--alm-line); border-radius: 12px; box-shadow: var(--alm-popup-shadow); }
+#alm-fx-ui[data-office] .tfmanage .tab-btn { height: 34px; }
+#alm-fx-ui[data-office] .tfmanage #blTfQtyDisplay { width: 132px; min-width: 132px; }
+#alm-fx-ui[data-office] .tfmanage #screenWorkspace .field-grid :is(input, select):disabled, #alm-fx-ui[data-office] .tfmanage #screenWorkspace .field-grid input[readonly] {
+  background-color: var(--alm-row); color: var(--alm-text);
+}
+
+@media (max-width: 750px) {
+  #alm-fx-ui[data-office] :is(.tfupload, .tfmanage) .app-header { height: auto; min-height: 0; flex: 0 0 auto; flex-wrap: wrap; gap: 8px; padding-bottom: 8px; }
+  #alm-fx-ui[data-office] :is(.tfupload, .tfmanage) :is(.ds-header-left, .ds-header-right, .header-left, .header-right) { flex-wrap: wrap; min-width: 0; gap: 8px; }
+  #alm-fx-ui[data-office] .tfupload .tf-tabs { overflow-x: auto; }
+}
+@media (max-width: 750px) {
+  #alm-fx-ui[data-office] .tfmanage .tab-bar { flex-wrap: nowrap; overflow-x: auto; }
+  #alm-fx-ui[data-office] .tfmanage .tab-bar .tab-btn { flex: none; white-space: nowrap; }
+}
+
+/* Trade-flow list: columns take only the width their heading or longest value needs, instead
+ * of the legacy 1400px floor stretching every column to share the leftover space. */
+#alm-fx-ui[data-office] .tfmanage table.data-table { width: auto; min-width: 0; table-layout: auto; }
+#alm-fx-ui[data-office] .tfmanage table.data-table :is(th, td) { white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+#alm-fx-ui[data-office] .tfmanage table.data-table :is(th, td, th.num, td.num) { text-align: center !important; }

@@ -42,6 +42,11 @@ const dealOf = (over: Partial<FxTransaction> = {}, record: MoAppRecord = rec({ F
 }
 
 describe('toDeal', () => {
+  it('reads the saved references from the transaction and its application record', () => {
+    const d = dealOf({ ExternalReference: 'BANK-123' }, rec({ ZolamDealNo: 'OLAM-45' }))
+    strictEqual(d.externalRef, 'BANK-123')
+    strictEqual(d.internalRef, 'OLAM-45')
+  })
   it('maps a created forward to an Unmatched FX row', () => {
     const d = dealOf()
     strictEqual(d.id, 'SG03-7000000000001')

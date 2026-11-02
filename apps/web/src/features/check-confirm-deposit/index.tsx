@@ -21,6 +21,7 @@ import './check-confirm-deposit.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './check-confirm-deposit.dark.css'
+import { CalendarPicker } from '../../shared/ui/CalendarPicker.tsx'
 
 const VERSION = 'v8'
 const PAGE_SIZE = 12
@@ -327,10 +328,9 @@ export default function CheckConfirmDepositApp() {
                     />
                     <div className="calendar-btn-wrap">
                       <button className="calendar-btn" type="button" tabIndex={-1} aria-hidden="true"></button>
-                      <input
+                      <CalendarPicker
                         id="ccKeyDateNative"
                         className="calendar-native"
-                        type="date"
                         aria-label="Open calendar"
                         onChange={(e) => onNativeDateChange(e.target.value)}
                       />

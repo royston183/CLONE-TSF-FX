@@ -9,6 +9,9 @@ import type { ComponentType, LazyExoticComponent } from 'react'
  * config/apps.json. Nothing else in the shell changes.
  */
 export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
+  'view-all-transactions': lazy(() => import('./view-all-transactions/index.tsx')),
+  'view-tsf-deals': lazy(() => import('./view-tsf-deals/index.tsx')),
+  'fo-deal-id-details': lazy(() => import('./fo-deal-id-details/index.tsx')),
   'ottk': lazy(() => import('./ottk/index.tsx')),
   'dttk': lazy(() => import('./dttk/index.tsx')),
   'deal-id': lazy(() => import('./deal-id/index.tsx')),
@@ -30,6 +33,7 @@ export const FEATURES: Record<string, LazyExoticComponent<ComponentType>> = {
   'sblc-create-request': lazy(() => import('./sblc-create-request/index.tsx')),
   'sblc-terminate': lazy(() => import('./sblc-terminate/index.tsx')),
   'sblc-allocate-bank': lazy(() => import('./sblc-allocate-bank/index.tsx')),
+  'limit-management': lazy(() => import('./limit-management/index.tsx')),
   'fo-create-master-contract': lazy(() => import('./fo-create-master-contract/index.tsx')),
   'fo-trader-workbench': lazy(() => import('./fo-trader-workbench/index.tsx')),
   'mo-confirm-master-contract': lazy(() => import('./mo-confirm-master-contract/index.tsx')),
