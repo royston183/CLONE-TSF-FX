@@ -39,6 +39,13 @@ export function actionEntryReason(action: EntryAction, txn: Pick<Txn, 'sgsart' |
   return ''
 }
 
+/**
+ * An NDF / DNDF whose fixing is already recorded (TXN_STATUS above 07) but whose settlement spot (DS1 / DS2) was never booked:
+ * Fix NDF offers "Create the Spot?" only once, so a closed or refused popup would otherwise leave the item "done" with no way back.
+ */
+export const ndfSpotMissing = (it: Pick<ActionItem, 'sfhaart' | 'status'>, dealTxns: readonly Pick<TxnRow, 'dealType' | 'sfhaart'>[]): boolean =>
+  (it.sfhaart === '631' || it.sfhaart === '632') && it.status > '07' && !dealTxns.some((t) => t.sfhaart === '605' || t.dealType === 'DS1' || t.dealType === 'DS2')
+
 export function actionItemEntry(it: Pick<ActionItem, 'sfhaart' | 'status'>, deal: Pick<Deal, 'ss'>, txn: Pick<Txn, 'dealType'>): EntryAction {
   if (it.sfhaart === '619') return deal.ss === 'X' && (!txn.dealType || txn.dealType === '00') ? 'spotOrder' : 'settlementSpot'
   if (it.sfhaart === '604') return 'settlementSpot'
@@ -409,7 +416,10 @@ export function fetchActionItems(data: AppData, deal: Deal, txns: readonly TxnRo
       it.diffAmt = d.dAmt
     }
     /* COLOR_CODE_ACTION_ITEMS */
-    if (it.status > '07') it.state = 'done'
+    if (ndfSpotMissing(it, txns)) {
+      it.state = 'pending'
+      it.button = true
+    } else if (it.status > '07') it.state = 'done'
     else if (!spotDone) {
       it.state = 'pending'
       it.button = true

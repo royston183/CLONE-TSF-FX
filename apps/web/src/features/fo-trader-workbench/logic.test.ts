@@ -9,6 +9,7 @@ import {
   calcCashSettlement,
   calcNdfSettlement,
   computeKpis,
+  ndfSpotMissing,
   createSpotTransaction,
   dateErrors,
   decideExercise,
@@ -220,5 +221,15 @@ describe('the same transaction number in two company codes', () => {
     const data = freshData()
     const d = SEED_DEALS[0]!
     for (const item of fetchActionItems(data, d, fetchTransactions(data, d.id))) strictEqual(item.dealId, d.id)
+  })
+})
+
+describe('ndfSpotMissing', () => {
+  const ndf = { sfhaart: '631', status: '10' }
+  it('a fixed NDF with no DS1 / DS2 spot still offers Create Spot; one with its spot, or not yet fixed, does not', () => {
+    strictEqual(ndfSpotMissing(ndf, [{ dealType: 'D2', sfhaart: '631' }, { dealType: 'D1', sfhaart: '619' }]), true)
+    strictEqual(ndfSpotMissing(ndf, [{ dealType: 'D2', sfhaart: '631' }, { dealType: 'DS1', sfhaart: '605' }]), false)
+    strictEqual(ndfSpotMissing({ sfhaart: '631', status: '07' }, [{ dealType: 'D2', sfhaart: '631' }]), false)
+    strictEqual(ndfSpotMissing({ sfhaart: '619', status: '10' }, [{ dealType: 'D1', sfhaart: '619' }]), false)
   })
 })

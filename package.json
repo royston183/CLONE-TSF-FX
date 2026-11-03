@@ -13,6 +13,7 @@
     "apps/*"
   ],
   "scripts": {
+    "predev": "npm run db:setup",
     "dev": "concurrently -n gateway,web -c cyan,magenta \"npm:dev:gateway\" \"npm:dev:web\"",
     "dev:gateway": "node --env-file-if-exists=.env --watch packages/gateway/src/index.ts",
     "dev:web": "npm run dev -w @slc/web",

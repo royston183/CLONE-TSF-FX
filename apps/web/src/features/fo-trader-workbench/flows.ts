@@ -6,7 +6,7 @@ import { buildNdoSpot, createSpotTransaction, fetchTransactions, inScope, isAuth
 import type { PopupSpec } from './modal.tsx'
 import type { StatusOptions } from '../../shared/popup/Popup.tsx'
 import type { ActionCtx, ActionItem, AppData, Deal, ToastKind, Txn } from './types.ts'
-import { actionItemEntry, type EntryAction, type WriteAction } from './logic.ts'
+import { actionItemEntry, ndfSpotMissing, type EntryAction, type WriteAction } from './logic.ts'
 
 /**
  * The SAP postings each workbench action makes (ZSGTSFR_SET_WSPACE). NDF fixing is live: the NDF
@@ -86,6 +86,11 @@ export function actionItemCreate(wb: Wb, it: ActionItem) {
   const t = findTxn(data, it.rfha, { dealId: it.dealId, bukrs: it.bukrs })
   const deal = t ? findDeal(data, t.dealId) : undefined
   if (!t || !deal) return
+  // A fixed NDF with no spot yet goes straight to Create Spot: its fixing cannot be recorded again.
+  if (ndfSpotMissing(it, fetchTransactions(data, t.dealId))) {
+    wb.open({ kind: 'spot', ctx: { dealId: t.dealId, rfha: t.rfha, fromAction: true }, variant: it.sfhaart === '632' ? 'dndf' : 'ndf', sfhaart: '605', rate: 0 })
+    return
+  }
   const entry = actionItemEntry(it, deal, t)
   const reason = wb.entryReason(entry, t)
   if (reason) {

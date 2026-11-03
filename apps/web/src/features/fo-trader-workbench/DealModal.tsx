@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { dropCls, type Dnd } from './dnd.ts'
 import { actionDiffSpot, actionItemCreate, actionNdfFixing, actionOptionExercise, findDeal, findTxn, type Wb } from './flows.ts'
 import { formatAmount, formatRate, isoToDMY } from './format.ts'
-import { actionItemEntry, dealStatusInfo, fetchActionItems, fetchTransactions, modelDesc, txnLinkClass, txnStatusInfo, txnTypeDescription, txnTypeText, type EntryAction } from './logic.ts'
+import { actionItemEntry, dealStatusInfo, fetchActionItems, fetchTransactions, modelDesc, ndfSpotMissing, txnLinkClass, txnStatusInfo, txnTypeDescription, txnTypeText, type EntryAction } from './logic.ts'
 import { ModalFrame, type FrameProps, type PopupSpec } from './modal.tsx'
 import type { ActionItem, TxnRow } from './types.ts'
 
@@ -149,6 +149,7 @@ export function DealModal({
   const wrongKind = (kind: string) => wb.toast(kind === 'txn' ? 'This action requires a transaction row.' : 'Select a deal first.', 'error')
   const selectedTxn = sel ? findTxn(data, sel, { dealId: deal.id }) : undefined
   const itemReason = (it: ActionItem) => {
+    if (ndfSpotMissing(it, txns)) return ''
     const txn = findTxn(data, it.rfha, { dealId: deal.id, bukrs: it.bukrs })
     return txn ? wb.entryReason(actionItemEntry(it, deal, txn), txn) : 'Transaction unavailable. Reload the workbench.'
   }
