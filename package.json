@@ -18,7 +18,7 @@
     "dev:web": "npm run dev -w @slc/web",
     "build": "npm run build -w @slc/web",
     "start": "node --env-file-if-exists=.env packages/gateway/src/index.ts",
-    "typecheck": "tsc -p packages/api-client && tsc -p packages/api-client/tsconfig.test.json && tsc -p packages/ui && tsc -p packages/gateway && tsc -p apps/web",
+    "typecheck": "tsc -p packages/api-client && tsc -p packages/api-client/tsconfig.test.json && tsc -p packages/ui && tsc -p packages/gateway && tsc -p apps/web && tsc -p apps/web/tsconfig.tsfx.json",
     "test": "node --test \"packages/**/*.test.ts\" \"apps/**/src/**/*.test.ts\" \"tools/**/*.test.mjs\"",
     "lint": "eslint .",
     "db:migrate": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts migrate",

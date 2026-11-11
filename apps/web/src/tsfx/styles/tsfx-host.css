@@ -1,0 +1,12 @@
+/* The frame the TSF_FX screens run in (the application's own header carries the sign-in and navigation). */
+.tsfx:has(.tsfx-frame), .tsfx:has(.tsfx-frame) { background: var(--bg, #f4f7fb); }
+.tsfx-frame { min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter Variable, Inter, system-ui, sans-serif; }
+.tsfx-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--line); min-height: 56px; }
+.tsfx-bar .tsfx-crumb { font-size: 13px; font-weight: 600; color: var(--muted); }
+.tsfx-bar .tsfx-crumb b { color: var(--text); font-weight: 700; }
+.tsfx-bar .tsfx-grow { flex: 1; }
+.tsfx-frame .app { display: block; min-height: 0; }
+.tsfx-frame .main { display: block; position: static; }
+.tsfx-frame .content { padding: 24px; max-width: none; margin: 0; }
+.tsfx-frame--ref .content { padding: 0; }
+.tsfx-frame--ref .tsfx-body { padding: 0 24px 24px; }

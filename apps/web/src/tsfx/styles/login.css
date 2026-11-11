@@ -1,0 +1,88 @@
+/* DSA adaptation of the SLC login: split panels, corner arcs and raised card. */
+.tsfx .login{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+.tsfx .login-pitch{gap:48px;padding:44px clamp(32px,5vw,76px);background:radial-gradient(1200px 620px at 78% 108%,rgba(255,255,255,.17),transparent 62%),linear-gradient(152deg,#0c4ba6 0%,#1565d8 46%,#2f8ae0 100%)}
+.tsfx .login-pitch::before,.tsfx .login-pitch::after{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05)}
+.tsfx .login-pitch::before{width:340px;height:340px;top:-104px;right:-68px}
+.tsfx .login-pitch::after{width:520px;height:520px;bottom:-228px;right:8%;left:auto}
+.tsfx .login-pitch .brand{position:relative;gap:14px}
+.tsfx .login-pitch .login-mark{height:46px;width:auto;flex-shrink:0;display:block;filter:drop-shadow(0 6px 18px #041e4238)}
+.tsfx .pitch-body{padding:0;max-width:620px}
+.tsfx .pitch-body h1{line-height:1.1;margin:16px 0 20px}
+.tsfx .pitch-body>p{max-width:48ch;line-height:1.65;color:#ffffffdf;margin:0;font-size:15px}
+.tsfx .login-kicker{color:#ffffffbb}
+.tsfx .login-benefits{display:flex;gap:28px;flex-wrap:wrap;margin-top:22px}
+.tsfx .login-benefits>div{display:flex;flex-direction:column;gap:5px}
+.tsfx .login-benefits b{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.tsfx .login-benefits small{font-size:10px;color:#ffffffba;font-weight:600}
+.tsfx .login-flow{margin-top:28px;padding:20px 26px 22px;border:1px solid #ffffff38;border-radius:14px;background:#ffffff17}
+.tsfx .login-flow>p{font-size:10px;letter-spacing:.7px;font-weight:700;color:#ffffffb3;margin-bottom:16px}
+.tsfx .login-flow ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0;margin:0;list-style:none}
+.tsfx .login-flow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 6px}
+.tsfx .login-flow li::before{content:'';position:absolute;top:6px;right:50%;width:100%;height:2px;background:#ffffff73}
+.tsfx .login-flow li:first-child::before{display:none}
+.tsfx .login-flow li>i{z-index:1;width:14px;height:14px;border:3px solid white;border-radius:50%;background:#1565d8}
+.tsfx .login-flow li>span{margin-top:11px;font-size:9.5px;color:#ffffffaa;font-weight:700}
+.tsfx .login-flow li>b{margin-top:2px;font-size:13.5px}
+.tsfx .login-flow li>small{margin-top:3px;min-height:30px;max-width:16ch;font-size:11px;line-height:1.35;color:#ffffffc7}
+.tsfx .login-capabilities{display:grid;gap:8px;margin-top:14px}
+.tsfx .login-capabilities>div{display:grid;grid-template-columns:85px minmax(0,1fr);align-items:center;gap:12px;padding:9px 14px;border:1px solid #ffffff29;border-radius:10px;background:#ffffff0f}
+.tsfx .login-capabilities b{font-size:10px;color:#ffffffcc}
+.tsfx .login-capabilities span{display:flex;flex-wrap:wrap;gap:6px}
+.tsfx .login-capabilities small{padding:3px 9px;border:1px solid #ffffff42;border-radius:999px;background:#ffffff1f;font-size:10.5px;font-weight:600}
+.tsfx .login-panel{position:relative;overflow:hidden;display:grid;place-items:center;padding:40px 24px;background:linear-gradient(180deg,#f7fafd 0%,#eef4fb 100%)}
+.tsfx .login-panel::before,.tsfx .login-panel::after{content:'';position:absolute;border-radius:50%;pointer-events:none;filter:blur(1.5px)}
+.tsfx .login-panel::before{width:232px;height:232px;top:-122px;right:-96px;border:58px solid #3fa9f521}
+.tsfx .login-panel::after{width:424px;height:424px;top:-226px;right:-190px;border:46px solid #3fa9f512}
+.tsfx .login-card{position:relative;z-index:1;width:min(460px,100%);padding:38px 40px 30px;border-radius:16px;background:#fff;box-shadow:0 22px 60px #0f274729;overflow:hidden}
+.tsfx .login-card::before{content:'';position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#0c4ba6,#3fa9f5)}
+.tsfx .login-card h2{margin:0;color:#0f2747}
+.tsfx .login-card>p{margin:7px 0 0;font-size:13px;color:#718096}
+.tsfx .login-rule{display:block;height:2px;margin:16px 0 22px;background:#e6ebf2}
+.tsfx .login-rule::before{content:'';display:block;width:52px;height:100%;background:#1565d8}
+.tsfx .login-card .field{margin-bottom:16px}
+.tsfx .login-card .field>span{color:#0f2747;font-weight:700}
+.tsfx .login-card input{min-height:46px;border-radius:9px;background:#fbfcfe}
+.tsfx .login-card>.button{height:48px;margin:8px 0 20px;justify-content:center;gap:9px;border:0;border-radius:10px;background:linear-gradient(90deg,#0c4ba6 0%,#1565d8 55%,#3fa9f5 100%);box-shadow:0 10px 22px #1565d847}
+.tsfx .login-card>.button:hover{filter:brightness(1.06)}
+.tsfx .login-card .captcha-art{width:116px}
+.tsfx .login-card .captcha-row{gap:9px}
+.tsfx .login-card .demo-login{padding:13px 15px}
+.tsfx .login-card .demo-login p{margin:7px 0 10px}
+.tsfx .login-card .demo-login>small{margin-top:10px}
+.tsfx .login-card .login-note{margin-top:18px}
+/* Live mode is a warning, not a reassurance: anything signed in here reaches the real backend. */
+.tsfx .login-note.live{color:#8a5a00;font-weight:600}
+:root[data-theme='dark'] .tsfx .login-note.live{color:#e0a33c}
+@media(min-width:901px) and (max-height:820px){.tsfx .login-pitch{gap:24px;padding-top:30px;padding-bottom:30px}.tsfx .pitch-body h1{font-size:clamp(26px,2.9vw,36px)}.tsfx .pitch-body>p{font-size:14px}.tsfx .login-benefits{gap:22px;margin-top:16px}.tsfx .login-benefits b{font-size:18px}.tsfx .login-flow{margin-top:18px;padding:16px 22px 18px}.tsfx .login-capabilities{margin-top:10px}.tsfx .login-capabilities>div{padding:7px 12px}.tsfx .login-panel{padding-block:28px}}
+@media(max-width:900px){.tsfx .login{display:grid;grid-template-columns:1fr}.tsfx .login-pitch{padding:28px 24px 36px;gap:24px}.tsfx .pitch-body{margin:0}.tsfx .pitch-body h1{font-size:32px}.tsfx .pitch-body>p{display:block;font-size:14px}.tsfx .login-flow,.tsfx .login-capabilities{display:none}.tsfx .login-benefits{gap:20px}.tsfx .login-benefits b{font-size:18px}.tsfx .login-panel{padding:28px 16px 40px}.tsfx .login-card{padding:32px 24px 26px}.tsfx .login-pitch footer{display:none}}
+@media(max-width:380px){.tsfx .login-card{padding-inline:18px}.tsfx .login-card .captcha-row{flex-wrap:wrap}.tsfx .login-card .captcha-row>input{flex-basis:100%}.tsfx .login-benefits{gap:16px}}
+/* One column width for every block of the pitch: the text, the three statements, the flow and the capability rows. */
+.tsfx .pitch-body>p{max-width:none}
+.tsfx .login-benefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid #ffffff29;border-radius:12px;background:#ffffff0f}
+.tsfx .login-benefits{margin-top:18px}.tsfx .login-benefits>div{padding:9px 16px;gap:3px}.tsfx .login-flow{margin-top:18px}.tsfx .login-benefits>div+div{border-left:1px solid #ffffff29}
+.tsfx .login-capabilities>div{grid-template-columns:96px minmax(0,1fr)}
+
+/* One screen, no page scroll on desktop: both halves are exactly the viewport high and the type is scaled down to fit. */
+@media(min-width:901px){
+.tsfx .login{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+.tsfx .login-pitch{height:100%;min-height:0;gap:0;justify-content:space-between;padding:clamp(22px,3.6vh,40px) clamp(32px,4.5vw,64px)}
+.tsfx .login-pitch .login-mark{height:38px}.tsfx .login .brand strong{font-size:20px}
+.tsfx .pitch-body{margin:auto 0;padding:clamp(12px,3vh,32px) 0;max-width:600px}
+.tsfx .login-kicker{display:block;font-size:13.5px;letter-spacing:.3px;margin:-14px 0 16px}
+.tsfx .pitch-body h1{font-size:clamp(24px,2.5vw,36px);line-height:1.15;letter-spacing:-.4px;margin:10px 0 12px}
+.tsfx .pitch-body>p{font-size:13px;line-height:1.6;max-width:56ch;margin:0}
+.tsfx .login-benefits{gap:26px;margin-top:clamp(12px,2.2vh,20px)}.tsfx .login-benefits b{font-size:16px;letter-spacing:-.2px}.tsfx .login-benefits small{font-size:10.5px}
+.tsfx .login-flow{margin-top:clamp(12px,2.4vh,22px);padding:14px 20px 12px;border-radius:12px}.tsfx .login-flow>p{margin-bottom:12px}
+.tsfx .login-flow li>i{width:12px;height:12px}.tsfx .login-flow li>b{font-size:12.5px}.tsfx .login-flow li>small{min-height:0;font-size:10.5px}
+.tsfx .login-capabilities{margin-top:10px;gap:6px}.tsfx .login-capabilities>div{padding:7px 12px}.tsfx .login-capabilities small{font-size:10px;padding:2px 8px}
+.tsfx .login-panel{height:100%;min-height:0;padding:clamp(40px,6vh,56px) 24px clamp(16px,3vh,32px)}
+.tsfx .login-card{padding:clamp(22px,3.4vh,32px) 34px clamp(18px,2.8vh,26px);width:min(420px,100%)}
+.tsfx .login-card h2{font-size:22px;margin:0}.tsfx .login-card>p{font-size:12.5px;margin:5px 0 0}
+.tsfx .login-rule{margin:clamp(10px,1.8vh,16px) 0 clamp(12px,2.2vh,20px)}
+.tsfx .login-card .field{margin-bottom:clamp(10px,1.7vh,14px);gap:6px}.tsfx .login-card input{min-height:40px;font-size:12.5px}
+.tsfx .login-card>.button{height:42px;min-height:42px;margin:4px 0 clamp(10px,1.8vh,16px)}
+.tsfx .login-card .login-note{margin-top:0}
+}
+/* Short screens: drop the secondary blocks rather than scroll. */
+@media(min-width:901px) and (max-height:760px){.tsfx .login-capabilities{display:none}}
+@media(min-width:901px) and (max-height:640px){.tsfx .login-flow{display:none}.tsfx .pitch-body>p{display:none}}

@@ -1,0 +1,26 @@
+/* ALM 2 / ALM 3 Trial Balance Data: report grids and the upload on the TRM report layout (trmrepay.css, manualdata.css). */
+.tsfx .tb-app .md-period .tb-date{min-width:150px}
+.tsfx .tb-app .md-period .tb-group{min-width:200px;max-width:280px}
+.tsfx .tb-app .md-period .tb-check,.tsfx .tb-checks{align-self:flex-end;min-height:32px}
+.tsfx .tb-checks{display:flex;flex-direction:column;gap:3px}
+.tsfx .tb-table td.tb-wide{max-width:280px}
+.tsfx .tb-table .tb-flag{text-align:center}
+.tsfx .tb-yn{color:var(--muted)}
+.tsfx .tb-yn.yes{color:var(--ds-bad);font-weight:600}
+/* ALM Mapping as the report's cell colours: green mapped (C500), red not mapped (C600). */
+.tsfx .tb-mapped{display:inline-block;min-width:34px;text-align:center;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px}
+.tsfx .tb-mapped.yes{background:color-mix(in srgb,var(--ds-ok) 18%,transparent);color:var(--ds-ok)}
+.tsfx .tb-mapped.no{background:var(--ds-bad-bg);color:var(--ds-bad)}
+.tsfx .tb-table tfoot td{position:sticky;bottom:0;background:color-mix(in srgb,#f2c94c 38%,var(--bg));font-weight:700}
+/* Upload: file picker, the expected layout and the per-row status. */
+.tsfx .tb-upload .md-period{align-items:center}
+.tsfx .tb-file{position:relative;overflow:hidden;cursor:pointer}
+.tsfx .tb-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.tsfx .tb-layout{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0;padding:0 18px 12px}
+.tsfx .tb-layout code{font-size:11px;color:var(--text)}
+.tsfx .tb-layout .ignored code{color:var(--muted);text-decoration:line-through}
+.tsfx .tb-status{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--muted)}
+.tsfx .tb-status.create{background:color-mix(in srgb,var(--ds-ok) 18%,transparent);color:var(--ds-ok)}
+.tsfx .tb-status.update{background:var(--pale);color:var(--blue)}
+.tsfx .tb-status:is(.invalid,.rejected){background:var(--ds-bad-bg);color:var(--ds-bad)}
+.tsfx .tb-table tr.tb-bad td.tb-wide{color:var(--ds-bad);white-space:normal}

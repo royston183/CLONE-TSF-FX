@@ -38,6 +38,8 @@ export async function proxyRequest(
   ifMatch?: string | undefined,
   /** What the caller accepts. JSON unless it asks for XML: $metadata is only served as XML (406 otherwise). */
   accept?: string | undefined,
+  /** `odata.maxpagesize=…`: how many rows a page may hold (the Trade Flows screens read whole entity sets by paging). */
+  prefer?: string | undefined,
 ): Promise<ProxyResult> {
   const session = sessionFor(service.key)
   const url = serviceUrl(service, path, query)
@@ -50,6 +52,7 @@ export async function proxyRequest(
     if (service.authHeader) headers['authorization'] = service.authHeader
     if (contentType) headers['content-type'] = contentType
     if (ifMatch && WRITE_METHODS.has(method)) headers['if-match'] = ifMatch
+    if (prefer && /^odata\.maxpagesize=\d+$/i.test(prefer.trim())) headers['prefer'] = prefer.trim()
     if (needsToken && session.token) headers['x-csrf-token'] = session.token
     const cookie = await cookieHeader(session, url)
     if (cookie) headers['cookie'] = cookie

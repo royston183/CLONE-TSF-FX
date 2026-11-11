@@ -94,6 +94,7 @@ export async function apiRoutes(app: FastifyInstance, services: Map<string, Serv
       req.headers['content-type'],
       firstValue(req.headers['if-match']),
       firstValue(req.headers['accept']),
+      firstValue(req.headers['prefer']),
     )
 
     reply.code(result.status)

@@ -1,0 +1,169 @@
+/* Invoice Finalisation: the Deal ID's BLs panel and the invoice review (scoped to .dealbls*). ALM tokens; light and dark. */
+.tsfx .dealbls .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tsfx .dealbls__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tsfx .dealbls__head .button { display: inline-flex; align-items: center; gap: 6px; }
+.tsfx .dealbls__why { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+.tsfx .dealbls__empty { margin: 4px 0 6px; font-size: 12.5px; color: var(--muted); }
+.tsfx .dealbls__scroll { max-height: 380px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.tsfx .dealbls__scroll thead th { position: sticky; top: 0; z-index: 1; }
+.tsfx .dealbls__scroll tfoot :is(th, td) { position: sticky; bottom: 0; background: var(--surface); z-index: 1; }
+.tsfx .dealbls__share { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.tsfx .dealbls__review { display: flex; flex-direction: column; gap: 12px; }
+.tsfx .dealbls__steps { display: flex; gap: 8px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+.tsfx .dealbls__steps li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line); font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--surface); }
+.tsfx .dealbls__steps li span { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; background: var(--bg); color: var(--muted); }
+.tsfx .dealbls__steps li.on { color: var(--blue); border-color: var(--blue); }
+.tsfx .dealbls__steps li.on span { background: var(--blue); color: #fff; }
+.tsfx .dealbls__steps li.done { color: var(--text); }
+.tsfx .dealbls__steps li.done span { background: var(--green, #16a34a); color: #fff; }
+.tsfx .dealbls__checks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 12.5px; }
+.tsfx .dealbls__checks p { margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tsfx .dealbls__confirm { margin: 0 0 6px; font-size: 13.5px; line-height: 1.6; }
+.tsfx .dealbls .button.dealbls__go, .tsfx .invblotter .button.dealbls__go { background: var(--blue); border-color: var(--blue); color: #fff; }
+.tsfx .dealbls .button.dealbls__go:disabled { opacity: .5; }
+.tsfx .dealbls__section { display: flex; flex-direction: column; gap: 8px; }
+.tsfx .dealbls__section h4 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.tsfx .dealbls__figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin: 0; }
+.tsfx .dealbls__figures div { padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.tsfx .dealbls__figures div.plus { background: var(--pale); }
+.tsfx .dealbls__figures dt { font-size: 11.5px; color: var(--muted); }
+.tsfx .dealbls__figures dd { margin: 2px 0 0; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tsfx .dealbls__figures small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.tsfx .dealbls__note { margin: 0; font-size: 12px; color: var(--muted); }
+.tsfx .dealbls__bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tsfx .dealbls__search { width: min(380px, 100%); height: 32px; border-radius: 8px; font-size: 12.5px; }
+.tsfx .dealbls__why { padding: 0 16px; }
+
+/* The Trade Flows look on this screen (2026-11-07): compact title and bar, section titles with a blue bar, soft cards,
+   even controls, quiet table headers. Light and dark use the ALM tokens. */
+.tsfx .invblotter .topbar { min-height: 0; padding-top: 6px; padding-bottom: 6px; }
+.tsfx .invblotter .app-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.tsfx .invblotter .hdr-btn, .tsfx .invblotter .back-btn, .tsfx .invblotter .icon-btn { height: 32px; font-size: 12.5px; border-radius: 8px; border-color: var(--line); color: var(--text); background: var(--surface); }
+.tsfx .invblotter .hdr-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: none; }
+.tsfx .invblotter .hdr-btn:disabled { opacity: .45; }
+.tsfx .invblotter .card { border-radius: 14px; border-color: color-mix(in srgb, var(--line) 75%, transparent); box-shadow: 0 1px 2px rgb(15 23 42 / 4%); background: var(--surface); }
+.tsfx .invblotter .section-head { padding-top: 10px; padding-bottom: 6px; }
+.tsfx .invblotter .section-title, .tsfx .invblotter .table-title { position: relative; padding-left: 11px; font-size: 13.5px; font-weight: 700; color: var(--text); }
+.tsfx .invblotter .section-title::before, .tsfx .invblotter .table-title::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 2px; background: var(--blue); }
+.tsfx .invblotter .section-meta { font-size: 12px; color: var(--muted); }
+.tsfx .invblotter .field label { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.tsfx .invblotter .control { height: 30px; font-size: 12.5px; border-radius: 8px; border-color: var(--line); }
+.tsfx .invblotter .control.readonly, .tsfx .invblotter .control:disabled { background: color-mix(in srgb, var(--bg) 70%, var(--surface)); color: var(--text); }
+.tsfx .invblotter thead th { font-size: 12px; font-weight: 600; }
+.tsfx .invblotter tbody td { font-size: 12.5px; }
+.tsfx .invblotter .dealbls .section-head { padding: 10px 16px 6px; }
+.tsfx .invblotter .dealbls__scroll { margin: 0 16px 14px; }
+.tsfx .invblotter .dealbls__empty { padding: 0 16px 12px; }
+.tsfx .invblotter .topbar .title-wrap .app-title { font-size: 18px; letter-spacing: 0; }
+.tsfx .dealbls__check { margin: 4px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
+.tsfx .dealbls__check .kit-status { flex: 0 0 auto; }
+/* The invoice date cells show the whole date (dd-mm-yyyy) beside the calendar button. */
+.tsfx .invblotter .date-cell .cell-input.date { width: 132px; min-width: 132px; padding-right: 26px; font-variant-numeric: tabular-nums; }
+
+/* 2026-11-07 redesign: one deal card (picker, the Propose figures, progress), short one-line details, the BLs. Nothing
+   wraps: long values end in … with the full text in the tooltip. */
+.tsfx .invblotter .workspace { gap: 10px; }
+.tsfx .inv-hero { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.tsfx .inv-hero__pick { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tsfx .inv-hero__pick label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.tsfx .inv-hero__pick > .control { width: 220px; height: 32px; }
+.tsfx .inv-hero__pick .button { height: 32px; }
+.tsfx .inv-hero__meta { margin-left: auto; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.tsfx .inv-hero__empty { margin: 0; font-size: 12.5px; color: var(--muted); }
+.tsfx .inv-hero__body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; border-top: 1px solid var(--line); padding-top: 10px; }
+.tsfx .inv-hero__id { min-width: 0; }
+.tsfx .inv-hero__id h2 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; white-space: nowrap; min-width: 0; }
+.tsfx .inv-hero__status { font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tsfx .inv-hero__id p { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsfx .inv-hero__figs { display: flex; gap: 10px; margin: 0; }
+.tsfx .inv-hero__figs > div { min-width: 150px; padding: 8px 14px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.tsfx .inv-hero__figs dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
+.tsfx .inv-hero__figs dd { margin: 2px 0 0; font-size: 24px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
+.tsfx .inv-hero__figs dd small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.tsfx .inv-hero__figs > div > span { display: block; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .inv-hero__figs .key { background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 70%, #7c3aed)); border-color: transparent; box-shadow: 0 6px 18px color-mix(in srgb, var(--blue) 30%, transparent); }
+.tsfx .inv-hero__figs .key :is(dt, dd, dd small, span) { color: #fff; }
+.tsfx .inv-hero__figs .key :is(dt, dd small, span) { opacity: .85; }
+.tsfx .inv-hero__bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.tsfx .inv-hero__progress { flex: 1; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tsfx .inv-hero__progress span { display: block; height: 100%; background: var(--blue); }
+.tsfx .inv-details { padding: 10px 16px; }
+.tsfx .inv-details dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 20px; margin: 0; }
+.tsfx .inv-details dl > div { min-width: 0; }
+.tsfx .inv-details dt { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.tsfx .inv-details dd { margin: 1px 0 0; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsfx .invblotter .dealbls { padding: 0 0 4px; }
+.tsfx .dealbls__top { display: flex; align-items: center; gap: 12px; padding: 10px 16px 8px; white-space: nowrap; min-width: 0; }
+.tsfx .dealbls__count { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; font-size: 11.5px; background: var(--pale); color: var(--blue); }
+.tsfx .dealbls__meta { font-size: 12px; font-weight: 600; color: var(--text); }
+.tsfx .dealbls__top .dealbls__why { margin: 0 0 0 auto; padding: 0; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tsfx .dealbls__top .dealbls__go { margin-left: auto; flex: 0 0 auto; }
+.tsfx .dealbls__top .dealbls__why + .dealbls__go { margin-left: 0; }
+.tsfx .dealbls__sno { color: var(--muted); width: 1%; }
+.tsfx .invblotter .dealbls__scroll td, .tsfx .invblotter .dealbls__scroll th { white-space: nowrap; }
+@media (max-width: 1000px) {
+  .tsfx .inv-hero__body { grid-template-columns: 1fr; }
+  .tsfx .inv-hero__figs > div { flex: 1; min-width: 0; }
+  .tsfx .inv-hero__figs dd { font-size: 18px; }
+  .tsfx .inv-hero__pick .control { width: auto; flex: 1; min-width: 0; }
+  .tsfx .dealbls__top { flex-wrap: wrap; }
+}
+/* The table ends where its data ends (compact columns): the frame hugs it instead of leaving an empty strip. */
+.tsfx .dealbls__scroll { width: fit-content; max-width: calc(100% - 32px); }
+.tsfx .dealbls__review .dealbls__scroll { max-width: 100%; }
+/* The Deal ID picker (replaces the browser's datalist): one line per deal, ID then entity · status. */
+.tsfx .inv-picker { position: relative; }
+.tsfx .inv-picker .control { width: 240px; height: 32px; }
+.tsfx .inv-picker__list { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: 460px; max-height: 320px; overflow: auto; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 28px rgb(15 23 42 / 14%); }
+.tsfx .inv-picker__list li { display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; min-width: 0; }
+.tsfx .inv-picker__list li b { flex: 0 0 auto; font-size: 13px; color: var(--blue); }
+.tsfx .inv-picker__list li span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tsfx .inv-picker__list li.on { background: var(--pale); }
+@media (max-width: 1000px) { .tsfx .inv-picker { flex: 1; min-width: 0; } .tsfx .inv-picker .control { width: 100%; } .tsfx .inv-picker__list { width: min(460px, calc(100vw - 48px)); } }
+/* UI pass 2026-11-08: details keep their natural width (dates are never cut); SAP status as SAP writes it; the key
+   figure keeps white-on-blue contrast in Night mode; narrow screens wrap the figures, the title and the header buttons. */
+.tsfx .inv-details dl { display: flex; flex-wrap: wrap; gap: 8px 32px; }
+.tsfx .inv-details dl > div { flex: 0 0 auto; max-width: 340px; }
+.tsfx .inv-hero__id h2, .tsfx .inv-hero__id h2 * { text-transform: none; }
+.tsfx .inv-hero__figs .key { background: linear-gradient(135deg, #1d4ed8, #6d28d9); }
+@media (max-width: 1000px) {
+  .tsfx .inv-hero__id h2 { flex-wrap: wrap; white-space: normal; row-gap: 4px; }
+  .tsfx .inv-hero__figs { flex-wrap: wrap; }
+  .tsfx .inv-hero__figs > div { flex: 1 1 130px; }
+  .tsfx .inv-hero__bar { white-space: normal; flex-wrap: wrap; }
+  .tsfx .inv-details dl > div { flex: 1 1 140px; }
+  .tsfx .invblotter .topbar { flex-wrap: wrap; height: auto; gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+  .tsfx .invblotter .top-right { flex-wrap: wrap; gap: 6px; }
+}
+
+/* The BLs table fills the whole card width. */
+.tsfx .dealbls__scroll > *, .tsfx .dealbls__scroll table { width: 100%; min-width: 100%; }
+.tsfx .dealbls__scroll { width: 100%; box-sizing: border-box; }
+
+/* "Invoice Generated Successfully" dialog and the in-app PDF preview. ALM tokens; light and dark. */
+.tsfx .invgen { display: flex; flex-direction: column; gap: 14px; }
+.tsfx .invgen__ok { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--green, #16a34a) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--green, #16a34a) 35%, var(--line)); }
+.tsfx .invgen__ok svg { color: var(--green, #16a34a); flex: none; }
+.tsfx .invgen__ok div { display: flex; flex-direction: column; gap: 2px; }
+.tsfx .invgen__ok span { font-size: 12.5px; color: var(--muted); }
+.tsfx .invgen__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 0; }
+.tsfx .invgen__facts div { padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.tsfx .invgen__facts dt { font-size: 11.5px; color: var(--muted); }
+.tsfx .invgen__facts dd { margin: 2px 0 0; font-size: 14px; font-weight: 700; }
+.tsfx .invgen__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tsfx .invgen__table th, .tsfx .invgen__table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+.tsfx .invgen__table th { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.tsfx .invgen__table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tsfx .invgen__preview { border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.tsfx .invgen__preview p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.tsfx .invgen__error { color: var(--red, #c0392b) !important; }
+.tsfx .invgen__note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.tsfx .invgen__muted { color: var(--muted); font-size: 13px; }
+.tsfx .invgen__tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tsfx .invgen__tab { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+.tsfx .invgen__tab.on { border-color: var(--blue); color: var(--blue); font-weight: 600; }
+.tsfx .invgen__frame { width: 100%; height: min(68vh, 760px); border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+
+/* The reason a confirmation cannot start is read in full, on its own line under the panel header. */
+.tsfx .dealbls__top .dealbls__why { white-space: normal; flex: 1 1 100%; order: 9; overflow: visible; text-overflow: clip; }

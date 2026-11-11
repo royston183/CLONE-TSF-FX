@@ -1,0 +1,24 @@
+/* The transaction-number popup frame from SAP - Reporting (src/styles.css + trmdeal.css).
+   Scoped to TransactionModal so the shared form/record dialogs keep their own designs. */
+.tsfx .ds-overlay.transaction-overlay{padding:16px;background:#0b1a2b73;backdrop-filter:none}
+.tsfx .ds-modal.transaction{width:min(1040px,100%);max-height:calc(100dvh - 32px);border-radius:11px;box-shadow:0 24px 60px -12px #0b1a2b60}
+.tsfx .ds-modal.transaction .ds-modal-head{align-items:flex-start;gap:10px;padding:18px;border-bottom:1px solid #bed9ef;background:linear-gradient(110deg,#f0f8ff 0%,#deeffc 55%,#c7e3fa 100%);color:#173e64}
+.tsfx .ds-modal.transaction .ds-modal-head::before,.tsfx .ds-modal.transaction .ds-modal-head::after{content:'';position:absolute;pointer-events:none;border-radius:50%;z-index:-1}
+.tsfx .ds-modal.transaction .ds-modal-head::before{width:245px;height:245px;right:-70px;top:-150px;border:25px solid #8cc3ec55}
+.tsfx .ds-modal.transaction .ds-modal-head::after{width:205px;height:205px;right:-35px;top:-137px;border:1px solid #ffffffb8;box-shadow:0 0 0 16px #eaf6ff50}
+.tsfx .ds-modal.transaction .kit-modal-heading{gap:0}
+.tsfx .ds-modal.transaction .ds-modal-head h2{font-size:15px;color:#173e64;margin:0 0 4px}
+.tsfx .ds-modal.transaction .ds-modal-head p{margin:0;color:#416886;font-size:11px;line-height:1.6}
+.tsfx .ds-modal.transaction .ds-modal-head .icon-button{color:#173e64;border:0;background:none;border-radius:5px;width:28px;height:28px}
+.tsfx .ds-modal.transaction .ds-modal-head .icon-button:hover{background:#b6d9f3}
+.tsfx .ds-modal.transaction .ds-modal-body{padding:18px}
+.tsfx .ds-modal.transaction .ds-modal-foot{gap:8px;padding:12px 18px;background:var(--surface)}
+.tsfx .ds-modal.transaction .ftr{--ftr-label:156px}
+.tsfx .ds-modal.transaction .kit-data-table.ftr-grid th{padding:6px 10px}
+.tsfx .ds-modal.transaction .kit-data-table.ftr-grid td{padding:5px 10px}
+@media(max-width:640px){
+  .tsfx .ds-modal.transaction .ftr{--ftr-label:108px}
+  .tsfx .ds-modal.transaction .ftr-cols{grid-template-columns:minmax(0,1fr)}
+  .tsfx .ds-modal.transaction .ftr-panel{padding:10px}
+  .tsfx .ds-modal.transaction .ftr-val.wide{min-width:min(120px,100%)}
+}

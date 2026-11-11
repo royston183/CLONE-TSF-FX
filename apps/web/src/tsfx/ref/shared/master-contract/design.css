@@ -1,0 +1,14 @@
+/* Structural helpers for shared MC confirmations, including body portals.
+ * Route appearance lives in ../fx/alm-theme.css; business state classes stay in the features.
+ */
+.tsfx .mc-confirmation { position: relative; }
+.tsfx .mc-confirm-close { position: absolute; top: 8px; right: 10px; border: none; background: transparent; color: var(--sp-muted); font-size: 20px; cursor: pointer; }
+.tsfx .mc-confirm-fields { margin: 0; padding: 0; border: none; min-width: 0; }
+.tsfx .mc-confirm-fields .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+.tsfx .mc-confirm-fields .detail-lbl { font-size: 11px; color: var(--sp-muted); }
+.tsfx .mc-confirm-fields .detail-val { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.tsfx .mc-confirm-fields .note { margin: 12px 0; }
+.tsfx .mc-confirm-fields :is(textarea, input)[aria-invalid='true'] { border-color: var(--sp-error); background: var(--sp-error-tint); }
+.tsfx .mc-drag-ghost { position: fixed; top: -1000px; left: -1000px; padding: 6px 10px; background: #22354c; color: #fff; border-radius: 4px; font: 600 12px 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif; white-space: nowrap; pointer-events: none; }
+@media (max-width: 460px) { .tsfx .mc-confirm-fields .detail-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .tsfx .mc-confirmation { animation: none; transition: none; } }

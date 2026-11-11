@@ -80,25 +80,50 @@
       "code": "tf-upload-console",
       "id": "tf-upload",
       "route": "/apps/tf-upload",
-      "title": "Trade Flow Upload",
+      "title": "Tradeflows Upload",
       "status": "ready",
-      "services": [
-        "tf"
-      ],
+      "services": ["tradeflow"],
       "legacy": "legacy/Uplaod TF.html",
       "legacyPort": 8768,
-      "note": "Converted from legacy/Uplaod TF.html with its original stylesheet scoped under .tfupload. Parses .xlsx in the browser with no third-party library, as the original did. Not yet run against live SAP."
+      "note": "Upload the trade-flow Excel file: one trade flow and one Bill of Lading per row. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
     },
     {
       "code": "tf-manage-console",
       "id": "tf-manage",
       "route": "/apps/tf-manage",
-      "title": "Manage Trade Flows",
-      "status": "scaffold",
-      "services": [],
+      "title": "Manage Tradeflows",
+      "status": "ready",
+      "services": ["tradeflow"],
       "legacy": "legacy/Manage TF.html",
       "legacyPort": 8770,
-      "note": "Legacy page runs on DUMMY_MASTER_DATA and has never called an API. Its SAP contract is undefined."
+      "note": "Split a trade flow into BLs within its quantity, add BLs or delete one. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
+    },
+    {
+      "code": "tf-list-console",
+      "id": "tf-list",
+      "route": "/apps/tf-list",
+      "title": "Tradeflows List",
+      "status": "ready",
+      "services": ["tradeflow", "middleware"],
+      "note": "Every trade flow with its Bill of Lading, priced at the commodity price of its TF date, and its value. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
+    },
+    {
+      "code": "tf-update-price-console",
+      "id": "tf-update-price",
+      "route": "/apps/tf-update-price",
+      "title": "Update Price",
+      "status": "ready",
+      "services": ["tradeflow", "middleware"],
+      "note": "Pick a date, see every commodity with its price for that day, and set the missing ones. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
+    },
+    {
+      "code": "tf-propose-console",
+      "id": "tf-propose",
+      "route": "/apps/tf-propose",
+      "title": "Propose Tradeflow",
+      "status": "ready",
+      "services": ["tradeflow", "middleware"],
+      "note": "AI-ranked proposals of free BLs that match each Deal ID by commodity and USD value. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
     },
     {
       "code": "inv-console",
@@ -422,10 +447,10 @@
       "id": "mo-generate-invoices-deal-id",
       "route": "/apps/mo-generate-invoices-deal-id",
       "title": "MO: Generate Invoices for Deal ID (Single Deal ID)",
-      "status": "scaffold",
+      "status": "ready",
       "services": [],
       "legacy": "legacy/ZSGTSF_RBILL_ADJUST_SELECTION_BASIC.html",
-      "note": "Legacy page never called an API - no fetch, no XMLHttpRequest. Converted as a UI-only React screen with its seed data quarantined in data.ts; covers the Invoice Finalisation Blotter (Adjusted Price/Qty grid, tolerance-based Confirm Invoice with BL Compliance Checklist, View BLs de-assign workflow, Invoice Difference, House Bank/Partner Bank assignment, Amendment, and the more-actions menu). SAP wiring (ZSGTSFV_FX, the invoice/BL tables this reads and writes) is a follow-up once those entities are defined."
+      "note": "MO: Generate Invoices for Deal ID (Single Deal ID): BL assignment, house banks, Review & Confirm Invoice, invoice PDFs with preview and download, per-leg View Invoices. Imported from the TSF_FX application (TSF - FX v1): the same screen, logic and look, under apps/web/src/tsfx; SAP and middleware calls go through this gateway."
     },
     {
       "code": "ZSGTSFR014",

@@ -1,0 +1,265 @@
+/*
+ * Normal theme tokens (the LAS reference look). Values copied from LAS tokens.css.
+ * Scoped to [data-app-theme='normal'] so a wrapper div (UI Gallery preview) gets them too.
+ * Dark values apply when data-theme='dark' is on the same element or an ancestor.
+ */
+[data-app-theme='normal'] .tsfx {
+  /* Compact spacing shared by page gutters, panels, forms and dialogs. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 12px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-8: 20px;
+  --space-10: 24px;
+  --space-12: 28px;
+
+  /* Radius: moderate, enterprise. Status chips are squared too. */
+  --radius-xs: 4px; /* status chips, small tiles */
+  --radius-sm: 6px; /* inputs, buttons */
+  --radius-md: 8px; /* menus, inner blocks, icon tiles */
+  --radius-lg: 10px; /* cards, tables */
+  --radius-xl: 12px; /* dialogs */
+  --radius-pill: 999px; /* progress tracks only */
+
+  /* SAP Reporting type scale: 13px body, 12px controls/navigation, 11px captions. */
+  --font-sans: "Inter Variable", Inter, "Segoe UI", system-ui, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 14px;
+  --text-xl: 17px;
+  --text-2xl: 23px;
+
+  /* Layout */
+  --topbar-height: 52px;
+  --sidebar-width: 288px;
+  --sidebar-rail: 64px;
+  --control-height: 32px;
+  --control-height-sm: 28px;
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* The four-dot loader: vivid yellow, red, green and silver-grey, the same in both
+     themes so the signature reads identically on light and dark. */
+  --loader-yellow: #ffc400;
+  --loader-red: #ff3b3b;
+  --loader-green: #00d26a;
+  --loader-grey: #a7b4c8;
+
+  color-scheme: light;
+
+  /* Canvas and surfaces */
+  --background: #f4f7fb; /* SAP Reporting's final theme/alm.css override */
+  --canvas-inset: #f4f6f9; /* the grey inside a dialog, behind its white sections */
+  --surface: #ffffff; /* cards, tables, forms */
+  --surface-elevated: #ffffff; /* dialogs, menus */
+  --surface-subtle: #f7fafd; /* table toolbars and footers */
+  --surface-head: #edf4fc; /* table header row, section header rows */
+  --surface-readonly: #edf0f4; /* read-only, system-controlled fields */
+  --surface-hover: #f0f6fd;
+
+  /* Blue and pale surfaces from SAP Reporting. */
+  --primary-blue: #1265c8;
+  --primary-hover: #105bb5;
+  --primary-active: #0e50a1;
+  --primary-fill: #1265c8;
+  --bright-blue: #3fa9f5;
+  --dark-blue: #173a65;
+  --light-blue: #71afe7;
+  --primary-soft: #eaf3ff;
+  --primary-soft-border: #b7d4f5;
+
+  /* Navigation surfaces; layout.css resolves their text from the ink tokens. */
+  --nav-bg: #ffffff;
+  --nav-sidebar: #ffffff;
+  --nav-border: rgb(255 255 255 / 0.1);
+  --nav-hover: rgb(255 255 255 / 0.08);
+  --nav-active: rgb(255 255 255 / 0.16);
+  --nav-indicator: #ffffff;
+  --nav-icon-tile: #1265c8;
+  --nav-input: rgb(255 255 255 / 0.1);
+  --nav-input-border: rgb(255 255 255 / 0.18);
+  --text-on-nav: #ffffff;
+  --text-on-nav-secondary: rgb(255 255 255 / 0.74);
+  --text-on-nav-tertiary: rgb(255 255 255 / 0.55);
+
+  /* Header band: dialog headers and the overview welcome (white type on it) */
+  --band-bg: #1265c8;
+  --band-border: #105bb5;
+  --band-ring: rgb(255 255 255 / 0.14);
+
+  --border: #e6ebf2;
+  --border-strong: #c5d5e5;
+  --divider: #e9eff6;
+
+  --text-primary: #22354c;
+  --text-secondary: #637690;
+  --text-tertiary: #718096;
+  --text-disabled: #9aaabd;
+  --text-on-primary: #ffffff;
+  --text-on-status: #000000;
+  --text-on-warning: #000000;
+
+  /* Semantic accents */
+  --status-success: #2e9b5b;
+  --status-success-soft: #e6f4ec;
+  --status-success-border: #b5ddc5;
+  --status-warning: #e5a900;
+  --status-warning-soft: #fff6db;
+  --status-warning-border: #efd583;
+  --status-error: #d64545;
+  --status-error-fill: #c53b3b;
+  --status-error-soft: #fcebeb;
+  --status-error-border: #f0bfbf;
+  --status-neutral: #8a94a6;
+  --status-neutral-soft: #edf0f4;
+  --status-neutral-border: #d3d9e2;
+  --status-info: #1265c8;
+  --status-info-soft: #eaf3ff;
+  --status-info-border: #b7d4f5;
+
+  /* Charts: blue, green, yellow, red, grey */
+  --chart-1: #1265c8;
+  --chart-2: #2e9b5b;
+  --chart-3: #e5a900;
+  --chart-4: #d64545;
+  --chart-5: #8a94a6;
+  --chart-track: #e6ecf3;
+
+  --overlay: rgb(8 24 44 / 0.5);
+  --shadow-xs: 0 1px 2px rgb(11 55 104 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(11 55 104 / 0.06), 0 2px 6px rgb(11 55 104 / 0.05);
+  --shadow-md: 0 6px 18px rgb(11 55 104 / 0.12);
+  --shadow-lg: 0 24px 56px rgb(8 24 44 / 0.28);
+  --focus-ring: 0 0 0 3px rgb(18 101 200 / 0.2);
+
+  /* Illustration palette (flat, no gradients) */
+  --illo-surface: #ffffff;
+  --illo-paper: #e3eaf3;
+  --illo-line: #c4d2e3;
+  --illo-blue: #1265c8;
+  --illo-blue-soft: #d3e7fa;
+  --illo-ink: #173a65;
+  --illo-on-accent: #ffffff;
+
+  /* The sign-in brand panel, tooltips (inverted) */
+  --brand-panel: #0c4ba6;
+  --text-on-brand: #ffffff;
+  --tooltip-bg: #000000;
+  --tooltip-text: #ffffff;
+
+  /* The template's own variables follow the Normal palette, so existing components restyle. */
+  --bg: var(--background);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --line: var(--border);
+  --blue: var(--primary-blue);
+  --pale: var(--primary-soft);
+  --navy: var(--dark-blue);
+  --page: var(--background);
+  --sunk: var(--surface-subtle);
+  --ink: var(--text-primary);
+  --hover: var(--surface-hover);
+}
+
+/* Dark */
+[data-theme='dark'] .tsfx [data-app-theme='normal'],
+[data-theme='dark'][data-app-theme='normal'] .tsfx {
+  color-scheme: dark;
+
+  --background: #0d1724;
+  --canvas-inset: #111a24;
+  --surface: #14212f;
+  --surface-elevated: #1b2c40;
+  --surface-subtle: #18222d;
+  --surface-head: #1b2633;
+  --surface-readonly: #1f2a37;
+  --surface-hover: #1a2531;
+
+  --primary-blue: #4fa9f0;
+  --primary-hover: #185fb9;
+  --primary-active: #14539f;
+  /* Dark-mode actions use a deeper fill so white labels remain readable. */
+  --primary-fill: #1c6fd4;
+  --bright-blue: #7cc0f8;
+  --dark-blue: #bcdcfa;
+  --light-blue: #17304a;
+  --primary-soft: #17304a;
+  --primary-soft-border: #2f6ea8;
+
+  /* Dark navigation, matching the SAP Reporting surface palette. */
+  --nav-bg: #14212f;
+  --nav-sidebar: #14212f;
+  --nav-border: rgb(255 255 255 / 0.08);
+  --nav-hover: rgb(255 255 255 / 0.07);
+  --nav-active: rgb(255 255 255 / 0.12);
+  --nav-indicator: #8fb0ff;
+  --nav-icon-tile: #1c6fd4;
+  --nav-input: rgb(255 255 255 / 0.08);
+  --nav-input-border: rgb(255 255 255 / 0.16);
+  --text-on-nav: #ffffff;
+  --text-on-nav-secondary: rgb(255 255 255 / 0.74);
+  --text-on-nav-tertiary: rgb(255 255 255 / 0.55);
+
+  --band-bg: #164a7d;
+  --band-border: #2f6ea8;
+  --band-ring: rgb(255 255 255 / 0.1);
+
+  --border: #2d3a48;
+  --border-strong: #3c4b5c;
+  --divider: #26323f;
+
+  --text-primary: #e6eef8;
+  --text-secondary: #a9c2dd;
+  --text-tertiary: #8da9c6;
+  --text-disabled: rgb(255 255 255 / 0.38);
+  --text-on-primary: #ffffff;
+  --text-on-status: #ffffff;
+  --text-on-warning: #000000;
+
+  --status-success: #3fb871;
+  --status-success-soft: #15301f;
+  --status-success-border: #24543a;
+  --status-warning: #f0b829;
+  --status-warning-soft: #30280f;
+  --status-warning-border: #5a4a17;
+  --status-error: #e46060;
+  --status-error-fill: #b83c3c;
+  --status-error-soft: #381b1f;
+  --status-error-border: #66313a;
+  --status-neutral: #8a94a6;
+  --status-neutral-soft: #212c39;
+  --status-neutral-border: #354354;
+  --status-info: #4fa9f0;
+  --status-info-soft: #17304a;
+  --status-info-border: #2f6ea8;
+
+  --chart-1: #4fa9f0;
+  --chart-2: #3fb871;
+  --chart-3: #f0b829;
+  --chart-4: #e46060;
+  --chart-5: #8a94a6;
+  --chart-track: #24303e;
+
+  --overlay: rgb(2 6 12 / 0.7);
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 22px rgb(0 0 0 / 0.38);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+  --focus-ring: 0 0 0 3px rgb(79 169 240 / 0.3);
+
+  --illo-surface: #1c2835;
+  --illo-paper: #1d2a38;
+  --illo-line: #3c4b5c;
+  --illo-blue: #4fa9f0;
+  --illo-blue-soft: #17304a;
+  --illo-ink: #bcdcfa;
+  --illo-on-accent: #ffffff;
+
+  --brand-panel: #0b1d4a;
+  --text-on-brand: #ffffff;
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #000000;
+}

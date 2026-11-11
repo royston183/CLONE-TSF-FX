@@ -1,0 +1,88 @@
+/* ALM 1 TRM Repayment Cashflows: report grid on the Manual Data layout (manualdata.css). */
+.tsfx .trm-app .md-period .field.trm-list{min-width:190px}
+.tsfx .trm-filters{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.tsfx .trm-filters .field{margin:0}
+.tsfx .trm-unit select{min-width:120px}
+.tsfx .trm-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-end}
+.tsfx .trm-seg button{border:0;background:var(--surface);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:7px 12px;cursor:pointer}
+.tsfx .trm-seg button+button{border-left:1px solid var(--line)}
+.tsfx .trm-seg button.on{background:var(--pale);color:var(--blue)}
+.tsfx .trm-table td{white-space:nowrap}
+.tsfx .trm-table td:not(.md-amt){max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.tsfx .trm-app .md-name.trm-src{min-width:260px;max-width:320px}
+.tsfx .trm-kind{display:inline-block;min-width:62px;margin-right:8px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;text-align:center;vertical-align:1px}
+.tsfx .trm-kind.int{background:var(--pale);color:var(--blue)}
+.tsfx .trm-kind.pri{background:color-mix(in srgb,var(--line) 70%,transparent);color:var(--text)}
+
+/* ALM 1 Quarterly Report: the report's row colours (C700 headings, C300 subtotals, C100 level 1, C210/C100/C110 mismatch rows). */
+.tsfx .qr-table tr.qr-heading td{font-weight:700;background:color-mix(in srgb,var(--pale) 55%,var(--surface))}
+.tsfx .qr-table tr.qr-level1 td{font-weight:600;background:color-mix(in srgb,var(--line) 35%,var(--surface))}
+.tsfx .qr-table tr.qr-subtotal td{font-weight:700;background:color-mix(in srgb,#f2c94c 22%,var(--surface))}
+.tsfx .qr-table tr:is(.qr-mismatch,.qr-cumulative,.qr-percent) td{font-weight:700;background:color-mix(in srgb,var(--blue) 12%,var(--surface))}
+.tsfx .qr-table thead tr.qr-xbrl td{position:static;font-size:11px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}
+.tsfx .qr-flag{text-align:center;color:var(--blue)}
+/* Drill-down: the group ID and the amounts of a row with a source screen open that screen. */
+.tsfx .qr-drill{border:0;background:none;padding:0;font:inherit;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.tsfx .qr-table td.qr-drillable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.tsfx .qr-table td.qr-drillable:hover{color:var(--blue);background:var(--pale)}
+.tsfx .qr-drill-from{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tsfx .qr-drill-text{font-size:12px;line-height:1.5;margin:0 0 10px;color:var(--text)}
+.tsfx .qr-drill-back{display:inline-flex;align-items:center;gap:4px;margin-bottom:8px}
+.tsfx .qr-drill-table td{white-space:normal}.tsfx .qr-drill-table tr.on td{background:var(--pale);font-weight:700}
+.tsfx .qr-drill-table tfoot td{position:static;font-weight:700}
+.tsfx .qr-table th.qr-xbrl-code,.tsfx .qr-table td.qr-xbrl-code{text-align:center}
+.tsfx .qr-table td.qr-drilled{outline:2px solid var(--blue);outline-offset:-2px;background:var(--pale)}
+.tsfx .qr-locked{background:color-mix(in srgb,#eb5757 15%,transparent)}
+/* The whole report on the page, no inner scroll box: no height cap, compact cells, wrapping names and bucket headers
+   so all columns fit the width. A sideways scroll remains only as a fallback on narrow windows. */
+.tsfx .qr-app .qr-full{max-height:none;min-height:0;overflow-y:visible}
+.tsfx .qr-full .qr-table{font-size:11px}
+.tsfx .qr-full .qr-table th{white-space:normal;padding:5px 4px;vertical-align:bottom;font-size:10.5px}
+.tsfx .qr-full .qr-table th.md-amt span{max-width:none;white-space:normal;overflow:visible}
+.tsfx .qr-full .qr-table td:not(.md-amt),.tsfx .qr-full .qr-table td.md-amt{padding:5px 4px}
+.tsfx .qr-full .qr-table td:not(.md-amt):not(.md-id){white-space:normal}
+.tsfx .qr-full .qr-table .md-amt{min-width:0}
+.tsfx .qr-full .qr-table :is(.md-id,.md-name){position:static;min-width:0;box-shadow:none}
+.tsfx .qr-full .qr-table .md-name{min-width:130px;max-width:none;white-space:normal}
+
+/* TRM layouts: SAP-style subtotal lines (C300 yellow, lighter per nested level) and the layout controls. */
+.tsfx .trm-layout-pick{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted)}
+.tsfx .trm-layout-pick select{min-height:30px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font-size:11px;max-width:200px}
+.tsfx .trm-table tr.trm-sub td{font-weight:700;background:color-mix(in srgb,#f2c94c 30%,var(--surface))}
+.tsfx .trm-table tr.trm-sub-1 td{background:color-mix(in srgb,#f2c94c 18%,var(--surface))}
+.tsfx .trm-table tr.trm-sub-2 td{background:color-mix(in srgb,#f2c94c 10%,var(--surface))}
+.tsfx .trm-table tr.trm-sub:hover td{filter:brightness(.98)}
+.tsfx .trm-table td.trm-sum-label{max-width:none;overflow:visible}
+.tsfx .trm-sum-pin{position:sticky;left:12px;display:inline-block}
+.tsfx .trm-sub-toggle{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap}
+.tsfx .trm-sub-toggle:disabled{opacity:1;cursor:default}
+.tsfx .trm-sub-toggle small,.tsfx .trm-sum-label small{font-weight:500;color:var(--muted);font-size:10.5px;margin-left:4px}
+.tsfx .trm-stars{color:var(--muted);letter-spacing:1px}
+.tsfx .trm-table tfoot td{background:color-mix(in srgb,#f2c94c 38%,var(--bg))}
+.tsfx .trm-lo-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 14px}
+.tsfx .trm-lo-tabs button{border:0;background:none;padding:8px 12px;font:inherit;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tsfx .trm-lo-tabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
+.tsfx .trm-lo-columns{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(220px,1fr);gap:12px;align-items:stretch}
+.tsfx .trm-lo-list b{display:flex;gap:8px;align-items:center;font-size:11.5px;margin-bottom:6px}
+.tsfx .trm-lo-list b span{font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-radius:4px;padding:1px 6px}
+.tsfx .trm-lo-list ul{list-style:none;margin:0;padding:4px;border:1px solid var(--line);border-radius:8px;height:320px;overflow:auto}
+.tsfx .trm-lo-list li{padding:6px 9px;border-radius:5px;font-size:12px;cursor:pointer;user-select:none}
+.tsfx .trm-lo-list li:hover{background:var(--ds-row,var(--bg))}
+.tsfx .trm-lo-list li.on{background:var(--pale);color:var(--blue);font-weight:600}
+.tsfx .trm-lo-list li.trm-lo-none{color:var(--muted);cursor:default}
+.tsfx .trm-lo-moves{display:flex;flex-direction:column;justify-content:center;gap:6px}
+.tsfx .trm-lo-hint{grid-column:1/-1;font-size:11px;color:var(--muted);margin:8px 0 0;line-height:1.5}
+.tsfx .trm-lo-hint.bad{color:#c0392b}
+.tsfx .trm-lo-criteria{display:flex;flex-direction:column;gap:6px;min-width:min(520px,100%)}
+.tsfx .trm-lo-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:12px}
+.tsfx .trm-lo-n{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--pale);color:var(--blue);font-size:10.5px;font-weight:700;flex-shrink:0}
+.tsfx .trm-lo-name{flex:1;font-weight:600}
+.tsfx .trm-lo-add{display:flex;gap:8px;margin-top:6px}
+.tsfx .trm-lo-add select{flex:1;min-height:30px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px}
+.tsfx .trm-lo-display,.tsfx .trm-lo-save{display:flex;flex-direction:column;gap:12px;min-width:min(420px,100%)}
+.tsfx .trm-lo-display .field,.tsfx .trm-lo-save .field{margin:0}
+@media(max-width:750px){.tsfx .trm-lo-columns{grid-template-columns:1fr}.tsfx .trm-lo-moves{flex-direction:row}.tsfx .trm-lo-list ul{height:180px}}
+
+/* ALM 2/3 TRM Principal O/S: rows whose TPM12 values SAP could not read (their amounts are missing). */
+.tsfx .trm-table tr.trm-flagged td{background:var(--ds-bad-bg)}
+.tsfx .md-tag.trm-flag{background:var(--ds-bad-bg);color:var(--ds-bad);border:1px solid color-mix(in srgb,var(--ds-bad) 35%,transparent)}

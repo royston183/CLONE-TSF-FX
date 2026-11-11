@@ -1,0 +1,138 @@
+/* Shared B/C report and dialog conventions, inspired by SAP Reporting. ALM remains the token baseline. */
+.tsfx .kit-report-page{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tsfx .kit-selection{overflow:hidden;min-width:0}
+.tsfx .kit-selection-head,.tsfx .kit-overview-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px}
+.tsfx .kit-selection-head h2,.tsfx .kit-overview-head h2{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:700}
+.tsfx .kit-selection-head h2 svg,.tsfx .kit-overview-head h2 svg{color:var(--blue);flex-shrink:0}
+.tsfx .kit-selection-head p{margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.tsfx .kit-selection-head>div{min-width:0}
+.tsfx .kit-selection-head>button{flex-shrink:0}
+.tsfx .kit-selection-body{border-top:1px solid var(--line);padding:18px 20px;background:color-mix(in srgb,var(--bg) 45%,var(--surface))}
+.tsfx .kit-selection-body[hidden]{display:none}
+.tsfx .kit-selection-body :is(.md-period,.ov-period){display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px;padding:0;margin:0;border:0;background:none}
+.tsfx .kit-selection-body .field{min-width:160px;flex:1 1 180px;max-width:300px;margin:0}
+.tsfx .kit-selection-body .field>span{font-size:12px;font-weight:600}
+.tsfx .kit-selection-body .button{min-height:36px}
+.tsfx .kit-chevron-open{transform:rotate(180deg)}
+.tsfx .kit-report-overview{min-width:0;overflow:hidden}
+.tsfx .kit-overview-head{padding-bottom:8px}
+.tsfx .kit-report-flow{display:grid;grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr) 32px minmax(0,1fr);align-items:stretch;list-style:none;padding:8px 20px 20px;margin:0}
+.tsfx .kit-report-flow>li:not(.kit-flow-link){display:flex;align-items:flex-start;gap:12px;min-width:0;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tsfx .kit-report-flow>li:nth-child(3){border-color:color-mix(in srgb,var(--blue) 35%,var(--line));background:color-mix(in srgb,var(--pale) 50%,var(--surface))}
+.tsfx .kit-flow-icon{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:10px;color:var(--blue);background:var(--pale)}
+.tsfx .kit-report-flow li>div{min-width:0}
+.tsfx .kit-report-flow small{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.tsfx .kit-report-flow b{display:block;font-size:13px;line-height:1.5}
+.tsfx .kit-report-flow p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.tsfx .kit-report-flow .kit-flow-link{display:flex;align-items:center;justify-content:center;color:var(--blue);position:relative}
+.tsfx .kit-flow-link::before{content:'';height:1px;width:100%;background:var(--line);position:absolute}
+.tsfx .kit-flow-link svg{z-index:1;background:var(--surface)}
+.tsfx .kit-layout-controls{display:flex;align-items:flex-end;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-left:auto;max-width:100%}
+.tsfx .kit-layout-controls .trm-layout-pick{display:flex;align-items:center;gap:6px;margin:0;font-size:12px;color:var(--muted)}
+.tsfx .kit-layout-controls select{max-width:210px;min-width:0}
+.tsfx .kit-report-page .trm-filters>.md-period-right{margin-left:0;flex:1 1 auto;flex-wrap:wrap;justify-content:flex-start}
+.tsfx .kit-report-page .trm-filters>.kit-layout-controls{flex:0 1 auto;margin-left:auto}
+.tsfx .kit-list .ds-filters>.ds-actions:has(.kit-layout-controls){margin-left:auto;justify-content:flex-end}
+.tsfx .kit-dashboard-status{padding:0 2px;display:flex;gap:8px;flex-wrap:wrap}
+
+/* Status tags use all three traffic-light colours and readable labels in both themes. */
+.tsfx .kit-status{--status-color:#15803d;display:inline-flex;align-items:center;justify-content:center;gap:6px;max-width:100%;padding:4px 9px;border:1px solid color-mix(in srgb,var(--status-color) 32%,transparent);border-radius:999px;background:color-mix(in srgb,var(--status-color) 10%,var(--surface));color:var(--status-color);font-size:11px;font-weight:650;line-height:1.35;vertical-align:middle}
+.tsfx .kit-status.amber{--status-color:#9a6700}
+.tsfx .kit-status.red{--status-color:#c93636}
+.tsfx .kit-status-dot{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:currentColor}
+[data-theme=dark] .tsfx .kit-status.green{--status-color:#6bd99a}
+[data-theme=dark] .tsfx .kit-status.amber{--status-color:#f2c45f}
+[data-theme=dark] .tsfx .kit-status.red{--status-color:#ff9393}
+
+/* Headings of records and dashboards: navy by day, the text colour by night. */
+.tsfx{--heading:var(--navy,#173a65)}
+[data-theme=dark] .tsfx{--heading:var(--text)}
+
+/* Pop-ups (components/ui/Modal), the one base layer: a header and a footer that stay in view around a bounded scrolling
+   body. Dialogs keep Reporting's soft blue header with a small arch; a record (.ds-modal.record, ObjectDialog) has the
+   compact white header of the record design: eyebrow, key, status tag and subtitle. */
+.tsfx .ds-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;background:#0d1e346b;backdrop-filter:blur(3px);font-family:'Inter Variable',Inter,'Segoe UI',sans-serif}
+.tsfx .ds-modal{display:flex;flex-direction:column;width:560px;max-width:100%;min-width:0;max-height:calc(100dvh - 48px);overflow:hidden;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -12px #0a1e3c59}
+.tsfx .ds-modal.wide{width:1040px}
+.tsfx .ds-modal.record{width:940px}
+.tsfx .ds-modal-head{position:relative;isolation:isolate;overflow:hidden;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px;background:linear-gradient(115deg,color-mix(in srgb,var(--pale) 80%,var(--surface)),var(--surface));border-bottom:1px solid color-mix(in srgb,var(--blue) 18%,var(--line))}
+.tsfx .ds-modal-head::after{content:'';position:absolute;z-index:-1;width:150px;height:150px;right:60px;top:-112px;border:22px solid color-mix(in srgb,var(--blue) 8%,transparent);border-radius:50%;pointer-events:none}
+.tsfx .ds-modal-head h2{margin:0;font-size:17px;font-weight:700;line-height:1.35;letter-spacing:-.3px;color:var(--heading);overflow-wrap:anywhere}
+.tsfx .ds-modal-head p{margin:0;font-size:12px;line-height:1.5;color:var(--muted);max-width:680px}
+.tsfx .ds-modal-head .icon-button{flex-shrink:0;border:1px solid var(--line);border-radius:9px;background:var(--surface);width:32px;height:32px}
+.tsfx .ds-modal-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:20px 22px}
+.tsfx .ds-modal-foot{flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .ds-modal.record .ds-modal-head{align-items:flex-start;padding:18px 22px 14px;background:var(--surface);border-bottom-color:var(--line)}
+.tsfx .ds-modal.record .ds-modal-head::after{content:none}
+.tsfx .ds-modal.record .ds-modal-head h2{font-size:19px}
+.tsfx .ds-modal.record .ds-modal-head p{font-size:13px}
+.tsfx .ds-modal.record .ds-modal-head .icon-button{width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--muted)}
+.tsfx .ds-modal.record .ds-modal-head .icon-button:hover:not(:disabled){background:var(--bg);color:var(--text)}
+.tsfx .ds-modal.record .ds-modal-body{padding:0}
+.tsfx .kit-dialog-section{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.tsfx .kit-dialog-section+.kit-dialog-section{margin-top:16px}
+.tsfx .kit-dialog-section-head{padding:13px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .kit-dialog-section-head h3{margin:0;font-size:12px;font-weight:700;line-height:1.5}
+.tsfx .kit-dialog-section-head p{margin:4px 0 0;font-size:11.5px;line-height:1.6;color:var(--muted)}
+.tsfx .kit-dialog-section-body{padding:16px;min-width:0}
+.tsfx .kit-dialog-section-body>.field+.field{margin-top:14px}
+.tsfx .kit-dialog-section-body>.md-toggle{display:flex;margin-top:14px}
+.tsfx .kit-dialog-section .ds-filters{padding:0 0 12px;border:0}
+.tsfx .ds-modal .trm-lo-save{min-width:0;gap:0}
+.tsfx .kit-dialog-section .kit-form .field{margin:0;min-width:0}
+.tsfx .ds-modal .trm-lo-tabs{gap:5px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow-x:auto;max-width:100%}
+.tsfx .ds-modal .trm-lo-tabs button{border:0;border-radius:7px;white-space:nowrap;flex:1;padding:10px 14px;margin:0;font-weight:600}
+.tsfx .ds-modal .trm-lo-tabs button.on{background:var(--surface);color:var(--blue);box-shadow:0 1px 5px #10233b14}
+.tsfx .kit-wizard{display:flex;list-style:none;gap:0;margin:0 0 22px;padding:0;counter-reset:step}
+.tsfx .kit-wizard li{display:flex;align-items:center;gap:9px;position:relative;flex:1;min-width:0;font-size:12px;color:var(--muted)}
+.tsfx .kit-wizard li:not(:last-child)::after{content:'';height:1px;background:var(--line);flex:1;margin:0 12px}
+.tsfx .kit-wizard li>span{display:grid;place-items:center;flex:0 0 30px;height:30px;border:1px solid var(--line);border-radius:50%;background:var(--bg);font-weight:700}
+.tsfx .kit-wizard li.current{color:var(--blue)}
+.tsfx .kit-wizard li.current>span{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 4px var(--pale)}
+.tsfx .kit-wizard li.complete>span{color:var(--blue);background:var(--pale);border-color:color-mix(in srgb,var(--blue) 30%,var(--line))}
+.tsfx .kit-wizard li b{font-size:12px;line-height:1.4}
+.tsfx .kit-selection button:focus-visible,.tsfx .ds-modal button:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+/* Table headings line up with their cells, on pages and in pop-ups alike: left by default; right over amounts and
+   numbers (.kit-num, .md-amt), the sort arrow and a filter button moving to the label's left; centred over check boxes
+   and flags. A heading has its cells' side padding: 12px (through its button when it sorts), 8px right over the
+   amounts of a .md-table. */
+.tsfx :is(.app,.ds-overlay) th{text-align:left;vertical-align:middle}
+.tsfx :is(.app,.ds-overlay) :is(th.kit-num,th.md-amt){text-align:right}
+.tsfx :is(.app,.ds-overlay) :is(th.ds-cb,th.ds-flag){text-align:center}
+.tsfx :is(.app,.ds-overlay) .sort-th{justify-content:flex-start;text-align:left}
+.tsfx :is(.app,.ds-overlay) :is(th.kit-num,th.md-amt) :is(.sort-th,.ds-sort){flex-direction:row-reverse;justify-content:flex-start;text-align:right}
+.tsfx :is(.app,.ds-overlay) th.kit-num .ds-th{flex-direction:row-reverse;padding:0 12px 0 6px}
+.tsfx :where(.ds-table) th:not(.sortable){padding:8px 12px}
+.tsfx :where(.ds-table) th.sortable{padding:0}
+.tsfx .md-table th.md-amt:not(.sortable),.tsfx .md-table th.md-amt .sort-th,.tsfx .ds-modal .md-table th.md-amt .sort-th{padding-right:8px}
+.tsfx .ov-stmt th.md-amt:has(>.ov-bucket-btn){padding:0}
+.tsfx .ov-stmt .ov-bucket-btn{text-align:right}
+/* The transaction pop-up (components/trm): SAP Reporting's label width, loading line, class pagination and lookup preview
+   (kept out of trmdeal.css, which stays a byte-identical copy of ALM's). */
+.tsfx .ftr.trm-deal{--ftr-label:156px}
+.tsfx .td-loading{display:flex;align-items:center;justify-content:flex-start;gap:9px}
+.tsfx .report-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 18px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
+.tsfx .report-pagination>div{display:flex;align-items:center;gap:10px}
+.tsfx .report-pagination .icon-button{border:1px solid var(--line);border-radius:5px;padding:3px;background:var(--surface)}
+.tsfx .report-pagination select{border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--text);padding:2px 4px;font-size:10.5px}
+.tsfx .td-pagination{padding:12px 0 0}
+.tsfx .td-table .num{text-align:right;font-variant-numeric:tabular-nums}
+/* The flow grids keep their own compact cells inside the pop-up, heading and cell on the same side padding. */
+.tsfx .ds-modal .ds-table.ftr-grid th{padding:6px 10px}
+.tsfx .ds-modal .ds-table.ftr-grid td{padding:5px 10px}
+.tsfx .transaction-hotspot-preview{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:7px;background:var(--bg);padding:12px;margin-top:18px;font-size:12px}
+.tsfx .transaction-hotspot-preview>span{color:var(--muted)}
+.tsfx .transaction-hotspot-preview .td-link{display:inline-flex;align-items:center;gap:5px}
+@media (max-width:640px){.tsfx .ftr.trm-deal{--ftr-label:108px}.tsfx .report-pagination{padding:10px 12px;font-size:10px;gap:8px}.tsfx .report-pagination>div{gap:7px}.tsfx .report-pagination>div>span:first-child{display:none}}
+@media(max-width:1000px){.tsfx .kit-report-page .trm-filters>.kit-layout-controls{flex-basis:100%}.tsfx .kit-report-flow>li:not(.kit-flow-link){flex-direction:column}.tsfx .kit-layout-controls{justify-content:flex-end}}
+@media(max-width:640px){
+  .tsfx .kit-selection-head,.tsfx .kit-overview-head{padding:14px;gap:10px;align-items:flex-start}.tsfx .kit-selection-head{flex-wrap:wrap}.tsfx .kit-selection-head>button{margin-left:auto}
+  .tsfx .kit-selection-body{padding:14px}.tsfx .kit-selection-body .field{max-width:none;flex-basis:100%}
+  .tsfx .kit-report-flow{grid-template-columns:1fr;padding:8px 14px 14px}.tsfx .kit-report-flow>li:not(.kit-flow-link){flex-direction:row}
+  .tsfx .kit-report-flow .kit-flow-link{height:26px}.tsfx .kit-flow-link::before{height:100%;width:1px}.tsfx .kit-flow-link svg{transform:rotate(90deg)}
+  .tsfx .kit-layout-controls{flex-basis:100%;margin-left:auto}.tsfx .kit-layout-controls select{max-width:160px}.tsfx .kit-layout-controls .button{font-size:11px}
+  .tsfx .ds-overlay{padding:10px}.tsfx .ds-modal{max-height:calc(100dvh - 20px);border-radius:14px}.tsfx .ds-modal-head{padding:14px 16px}.tsfx .ds-modal-body{padding:16px}.tsfx .ds-modal-foot{padding:12px 16px}
+  .tsfx .ds-modal-head h2{font-size:16px}.tsfx .ds-modal.record .ds-modal-head{padding:14px 12px 12px 16px}.tsfx .ds-modal.record .ds-modal-head h2{font-size:17px}.tsfx .kit-dialog-section-body{padding:12px}.tsfx .kit-dialog-section-head{padding:11px 12px}
+  .tsfx .kit-wizard li{flex-direction:column;text-align:center;gap:7px}.tsfx .kit-wizard li:not(:last-child)::after{position:absolute;top:15px;width:calc(100% - 40px);left:calc(50% + 20px);margin:0}
+  .tsfx .ds-modal .trm-lo-columns{grid-template-columns:minmax(0,1fr)}.tsfx .ds-modal .trm-lo-list{min-width:0}.tsfx .ds-modal .trm-lo-list ul{height:170px}
+}

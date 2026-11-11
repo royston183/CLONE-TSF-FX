@@ -1,0 +1,367 @@
+/* Propose Tradeflows (scoped to .tsf-propose and the proposal modal .tsf-proposal). ALM tokens; light and dark.
+   One type scale (11 / 12 / 13 / 14 / 18 px), one accent (blue); green only for an exact match, amber only outside 1%. */
+.tsfx .tsf-propose { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.tsfx .tsf-propose .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-propose .actions { text-align: right; }
+.tsfx .tsf-propose__muted { color: var(--muted); font-size: 12px; margin: 0; }
+.tsfx .tsf-propose__link { display: inline-flex; align-items: center; gap: 3px; border: 0; background: none; color: var(--blue); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 2px; }
+.tsfx .tsf-propose__link:focus-visible, .tsfx .tsf-propose__opt:focus-visible, .tsfx .tsf-propose__filter button:focus-visible, .tsfx .tsf-propose__deal-bls:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* Cards are buttons: their data keeps its own case (the theme capitalises button text). */
+.tsfx .tsf-propose__card, .tsfx .tsf-propose__card *, .tsfx .tsf-propose__deal, .tsfx .tsf-propose__deal *, .tsfx .tsf-propose__deal-bls, .tsfx .tsf-propose__deal-bls * { text-transform: none; }
+.tsfx .tsf-propose__card .tsf-propose__rank { text-transform: uppercase; }
+.tsfx .tsf-propose__nowrap { white-space: nowrap; }
+
+/* Header: source and the four figures. */
+.tsfx .tsf-propose__top { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.tsfx .tsf-propose__kpis { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.tsfx .tsf-propose__kpis div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; }
+.tsfx .tsf-propose__kpis dt { font-size: 11px; color: var(--muted); }
+.tsfx .tsf-propose__kpis dd { margin: 1px 0 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-propose__kpis small { font-size: 11px; font-weight: 500; color: var(--muted); }
+
+.tsfx .tsf-propose__layout { display: grid; grid-template-columns: minmax(260px, 310px) minmax(0, 1fr); gap: 12px; align-items: start; }
+.tsfx .tsf-propose__main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tsfx .tsf-propose .panel { margin: 0; }
+
+/* Deal list. */
+.tsfx .tsf-propose__deals { padding: 0; position: sticky; top: 12px; max-height: calc(100vh - 140px); display: flex; flex-direction: column; overflow: hidden; }
+.tsfx .tsf-propose__deals-head { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.tsfx .tsf-propose__deals-head h2 { margin: 0; font-size: 14px; }
+.tsfx .tsf-propose__deals-head h2 span { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.tsfx .tsf-propose__search { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; background: var(--bg); color: var(--muted); }
+.tsfx .tsf-propose__search .input { border: 0; background: transparent; box-shadow: none; padding: 6px 0; width: 100%; font-size: 12px; }
+.tsfx .tsf-propose__filter { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; align-self: flex-start; }
+.tsfx .tsf-propose__filter button { border: 0; background: var(--surface); color: var(--muted); font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer; }
+.tsfx .tsf-propose__filter button + button { border-left: 1px solid var(--line); }
+.tsfx .tsf-propose__filter button.on { background: var(--pale); color: var(--blue); font-weight: 600; }
+.tsfx .tsf-propose__scoped { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 11.5px; color: var(--blue); }
+.tsfx .tsf-propose__deal-list { list-style: none; margin: 0; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.tsfx .tsf-propose__deal-list li { display: flex; flex-direction: column; }
+.tsfx .tsf-propose__deal { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; font-size: 12px; transition: border-color .12s; }
+.tsfx .tsf-propose__deal b { font-size: 13px; }
+.tsfx .tsf-propose__deal:hover { border-color: var(--blue); }
+.tsfx .tsf-propose__deal:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .tsf-propose__deal.selected { border-color: var(--blue); background: var(--pale); box-shadow: inset 3px 0 0 var(--blue); }
+.tsfx .tsf-propose__deal-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tsfx .tsf-propose__deal-desc { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsfx .tsf-propose__commodity { font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--pale); color: var(--blue); white-space: nowrap; }
+.tsfx .tsf-propose__deal-left { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-propose__bar { height: 3px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tsfx .tsf-propose__bar span { display: block; height: 100%; background: var(--blue); }
+.tsfx .tsf-propose__deal-bls { display: flex; align-items: center; gap: 6px; margin: -3px 6px 0; padding: 6px 9px 4px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; background: var(--bg); color: var(--blue); font: inherit; font-size: 11.5px; cursor: pointer; text-align: left; }
+.tsfx .tsf-propose__deal-bls span { flex: 1; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-propose__deal-bls:hover { background: var(--pale); }
+
+.tsfx .tsf-propose__empty { text-align: center; padding: 40px 24px; color: var(--muted); }
+.tsfx .tsf-propose__empty svg { color: var(--blue); }
+.tsfx .tsf-propose__empty h3 { color: var(--text); margin: 8px 0 4px; font-size: 14px; }
+.tsfx .tsf-propose__empty p { max-width: 440px; margin: 0 auto; font-size: 12.5px; }
+
+/* Deal header: one slim row. */
+.tsfx .tsf-propose__hero { padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 20px; align-items: center; }
+.tsfx .tsf-propose__hero-title h2 { margin: 0 0 2px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.tsfx .tsf-propose__hero-figures { display: flex; gap: 8px; margin: 0; }
+.tsfx .tsf-propose__hero-figures div { padding: 5px 12px; border-radius: 8px; background: var(--bg); min-width: 120px; }
+.tsfx .tsf-propose__hero-figures div.accent { background: var(--pale); }
+.tsfx .tsf-propose__hero-figures dt { font-size: 11px; color: var(--muted); }
+.tsfx .tsf-propose__hero-figures dd { margin: 1px 0 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-propose__hero-figures .accent dd { color: var(--blue); }
+.tsfx .tsf-propose__hero-figures small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.tsfx .tsf-propose__progress { grid-column: 1 / -1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tsfx .tsf-propose__progress span { display: block; height: 100%; background: var(--blue); }
+
+/* Proposals: options, conditions, cards. */
+.tsfx .tsf-propose__proposals { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.tsfx .tsf-propose__options { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.tsfx .tsf-propose__options [role=group] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tsfx .tsf-propose__options [role=group] > span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-right: 2px; }
+.tsfx .tsf-propose__opt { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); padding: 4px 11px; font: inherit; font-size: 12px; cursor: pointer; }
+.tsfx .tsf-propose__opt:hover { border-color: var(--blue); }
+.tsfx .tsf-propose__opt.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.tsfx .tsf-propose__ask { display: flex; gap: 6px; align-items: center; padding: 4px 4px 4px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--blue); }
+.tsfx .tsf-propose__ask:focus-within { border-color: var(--blue); }
+.tsfx .tsf-propose__ask .input { flex: 1; border: 0; background: transparent; box-shadow: none; font-size: 12.5px; padding: 6px 2px; }
+.tsfx .tsf-propose__understood { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tsfx .tsf-propose__rule { font-size: 11.5px; padding: 2px 9px; border-radius: 999px; background: var(--pale); color: var(--blue); }
+.tsfx .tsf-propose__not { font-size: 11.5px; color: var(--muted); font-style: italic; }
+.tsfx .tsf-propose__none { margin: 0; padding: 12px 14px; border-radius: 9px; border: 1px dashed var(--line); color: var(--text); font-size: 12.5px; }
+.tsfx .tsf-propose__hint { margin: 0; font-size: 12px; color: var(--muted); }
+.tsfx .tsf-propose__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.tsfx .tsf-propose__card { width: 100%; height: 100%; text-align: left; display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; font-size: 12px; transition: border-color .12s, box-shadow .12s; }
+.tsfx .tsf-propose__card:hover { border-color: var(--blue); box-shadow: var(--shadow); }
+.tsfx .tsf-propose__card:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .tsf-propose__card.best { border-color: var(--blue); box-shadow: inset 0 3px 0 var(--blue); }
+.tsfx .tsf-propose__card-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.tsfx .tsf-propose__rank { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.tsfx .tsf-propose__card.best .tsf-propose__rank { color: var(--blue); }
+.tsfx .tsf-propose__match { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--pale); color: var(--blue); }
+.tsfx .tsf-propose__match.exact { background: color-mix(in srgb, var(--ov-c3, #1f8a5b) 14%, transparent); color: var(--ov-c3, #1f8a5b); }
+.tsfx .tsf-propose__match.out { background: color-mix(in srgb, #c98a1b 16%, transparent); color: #a86e0c; }
+.tsfx .tsf-propose__total { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-propose__total small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.tsfx .tsf-propose__diff, .tsfx .tsf-propose__meta { color: var(--muted); font-size: 11.5px; }
+.tsfx .tsf-propose__bls { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsfx .tsf-propose__reason { display: flex; gap: 5px; font-size: 11.5px; color: var(--text); line-height: 1.4; padding-top: 6px; border-top: 1px dashed var(--line); }
+.tsfx .tsf-propose__reason svg { flex: none; margin-top: 2px; color: var(--blue); }
+.tsfx .tsf-propose__turns { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 6px; }
+.tsfx .tsf-propose__turns li { display: flex; flex-direction: column; gap: 3px; }
+.tsfx .tsf-propose__turns p { margin: 0; padding: 6px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45; }
+.tsfx .tsf-propose__turns .q { background: var(--bg); align-self: flex-end; }
+.tsfx .tsf-propose__turns .a { background: var(--pale); display: flex; gap: 6px; }
+.tsfx .tsf-propose__turns .a svg { flex: none; margin-top: 3px; color: var(--blue); }
+.tsfx .tsf-propose__turns .a.off { color: var(--muted); }
+
+/* Assigned BLs (page and modal). */
+.tsfx .tsf-propose__assigned { padding: 14px 16px; }
+.tsfx .tsf-propose__assigned h3 { margin: 0 0 10px; font-size: 14px; }
+.tsfx .tsf-propose__assigned h3 span { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.tsfx .tsf-propose__groups { display: flex; flex-direction: column; gap: 8px; }
+.tsfx .tsf-propose__groups-sum { margin: 0; font-size: 12px; color: var(--muted); }
+.tsfx .tsf-propose__groups-sum b { color: var(--text); font-variant-numeric: tabular-nums; }
+.tsfx .tsf-propose__tf-strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.tsfx .tsf-propose__tf-strip li { display: flex; flex-direction: column; gap: 2px; padding: 7px 11px; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 8px; background: var(--surface); font-size: 12px; }
+.tsfx .tsf-propose__tf-strip svg { color: var(--blue); vertical-align: -2px; margin-right: 5px; }
+.tsfx .tsf-propose__tf-strip small { color: var(--muted); font-size: 11px; }
+.tsfx .tsf-propose__tf-usd { font-size: 13px; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-propose__capped { color: var(--muted); }
+
+/* Proposal modal. */
+.tsfx .tsf-proposal { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.tsfx .tsf-proposal .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-proposal__section { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; }
+.tsfx .tsf-proposal__section h4 { margin: 0 0 10px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; display: flex; gap: 6px; align-items: center; }
+.tsfx .tsf-proposal__figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
+.tsfx .tsf-proposal__figures div { padding: 7px 10px; border-radius: 8px; background: var(--bg); }
+.tsfx .tsf-proposal__figures div.plus { background: var(--pale); }
+.tsfx .tsf-proposal__figures div.good dd { color: var(--ov-c3, #1f8a5b); }
+.tsfx .tsf-proposal__figures dt { font-size: 11px; color: var(--muted); }
+.tsfx .tsf-proposal__figures dd { margin: 2px 0 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-proposal__figures small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.tsfx .tsf-proposal__why { background: var(--pale); border-color: transparent; }
+.tsfx .tsf-proposal__why h4 svg { color: var(--blue); }
+.tsfx .tsf-proposal__why p { margin: 0; line-height: 1.5; }
+.tsfx .tsf-proposal__table { overflow-x: auto; width: 100%; }
+.tsfx .tsf-proposal__share { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.tsfx .tsf-proposal__note { margin: 0; font-size: 12px; color: var(--muted); }
+
+@media (max-width: 1180px) {
+  .tsfx .tsf-propose__hero { grid-template-columns: 1fr; }
+  .tsfx .tsf-propose__hero-figures { flex-wrap: wrap; }
+}
+@media (max-width: 900px) {
+  .tsfx .tsf-propose__layout { grid-template-columns: minmax(0, 1fr); }
+  .tsfx .tsf-propose__deals { position: static; max-height: 360px; }
+  .tsfx .tsf-propose__hero-figures div { flex: 1; min-width: 0; }
+  .tsfx .tsf-proposal__figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Proposals and assigned BLs as compact report lists. */
+.tsfx .tsf-propose__list th, .tsfx .tsf-propose__list td, .tsfx .tsf-propose__groups .ds-table th, .tsfx .tsf-propose__groups .ds-table td { font-size: 12px; padding-top: 6px; padding-bottom: 6px; vertical-align: middle; }
+.tsfx .tsf-propose__list tr.best td { background: var(--pale); }
+.tsfx .tsf-propose__list tr.best .tsf-propose__rank { color: var(--blue); }
+.tsfx .tsf-propose__list .tsf-propose__rank { display: block; font-size: 11px; }
+.tsfx .tsf-propose__list .tsf-propose__reason { display: block; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 0; padding: 0; font-size: 11px; color: var(--muted); }
+.tsfx .tsf-propose__list .tsf-propose__reason svg { display: none; }
+.tsfx .tsf-propose__list .tsf-propose__bls { max-width: 260px; }
+.tsfx .tsf-propose__list .tsf-propose__match { white-space: nowrap; }
+.tsfx .tsf-propose__sub { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+.tsfx .tsf-propose__list tbody tr { cursor: default; }
+.tsfx .tsf-propose__open { font-size: 12px; text-transform: none; white-space: nowrap; }
+.tsfx .tsf-propose__list tr.best .tsf-propose__open { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Master–detail (requested 2026-11-07): the Deal IDs as a report table on the left, the chosen deal on the right. */
+.tsfx .tsf-propose__layout { grid-template-columns: minmax(360px, 0.8fr) minmax(0, 1.2fr); gap: 18px; }
+.tsfx .tsf-propose__deals { padding: 0; }
+.tsfx .tsf-propose__deals .ds-table-wrap, .tsfx .tsf-propose__deals .table-wrap { overflow-y: auto; }
+.tsfx .tsf-propose__dealtable { width: 100%; }
+.tsfx .tsf-propose__dealtable tbody tr { cursor: pointer; }
+.tsfx .tsf-propose__dealtable tbody tr.selected td { background: var(--pale); }
+.tsfx .tsf-propose__dealtable tbody tr.selected td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+.tsfx .tsf-propose__dealid { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--blue); cursor: pointer; text-transform: none; }
+.tsfx .tsf-propose__dealid:focus-visible, .tsfx .tsf-propose__bls-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+.tsfx .tsf-propose__bls-link { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--blue); font: inherit; font-size: 11px; padding: 0 6px; cursor: pointer; }
+.tsfx .tsf-propose__pad { padding: 14px; }
+.tsfx .tsf-propose__deals > div:has(> .kit-data-table) { flex: 1; min-height: 0; overflow: auto; }
+
+/* The chosen deal: a title, a subtitle and one figures line, like a report header. */
+.tsfx .tsf-propose__hero { padding: 2px 0 0; background: none; border: 0; box-shadow: none; display: flex; flex-direction: column; gap: 8px; }
+.tsfx .tsf-propose__hero-title h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 4px; }
+.tsfx .tsf-propose__hero-title .tsf-propose__muted { font-size: 13px; }
+.tsfx .tsf-propose__net { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: var(--text); }
+.tsfx .tsf-propose__net b { color: var(--blue); }
+.tsfx .tsf-propose__hero .tsf-propose__progress { height: 3px; }
+.tsfx .tsf-propose .tsf-kpis { margin: 0; }
+
+/* A deal can hold many BLs: the assigned list scrolls inside its panel, its header and total stay in view. */
+.tsfx .tsf-propose__assigned .tsf-propose__scroll { max-height: 460px; overflow: auto; }
+.tsfx .tsf-propose__assigned thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+.tsfx .tsf-propose__assigned tfoot :is(th, td) { position: sticky; bottom: 0; background: var(--surface); }
+.tsfx .tsf-propose__deals .kit-data-table thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+
+/* Compact (2026-11-07). */
+.tsfx .tsf-propose { gap: 10px; }
+.tsfx .tsf-propose__layout { gap: 12px; }
+.tsfx .tsf-propose__deals-head { padding: 10px 12px 8px; gap: 6px; }
+.tsfx .tsf-propose__hero { gap: 4px; }
+.tsfx .tsf-propose__hero-title h2 { font-size: 15px; font-weight: 700; letter-spacing: 0; margin: 0; gap: 8px; }
+.tsfx .tsf-propose__hero-title .tsf-propose__muted { font-size: 12px; }
+.tsfx .tsf-propose__net { margin: 2px 0 0; font-size: 12px; }
+.tsfx .tsf-propose__proposals, .tsfx .tsf-propose__assigned { padding: 10px 12px; gap: 8px; }
+.tsfx .tsf-propose__opt { padding: 2px 9px; font-size: 11.5px; }
+.tsfx .tsf-propose__options { gap: 6px 16px; }
+.tsfx .tsf-propose__ask { padding: 2px 2px 2px 8px; }
+.tsfx .tsf-propose__ask .input { padding: 4px 2px; font-size: 12px; }
+.tsfx .tsf-propose__ask .button { min-height: 26px; padding-top: 2px; padding-bottom: 2px; font-size: 11.5px; }
+.tsfx .tsf-propose__none { padding: 8px 10px; font-size: 12px; }
+.tsfx .tsf-propose__dealid { font-size: 12.5px; }
+.tsfx .tsf-propose__assigned h3 { margin: 0 0 4px; font-size: 13px; }
+/* The deal list scrolls inside its own box: the search and the Open / With BLs / All filter stay in view. */
+.tsfx .tsf-propose__deals { overflow: hidden; }
+.tsfx .tsf-propose__dealscroll { flex: 1; min-height: 0; overflow: auto; }
+.tsfx .tsf-propose__hero { align-items: stretch; text-align: left; }
+
+/* The command bar (2026-11-07): one roomy field that says which BLs to use, examples to try, a guide, and the applied
+   conditions as removable chips. */
+.tsfx .tsf-cmd { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 4px; }
+.tsfx .tsf-cmd__bar { display: flex; align-items: center; gap: 8px; padding: 5px 6px 5px 12px; border: 1.5px solid color-mix(in srgb, var(--blue) 35%, var(--line)); border-radius: 12px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pale) 55%, var(--surface)), var(--surface)); box-shadow: 0 1px 2px rgb(15 23 42 / 5%); transition: border-color .15s, box-shadow .15s; }
+.tsfx .tsf-cmd__bar:focus-within { border-color: var(--blue); box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 14%, transparent); }
+.tsfx .tsf-cmd__icon { color: var(--blue); flex: 0 0 auto; }
+.tsfx .tsf-cmd__bar input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 13.5px; height: 34px; }
+.tsfx .tsf-cmd__bar input::placeholder { color: var(--muted); }
+.tsfx .tsf-cmd__bar .button { height: 32px; border-radius: 8px; }
+.tsfx .tsf-cmd__try { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tsfx .tsf-cmd__try > span { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.tsfx .tsf-cmd__eg { border: 1px dashed color-mix(in srgb, var(--blue) 40%, var(--line)); background: var(--surface); color: var(--blue); border-radius: 999px; padding: 3px 10px;
+  font: inherit; font-size: 11.5px; cursor: pointer; text-transform: none; white-space: nowrap; }
+.tsfx .tsf-cmd__eg:hover { background: var(--pale); border-style: solid; }
+.tsfx .tsf-cmd__eg:focus-visible, .tsfx .tsf-cmd__x:focus-visible, .tsfx .tsf-cmd__help summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .tsf-cmd__help summary { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; list-style: none; }
+.tsfx .tsf-cmd__help summary::-webkit-details-marker { display: none; }
+.tsfx .tsf-cmd__help[open] summary { color: var(--blue); }
+.tsfx .tsf-cmd__guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 60%, var(--surface)); }
+.tsfx .tsf-cmd__guide > div { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
+.tsfx .tsf-cmd__guide h5 { flex-basis: 100%; margin: 0 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.tsfx .tsf-cmd__guide p { grid-column: 1 / -1; margin: 2px 0 0; font-size: 11.5px; color: var(--muted); }
+.tsfx .tsf-propose .tsf-propose__understood { padding: 2px 14px 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tsfx .tsf-cmd__chip { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 2px 3px 2px 4px; border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line)); border-radius: 999px; background: var(--pale); max-width: 100%; }
+.tsfx .tsf-cmd__chip .tsf-propose__rule, .tsfx .tsf-cmd__chip .tsf-propose__not { border: 0; background: none; padding: 1px 4px; }
+.tsfx .tsf-cmd__x { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue); cursor: pointer; padding: 0; }
+.tsfx .tsf-cmd__x:hover { background: var(--blue); color: #fff; }
+.tsfx .tsf-propose__aim { font-size: 12px; color: var(--muted); margin-left: auto; }
+.tsfx .tsf-propose__aim b { color: var(--blue); }
+.tsfx .tsf-propose__tabs { margin: 2px 0 8px; border-bottom: 1px solid var(--line); width: 100%; }
+.tsfx .tsf-proposal__off td { opacity: .45; text-decoration: line-through; }
+.tsfx .tsf-proposal__off td:first-child { opacity: 1; text-decoration: none; }
+.tsfx .tsf-proposal__hint { font-weight: 400; color: var(--muted); font-size: 11.5px; margin-left: 6px; }
+/* The deal list fits its panel (no sideways scroll). */
+.tsfx .tsf-propose__dealtable { width: 100%; table-layout: auto; }
+.tsfx .tsf-propose__dealtable td:nth-child(2) { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tsfx .tsf-proposal__hint { text-transform: none; letter-spacing: 0; }
+.tsfx .tsf-propose__way { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; white-space: normal; }
+.tsfx .tsf-propose__reset { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 11.5px; cursor: pointer; text-transform: none; }
+.tsfx .tsf-propose__reset:hover { color: var(--blue); border-color: var(--blue); }
+.tsfx .tsf-propose__reset:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .tsf-propose__updating { display: flex; align-items: center; gap: 8px; margin: 2px 14px 6px; font-size: 12px; color: var(--blue); }
+.tsfx .tsf-propose__updating span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--blue) 30%, transparent); border-top-color: var(--blue); animation: tsf-spin .8s linear infinite; }
+@keyframes tsf-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tsfx .tsf-propose__updating span { animation: none; } }
+.tsfx .tsf-propose__listwrap { min-width: 0; }
+.tsfx .tsf-propose__allways { font-size: 11.5px; color: var(--muted); margin-left: 4px; }
+.tsfx .tsf-proposal__sno { color: var(--muted); width: 1%; white-space: nowrap; }
+
+/* A deal open: the list steps aside (All Deal IDs brings it back), one wide column. */
+.tsfx .tsf-propose__layout--deal { grid-template-columns: minmax(0, 1fr); }
+.tsfx .tsf-propose__dealnav { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.tsfx .tsf-propose__dealnav .tsf-propose__muted { margin-left: auto; font-size: 12px; }
+.tsfx .tsf-dealhero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 14px 18px; margin-bottom: 10px; }
+.tsfx .tsf-dealhero__id h2 { margin: 0; font-size: 20px; font-weight: 800; display: flex; gap: 10px; align-items: center; }
+.tsfx .tsf-dealhero__id p { margin: 2px 0 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsfx .tsf-dealhero__figs { display: flex; gap: 10px; margin: 0; }
+.tsfx .tsf-dealhero__figs > div { min-width: 170px; padding: 8px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.tsfx .tsf-dealhero__figs dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.tsfx .tsf-dealhero__figs dd { margin: 2px 0 0; font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-dealhero__figs dd small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.tsfx .tsf-dealhero__figs > div > span { display: block; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-dealhero__figs .key { background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 70%, #7c3aed)); border-color: transparent; color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--blue) 30%, transparent); }
+.tsfx .tsf-dealhero__figs .key dt, .tsfx .tsf-dealhero__figs .key dd small, .tsfx .tsf-dealhero__figs .key > span { color: rgba(255, 255, 255, .85); }
+.tsfx .tsf-dealhero__bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.tsfx .tsf-dealhero__bar .tsf-propose__progress { flex: 1; height: 6px; }
+/* The assistant: a gradient spark, a thinking indicator and its answer under the bar. */
+.tsfx .tsf-cmd__ai { display: inline-grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; border-radius: 8px; color: #fff; background: linear-gradient(135deg, var(--blue), #7c3aed); }
+.tsfx .tsf-cmd__reply { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--blue) 6%, var(--surface, #fff)); border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line)); font-size: 12.5px; }
+.tsfx .tsf-cmd__reply .tsf-cmd__ai { width: 20px; height: 20px; border-radius: 6px; }
+.tsfx .tsf-cmd__reply p { margin: 1px 0 0; flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
+.tsfx .tsf-cmd__reply p .tsf-cmd__x { margin-left: auto; }
+.tsfx .tsf-cmd__typing { gap: 4px !important; align-items: center !important; height: 18px; }
+.tsfx .tsf-cmd__typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: tsf-typing 1s infinite ease-in-out; }
+.tsfx .tsf-cmd__typing i:nth-child(2) { animation-delay: .15s; } .tsfx .tsf-cmd__typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes tsf-typing { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .tsfx .tsf-cmd__typing i { animation: none; } }
+@media (max-width: 900px) { .tsfx .tsf-dealhero { grid-template-columns: 1fr; } .tsfx .tsf-dealhero__figs > div { flex: 1; min-width: 0; } .tsfx .tsf-dealhero__figs dd { font-size: 20px; } }
+.tsfx .tsf-proposal__table { width: fit-content; max-width: 100%; }
+
+/* Less height (2026-11-07): navigation, deal and progress in one block beside the two figures; "Fill with" on the
+   tabs row; "What can I type?" at the end of the Try row; tighter proposal rows. The proposals start high on the page. */
+.tsfx .tsf-dealhero { padding: 10px 14px; gap: 6px 18px; margin-bottom: 6px; }
+.tsfx .tsf-dealhero__id { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tsfx .tsf-dealhero__nav { display: flex; align-items: center; gap: 6px; }
+.tsfx .tsf-dealhero__nav .button { height: 26px; padding: 0 8px; font-size: 12px; }
+.tsfx .tsf-dealhero__nav .tsf-propose__muted { margin-left: 6px; font-size: 11.5px; }
+.tsfx .tsf-dealhero__id h2 { font-size: 18px; white-space: nowrap; min-width: 0; }
+.tsfx .tsf-dealhero__id h2::before { display: none; }
+.tsfx .tsf-dealhero__desc { font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tsfx .tsf-dealhero__bar { grid-column: auto; }
+.tsfx .tsf-dealhero__figs > div { padding: 6px 14px; min-width: 150px; border-radius: 10px; }
+.tsfx .tsf-dealhero__figs dd { font-size: 22px; }
+.tsfx .tsf-propose__tabrow { display: flex; align-items: flex-end; gap: 16px; border-bottom: 1px solid var(--line); margin: 0 0 8px; min-width: 0; }
+.tsfx .tsf-propose__tabrow .tsf-propose__tabs { margin: 0; border-bottom: 0; width: auto; flex: 0 0 auto; }
+.tsfx .tsf-propose__tabrow .tsf-propose__options { margin-left: auto; padding-bottom: 6px; flex-wrap: nowrap; align-items: center; min-width: 0; }
+.tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] { flex-wrap: nowrap; white-space: nowrap; }
+.tsfx .tsf-propose__tabrow .tsf-propose__aim { white-space: nowrap; font-size: 12px; }
+.tsfx .tsf-propose__proposals { padding: 8px 12px; gap: 6px; }
+.tsfx .tsf-cmd { padding: 2px 2px 0; gap: 6px; }
+.tsfx .tsf-cmd__bar input { height: 30px; }
+.tsfx .tsf-cmd__bar .button { height: 30px; }
+.tsfx .tsf-cmd__try { gap: 5px; }
+.tsfx .tsf-cmd__try .tsf-cmd__eg { padding-top: 1px; padding-bottom: 1px; }
+.tsfx .tsf-cmd__try .tsf-cmd__help { margin-left: 4px; }
+.tsfx .tsf-cmd__try .tsf-cmd__help[open] { flex-basis: 100%; margin-left: 0; }
+.tsfx .tsf-propose .tsf-propose__list :is(th, td) { padding-top: 4px !important; padding-bottom: 4px !important; height: auto; line-height: 1.35; }
+@media (max-width: 1100px) {
+  .tsfx .tsf-propose__tabrow { flex-wrap: wrap; }
+  .tsfx .tsf-propose__tabrow .tsf-propose__options { margin-left: 0; flex-wrap: wrap; }
+  .tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] { flex-wrap: wrap; }
+}
+
+/* One reading column (2026-11-08): on wide screens the open deal keeps a 1240px column, so the figures, "Fill with" and
+   the proposals share one right edge near the content instead of the far edge of the monitor. */
+.tsfx .tsf-propose__layout--deal .tsf-propose__main { max-width: 1240px; width: 100%; }
+.tsfx .tsf-dealhero { grid-template-columns: minmax(0, 1fr) auto; column-gap: 28px; }
+.tsfx .tsf-propose__tabrow .tsf-propose__options { gap: 0; }
+.tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] { gap: 6px; }
+.tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] > span:first-child { padding-left: 14px; border-left: 1px solid var(--line); }
+/* The key figure keeps white-on-blue contrast in Night mode (the dark theme's --blue is light). */
+.tsfx .tsf-dealhero__figs .key { background: linear-gradient(135deg, #1d4ed8, #6d28d9); }
+
+/* Deal list figures: USD millions, right-aligned, tabular; a negative balance or a flagged figure stands out. */
+.tsfx .tsf-propose__dealtable th.num, .tsfx .tsf-propose__dealtable td.num { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-propose__dealtable thead th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
+.tsfx .tsf-propose__neg { color: var(--red, #c0392b); font-weight: 600; }
+.tsfx .tsf-propose__flag { margin-left: 4px; vertical-align: -1px; color: var(--amber, #b7791f); }
+@media (min-width: 1101px) {
+  .tsfx .tsf-propose__layout:not(.tsf-propose__layout--deal) { grid-template-columns: minmax(660px, 1.5fr) minmax(0, 1fr); }
+}
+.tsfx .tsf-propose__dealtable th, .tsfx .tsf-propose__dealtable td { padding-left: 8px; padding-right: 8px; }
+.tsfx .tsf-propose__dealtable td:nth-child(2) { max-width: 170px; }
+.tsfx .tsf-propose__dealtable thead th.num { white-space: normal; }
+@media (min-width: 1101px) {
+  .tsfx .tsf-propose__layout:not(.tsf-propose__layout--deal) { grid-template-columns: minmax(985px, 2.5fr) minmax(0, 1fr); }
+}
+.tsfx .tsf-propose__dealtable th.num, .tsfx .tsf-propose__dealtable td.num { width: 1%; min-width: 0; }
+.tsfx .tsf-propose__dealtable thead th.num { min-width: 78px; }
+.tsfx .tsf-propose__dealscroll table.tsf-propose__dealtable { table-layout: auto; width: 100%; min-width: 0; }
+/* The shared table plan right-aligns number columns (!important); this list centres them, headers and values. */
+.tsfx .kit-data-table.tsf-propose__dealtable :is(th, td)[data-table-align=right] { text-align: center !important; }
+.tsfx .kit-data-table.tsf-propose__dealtable th[data-table-align=right] .kit-table-sort { justify-content: center; }

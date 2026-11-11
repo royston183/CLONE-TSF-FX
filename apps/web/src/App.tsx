@@ -38,7 +38,6 @@ const ALM_FX_OFFICE_FEATURES = new Set([
   'mo-deal-id-invoice-status',
   'mo-deal-id-invoice-mark',
   'mo-deal-id-invoicing',
-  'mo-generate-invoices-deal-id',
   'inr-heads-up-reminder',
   'mo-view-deal-id-settlement-list',
   'mo-execute-settlement-deal-id',
@@ -55,8 +54,6 @@ const ALM_FX_OFFICE_FEATURES = new Set([
   'bo-reverse-fx-mtm-oil-dmcc',
   'bo-reverse-fx-mtm-other-origins',
   'bo-reverse-fx-mtm-india',
-  'tf-upload',
-  'tf-manage',
 ])
 
 /**

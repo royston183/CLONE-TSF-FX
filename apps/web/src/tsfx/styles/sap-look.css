@@ -1,0 +1,112 @@
+/* TSF_FX look (requested 2026-11-07, after the ALM Cash Management "Liquidity Status" screen): slim white top bar with a
+   "/" breadcrumb, bold page titles, one joined KPI strip, report tables with sort + filter headers and bold totals.
+   Loaded after every ALM and template file; ALM's own stylesheets stay unchanged. Light and dark use the ALM tokens. */
+
+/* Top bar. */
+.tsfx .app .topbar { background: var(--surface); border-bottom: 1px solid var(--line); min-height: 56px; height: 56px; }
+.tsfx .app .top-crumb { font-size: 13px; font-weight: 600; gap: 6px; color: var(--muted); }
+.tsfx .app .top-crumb .crumb-sep { color: var(--muted); font-weight: 400; margin: 0 1px; }
+.tsfx .app .top-crumb button { font-weight: 600; color: var(--muted); }
+.tsfx .app .top-crumb button[aria-current='page'] { color: var(--text); font-weight: 700; }
+.tsfx .app .top-actions .theme-toggle { padding: 0 10px; min-width: 38px; justify-content: center; }
+
+/* Page titles. */
+.tsfx .app .page-heading h1, .tsfx .app .tsf-head h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.tsfx .app .page-heading p, .tsfx .app .tsf-head p { font-size: 13px; color: var(--muted); }
+
+/* One joined KPI strip (FxKpis and the pages that use it). */
+.tsfx .app .tsf-kpis { display: flex; flex-wrap: wrap; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.tsfx .app .tsf-kpis > [role='listitem'] { flex: 1 1 160px; min-width: 0; border-right: 1px solid var(--line); }
+.tsfx .app .tsf-kpis > [role='listitem']:last-child { border-right: 0; }
+.tsfx .app .tsf-kpi { height: 100%; border: 0; border-radius: 0; box-shadow: none; padding: 14px 18px; gap: 6px; background: transparent; }
+.tsfx .app .tsf-kpi--green, .tsfx .app .tsf-kpi--amber, .tsfx .app .tsf-kpi--red, .tsfx .app .tsf-kpi--grey, .tsfx .app .tsf-kpi--purple, .tsfx .app .tsf-kpi--blue { border-left: 0; }
+.tsfx .app button.tsf-kpi:hover { background: var(--pale); }
+.tsfx .app .tsf-kpi.is-active { background: var(--pale); box-shadow: inset 0 -3px 0 var(--blue); }
+.tsfx .app .tsf-kpi__label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tsfx .app .tsf-kpi__value { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.tsfx .app .tsf-kpi__note { font-size: 12px; color: var(--muted); }
+
+/* Report tables: header, rows, totals, the column filter. */
+.tsfx .app .kit-data-table thead th { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.tsfx .app .kit-data-table tbody td { font-size: 13px; }
+.tsfx .app .kit-data-table tbody tr[data-table-row]:hover td { background: color-mix(in srgb, var(--pale) 55%, transparent); }
+.tsfx .app .kit-data-table tfoot :is(th, td) { font-weight: 700; color: var(--text); }
+.tsfx .kit-table-filter { display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; padding: 2px; margin-left: 2px; color: var(--muted); cursor: pointer; opacity: .75; border-radius: 4px; }
+.tsfx .kit-table-filter:hover { opacity: 1; color: var(--blue); }
+.tsfx .kit-table-filter.on { opacity: 1; color: var(--blue); background: var(--pale); }
+.tsfx .kit-table-filter:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .app .ds-flt { color: var(--muted); }
+.tsfx .app .ds-flt.on { color: var(--blue); }
+
+/* Panels. */
+.tsfx .app .panel { border-radius: 12px; }
+
+/* Top bar: the page's own controls, then the SAP status, theme and refresh as compact icon buttons. */
+.tsfx .app .top-actions { gap: 10px; align-items: center; }
+.tsfx .app .top-page-actions { display: flex; align-items: center; gap: 10px; }
+.tsfx .app .top-page-actions:empty { display: none; }
+.tsfx .app .top-icon { width: 38px; height: 38px; min-width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+.tsfx .app .connection-chip { font-size: 11px; padding: 4px 10px; }
+.tsfx .top-asof { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.tsfx .top-asof input[type=date] { height: 38px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; background: var(--surface); color: var(--text); font: inherit; font-weight: 600; }
+.tsfx .top-asof input[type=date]:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tsfx .top-step { width: 34px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; }
+.tsfx .top-step:hover { border-color: var(--blue); color: var(--blue); }
+.tsfx .top-step:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+/* On a narrow screen the top bar wraps, so the page's controls (e.g. the As of date) stay reachable. */
+@media (max-width: 900px) { .tsfx .app .topbar { height: auto; flex-wrap: wrap; padding-block: 8px; row-gap: 8px; } .tsfx .app .top-actions { flex-wrap: wrap; } }
+
+/* The KPI strip on every page (also where the FX page styles are not loaded): label, value and note stacked. */
+.tsfx .app .tsf-kpi { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left; font: inherit; color: var(--text); text-transform: none; cursor: default; }
+.tsfx .app button.tsf-kpi { cursor: pointer; }
+.tsfx .app .tsf-kpi * { text-transform: none; }
+.tsfx .app .tsf-kpi .tsf-kpi__label { text-transform: uppercase; }
+
+/* Compact (requested 2026-11-07: "everything is so big … so many space wasted"): smaller titles, tighter tables and
+   tools, less space between sections. Overrides the sizes above. */
+.tsfx .app .page-heading { margin-bottom: 10px; }
+.tsfx .app .page-heading h1, .tsfx .app .tsf-head h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
+.tsfx .app .page-heading p, .tsfx .app .tsf-head p { font-size: 12px; }
+.tsfx .app .kit-data-table thead th { font-size: 12px; padding-top: 7px; padding-bottom: 7px; }
+.tsfx .app .kit-data-table tbody td, .tsfx .app .kit-data-table tfoot :is(th, td) { font-size: 12.5px; padding-top: 6px; padding-bottom: 6px; }
+.tsfx .app .kit-table-tools { padding: 3px 8px; gap: 6px; }
+.tsfx .app .kit-table-tools .button, .tsfx .app .kit-table-tools select { font-size: 11.5px; min-height: 26px; padding-top: 2px; padding-bottom: 2px; }
+.tsfx .app .kit-table-tools label, .tsfx .app .kit-table-tools span { font-size: 11.5px; }
+.tsfx .app .tsf-kpi { padding: 10px 14px; gap: 3px; }
+.tsfx .app .tsf-kpi__value { font-size: 17px; }
+
+/* Clean (requested 2026-11-07, after the ECB Loan Creation Workbench): soft white cards on a pale canvas, section titles
+   with a blue bar, underlined tabs with count pills, a grey table header whose sort/filter icons show only on hover or
+   focus (or when in use), horizontal row lines only, and quiet status tags inside tables. */
+.tsfx .app .panel { border-radius: 14px; border-color: color-mix(in srgb, var(--line) 75%, transparent); box-shadow: 0 1px 2px rgb(15 23 42 / 4%); }
+.tsfx .app .panel h2 { position: relative; padding-left: 11px; font-weight: 700; }
+.tsfx .app .panel h2::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 2px; background: var(--blue); }
+
+/* Tables. */
+.tsfx .app .kit-data-table thead th { background: color-mix(in srgb, var(--bg) 80%, var(--surface)); color: color-mix(in srgb, var(--text) 80%, var(--muted)); font-weight: 600; border-bottom: 1px solid var(--line); }
+.tsfx .app .kit-data-table :is(th, td) { border-left: 0; border-right: 0; }
+.tsfx .app .kit-data-table tbody td { border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent); padding-top: 8px; padding-bottom: 8px; }
+.tsfx .app .kit-data-table thead :is(.kit-table-sort svg, .kit-table-filter) { opacity: 0; transition: opacity .12s; }
+.tsfx .app .kit-data-table thead th:is(:hover, :focus-within) :is(.kit-table-sort svg, .kit-table-filter), .tsfx .app .kit-data-table thead th:not([aria-sort='none']) .kit-table-sort svg, .tsfx .app .kit-data-table thead .kit-table-filter.on { opacity: 1; }
+@media (hover: none) { .tsfx .app .kit-data-table thead :is(.kit-table-sort svg, .kit-table-filter) { opacity: .6; } }
+.tsfx .app .kit-data-table tbody .kit-status { background: none; border: 0; padding: 0; font-weight: 600; }
+
+/* Underlined tabs with count pills (replaces the boxed segment where a page marks it .tsf-tabs). */
+.tsfx .app .tsf-tabs { display: inline-flex; gap: 18px; border: 0; border-radius: 0; background: none; overflow: visible; box-shadow: none; padding: 0; }
+.tsfx .app .tsf-tabs button { border: 0 !important; background: none !important; padding: 4px 0 6px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent !important; border-radius: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: none; }
+.tsfx .app .tsf-tabs button.on, .tsfx .app .tsf-tabs button[aria-checked='true'], .tsfx .app .tsf-tabs button[aria-pressed='true'] { color: var(--blue); border-bottom-color: var(--blue) !important; }
+.tsfx .app .tsf-tabs .count { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--bg) 70%, var(--line)); color: var(--muted); }
+.tsfx .app .tsf-tabs button.on .count, .tsfx .app .tsf-tabs button[aria-checked='true'] .count, .tsfx .app .tsf-tabs button[aria-pressed='true'] .count { background: var(--pale); color: var(--blue); }
+.tsfx .app .tsf-tabs button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+
+/* Inputs and buttons: soft, even height. */
+.tsfx .app .panel .input, .tsfx .app .panel input[type='text'], .tsfx .app .panel input[type='search'] { border-radius: 8px; }
+.tsfx .app .tsf-price__input { border: 1px solid var(--line); border-radius: 6px; box-shadow: none; }
+.tsfx .app .tsf-price__input:focus-visible { outline: 2px solid var(--blue); outline-offset: 0; border-color: var(--blue); }
+/* The same quiet header in modals (rendered outside .app). */
+.tsfx .kit-data-table thead :is(.kit-table-sort svg, .kit-table-filter) { opacity: 0; transition: opacity .12s; }
+.tsfx .kit-data-table thead th:is(:hover, :focus-within) :is(.kit-table-sort svg, .kit-table-filter), .tsfx .kit-data-table thead th:not([aria-sort='none']) .kit-table-sort svg, .tsfx .kit-data-table thead .kit-table-filter.on { opacity: 1; }
+@media (hover: none) { .tsfx .kit-data-table thead :is(.kit-table-sort svg, .kit-table-filter) { opacity: .6; } }
+.tsfx .ds-tabs[hidden] { display: none !important; }
+/* The short form of a large amount next to it (23.9M, 500K, 1.25B): its size at a glance. */
+.tsfx .num-short { display: inline-block; margin-left: 5px; padding: 0 6px; border-radius: 999px; font-size: .8em; font-weight: 700; line-height: 1.6; color: var(--blue); background: var(--pale); vertical-align: 1px; font-variant-numeric: tabular-nums; }

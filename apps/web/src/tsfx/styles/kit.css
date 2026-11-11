@@ -1,0 +1,123 @@
+/* Template additions (SAP Standalone Application). ALM has no textarea counter, drop zone, date range, small modal,
+   value-help table or gallery layout; these rules add them using ALM's tokens only. Every selector starts
+   with .kit- (or .ds-modal.small); nothing here restyles an ALM class. */
+.tsfx .kit-counter{display:block;text-align:right;font-size:11px;color:var(--muted);margin-top:2px}
+.tsfx .kit-textarea{width:100%;min-height:84px;resize:vertical;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text)}
+.tsfx .kit-textarea[aria-invalid=true]{border-color:var(--ds-bad);background:var(--ds-bad-bg)}
+.tsfx .kit-range{display:inline-flex;align-items:center;gap:6px}
+.tsfx .kit-range>span{color:var(--muted);font-size:12px}
+.tsfx .kit-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:110px;padding:16px;border:1.5px dashed var(--line);border-radius:10px;background:var(--bg);color:var(--muted);font-size:12.5px;text-align:center;cursor:pointer}
+.tsfx .kit-drop.over,.tsfx .kit-drop:focus-visible{border-color:var(--blue);color:var(--blue);outline:none}
+.tsfx .kit-drop b{color:var(--text)}
+.tsfx .kit-error{display:block;color:var(--ds-bad);font-size:11.5px;margin-top:3px}
+.tsfx .kit-multi{display:inline-flex;align-items:center;gap:6px}
+.tsfx .ds-modal.small{width:min(420px,100%)}
+.tsfx .kit-vh-table{max-height:360px;overflow:auto;margin-top:10px}
+.tsfx .kit-vh-table tr{cursor:pointer}
+.tsfx .kit-vh-table tr.kit-active td{background:var(--pale)}
+.tsfx .kit-form{display:grid;grid-template-columns:repeat(var(--kit-cols,1),minmax(0,1fr));gap:12px 18px}
+@media (max-width:640px){.tsfx .kit-form{grid-template-columns:1fr}}
+.tsfx .kit-gallery{display:flex;flex-direction:column;gap:18px}
+.tsfx .kit-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.tsfx .kit-gallery-item{display:flex;flex-direction:column;gap:10px;padding:14px}
+.tsfx .kit-gallery-item h3{margin:0;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.tsfx .kit-id{text-transform:none;font:600 11px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--blue);background:var(--pale);border-radius:5px;padding:3px 6px}
+.tsfx .kit-states{display:grid;gap:8px}
+.tsfx .kit-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* Large lists (spec §3.3): the last page stays visible, dimmed, while the next one loads. */
+.tsfx .kit-list{display:flex;flex-direction:column}
+.tsfx .kit-list-wrap{position:relative}
+.tsfx .kit-loading table{opacity:.5;transition:opacity .15s}
+.tsfx .kit-list-spin{position:absolute;top:56px;left:50%;transform:translateX(-50%);color:var(--blue)}
+.tsfx .kit-row-open{cursor:pointer}
+.tsfx .kit-row-open:focus-visible td{background:var(--pale)}
+.tsfx .kit-filter{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.tsfx .kit-filter input{height:32px;width:130px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit}
+.tsfx .kit-pager{padding:0 18px 14px}
+.tsfx .kit-page-size{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.tsfx .kit-page-size select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font:inherit}
+/* Object page (spec §4): review summary of item changes; a tab with problems. */
+.tsfx .kit-summary{margin:12px 0 0;padding-left:18px;font-size:12.5px;color:var(--text)}
+.tsfx .kit-tab-bad::after{content:' •';color:var(--ds-bad)}
+/* Read-only inputs (a key while editing) look locked, with ALM's tokens; the second and third selectors outrank ALM's .field input rules. */
+.tsfx .kit-readonly,.tsfx .field input.kit-readonly,[data-theme=dark] .tsfx .field input.kit-readonly{background:var(--bg);color:var(--muted);border-color:var(--line);cursor:default}
+.tsfx .ds-cell.kit-readonly{background:var(--bg);color:var(--muted);cursor:default}
+
+/* Reports (sub-project 3): the "Opened from" bar of a screen reached by a drill. */
+.tsfx .kit-drill-from{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--pale);font-size:12px}
+.tsfx .kit-drill-from .text-button{display:inline-flex;align-items:center;gap:4px}
+
+/* Dashboards (sub-project 3): chart grid and tiles that open another screen (the donut is ALM's .ov-ch-pie). */
+.tsfx .kit-gallery-wide{grid-column:1/-1}
+.tsfx .kit-dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:14px}
+.tsfx .ov-tile.kit-tile-link{cursor:pointer}
+.tsfx .ov-tile.kit-tile-link:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.tsfx .kit-tile-open{border:0;background:none;padding:0;text-align:left;cursor:pointer}
+.tsfx .kit-tile-open:hover{color:var(--blue);text-decoration:underline}
+
+/* Pop-up and side-panel footers (Modal footerStart, Drawer footer): every action button sits there, in view. */
+.tsfx .kit-foot-start{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto}
+.tsfx .kit-drawer-foot{position:sticky;bottom:-16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:auto -16px -16px;padding:12px 16px;border-top:1px solid var(--line);background:var(--bg)}
+
+/* Record pop-ups (ObjectDialog: the record design): eyebrow, tag, key facts, one tab strip, grouped fields with small-caps
+   headings, plain display values ("—" when empty), field hints and bordered item tables. */
+.tsfx .kit-eyebrow{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tsfx .kit-modal-heading{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 auto}
+.tsfx .kit-modal-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.tsfx .kit-modal-title .kit-status{flex:0 0 auto}
+.tsfx .kit-tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.3;color:var(--blue);background:var(--pale)}
+.tsfx .kit-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:0;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .kit-facts>div{display:flex;flex-direction:column;gap:3px;min-width:0;padding:12px 22px;border-right:1px solid var(--line)}
+.tsfx .kit-facts>div:last-child{border-right:0}
+.tsfx .kit-facts dt{font-size:11px;font-weight:600;color:var(--muted)}
+.tsfx .kit-facts dd{margin:0;font-size:15px;font-weight:700;color:var(--heading);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tsfx .kit-facts dd.kit-num,.tsfx .kit-dl dd.kit-num{text-align:left}
+.tsfx .kit-tabs{position:sticky;top:0;z-index:2;display:flex;gap:2px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--surface);overflow-x:auto;scrollbar-width:thin}
+.tsfx .kit-tabs button{flex:0 0 auto;height:44px;padding:0 14px;border:0;border-bottom:2px solid transparent;background:none;font:inherit;font-weight:500;color:var(--muted);white-space:nowrap;cursor:pointer}
+.tsfx .kit-tabs button:hover{color:var(--text)}
+.tsfx .kit-tabs button[aria-selected=true]{font-weight:700;color:var(--heading);border-bottom-color:var(--blue)}
+.tsfx .kit-tabs button:focus-visible{outline:2px solid var(--blue);outline-offset:-3px;border-radius:6px}
+.tsfx .kit-tabs .kit-tab-empty:not([aria-selected=true]){font-style:italic}
+.tsfx .kit-record-panel{padding:18px 22px 22px}
+.tsfx .kit-record-panel:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.tsfx .kit-record-notice{padding:14px 22px 0}
+.tsfx .kit-record-head{margin-bottom:18px}
+.tsfx .kit-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:18px 28px}
+.tsfx .kit-group{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tsfx .kit-group>h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.tsfx .kit-dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:9px 12px;margin:0}
+.tsfx .kit-dl dt{color:var(--muted)}
+.tsfx .kit-dl dd{margin:0;font-weight:600;color:var(--text);overflow-wrap:anywhere}
+.tsfx .kit-empty{color:var(--muted);font-weight:400}
+.tsfx .kit-empty-note{margin:0;color:var(--muted)}
+.tsfx .kit-table-card{border:1px solid var(--line);border-radius:10px;overflow:auto}
+.tsfx .kit-table-card .ds-table tbody tr:last-child td{border-bottom:0}
+.tsfx .kit-hint{display:block;margin-top:6px;font-size:11px;font-weight:400;color:var(--muted)}
+.tsfx .kit-field-with-hint{min-width:0}
+.tsfx .kit-record-panel .field>.ftr-val{display:flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted)}
+@media (max-width:640px){.tsfx .kit-facts>div{padding:10px 16px}.tsfx .kit-tabs{padding:0 8px}.tsfx .kit-record-panel{padding:14px 16px 18px}.tsfx .kit-record-notice{padding:12px 16px 0}.tsfx .kit-dl{grid-template-columns:minmax(0,1fr);gap:2px 0}.tsfx .kit-dl dd{margin-bottom:8px}}
+
+/* Tables: a column of amounts or numbers sits on the right, heading and cells alike (lib/fields alignOf). */
+.tsfx .kit-num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* Settings → SAP Connection: Test & save and Reset to default, side by side (wrapping on a narrow screen). */
+.tsfx .kit-account-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.tsfx .kit-record-page{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.tsfx .kit-record-page-head{display:flex;flex-direction:column;gap:2px;padding:16px 22px;border-bottom:1px solid var(--line)}
+.tsfx .kit-record-page-head p{margin:0;color:var(--muted);font-size:13px}
+.tsfx .kit-record-page-body{min-width:0}
+.tsfx .kit-record-page-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .kit-record-page-foot .kit-foot-start{display:flex;gap:10px;margin-right:auto}
+.tsfx .kit-record-wizard .kit-wizard{margin:16px 22px 0}
+.tsfx .kit-grid-page{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.tsfx .kit-grid-page-head{display:flex;flex-direction:column;gap:2px;padding:16px 22px;border-bottom:1px solid var(--line)}
+.tsfx .kit-grid-page-head p{margin:0;color:var(--muted);font-size:13px}
+.tsfx .kit-grid-page-body{min-width:0;padding:20px 22px}
+.tsfx .kit-grid-page-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .kit-wizard-nav{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+/* A table or object list sits in .kit-app-list (hidden while a record or grid page takes its place): its notices keep
+   the side margins they had as children of .ds-app, and a page shown in the panel draws no second card inside it. */
+.tsfx .kit-app-list>.notice{margin:0 18px 10px}
+.tsfx .kit-app-list~.kit-record-page,.tsfx .kit-app-list~.kit-grid-page{border:0;border-radius:0}
+@media (max-width:640px){.tsfx .kit-record-page-head,.tsfx .kit-record-page-foot,.tsfx .kit-grid-page-head,.tsfx .kit-grid-page-foot{padding-left:16px;padding-right:16px}.tsfx .kit-grid-page-body{padding:16px}.tsfx .kit-record-wizard .kit-wizard{margin:12px 16px 0}}
+.tsfx .kit-breakdown-nav{margin-bottom:12px}

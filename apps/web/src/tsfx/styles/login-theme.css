@@ -1,0 +1,106 @@
+/* DSA dark palette and login rules. */
+
+
+:root[data-theme='dark'] .tsfx {
+  /* --- the four real tokens --- */
+  --blue: #4fa9f0;
+  --muted: #a9c2dd;
+  --line: rgba(148, 186, 224, 0.22);
+  --navy: #e6eef8;
+
+  /* --- semantic dark palette -------------------------------------------------
+   * Text. Contrast is measured against --surface (#14212f), the commonest backdrop:
+   *   --ink   #e6eef8 -> ~13.4:1   (headings, primary body text)
+   *   --ink-2 #a9c2dd -> ~8.9:1    (muted/help text, small labels)
+   * Both clear the 4.5:1 AA floor with room to spare, and clear it against --page too.
+   */
+  --page: #0d1724;
+  --ink: #e6eef8;
+  --ink-2: #a9c2dd;
+
+  /* Surfaces, ordered by how far they lift off the page. --surface is the base card
+   * and shell; --surface-raised is for blocks nested INSIDE a card or modal, which
+   * need to separate from --surface; --surface-sunk is for inset bands (toolbars,
+   * table headers, modal footers) that should read as recessed. */
+  --surface: #14212f;
+  --surface-raised: #1b2c40;
+  --surface-sunk: #101b28;
+  --surface-hover: #182739;
+  --control: #16243a;
+  --control-hover: #1b2c45;
+
+  --line-soft: rgba(148, 186, 224, 0.14);
+  --line-strong: rgba(148, 186, 224, 0.42);
+
+  /* Tinted families. Each is a dark fill plus a light-on-dark ink of the same hue,
+   * replacing the pale fill / dark ink pairs light mode uses. Inks measured on their
+   * own fill: accent ~6.9:1, ok ~7.2:1, warn ~7.7:1, red ~8.4:1. */
+  --accent-bg: #17304a;
+  --accent-line: #2f6ea8;
+  --accent-ink: #7cc0f8;
+  --accent-ink-strong: #bcdcfa;
+
+  --ok-bg: #123526;
+  --ok-line: #1f5a40;
+  --ok-ink: #5fd39b;
+
+  --warn-bg: #3a2a12;
+  --warn-line: #6a4f22;
+  --warn-ink: #f0b866;
+
+  --red: #e2665a;
+  --red-ink: #f3a49b;
+  --red-bg: #2c1a19;
+  --red-line: #4a2724;
+
+  /* The primary button keeps white text, so it cannot use --blue (#4fa9f0), which
+   * would put white on a light blue at ~2.5:1. #1c6fd4 takes white to ~4.9:1. */
+  --button-bg: #1c6fd4;
+
+  --nav-ring: #2f6ea8;
+  --rail-badge-ring: #14212f;
+
+  /* Page base. :root also matches <html>; body has no background of its own, so this
+   * is the whole page's background/text colour. --ink on --page is ~14.9:1. */
+  color: var(--ink);
+  background: var(--page);
+}
+:root[data-theme='dark'] .tsfx .login-panel {
+  background: linear-gradient(180deg, #101c2b 0%, #0b1420 100%);
+}
+
+:root[data-theme='dark'] .tsfx .login-card {
+  background: var(--surface);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] .tsfx .login-card > p,
+:root[data-theme='dark'] .tsfx .login-note,
+:root[data-theme='dark'] .tsfx .password-control button {
+  color: var(--ink-2);
+}
+
+:root[data-theme='dark'] .tsfx .login-rule {
+  background: var(--line);
+}
+
+:root[data-theme='dark'] .tsfx .demo-login {
+  background: var(--surface-sunk);
+  border-color: var(--line);
+}
+:root[data-theme='dark'] .tsfx .demo-login > span,
+:root[data-theme='dark'] .tsfx .demo-login p,
+:root[data-theme='dark'] .tsfx .demo-login > small,
+:root[data-theme='dark'] .tsfx .demo-login code {
+  color: var(--ink-2);
+}
+:root[data-theme='dark'] .tsfx .demo-login button {
+  background: var(--control);
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+:root[data-theme='dark'] .tsfx .demo-login button.active {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}

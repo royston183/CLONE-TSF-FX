@@ -1,0 +1,557 @@
+/*
+ * Normal theme: login (LAS pages/LoginPage.jsx, login.css and the login parts of reportingTheme.css).
+ * Every selector uses nt- classes or sits under [data-app-theme='normal'].
+ */
+[data-app-theme='normal'] .tsfx {
+  --nt-login-arch: #3fa9f521;
+  --nt-login-arch-outer: #3fa9f512;
+  --nt-login-pitch:
+    radial-gradient(1200px 620px at 78% 108%, rgb(255 255 255 / 0.17), transparent 62%),
+    linear-gradient(152deg, #0c4ba6 0%, #1565d8 46%, #2f8ae0 100%);
+  --nt-login-panel: linear-gradient(180deg, #f7fafd 0%, #eef4fb 100%);
+}
+[data-theme='dark'] .tsfx [data-app-theme='normal'],
+[data-theme='dark'][data-app-theme='normal'] .tsfx {
+  --nt-login-panel: linear-gradient(180deg, #101c2b 0%, #0b1420 100%);
+}
+
+.tsfx .nt-login {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--background);
+}
+/* Inside the UI Gallery preview the page is not full height. */
+.tsfx .nt-preview .nt-login {
+  min-height: 0;
+}
+
+/* Brand panel: white type on the blue gradient, with two corner arches. */
+.tsfx .nt-login-pitch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-10) clamp(32px, 5vw, 72px);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--nt-login-pitch);
+  color: var(--text-on-brand);
+}
+.tsfx .nt-login-pitch::before,
+.tsfx .nt-login-pitch::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.05);
+  pointer-events: none;
+}
+.tsfx .nt-login-pitch::before {
+  width: 340px;
+  height: 340px;
+  top: -104px;
+  right: -68px;
+}
+.tsfx .nt-login-pitch::after {
+  width: 520px;
+  height: 520px;
+  bottom: -228px;
+  right: 8%;
+}
+.tsfx .nt-login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-on-brand);
+}
+.tsfx .nt-login-brand > div {
+  display: flex;
+  flex-direction: column;
+}
+.tsfx .nt-login-mark {
+  height: 44px;
+  width: auto;
+}
+.tsfx .nt-login-brand strong {
+  color: var(--text-on-brand);
+  font-size: 19px;
+}
+.tsfx .nt-login-brand small {
+  color: rgb(255 255 255 / 0.72);
+  font-size: var(--text-xs);
+}
+.tsfx .nt-pitch-body {
+  max-width: 620px;
+  margin: auto 0;
+}
+.tsfx .nt-login-kicker {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: var(--radius-pill);
+  color: var(--text-on-brand);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+.tsfx .nt-pitch-body h1 {
+  margin: var(--space-5) 0;
+  color: var(--text-on-brand);
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+.tsfx .nt-pitch-body > p {
+  max-width: 50ch;
+  margin: 0;
+  color: rgb(255 255 255 / 0.82);
+  font-size: var(--text-lg);
+  line-height: 1.65;
+}
+.tsfx .nt-login-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid rgb(255 255 255 / 0.16);
+}
+.tsfx .nt-login-benefits > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tsfx .nt-login-benefits b {
+  color: var(--text-on-brand);
+  font-size: 16px;
+  font-weight: 700;
+}
+.tsfx .nt-login-benefits small {
+  color: rgb(255 255 255 / 0.72);
+  font-size: var(--text-xs);
+  font-weight: 550;
+}
+.tsfx .nt-login-flow {
+  margin-top: var(--space-8);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: var(--radius-lg);
+  background: rgb(255 255 255 / 0.05);
+}
+.tsfx .nt-login-flow > p {
+  margin: 0 0 var(--space-4);
+  color: rgb(255 255 255 / 0.72);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tsfx .nt-login-flow ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tsfx .nt-login-flow li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6px;
+  text-align: center;
+}
+.tsfx .nt-login-flow li::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: rgb(255 255 255 / 0.3);
+}
+.tsfx .nt-login-flow li:first-child::before {
+  display: none;
+}
+.tsfx .nt-login-flow li > i {
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--text-on-brand);
+  border-radius: 50%;
+  background: #1565d8;
+}
+.tsfx .nt-login-flow li > span {
+  margin-top: 10px;
+  color: rgb(255 255 255 / 0.66);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.tsfx .nt-login-flow li > b {
+  margin-top: 2px;
+  color: var(--text-on-brand);
+  font-size: var(--text-md);
+}
+.tsfx .nt-login-flow li > small {
+  margin-top: 2px;
+  max-width: 16ch;
+  color: rgb(255 255 255 / 0.72);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+.tsfx .nt-login-capabilities {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.tsfx .nt-login-capabilities > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+.tsfx .nt-login-capabilities b {
+  color: rgb(255 255 255 / 0.8);
+  font-size: var(--text-xs);
+}
+.tsfx .nt-login-capabilities span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tsfx .nt-login-capabilities small {
+  padding: 3px 10px;
+  border: 1px solid rgb(255 255 255 / 0.24);
+  border-radius: var(--radius-pill);
+  color: var(--text-on-brand);
+  font-size: var(--text-xs);
+  font-weight: 550;
+}
+.tsfx .nt-login-pitch footer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: rgb(255 255 255 / 0.66);
+  font-size: var(--text-xs);
+}
+
+/* Sign-in card on the pale panel with its own corner arches. */
+.tsfx .nt-login-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+  overflow-x: hidden;
+  overflow-y: auto;
+  isolation: isolate;
+  background: var(--nt-login-panel);
+}
+.tsfx .nt-login-panel::before,
+.tsfx .nt-login-panel::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(1.5px);
+}
+.tsfx .nt-login-panel::before {
+  width: 232px;
+  height: 232px;
+  top: -122px;
+  right: -96px;
+  border: 58px solid var(--nt-login-arch);
+}
+.tsfx .nt-login-panel::after {
+  width: 424px;
+  height: 424px;
+  top: -226px;
+  right: -190px;
+  border: 46px solid var(--nt-login-arch-outer);
+}
+.tsfx .nt-login-theme-toggle {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.tsfx .nt-login-card {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  margin: auto;
+  padding: var(--space-10) var(--space-10) var(--space-8);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.tsfx .nt-login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(90deg, #0c4ba6, #3fa9f5);
+}
+.tsfx .nt-login-card h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 23px;
+  letter-spacing: -0.02em;
+}
+.tsfx .nt-login-card > p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+}
+.tsfx .nt-login-rule {
+  display: block;
+  height: 1px;
+  margin: var(--space-5) 0 var(--space-6);
+  background: var(--divider);
+}
+.tsfx .nt-login-rule::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 3px;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: var(--primary-blue);
+}
+.tsfx .nt-login-field {
+  display: block;
+  margin-bottom: var(--space-4);
+}
+.tsfx .nt-login-field > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.tsfx .nt-login-field > span b {
+  color: var(--status-error);
+}
+.tsfx .nt-login-card input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+}
+.tsfx .nt-login-card input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: var(--focus-ring);
+}
+.tsfx .nt-password-control {
+  position: relative;
+}
+.tsfx .nt-password-control input {
+  padding-right: 46px;
+}
+.tsfx .nt-password-control button {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.tsfx .nt-password-control button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.tsfx .nt-captcha-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tsfx .nt-captcha-row input {
+  min-width: 0;
+}
+[data-app-theme='normal'] .tsfx .nt-captcha-row .captcha {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 2px 2px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-readonly);
+  user-select: none;
+}
+[data-app-theme='normal'] .tsfx .nt-captcha-row .captcha-art {
+  display: block;
+  width: 116px;
+  height: 40px;
+}
+[data-app-theme='normal'] .tsfx .nt-captcha-row .captcha-refresh {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+[data-app-theme='normal'] .tsfx .nt-captcha-row .captcha-refresh:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+[data-app-theme='normal'] .tsfx .nt-login-card .error {
+  margin: var(--space-2) 0 0;
+}
+.tsfx .nt-login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 46px;
+  margin: var(--space-4) 0 var(--space-5);
+  /* LAS draws every button as an outline in its action's colour (uniform.css outranks its login gradient), filled on
+     hover, keyboard focus and press: the primary blue (--primary-blue / --primary-fill are LAS's action blues). */
+  border: 1px solid var(--primary-blue);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary-blue);
+  font-size: var(--text-md);
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.tsfx .nt-login-submit:hover:not(:disabled),
+.tsfx .nt-login-submit:focus-visible:not(:disabled),
+.tsfx .nt-login-submit:active:not(:disabled) {
+  border-color: var(--primary-fill);
+  background: var(--primary-fill);
+  color: var(--text-on-primary);
+}
+.tsfx .nt-login-submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.tsfx .nt-login-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+.tsfx .nt-login-note svg {
+  color: var(--status-success);
+}
+
+/* Responsive */
+@media (min-width: 901px) and (max-height: 860px) {
+  .tsfx .nt-login-pitch {
+    gap: var(--space-6);
+    padding-block: var(--space-8);
+  }
+  .tsfx .nt-pitch-body h1 {
+    font-size: clamp(26px, 2.8vw, 36px);
+    margin: var(--space-4) 0;
+  }
+  .tsfx .nt-login-benefits {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+  }
+  .tsfx .nt-login-flow {
+    margin-top: var(--space-5);
+  }
+  .tsfx .nt-login-capabilities {
+    display: none;
+  }
+  .tsfx .nt-login-card {
+    padding: var(--space-8);
+  }
+}
+@media (min-width: 901px) and (max-height: 700px) {
+  .tsfx .nt-login-flow,
+  .tsfx .nt-login-pitch footer {
+    display: none;
+  }
+}
+@media (min-width: 901px) and (max-width: 1240px) {
+  .tsfx .nt-login-capabilities {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .tsfx .nt-login {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tsfx .nt-login-pitch {
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5) var(--space-6);
+  }
+  .tsfx .nt-login-pitch .nt-login-mark {
+    height: 34px;
+  }
+  .tsfx .nt-pitch-body {
+    margin: 0;
+  }
+  .tsfx .nt-pitch-body h1 {
+    margin: var(--space-3) 0 0;
+    font-size: 20px;
+  }
+  .tsfx .nt-pitch-body > p,
+  .tsfx .nt-login-benefits,
+  .tsfx .nt-login-flow,
+  .tsfx .nt-login-capabilities,
+  .tsfx .nt-login-pitch footer {
+    display: none;
+  }
+  .tsfx .nt-login-panel {
+    align-items: flex-start;
+    padding: var(--space-5) var(--space-4) var(--space-8);
+  }
+  .tsfx .nt-login-card {
+    padding: var(--space-6) var(--space-5);
+  }
+  .tsfx .nt-login-card h2 {
+    font-size: 20px;
+  }
+}
+@media (max-width: 380px) {
+  .tsfx .nt-captcha-row {
+    flex-wrap: wrap;
+  }
+  .tsfx .nt-captcha-row > input {
+    flex-basis: 100%;
+  }
+}
