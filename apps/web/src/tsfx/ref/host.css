@@ -1,0 +1,55 @@
+/* The workspace and the reference both use these generic class names. Restore
+   the reference's normal document flow before each feature's scoped rules apply.
+   Feature styles load with their lazy screen and can set their own layout. */
+.tsfx .tsfx-ref .app { display: block; min-height: 0; }
+.tsfx .tsfx-ref .main { display: block; flex: initial; flex-direction: row; position: static; isolation: auto; width: auto; }
+.tsfx .tsfx-ref .content { padding: 0; flex: initial; max-width: none; width: auto; margin: 0; position: static; z-index: auto; overflow-x: visible; }
+.tsfx .tsfx-ref .panel { padding: 0; }
+.tsfx .tsfx-ref .field { margin-bottom: 0; }
+.tsfx .tsfx-ref .table-wrap { max-height: none; }
+.tsfx .tsfx-ref .pagination { margin-top: 0; }
+
+/* The workspace already supplies the page gutter and the height of the content area. */
+.tsfx .tsfx-ref#tsfx-alm-ui, .tsfx .tsfx-ref#tsfx-alm-ui > * { min-height: 0; }
+.tsfx .tsfx-ref#tsfx-alm-ui > * { padding: 0; }
+.tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body { min-width: 0; flex: 1 1 620px; max-width: 100%; }
+.tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar { flex-wrap: wrap !important; overflow: visible !important; }
+.tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .filter-bar { flex-wrap: wrap !important; min-width: 0 !important; max-width: 100% !important; }
+.tsfx .tsfx-ref#tsfx-alm-ui .table-title-row { flex-wrap: wrap; min-width: 0; }
+.tsfx .tsfx-ref#tsfx-alm-ui .table-heading { min-width: 0; white-space: normal; overflow-wrap: anywhere; flex: 1 1 260px; }
+.tsfx .tsfx-ref#tsfx-alm-ui .table-title-row .table-tools { margin-left: auto; flex-shrink: 0; }
+
+/* The first normal value row supplies the alignment for text, numeric and checkbox columns. */
+.tsfx .tsfx-ref#tsfx-alm-ui :is(table,#mc-table,#fx-table) th[data-ref-align=left] { text-align: left !important; }
+.tsfx .tsfx-ref#tsfx-alm-ui :is(table,#mc-table,#fx-table) th[data-ref-align=right] { text-align: right !important; }
+.tsfx .tsfx-ref#tsfx-alm-ui :is(table,#mc-table,#fx-table) th[data-ref-align=center] { text-align: center !important; }
+.tsfx .tsfx-ref#tsfx-alm-ui :is(table,#mc-table,#fx-table) th[data-ref-align=left] :is(.sort-th,.th-inner) { justify-content: flex-start; text-align: left; }
+.tsfx .tsfx-ref#tsfx-alm-ui :is(table,#mc-table,#fx-table) th[data-ref-align=right] :is(.sort-th,.th-inner) { justify-content: flex-end; text-align: right; }
+.tsfx .tsfx-ref#tsfx-alm-ui th .arrow:empty { display: none; }
+.tsfx .tsfx-ref#tsfx-alm-ui th[data-ref-align=right] .arrow { position: absolute; right: 1px; top: 50%; margin: 0; transform: translateY(-50%); }
+
+@media (max-width: 750px) {
+  .tsfx .tsfx-ref#tsfx-alm-ui .page-head .title-wrap { flex: 1 1 180px !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui :is(.page-head,.topbar) .page-title { white-space: normal !important; overflow-wrap: anywhere; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .tsf-ndf-fixing .toolbar-right { position: static; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .tsf-ndf-fixing .card-title { height: auto; min-height: 46px; padding: 10px 12px; flex-wrap: wrap; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .tsf-ndf-fixing .card-title .right { flex-basis: 100%; margin-left: 0; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar { align-items: stretch; overflow: visible !important; flex-wrap: wrap !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar .search-box { flex: 1 1 100% !important; min-width: 0 !important; max-width: none !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body { display: flex !important; flex: 1 1 100% !important; width: 100% !important; flex-wrap: wrap !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .filter-bar { display: flex !important; flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex-wrap: wrap !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .filter-field { flex: 1 1 130px !important; min-width: 0 !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .filter-field select { width: 100% !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .filter-field:has(.date-range) { flex-basis: 100% !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar #filter-panel-body .common-actions { flex-wrap: wrap !important; min-width: 0; max-width: 100%; margin-left: 0; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar > .filter-bar { flex: 1 1 100% !important; min-width: 0 !important; max-width: 100%; flex-wrap: wrap !important; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar > .filter-bar .filter-field { min-width: 0; flex: 1 1 130px; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .master-toolbar > .filter-bar select { width: 100%; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .common-actions { flex-wrap: wrap !important; min-width: 0; max-width: 100%; }
+  .tsfx .tsfx-ref#tsfx-alm-ui table :is(.sticky-col,.sticky-1,.sticky-2,.sticky-3) { left: auto !important; right: auto !important; }
+}
+@media (max-width: 600px) {
+  .tsfx .tsfx-ref#tsfx-alm-ui .metrics-grid:not(.kpi-hidden) { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .metrics-grid .metric-card { min-height: 96px; padding: 16px; }
+  .tsfx .tsfx-ref#tsfx-alm-ui .metrics-grid .metric-val { font-size: 22px; }
+}

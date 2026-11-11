@@ -1,0 +1,58 @@
+/* Manage Tradeflows (scoped to .tsf-manage and its split dialog .tsf-split). Colours come from the ALM tokens. */
+.tsfx .tsf-manage__back { margin-bottom: 12px; }
+.tsfx .tsf-manage__summary {
+  display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-start; justify-content: space-between;
+  padding: 16px 18px; border: 1px solid var(--border, #dbe3ee); border-radius: 10px; background: var(--surface-2, var(--panel, #f7f9fc));
+}
+.tsfx .tsf-manage__eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #64748b); }
+.tsfx .tsf-manage__title h2 { margin: 2px 0; font-size: 20px; }
+.tsfx .tsf-manage__title h2 span { font-weight: 500; color: var(--muted, #64748b); font-size: 15px; }
+.tsfx .tsf-manage__sub { margin: 0; color: var(--muted, #64748b); font-size: 13px; }
+.tsfx .tsf-manage__facts { display: grid; grid-template-columns: repeat(5, minmax(110px, auto)); gap: 4px 24px; margin: 0; }
+.tsfx .tsf-manage__facts div { display: flex; flex-direction: column; }
+.tsfx .tsf-manage__facts dt { font-size: 11px; color: var(--muted, #64748b); text-transform: uppercase; letter-spacing: .04em; }
+.tsfx .tsf-manage__facts dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tsfx .tsf-manage__facts dd.open { color: var(--accent, #1d6fd8); }
+.tsfx .tsf-manage__bar { margin-top: 18px; }
+.tsfx .tsf-manage__bar h3 { margin: 0; font-size: 15px; }
+.tsfx .tsf-manage__count { color: var(--muted, #64748b); font-size: 12.5px; margin-left: 8px; }
+.tsfx .tsf-manage__toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; margin-right: 8px; cursor: pointer; }
+.tsfx .tsf-manage__table { overflow-x: auto; }
+.tsfx .tsf-manage__table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-manage__table td.actions, .tsfx .tsf-manage__table th.actions { text-align: right; white-space: nowrap; }
+.tsfx .tsf-manage__table td.actions .button + .button { margin-left: 6px; }
+.tsfx .tsf-manage__table tr.deleted td { color: var(--muted, #94a3b8); }
+.tsfx .tsf-manage__table tr.deleted td.num { text-decoration: line-through; }
+.tsfx .tsf-manage__empty { color: var(--muted, #64748b); padding: 12px 4px; }
+
+.tsfx .tsf-split { display: flex; flex-direction: column; gap: 14px; }
+.tsfx .tsf-split__section { border: 1px solid var(--border, #dbe3ee); border-radius: 10px; padding: 14px 16px; }
+.tsfx .tsf-split__section h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
+.tsfx .tsf-split__hint { margin: 0 0 12px; color: var(--muted, #64748b); font-size: 13px; }
+.tsfx .tsf-split__count { display: inline-flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.tsfx .tsf-split__count .input { width: 120px; }
+.tsfx .tsf-split__error { color: var(--danger, #c0392b); margin: 8px 0 0; font-size: 13px; }
+.tsfx .tsf-split__table { width: 100%; }
+.tsfx .tsf-split__table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-split__table input.num { width: 150px; text-align: right; }
+.tsfx .tsf-split__facts { display: flex; gap: 28px; margin: 12px 0 0; }
+.tsfx .tsf-split__facts div { display: flex; gap: 8px; align-items: baseline; }
+.tsfx .tsf-split__facts dt { color: var(--muted, #64748b); font-size: 12.5px; }
+.tsfx .tsf-split__facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tsfx .tsf-split__facts dd.bad { color: var(--danger, #c0392b); }
+
+@media (max-width: 720px) {
+  .tsfx .tsf-manage__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tsfx .tsf-split__table input.num { width: 110px; }
+}
+
+/* Master–detail (requested 2026-11-07): the trade flows on the left, the open one with its BLs on the right. */
+.tsfx .tsf-manage__md { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.tsfx .tsf-manage__md.is-open { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+.tsfx .tsf-manage__md:not(.is-open) .tsf-manage__detail { display: none; }
+.tsfx .tsf-manage__list { margin: 0; min-width: 0; }
+.tsfx .tsf-manage__detail { min-width: 0; }
+.tsfx .tsf-manage__detail > .panel, .tsfx .tsf-manage__detail > section, .tsfx .tsf-manage__detail > div { margin: 0; }
+.tsfx .tsf-manage__pick { padding: 40px 24px; text-align: center; color: var(--muted, #64748b); }
+.tsfx .tsf-manage__md.is-open .tsf-manage__title h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+@media (max-width: 1200px) { .tsfx .tsf-manage__md.is-open { grid-template-columns: minmax(0, 1fr); } }

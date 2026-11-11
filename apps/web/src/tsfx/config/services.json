@@ -1,0 +1,38 @@
+[
+  {
+    "key": "tsf-deals",
+    "title": "TSF FX Deals",
+    "binding": "ZFS_SB_TSFDEAL_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_tsfdeal_o4_api/srvd_a2x/sap/zfs_sd_tsfdeal/0001/"
+  },
+  {
+    "key": "trmfxapp",
+    "title": "TRM FX Workflow Data (TrmFxApp)",
+    "binding": "ZFS_SB_TRMFXAPP_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_trmfxapp_o4_api/srvd_a2x/sap/zfs_sd_trmfxapp/0001/"
+  },
+  {
+    "key": "trmfx",
+    "title": "TRM FX Transactions",
+    "binding": "ZFS_SB_TRMFX_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_trmfx_o4_api/srvd_a2x/sap/zfs_sd_trmfx/0001/"
+  },
+  {
+    "key": "dealid",
+    "title": "Deal ID",
+    "binding": "ZFS_SB_DEALID_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_dealid_o4_api/srvd_a2x/sap/zfs_sd_dealid/0001/"
+  },
+  {
+    "key": "tf",
+    "title": "Trade Flow",
+    "binding": "ZFS_SB_TRDFLOW_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_trdflow_o4_api/srvd_a2x/sap/zfs_sd_trdflow/0001/"
+  },
+  {
+    "key": "tradeflow",
+    "title": "Trade Flows",
+    "binding": "ZFS_SB_TRADEFLOW_O4_API",
+    "path": "/sap/opu/odata4/sap/zfs_sb_tradeflow_o4_api/srvd_a2x/sap/zfs_sd_tradeflow/0001/"
+  }
+]

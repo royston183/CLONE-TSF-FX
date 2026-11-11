@@ -1,0 +1,207 @@
+/* Original stylesheet of ZSGTSF_RBILL_ADJUST_SELECTION_BASIC.html, scoped under .invblotter.
+ * Generated — every declaration is byte-identical to the legacy page; only selectors are
+ * prefixed and @keyframes renamed, so each converted app keeps its exact original look
+ * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
+ */
+.tsfx .invblotter *, .tsfx .invblotter {box-sizing:border-box}
+.tsfx .invblotter {height:100%;margin:0}
+.tsfx .invblotter {font-family:Inter,Arial,Helvetica,sans-serif;font-size:13px;color:#1D2D3E;background:#F4F8FC;overflow:hidden}
+.tsfx .invblotter button, .tsfx .invblotter input, .tsfx .invblotter select, .tsfx .invblotter textarea {font:inherit}
+.tsfx .invblotter button {cursor:pointer}
+.tsfx .invblotter button:disabled {cursor:not-allowed;opacity:.45}
+.tsfx .invblotter .app {height:100%;display:flex;flex-direction:column}
+.tsfx .invblotter .topbar {height:58px;min-height:58px;background:#fff;border-bottom:1px solid #DCE5EE;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px;box-shadow:0 1px 3px rgba(21,41,63,.05);z-index:20}
+.tsfx .invblotter .top-left, .tsfx .invblotter .top-right {display:flex;align-items:center;gap:9px;min-width:0}
+.tsfx .invblotter .back-btn, .tsfx .invblotter .hdr-btn, .tsfx .invblotter .icon-btn {height:38px;border:1px solid #A9BACB;background:#fff;color:#415C76;border-radius:5px;padding:0 13px;display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+.tsfx .invblotter .back-btn:hover, .tsfx .invblotter .hdr-btn:hover, .tsfx .invblotter .icon-btn:hover {background:#F7FAFD;border-color:#7F97AF}
+.tsfx .invblotter .hdr-btn.primary {background:#0876D8;color:#fff;border-color:#0876D8;box-shadow:0 3px 8px rgba(8,118,216,.18)}
+.tsfx .invblotter .hdr-btn.primary:hover {background:#0669C1}
+.tsfx .invblotter .hdr-btn.danger {color:#B42318;border-color:#E1A29D}
+.tsfx .invblotter .hdr-btn.danger:hover {background:#FFF6F5}
+.tsfx .invblotter .hdr-btn svg, .tsfx .invblotter .back-btn svg, .tsfx .invblotter .icon-btn svg {width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tsfx .invblotter .brand-mark {width:28px;height:30px;position:relative;margin-left:5px;flex:0 0 auto}
+.tsfx .invblotter .brand-mark span {position:absolute;left:0;height:6px;border-radius:4px}
+.tsfx .invblotter .brand-mark .b1 {top:1px;width:21px;background:#D6422D}
+.tsfx .invblotter .brand-mark .b2 {top:9px;width:16px;background:#F29D27}
+.tsfx .invblotter .brand-mark .b3 {top:17px;width:11px;background:#3F8E59}
+.tsfx .invblotter .brand-mark .b4 {top:25px;width:6px;background:#7B828A}
+.tsfx .invblotter .title-wrap {display:flex;align-items:baseline;gap:12px;min-width:0}
+.tsfx .invblotter .app-title {font-size:20px;font-weight:700;color:#172B3E;white-space:nowrap}
+.tsfx .invblotter .app-sub {font-size:12px;color:#6C7F92;white-space:nowrap}
+.tsfx .invblotter .live-dot {width:12px;height:12px;background:#2EB26A;border:3px solid #DDF5E8;border-radius:50%;margin:0 2px}
+.tsfx .invblotter .more-wrap {position:relative}
+.tsfx .invblotter .more-menu {display:none;position:absolute;right:0;top:43px;width:230px;background:#fff;border:1px solid #CBD8E5;border-radius:8px;box-shadow:0 12px 28px rgba(24,48,72,.18);padding:6px;z-index:100}
+.tsfx .invblotter .more-menu.open {display:block}
+.tsfx .invblotter .more-item {width:100%;border:0;background:#fff;text-align:left;padding:10px 11px;border-radius:5px;color:#29435C;display:flex;align-items:center;justify-content:space-between}
+.tsfx .invblotter .more-item:hover {background:#F2F7FC}
+.tsfx .invblotter .more-item.danger {color:#B42318}
+.tsfx .invblotter .more-item:disabled {display:none}
+.tsfx .invblotter .workspace {flex:1;min-height:0;padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.tsfx .invblotter .card {background:#fff;border:1px solid #D7E0E9;border-radius:10px;box-shadow:0 1px 4px rgba(26,48,70,.07);min-height:0}
+.tsfx .invblotter .context-card {flex:0 0 auto}
+.tsfx .invblotter .section-head {display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.tsfx .invblotter .section-title {font-weight:700;color:#20364C;font-size:14px}
+.tsfx .invblotter .section-meta {color:#6E8194;font-size:12px}
+.tsfx .invblotter .selection-card {padding:10px 12px 11px}
+.tsfx .invblotter .selection-card .section-head {margin-bottom:9px}
+.tsfx .invblotter .selection-grid {display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:14px;align-items:end}
+.tsfx .invblotter .selection-note {font-size:12px;color:#6E8194;padding-bottom:8px}
+.tsfx .invblotter #basicCard {align-self:flex-start;width:1360px;max-width:100%;padding:10px 12px 11px;height:auto;min-height:0}
+.tsfx .invblotter .basic-grid {display:flex;flex-direction:column;gap:8px;height:auto;min-height:0}
+.tsfx .invblotter .basic-row {display:grid;grid-template-columns:140px 170px 170px 170px 140px 140px 180px 140px;gap:10px;align-items:end;justify-content:start;width:max-content;max-width:100%}
+.tsfx .invblotter .basic-row.row-deal .field:nth-child(1) {grid-column:1 / span 4}
+.tsfx .invblotter .basic-row.row-deal .field:nth-child(2) {grid-column:5}
+.tsfx .invblotter .basic-row.row-deal .field:nth-child(3) {grid-column:6}
+.tsfx .invblotter .basic-row.row-deal .field:nth-child(4) {grid-column:7 / span 2}
+.tsfx .invblotter .basic-row.row-contract .field:nth-child(1) {grid-column:1}
+.tsfx .invblotter .basic-row.row-contract .field:nth-child(2) {grid-column:2 / span 3}
+.tsfx .invblotter .basic-row.row-contract .field:nth-child(3) {grid-column:5}
+.tsfx .invblotter .basic-row.row-contract .field:nth-child(4) {grid-column:6}
+.tsfx .invblotter .basic-row.row-contract .field:nth-child(5) {grid-column:7}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(1) {grid-column:1 / span 2}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(2) {grid-column:3}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(3) {grid-column:4}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(4) {grid-column:5 / span 2}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(5) {grid-column:7}
+.tsfx .invblotter .basic-row.row-structure .field:nth-child(6) {grid-column:8}
+.tsfx .invblotter .basic-row.row-model .field:nth-child(1) {grid-column:1 / span 3}
+.tsfx .invblotter .field {min-width:0}
+.tsfx .invblotter .field label {display:block;font-size:11px;font-weight:700;color:#516B83;margin:0 0 4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tsfx .invblotter .req {color:#D92D20}
+.tsfx .invblotter .control {height:33px;border:1px solid #B9C8D6;border-radius:5px;background:#fff;color:#223C53;padding:0 9px;width:100%;outline:none;min-width:0}
+.tsfx .invblotter .control:focus {border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.13)}
+.tsfx .invblotter .control.readonly, .tsfx .invblotter .control:disabled {background:#F4F7FA;color:#4D6174;border-color:#D3DEE8;opacity:1}
+.tsfx .invblotter .status-control {font-weight:700;color:#087F6B}
+.tsfx .invblotter .date-value {height:33px;background:#F7F9FB;border:1px solid #D3DEE8;border-radius:5px;padding:8px 9px;color:#4D6174;white-space:nowrap}
+.tsfx .invblotter .tables {flex:1;min-height:0;display:grid;grid-template-rows:minmax(180px,.88fr) minmax(245px,1.12fr);gap:10px}
+.tsfx .invblotter .table-card {display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tsfx .invblotter .table-toolbar {height:46px;min-height:46px;border-bottom:1px solid #DCE5ED;display:flex;align-items:center;justify-content:space-between;padding:0 11px;gap:12px}
+.tsfx .invblotter .table-title {font-size:14px;font-weight:700;color:#1F344A;white-space:nowrap}
+.tsfx .invblotter .count {font-size:12px;font-weight:400;color:#6F8396;margin-left:4px}
+.tsfx .invblotter .toolbar-tools {display:flex;align-items:center;gap:6px;min-width:0}
+.tsfx .invblotter .search {height:33px;width:218px;border:1px solid #AEBFCE;border-radius:5px;padding:0 10px;color:#1E344A;outline:none}
+.tsfx .invblotter .search:focus {border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.12)}
+.tsfx .invblotter .small-btn {height:33px;border:1px solid #AEBFCE;border-radius:5px;background:#fff;color:#36516A;padding:0 10px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.tsfx .invblotter .small-btn:hover {background:#F4F8FC}
+.tsfx .invblotter .small-btn.primary {background:#0876D8;border-color:#0876D8;color:#fff}
+.tsfx .invblotter .small-btn svg {width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tsfx .invblotter .grid-wrap {flex:1;min-height:0;overflow:auto;position:relative}
+.tsfx .invblotter table {border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;font-size:12.5px}
+.tsfx .invblotter thead th {position:sticky;top:0;z-index:3;background:#F2F5F8;color:#405B74;font-size:11.5px;font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid #D7E1EA;white-space:nowrap;user-select:none}
+.tsfx .invblotter thead th.sortable {cursor:pointer;padding-right:22px}
+.tsfx .invblotter thead th.sortable:after {content:'↕';position:absolute;right:8px;color:#8294A5;font-weight:400}
+.tsfx .invblotter thead th.sorted-asc:after {content:'↑';color:#256FAE}
+.tsfx .invblotter thead th.sorted-desc:after {content:'↓';color:#256FAE}
+.tsfx .invblotter tbody td {padding:7px 10px;border-bottom:1px solid #E5EBF1;color:#20384E;white-space:nowrap;background:#fff;vertical-align:middle}
+.tsfx .invblotter tbody tr:hover td {background:#F8FBFE}
+.tsfx .invblotter tbody tr.selected td {background:#EAF4FF}
+.tsfx .invblotter tbody tr.dragging {opacity:.55}
+.tsfx .invblotter .select-cell {width:38px;text-align:center;padding-left:8px!important;padding-right:8px!important}
+.tsfx .invblotter .row-check {width:14px;height:14px;accent-color:#0876D8;vertical-align:middle}
+.tsfx .invblotter .link {color:#006BC7;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.tsfx .invblotter .num {text-align:right;font-variant-numeric:tabular-nums}
+.tsfx .invblotter .center {text-align:center}
+.tsfx .invblotter .status-text {font-weight:700}
+.tsfx .invblotter .status-ok {color:#087F5B}
+.tsfx .invblotter .status-warn {color:#C77700}
+.tsfx .invblotter .status-info {color:#0B66B2}
+.tsfx .invblotter .status-danger {color:#C2342B}
+.tsfx .invblotter .editable-cell {padding:4px 6px!important}
+.tsfx .invblotter .cell-input {height:28px;border:1px solid #AFC0CF;border-radius:4px;padding:0 7px;background:#fff;color:#20384E;width:108px;outline:none;text-align:right}
+.tsfx .invblotter .cell-input.date {width:102px;text-align:left;padding-right:26px}
+.tsfx .invblotter .cell-input:disabled {background:#F1F4F7;border-color:#D5DFE8;color:#6B7B8C}
+.tsfx .invblotter .cell-input:focus {border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.1)}
+.tsfx .invblotter .date-cell {position:relative;display:inline-block}
+.tsfx .invblotter .date-trigger {position:absolute;right:4px;top:3px;width:22px;height:22px;border:0;background:transparent;color:#557089;padding:2px}
+.tsfx .invblotter .assign-btn {border:1px solid #8FB4D5;background:#F5FAFF;color:#0B66B2;border-radius:4px;height:27px;padding:0 8px;font-weight:700}
+.tsfx .invblotter .assign-btn:disabled {border-color:#D5DFE7;color:#96A5B3;background:#F5F7F9}
+.tsfx .invblotter .table-footer {height:38px;min-height:38px;border-top:1px solid #DDE5EC;display:flex;align-items:center;justify-content:space-between;padding:0 11px;color:#6B7F92;font-size:12px;background:#fff}
+.tsfx .invblotter .pager {display:flex;align-items:center;gap:4px}
+.tsfx .invblotter .page-btn {width:29px;height:27px;border:1px solid #D0DAE4;background:#fff;border-radius:4px;color:#52697E}
+.tsfx .invblotter .page-btn.active {border-color:#86AED2;background:#EFF7FF;color:#075FAD;font-weight:700}
+.tsfx .invblotter .page-btn:disabled {opacity:.35}
+.tsfx .invblotter .empty {padding:30px;text-align:center;color:#708296;background:#fff}
+.tsfx .invblotter .drop-ready {box-shadow:0 0 0 2px rgba(8,118,216,.18)!important;border-color:#4C9CE2!important}
+.tsfx .invblotter .drop-hover {background:#E8F4FF!important;box-shadow:0 0 0 3px rgba(8,118,216,.24)!important}
+.tsfx .invblotter .modal-overlay {display:none;position:fixed;inset:0;background:rgba(20,39,58,.32);z-index:400;align-items:center;justify-content:center;padding:24px}
+.tsfx .invblotter .modal-overlay.open {display:flex}
+.tsfx .invblotter .modal {background:#fff;border:1px solid #C9D6E2;border-radius:10px;box-shadow:0 22px 55px rgba(15,34,52,.24);width:min(920px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.tsfx .invblotter .modal.sm {width:min(520px,94vw)}
+.tsfx .invblotter .modal.md {width:min(720px,94vw)}
+.tsfx .invblotter .modal.lg {width:min(1100px,96vw)}
+.tsfx .invblotter .modal-head {height:50px;min-height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #DCE5ED}
+.tsfx .invblotter .modal-title {font-size:16px;font-weight:700;color:#20364A}
+.tsfx .invblotter .modal-close {border:0;background:transparent;width:32px;height:32px;border-radius:50%;color:#667D92;font-size:22px;line-height:29px}
+.tsfx .invblotter .modal-close:hover {background:#F0F4F8}
+.tsfx .invblotter .modal-body {padding:15px 16px;overflow:auto;min-height:0}
+.tsfx .invblotter .modal-footer {height:55px;min-height:55px;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 16px;border-top:1px solid #DCE5ED;background:#FBFCFD}
+.tsfx .invblotter .action-btn {height:34px;border:1px solid #AEBECD;background:#fff;color:#3E5870;border-radius:5px;padding:0 13px;font-weight:700}
+.tsfx .invblotter .action-btn.primary {background:#0876D8;border-color:#0876D8;color:#fff}
+.tsfx .invblotter .action-btn.danger {background:#C83B32;border-color:#C83B32;color:#fff}
+.tsfx .invblotter .action-btn:disabled {opacity:.4}
+.tsfx .invblotter .confirm-icon {width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF4FF;color:#0876D8;font-size:22px;margin-bottom:10px}
+.tsfx .invblotter .confirm-text {font-size:14px;line-height:1.55;color:#30485F}
+.tsfx .invblotter .confirm-note {margin-top:8px;padding:9px 10px;background:#F7F9FB;border:1px solid #DEE7EF;border-radius:6px;color:#536A7F;font-size:12px}
+.tsfx .invblotter .checklist {margin:0;padding-left:22px;color:#334B61;line-height:1.45}
+.tsfx .invblotter .checklist li {padding:5px 0 5px 2px}
+.tsfx .invblotter .proceed-box {margin-top:12px;padding:10px 12px;border:1px solid #CCE0F1;background:#F5FAFF;border-radius:7px;font-weight:700;color:#295372}
+.tsfx .invblotter .modal-form {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tsfx .invblotter .modal-form .span2 {grid-column:1/-1}
+.tsfx .invblotter textarea.control {height:86px;padding:9px;resize:vertical}
+.tsfx .invblotter .mini-grid {border:1px solid #D9E3EB;border-radius:7px;overflow:auto;max-height:390px}
+.tsfx .invblotter .mini-grid table {min-width:900px}
+.tsfx .invblotter .mini-grid thead th {top:0}
+.tsfx .invblotter .calendar {display:none;position:fixed;width:286px;background:#fff;border:1px solid #C7D5E1;border-radius:8px;box-shadow:0 14px 32px rgba(22,44,65,.2);z-index:700;padding:10px}
+.tsfx .invblotter .calendar.open {display:block}
+.tsfx .invblotter .cal-head {display:grid;grid-template-columns:32px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:8px}
+.tsfx .invblotter .cal-nav {height:30px;border:1px solid #CBD7E2;background:#fff;border-radius:5px;color:#4B657D}
+.tsfx .invblotter .cal-select {height:30px;border:1px solid #CBD7E2;border-radius:5px;background:#fff;color:#324D65;padding:0 5px}
+.tsfx .invblotter .cal-week, .tsfx .invblotter .cal-days {display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.tsfx .invblotter .cal-week span {text-align:center;font-size:10px;color:#718497;font-weight:700;padding:5px 0}
+.tsfx .invblotter .cal-day {height:31px;border:0;border-radius:5px;background:#fff;color:#324B62}
+.tsfx .invblotter .cal-day:hover {background:#EDF6FF;color:#086CBD}
+.tsfx .invblotter .cal-day.muted {color:#B6C1CB}
+.tsfx .invblotter .cal-day.today {box-shadow:inset 0 0 0 1px #7FAED6}
+.tsfx .invblotter .cal-day.selected {background:#0876D8;color:#fff}
+.tsfx .invblotter .toast-wrap {position:fixed;right:18px;top:68px;z-index:900;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.tsfx .invblotter .toast {min-width:280px;max-width:430px;background:#fff;border:1px solid #CFDCE7;border-left:4px solid #2F9E69;border-radius:7px;box-shadow:0 10px 26px rgba(20,42,63,.17);padding:11px 12px;color:#334B61;animation:invblotter-fadein .18s ease-out}
+.tsfx .invblotter .toast.error {border-left-color:#D8493F}
+.tsfx .invblotter .toast.warn {border-left-color:#EA8A16}
+.tsfx .invblotter .toast.info {border-left-color:#2B78C5}
+@keyframes invblotter-fadein {from{transform:translateY(-6px);opacity:0}to{transform:translateY(0);opacity:1}}
+.tsfx .invblotter .deal-picker {display:flex;align-items:center;gap:5px;min-width:0}
+.tsfx .invblotter .deal-picker .control {flex:1;min-width:0}
+.tsfx .invblotter .view-deals-btn {height:33px;min-width:66px;border:1px solid #AEBFCE;border-radius:5px;background:#fff;color:#36516A;padding:0 7px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.tsfx .invblotter .view-deals-btn:hover {background:#F4F8FC;border-color:#7F97AF}
+.tsfx .invblotter .deal-lookup-row {cursor:pointer}
+.tsfx .invblotter .deal-lookup-row:hover td {background:#EEF7FF}
+.tsfx .invblotter .bl-locked td {background:#F7F9FB;color:#7E8C99}
+.tsfx .invblotter .bl-locked:hover td {background:#F7F9FB}
+.tsfx .invblotter .bl-locked .row-check {cursor:not-allowed}
+.tsfx .invblotter .txn-modal {width:min(620px,94vw)}
+.tsfx .invblotter .detail-grid {display:flex;flex-direction:column;gap:0;border:1px solid #D9E3EB;border-radius:7px;overflow:hidden}
+.tsfx .invblotter .detail-item {display:grid;grid-template-columns:175px 1fr;min-width:0;background:#fff;border:0;border-bottom:1px solid #E4EAF0;border-radius:0;padding:0}
+.tsfx .invblotter .detail-item:last-child {border-bottom:0}
+.tsfx .invblotter .detail-label {display:flex;align-items:center;padding:9px 11px;background:#F7F9FB;border-right:1px solid #E4EAF0;font-size:10px;text-transform:uppercase;letter-spacing:.35px;color:#74879A;font-weight:700;margin:0}
+.tsfx .invblotter .detail-value {display:flex;align-items:center;padding:9px 11px;font-size:13px;color:#243F57;overflow:visible;text-overflow:clip;white-space:normal;word-break:break-word}
+.tsfx .invblotter .hint {font-size:11px;color:#73869A;margin-top:8px}
+@media(max-width:1450px) {
+.tsfx .invblotter #basicCard {width:100%}
+.tsfx .invblotter .basic-row {grid-template-columns:130px 155px 155px 155px 130px 130px 165px 130px}
+.tsfx .invblotter .hdr-btn .txt-hide {display:none}
+.tsfx .invblotter .hdr-btn {padding:0 10px}
+}
+@media(max-width:1100px) {
+.tsfx .invblotter {overflow:auto}
+.tsfx .invblotter .app {height:auto;min-height:100%}
+.tsfx .invblotter .workspace {overflow:visible}
+.tsfx .invblotter .tables {display:flex;flex-direction:column}
+.tsfx .invblotter .table-card {min-height:320px}
+.tsfx .invblotter .selection-grid {grid-template-columns:minmax(300px,480px) 1fr}
+.tsfx .invblotter .basic-row {display:flex;flex-wrap:wrap;width:100%}
+.tsfx .invblotter .basic-row .field {flex:0 0 180px}
+.tsfx .invblotter .basic-row .field:first-child {flex-basis:360px}
+.tsfx .invblotter .topbar {position:sticky;top:0}
+.tsfx .invblotter .top-right {overflow-x:auto}
+.tsfx .invblotter .search {width:170px}
+}

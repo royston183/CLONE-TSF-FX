@@ -57,6 +57,14 @@
       "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_trdflow_o4_api/srvd_a2x/sap/zfs_sd_trdflow/0001",
       "description": "ZFS_SB_TRDFLOW_O4_API — TrdFlow, ChComm"
     },
+    "tradeflow": {
+      "kind": "odata",
+      "auth": "sap-ds4",
+      "client": "100",
+      "tlsVerify": false,
+      "base": "https://10.40.1.33:44300/sap/opu/odata4/sap/zfs_sb_tradeflow_o4_api/srvd_a2x/sap/zfs_sd_tradeflow/0001",
+      "description": "ZFS_SB_TRADEFLOW_O4_API — TradeFlow with BillOfLading, CommodityPrice, Commodity (Trade Flows: upload, list, update price, manage, propose)"
+    },
     "trmfx": {
       "kind": "odata",
       "auth": "sap-ds4",

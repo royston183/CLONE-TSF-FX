@@ -1,0 +1,1365 @@
+/* Normal theme: shell. Every selector is scoped to [data-app-theme='normal'] or uses nt- classes. */
+/*
+ * The signed-in frame (components/normal/): navbar (NormalNavbar), sidebar (NormalSidebar), canvas, page header
+ * (PageHeader), illustrations (Illustration) and footer. Ported from LAS layout.css, app.css (the folding rail),
+ * components.css (.illo), reportingTheme.css (.surface-arches, .page-heading) and motion.css, every class with nt-.
+ * The KPI cards (NormalOverview, KpiCard) are ported from components.css (.stat, .stats, .tone-icon) and motion.css.
+ *
+ *   >= 751px   navbar + 64px icon rail, expanding to 288px on hover or keyboard focus
+ *   <= 750px   navbar + off-canvas sidebar behind the menu button, over a backdrop
+ */
+[data-app-theme='normal'] .tsfx {
+  --nt-arch: #3fa9f521;
+  --nt-arch-outer: #3fa9f512;
+}
+
+.tsfx .nt-app {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+/* ── Shared controls ─────────────────────────────────────────────────── */
+.tsfx .nt-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.tsfx .nt-icon-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.tsfx .nt-icon-button:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+.tsfx .nt-icon-button svg {
+  color: currentColor;
+}
+.tsfx .nt-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--primary-fill);
+  color: var(--text-on-primary);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+@keyframes nt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.tsfx .nt-spin {
+  animation: nt-spin 1s linear infinite;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────── */
+/* A white surface (raised dark in dark mode) with black / white type: the --nav-* tokens point at surface tokens. */
+.tsfx .nt-topbar {
+  --nav-bg: var(--surface);
+  --nav-border: var(--border);
+  --nav-hover: var(--surface-hover);
+  --nav-active: var(--primary-soft);
+  --nav-input: var(--surface-subtle);
+  --nav-input-border: var(--border);
+  --nav-indicator: var(--primary-blue);
+  --text-on-nav: var(--text-primary);
+  --text-on-nav-secondary: var(--text-secondary);
+  --text-on-nav-tertiary: var(--text-tertiary);
+  box-shadow: var(--shadow-xs);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  height: var(--topbar-height);
+  padding: 0 12px;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  color: var(--text-on-nav);
+}
+.tsfx .nt-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex-shrink: 0;
+  width: calc(var(--sidebar-width) - var(--space-5) - var(--space-5));
+  color: var(--text-on-nav);
+  text-decoration: none;
+}
+.tsfx .nt-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--illo-on-accent);
+  flex-shrink: 0;
+}
+.tsfx .nt-brand img {
+  height: 26px;
+  width: auto;
+}
+.tsfx .nt-brand strong {
+  display: block;
+  color: var(--text-on-nav);
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.tsfx .nt-brand small {
+  display: block;
+  margin-top: 1px;
+  color: var(--text-on-nav-secondary);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tsfx .nt-topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+.tsfx .nt-topbar .nt-icon-button {
+  color: var(--text-on-nav-secondary);
+}
+.tsfx .nt-topbar .nt-icon-button:hover:not(:disabled) {
+  background: var(--nav-hover);
+  color: var(--text-on-nav);
+}
+.tsfx .nt-topbar .nt-icon-button[aria-pressed="true"] {
+  background: var(--nav-active);
+  color: var(--text-on-nav);
+}
+.tsfx .nt-topbar .nt-icon-button:focus-visible {
+  outline-color: var(--nav-indicator);
+}
+.tsfx .nt-topbar-context {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.tsfx .nt-topbar-company {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: var(--space-3);
+  color: var(--text-on-nav-secondary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+/* The SAP status chip (NormalConnection): a squared status tag with its tone's dot. */
+.tsfx .nt-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  padding: 2px 10px;
+  border: 1px solid var(--status-neutral-border);
+  border-radius: var(--radius-xs);
+  background: var(--status-neutral-soft);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tsfx .nt-connection:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+.tsfx .nt-connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-neutral);
+  flex-shrink: 0;
+}
+.tsfx .nt-connection.nt-tone-green {
+  border-color: var(--status-success-border);
+  background: var(--status-success-soft);
+}
+.tsfx .nt-connection.nt-tone-green .nt-connection-dot {
+  background: var(--status-success);
+}
+.tsfx .nt-connection.nt-tone-amber {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-soft);
+}
+.tsfx .nt-connection.nt-tone-amber .nt-connection-dot {
+  background: var(--status-warning);
+}
+.tsfx .nt-connection.nt-tone-red {
+  border-color: var(--status-error-border);
+  background: var(--status-error-soft);
+}
+.tsfx .nt-connection.nt-tone-red .nt-connection-dot {
+  background: var(--status-error);
+}
+.tsfx .nt-topbar-divider {
+  width: 1px;
+  height: 28px;
+  margin: 0 var(--space-2);
+  background: var(--nav-border);
+}
+.tsfx .nt-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: var(--space-2);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--nav-border);
+}
+.tsfx .nt-topbar-user .nt-avatar {
+  background: var(--primary-fill);
+  color: var(--text-on-primary);
+  box-shadow: 0 0 0 2px var(--nav-input-border);
+}
+.tsfx .nt-topbar-user b {
+  display: block;
+  color: var(--text-on-nav);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.tsfx .nt-topbar-user small {
+  display: block;
+  color: var(--text-on-nav-secondary);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+.tsfx .nt-mobile-menu,
+.tsfx .nt-sidebar-backdrop {
+  display: none;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.tsfx .nt-app-body {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - var(--topbar-height));
+}
+/* A white surface too: the active item is a pale blue fill with a border and a blue icon. */
+.tsfx .nt-sidebar {
+  --nav-sidebar: var(--surface);
+  --nav-border: var(--border);
+  --nav-hover: var(--surface-hover);
+  --nav-active: var(--primary-soft);
+  --nav-input-border: var(--border);
+  --nav-indicator: var(--primary-blue);
+  --nav-icon-tile: var(--primary-fill);
+  --text-on-nav: var(--text-primary);
+  --text-on-nav-secondary: var(--text-secondary);
+  --text-on-nav-tertiary: var(--text-tertiary);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: var(--topbar-height);
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--topbar-height));
+  padding: 16px 12px 0;
+  background: var(--nav-sidebar);
+  color: var(--text-on-nav);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* No scrollbar: on a short screen the menu still scrolls with the wheel, touch or keyboard. */
+  scrollbar-width: none;
+}
+.tsfx .nt-sidebar::-webkit-scrollbar {
+  display: none;
+}
+.tsfx .nt-sidebar nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+.tsfx .nt-nav-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 16px 12px 9px;
+  color: var(--text-on-nav-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tsfx .nt-nav-group::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--nav-border);
+}
+.tsfx .nt-sidebar nav > .nt-nav-group:first-child {
+  padding-top: var(--space-1);
+}
+.tsfx .nt-sidebar nav button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-on-nav-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  text-align: left;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.tsfx .nt-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-on-nav-secondary);
+  flex-shrink: 0;
+  font-style: normal;
+}
+.tsfx .nt-sidebar nav button > span {
+  min-width: 0;
+}
+.tsfx .nt-sidebar nav button:hover {
+  background: var(--nav-hover);
+  color: var(--text-on-nav);
+}
+.tsfx .nt-sidebar nav button:hover .nt-nav-icon {
+  color: var(--text-on-nav);
+}
+.tsfx .nt-sidebar nav button.nt-active {
+  background: var(--nav-active);
+  color: var(--text-on-nav);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--primary-soft-border);
+}
+.tsfx .nt-sidebar nav button.nt-active .nt-nav-icon {
+  color: var(--primary-blue);
+}
+.tsfx .nt-sidebar nav button:focus-visible {
+  outline: 2px solid var(--nav-indicator);
+  outline-offset: -2px;
+}
+.tsfx .nt-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Canvas and page header ──────────────────────────────────────────── */
+/* Clip only the decoration, keeping menus, focus rings and page scrolling usable. */
+.tsfx .nt-content {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  width: 100%;
+  /* Wide screens use their width too, rather than a band of empty canvas either side. */
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+}
+.tsfx .nt-surface-arches {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  animation: none !important;
+}
+.tsfx .nt-surface-arches::before,
+.tsfx .nt-surface-arches::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(1.5px);
+}
+.tsfx .nt-surface-arches::before {
+  width: 232px;
+  height: 232px;
+  top: -122px;
+  right: -96px;
+  border: 58px solid var(--nt-arch);
+}
+.tsfx .nt-surface-arches::after {
+  width: 424px;
+  height: 424px;
+  top: -226px;
+  right: -190px;
+  border: 46px solid var(--nt-arch-outer);
+}
+/* The page header is a white surface on the canvas with a blue rule on its left edge. */
+.tsfx .nt-page-heading {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.tsfx .nt-page-heading::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--primary-blue);
+}
+.tsfx .nt-page-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--primary-fill);
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+}
+.tsfx .nt-page-heading-text {
+  flex: 1;
+  min-width: 0;
+}
+.tsfx .nt-page-heading h1 {
+  margin: 2px 0;
+  color: var(--text-primary);
+  font-size: var(--text-2xl);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.tsfx .nt-page-heading p {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+.tsfx .nt-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+.tsfx .nt-page-illustration {
+  z-index: 1;
+  align-self: center;
+  margin: calc(var(--space-4) * -1) 0;
+}
+.tsfx .nt-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tsfx .nt-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.tsfx .nt-breadcrumb li svg {
+  opacity: 0.7;
+}
+.tsfx .nt-breadcrumb [aria-current="page"] {
+  color: var(--text-primary);
+  font-weight: 650;
+}
+.tsfx .nt-page-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-4) 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+/* ── Illustration (components/normal/Illustration.tsx) ──────────────── */
+.tsfx .nt-illo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.tsfx .nt-illo .nt-s {
+  fill: var(--illo-surface);
+}
+.tsfx .nt-illo .nt-p {
+  fill: var(--illo-paper);
+}
+.tsfx .nt-illo .nt-l {
+  stroke: var(--illo-line);
+  stroke-width: 1.5;
+}
+.tsfx .nt-illo .nt-lf {
+  fill: var(--illo-line);
+}
+.tsfx .nt-illo .nt-b {
+  fill: var(--illo-blue);
+}
+.tsfx .nt-illo .nt-bs {
+  fill: var(--illo-blue-soft);
+}
+.tsfx .nt-illo .nt-k {
+  fill: var(--illo-ink);
+}
+.tsfx .nt-illo .nt-y {
+  fill: var(--status-warning);
+}
+.tsfx .nt-illo .nt-r {
+  fill: var(--status-error);
+}
+.tsfx .nt-illo .nt-g {
+  fill: var(--status-success);
+}
+.tsfx .nt-illo .nt-n {
+  fill: var(--status-neutral);
+}
+.tsfx .nt-illo .nt-wf {
+  fill: var(--illo-on-accent);
+}
+.tsfx .nt-illo .nt-ws {
+  stroke: var(--illo-on-accent);
+}
+.tsfx .nt-illo .nt-trend {
+  stroke: var(--illo-ink);
+}
+
+/* ── Motion (LAS motion.css): the page rises in, illustrations breathe ── */
+@keyframes nt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.tsfx .nt-content > :not(.nt-page-heading):not(.nt-page-footer):not(.nt-surface-arches) {
+  animation: nt-rise 0.42s var(--ease) backwards;
+}
+.tsfx .nt-content > :nth-child(3) {
+  animation-delay: 0.03s;
+}
+.tsfx .nt-content > :nth-child(4) {
+  animation-delay: 0.08s;
+}
+.tsfx .nt-content > :nth-child(5) {
+  animation-delay: 0.13s;
+}
+.tsfx .nt-content > :nth-child(n + 6) {
+  animation-delay: 0.18s;
+}
+.tsfx .nt-page-heading {
+  animation: nt-rise 0.36s var(--ease) backwards;
+}
+@keyframes nt-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.tsfx .nt-page-illustration .nt-illo {
+  animation: nt-float 4.5s ease-in-out infinite;
+}
+@keyframes nt-twinkle {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}
+.tsfx .nt-illo > circle.nt-y,
+.tsfx .nt-illo > circle.nt-r,
+.tsfx .nt-illo > circle.nt-g,
+.tsfx .nt-illo > circle.nt-n {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nt-twinkle 2.8s ease-in-out infinite;
+}
+.tsfx .nt-illo > circle.nt-y:nth-of-type(2n),
+.tsfx .nt-illo > circle.nt-r:nth-of-type(2n),
+.tsfx .nt-illo > circle.nt-g:nth-of-type(2n),
+.tsfx .nt-illo > circle.nt-n:nth-of-type(2n) {
+  animation-delay: 1.1s;
+}
+@keyframes nt-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.tsfx .nt-illo .nt-gear {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nt-turn 6s linear infinite;
+}
+@keyframes nt-dot-beat {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  15% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+}
+.tsfx .nt-illo .nt-pulse-dots circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nt-dot-beat 1.2s var(--ease) infinite;
+}
+.tsfx .nt-illo .nt-pulse-dots circle:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.tsfx .nt-illo .nt-pulse-dots circle:nth-child(3) {
+  animation-delay: 0.6s;
+}
+.tsfx .nt-illo .nt-pulse-dots circle:nth-child(4) {
+  animation-delay: 0.9s;
+}
+@keyframes nt-draw {
+  from {
+    stroke-dashoffset: 48;
+  }
+}
+.tsfx .nt-illo .nt-draw {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 0;
+  animation: nt-draw 0.7s 0.25s var(--ease) backwards;
+}
+@keyframes nt-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.5) rotate(-12deg);
+  }
+  70% {
+    transform: scale(0.95) rotate(2deg);
+  }
+}
+.tsfx .nt-illo .nt-stamp {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nt-stamp 0.55s 0.15s var(--ease) backwards;
+}
+@keyframes nt-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+.tsfx .nt-illo .nt-bars rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: nt-grow-y 0.6s var(--ease) backwards;
+}
+.tsfx .nt-illo .nt-bars rect:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.tsfx .nt-illo .nt-bars rect:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.tsfx .nt-illo .nt-bars rect:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.tsfx .nt-illo .nt-bars rect:nth-child(5) {
+  animation-delay: 0.32s;
+}
+.tsfx .nt-illo .nt-coins circle {
+  transform-box: fill-box;
+  animation: nt-float 2.6s ease-in-out infinite;
+}
+.tsfx .nt-illo .nt-coins circle:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
+/* ── UI Gallery previews (gallery/TemplatesSection.tsx): the frame's parts in a box, not the page ── */
+.tsfx .nt-preview {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+.tsfx .nt-preview .nt-topbar,
+.tsfx .nt-preview .nt-sidebar {
+  position: relative;
+  top: 0;
+}
+.tsfx .nt-preview .nt-app-body {
+  min-height: 0;
+}
+.tsfx .nt-preview .nt-sidebar {
+  height: 320px;
+}
+@media (max-width: 750px) {
+  [data-app-theme='normal'] .tsfx .nt-sidebar:not(.open) { visibility: hidden; pointer-events: none; }
+}
+.tsfx .nt-preview .nt-page-heading {
+  margin: var(--space-4);
+}
+.tsfx .nt-illo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+.tsfx .nt-illo-grid figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* ── The folding rail (LAS app.css): desktop and tablet ─────────────────
+ * Folded to 64px, it opens by itself while pointed at (after a short wait, so passing over it does not open it) or
+ * while a key has moved focus into it, then folds again. Only the width moves: icons stay put, labels and group
+ * names keep their size and fade in after the rail has opened, out before it folds. */
+@media (min-width: 751px) {
+  .tsfx .nt-sidebar {
+    --nav-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.3s var(--nav-ease);
+  }
+  .tsfx .nt-nav-collapsed .nt-brand {
+    width: auto;
+  }
+  .tsfx .nt-nav-collapsed .nt-sidebar {
+    width: var(--sidebar-rail);
+    will-change: width;
+  }
+  .tsfx .nt-nav-collapsed .nt-sidebar:hover,
+  .tsfx .nt-nav-collapsed .nt-sidebar:has(:focus-visible) {
+    width: var(--sidebar-width);
+    transition-delay: 0.12s;
+  }
+  /* Folding waits for the labels to fade. */
+  .tsfx .nt-nav-collapsed .nt-sidebar:not(:hover):not(:has(:focus-visible)) {
+    transition-delay: 0.08s;
+  }
+  /* Labels keep their expanded width (sidebar minus padding 24, item padding 24, icon 16, gap 11): no rewrapping. */
+  .tsfx .nt-nav-collapsed .nt-sidebar nav button > span {
+    flex: none;
+    width: calc(var(--sidebar-width) - 75px);
+    opacity: 1;
+    transition: opacity 0.2s var(--nav-ease) 0.3s;
+  }
+  .tsfx .nt-nav-collapsed .nt-sidebar:not(:hover):not(:has(:focus-visible)) nav button > span {
+    opacity: 0;
+    transition: opacity 0.1s linear;
+  }
+  /* The group headings keep their height; the name fades and the rule runs the full width. */
+  .tsfx .nt-nav-collapsed .nt-sidebar .nt-nav-group > span {
+    white-space: nowrap;
+    transition: opacity 0.2s var(--nav-ease) 0.3s;
+  }
+  .tsfx .nt-nav-collapsed .nt-sidebar:not(:hover):not(:has(:focus-visible)) .nt-nav-group {
+    gap: 0;
+  }
+  .tsfx .nt-nav-collapsed .nt-sidebar:not(:hover):not(:has(:focus-visible)) .nt-nav-group > span {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.1s linear;
+  }
+}
+
+/* ── Responsive (LAS breakpoints) ────────────────────────────────────── */
+@media (max-width: 1400px) {
+  .tsfx .nt-topbar-company {
+    display: none;
+  }
+}
+@media (max-width: 1179px) {
+  .tsfx .nt-brand {
+    width: auto;
+  }
+  .tsfx .nt-content {
+    padding: var(--space-5) var(--space-6);
+  }
+  .tsfx .nt-topbar-user > div,
+  .tsfx .nt-page-illustration {
+    display: none;
+  }
+}
+@media (max-width: 960px) {
+  .tsfx .nt-page-heading {
+    flex-wrap: wrap;
+  }
+  .tsfx .nt-heading-actions {
+    width: 100%;
+  }
+}
+@media (max-width: 750px) {
+  .tsfx .nt-topbar {
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+  }
+  .tsfx .nt-mobile-menu {
+    display: inline-flex;
+  }
+  .tsfx .nt-topbar-divider,
+  .tsfx .nt-brand small {
+    display: none;
+  }
+  /* The brand gives way first (its name ends in an ellipsis), so every tool stays in view and tappable. */
+  .tsfx .nt-topbar .nt-brand {
+    gap: 8px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .tsfx .nt-brand > div {
+    min-width: 0;
+  }
+  .tsfx .nt-brand strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tsfx .nt-topbar-tools {
+    flex-shrink: 0;
+  }
+  /* The SAP status chip folds to its dot; the words stay in the button for screen readers (and its title). */
+  .tsfx .nt-connection {
+    gap: 0;
+    min-width: 28px;
+    padding: 2px 9px;
+    font-size: 0;
+  }
+  .tsfx .nt-page-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .tsfx .nt-brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+  .tsfx .nt-topbar-tools {
+    gap: 2px;
+  }
+  .tsfx .nt-topbar-user {
+    margin-left: 0;
+    padding-left: var(--space-2);
+    gap: 2px;
+  }
+  .tsfx .nt-topbar-user .nt-avatar {
+    display: none;
+  }
+  .tsfx .nt-sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    z-index: 31;
+    width: min(var(--sidebar-width), 86vw);
+    height: calc(100dvh - var(--topbar-height));
+    transform: translateX(-100%);
+    transition: transform 0.2s var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  /* "open" is set by NormalSidebar (the menu button); it is not an nt- class, so the rule carries the scope. */
+  [data-app-theme='normal'] .tsfx .nt-sidebar.open {
+    transform: translateX(0);
+  }
+  .tsfx .nt-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--topbar-height) 0 0;
+    z-index: 30;
+    padding: 0;
+    border: 0;
+    background: var(--overlay);
+  }
+  .tsfx .nt-content {
+    padding: var(--space-4) var(--space-3);
+  }
+  .tsfx .nt-page-heading {
+    gap: var(--space-3) var(--space-4);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .tsfx .nt-page-heading h1 {
+    font-size: 21px;
+  }
+  .tsfx .nt-heading-actions {
+    justify-content: space-between;
+  }
+  .tsfx .nt-page-footer {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+@media (max-width: 420px) {
+  .tsfx .nt-topbar {
+    padding: 0 8px;
+    gap: 6px;
+  }
+  .tsfx .nt-topbar .nt-icon-button {
+    width: 30px;
+    height: 32px;
+  }
+  .tsfx .nt-brand strong {
+    font-size: 13px;
+  }
+}
+@media (max-width: 379px) {
+  .tsfx .nt-connection {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tsfx .nt-sidebar,
+  .tsfx .nt-sidebar * {
+    transition: none !important;
+  }
+  .tsfx .nt-app *,
+  .tsfx .nt-app *::before,
+  .tsfx .nt-app *::after {
+    animation: none !important;
+  }
+}
+
+/* Notifications (components/normal/NotificationBell.tsx), ported from LAS .nb* */
+.tsfx .nt-nb {
+  position: relative;
+}
+.tsfx .nt-nb .nt-notify {
+  position: relative;
+}
+.tsfx .nt-nb-count {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: var(--status-warning);
+  color: var(--text-on-warning);
+  font-size: 9.5px;
+  font-weight: 750;
+  line-height: 1.6;
+  box-shadow: 0 0 0 2px var(--nav-bg, var(--surface));
+}
+.tsfx .nt-nb-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(560px, calc(100vh - var(--topbar-height) - 24px));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.tsfx .nt-nb-panel header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+.tsfx .nt-nb-panel h3 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+.tsfx .nt-nb-body {
+  overflow-y: auto;
+}
+.tsfx .nt-nb-body h4 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tsfx .nt-nb-body h4 span {
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.tsfx .nt-nb-body ul {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  list-style: none;
+}
+.tsfx .nt-nb-body li button {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+.tsfx .nt-nb-body li button:hover,
+.tsfx .nt-nb-body li button:focus-visible {
+  background: var(--surface-hover);
+}
+.tsfx .nt-nb-body li span {
+  flex: 1;
+  min-width: 0;
+}
+.tsfx .nt-nb-body li b {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.tsfx .nt-nb-body li small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+.tsfx .nt-nb-body time {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+.tsfx .nt-nb-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  font-style: normal;
+}
+.tsfx .nt-nb-icon.nt-tone-pending,
+.tsfx .nt-nb-icon.nt-tone-back {
+  background: var(--status-warning-soft);
+  color: var(--status-warning);
+}
+.tsfx .nt-nb-icon.nt-tone-rejected {
+  background: var(--status-error-soft);
+  color: var(--status-error);
+}
+.tsfx .nt-nb-icon.nt-tone-approved {
+  background: var(--status-success-soft);
+  color: var(--status-success);
+}
+.tsfx .nt-nb-empty {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+/* In the UI Gallery the open panel sits in flow instead of floating over the page. */
+.tsfx .nt-bell-preview {
+  min-height: 260px;
+}
+.tsfx .nt-bell-preview .nt-nb-panel {
+  position: static;
+  margin-left: auto;
+}
+
+/* ── KPI cards (LAS StatCard) and the Overview's application links ────────────
+ * A white card: the label with its tone's dot, the icon tile, the figure, the caption and the tone's accent rail. */
+.tsfx .nt-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.tsfx .nt-stat {
+  --tone: var(--primary-blue);
+  --tone-soft: var(--primary-soft);
+  position: relative;
+  min-width: 0;
+  padding: var(--space-5) var(--space-5) calc(var(--space-5) + 4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.tsfx .nt-stat.nt-tone-green {
+  --tone: var(--status-success);
+  --tone-soft: var(--status-success-soft);
+}
+.tsfx .nt-stat.nt-tone-amber {
+  --tone: var(--status-warning);
+  --tone-soft: var(--status-warning-soft);
+}
+.tsfx .nt-stat.nt-tone-red {
+  --tone: var(--status-error);
+  --tone-soft: var(--status-error-soft);
+}
+.tsfx .nt-stat.nt-tone-navy {
+  --tone: var(--dark-blue);
+  --tone-soft: var(--status-neutral-soft);
+}
+.tsfx .nt-stat::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: var(--tone);
+}
+.tsfx .nt-stat > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.tsfx .nt-stat > div > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.tsfx .nt-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tone);
+  flex-shrink: 0;
+}
+.tsfx .nt-stat strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.tsfx .nt-stat > small {
+  display: block;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--divider);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+/* Featured: the figure a page leads with, as a blue card with white type. */
+.tsfx .nt-stat.nt-featured {
+  border-color: var(--band-border);
+  background: var(--band-bg);
+  box-shadow: var(--shadow-md);
+}
+.tsfx .nt-stat.nt-featured::after {
+  background: var(--nav-indicator);
+}
+.tsfx .nt-stat.nt-featured > div > span,
+.tsfx .nt-stat.nt-featured > small {
+  color: var(--text-on-nav-secondary);
+}
+.tsfx .nt-stat.nt-featured strong {
+  color: var(--text-on-primary);
+}
+.tsfx .nt-stat.nt-featured > small {
+  border-top-color: var(--nav-input-border);
+}
+.tsfx .nt-stat.nt-featured .nt-stat-dot {
+  background: var(--nav-indicator);
+}
+.tsfx .nt-stat.nt-featured .nt-tone-icon {
+  background: var(--nav-active);
+  color: var(--text-on-primary);
+}
+/* Tone icon tiles: tint behind, coloured icon, never coloured type. */
+.tsfx .nt-tone-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  font-style: normal;
+  flex-shrink: 0;
+  background: var(--primary-soft);
+  color: var(--primary-blue);
+}
+.tsfx .nt-tone-icon.nt-icon-green {
+  background: var(--status-success-soft);
+  color: var(--status-success);
+}
+.tsfx .nt-tone-icon.nt-icon-amber {
+  background: var(--status-warning-soft);
+  color: var(--status-warning);
+}
+.tsfx .nt-tone-icon.nt-icon-red {
+  background: var(--status-error-soft);
+  color: var(--status-error);
+}
+.tsfx .nt-tone-icon.nt-icon-navy {
+  background: var(--status-neutral-soft);
+  color: var(--dark-blue);
+}
+/* KPI cards arrive left to right and rise toward the pointer. */
+.tsfx .nt-stats > .nt-stat {
+  animation: nt-rise 0.45s var(--ease) backwards;
+}
+.tsfx .nt-stats > .nt-stat:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.tsfx .nt-stats > .nt-stat:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.tsfx .nt-stats > .nt-stat:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.tsfx .nt-stat,
+.tsfx .nt-app-link {
+  transition:
+    transform 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease);
+}
+.tsfx .nt-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.tsfx .nt-stat:hover .nt-tone-icon {
+  transform: scale(1.08);
+}
+.tsfx .nt-tone-icon {
+  transition: transform 0.18s var(--ease);
+}
+
+/* The applications panel under the figures. */
+.tsfx .nt-overview-apps {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.tsfx .nt-overview-apps h2 {
+  margin: 0 0 var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.tsfx .nt-overview-apps ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tsfx .nt-app-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.tsfx .nt-app-link:hover {
+  border-color: var(--primary-soft-border);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.tsfx .nt-app-link > span {
+  display: grid;
+  min-width: 0;
+}
+.tsfx .nt-app-link strong {
+  font-size: var(--text-md);
+  font-weight: 650;
+}
+.tsfx .nt-app-link small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tsfx .nt-overview-empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+@media (max-width: 1179px) {
+  .tsfx .nt-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 750px) {
+  .tsfx .nt-stats {
+    gap: var(--space-3);
+  }
+  .tsfx .nt-stat {
+    padding: var(--space-4);
+  }
+  .tsfx .nt-stat strong {
+    font-size: 19px;
+  }
+}
+@media (max-width: 379px) {
+  .tsfx .nt-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tsfx .nt-stat:hover,
+  .tsfx .nt-app-link:hover {
+    transform: none;
+  }
+}

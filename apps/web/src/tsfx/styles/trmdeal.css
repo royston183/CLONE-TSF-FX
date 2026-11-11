@@ -1,0 +1,74 @@
+/* TRM transaction pop-up (DealDialog / ClassDialog): FTR_DISPLAY (TM_53) look and feel in the app theme (L-643): header block, toolbar,
+   SAP tab strip, group boxes with label/field rows and ALV-style grids. Colours come from the app theme tokens (Day / Night), never the OS scheme. */
+.tsfx .td-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 18px;margin:12px 0 16px}
+.tsfx .td-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tsfx .td-field span{font-size:11px;font-weight:600;color:var(--muted)}
+.tsfx .td-field b{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
+.tsfx .td-field b.td-empty{color:var(--muted);font-weight:400}
+.tsfx .td-scroll{overflow-x:auto;margin-top:10px}
+.tsfx .td-table{min-width:640px}
+.tsfx .td-muted{font-size:12px;color:var(--muted)}
+.tsfx .td-notice{font-size:12px;color:#1f7a4d;background:color-mix(in srgb,#1f8a5b 12%,var(--surface));border-radius:6px;padding:8px 10px}
+.tsfx .td-warn{font-size:12px;color:#8a5a00;background:color-mix(in srgb,#b7791f 14%,var(--surface));border-radius:6px;padding:8px 10px}
+.tsfx .td-error{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:#9b2c3a;background:color-mix(in srgb,#c0392b 10%,var(--surface));border-radius:6px;padding:10px;margin-bottom:10px}
+:root[data-theme=dark] .tsfx .td-notice{color:#4cc38a}:root[data-theme=dark] .tsfx .td-warn{color:#e0b050}:root[data-theme=dark] .tsfx .td-error{color:#f07060}
+.tsfx .td-error p{margin:4px 0 0}
+.tsfx .td-error .button{margin-left:auto}
+.tsfx .td-h{font-size:13px;margin:6px 0 0}
+.tsfx .td-link,.tsfx .trm-hotspot{background:none;border:0;padding:0;font:inherit;color:var(--blue);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.tsfx .td-link:focus-visible,.tsfx .trm-hotspot:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:2px}
+/* Tabs inside the pop-up: a segmented bar. */
+.tsfx .ds-modal .trm-lo-tabs{gap:2px;padding:3px;margin:0 0 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);width:max-content;max-width:100%;overflow-x:auto}
+.tsfx .ds-modal .trm-lo-tabs button{border:0;margin:0;padding:6px 14px;border-radius:7px;color:var(--muted)}
+.tsfx .ds-modal .trm-lo-tabs button:hover:not(:disabled){color:var(--text)}
+.tsfx .ds-modal .trm-lo-tabs button.on{background:var(--surface);color:var(--blue);box-shadow:0 1px 3px rgba(15,39,71,.14)}
+/* FTR_DISPLAY screen: .ftr wraps header, toolbar, tab strip and panel. */
+.tsfx .ds-modal.wide:has(.ftr){width:min(1040px,100%)}
+.tsfx .ftr{--ftr-label:132px;--ftr-tint:color-mix(in srgb,var(--blue) 7%,var(--surface));font-size:12.5px}
+.tsfx .ftr-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 6px;margin-bottom:10px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}
+.tsfx .ftr-tool{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;background:none;border-radius:5px;padding:4px 9px;font-size:12px;font-weight:600;color:var(--text)}
+.tsfx .ftr-tool:hover:not(:disabled){background:var(--surface);border-color:var(--line);color:var(--blue)}
+.tsfx .ftr-hint{font-size:11.5px;color:var(--muted);margin-left:auto}
+.tsfx .ftr-head{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,max-content));gap:0 56px;margin:0 2px 14px}
+.tsfx .ftr-row{display:grid;grid-template-columns:var(--ftr-label) minmax(0,1fr);align-items:center;gap:8px;min-height:27px}
+.tsfx .ftr-row>span:first-child{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px dotted color-mix(in srgb,var(--muted) 45%,transparent);padding-bottom:1px}
+.tsfx .ftr-vals{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.tsfx .ftr-val{display:inline-block;min-width:44px;min-height:21px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:15px}
+.tsfx .ftr-val.wide{min-width:120px}
+.tsfx .ftr-val.num{min-width:130px;text-align:right}
+.tsfx .ftr-text{color:var(--text);overflow-wrap:anywhere}
+.tsfx .ftr-in{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tsfx .ftr-in input{min-height:27px;padding:2px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text);font:inherit;max-width:240px}
+.tsfx .ftr-in input[aria-invalid="true"]{border-color:#bf515d}
+.tsfx .ftr-in b{font-size:11px;font-weight:500;color:#bf515d}
+/* SAP tab strip: tabs sit on the panel's top edge, the active one opens into it. */
+.tsfx .ftr-tabs{display:flex;gap:2px;overflow-x:auto;overflow-y:hidden;padding:0 4px;scrollbar-width:thin}
+.tsfx .ftr-tabs button{flex:0 0 auto;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg);color:var(--muted);padding:6px 13px;font-size:12px;font-weight:600;margin-bottom:-1px;position:relative}
+.tsfx .ftr-tabs button:hover:not(:disabled){color:var(--text)}
+.tsfx .ftr-tabs button.on{background:var(--surface);color:var(--blue);z-index:1;box-shadow:inset 0 2px 0 var(--blue)}
+.tsfx .ftr-tabs button.gap:not(.on){font-style:italic;font-weight:500}
+.tsfx .ftr-panel{border:1px solid var(--line);border-radius:0 8px 8px 8px;background:var(--surface);padding:12px 14px 14px;display:grid;gap:12px;min-height:280px;align-content:start}
+.tsfx .ftr-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+/* Group box: SAP frame with a tinted title bar. */
+.tsfx .ftr-box{border:1px solid var(--line);border-radius:6px;margin:0;padding:0 12px 8px;min-width:0;background:var(--surface)}
+.tsfx .ftr-box>legend{float:left;width:calc(100% + 24px);margin:0 -12px 6px;padding:4px 12px;background:var(--ftr-tint);border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font-weight:600;color:var(--text)}
+.tsfx .ftr-box>legend+*{clear:both}
+.tsfx .ftr-two{display:block}
+.tsfx .ftr-two>div{display:inline-block;vertical-align:top;width:50%;min-width:280px;padding-right:12px}
+.tsfx .ftr-gap{display:flex;gap:8px;align-items:flex-start;margin:0;font-size:12px;color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:10px 12px}
+.tsfx .ftr-gap svg{margin-top:2px;color:var(--blue)}
+/* ALV-style grids (Flows, Overview of Conditions, Activities). */
+.tsfx .ftr-grid{min-width:720px;font-size:12px}
+.tsfx .ftr-grid caption{text-align:left;font-size:15px;font-weight:600;padding:2px 0 8px;color:var(--text)}
+.tsfx .ftr-grid th{padding:6px 10px;text-align:left}
+.tsfx .ftr-grid td{padding:5px 10px;font-variant-numeric:tabular-nums}
+.tsfx .ftr-grid tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
+.tsfx .ftr-grid .num{text-align:right}
+.tsfx .ftr-grid tfoot td{font-weight:700;background:color-mix(in srgb,#e8b400 22%,var(--surface));border-top:2px solid var(--line)}
+.tsfx .ftr-grid .td-link{font-weight:500}
+.tsfx .ftr-flow{display:grid;gap:10px;min-width:min(440px,100%)}
+.tsfx .ftr-flow .ftr-row{grid-template-columns:118px minmax(0,1fr)}
+.tsfx .ftr-check{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);margin-left:6px}
+.tsfx .ftr-check input{margin:0}
+.tsfx .ftr-small{min-width:560px}
+@media (max-width:640px){.tsfx .ftr{--ftr-label:108px}.tsfx .ftr-two>div{width:100%;min-width:0;padding-right:0}.tsfx .ftr-head{grid-template-columns:1fr}.tsfx .ftr-val.num{min-width:96px}}

@@ -9,6 +9,7 @@ import { loadServices, REPO_ROOT } from './config.ts'
 import { apiRoutes } from './routes/api.ts'
 import { authRoutes, requireSession } from './routes/auth.ts'
 import { localdbRoutes } from './routes/localdb.ts'
+import { tsfxAiRoutes } from './routes/tsfx-ai.ts'
 
 const PORT = Number(process.env['PORT'] ?? 8080)
 const HOST = process.env['HOST'] ?? '127.0.0.1'
@@ -57,6 +58,7 @@ export async function build() {
 
   await authRoutes(app)
   await localdbRoutes(app, services)
+  await tsfxAiRoutes(app)
   await apiRoutes(app, services)
 
   // Startup must say plainly which backends are usable. A service silently doing nothing

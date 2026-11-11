@@ -1,0 +1,47 @@
+/* Update Price on a date (scoped to .tsf-price): the commodities on the date on the left, the chosen commodity's price
+   history on the right; the date is in the top bar (As of). ALM tokens; light and dark. */
+.tsfx .tsf-price { display: flex; flex-direction: column; gap: 16px; font-size: 13px; }
+.tsfx .tsf-price .tsf-kpis { margin: 0; }
+.tsfx .tsf-price__layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 18px; align-items: start; }
+.tsfx .tsf-price__list { padding: 0; overflow: hidden; }
+.tsfx .tsf-price__bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 6px; }
+.tsfx .tsf-price__bar h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.tsfx .tsf-price__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 6px 16px 12px; border-bottom: 1px solid var(--line); }
+.tsfx .tsf-price__tools .ds-search { flex: 1; min-width: 180px; }
+.tsfx .tsf-price__tools .text-button { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+.tsfx .tsf-price .num { text-align: right; }
+.tsfx .tsf-price .actions { text-align: right; white-space: nowrap; }
+.tsfx .tsf-price__table tbody tr { cursor: pointer; }
+.tsfx .tsf-price__table tbody tr.selected td { background: var(--pale); }
+.tsfx .tsf-price__table tbody tr.selected td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+.tsfx .tsf-price__pick { border: 0; background: none; padding: 0; font: inherit; color: var(--blue); cursor: pointer; text-transform: none; }
+.tsfx .tsf-price__pick:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+.tsfx .tsf-price__input { width: 120px; text-align: right; font-variant-numeric: tabular-nums; height: 32px; }
+.tsfx .tsf-price__changed td { background: color-mix(in srgb, var(--pale) 70%, transparent); }
+
+.tsfx .tsf-price__detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tsfx .tsf-price__detail-head h2 { margin: 0 0 4px; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+.tsfx .tsf-price__detail-head p { margin: 0; font-size: 13px; }
+.tsfx .tsf-price__net { margin-top: 6px !important; font-weight: 600; color: var(--text); }
+.tsfx .tsf-price__net b { color: var(--blue); }
+.tsfx .tsf-price__detail .panel { padding: 0; overflow: hidden; }
+
+@media (max-width: 1100px) { .tsfx .tsf-price__layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* Compact (2026-11-07). */
+.tsfx .tsf-price { gap: 10px; }
+.tsfx .tsf-price__layout { gap: 12px; }
+.tsfx .tsf-price__bar { padding: 8px 12px 2px; }
+.tsfx .tsf-price__bar h2 { font-size: 13px; }
+.tsfx .tsf-price__tools { padding: 4px 12px 8px; gap: 6px 10px; }
+.tsfx .tsf-price__tools .trm-seg button { font-size: 11.5px; padding-top: 3px; padding-bottom: 3px; }
+.tsfx .tsf-price__tools .ds-search input { font-size: 12px; padding-top: 4px; padding-bottom: 4px; }
+.tsfx .tsf-price__input { height: 26px; width: 104px; font-size: 12px; }
+.tsfx .tsf-price__detail { gap: 8px; }
+.tsfx .tsf-price__detail-head h2 { font-size: 15px; font-weight: 700; letter-spacing: 0; margin: 0 0 2px; }
+.tsfx .tsf-price__detail-head p { font-size: 12px; }
+.tsfx .tsf-price__net { margin-top: 2px !important; }
+/* The As of date and Save sit above the list (not in the top bar). */
+.tsfx .tsf-price__bar .top-asof { font-size: 12px; gap: 4px; }
+.tsfx .tsf-price__bar .top-asof input[type=date] { height: 30px; font-size: 12.5px; padding: 0 8px; }
+.tsfx .tsf-price__bar .top-step { width: 28px; height: 30px; }

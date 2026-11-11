@@ -1,0 +1,63 @@
+﻿/* Transaction display only: keep its frame and field hierarchy consistent across screens. */
+.tsfx .fx-transaction-dialog,
+.tsfx .fx-transaction-details,
+.tsfx .fo-trader-workbench .txn-details-modal {
+  --txn-surface: var(--alm-surface, var(--surface));
+  --txn-page: var(--alm-bg, var(--bg));
+  --txn-ink: var(--alm-text, var(--text));
+  --txn-label: var(--alm-label, var(--text-muted));
+  --txn-accent: var(--alm-blue, var(--primary));
+  --txn-tint: var(--alm-pale, var(--primary-tint));
+  --txn-edge: color-mix(in srgb, var(--txn-accent) 22%, var(--alm-input-line, var(--border-strong)));
+}
+.tsfx .fx-transaction-dialog { --text-sub: var(--txn-ink); }
+.tsfx .fx-transaction-dialog > .slc-dialog {
+  margin: auto;
+  border: 1px solid var(--txn-edge);
+  border-radius: 12px;
+  box-shadow: 0 24px 72px -12px #0b1a2b80, 0 0 0 1px var(--txn-edge);
+}
+.tsfx .fx-transaction-dialog > .slc-dialog::backdrop { background: #0b1a2ba3; backdrop-filter: blur(2px); }
+.tsfx .fx-transaction-dialog .slc-dialog__head {
+  min-height: 66px;
+  padding: 18px 22px 15px;
+  background: var(--txn-tint);
+  border-bottom: 1px solid var(--txn-edge);
+  box-shadow: inset 0 4px 0 var(--txn-accent);
+}
+.tsfx .fx-transaction-dialog .slc-dialog__title { color: var(--txn-ink); font-size: 17px; font-weight: 700; line-height: 1.4; }
+.tsfx .fx-transaction-dialog .slc-dialog__close { width: 30px; height: 30px; flex: 0 0 30px; border: 1px solid var(--txn-edge); border-radius: 6px; background: var(--txn-surface); color: var(--txn-label); }
+.tsfx .fx-transaction-dialog .slc-dialog__body { padding: 20px; background: var(--txn-page); }
+.tsfx .fx-transaction-dialog .slc-dialog__footer { padding: 14px 20px; border-top: 1px solid var(--txn-edge); background: var(--txn-surface); }
+.tsfx .fx-transaction-dialog .slc-dialog__footer .slc-btn { min-width: 96px; }
+.tsfx .fx-transaction-details.txn-detail-content { color: var(--txn-ink); }
+.tsfx .fx-transaction-details .txn-detail-header { padding: 16px; background: var(--txn-tint); border: 1px solid var(--txn-edge); border-left: 4px solid var(--txn-accent); border-radius: 8px; }
+.tsfx .fx-transaction-details .txn-detail-summary-label { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; color: var(--txn-ink); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tsfx .fx-transaction-details .txn-detail-readonly { padding: 3px 8px; border: 1px solid var(--txn-edge); border-radius: 4px; color: var(--txn-label); background: var(--txn-surface); font-size: 10px; letter-spacing: .04em; }
+.tsfx .fx-transaction-details .txn-detail-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 22px; margin: 0; }
+.tsfx .fx-transaction-details .txn-detail-fields > div { display: grid; grid-template-columns: minmax(110px, 40%) minmax(0, 1fr); gap: 10px; align-items: center; }
+.tsfx .fx-transaction-details .txn-detail-fields dt { margin: 0; color: var(--txn-label); font-size: 12px; font-weight: 600; line-height: 1.4; }
+.tsfx .fx-transaction-details .txn-detail-fields dd { margin: 0; min-height: 32px; padding: 6px 9px; border: 1px solid var(--txn-edge); border-radius: 4px; background: var(--txn-page); color: var(--txn-ink); font-size: 13px; font-weight: 600; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tsfx .fx-transaction-details .txn-detail-header dd { background: var(--txn-surface); font-weight: 700; }
+.tsfx .fx-transaction-details .txn-detail-tabs { display: flex; gap: 4px; padding: 4px; margin: 18px 0; border: 1px solid var(--txn-edge); border-radius: 7px; background: var(--txn-surface); }
+.tsfx .fx-transaction-details .txn-detail-tabs button { padding: 9px 16px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--txn-label); cursor: pointer; font: inherit; font-weight: 600; }
+.tsfx .fx-transaction-details .txn-detail-tabs button[aria-selected="true"] { color: var(--txn-accent); background: var(--txn-tint); border-color: var(--txn-edge); font-weight: 700; box-shadow: inset 0 -2px 0 var(--txn-accent); }
+.tsfx .fx-transaction-details .txn-detail-section { margin: 0 0 18px; overflow: hidden; border: 1px solid var(--txn-edge); border-radius: 8px; background: var(--txn-surface); box-shadow: 0 2px 5px #0b1a2b06; }
+.tsfx .fx-transaction-details .txn-detail-section h3 { margin: 0; padding: 11px 16px; border-bottom: 1px solid var(--txn-edge); border-left: 3px solid var(--txn-accent); background: var(--txn-tint); color: var(--txn-ink); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tsfx .fx-transaction-details .txn-detail-section .txn-detail-fields { padding: 16px; }
+.tsfx .fx-transaction-details .txn-detail-section[aria-label="Settlement"] { margin-left: 20px; }
+.tsfx .fx-transaction-details .txn-detail-note { margin: 12px 0; color: var(--txn-label); font-size: 12px; line-height: 1.5; }
+.tsfx .fx-transaction-details .txn-detail-message { padding: 32px 16px; }
+.tsfx .fx-transaction-details .txn-detail-error { color: var(--error); }
+.tsfx .fx-transaction-details .txn-detail-blank { color: var(--txn-label); font-weight: 400; }
+.tsfx .fx-transaction-details .slc-btn { color: var(--txn-ink); }
+.tsfx .fx-transaction-link { border: 0; background: transparent; padding: 0; font: inherit; color: var(--primary); cursor: pointer; text-align: inherit; }
+.tsfx .fx-transaction-link:hover { text-decoration: underline; }
+@media (max-width: 700px) {
+  .tsfx .fx-transaction-dialog .slc-dialog__head { padding: 16px; }
+  .tsfx .fx-transaction-dialog .slc-dialog__body { padding: 14px; }
+  .tsfx .fx-transaction-details .txn-detail-fields { grid-template-columns: minmax(0, 1fr); }
+  .tsfx .fx-transaction-details .txn-detail-fields > div { grid-template-columns: minmax(100px, 40%) minmax(0, 1fr); gap: 8px; }
+  .tsfx .fx-transaction-details .txn-detail-section[aria-label="Settlement"] { margin-left: 0; }
+  .tsfx .fx-transaction-details .txn-detail-tabs button { padding: 9px 12px; }
+}
