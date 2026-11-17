@@ -27,8 +27,8 @@
 .tsfx .app .tsf-kpi__note { font-size: 12px; color: var(--muted); }
 
 /* Report tables: header, rows, totals, the column filter. */
-.tsfx .app .kit-data-table thead th { font-size: 12.5px; font-weight: 700; color: var(--text); }
-.tsfx .app .kit-data-table tbody td { font-size: 13px; }
+.tsfx .app .kit-data-table thead th { font-size: 14px; font-weight: 700; color: var(--text); }
+.tsfx .app .kit-data-table tbody td { font-size: 14.5px; }
 .tsfx .app .kit-data-table tbody tr[data-table-row]:hover td { background: color-mix(in srgb, var(--pale) 55%, transparent); }
 .tsfx .app .kit-data-table tfoot :is(th, td) { font-weight: 700; color: var(--text); }
 .tsfx .kit-table-filter { display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; padding: 2px; margin-left: 2px; color: var(--muted); cursor: pointer; opacity: .75; border-radius: 4px; }
@@ -67,8 +67,8 @@
 .tsfx .app .page-heading { margin-bottom: 10px; }
 .tsfx .app .page-heading h1, .tsfx .app .tsf-head h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
 .tsfx .app .page-heading p, .tsfx .app .tsf-head p { font-size: 12px; }
-.tsfx .app .kit-data-table thead th { font-size: 12px; padding-top: 7px; padding-bottom: 7px; }
-.tsfx .app .kit-data-table tbody td, .tsfx .app .kit-data-table tfoot :is(th, td) { font-size: 12.5px; padding-top: 6px; padding-bottom: 6px; }
+.tsfx .app .kit-data-table thead th { font-size: 13.5px; padding-top: 7px; padding-bottom: 7px; }
+.tsfx .app .kit-data-table tbody td, .tsfx .app .kit-data-table tfoot :is(th, td) { font-size: 14px; padding-top: 6px; padding-bottom: 6px; }
 .tsfx .app .kit-table-tools { padding: 3px 8px; gap: 6px; }
 .tsfx .app .kit-table-tools .button, .tsfx .app .kit-table-tools select { font-size: 11.5px; min-height: 26px; padding-top: 2px; padding-bottom: 2px; }
 .tsfx .app .kit-table-tools label, .tsfx .app .kit-table-tools span { font-size: 11.5px; }

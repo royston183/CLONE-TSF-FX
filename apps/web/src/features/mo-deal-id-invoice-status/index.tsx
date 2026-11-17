@@ -440,6 +440,6 @@ export default function MoDealIdInvoiceStatus() {
 
 /** Says where the rows came from, and which columns are waiting for an API. */
 function SourceNote({ source, notes }: { source: DataSource | 'loading'; notes: readonly string[] }) {
-  const text = source === 'loading' ? 'Loading from MySQL…' : source === 'sap' ? ['ZSGTSFTR_DEALID · MySQL', ...notes].join(' · ') : notes.join(' · ')
+  const text = source === 'loading' ? 'Loading…' : source === 'sap' ? ['Live data', ...notes].join(' · ') : notes.join(' · ')
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

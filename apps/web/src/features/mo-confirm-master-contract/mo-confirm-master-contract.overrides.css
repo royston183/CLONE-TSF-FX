@@ -19,7 +19,7 @@
   transform: translateY(-1px);
 }
 .mocmc.row-dragging .drag-target:not(:disabled):not(.drag-over) {
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.18) !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.18) !important;
 }
 .mocmc.row-dragging .drag-target:not(:disabled)::after {
   content: "Drop here";

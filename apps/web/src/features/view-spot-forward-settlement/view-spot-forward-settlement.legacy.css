@@ -11,8 +11,8 @@
   --text-faint:#8CA0B3;
   --border:#E1E9F2;
   --border-strong:#CBD9E8;
-  --primary:#1F6FEB;
-  --primary-dark:#1657C4;
+  --primary:#0854a0;
+  --primary-dark:#0854a0;
   --primary-light:#6FA8FF;
   --primary-tint:#EAF2FF;
   --success:#27AE60;
@@ -153,12 +153,12 @@
 .view-spot-forward-settlement .table-wrap {width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
 .view-spot-forward-settlement table {border-collapse:collapse;border-spacing:0;font-size:12px;}
 .view-spot-forward-settlement #deal-table {width:max-content;min-width:100%;}
-.view-spot-forward-settlement .list-table th, .view-spot-forward-settlement .list-table td {padding:9px 12px;white-space:nowrap;}
-.view-spot-forward-settlement .list-table thead th {position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size:10.8px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;z-index:5;}
+.view-spot-forward-settlement .list-table th, .view-spot-forward-settlement .list-table td {padding: 9px 7px;white-space:nowrap;}
+.view-spot-forward-settlement .list-table thead th {position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size: 12.3px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;z-index:5;}
 .view-spot-forward-settlement .list-table thead th.sortable {cursor:pointer;}
 .view-spot-forward-settlement .list-table thead th.sortable:hover {color:var(--primary-dark);}
-.view-spot-forward-settlement .list-table thead th.sortable .arrow {font-size:9px;color:var(--text-faint);}
-.view-spot-forward-settlement .list-table tbody td {border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.view-spot-forward-settlement .list-table thead th.sortable .arrow {font-size: 10.5px;color:var(--text-faint);}
+.view-spot-forward-settlement .list-table tbody td {border-bottom:1px solid var(--border);font-size: 13.5px;color:var(--text);}
 .view-spot-forward-settlement .list-table tbody tr {transition:background .15s;cursor:pointer;}
 .view-spot-forward-settlement .list-table tbody tr:hover td {background:#F7FAFD;}
 .view-spot-forward-settlement .list-table tbody tr.row-checked td {background:var(--primary-tint)!important;}
@@ -260,7 +260,7 @@
 .view-spot-forward-settlement .metric-card.k-errcorr {border-left-color:var(--purple);}
 .view-spot-forward-settlement .metric-card::before {display:none!important;}
 .view-spot-forward-settlement .metric-card:hover {transform:none;border-color:#C7D3E0;box-shadow:0 3px 8px rgba(18,38,63,.13);}
-.view-spot-forward-settlement .metric-card.active {border-color:#B9CBE0;box-shadow:0 0 0 2px rgba(31,111,235,.10);}
+.view-spot-forward-settlement .metric-card.active {border-color:#B9CBE0;box-shadow:0 0 0 2px rgba(8,84,160,.10);}
 .view-spot-forward-settlement .metric-inner {position:relative;min-height:104px;padding:20px 20px 13px;}
 .view-spot-forward-settlement .metric-val {font-size:30px;font-weight:700;line-height:1;margin-bottom:12px;}
 .view-spot-forward-settlement .metric-lbl {font-size:11.5px;font-weight:700;color:#214B72;max-width:55%;white-space:normal;overflow:visible;}

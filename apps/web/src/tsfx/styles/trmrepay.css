@@ -19,7 +19,7 @@
 .tsfx .qr-table tr.qr-level1 td{font-weight:600;background:color-mix(in srgb,var(--line) 35%,var(--surface))}
 .tsfx .qr-table tr.qr-subtotal td{font-weight:700;background:color-mix(in srgb,#f2c94c 22%,var(--surface))}
 .tsfx .qr-table tr:is(.qr-mismatch,.qr-cumulative,.qr-percent) td{font-weight:700;background:color-mix(in srgb,var(--blue) 12%,var(--surface))}
-.tsfx .qr-table thead tr.qr-xbrl td{position:static;font-size:11px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}
+.tsfx .qr-table thead tr.qr-xbrl td{position:static;font-size: 12.5px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}
 .tsfx .qr-flag{text-align:center;color:var(--blue)}
 /* Drill-down: the group ID and the amounts of a row with a source screen open that screen. */
 .tsfx .qr-drill{border:0;background:none;padding:0;font:inherit;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
@@ -37,7 +37,7 @@
    so all columns fit the width. A sideways scroll remains only as a fallback on narrow windows. */
 .tsfx .qr-app .qr-full{max-height:none;min-height:0;overflow-y:visible}
 .tsfx .qr-full .qr-table{font-size:11px}
-.tsfx .qr-full .qr-table th{white-space:normal;padding:5px 4px;vertical-align:bottom;font-size:10.5px}
+.tsfx .qr-full .qr-table th{white-space:normal;padding:5px 4px;vertical-align:bottom;font-size: 12px}
 .tsfx .qr-full .qr-table th.md-amt span{max-width:none;white-space:normal;overflow:visible}
 .tsfx .qr-full .qr-table td:not(.md-amt),.tsfx .qr-full .qr-table td.md-amt{padding:5px 4px}
 .tsfx .qr-full .qr-table td:not(.md-amt):not(.md-id){white-space:normal}

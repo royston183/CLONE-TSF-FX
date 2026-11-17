@@ -14,8 +14,8 @@
 .invblotter .top-left, .invblotter .top-right {display:flex;align-items:center;gap:9px;min-width:0}
 .invblotter .back-btn, .invblotter .hdr-btn, .invblotter .icon-btn {height:38px;border:1px solid #A9BACB;background:#fff;color:#415C76;border-radius:5px;padding:0 13px;display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
 .invblotter .back-btn:hover, .invblotter .hdr-btn:hover, .invblotter .icon-btn:hover {background:#F7FAFD;border-color:#7F97AF}
-.invblotter .hdr-btn.primary {background:#0876D8;color:#fff;border-color:#0876D8;box-shadow:0 3px 8px rgba(8,118,216,.18)}
-.invblotter .hdr-btn.primary:hover {background:#0669C1}
+.invblotter .hdr-btn.primary {background:#0854a0;color:#fff;border-color:#0854a0;box-shadow:0 3px 8px rgba(8,118,216,.18)}
+.invblotter .hdr-btn.primary:hover {background:#0854a0}
 .invblotter .hdr-btn.danger {color:#B42318;border-color:#E1A29D}
 .invblotter .hdr-btn.danger:hover {background:#FFF6F5}
 .invblotter .hdr-btn svg, .invblotter .back-btn svg, .invblotter .icon-btn svg {width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
@@ -83,28 +83,28 @@
 .invblotter .search:focus {border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.12)}
 .invblotter .small-btn {height:33px;border:1px solid #AEBFCE;border-radius:5px;background:#fff;color:#36516A;padding:0 10px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .invblotter .small-btn:hover {background:#F4F8FC}
-.invblotter .small-btn.primary {background:#0876D8;border-color:#0876D8;color:#fff}
+.invblotter .small-btn.primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .invblotter .small-btn svg {width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
 .invblotter .grid-wrap {flex:1;min-height:0;overflow:auto;position:relative}
 .invblotter table {border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;font-size:12.5px}
-.invblotter thead th {position:sticky;top:0;z-index:3;background:#F2F5F8;color:#405B74;font-size:11.5px;font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid #D7E1EA;white-space:nowrap;user-select:none}
-.invblotter thead th.sortable {cursor:pointer;padding-right:22px}
+.invblotter thead th {position:sticky;top:0;z-index:3;background:#F2F5F8;color:#405B74;font-size: 13px;font-weight:700;text-align:left;padding: 8px 6px;border-bottom:1px solid #D7E1EA;white-space:nowrap;user-select:none}
+.invblotter thead th.sortable {cursor:pointer;padding-right: 12px}
 .invblotter thead th.sortable:after {content:'↕';position:absolute;right:8px;color:#8294A5;font-weight:400}
-.invblotter thead th.sorted-asc:after {content:'↑';color:#256FAE}
-.invblotter thead th.sorted-desc:after {content:'↓';color:#256FAE}
-.invblotter tbody td {padding:7px 10px;border-bottom:1px solid #E5EBF1;color:#20384E;white-space:nowrap;background:#fff;vertical-align:middle}
+.invblotter thead th.sorted-asc:after {content:'↑';color:#0854a0}
+.invblotter thead th.sorted-desc:after {content:'↓';color:#0854a0}
+.invblotter tbody td {padding: 7px 6px;border-bottom:1px solid #E5EBF1;color:#20384E;white-space:nowrap;background:#fff;vertical-align:middle}
 .invblotter tbody tr:hover td {background:#F8FBFE}
 .invblotter tbody tr.selected td {background:#EAF4FF}
 .invblotter tbody tr.dragging {opacity:.55}
 .invblotter .select-cell {width:38px;text-align:center;padding-left:8px!important;padding-right:8px!important}
-.invblotter .row-check {width:14px;height:14px;accent-color:#0876D8;vertical-align:middle}
-.invblotter .link {color:#006BC7;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.invblotter .row-check {width:14px;height:14px;accent-color:#0854a0;vertical-align:middle}
+.invblotter .link {color:#0854a0;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .invblotter .num {text-align:right;font-variant-numeric:tabular-nums}
 .invblotter .center {text-align:center}
 .invblotter .status-text {font-weight:700}
 .invblotter .status-ok {color:#087F5B}
 .invblotter .status-warn {color:#C77700}
-.invblotter .status-info {color:#0B66B2}
+.invblotter .status-info {color:#06477f}
 .invblotter .status-danger {color:#C2342B}
 .invblotter .editable-cell {padding:4px 6px!important}
 .invblotter .cell-input {height:28px;border:1px solid #AFC0CF;border-radius:4px;padding:0 7px;background:#fff;color:#20384E;width:108px;outline:none;text-align:right}
@@ -113,12 +113,12 @@
 .invblotter .cell-input:focus {border-color:#3B82C4;box-shadow:0 0 0 2px rgba(59,130,196,.1)}
 .invblotter .date-cell {position:relative;display:inline-block}
 .invblotter .date-trigger {position:absolute;right:4px;top:3px;width:22px;height:22px;border:0;background:transparent;color:#557089;padding:2px}
-.invblotter .assign-btn {border:1px solid #8FB4D5;background:#F5FAFF;color:#0B66B2;border-radius:4px;height:27px;padding:0 8px;font-weight:700}
+.invblotter .assign-btn {border:1px solid #8FB4D5;background:#F5FAFF;color:#06477f;border-radius:4px;height:27px;padding:0 8px;font-weight:700}
 .invblotter .assign-btn:disabled {border-color:#D5DFE7;color:#96A5B3;background:#F5F7F9}
 .invblotter .table-footer {height:38px;min-height:38px;border-top:1px solid #DDE5EC;display:flex;align-items:center;justify-content:space-between;padding:0 11px;color:#6B7F92;font-size:12px;background:#fff}
 .invblotter .pager {display:flex;align-items:center;gap:4px}
 .invblotter .page-btn {width:29px;height:27px;border:1px solid #D0DAE4;background:#fff;border-radius:4px;color:#52697E}
-.invblotter .page-btn.active {border-color:#86AED2;background:#EFF7FF;color:#075FAD;font-weight:700}
+.invblotter .page-btn.active {border-color:#86AED2;background:#EFF7FF;color:#06477f;font-weight:700}
 .invblotter .page-btn:disabled {opacity:.35}
 .invblotter .empty {padding:30px;text-align:center;color:#708296;background:#fff}
 .invblotter .drop-ready {box-shadow:0 0 0 2px rgba(8,118,216,.18)!important;border-color:#4C9CE2!important}
@@ -136,10 +136,10 @@
 .invblotter .modal-body {padding:15px 16px;overflow:auto;min-height:0}
 .invblotter .modal-footer {height:55px;min-height:55px;display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 16px;border-top:1px solid #DCE5ED;background:#FBFCFD}
 .invblotter .action-btn {height:34px;border:1px solid #AEBECD;background:#fff;color:#3E5870;border-radius:5px;padding:0 13px;font-weight:700}
-.invblotter .action-btn.primary {background:#0876D8;border-color:#0876D8;color:#fff}
+.invblotter .action-btn.primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .invblotter .action-btn.danger {background:#C83B32;border-color:#C83B32;color:#fff}
 .invblotter .action-btn:disabled {opacity:.4}
-.invblotter .confirm-icon {width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF4FF;color:#0876D8;font-size:22px;margin-bottom:10px}
+.invblotter .confirm-icon {width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF4FF;color:#0854a0;font-size:22px;margin-bottom:10px}
 .invblotter .confirm-text {font-size:14px;line-height:1.55;color:#30485F}
 .invblotter .confirm-note {margin-top:8px;padding:9px 10px;background:#F7F9FB;border:1px solid #DEE7EF;border-radius:6px;color:#536A7F;font-size:12px}
 .invblotter .checklist {margin:0;padding-left:22px;color:#334B61;line-height:1.45}
@@ -159,15 +159,15 @@
 .invblotter .cal-week, .invblotter .cal-days {display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .invblotter .cal-week span {text-align:center;font-size:10px;color:#718497;font-weight:700;padding:5px 0}
 .invblotter .cal-day {height:31px;border:0;border-radius:5px;background:#fff;color:#324B62}
-.invblotter .cal-day:hover {background:#EDF6FF;color:#086CBD}
+.invblotter .cal-day:hover {background:#EDF6FF;color:#0854a0}
 .invblotter .cal-day.muted {color:#B6C1CB}
 .invblotter .cal-day.today {box-shadow:inset 0 0 0 1px #7FAED6}
-.invblotter .cal-day.selected {background:#0876D8;color:#fff}
+.invblotter .cal-day.selected {background:#0854a0;color:#fff}
 .invblotter .toast-wrap {position:fixed;right:18px;top:68px;z-index:900;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .invblotter .toast {min-width:280px;max-width:430px;background:#fff;border:1px solid #CFDCE7;border-left:4px solid #2F9E69;border-radius:7px;box-shadow:0 10px 26px rgba(20,42,63,.17);padding:11px 12px;color:#334B61;animation:invblotter-fadein .18s ease-out}
 .invblotter .toast.error {border-left-color:#D8493F}
 .invblotter .toast.warn {border-left-color:#EA8A16}
-.invblotter .toast.info {border-left-color:#2B78C5}
+.invblotter .toast.info {border-left-color:#0854a0}
 @keyframes invblotter-fadein {from{transform:translateY(-6px);opacity:0}to{transform:translateY(0);opacity:1}}
 .invblotter .deal-picker {display:flex;align-items:center;gap:5px;min-width:0}
 .invblotter .deal-picker .control {flex:1;min-width:0}

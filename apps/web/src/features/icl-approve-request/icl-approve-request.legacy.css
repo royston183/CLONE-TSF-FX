@@ -13,9 +13,9 @@
   --text:#1d2d3e;
   --muted:#687b8d;
   --labelInk:#475e75;
-  --blue:#0a6ed1;
+  --blue:#0854a0;
   --blueMid:#35a5dc;
-  --blueDark:#085caf;
+  --blueDark:#06477f;
   --blueSoft:#eaf3fc;
   --blueSoft2:#d1e8ff;
   --teal:#00897b;
@@ -104,11 +104,11 @@
 .iclapprove .table-scroll { width:100%; overflow:auto; background:#fff; }
 .iclapprove table.data-table { width:auto; border-collapse:separate; border-spacing:0; font-size:12px; }
 .iclapprove table.data-table th {
-  position:sticky; top:0; z-index:2; height:34px; padding:6px 24px 6px 8px; background:#f5f8fa; color:#1d2d3e;
+  position:sticky; top:0; z-index:2; height:34px; padding: 6px 13px 6px 6px; background:#f5f8fa; color:#1d2d3e;
   border-right:1px solid #d9d9d9; border-bottom:1px solid #c7d4e0; text-align:left; font-weight:600; white-space:nowrap;
 }
 .iclapprove table.data-table td {
-  height:34px; padding:4px 8px; background:#fff; border-right:1px solid #e7ebee;
+  height:34px; padding: 4px 6px; background:#fff; border-right:1px solid #e7ebee;
   border-bottom:1px solid #e7ebee; white-space:nowrap; color:#1d2d3e; font-weight:400;
 }
 .iclapprove table.data-table thead th[data-col] { cursor:pointer; user-select:none; position:relative; }
@@ -116,8 +116,8 @@
 .iclapprove .sort-up, .iclapprove .sort-down { position:absolute; left:0; width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; }
 .iclapprove .sort-up { top:0; border-bottom:5px solid #9aa7b4; }
 .iclapprove .sort-down { bottom:0; border-top:5px solid #9aa7b4; }
-.iclapprove table.data-table thead th.sort-asc .sort-up { border-bottom-color:#0a6ed1; }
-.iclapprove table.data-table thead th.sort-desc .sort-down { border-top-color:#0a6ed1; }
+.iclapprove table.data-table thead th.sort-asc .sort-up { border-bottom-color:#0854a0; }
+.iclapprove table.data-table thead th.sort-desc .sort-down { border-top-color:#0854a0; }
 .iclapprove .icl-select-radio { width:14px; height:14px; cursor:pointer; }
 .iclapprove .pagination-bar { display:flex; align-items:center; justify-content:flex-end; gap:5px; padding:8px 10px; background:#fff; border-top:1px solid #e5e9ed; }
 .iclapprove .page-btn {
@@ -125,7 +125,7 @@
   background:#fff; color:#1d2d3e; font-size:11px; cursor:pointer;
 }
 .iclapprove .page-btn:hover:not(:disabled) { background:#f7f8f9; border-color:#b8b8b8; }
-.iclapprove .page-btn.active { background:#eaf3fc; border-color:#0a6ed1; color:#004b93; font-weight:600; }
+.iclapprove .page-btn.active { background:#eaf3fc; border-color:#0854a0; color:#06477f; font-weight:600; }
 .iclapprove .page-btn:disabled { background:#f7f8f9; color:#9aa7b4; cursor:default; }
 .iclapprove table.data-table tbody tr:hover td { background:#f2f8fd; }
 .iclapprove table.data-table tbody tr.selected-row td { background:#eaf3fc !important; }
@@ -297,10 +297,10 @@
 }
 .iclapprove .dms-table { width:100%; border-collapse:collapse; font-size:11.5px; }
 .iclapprove .dms-table th {
-  background:var(--page2); color:#1d2d3e; text-align:left; font-weight:600; padding:6px 7px;
+  background:var(--page2); color:#1d2d3e; text-align:left; font-weight:600; padding: 6px 6px;
   border-bottom:1px solid var(--lineStrong); white-space:nowrap;
 }
-.iclapprove .dms-table td { padding:5px 7px; border-bottom:1px solid var(--line); color:#1d2d3e; white-space:nowrap; }
+.iclapprove .dms-table td { padding: 5px 6px; border-bottom:1px solid var(--line); color:#1d2d3e; white-space:nowrap; }
 .iclapprove .dms-table input[type="text"] {
   height:22px; border:none; border-bottom:1px solid var(--lineStrong); border-radius:0;
   padding:2px 14px 2px 2px; font-size:11.5px; width:100%; background:transparent; color:#1d2d3e;

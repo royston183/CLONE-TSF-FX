@@ -15,7 +15,7 @@
 /* Calendars are body portals, so they stay clear of scrollable modal boundaries. */
 .fx-date-calendar {
   --cal-surface: #fff; --cal-text: #22354c; --cal-muted: #718096; --cal-line: #e6ebf2;
-  --cal-blue: #1265c8; --cal-pale: #eaf3ff; --cal-button: #1265c8;
+  --cal-blue: #0854a0; --cal-pale: #eaf3ff; --cal-button: #0854a0;
   position: fixed; z-index: 11000; padding: 10px;
   border: 1px solid var(--cal-line); border-radius: 8px;
   background: var(--cal-surface); color: var(--cal-text);
@@ -24,7 +24,7 @@
 }
 :root[data-theme='dark'] .fx-date-calendar {
   --cal-surface: #19293a; --cal-text: #e6eef8; --cal-muted: #96acc1; --cal-line: #2a3e53;
-  --cal-blue: #78b7ff; --cal-pale: #17304a; --cal-button: #2464a7;
+  --cal-blue: #78b7ff; --cal-pale: #17304a; --cal-button: #0854a0;
 }
 .fx-date-calendar__heading { display: grid; grid-template-columns: 24px minmax(0, 1fr) 76px 24px; align-items: center; gap: 4px; margin-bottom: 8px; }
 .fx-date-calendar button, .fx-date-calendar select { font: inherit; color: inherit; }
@@ -48,8 +48,8 @@
    11px text and slimmer columns, which puts most of the 28 columns on screen at once. Colours stay the theme's. The legacy
    sheet states its sizes with !important, so these do too; they load last. */
 .fx-blotter #fx-table { font-size: 11px !important; }
-.fx-blotter #fx-table thead th { padding: 6px 6px !important; font-size: 10px !important; line-height: 1.2 !important; }
-.fx-blotter #fx-table tbody td { padding: 3px 5px !important; font-size: 11px !important; line-height: 1.2 !important; }
+.fx-blotter #fx-table thead th { padding: 6px 6px !important; font-size: 11.5px !important; line-height: 1.2 !important; }
+.fx-blotter #fx-table tbody td { padding: 3px 5px !important; font-size: 12.5px !important; line-height: 1.2 !important; }
 .fx-blotter #fx-table .cell-input,
 .fx-blotter #fx-table .cell-select {
   height: 26px !important; padding: 0 6px !important; border-radius: 5px !important;
@@ -92,4 +92,4 @@
 /* Date columns (Trade Date, Value Date, NDF Fixing Date): dd-mm-yyyy needs about 70px, so the column is only as wide as its
    box (text + the calendar button) and takes none of the table's spare width. width:1% makes an auto-layout column shrink to its content. */
 .fx-blotter #fx-table :is(th, td):is(:nth-child(5), :nth-child(18), :nth-child(23)) { width: 1% !important; }
-.fx-blotter #fx-table :is(td:nth-child(5), td:nth-child(18), td:nth-child(23)) .fx-date-field > input { padding-left: 6px !important; padding-right: 24px !important; }
+.fx-blotter #fx-table :is(td:nth-child(5), td:nth-child(18), td:nth-child(23)) .fx-date-field > input { padding-left: 6px !important; padding-right: 13px !important; }

@@ -52,7 +52,7 @@ export function ReverseModal({
         <div
           style={{ margin: '0 0 12px', padding: '9px 12px', borderRadius: 8, fontSize: 12, background: 'var(--sp-warning-tint)', color: 'var(--sp-text)' }}
         >
-          <strong>Note:</strong> This runs <code>BAPI_FTR_FXT_REVERSE</code> in SAP (reason 04) &mdash; reversing is final.
+          <strong>Note:</strong> This reverses the transaction in SAP &mdash; reversing is final.
           The transaction stays in the list marked <strong>Reversed</strong>. The SAP service has no field for a remark, so the
           remark below is not sent anywhere.
         </div>

@@ -1,7 +1,9 @@
 import { DataTable as UniversalTable } from '@tsfx/components/table/DataTable';
+import { Banknote, CheckCircle2, PieChart, Scale } from 'lucide-react'
+import { KpiRow } from '../../../components/ui/McKpi'
+import { InfoTicker } from '@tsfx/components/ui/InfoTicker'
 import { requestTask } from '@tsfx/ref/shared/request-task'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './mo-generate-invoices-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -655,8 +657,6 @@ export default function MoGenerateInvoicesDealId() {
       <div className="app">
         <header className="topbar">
           <div className="top-left">
-            <BackButton className="fx-back-btn" />
-            
             <div className="title-wrap">
               <div className="app-title">Invoice Finalisation Blotter</div>
             </div>
@@ -734,6 +734,12 @@ export default function MoGenerateInvoicesDealId() {
         </header>
 
         <main className="workspace">
+          {deal ? <KpiRow compact label="Deal figures" items={[
+            { value: figures?.usd ? formatCompact(figures.usd) : '—', unit: 'USD', label: 'Deal amount', note: deal.dealId, icon: <Banknote size={16} /> },
+            { value: figures ? formatCompact(figures.assignedUsd) : formatCompact(dealBls.usd), unit: 'USD', label: 'Assigned', note: `${dealBls.rows.length} BLs`, tone: 'green', icon: <CheckCircle2 size={16} /> },
+            { value: figures?.remainingUsd ? formatCompact(Math.abs(Number(figures.remainingUsd))) : '—', unit: 'USD', label: over ? 'Over by' : 'Unassigned', tone: over ? 'red' : 'amber', icon: <Scale size={16} /> },
+            { value: `${assignedPct}%`, label: 'Assigned share', tone: 'violet', icon: <PieChart size={16} />, note: `tolerance ${deal.tolerance === null ? '—' : `${money(deal.tolerance, 2)}%`}` }
+          ]} /> : null}
           <section className="card inv-hero" aria-label="Deal ID">
             <div className="inv-hero__pick">
               <label htmlFor="invDealId">Deal ID</label>
@@ -750,29 +756,8 @@ export default function MoGenerateInvoicesDealId() {
                     <span className="mono">{deal.dealId}</span>
                     {figures ? <TrafficLightTag tone={STATE_TONE[assignState(figures)]}>{assignState(figures)}</TrafficLightTag> : null}
                     <WorkflowStatus status={deal.status} label={statusText(deal.status)} options={statusOptions} />
+                  <span className="inv-hero__desc" title={`${deal.mcDesc} · ${deal.entityString}`}>{[figures?.tsfCommodityText, deal.mcDesc, deal.entityString].filter(Boolean).join(' · ') || '—'}</span>
                   </h2>
-                  <p title={`${deal.mcDesc} · ${deal.entityString}`}>{[figures?.tsfCommodityText, deal.mcDesc, deal.entityString].filter(Boolean).join(' · ') || '—'}</p>
-                </div>
-                <dl className="inv-hero__figs">
-                  <div>
-                    <dt>Deal amount</dt>
-                    <dd>{figures?.usd ? formatCompact(figures.usd) : '—'} <small>USD</small></dd>
-                    <span>{figures?.usd ? formatAmount4(figures.usd) : ''}</span>
-                  </div>
-                  <div>
-                    <dt>Assigned · {dealBls.rows.length} BLs</dt>
-                    <dd>{figures ? formatCompact(figures.assignedUsd) : formatCompact(dealBls.usd)} <small>USD</small></dd>
-                    <span>{formatAmount4(figures ? figures.assignedUsd : dealBls.usd.toFixed(2))}</span>
-                  </div>
-                  <div className="key">
-                    <dt>{over ? 'Over by' : 'Unassigned'}</dt>
-                    <dd>{figures?.remainingUsd ? formatCompact(Math.abs(Number(figures.remainingUsd))) : '—'} <small>USD</small></dd>
-                    <span>{figures?.remainingUsd ? formatAmount4(Math.abs(Number(figures.remainingUsd)).toFixed(2)) : dealBls.loading ? 'Reading…' : ''}</span>
-                  </div>
-                </dl>
-                <div className="inv-hero__bar">
-                  <div className="inv-hero__progress" role="progressbar" aria-valuenow={assignedPct} aria-valuemin={0} aria-valuemax={100} aria-label="Assigned share of the deal"><span style={{ width: `${assignedPct}%` }} /></div>
-                  <span>{assignedPct}% assigned · tolerance {deal.tolerance === null ? '—' : `${money(deal.tolerance, 2)}%`}</span>
                 </div>
               </div>
             ) : (
@@ -781,26 +766,17 @@ export default function MoGenerateInvoicesDealId() {
           </section>
 
           {deal ? (
-            <section className="card inv-details" aria-label="Deal details">
-              <dl>
-                {([
-                  ['Reference', deal.dealRef],
-                  ['Deal dates', deal.dealStart || deal.dealEnd ? `${deal.dealStart || '—'} → ${deal.dealEnd || '—'}` : ''],
-                  ['Shipment', deal.shipStart || deal.shipEnd ? `${deal.shipStart || '—'} → ${deal.shipEnd || '—'}` : ''],
-                  ['Master contract', [deal.mcRef, deal.mcDate].filter(Boolean).join(' · ')],
-                  ['Entity', deal.entityString],
-                  ['Currency', deal.currencyString],
-                  ['Trader', deal.traderDesc || deal.trader],
-                  ['FX model', [deal.modelId, deal.modelDesc].filter(Boolean).join(' · ')],
-                  ['Inv model', deal.fxInvModel],
-                ] as const).map(([k, v]) => (
-                  <div key={k}>
-                    <dt>{k}</dt>
-                    <dd title={v || undefined}>{v || '—'}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
+            <InfoTicker label="Deal details" items={[
+              { label: 'Reference', value: deal.dealRef },
+              { label: 'Deal dates', value: deal.dealStart || deal.dealEnd ? `${deal.dealStart || '—'} → ${deal.dealEnd || '—'}` : '' },
+              { label: 'Shipment', value: deal.shipStart || deal.shipEnd ? `${deal.shipStart || '—'} → ${deal.shipEnd || '—'}` : '' },
+              { label: 'Master contract', value: [deal.mcRef, deal.mcDate].filter(Boolean).join(' · '), key: true },
+              { label: 'Entity', value: deal.entityString },
+              { label: 'Currency', value: deal.currencyString, key: true },
+              { label: 'Trader', value: deal.traderDesc || deal.trader },
+              { label: 'FX model', value: [deal.modelId, deal.modelDesc].filter(Boolean).join(' · '), key: true },
+              { label: 'Inv model', value: deal.fxInvModel }
+            ]} />
           ) : null}
 
           {deal && statusOpens && blocker.message ? (

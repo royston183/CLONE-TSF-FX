@@ -28,15 +28,15 @@
   transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 .tsfx button.fx-back-btn:hover {
-  border-color: #0a6ed1 !important;
-  color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
+  color: #0854a0 !important;
   box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1) !important;
 }
 .tsfx button.fx-back-btn:active {
   transform: translateY(1px);
 }
 .tsfx button.fx-back-btn:focus-visible {
-  outline: 2px solid #0a6ed1;
+  outline: 2px solid #0854a0;
   outline-offset: 1px;
 }
 .tsfx button.fx-back-btn > svg {

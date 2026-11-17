@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { statusMeta, type ToolbarVisibility } from './logic.ts'
 import type { Deal, StatusMeta } from './types.ts'
 
@@ -22,41 +23,35 @@ export function HeaderGrid({
   statuses: readonly StatusMeta[]
   onStatus: (code: string) => void
 }) {
-  const cells: [string, ReactNode][] = [
-    ['Deal ID', <span className="accent">{deal.dealId}</span>],
-    ['Deal Start Date', deal.dealStartDate],
-    ['Deal End Date', deal.dealEndDate],
-    ['Revised End Date', deal.revisedEndDate ? deal.revisedEndDate : <span className="mut">-</span>],
-    ['MC Ref No', <span className="accent">{deal.mcRefNo}</span>],
-    ['MC Description', deal.mcDesc],
-    ['MC Date', deal.mcDate],
-    ['Ship End Date', deal.shipEndDate],
-    ['FX Model ID', deal.fxModelId],
-    ['FX Model Desc', deal.fxModelDesc],
-    ['Entity String', deal.entityString],
-    ['FX Inv Model', deal.fxInvModel],
-    ['Trader', `${deal.trader} - ${deal.traderDesc}`],
-    ['Currency String', deal.currencyString],
-    [
-      'Deal ID Status',
-      <select id="hdrStatusSel" value={deal.dealStatus} onChange={(e) => onStatus(e.target.value)} style={{ width: '100%' }}>
-        {(statuses.some((s) => s.code === deal.dealStatus) ? statuses : [statusMeta(deal.dealStatus, statuses), ...statuses]).map((s) => (
-          <option key={s.code} value={s.code}>
-            {s.code} - {s.text}
-          </option>
-        ))}
-      </select>,
-    ],
+  const items: TickerItem[] = [
+    { label: 'Deal ID', value: deal.dealId, key: true },
+    { label: 'Deal Start Date', value: deal.dealStartDate },
+    { label: 'Deal End Date', value: deal.dealEndDate },
+    { label: 'Revised End Date', value: deal.revisedEndDate || '-' },
+    { label: 'MC Ref No', value: deal.mcRefNo, key: true },
+    { label: 'MC Description', value: deal.mcDesc },
+    { label: 'MC Date', value: deal.mcDate },
+    { label: 'Ship End Date', value: deal.shipEndDate },
+    { label: 'FX Model ID', value: deal.fxModelId },
+    { label: 'FX Model Desc', value: deal.fxModelDesc, key: true },
+    { label: 'Entity String', value: deal.entityString },
+    { label: 'FX Inv Model', value: deal.fxInvModel },
+    { label: 'Trader', value: `${deal.trader} - ${deal.traderDesc}` },
+    { label: 'Currency String', value: deal.currencyString, key: true }
   ]
   return (
-    <div className="hdr-grid">
-      {cells.map(([label, value]) => (
-        <div className="hdr-cell" key={label}>
-          <div className="hdr-lbl">{label}</div>
-          <div className="hdr-val">{value}</div>
-        </div>
-      ))}
-      <div className="hdr-cell"></div>
+    <div className="hdr-ticker">
+      <label className="hdr-status">
+        <span>Deal ID Status</span>
+        <select id="hdrStatusSel" value={deal.dealStatus} onChange={(e) => onStatus(e.target.value)}>
+          {(statuses.some((s) => s.code === deal.dealStatus) ? statuses : [statusMeta(deal.dealStatus, statuses), ...statuses]).map((s) => (
+            <option key={s.code} value={s.code}>
+              {s.code} - {s.text}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="hdr-ticker__strip"><InfoTicker items={items} label="Deal ID overview" /></div>
     </div>
   )
 }

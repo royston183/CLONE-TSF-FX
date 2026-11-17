@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './fo-create-deal-id-manually.legacy.css'
@@ -347,71 +348,25 @@ function WorkbenchScreen({
                 <div className="card-title">Basic Details</div>
                 <div className="record-count">{deal.status === '02' ? 'Confirmed Deal ID' : deal.status === 'X' ? 'Status X Deal ID' : 'Created Deal ID'}</div>
               </div>
-              <div className="basic-grid">
-                <div className="basic-row row-primary">
-                  <div className="field">
-                    <label>Deal ID Reference / Description</label>
-                    <input className="input" readOnly value={`${deal.ref}  ·  ${deal.description}`} />
-                  </div>
-                  <div className="field">
-                    <label>Deal Start Date</label>
-                    <input className="input" readOnly value={deal.startDate} />
-                  </div>
-                  <div className="field">
-                    <label>Deal End Date</label>
-                    <input className="input" readOnly value={deal.endDate} />
-                  </div>
-                  <div className="field">
-                    <label>Deal ID Status</label>
-                    <select className="select" disabled value={deal.status}>
-                      <option value="01">01 - Created</option>
-                      <option value="02">02 - Confirmed</option>
-                      <option value="X">X - Status X</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="basic-row row-contract">
-                  <div className="field">
-                    <label>MC Ref No</label>
-                    <input className="input" readOnly value={deal.mcRef} />
-                  </div>
-                  <div className="field">
-                    <label>MC Description</label>
-                    <input className="input" readOnly value={deal.mcDesc} />
-                  </div>
-                  <div className="field">
-                    <label>MC Date</label>
-                    <input className="input" readOnly value={deal.mcDate} />
-                  </div>
-                  <div className="field">
-                    <label>Ship End Date</label>
-                    <input className="input" readOnly value={deal.shipEnd} />
-                  </div>
-                  <div className="field">
-                    <label>FX Model ID</label>
-                    <input className="input" readOnly value={deal.fxModel} />
-                  </div>
-                </div>
-                <div className="basic-row row-structure">
-                  <div className="field">
-                    <label>Entity String</label>
-                    <input className="input" readOnly value={deal.entityString} />
-                  </div>
-                  <div className="field">
-                    <label>Currency String</label>
-                    <input className="input" readOnly value={deal.currencyString} />
-                  </div>
-                  <div className="field">
-                    <label>Trader</label>
-                    <select className="select" disabled value={deal.trader}>
-                      <option>{deal.trader}</option>
-                    </select>
-                  </div>
-                  <div className="field">
-                    <label>Trader Code</label>
-                    <input className="input" readOnly value={deal.traderCode} />
-                  </div>
-                </div>
+              <div className="basic-ticker">
+                <InfoTicker
+                  label="Deal ID basic details"
+                  items={[
+                    { label: 'Deal ID', value: `${deal.ref}  ·  ${deal.description}`, key: true },
+                    { label: 'Deal Start Date', value: deal.startDate },
+                    { label: 'Deal End Date', value: deal.endDate },
+                    { label: 'Deal ID Status', value: deal.status === '02' ? '02 - Confirmed' : deal.status === 'X' ? 'X - Status X' : '01 - Created', key: true },
+                    { label: 'MC Ref No', value: deal.mcRef, key: true },
+                    { label: 'MC Description', value: deal.mcDesc },
+                    { label: 'MC Date', value: deal.mcDate },
+                    { label: 'Ship End Date', value: deal.shipEnd },
+                    { label: 'FX Model ID', value: deal.fxModel },
+                    { label: 'Entity String', value: deal.entityString },
+                    { label: 'Currency String', value: deal.currencyString, key: true },
+                    { label: 'Trader', value: deal.trader },
+                    { label: 'Trader Code', value: deal.traderCode }
+                  ] satisfies TickerItem[]}
+                />
               </div>
             </section>
 

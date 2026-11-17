@@ -63,9 +63,11 @@ export function pickInitialFocus(box: HTMLElement): HTMLElement {
  * `variant="record"` is one business record (ObjectDialog): a compact white header with an eyebrow (what it is, read
  * with the title as the dialog's name), the title (its key) and a status tag; the body has no padding of its own.
  */
-export function Modal({ title, subtitle, eyebrow, status, variant, size, wide = false, onClose, children, footer, footerStart, busy = false, onPrimary, onEnter, initialFocus = 'auto' }: {
+export function Modal({ title, subtitle, eyebrow, status, variant, size, wide = false, onClose, children, footer, footerStart, busy = false, onPrimary, onEnter, initialFocus = 'auto', closeOnBackdrop = true }: {
   title: string; subtitle?: string; eyebrow?: string; status?: ReactNode; variant?: 'record' | 'transaction'; size?: 'small' | 'normal' | 'wide'; wide?: boolean; onClose: () => void;
   children: ReactNode; footer: ReactNode; footerStart?: ReactNode; busy?: boolean; onPrimary?: () => void; onEnter?: () => void; initialFocus?: 'auto' | 'dialog';
+  /** False for a record whose work must not be dropped by a stray click outside: only Close and Esc close it. */
+  closeOnBackdrop?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const titleId = useId(), subtitleId = useId(), eyebrowId = useId();
@@ -99,7 +101,7 @@ export function Modal({ title, subtitle, eyebrow, status, variant, size, wide = 
     return () => document.removeEventListener('keydown', keys);
   }, [id, onClose, busy, onEnter]);
   return createPortal(
-    <div className={`ds-overlay${variant === 'transaction' ? ' transaction-overlay' : ''}`} onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+    <div className={`ds-overlay${variant === 'transaction' ? ' transaction-overlay' : ''}`} onMouseDown={e => { if (closeOnBackdrop && e.target === e.currentTarget && !busy) onClose(); }}>
       <div ref={box} tabIndex={-1} className={['ds-modal', sized === 'normal' ? '' : sized, variant ?? ''].filter(Boolean).join(' ')} role="dialog" aria-modal="true"
         aria-labelledby={eyebrow ? `${eyebrowId} ${titleId}` : titleId} aria-describedby={subtitle ? subtitleId : undefined} aria-busy={busy}>
         <div className="ds-modal-head">

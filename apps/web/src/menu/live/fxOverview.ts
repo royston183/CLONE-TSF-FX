@@ -127,9 +127,15 @@ export async function loadFxOverviewRaw(signal?: AbortSignal): Promise<FxOvervie
       return await loadSapDeals(signal)
     } catch (error) {
       if (signal?.aborted || isAbort(error)) throw error
-      const rows = await fxList('tsfvFx', {}, { signal })
-      problems.push(`SAP FX transactions unavailable; using the live FS Cloud FX view. ${error instanceof Error ? error.message : String(error)}`)
-      return rows
+      // The FX view carries the same deals, so a slow primary read is not worth a banner; only when the view fails too is the user told.
+      console.warn('[overview] SAP FX transactions unavailable; using the FX view instead.', error)
+      try {
+        return await fxList('tsfvFx', {}, { signal })
+      } catch (fallback) {
+        if (signal?.aborted || isAbort(fallback)) throw fallback
+        problems.push(`SAP FX transactions unavailable. ${fallback instanceof Error ? fallback.message : String(fallback)}`)
+        throw fallback
+      }
     }
   }
   const data = await Promise.allSettled(ENDPOINTS.map(([, resource]) =>

@@ -16,7 +16,7 @@
  */
 .fo-fx-error-correction.row-dragging .drag-target {
   border-style: solid;
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.15);
 }
 .fo-fx-error-correction.row-dragging .drag-target::after {
   content: "Drop here";

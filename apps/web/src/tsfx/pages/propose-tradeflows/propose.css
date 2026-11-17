@@ -157,7 +157,7 @@
 }
 
 /* Proposals and assigned BLs as compact report lists. */
-.tsfx .tsf-propose__list th, .tsfx .tsf-propose__list td, .tsfx .tsf-propose__groups .ds-table th, .tsfx .tsf-propose__groups .ds-table td { font-size: 12px; padding-top: 6px; padding-bottom: 6px; vertical-align: middle; }
+.tsfx .tsf-propose__list th, .tsfx .tsf-propose__list td, .tsfx .tsf-propose__groups .ds-table th, .tsfx .tsf-propose__groups .ds-table td { font-size: 13.5px; padding-top: 6px; padding-bottom: 6px; vertical-align: middle; }
 .tsfx .tsf-propose__list tr.best td { background: var(--pale); }
 .tsfx .tsf-propose__list tr.best .tsf-propose__rank { color: var(--blue); }
 .tsfx .tsf-propose__list .tsf-propose__rank { display: block; font-size: 11px; }
@@ -278,14 +278,6 @@
 .tsfx .tsf-dealhero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 14px 18px; margin-bottom: 10px; }
 .tsfx .tsf-dealhero__id h2 { margin: 0; font-size: 20px; font-weight: 800; display: flex; gap: 10px; align-items: center; }
 .tsfx .tsf-dealhero__id p { margin: 2px 0 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tsfx .tsf-dealhero__figs { display: flex; gap: 10px; margin: 0; }
-.tsfx .tsf-dealhero__figs > div { min-width: 170px; padding: 8px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
-.tsfx .tsf-dealhero__figs dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-.tsfx .tsf-dealhero__figs dd { margin: 2px 0 0; font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tsfx .tsf-dealhero__figs dd small { font-size: 12px; font-weight: 600; color: var(--muted); }
-.tsfx .tsf-dealhero__figs > div > span { display: block; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tsfx .tsf-dealhero__figs .key { background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 70%, #7c3aed)); border-color: transparent; color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--blue) 30%, transparent); }
-.tsfx .tsf-dealhero__figs .key dt, .tsfx .tsf-dealhero__figs .key dd small, .tsfx .tsf-dealhero__figs .key > span { color: rgba(255, 255, 255, .85); }
 .tsfx .tsf-dealhero__bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .tsfx .tsf-dealhero__bar .tsf-propose__progress { flex: 1; height: 6px; }
 /* The assistant: a gradient spark, a thinking indicator and its answer under the bar. */
@@ -299,7 +291,7 @@
 .tsfx .tsf-cmd__typing i:nth-child(2) { animation-delay: .15s; } .tsfx .tsf-cmd__typing i:nth-child(3) { animation-delay: .3s; }
 @keyframes tsf-typing { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .tsfx .tsf-cmd__typing i { animation: none; } }
-@media (max-width: 900px) { .tsfx .tsf-dealhero { grid-template-columns: 1fr; } .tsfx .tsf-dealhero__figs > div { flex: 1; min-width: 0; } .tsfx .tsf-dealhero__figs dd { font-size: 20px; } }
+@media (max-width: 900px) { .tsfx .tsf-dealhero { grid-template-columns: 1fr; } }
 .tsfx .tsf-proposal__table { width: fit-content; max-width: 100%; }
 
 /* Less height (2026-11-07): navigation, deal and progress in one block beside the two figures; "Fill with" on the
@@ -313,8 +305,6 @@
 .tsfx .tsf-dealhero__id h2::before { display: none; }
 .tsfx .tsf-dealhero__desc { font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .tsfx .tsf-dealhero__bar { grid-column: auto; }
-.tsfx .tsf-dealhero__figs > div { padding: 6px 14px; min-width: 150px; border-radius: 10px; }
-.tsfx .tsf-dealhero__figs dd { font-size: 22px; }
 .tsfx .tsf-propose__tabrow { display: flex; align-items: flex-end; gap: 16px; border-bottom: 1px solid var(--line); margin: 0 0 8px; min-width: 0; }
 .tsfx .tsf-propose__tabrow .tsf-propose__tabs { margin: 0; border-bottom: 0; width: auto; flex: 0 0 auto; }
 .tsfx .tsf-propose__tabrow .tsf-propose__options { margin-left: auto; padding-bottom: 6px; flex-wrap: nowrap; align-items: center; min-width: 0; }
@@ -337,13 +327,11 @@
 
 /* One reading column (2026-11-08): on wide screens the open deal keeps a 1240px column, so the figures, "Fill with" and
    the proposals share one right edge near the content instead of the far edge of the monitor. */
-.tsfx .tsf-propose__layout--deal .tsf-propose__main { max-width: 1240px; width: 100%; }
 .tsfx .tsf-dealhero { grid-template-columns: minmax(0, 1fr) auto; column-gap: 28px; }
 .tsfx .tsf-propose__tabrow .tsf-propose__options { gap: 0; }
 .tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] { gap: 6px; }
 .tsfx .tsf-propose__tabrow .tsf-propose__options [role=group] > span:first-child { padding-left: 14px; border-left: 1px solid var(--line); }
 /* The key figure keeps white-on-blue contrast in Night mode (the dark theme's --blue is light). */
-.tsfx .tsf-dealhero__figs .key { background: linear-gradient(135deg, #1d4ed8, #6d28d9); }
 
 /* Deal list figures: USD millions, right-aligned, tabular; a negative balance or a flagged figure stands out. */
 .tsfx .tsf-propose__dealtable th.num, .tsfx .tsf-propose__dealtable td.num { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -353,7 +341,7 @@
 @media (min-width: 1101px) {
   .tsfx .tsf-propose__layout:not(.tsf-propose__layout--deal) { grid-template-columns: minmax(660px, 1.5fr) minmax(0, 1fr); }
 }
-.tsfx .tsf-propose__dealtable th, .tsfx .tsf-propose__dealtable td { padding-left: 8px; padding-right: 8px; }
+.tsfx .tsf-propose__dealtable th, .tsfx .tsf-propose__dealtable td { padding-left: 6px; padding-right: 6px; }
 .tsfx .tsf-propose__dealtable td:nth-child(2) { max-width: 170px; }
 .tsfx .tsf-propose__dealtable thead th.num { white-space: normal; }
 @media (min-width: 1101px) {

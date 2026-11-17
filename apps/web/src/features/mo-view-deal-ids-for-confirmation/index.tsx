@@ -246,7 +246,6 @@ export default function MoViewDealIdsForConfirmation() {
           <div className="header-title-block">
             <div className="header-title-row">
               <span className="header-title">MO: View List of Deal IDs for Confirmation</span>
-              <span className="header-tcode">ZSGTSFR044</span>
             </div>
             <span className="header-subtitle">
               Read-only workbench &mdash; monitor deal IDs pending middle-office confirmation
@@ -460,9 +459,9 @@ export default function MoViewDealIdsForConfirmation() {
 function SourceNote({ source }: { source: DataSource | 'loading' }) {
   const text =
     source === 'loading'
-      ? 'Loading from MySQL…'
+      ? 'Loading…'
       : source === 'sap'
-        ? 'ZSGTSFTR_DEALID · MySQL'
+        ? 'Live data'
         : `${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read from the SLC middleware`
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

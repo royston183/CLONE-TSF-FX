@@ -839,17 +839,17 @@
 
 .mp-activity th {
   text-align: left;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
-  padding: 0 10px 9px 0;
+  padding: 0 6px 9px 0;
   border-bottom: 1px solid var(--blue-pale2);
 }
 
 .mp-activity td {
-  padding: 10px 10px 10px 0;
+  padding: 10px 6px 10px 0;
   border-bottom: 1px solid var(--border);
   color: var(--text-sub);
 }
@@ -1330,7 +1330,7 @@
 .mp-detail-scroll { max-height: 65vh; overflow: auto; }
 .mp-detail-table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; }
 .mp-detail-table th { position: sticky; top: 0; background: var(--white, #fff); text-align: left; }
-.mp-detail-table th, .mp-detail-table td { padding: 10px 14px; border-bottom: 1px solid var(--blue-pale2, #d9e5ef); }
+.mp-detail-table th, .mp-detail-table td { padding: 10px 8px; border-bottom: 1px solid var(--blue-pale2, #d9e5ef); }
 .mp-detail-chart { padding: 16px 0; }
 .mp-detail-chart .mp-donut { width: min(300px, 70vw); height: min(300px, 70vw); }
 .mp-detail-chart .mp-tree { height: 360px; }
@@ -1421,8 +1421,8 @@
 .mp .mp-panel .mp-donut-total { font-size: 16px; }
 .mp .mp-panel .mp-donut-cap { font-size: 6px; }
 .mp .mp-panel .mp-radial-pct { font-size: 19px; }
-.mp .mp-panel .mp-activity :is(th, td) { font-size: 12.5px; }
-.mp .mp-panel .mp-activity th { font-size: 11.5px; }
+.mp .mp-panel .mp-activity :is(th, td) { font-size: 14px; }
+.mp .mp-panel .mp-activity th { font-size: 13px; }
 .mp-live-grid .mp-panel .mp-legend li { align-items: start; }
 .mp-live-grid .mp-panel .mp-legend-label { min-width: 0; overflow-wrap: anywhere; }
 .mp-live-grid .mp-panel .mp-legend-value { flex-shrink: 0; }

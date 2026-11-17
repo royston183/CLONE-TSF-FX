@@ -598,11 +598,11 @@ export default function MoUpdateMcExpiry() {
 function SourceNote({ source, demoCount }: { source: MasterSource | 'loading'; demoCount: number }) {
   const text =
     source === 'loading'
-      ? 'Loading from MySQL…'
+      ? 'Loading…'
       : source === 'mysql'
         ? demoCount > 0
-          ? `ZSGTSFTR_MAS_CON · MySQL + ${demoCount} demo contracts (their expiry stays on this screen)`
-          : 'ZSGTSFTR_MAS_CON · MySQL'
+          ? `Live data + ${demoCount} demo contracts (their expiry stays on this screen)`
+          : 'Live data'
         :'Dummy data — the middleware could not be reached, so changes stay on this screen'
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

@@ -492,10 +492,14 @@ export async function fixNdf(
 ): Promise<ActionResult> {
   if (!Number.isFinite(rate) || rate <= 0) return { ok: false, message: 'Enter a fixing rate greater than zero.' }
   const url = trmfx(`${entityPath('FxTransaction', { CompanyCode: deal.bukrs, FinancialTransaction: deal.rfha })}/${FIX_NDF_ACTION}`)
+  let alreadyFixed = false
   try {
     await apiRequest(url, { method: 'POST', body: { FixingRate: fixingRateValue(rate) } })
   } catch (error) {
-    return { ok: false, message: `SAP did not record the fixing of transaction ${deal.rfha}: ${sapMessage(error)}${fixingHint(error)}` }
+    // T1/079 "activity category Fixing": SAP already holds this fixing (an earlier save recorded it but the TSF status never moved on).
+    // The deal is fixed, so only the status is still owed, rather than a dead end.
+    if (isAlreadyFixed(error)) alreadyFixed = true
+    else return { ok: false, message: `SAP did not record the fixing of transaction ${deal.rfha}: ${sapMessage(error)}${fixingHint(error)}` }
   }
   const changes: TsfChanges = { TxnStatus: nextStatus }
   if (foRemark !== undefined) changes.NdfFoRem = foRemark.trim().slice(0, FO_REMARK_MAX)
@@ -507,7 +511,16 @@ export async function fixNdf(
       message: `The fixing of transaction ${deal.rfha} was recorded in SAP, but its TSF status could not be set to ${nextStatus}: ${sapMessage(error)}`,
     }
   }
+  if (alreadyFixed) {
+    return { ok: true, message: `Transaction ${deal.rfha} was already fixed in SAP, so its status was set to ${nextStatus}. The rate held in SAP was kept; use FO: NDF Fixing Error Correction to change it.` }
+  }
   return { ok: true, message: `Fixing rate ${fixingRateValue(rate).toFixed(4)} recorded for transaction ${deal.rfha} (status ${nextStatus}).` }
+}
+
+/** SAP's T1/079 for a transaction whose activity category is already Fixing. */
+function isAlreadyFixed(error: unknown): boolean {
+  const err = error instanceof ApiError ? (error.body as { error?: { code?: string; message?: string } } | null)?.error : undefined
+  return err?.code === 'T1/079' && /\bfixing\b/i.test(err.message ?? '')
 }
 
 /* ---------------- bank settlement posting (FX NDF Settlement, ZSGTSFR028) ---------------- */

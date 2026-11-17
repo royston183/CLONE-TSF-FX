@@ -12,9 +12,9 @@
   --text:#1d2d3e;
   --text-secondary:#556b82;
   --muted:#6a6d70;
-  --blue:#0a6ed1;
+  --blue:#0854a0;
   --blue-hover:#0854a0;
-  --blue-active:#004b93;
+  --blue-active:#06477f;
   --blue-soft:#eaf3fc;
   --blue-soft-2:#d1e8ff;
   --green:#107e3e;
@@ -548,7 +548,7 @@
   z-index:4;
   min-width:140px;
   max-width:260px;
-  padding:8px 10px;
+  padding: 8px 6px;
   background:#f2f4f5;
   color:var(--text-secondary);
   border-right:1px solid #e4e6e8;
@@ -559,7 +559,7 @@
 }
 .tfupload .preview-table td {
   max-width:260px;
-  padding:8px 10px;
+  padding: 8px 6px;
   background:var(--surface);
   color:var(--text);
   border-right:1px solid #eef0f2;
@@ -887,11 +887,11 @@
 .tfupload .preview-table th {
   min-width:118px;
   max-width:190px;
-  padding:7px 8px;
+  padding: 7px 6px;
 }
 .tfupload .preview-table td {
   max-width:190px;
-  padding:7px 8px;
+  padding: 7px 6px;
 }
 .tfupload .preview-table th.sticky-2, .tfupload .preview-table td.sticky-2 {
   left:118px;
@@ -954,7 +954,7 @@
 }
 .tfupload .template-link {
   color:var(--blue)!important;
-  border-bottom-color:rgba(10,110,209,.28)!important;
+  border-bottom-color:rgba(8,84,160,.28)!important;
 }
 .tfupload .template-link:hover {
   color:var(--blue-hover)!important;
@@ -1111,9 +1111,9 @@
   --text:#1d2d3e;
   --text-secondary:#475e75;
   --muted:#687b8d;
-  --blue:#0a6ed1;
-  --blue-hover:#085caf;
-  --blue-active:#004b93;
+  --blue:#0854a0;
+  --blue-hover:#06477f;
+  --blue-active:#06477f;
   --blue-soft:#eaf3fc;
   --blue-soft-2:#d1e8ff;
   --green:#107e3e;
@@ -1139,8 +1139,8 @@
 .tfupload .app-title {font-size:17px;font-weight:700;color:var(--text);white-space:nowrap}
 .tfupload .ds-mark {
   width:30px;height:30px;border-radius:6px;flex:none;display:grid;place-items:center;
-  background:linear-gradient(145deg,#0a6ed1,#35a5dc);color:#fff;
-  box-shadow:0 2px 7px rgba(10,110,209,.22);
+  background:linear-gradient(145deg,#0854a0,#35a5dc);color:#fff;
+  box-shadow:0 2px 7px rgba(8,84,160,.22);
 }
 .tfupload .ds-mark svg {width:18px;height:18px;fill:currentColor}
 .tfupload .ds-code {font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap}
@@ -1196,13 +1196,13 @@
 /* --- Table --------------------------------------------------------------- */
 .tfupload .table-toolbar {background:#f8fafb;border-bottom:1px solid var(--line);padding:7px 11px}
 .tfupload .preview-table th {
-  background:var(--surface-alt);color:var(--text-secondary);font-size:11px;font-weight:700;
-  text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);
+  background:var(--surface-alt);color:var(--text-secondary);font-size: 12.5px;font-weight:700;
+  text-align:left;padding: 7px 6px;border-bottom:1px solid var(--line);
   border-right:1px solid #e6e9eb;white-space:nowrap;
 }
 .tfupload .preview-table td {
-  padding:6px 8px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;
-  font-size:12px;color:var(--text);background:#fff;
+  padding: 6px 6px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;
+  font-size: 13.5px;color:var(--text);background:#fff;
 }
 .tfupload .preview-table tbody tr:hover td {background:#f7fbff}
 .tfupload .preview-table .num {text-align:right;font-variant-numeric:tabular-nums}

@@ -15,8 +15,8 @@
   --sub:#64748b;
   --muted:#94a3b8;
 
-  --blue:#2563eb;
-  --blue-hover:#1d4ed8;
+  --blue:#0854a0;
+  --blue-hover:#0854a0;
   --blue-soft:#eff6ff;
 
   --border:#e2e8f0;
@@ -351,7 +351,7 @@
   z-index:5;
   background:#ffffff;
   color:var(--sub);
-  font-size:11px;
+  font-size: 12.5px;
   font-weight:600;
   text-align:left;
   text-transform:uppercase;
@@ -366,14 +366,14 @@
 .mo-confirm-ndf-fixing table.ndf-table thead th.no-sort { cursor:default; }
 .mo-confirm-ndf-fixing table.ndf-table thead th.no-sort:hover { background:#ffffff; }
 .mo-confirm-ndf-fixing table.ndf-table thead th .th-inner { display:flex; align-items:center; gap:4px; }
-.mo-confirm-ndf-fixing table.ndf-table thead th .sort-arrow { font-size:10px; color:var(--muted); }
+.mo-confirm-ndf-fixing table.ndf-table thead th .sort-arrow { font-size: 11.5px; color:var(--muted); }
 .mo-confirm-ndf-fixing table.ndf-table thead th.sorted .sort-arrow { color:var(--blue); }
 .mo-confirm-ndf-fixing table.ndf-table thead th.col-select { width:40px; min-width:40px; }
 .mo-confirm-ndf-fixing table.ndf-table thead th.num { text-align:right; }
 .mo-confirm-ndf-fixing table.ndf-table tbody td {
   padding:.55rem .6rem;
   border-bottom:1px solid var(--border);
-  font-size:13px;
+  font-size: 14.5px;
   font-weight:400;
   color:var(--text);
   white-space:nowrap;

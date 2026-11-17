@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import {
@@ -875,38 +876,18 @@ export default function IclRequestApp() {
                 </div>
                 <div id="iclDetails" className="card-body">
                   {selectedRow ? (
-                    <div className="detail-grid">
-                      <DetailLine label="OTTK No" code={selectedRow.ottkNo} size="xs" />
-                      <DetailLine
-                        label="ICL Given Comp."
-                        code={selectedRow.iclGivenComp}
-                        desc={selectedRow.iclGivenName}
-                        size="md"
-                      />
-                      <DetailLine
-                        label="Business Area"
-                        code={selectedRow.businessArea}
-                        desc={selectedRow.businessAreaName}
-                        size="md"
-                      />
-                      <DetailLine
-                        label="ICL Received Comp."
-                        code={selectedRow.iclReceivedComp}
-                        desc={selectedRow.iclReceivedName}
-                        size="md"
-                      />
-                      <DetailLine
-                        label="Deposit Bank"
-                        code={selectedRow.lcIssuanceBank}
-                        desc={selectedRow.lcIssuanceBankName}
-                        size="lg"
-                      />
-                      <DetailLine
-                        label="Entity String"
-                        code={selectedRow.entityStringFull}
-                        size="md"
-                      />
-                    </div>
+                    <InfoTicker
+                      label="ICL request basic details"
+                      items={[
+                        { label: 'OTTK No', value: selectedRow.ottkNo, key: true },
+                        { label: 'ICL Given Comp.', value: [selectedRow.iclGivenComp, selectedRow.iclGivenName].filter(Boolean).join(' - ') },
+                        { label: 'Business Area', value: [selectedRow.businessArea, selectedRow.businessAreaName].filter(Boolean).join(' - ') },
+                        { label: 'ICL Received Comp.', value: [selectedRow.iclReceivedComp, selectedRow.iclReceivedName].filter(Boolean).join(' - ') },
+                        { label: 'Deposit Bank', value: [selectedRow.lcIssuanceBank, selectedRow.lcIssuanceBankName].filter(Boolean).join(' - '), key: true },
+                        { label: 'Entity String', value: selectedRow.entityStringFull }
+                      ] satisfies TickerItem[]}
+                    />
+
                   ) : null}
                 </div>
               </div>

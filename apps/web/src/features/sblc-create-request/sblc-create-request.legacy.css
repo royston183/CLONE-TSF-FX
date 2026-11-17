@@ -113,8 +113,8 @@
 }
 .sblccreate .input:focus, .sblccreate .select:focus {
   outline:0;
-  border-color:#0a6ed1;
-  box-shadow:0 0 0 1px #0a6ed1;
+  border-color:#0854a0;
+  box-shadow:0 0 0 1px #0854a0;
 }
 .sblccreate .structure-select {width:190px}
 .sblccreate .ottk-select {width:170px}
@@ -130,7 +130,7 @@
 }
 .sblccreate .filter-icon-btn:hover {
   background:#f7f8f9;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
 }
 .sblccreate .filter-icon-btn:before {
   content:"";
@@ -258,18 +258,18 @@
   border:1px solid #d1e8ff;
   border-radius:4px;
   background:#eaf3fc;
-  color:#004b93;
+  color:#06477f;
   font-size:12px;
   font-weight:600;
 }
 .sblccreate .btn:hover {
   background:#d1e8ff;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
   color:#0854a0;
 }
 .sblccreate .btn-primary {
-  background:#0a6ed1;
-  border-color:#0a6ed1;
+  background:#0854a0;
+  border-color:#0854a0;
   color:#fff;
 }
 .sblccreate .btn-primary:hover {
@@ -337,7 +337,7 @@
   top:0;
   z-index:2;
   height:34px;
-  padding:6px 24px 6px 8px;
+  padding: 6px 13px 6px 6px;
   background:#f5f8fa;
   color:#1d2d3e;
   border-right:1px solid #d9d9d9;
@@ -348,7 +348,7 @@
 }
 .sblccreate .data-table td {
   height:34px;
-  padding:4px 8px;
+  padding: 4px 6px;
   background:#fff;
   border-right:1px solid #e7ebee;
   border-bottom:1px solid #e7ebee;
@@ -386,8 +386,8 @@
   bottom:0;
   border-top:5px solid #9aa7b4;
 }
-.sblccreate th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.sblccreate th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.sblccreate th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.sblccreate th.sort-desc .sort-down {border-top-color:#0854a0}
 .sblccreate .pagination-bar {
   display:flex;
   align-items:center;
@@ -414,8 +414,8 @@
 }
 .sblccreate .page-btn.active {
   background:#eaf3fc;
-  border-color:#0a6ed1;
-  color:#004b93;
+  border-color:#0854a0;
+  color:#06477f;
   font-weight:600;
 }
 .sblccreate .page-btn:disabled {
@@ -532,7 +532,7 @@
 }
 .sblccreate .request-table th {
   height:34px;
-  padding:6px 8px;
+  padding: 6px 6px;
   background:#f5f8fa;
   color:#1d2d3e;
   border-right:1px solid #d9d9d9;
@@ -543,7 +543,7 @@
 }
 .sblccreate .request-table td {
   height:36px;
-  padding:4px 8px;
+  padding: 4px 6px;
   background:#fff;
   border-right:1px solid #e7ebee;
   border-bottom:1px solid #e7ebee;
@@ -575,8 +575,8 @@
 }
 .sblccreate .request-input:focus {
   outline:0;
-  border-color:#0a6ed1;
-  box-shadow:0 0 0 1px #0a6ed1;
+  border-color:#0854a0;
+  box-shadow:0 0 0 1px #0854a0;
 }
 .sblccreate .request-amount {
   min-width:132px;
@@ -609,7 +609,7 @@
   top:6px;
   width:12px;
   height:12px;
-  border:1px solid #0a6ed1;
+  border:1px solid #0854a0;
   border-radius:2px;
 }
 .sblccreate .request-calendar-btn:after {
@@ -619,9 +619,9 @@
   top:4px;
   width:8px;
   height:5px;
-  border-left:2px solid #0a6ed1;
-  border-right:2px solid #0a6ed1;
-  border-bottom:1px solid #0a6ed1;
+  border-left:2px solid #0854a0;
+  border-right:2px solid #0854a0;
+  border-bottom:1px solid #0854a0;
 }
 .sblccreate .request-calendar {
   display:none;
@@ -732,7 +732,7 @@
 .sblccreate .cal-link {
   border:0;
   background:#fff;
-  color:#0a6ed1;
+  color:#0854a0;
   font-size:11px;
   padding:4px 0;
 }
@@ -788,13 +788,13 @@
   border:1px solid #d9d9d9;
   border-radius:4px;
   background:#fff;
-  color:#004b93;
+  color:#06477f;
   font-size:16px;
   line-height:24px;
 }
 .sblccreate .request-add-btn:hover {
   background:#f7f8f9;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
 }
 .sblccreate .request-no {
   font-weight:600;
@@ -865,7 +865,7 @@
   height:7px;
   margin-right:6px;
   border-radius:50%;
-  background:#0a6ed1;
+  background:#0854a0;
 }
 @media screen and (max-width:1180px) {
 .sblccreate .selection-main-row {flex-wrap:wrap}

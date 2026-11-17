@@ -137,7 +137,7 @@ export function McModal({ modal, deal, onClose }: { modal: Modal; deal: Deal | n
     <Shell
       modal={modal}
       title={deal ? `Master Contract – ${deal.zmc_ref}` : 'Master Contract Details'}
-      subtitle="ZSGTSFFM_MC_DETAILS"
+      subtitle="Master contract details"
       onClose={onClose}
     >
       {deal ? (

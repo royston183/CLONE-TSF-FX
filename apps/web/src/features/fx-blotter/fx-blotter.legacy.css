@@ -11,8 +11,8 @@
   --text-faint:#8CA0B3;
   --border:#E1E9F2;
   --border-strong:#CBD9E8;
-  --primary:#1F6FEB;
-  --primary-dark:#1657C4;
+  --primary:#0854a0;
+  --primary-dark:#0854a0;
   --primary-light:#6FA8FF;
   --primary-tint:#EAF2FF;
   --success:#27AE60;
@@ -116,12 +116,12 @@
 /* Table */
 .fx-blotter .table-wrap {width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
 .fx-blotter #fx-table {width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;}
-.fx-blotter .list-table th, .fx-blotter .list-table td {padding:8px 10px;white-space:nowrap;}
-.fx-blotter .list-table thead th {position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size:10.8px;font-weight:700;letter-spacing:0;text-transform:none;z-index:5;}
+.fx-blotter .list-table th, .fx-blotter .list-table td {padding: 8px 6px;white-space:nowrap;}
+.fx-blotter .list-table thead th {position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;font-size: 12.3px;font-weight:700;letter-spacing:0;text-transform:none;z-index:5;}
 .fx-blotter .list-table thead th.sortable {cursor:pointer;user-select:none;}
 .fx-blotter .list-table thead th.sortable:hover {color:var(--primary-dark);}
-.fx-blotter .list-table thead th.sortable .arrow {font-size:9px;color:var(--text-faint);margin-left:3px;}
-.fx-blotter .list-table tbody td {border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.fx-blotter .list-table thead th.sortable .arrow {font-size: 10.5px;color:var(--text-faint);margin-left:3px;}
+.fx-blotter .list-table tbody td {border-bottom:1px solid var(--border);font-size: 13.5px;color:var(--text);}
 .fx-blotter .list-table tbody tr {transition:background .15s;}
 .fx-blotter .list-table tbody tr:hover td {background:#F7FAFD;}
 .fx-blotter .list-table tbody tr.row-checked td {background:var(--primary-tint)!important;}
@@ -137,7 +137,7 @@
 .fx-blotter #fx-table .sticky-1 {left:0!important;width:34px;min-width:34px;max-width:34px;text-align:center;}
 .fx-blotter #fx-table .sticky-2 {left:34px!important;width:112px;min-width:112px;max-width:112px;}
 .fx-blotter #fx-table .sticky-3 {left:146px!important;width:118px;min-width:118px;max-width:118px;box-shadow:4px 0 6px -4px rgba(22,39,64,.18);}
-.fx-blotter .empty-row td {text-align:center!important;color:var(--text-muted);padding:30px 12px;font-style:italic;}
+.fx-blotter .empty-row td {text-align:center!important;color:var(--text-muted);padding: 30px 7px;font-style:italic;}
 .fx-blotter .num {font-variant-numeric:tabular-nums;text-align:right;}
 .fx-blotter .muted-dash {color:var(--text-faint);}
 .fx-blotter .cell-input, .fx-blotter .cell-select {width:100%;height:28px;padding:0 6px;border:1px solid var(--border-strong);border-radius:5px;font-size:11.5px;background:#fff;color:var(--text);outline:none;}
@@ -222,8 +222,8 @@
 .fx-blotter .validation-box.bad {background:var(--error-tint);border-color:#F3C6C0;color:var(--error);}
 .fx-blotter .validation-box ul {margin:4px 0 0 16px;padding:0;}
 .fx-blotter .mini-table {width:100%;border-collapse:collapse;font-size:11.8px;margin-bottom:8px;}
-.fx-blotter .mini-table th {text-align:left;font-size:10.5px;font-weight:700;color:var(--text-muted);padding:6px 8px;border-bottom:1px solid var(--border);background:#F7FAFD;}
-.fx-blotter .mini-table td {padding:7px 8px;border-bottom:1px solid var(--border-soft);}
+.fx-blotter .mini-table th {text-align:left;font-size: 12px;font-weight:700;color:var(--text-muted);padding: 6px 6px;border-bottom:1px solid var(--border);background:#F7FAFD;}
+.fx-blotter .mini-table td {padding: 7px 6px;border-bottom:1px solid var(--border-soft);}
 .fx-blotter .mini-table tr.selectable {cursor:pointer;}
 .fx-blotter .mini-table tr.selectable:hover td {background:#F7FAFD;}
 .fx-blotter .mini-table tr.mc-selected td {background:var(--primary-tint)!important;}
@@ -300,8 +300,8 @@
 .fx-blotter .aux-summary .badge-blue {font-size:11.5px;}
 .fx-blotter .aux-table-wrap {max-height:46vh;overflow:auto;border:1px solid var(--border);border-radius:var(--radius-md);background:#fff;}
 .fx-blotter .aux-table {width:max-content;min-width:100%;border-collapse:collapse;font-size:11.5px;}
-.fx-blotter .aux-table th {position:sticky;top:0;z-index:2;background:#F1F3F6;color:#3E4C5E;font-size:10.6px;font-weight:700;padding:7px 9px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left;}
-.fx-blotter .aux-table td {padding:7px 9px;border-right:1px solid var(--border-soft);border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text);}
+.fx-blotter .aux-table th {position:sticky;top:0;z-index:2;background:#F1F3F6;color:#3E4C5E;font-size: 12.1px;font-weight:700;padding: 7px 6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left;}
+.fx-blotter .aux-table td {padding: 7px 6px;border-right:1px solid var(--border-soft);border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text);}
 .fx-blotter .aux-table tr.released-row td {background:#EFFAF3;}
 .fx-blotter .aux-table tr:hover td {background:#F7FAFD;}
 .fx-blotter .aux-table .rfha-link {border:0;background:none;color:var(--primary-dark);font-weight:700;padding:0;cursor:pointer;font-size:11.5px;}
@@ -348,8 +348,8 @@
 .fx-blotter .sap-actionbar {margin:14px 16px 10px;padding:10px 12px;gap:8px;background:#FFFFFF;border:1px solid #D1DAE4;border-radius:10px;box-shadow:none;}
 .fx-blotter .sap-actionbar .tb-btn {height:36px;padding:0 12px;font-size:12px;border-radius:6px;border-color:#AEBCCA;color:#52677D;background:#F8FAFB;}
 .fx-blotter .sap-actionbar .tb-btn:hover:not(:disabled) {background:#FFFFFF;border-color:#7C97B1;color:#1F3348;}
-.fx-blotter .sap-actionbar .tb-btn.primary {background:#1976D2;border-color:#1976D2;color:#FFFFFF;}
-.fx-blotter .sap-actionbar .tb-btn.primary:hover:not(:disabled) {background:#1465B6;border-color:#1465B6;color:#FFFFFF;}
+.fx-blotter .sap-actionbar .tb-btn.primary {background:#0854a0;border-color:#0854a0;color:#FFFFFF;}
+.fx-blotter .sap-actionbar .tb-btn.primary:hover:not(:disabled) {background:#0854a0;border-color:#0854a0;color:#FFFFFF;}
 .fx-blotter .sap-actionbar .tb-btn.warn {background:#F8FAFB;color:#9A6C1F;border-color:#D8C29C;}
 .fx-blotter .sap-actionbar .tb-btn.purple {background:#F8FAFB;color:#6A4AA1;border-color:#CBBBEA;}
 .fx-blotter .sap-actionbar .tb-btn.danger {background:#F8FAFB;color:#C04A3E;border-color:#E5C0BC;}
@@ -370,8 +370,8 @@
 .fx-blotter .seg {height:34px;font-size:12px;color:#516679;}
 .fx-blotter .selected-count {font-size:12px;color:#61778C;}
 .fx-blotter .table-wrap {border-top:0;background:#FFFFFF;}
-.fx-blotter .list-table thead th {background:#F0F2F4;color:#4B6176;font-size:12px;font-weight:700;border-bottom:1px solid #D7DFE8;}
-.fx-blotter .list-table tbody td {padding:8px 10px;border-bottom:1px solid #E2E8EE;color:#223548;}
+.fx-blotter .list-table thead th {background:#F0F2F4;color:#4B6176;font-size: 13.5px;font-weight:700;border-bottom:1px solid #D7DFE8;}
+.fx-blotter .list-table tbody td {padding: 8px 6px;border-bottom:1px solid #E2E8EE;color:#223548;}
 .fx-blotter .list-table tbody tr:hover td {background:#F8FBFD;}
 .fx-blotter .list-table th, .fx-blotter .list-table td {border-right:1px solid #E2E8EE;}
 .fx-blotter #fx-table .sticky-col {background:inherit;}
@@ -384,7 +384,7 @@
 .fx-blotter .pager-btn {border-radius:5px;border-color:#B7C4D2;}
 .fx-blotter .note {background:#FAFBFD;border-top:1px solid #E1E7EE;color:#667B8F;}
 .fx-blotter .modal-header {background:#F8FAFC;border-bottom:1px solid #DCE4EC;}
-.fx-blotter .aux-table th {background:#F0F2F4;color:#4B6176;font-size:12px;border-bottom:1px solid #D7DFE8;}
+.fx-blotter .aux-table th {background:#F0F2F4;color:#4B6176;font-size: 13.5px;border-bottom:1px solid #D7DFE8;}
 .fx-blotter .aux-table td {border-bottom:1px solid #E2E8EE;}
 .fx-blotter .aux-table-wrap {border:1px solid #D1DAE4;border-radius:8px;}
 @media (max-width:1100px) {
@@ -430,8 +430,8 @@
    Visual-only port: preserves the existing FX Deal Blotter fields/actions.
    ======================================================================== */
 .fx-blotter {
-  --modern-primary:#2563eb;
-  --modern-primary-dark:#1d4ed8;
+  --modern-primary:#0854a0;
+  --modern-primary-dark:#0854a0;
   --modern-primary-soft:#eff6ff;
   --modern-ink:#172033;
   --modern-muted:#64748b;
@@ -570,13 +570,13 @@
   table-layout:auto!important;font-size:11px!important;background:transparent!important;
 }
 .fx-blotter #fx-table thead th {
-  position:sticky!important;top:0!important;z-index:20!important;padding:10px 8px!important;
+  position:sticky!important;top:0!important;z-index:20!important;padding: 10px 6px!important;
   background:rgba(255,255,255,.88)!important;color:#475569!important;
   border-bottom:1px solid var(--modern-line)!important;border-right:1px solid #edf1f6!important;
-  font-size:10px!important;font-weight:800!important;white-space:nowrap!important;
+  font-size: 11.5px!important;font-weight:800!important;white-space:nowrap!important;
 }
 .fx-blotter #fx-table tbody td {
-  padding:6px!important;border-bottom:1px solid #edf1f6!important;border-right:1px solid #edf1f6!important;
+  padding: 6px 6px!important;border-bottom:1px solid #edf1f6!important;border-right:1px solid #edf1f6!important;
   background:transparent!important;color:var(--modern-ink)!important;vertical-align:middle!important;
 }
 .fx-blotter #fx-table tbody tr:hover td {background:rgba(255,255,255,.55)!important;}
@@ -649,7 +649,7 @@
 .fx-blotter .head-actions .tb-btn {height:38px!important;border-radius:4px!important;background:#fff!important;border-color:#9faebd!important;color:#425b72!important;}
 .fx-blotter .sap-actionbar {margin:10px 16px 10px!important;padding:7px 10px!important;border:1px solid #d5dadd!important;border-radius:7px!important;background:#fff!important;box-shadow:none!important;}
 .fx-blotter .sap-actionbar .tb-btn {height:32px!important;border-radius:4px!important;font-size:11.5px!important;background:#fff!important;border-color:#aab7c4!important;color:#425b72!important;}
-.fx-blotter .sap-actionbar .tb-btn.primary {background:#0a6ed1!important;border-color:#0a6ed1!important;color:#fff!important;box-shadow:none!important;}
+.fx-blotter .sap-actionbar .tb-btn.primary {background:#0854a0!important;border-color:#0854a0!important;color:#fff!important;box-shadow:none!important;}
 .fx-blotter main {padding:0 16px 18px!important;background:#f5f6f7!important;}
 .fx-blotter #fx-blotter-panel {margin:0!important;border:1px solid #d5dadd!important;border-radius:8px!important;background:#fff!important;box-shadow:0 1px 3px rgba(0,0,0,.07)!important;overflow:hidden!important;}
 .fx-blotter #fx-blotter-panel .panel-title {min-height:44px!important;padding:9px 12px!important;margin:0!important;border-bottom:1px solid #d8dde2!important;background:#fff!important;}
@@ -666,14 +666,14 @@
 .fx-blotter #fx-blotter-panel .toolbar-row2>.badge-blue {display:none!important;}
 .fx-blotter #fx-blotter-panel .table-wrap {max-height:520px!important;min-height:270px!important;margin:0!important;background:#fff!important;border:0!important;overflow:auto!important;}
 .fx-blotter #fx-table {background:#fff!important;font-size:11.5px!important;}
-.fx-blotter #fx-table thead th {padding:8px 9px!important;background:#f1f3f4!important;color:#425e77!important;font-size:11px!important;font-weight:700!important;border-bottom:1px solid #d8dde2!important;border-right:1px solid #e1e5e9!important;}
-.fx-blotter #fx-table tbody td {padding:6px 8px!important;background:#fff!important;border-bottom:1px solid #e3e7ea!important;border-right:1px solid #e6eaed!important;color:#1d2d3e!important;}
+.fx-blotter #fx-table thead th {padding: 8px 6px!important;background:#f1f3f4!important;color:#425e77!important;font-size: 12.5px!important;font-weight:700!important;border-bottom:1px solid #d8dde2!important;border-right:1px solid #e1e5e9!important;}
+.fx-blotter #fx-table tbody td {padding: 6px 6px!important;background:#fff!important;border-bottom:1px solid #e3e7ea!important;border-right:1px solid #e6eaed!important;color:#1d2d3e!important;}
 .fx-blotter #fx-table tbody tr:hover td, .fx-blotter #fx-table tbody tr:hover .sticky-col {background:#f7f9fa!important;}
 .fx-blotter #fx-table .sticky-1, .fx-blotter #fx-table .sticky-2, .fx-blotter #fx-table .sticky-3 {background:#fff!important;}
 .fx-blotter #fx-table thead .sticky-1, .fx-blotter #fx-table thead .sticky-2, .fx-blotter #fx-table thead .sticky-3 {background:#f1f3f4!important;}
 .fx-blotter #fx-table .sticky-3 {box-shadow:4px 0 7px rgba(0,0,0,.04)!important;}
 .fx-blotter #fx-table .cell-input, .fx-blotter #fx-table .cell-select {height:29px!important;padding:0 6px!important;border:1px solid #b7c2cd!important;border-radius:3px!important;background:#fff!important;font-size:11px!important;font-weight:500!important;box-shadow:none!important;}
-.fx-blotter #fx-table .cell-input:focus, .fx-blotter #fx-table .cell-select:focus {border-color:#0a6ed1!important;box-shadow:inset 0 0 0 1px #0a6ed1!important;}
+.fx-blotter #fx-table .cell-input:focus, .fx-blotter #fx-table .cell-select:focus {border-color:#0854a0!important;box-shadow:inset 0 0 0 1px #0854a0!important;}
 .fx-blotter #fx-table tbody tr:not(.row-draft):not(.row-reversed):not(.empty-row) td, .fx-blotter #fx-table tbody tr:not(.row-draft):not(.row-reversed):not(.empty-row) .sticky-col, .fx-blotter #fx-table tbody tr.row-reversed td, .fx-blotter #fx-table tbody tr.row-reversed .sticky-col {background:#fff!important;}
 .fx-blotter .status-cell {min-height:22px!important;padding:1px 8px!important;font-size:9.5px!important;border-radius:999px!important;}
 .fx-blotter .status-cell.st-created {background:#fff3e8!important;color:#a85c00!important;}
@@ -706,8 +706,8 @@
   --text-faint:#687B8D;
   --border:#D5DADD;
   --border-strong:#8996A1;
-  --primary:#0A6ED1;
-  --primary-dark:#085CAF;
+  --primary:#0854a0;
+  --primary-dark:#06477f;
   --primary-light:#4FA3E8;
   --primary-tint:#EAF3FC;
   --success:#107E3E;
@@ -727,8 +727,8 @@
   --shadow-card:0 1px 3px rgba(34,53,72,.13);
   --shadow-pop:0 22px 70px rgba(16,38,58,.3);
   --font:"72","Segoe UI",Arial,Helvetica,sans-serif;
-  --modern-primary:#0A6ED1;
-  --modern-primary-dark:#085CAF;
+  --modern-primary:#0854a0;
+  --modern-primary-dark:#06477f;
   --modern-primary-soft:#EAF3FC;
   --modern-ink:#1D2D3E;
   --modern-muted:#475E75;
@@ -781,7 +781,7 @@
 }
 .fx-blotter .sap-actionbar .tb-btn.primary:hover:not(:disabled), .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.primary:hover:not(:disabled),
 .fx-blotter #fx-blotter-panel .context-row>.tb-btn:hover:not(:disabled), .fx-blotter .tb-btn.primary:hover:not(:disabled), .fx-blotter .btn-confirm:hover:not(:disabled) {
-  background:var(--primary-dark)!important;border-color:var(--primary-dark)!important;color:#fff!important;box-shadow:0 2px 6px rgba(10,110,209,.22)!important;
+  background:var(--primary-dark)!important;border-color:var(--primary-dark)!important;color:#fff!important;box-shadow:0 2px 6px rgba(8,84,160,.22)!important;
 }
 /* danger: Delete / Reverse / Reject, and the two "Release to MO" (send to M.O.) buttons */
 .fx-blotter #fx-blotter-panel .toolbar-row2 .tb-btn.danger, .fx-blotter .tb-btn.danger,
@@ -799,7 +799,7 @@
 .fx-blotter .sap-actionbar .tb-btn.drag-armed, .fx-blotter .sap-actionbar .tb-btn.primary.drag-armed,
 .fx-blotter .sap-actionbar #btn-release.drag-armed, .fx-blotter .sap-actionbar #btn-ss.drag-armed {
   border-color:var(--primary)!important;background:var(--primary-tint)!important;color:var(--primary)!important;
-  box-shadow:0 0 0 2px rgba(10,110,209,.12)!important;
+  box-shadow:0 0 0 2px rgba(8,84,160,.12)!important;
 }
 .fx-blotter #fx-table tbody tr.dragging {opacity:.5;}
 /* ---- 4. Action strip + panel (cards) ---- */
@@ -878,15 +878,15 @@
 .fx-blotter #fx-blotter-panel .table-wrap {background:#fff!important;border:0!important;}
 .fx-blotter #fx-table {font-size:14px!important;}
 .fx-blotter #fx-table thead th {
-  padding:8px 10px!important;background:var(--gray-tint)!important;color:var(--text-muted)!important;
-  font-size:13px!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap!important;
+  padding: 8px 6px!important;background:var(--gray-tint)!important;color:var(--text-muted)!important;
+  font-size: 14.5px!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap!important;
   border-bottom:1px solid #E6E9EB!important;border-right:0!important;
 }
 .fx-blotter #fx-table thead th.sticky-col {background:var(--gray-tint)!important;}
 .fx-blotter #fx-table thead th.sortable:hover {color:var(--primary-dark)!important;}
-.fx-blotter #fx-table thead th .arrow {font-size:9px;color:var(--primary);}
+.fx-blotter #fx-table thead th .arrow {font-size: 10.5px;color:var(--primary);}
 .fx-blotter #fx-table tbody td {
-  padding:8px 10px!important;font-size:14px;font-weight:400;color:var(--text)!important;
+  padding: 8px 6px!important;font-size: 15.5px;font-weight:400;color:var(--text)!important;
   border-bottom:1px solid #E6E9EB!important;border-right:0!important;white-space:nowrap;
   transition:background .15s ease;
 }
@@ -978,10 +978,10 @@
 /* popup tables */
 .fx-blotter .aux-table-wrap {border:1px solid var(--border);border-radius:var(--radius-md);}
 .fx-blotter .mini-table th, .fx-blotter .aux-table th {
-  background:var(--gray-tint);color:var(--text-muted);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-  padding:8px 10px;border-bottom:1px solid #E6E9EB;border-right:0;white-space:nowrap;
+  background:var(--gray-tint);color:var(--text-muted);font-size: 14.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+  padding: 8px 6px;border-bottom:1px solid #E6E9EB;border-right:0;white-space:nowrap;
 }
-.fx-blotter .mini-table td, .fx-blotter .aux-table td {font-size:14px;padding:7px 10px;border-bottom:1px solid #E6E9EB;border-right:0;color:var(--text);}
+.fx-blotter .mini-table td, .fx-blotter .aux-table td {font-size: 15.5px;padding: 7px 6px;border-bottom:1px solid #E6E9EB;border-right:0;color:var(--text);}
 .fx-blotter .mini-table tr.selectable:hover td, .fx-blotter .aux-table tr:hover td {background:#F7FBFF;}
 .fx-blotter .mini-table tr.mc-selected td {background:var(--primary-tint)!important;}
 .fx-blotter .aux-table tr.released-row td {background:var(--success-tint);}
@@ -1048,22 +1048,22 @@
   height:32px!important;min-height:32px!important;padding:0 14px!important;border-radius:4px!important;font-size:13px!important;font-weight:600!important;
 }
 .fx-blotter .modal-footer .btn-cancel {background:#fff!important;color:#1D2D3E!important;border:1px solid #8996A1!important;}
-.fx-blotter .modal-footer .btn-cancel:hover {border-color:#0A6ED1!important;color:#0A6ED1!important;}
-.fx-blotter .modal-footer .btn-confirm {background:#0A6ED1!important;color:#fff!important;border:1px solid #0A6ED1!important;}
-.fx-blotter .modal-footer .btn-confirm:hover:not(:disabled) {background:#085CAF!important;border-color:#085CAF!important;}
+.fx-blotter .modal-footer .btn-cancel:hover {border-color:#0854a0!important;color:#0854a0!important;}
+.fx-blotter .modal-footer .btn-confirm {background:#0854a0!important;color:#fff!important;border:1px solid #0854a0!important;}
+.fx-blotter .modal-footer .btn-confirm:hover:not(:disabled) {background:#06477f!important;border-color:#06477f!important;}
 .fx-blotter .modal-footer .btn-confirm.is-reject {background:#fff!important;color:#BB0000!important;border:1px solid #F3C6C0!important;}
 .fx-blotter .modal-footer .btn-confirm.is-reject:hover:not(:disabled) {background:#FCEAEA!important;}
 /* ---- popup body ---- */
-.fx-blotter .modal-body .section-label, .fx-blotter .modal-body .auto-deal-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#085CAF;}
+.fx-blotter .modal-body .section-label, .fx-blotter .modal-body .auto-deal-title {font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#06477f;}
 .fx-blotter .modal-body .form-field label, .fx-blotter .modal-body .auto-field-label {font-size:13px;font-weight:600;color:#475E75;}
 .fx-blotter .modal-body .detail-lbl {font-size:13px;font-weight:600;color:#475E75;}
 .fx-blotter .modal-body .detail-val {font-size:12.5px;font-weight:600;color:#1D2D3E;}
-.fx-blotter .modal-body .detail-val.accent {color:#085CAF;}
+.fx-blotter .modal-body .detail-val.accent {color:#06477f;}
 .fx-blotter .modal-body .form-field input:not([type=checkbox]):not([type=radio]):not([type=file]), .fx-blotter .modal-body .form-field select,
 .fx-blotter .modal-body .auto-control {height:36px;font-size:13px;color:#1D2D3E;border:1px solid #8996A1;border-radius:4px;}
 .fx-blotter .modal-body .form-field textarea {font-size:13px;color:#1D2D3E;border:1px solid #8996A1;border-radius:4px;}
 .fx-blotter .modal-body .form-field input:focus, .fx-blotter .modal-body .form-field select:focus, .fx-blotter .modal-body .form-field textarea:focus,
-.fx-blotter .modal-body .auto-control:focus {border-color:#0A6ED1;box-shadow:0 0 0 3px #EAF3FC;outline:none;}
+.fx-blotter .modal-body .auto-control:focus {border-color:#0854a0;box-shadow:0 0 0 3px #EAF3FC;outline:none;}
 .fx-blotter .modal-body .auto-control[readonly]:not(:disabled):not(.auto-locked), .fx-blotter .modal-body .auto-readonly-value {
   background:#F5F7F9!important;color:#1D2D3E!important;border-color:#D5DADD!important;font-size:12.5px!important;font-weight:600!important;
 }
@@ -1073,11 +1073,11 @@
 .fx-blotter .modal-body .validation-box.bad {background:#FCEAEA;color:#BB0000;}
 /* ---- popup tables: grey header, row lines only ---- */
 .fx-blotter .modal-body .mini-table th, .fx-blotter .modal-body .aux-table th {
-  background:#F2F4F5;color:#475E75;font-size:13px;font-weight:700;text-transform:uppercase;padding:7px 10px;
+  background:#F2F4F5;color:#475E75;font-size: 14.5px;font-weight:700;text-transform:uppercase;padding: 7px 6px;
   border-left:0;border-right:0;border-bottom:1px solid #E6E9EB;
 }
 .fx-blotter .modal-body .mini-table td, .fx-blotter .modal-body .aux-table td {
-  font-size:14px;padding:7px 10px;border-left:0;border-right:0;border-bottom:1px solid #E6E9EB;
+  font-size: 15.5px;padding: 7px 6px;border-left:0;border-right:0;border-bottom:1px solid #E6E9EB;
 }
 /* ---- main grid (#fx-table): no vertical lines, one 1px #E6E9EB line under the header and each row ---- */
 .fx-blotter #fx-table.list-table th, .fx-blotter #fx-table.list-table td {border-left:0!important;border-right:0!important;}

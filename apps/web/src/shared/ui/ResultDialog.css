@@ -6,10 +6,10 @@
   --sr-border: #b9c2c9;
   --sr-ref-bg: #f5f7f9;
   --sr-ref-border: #d5dadd;
-  --sr-ref-value: #085caf;
+  --sr-ref-value: #06477f;
   --sr-btn-border: #8996a1;
-  --sr-primary: #0a6ed1;
-  --sr-primary-dark: #085caf;
+  --sr-primary: #0854a0;
+  --sr-primary-dark: #06477f;
   --sr-primary-tint: #eaf3fc;
   --sr-success: #107e3e;
   --sr-success-tint: #e4f5e9;
@@ -39,7 +39,7 @@
   --sr-ref-value: #6cb6ff;
   --sr-btn-border: #5b6c7c;
   --sr-primary: #3b95ec;
-  --sr-primary-dark: #2f86dc;
+  --sr-primary-dark: #0854a0;
   --sr-primary-tint: #1d3550;
   --sr-success: #4cc27a;
   --sr-success-tint: #17382a;
@@ -148,7 +148,7 @@
 .std-result-btn-secondary { background: var(--sr-card); color: var(--sr-text); border-color: var(--sr-btn-border); }
 .std-result-btn-secondary:hover:not(:disabled) { border-color: var(--sr-primary); color: var(--sr-primary); }
 .std-result-btn-primary { background: var(--sr-primary); color: #fff; }
-.std-result-btn-primary:hover:not(:disabled) { background: var(--sr-primary-dark); box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+.std-result-btn-primary:hover:not(:disabled) { background: var(--sr-primary-dark); box-shadow: 0 2px 6px rgba(8,84,160, 0.22); }
 .std-result-btn-danger { background: var(--sr-error-tint); color: var(--sr-error); border-color: #f3c6c0; }
 .std-result-btn-danger:hover:not(:disabled) { border-color: var(--sr-error); }
 :root[data-theme='dark'] .std-result-btn-danger { border-color: #7a3a3a; }

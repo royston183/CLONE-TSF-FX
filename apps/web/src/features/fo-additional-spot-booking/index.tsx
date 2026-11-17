@@ -150,7 +150,7 @@ export default function FoAdditionalSpotBooking() {
   const refresh = () => {
     setGeneration((g) => g + 1)
     resetFilters()
-    pushToast('Workbench reloaded from MySQL.', 'info')
+    pushToast('Workbench reloaded.', 'info')
   }
 
   const downloadCsv = () => {
@@ -329,9 +329,9 @@ export default function FoAdditionalSpotBooking() {
                 {filteredRows.length} records
                 <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>
                   {loadState === 'loading'
-                    ? 'Loading from MySQL…'
+                    ? 'Loading…'
                     : loadState === 'ok'
-                      ? 'ZSGTSFTR_IN_SPOT · MySQL'
+                      ? 'Live data'
                       : 'ZSGTSFTR_IN_SPOT could not be read — nothing to book against'}
                 </span>
               </div>

@@ -19,9 +19,9 @@ and everything is same-origin by construction — no CORS configuration on the S
 ## Quick start
 
 ```bash
-npm ci
+npm.cmd ci
 cp .env.example .env      # then fill in SAP_DS4_100_NIIF_PASSWORD
-npm run dev               # gateway on :8080, Vite on :5173 — open :5173
+npm.cmd run dev               # gateway on :8080, Vite on :5173 — open :5173
 ```
 
 Sign in with `DEMO_USER` / `DEMO_PASSWORD` (`demo` / `demo` by default).

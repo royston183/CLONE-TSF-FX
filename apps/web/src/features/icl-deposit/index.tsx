@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { addDaysIso, calcDepositAmt, displayDate, isoFromDisplay, money, rateFmt, toNumber } from './calc.ts'
@@ -857,34 +858,18 @@ export default function IclDepositApp() {
                     <div className="card-meta">ICL Request</div>
                   </div>
                   <div id="iclDetails" className="card-body">
-                    <div className="detail-grid">
-                      <DetailRow label="OTTK No" code={record.ottkNo} size="xs" />
-                      <DetailRow
-                        label="ICL Given Comp."
-                        code={record.iclGivenComp}
-                        desc={record.iclGivenName}
-                        size="md"
-                      />
-                      <DetailRow
-                        label="Business Area"
-                        code={record.businessArea}
-                        desc={record.businessAreaName}
-                        size="md"
-                      />
-                      <DetailRow
-                        label="ICL Received Comp."
-                        code={record.iclReceivedComp}
-                        desc={record.iclReceivedName}
-                        size="md"
-                      />
-                      <DetailRow
-                        label="Deposit Bank"
-                        code={record.lcIssuanceBank}
-                        desc={record.lcIssuanceBankName}
-                        size="lg"
-                      />
-                      <DetailRow label="Entity String" code={record.entityString} size="md" />
-                    </div>
+                    <InfoTicker
+                      label="ICL request basic details"
+                      items={[
+                        { label: 'OTTK No', value: record.ottkNo, key: true },
+                        { label: 'ICL Given Comp.', value: [record.iclGivenComp, record.iclGivenName].filter(Boolean).join(' - ') },
+                        { label: 'Business Area', value: [record.businessArea, record.businessAreaName].filter(Boolean).join(' - ') },
+                        { label: 'ICL Received Comp.', value: [record.iclReceivedComp, record.iclReceivedName].filter(Boolean).join(' - ') },
+                        { label: 'Deposit Bank', value: [record.lcIssuanceBank, record.lcIssuanceBankName].filter(Boolean).join(' - '), key: true },
+                        { label: 'Entity String', value: record.entityString }
+                      ] satisfies TickerItem[]}
+                    />
+
                   </div>
                 </div>
                 <div className="card table-card">

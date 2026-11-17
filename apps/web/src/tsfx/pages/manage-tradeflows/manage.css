@@ -1,18 +1,4 @@
 /* Manage Tradeflows (scoped to .tsf-manage and its split dialog .tsf-split). Colours come from the ALM tokens. */
-.tsfx .tsf-manage__back { margin-bottom: 12px; }
-.tsfx .tsf-manage__summary {
-  display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-start; justify-content: space-between;
-  padding: 16px 18px; border: 1px solid var(--border, #dbe3ee); border-radius: 10px; background: var(--surface-2, var(--panel, #f7f9fc));
-}
-.tsfx .tsf-manage__eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #64748b); }
-.tsfx .tsf-manage__title h2 { margin: 2px 0; font-size: 20px; }
-.tsfx .tsf-manage__title h2 span { font-weight: 500; color: var(--muted, #64748b); font-size: 15px; }
-.tsfx .tsf-manage__sub { margin: 0; color: var(--muted, #64748b); font-size: 13px; }
-.tsfx .tsf-manage__facts { display: grid; grid-template-columns: repeat(5, minmax(110px, auto)); gap: 4px 24px; margin: 0; }
-.tsfx .tsf-manage__facts div { display: flex; flex-direction: column; }
-.tsfx .tsf-manage__facts dt { font-size: 11px; color: var(--muted, #64748b); text-transform: uppercase; letter-spacing: .04em; }
-.tsfx .tsf-manage__facts dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tsfx .tsf-manage__facts dd.open { color: var(--accent, #1d6fd8); }
 .tsfx .tsf-manage__bar { margin-top: 18px; }
 .tsfx .tsf-manage__bar h3 { margin: 0; font-size: 15px; }
 .tsfx .tsf-manage__count { color: var(--muted, #64748b); font-size: 12.5px; margin-left: 8px; }
@@ -42,17 +28,6 @@
 .tsfx .tsf-split__facts dd.bad { color: var(--danger, #c0392b); }
 
 @media (max-width: 720px) {
-  .tsfx .tsf-manage__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tsfx .tsf-split__table input.num { width: 110px; }
 }
 
-/* Master–detail (requested 2026-11-07): the trade flows on the left, the open one with its BLs on the right. */
-.tsfx .tsf-manage__md { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
-.tsfx .tsf-manage__md.is-open { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
-.tsfx .tsf-manage__md:not(.is-open) .tsf-manage__detail { display: none; }
-.tsfx .tsf-manage__list { margin: 0; min-width: 0; }
-.tsfx .tsf-manage__detail { min-width: 0; }
-.tsfx .tsf-manage__detail > .panel, .tsfx .tsf-manage__detail > section, .tsfx .tsf-manage__detail > div { margin: 0; }
-.tsfx .tsf-manage__pick { padding: 40px 24px; text-align: center; color: var(--muted, #64748b); }
-.tsfx .tsf-manage__md.is-open .tsf-manage__title h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
-@media (max-width: 1200px) { .tsfx .tsf-manage__md.is-open { grid-template-columns: minmax(0, 1fr); } }

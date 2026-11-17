@@ -13,9 +13,9 @@
   --text:#1d2d3e;
   --muted:#687b8d;
   --labelInk:#475e75;
-  --blue:#0a6ed1;
+  --blue:#0854a0;
   --blueMid:#35a5dc;
-  --blueDark:#085caf;
+  --blueDark:#06477f;
   --blueSoft:#eaf3fc;
   --blueSoft2:#d1e8ff;
   --teal:#00897b;
@@ -107,10 +107,10 @@
 .tfmanage .table-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:var(--radiusSm); background:var(--surface); }
 .tfmanage table.data-table { width:100%; border-collapse:collapse; font-size:12px; min-width:1400px; }
 .tfmanage table.data-table th {
-  background:var(--page2); color:#1d2d3e; text-align:left; font-size:12px;
-  font-weight:600; padding:7px 8px; border-bottom:1px solid var(--lineStrong); white-space:nowrap;
+  background:var(--page2); color:#1d2d3e; text-align:left; font-size: 13.5px;
+  font-weight:600; padding: 7px 6px; border-bottom:1px solid var(--lineStrong); white-space:nowrap;
 }
-.tfmanage table.data-table td { padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; color:#1d2d3e; font-weight:400; }
+.tfmanage table.data-table td { padding: 6px 6px; border-bottom:1px solid var(--line); white-space:nowrap; color:#1d2d3e; font-weight:400; }
 .tfmanage table.data-table tbody tr:hover td { background:var(--blueSoft); }
 .tfmanage table.data-table tbody tr.selected-row td { background:var(--blueSoft2) !important; }
 .tfmanage .status-dot {
@@ -378,9 +378,9 @@
   --text:#1d2d3e;
   --muted:#687b8d;
   --labelInk:#475e75;
-  --blue:#0a6ed1;
+  --blue:#0854a0;
   --blueMid:#35a5dc;
-  --blueDark:#085caf;
+  --blueDark:#06477f;
   --blueSoft:#eaf3fc;
   --blueSoft2:#d1e8ff;
   --green:#107e3e;
@@ -401,8 +401,8 @@
 .tfmanage .app-title {font-size:17px;font-weight:700;color:var(--text);white-space:nowrap}
 .tfmanage .ds-mark {
   width:30px;height:30px;border-radius:6px;flex:none;display:grid;place-items:center;
-  background:linear-gradient(145deg,#0a6ed1,#35a5dc);color:#fff;
-  box-shadow:0 2px 7px rgba(10,110,209,.22);
+  background:linear-gradient(145deg,#0854a0,#35a5dc);color:#fff;
+  box-shadow:0 2px 7px rgba(8,84,160,.22);
 }
 .tfmanage .ds-mark svg {width:18px;height:18px;fill:currentColor}
 .tfmanage .ds-code {font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap}
@@ -448,11 +448,11 @@
 .tfmanage .ds-panel .toolstrip .date-field-wrap input[type="text"] {width:150px;padding-right:24px}
 /* --- Table --------------------------------------------------------------- */
 .tfmanage table.data-table th {
-  background:var(--surfaceAlt);color:var(--labelInk);font-size:11px;font-weight:700;
-  padding:7px 8px;border-bottom:1px solid var(--line);border-right:1px solid #e6e9eb;
+  background:var(--surfaceAlt);color:var(--labelInk);font-size: 12.5px;font-weight:700;
+  padding: 7px 6px;border-bottom:1px solid var(--line);border-right:1px solid #e6e9eb;
 }
 .tfmanage table.data-table td {
-  padding:6px 8px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size:12px;
+  padding: 6px 6px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size: 13.5px;
 }
 .tfmanage table.data-table tbody tr:hover td {background:#f7fbff}
 .tfmanage table.data-table tbody tr.selected-row td {background:var(--blueSoft)!important}

@@ -105,8 +105,8 @@ export function liveProposeData(): ProposeData {
   let dealsCache: Promise<Deal[]> | null = null;
   // The Deal IDs are read once; the rates wait for them, so every deal currency gets its rate.
   const deals = () => (dealsCache ??= (async () => {
-    const [list, mcs] = await Promise.all([all('tsf-deal-id', 'dealIds', 500), all('master-contract', 'contracts', 100)]);
-    const byNo = new Map(mcs.map(m => [str(m.mcNo), { commodity: str(m.commodity), commodityDesc: str(m.commodityDesc) }]));
+    const [list, mcs] = await Promise.all([all('tsf-deal-id', 'dealIds', 500), fxList('masterContract')]);
+    const byNo = new Map(mcs.map(m => [str(m.ZMC_REF_NO), { commodity: str(m.ZCOMMODITY), commodityDesc: str(m.ZCOM_DESC) }]));
     return list.filter(d => Number(d.dealAmount) > 0).map(d => toDeal(d, byNo));
   })());
   const rates = () => (ratesCache ??= (async () => {

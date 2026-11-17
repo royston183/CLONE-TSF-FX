@@ -112,8 +112,8 @@
 }
 .cclcissued .input:focus, .cclcissued .select:focus {
   outline:0;
-  border-color:#0a6ed1;
-  box-shadow:0 0 0 1px #0a6ed1;
+  border-color:#0854a0;
+  box-shadow:0 0 0 1px #0854a0;
 }
 .cclcissued .company-select {width:220px}
 .cclcissued .date-shell {
@@ -165,7 +165,7 @@
 }
 .cclcissued .filter-icon-btn:hover {
   background:#f7f8f9;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
 }
 .cclcissued .filter-icon-btn:before {
   content:"";
@@ -280,18 +280,18 @@
   border:1px solid #d1e8ff;
   border-radius:4px;
   background:#eaf3fc;
-  color:#004b93;
+  color:#06477f;
   font-size:12px;
   font-weight:600;
 }
 .cclcissued .btn:hover {
   background:#d1e8ff;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
   color:#0854a0;
 }
 .cclcissued .btn-primary {
-  background:#0a6ed1;
-  border-color:#0a6ed1;
+  background:#0854a0;
+  border-color:#0854a0;
   color:#fff;
 }
 .cclcissued .btn-primary:hover {
@@ -359,7 +359,7 @@
   top:0;
   z-index:2;
   height:34px;
-  padding:6px 24px 6px 8px;
+  padding: 6px 13px 6px 6px;
   background:#f5f8fa;
   color:#1d2d3e;
   border-right:1px solid #d9d9d9;
@@ -370,7 +370,7 @@
 }
 .cclcissued .data-table td {
   height:34px;
-  padding:4px 8px;
+  padding: 4px 6px;
   background:#fff;
   border-right:1px solid #e7ebee;
   border-bottom:1px solid #e7ebee;
@@ -409,8 +409,8 @@
   bottom:0;
   border-top:5px solid #9aa7b4;
 }
-.cclcissued th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.cclcissued th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.cclcissued th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.cclcissued th.sort-desc .sort-down {border-top-color:#0854a0}
 .cclcissued .pagination-bar {
   display:flex;
   align-items:center;
@@ -437,8 +437,8 @@
 }
 .cclcissued .page-btn.active {
   background:#eaf3fc;
-  border-color:#0a6ed1;
-  color:#004b93;
+  border-color:#0854a0;
+  color:#06477f;
   font-weight:600;
 }
 .cclcissued .page-btn:disabled {
@@ -575,7 +575,7 @@
   height:7px;
   margin-right:6px;
   border-radius:50%;
-  background:#0a6ed1;
+  background:#0854a0;
 }
 .cclcissued .calendar-popup {
   display:none;
@@ -685,7 +685,7 @@
 .cclcissued .cal-link {
   border:0;
   background:#fff;
-  color:#0a6ed1;
+  color:#0854a0;
   font-size:11px;
   padding:4px 0;
 }

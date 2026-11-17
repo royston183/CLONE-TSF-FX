@@ -180,7 +180,8 @@ function SearchPopup({
         ? { left, top: r.bottom + 2, width, maxHeight: Math.min(POPUP_MAX_HEIGHT, below) }
         : { left, bottom: window.innerHeight - r.top + 2, width, maxHeight: Math.min(POPUP_MAX_HEIGHT, above) },
     )
-    inputRef.current?.focus()
+    // preventScroll: focusing the box must not scroll the pop-up behind it, or the scroll listener below closes the list at once.
+    inputRef.current?.focus({ preventScroll: true })
   }, [select, options])
 
   useEffect(() => {
@@ -193,8 +194,12 @@ function SearchPopup({
       const t = e.target as Node
       if (!rootRef.current?.contains(t) && t !== select) onClose(false)
     }
+    // Only a scroll that actually moves the select away closes the list; a scroll that leaves it where it was (a layout settling) does not.
+    const at = select.getBoundingClientRect()
     const onScroll = (e: Event) => {
-      if (!rootRef.current?.contains(e.target as Node)) onClose(false)
+      if (rootRef.current?.contains(e.target as Node)) return
+      const now = select.getBoundingClientRect()
+      if (Math.abs(now.top - at.top) > 2 || Math.abs(now.left - at.left) > 2) onClose(false)
     }
     const onResize = () => onClose(false)
     document.addEventListener('mousedown', onDown, true)

@@ -61,17 +61,17 @@
 :root:not([data-theme='dark']) .invblotter .hdr-btn.primary,
 :root:not([data-theme='dark']) .invblotter .small-btn.primary,
 :root:not([data-theme='dark']) .invblotter .action-btn.primary {
-  background: #0a6ed1;
-  border-color: #0a6ed1;
+  background: #0854a0;
+  border-color: #0854a0;
   color: #fff;
   box-shadow: none;
 }
 :root:not([data-theme='dark']) .invblotter .hdr-btn.primary:hover,
 :root:not([data-theme='dark']) .invblotter .small-btn.primary:hover,
 :root:not([data-theme='dark']) .invblotter .action-btn.primary:hover {
-  background: #085caf;
-  border-color: #085caf;
-  box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22);
+  background: #06477f;
+  border-color: #06477f;
+  box-shadow: 0 2px 6px rgba(8,84,160, 0.22);
 }
 :root:not([data-theme='dark']) .invblotter .hdr-btn.danger { color: #bb0000; border-color: #bb0000; }
 :root:not([data-theme='dark']) .invblotter .action-btn.danger { background: #bb0000; border-color: #bb0000; color: #fff; }
@@ -100,8 +100,8 @@
 :root:not([data-theme='dark']) .invblotter .control:focus,
 :root:not([data-theme='dark']) .invblotter .search:focus,
 :root:not([data-theme='dark']) .invblotter .cell-input:focus {
-  border-color: #0a6ed1;
-  box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.12);
+  border-color: #0854a0;
+  box-shadow: 0 0 0 3px rgba(8,84,160, 0.12);
 }
 :root:not([data-theme='dark']) .invblotter .control.readonly,
 :root:not([data-theme='dark']) .invblotter .control:disabled,
@@ -111,15 +111,15 @@
 /* ---- 6. Tables: sticky uppercase grey header, 14px data, lift on hover, selected blue --- */
 .invblotter table { font-size: 14px; }
 .invblotter thead th {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  padding: 8px 10px;
+  padding: 8px 6px;
 }
-.invblotter tbody td { padding: 8px 10px; font-size: 14px; }
+.invblotter tbody td { padding: 8px 6px; font-size: 15.5px; }
 .invblotter tbody td.editable-cell { padding: 4px 6px !important; }
-.invblotter tbody td.select-cell { padding-left: 8px !important; padding-right: 8px !important; }
+.invblotter tbody td.select-cell { padding-left: 6px !important; padding-right: 6px !important; }
 .invblotter tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .invblotter tbody tr {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -140,14 +140,14 @@
 :root:not([data-theme='dark']) .invblotter tbody tr:hover td { background: #f7fbff; }
 :root:not([data-theme='dark']) .invblotter tbody tr.selected td,
 :root:not([data-theme='dark']) .invblotter tbody tr.selected:hover td { background: #eaf3fc; }
-:root:not([data-theme='dark']) .invblotter tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(10, 110, 209, 0.14); }
+:root:not([data-theme='dark']) .invblotter tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(8,84,160, 0.14); }
 :root:not([data-theme='dark']) .invblotter .deal-lookup-row:hover td { background: #f7fbff; }
 :root:not([data-theme='dark']) .invblotter .bl-locked:hover { box-shadow: none; }
 
 /* ---- 7. Status colours (OTTK palette) --------------------------------------------------- */
 :root:not([data-theme='dark']) .invblotter .status-ok { color: #107e3e; }
 :root:not([data-theme='dark']) .invblotter .status-warn { color: #9b6b00; }
-:root:not([data-theme='dark']) .invblotter .status-info { color: #0a6ed1; }
+:root:not([data-theme='dark']) .invblotter .status-info { color: #0854a0; }
 :root:not([data-theme='dark']) .invblotter .status-danger { color: #bb0000; }
 :root:not([data-theme='dark']) .invblotter .status-control { color: #107e3e; }
 
@@ -155,8 +155,8 @@
 .invblotter .page-btn { width: 28px; height: 28px; border-radius: 4px; }
 :root:not([data-theme='dark']) .invblotter .page-btn { border-color: #d5dadd; color: #475e75; }
 :root:not([data-theme='dark']) .invblotter .page-btn.active {
-  background: #0a6ed1;
-  border-color: #0a6ed1;
+  background: #0854a0;
+  border-color: #0854a0;
   color: #fff;
 }
 
@@ -180,14 +180,14 @@
 
 /* ---- 12. Drag and drop (styling only): row being dragged fades, drop target glows blue ---- */
 :root:not([data-theme='dark']) .invblotter .drop-ready {
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.18) !important;
-  border-color: #0a6ed1 !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.18) !important;
+  border-color: #0854a0 !important;
 }
 :root:not([data-theme='dark']) .invblotter .drop-hover {
   background: #eaf3fc !important;
-  border-color: #0a6ed1 !important;
-  color: #0a6ed1 !important;
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.12) !important;
+  border-color: #0854a0 !important;
+  color: #0854a0 !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.12) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

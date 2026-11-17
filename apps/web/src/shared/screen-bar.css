@@ -1,0 +1,11 @@
+/* The shared screen bar (ScreenBar): the Fourth Signal mark, the screen's name and a rotating strip. It sits outside
+ * #alm-fx-ui, so it carries its own copy of the palette (the ZFS_CASHPOS3 tokens), light and dark. */
+.fs-bar {
+  --bar-card: #fff; --bar-line: #e2e8f4; --bar-ink: #1d3557; --bar-label: #5b6f8a; --bar-blue: #0854a0;
+  display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 6px 28px;
+  background: var(--bar-card); border-bottom: 1px solid var(--bar-line); font: 12px/1.4 "72", "72full", "Inter", Arial, Helvetica, sans-serif;
+}
+:root[data-theme='dark'] .fs-bar { --bar-card: #1d222a; --bar-line: #2f3f53; --bar-ink: #d3deef; --bar-label: #97a7b8; --bar-blue: #7cb7f2; }
+.fs-bar__logo { height: 30px; width: auto; max-width: 96px; object-fit: contain; flex: none; }
+.fs-bar__title { flex: none; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 800; letter-spacing: -.01em; color: var(--bar-ink); }
+@media (max-width: 900px) { .fs-bar { flex-wrap: wrap; padding: 6px 14px; } .fs-bar__title { max-width: none; } }

@@ -18,8 +18,8 @@
   --text:#1D2D3E;
   --text-muted:#475E75;
   --text-faint:#687B8D;
-  --primary:#0A6ED1;
-  --primary-dark:#085CAF;
+  --primary:#0854a0;
+  --primary-dark:#06477f;
   --primary-soft:#EAF3FC;
   --secondary-blue:#4FA3E8;
   --success:#107E3E;
@@ -86,7 +86,7 @@
 }
 .mo-view-deal-ids-for-confirmation .btn svg {width:14px;height:14px;flex-shrink:0;}
 .mo-view-deal-ids-for-confirmation .btn-primary {background:var(--primary);color:#fff;}
-.mo-view-deal-ids-for-confirmation .btn-primary:hover {background:var(--primary-dark);box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.mo-view-deal-ids-for-confirmation .btn-primary:hover {background:var(--primary-dark);box-shadow:0 2px 6px rgba(8,84,160,.22);}
 .mo-view-deal-ids-for-confirmation .btn-secondary {background:var(--card);color:var(--text);border-color:var(--border-strong,#8996A1);}
 .mo-view-deal-ids-for-confirmation .btn-secondary:hover {border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
 .mo-view-deal-ids-for-confirmation .btn-ghost {background:transparent;color:var(--primary);border-color:transparent;padding:0 6px;height:auto;}
@@ -263,8 +263,8 @@
 .mo-view-deal-ids-for-confirmation table.data-table {border-collapse:collapse;width:100%;min-width:1400px;}
 .mo-view-deal-ids-for-confirmation table.data-table thead th {
   position:sticky;top:0;background:var(--bg);z-index:5;
-  text-align:left;font-size:13px;font-weight:700;color:var(--text-muted);
-  padding:8px 10px;border-bottom:1px solid var(--border-soft);white-space:nowrap;
+  text-align:left;font-size: 14.5px;font-weight:700;color:var(--text-muted);
+  padding: 8px 6px;border-bottom:1px solid var(--border-soft);white-space:nowrap;
   cursor:pointer;user-select:none;letter-spacing:.3px;text-transform:uppercase;
 }
 .mo-view-deal-ids-for-confirmation table.data-table thead th:hover {color:var(--primary-dark);}
@@ -275,7 +275,7 @@
 .mo-view-deal-ids-for-confirmation .sort-ind {width:10px;height:10px;opacity:.3;flex-shrink:0;}
 .mo-view-deal-ids-for-confirmation .sort-ind.active {opacity:1;color:var(--primary);}
 .mo-view-deal-ids-for-confirmation table.data-table tbody td {
-  padding:8px 10px;border-bottom:1px solid var(--border-soft);font-size:14px;
+  padding: 8px 6px;border-bottom:1px solid var(--border-soft);font-size: 15.5px;
   color:var(--text);white-space:nowrap;
 }
 .mo-view-deal-ids-for-confirmation table.data-table tbody td.num {text-align:right;font-variant-numeric:tabular-nums;}

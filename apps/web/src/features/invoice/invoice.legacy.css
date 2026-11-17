@@ -60,7 +60,7 @@
   padding: 3px 7px;
   border: 1px solid #bbdefb;
   background-color: #e3f2fd;
-  color: #1565c0;
+  color: #0854a0;
   font-size: 10px;
   font-weight: bold;
 }
@@ -101,7 +101,7 @@
 .invoice .panel-title {
   padding-left: 9px;
   vertical-align: middle;
-  color: #1565c0;
+  color: #0854a0;
   font-size: 10px;
   font-weight: bold;
 }
@@ -157,7 +157,7 @@
   border-collapse: collapse;
 }
 .invoice .input-help-table td {
-  padding: 0;
+  padding: 0 0;
 }
 .invoice .input-help-button-cell {
   width: 38px;
@@ -167,7 +167,7 @@
   height: 25px;
   border: 1px solid #b0ceeb;
   background-color: #e3f2fd;
-  color: #1565c0;
+  color: #0854a0;
   font-weight: bold;
   cursor: pointer;
 }
@@ -183,8 +183,8 @@
   padding: 0 8px;
 }
 .invoice .btn-primary, .invoice .tool-primary {
-  border-color: #1565c0;
-  background-color: #1e88e5;
+  border-color: #0854a0;
+  background-color: #0854a0;
   color: #ffffff;
 }
 .invoice .btn-danger {
@@ -249,7 +249,7 @@
   border-bottom: 1px solid #b0ceeb;
   background-color: #ddeef9;
   color: #5d86a7;
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: bold;
   text-transform: uppercase;
   text-align: left;
@@ -304,7 +304,7 @@
 }
 .invoice .modal-head {
   height: 40px;
-  background-color: #1565c0;
+  background-color: #0854a0;
   color: #ffffff;
 }
 .invoice .modal-head-table {
@@ -327,7 +327,7 @@
   width: 28px;
   height: 26px;
   border: 1px solid #ffffff;
-  background-color: #1565c0;
+  background-color: #0854a0;
   color: #ffffff;
   font-weight: bold;
   cursor: pointer;
@@ -356,14 +356,14 @@
   font-size: 10px;
 }
 .invoice .lookup-table th {
-  padding: 7px;
+  padding: 7px 6px;
   background-color: #ddeef9;
   color: #5d86a7;
   border: 1px solid #c9deef;
   text-align: left;
 }
 .invoice .lookup-table td {
-  padding: 7px;
+  padding: 7px 6px;
   border: 1px solid #e2edf5;
 }
 .invoice .lookup-selected td {
@@ -435,7 +435,7 @@
 .invoice .selection-box { width: 590px; }
 .invoice .table-wrap { overflow-x: hidden; overflow-y: auto; max-height: 190px; }
 .invoice .data-table { min-width: 0; width: 100%; table-layout: fixed; font-size: 9px; }
-.invoice .data-table th { padding: 4px 3px; font-size: 7px; overflow: hidden; white-space: nowrap; }
+.invoice .data-table th { padding: 4px 3px; font-size: 8.5px; overflow: hidden; white-space: nowrap; }
 .invoice .data-table td { padding: 2px 3px; overflow: hidden; white-space: nowrap; }
 .invoice .grid-input { width: 100%; min-width: 0; height: 20px; font-size: 9px; }
 .invoice .modal-window { width: 820px; margin-left: -410px; top: 35px; border-radius: 7px; }
@@ -477,7 +477,7 @@
 .invoice .data-table th {
   height: 21px;
   padding: 2px 4px !important;
-  font-size: 8px !important;
+  font-size: 9.5px !important;
   color: #173f63;
   background-color: #dceaf4;
   border-right: 1px solid #b8cee0;
@@ -560,8 +560,8 @@
 }
 .invoice .panel-title, .invoice .label-cell { font-size: 11px !important; }
 .invoice .data-table { font-size: 10px !important; }
-.invoice .data-table th { font-size: 9px !important; height: 23px; padding: 3px 5px !important; }
-.invoice .data-table td { font-size: 10px !important; height: 24px; padding: 2px 5px !important; }
+.invoice .data-table th { font-size: 10.5px !important; height: 23px; padding: 3px 5px !important; }
+.invoice .data-table td { font-size: 11.5px !important; height: 24px; padding: 2px 5px !important; }
 .invoice .grid-input { font-size: 10px !important; height: 22px !important; }
 .invoice .grid-calc-btn { font-size: 10px !important; height: 22px; }
 .invoice .modal-bg { background-color: rgba(35, 57, 79, 0.28) !important; }
@@ -750,7 +750,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 .invoice .details-table > tbody > tr > td, .invoice .two-col-table > tbody > tr > td {
     display: block;
     width: auto !important;
-    padding: 0 !important;
+    padding: 0 0 !important;
   }
 .invoice .details-left, .invoice .details-right, .invoice .left-col, .invoice .right-col {
     padding: 0 !important;
@@ -830,7 +830,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   border: 1px solid #d1e8ff !important;
   border-radius: 4px !important;
   background: #eaf3fc !important;
-  color: #004b93 !important;
+  color: #06477f !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   line-height: 28px !important;
@@ -838,12 +838,12 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 }
 .invoice .toolbar .tool-btn:hover, .invoice .btn:hover, .invoice .grid-calc-btn:hover, .invoice .grid-nav-btn:hover {
   background: #d1e8ff !important;
-  border-color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
   color: #0854a0 !important;
 }
 .invoice .toolbar .tool-primary, .invoice .btn-primary {
-  border-color: #0a6ed1 !important;
-  background: #0a6ed1 !important;
+  border-color: #0854a0 !important;
+  background: #0854a0 !important;
   color: #ffffff !important;
 }
 .invoice .toolbar .tool-primary:hover, .invoice .btn-primary:hover {
@@ -946,7 +946,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   background: #ffffff !important;
   color: #1d2d3e !important;
   font-weight: 600 !important;
-  border-color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
 }
 .invoice .two-col-table {
   flex: 0 0 auto !important;
@@ -1019,13 +1019,13 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 }
 .invoice .fti-table th {
   height: 31px !important;
-  padding: 6px 7px !important;
+  padding: 6px 6px !important;
   overflow: hidden !important;
   background: #eef1f3 !important;
   color: #556b82 !important;
   border-right: 1px solid #d9d9d9 !important;
   border-bottom: 1px solid #c7d4e0 !important;
-  font-size: 11px !important;
+  font-size: 12.5px !important;
   font-weight: 600 !important;
   line-height: 16px !important;
   text-align: left !important;
@@ -1041,7 +1041,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   color: #1d2d3e !important;
   border-right: 1px solid #e3e6e8 !important;
   border-bottom: 1px solid #e3e6e8 !important;
-  font-size: 12px !important;
+  font-size: 13.5px !important;
   line-height: 21px !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
@@ -1073,10 +1073,10 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   border-color: #b8b8b8 !important;
 }
 .invoice .fti-table .grid-input:focus {
-  border-color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
   background: #ffffff !important;
   outline: 0 !important;
-  box-shadow: 0 0 0 1px #0a6ed1 !important;
+  box-shadow: 0 0 0 1px #0854a0 !important;
 }
 .invoice .fti-table tr:hover td {
   background: #eef6fd !important;
@@ -1147,7 +1147,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 .invoice .confirm-note {
   border: 1px solid #d1e8ff !important;
   background: #eaf3fc !important;
-  color: #004b93 !important;
+  color: #06477f !important;
 }
 .invoice #toastRegion {
   position: fixed;
@@ -1223,7 +1223,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   font-size: 11px !important;
 }
 .invoice .status-dot {
-  color: #0a6ed1 !important;
+  color: #0854a0 !important;
 }
 @media screen and (max-width: 1100px) {
 .invoice {
@@ -1242,7 +1242,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 .invoice .details-table > tbody > tr > td, .invoice .two-col-table > tbody > tr > td {
     display: block !important;
     width: auto !important;
-    padding: 0 !important;
+    padding: 0 0 !important;
   }
 .invoice .details-left, .invoice .details-right, .invoice .left-col, .invoice .right-col {
     padding: 0 !important;
@@ -1373,7 +1373,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   top: 0 !important;
   z-index: 3 !important;
   height: 29px !important;
-  padding: 5px 22px 5px 7px !important;
+  padding: 5px 12px 5px 6px !important;
   cursor: pointer !important;
 }
 .invoice .fti-table th.sortable {
@@ -1403,10 +1403,10 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   border-top: 5px solid #9aa7b4;
 }
 .invoice .fti-table th.sort-asc .sort-up {
-  border-bottom-color: #0a6ed1;
+  border-bottom-color: #0854a0;
 }
 .invoice .fti-table th.sort-desc .sort-down {
-  border-top-color: #0a6ed1;
+  border-top-color: #0854a0;
 }
 .invoice .fti-table td {
   height: 27px !important;
@@ -1542,24 +1542,24 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   border: 1px solid #d1e8ff !important;
   border-radius: 4px !important;
   background: #eaf3fc !important;
-  color: #004b93 !important;
+  color: #06477f !important;
   line-height: 25px !important;
   text-align: center !important;
   cursor: pointer !important;
 }
 .invoice .grid-icon-btn:hover {
   background: #d1e8ff !important;
-  border-color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
   color: #0854a0 !important;
 }
 .invoice .fti-table th {
   color: #1d2d3e !important;
-  font-size: 12px !important;
+  font-size: 13.5px !important;
   font-weight: 600 !important;
 }
 .invoice .fti-table td, .invoice .fti-table .grid-input {
   color: #1d2d3e !important;
-  font-size: 12px !important;
+  font-size: 13.5px !important;
   font-weight: 400 !important;
 }
 .invoice .adjusted-panel {
@@ -1644,14 +1644,14 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   z-index: 3 !important;
   background: #f5f8fa !important;
   color: #1d2d3e !important;
-  font-size: 11px !important;
+  font-size: 12.5px !important;
   font-weight: 600 !important;
   text-transform: none !important;
 }
 .invoice #blListTable td {
   background: #ffffff !important;
   color: #1d2d3e !important;
-  font-size: 11px !important;
+  font-size: 12.5px !important;
 }
 .invoice #blListTable tbody tr:hover td {
   background: #f2f8fd !important;
@@ -1720,7 +1720,7 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 }
 .invoice #pnlTable th, .invoice #pnlTable td {
   font-family: "Inter", "Segoe UI", Arial, Helvetica, sans-serif !important;
-  font-size: 12px !important;
+  font-size: 13.5px !important;
   color: #1d2d3e !important;
   text-transform: none !important;
 }
@@ -1777,8 +1777,8 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
   --ds-text:#1d2d3e;
   --ds-sub:#475e75;
   --ds-muted:#687b8d;
-  --ds-blue:#0a6ed1;
-  --ds-blue-hover:#085caf;
+  --ds-blue:#0854a0;
+  --ds-blue-hover:#06477f;
   --ds-blue-soft:#eaf3fc;
   --ds-green:#107e3e;
   --ds-shadow:0 1px 3px rgba(34,53,72,.13);
@@ -1809,8 +1809,8 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 }
 .invoice .ds-mark {
   width:30px;height:30px;border-radius:6px;flex:none;display:grid;place-items:center;
-  background:linear-gradient(145deg,#0a6ed1,#35a5dc);color:#fff;
-  box-shadow:0 2px 7px rgba(10,110,209,.22);
+  background:linear-gradient(145deg,#0854a0,#35a5dc);color:#fff;
+  box-shadow:0 2px 7px rgba(8,84,160,.22);
 }
 .invoice .ds-mark svg {width:18px;height:18px;fill:currentColor}
 .invoice .ds-code {font-size:12px;font-weight:400;color:var(--ds-muted);white-space:nowrap}
@@ -1885,11 +1885,11 @@ th:nth-child(7), .invoice #pnlTable td:nth-child(7) { width: 125px; }
 /* --- Grid ----------------------------------------------------------------- */
 .invoice .fti-table th, .invoice .data-table th {
   background:var(--ds-surface-2)!important;color:var(--ds-sub)!important;
-  font-size:11px!important;font-weight:700!important;
+  font-size: 12.5px!important;font-weight:700!important;
   border-bottom:1px solid var(--ds-line)!important;border-right:1px solid #e6e9eb!important;
 }
 .invoice .fti-table td, .invoice .data-table td, .invoice .fti-table .grid-input {
-  color:var(--ds-text)!important;font-size:12px!important;background:#fff!important;
+  color:var(--ds-text)!important;font-size: 13.5px!important;background:#fff!important;
   border-right-color:#edf0f2!important;border-bottom-color:#edf0f2!important;
 }
 .invoice .fti-table tr:hover td {background:#f7fbff!important}

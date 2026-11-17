@@ -60,8 +60,8 @@
 /* ALV-style grids (Flows, Overview of Conditions, Activities). */
 .tsfx .ftr-grid{min-width:720px;font-size:12px}
 .tsfx .ftr-grid caption{text-align:left;font-size:15px;font-weight:600;padding:2px 0 8px;color:var(--text)}
-.tsfx .ftr-grid th{padding:6px 10px;text-align:left}
-.tsfx .ftr-grid td{padding:5px 10px;font-variant-numeric:tabular-nums}
+.tsfx .ftr-grid th{padding: 6px 6px;text-align:left}
+.tsfx .ftr-grid td{padding: 5px 6px;font-variant-numeric:tabular-nums}
 .tsfx .ftr-grid tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 60%,var(--surface))}
 .tsfx .ftr-grid .num{text-align:right}
 .tsfx .ftr-grid tfoot td{font-weight:700;background:color-mix(in srgb,#e8b400 22%,var(--surface));border-top:2px solid var(--line)}

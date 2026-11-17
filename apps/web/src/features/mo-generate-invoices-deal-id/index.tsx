@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './mo-generate-invoices-deal-id.legacy.css'
@@ -377,7 +378,7 @@ export default function MoGenerateInvoicesDealId() {
       return
     }
     if (deal.tolerance === null) {
-      toast('Tolerance T02 (ZSGTSFTR_TOLR) could not be read, so the invoice cannot be compared with the deal.', 'error')
+      toast('Tolerance T02 could not be read, so the invoice cannot be compared with the deal.', 'error')
       return
     }
     const fresh = { ...deal, inv: deal.inv.map(recalcInvoiceRow) }
@@ -686,84 +687,27 @@ export default function MoGenerateInvoicesDealId() {
               <div className="section-title">Basic Details</div>
               <div className="section-meta">{deal ? `Deal ${deal.dealId} • ${statusText(deal.status)} • Tolerance ${deal.tolerance === null ? '—' : money(deal.tolerance, 2)}%` : 'Select a Deal ID to load invoice data'}</div>
             </div>
-            <div className="basic-grid">
-              <div className="basic-row row-deal">
-                <div className="field">
-                  <label>Deal ID Reference</label>
-                  <input className="control readonly" disabled value={deal?.dealRef ?? ''} />
-                </div>
-                <div className="field">
-                  <label>Deal Start Date</label>
-                  <div className="date-value">{deal?.dealStart || '—'}</div>
-                </div>
-                <div className="field">
-                  <label>Deal End Date</label>
-                  <div className="date-value">{deal?.dealEnd || '—'}</div>
-                </div>
-                <div className="field">
-                  <label>Deal ID Status</label>
-                  <select className="control status-control" disabled value={deal?.status ?? ''}>
-                    {deal ? <option value={deal.status}>{statusText(deal.status)}</option> : null}
-                  </select>
-                </div>
-              </div>
-
-              <div className="basic-row row-contract">
-                <div className="field">
-                  <label>MC Ref No</label>
-                  <input className="control readonly" disabled value={deal?.mcRef ?? ''} />
-                </div>
-                <div className="field">
-                  <label>MC Description</label>
-                  <input className="control readonly" disabled value={deal?.mcDesc ?? ''} />
-                </div>
-                <div className="field">
-                  <label>MC Date</label>
-                  <div className="date-value">{deal?.mcDate || '—'}</div>
-                </div>
-                <div className="field">
-                  <label>Ship Start Date</label>
-                  <div className="date-value">{deal?.shipStart || '—'}</div>
-                </div>
-                <div className="field">
-                  <label>Ship End Date</label>
-                  <div className="date-value">{deal?.shipEnd || '—'}</div>
-                </div>
-              </div>
-
-              <div className="basic-row row-structure">
-                <div className="field">
-                  <label>Entity String</label>
-                  <input className="control readonly" disabled value={deal?.entityString ?? ''} />
-                </div>
-                <div className="field">
-                  <label>Currency String</label>
-                  <input className="control readonly" disabled value={deal?.currencyString ?? ''} />
-                </div>
-                <div className="field">
-                  <label>Trader</label>
-                  <input className="control readonly" disabled value={deal?.trader ?? ''} />
-                </div>
-                <div className="field">
-                  <label>Trader Name</label>
-                  <input className="control readonly" disabled value={deal?.traderDesc ?? ''} />
-                </div>
-                <div className="field">
-                  <label>FX Model ID</label>
-                  <input className="control readonly" disabled value={deal?.modelId ?? ''} />
-                </div>
-                <div className="field">
-                  <label>FX Inv Model</label>
-                  <input className="control readonly" disabled value={deal?.fxInvModel ?? ''} />
-                </div>
-              </div>
-
-              <div className="basic-row row-model">
-                <div className="field">
-                  <label>Model Description</label>
-                  <input className="control readonly" disabled value={deal?.modelDesc ?? ''} />
-                </div>
-              </div>
+            <div className="basic-ticker">
+              <InfoTicker
+                label="Deal ID basic details"
+                items={[
+                  { label: 'Deal ID', value: deal?.dealRef ?? '', key: true },
+                  { label: 'Deal Start Date', value: deal?.dealStart ?? '' },
+                  { label: 'Deal End Date', value: deal?.dealEnd ?? '' },
+                  { label: 'Deal ID Status', value: deal ? statusText(deal.status) : '', key: true },
+                  { label: 'MC Ref No', value: deal?.mcRef ?? '', key: true },
+                  { label: 'MC Description', value: deal?.mcDesc ?? '' },
+                  { label: 'MC Date', value: deal?.mcDate ?? '' },
+                  { label: 'Ship Start Date', value: deal?.shipStart ?? '' },
+                  { label: 'Ship End Date', value: deal?.shipEnd ?? '' },
+                  { label: 'Entity String', value: deal?.entityString ?? '' },
+                  { label: 'Currency String', value: deal?.currencyString ?? '', key: true },
+                  { label: 'Trader', value: [deal?.trader, deal?.traderDesc].filter(Boolean).join(' - ') },
+                  { label: 'FX Model ID', value: deal?.modelId ?? '' },
+                  { label: 'FX Inv Model', value: deal?.fxInvModel ?? '' },
+                  { label: 'Model Description', value: deal?.modelDesc ?? '' }
+                ] satisfies TickerItem[]}
+              />
             </div>
           </section>
 

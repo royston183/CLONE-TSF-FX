@@ -4,6 +4,8 @@ import { AppShell, Button, EmptyState, Spinner, ToastProvider } from '@slc/ui'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ThemeProvider } from './shared/ThemeContext.tsx'
 import { SelectSearch } from './shared/SelectSearch.tsx'
+import { ScreenBar } from './shared/ScreenBar.tsx'
+import { installButtonIcons } from './shared/buttonIcons.ts'
 import { DatalistSuggest } from './shared/DatalistSuggest.tsx'
 import { LoginPage } from './auth/LoginPage.tsx'
 import { RequireAuth } from './auth/RequireAuth.tsx'
@@ -14,6 +16,10 @@ import './shared/fx/alm-theme.css'
 import './shared/fx/office-theme.css'
 import './shared/fx/tf-theme.css'
 import './shared/master-contract/design.css'
+
+// Screens that carry their own header, logo and strip (the Trade Flows frame): the shared bar and wrapper skip them.
+const OWN_FRAME = new Set(['tf-upload', 'tf-list', 'tf-update-price', 'tf-manage', 'tf-propose', 'mo-generate-invoices-deal-id'])
+installButtonIcons()
 
 // First ALM styling pass: the implemented FX Master Contract / Front Office routes.
 const ALM_FX_FEATURES = new Set([
@@ -122,12 +128,17 @@ function FeatureRoute() {
         </div>
       }
     >
-      <div
-        id={ALM_FX_FEATURES.has(appId ?? '') || ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}
-        data-office={ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'true' : undefined}
-      >
+      {OWN_FRAME.has(appId ?? '') ? (
         <Feature />
-      </div>
+      ) : (
+        <>
+          <ScreenBar appId={appId ?? ''} />
+          {/* Every other screen sits on the shared theme (tokens, type, KPI cards, tables, controls, dialogs). */}
+          <div id="alm-fx-ui" data-office={ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'true' : undefined}>
+            <Feature />
+          </div>
+        </>
+      )}
     </Suspense>
   )
 }

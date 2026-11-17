@@ -11,7 +11,7 @@ export type { TableColumn } from '@tsfx/lib/grid/table-layout';
 export { columnsFor } from '@tsfx/lib/grid/table-layout';
 
 /** Shared native table: one column plan governs headers, values, totals, sorting and editable cells. */
-export function DataTable({ columns, children, className = '', nativeLayout = false, nativeExport = false, ref: forwardedRef, ...props }: TableHTMLAttributes<HTMLTableElement> & { columns?: TableColumn[]; nativeLayout?: boolean; nativeExport?: boolean; ref?: Ref<HTMLTableElement> }) {
+export function DataTable({ columns, children, className = '', nativeLayout = false, nativeExport = false, stretch = false, ref: forwardedRef, ...props }: TableHTMLAttributes<HTMLTableElement> & { columns?: TableColumn[]; nativeLayout?: boolean; nativeExport?: boolean; /** Spread the columns over the full width of the container when they would take less. */ stretch?: boolean; ref?: Ref<HTMLTableElement> }) {
   const ref = useRef<HTMLTableElement>(null);
   const cols = useRef<HTMLTableColElement>(null);
   const heads = headerCells(children);
@@ -149,7 +149,8 @@ export function DataTable({ columns, children, className = '', nativeLayout = fa
       };
       const measured: MeasuredColumn[] = buckets.map((cells, i) => {
         const head = cells.find(c => c.tagName === 'TH');
-        const body = cells.filter(c => c.closest('tbody'));
+        // The footer's totals are part of what a column has to hold (they are often the widest values).
+        const body = cells.filter(c => c.closest('tbody, tfoot'));
         const control = body.find(c => c.querySelector('input:not([type=checkbox]):not([type=radio]),select'))?.querySelector<HTMLInputElement>('input:not([type=checkbox]):not([type=radio]),select');
         const spec = columns?.[order[i]];
         const numeric = cells.some(c => c.matches('.md-amt,.kit-num,.num,.right,.numcell,.numeric')) || control?.inputMode === 'decimal' || control?.inputMode === 'numeric';
@@ -183,7 +184,9 @@ export function DataTable({ columns, children, className = '', nativeLayout = fa
         const minWidth = spec?.minWidth ?? (control ? Math.max(composite, kind === 'date' ? 166 : kind === 'amount' ? 192 : 120) : undefined);
         return { kind, contentWidth, headerWidth, minWidth, align: spec?.align, width: spec?.width };
       });
-      const plan = fitTableColumns(measured, table.parentElement?.clientWidth ?? 0);
+      const fitted = fitTableColumns(measured, table.parentElement?.clientWidth ?? 0);
+      const room = table.parentElement?.clientWidth ?? 0, used = fitted.reduce((sum, c) => sum + c.width, 0);
+      const plan = stretch && room > used + 1 ? fitted.map(c => ({ ...c, width: Math.floor(c.width * room / used) })) : fitted;
       const elements = plan.map((c, i) => {
         const col = document.createElement('col'); col.style.width = `${c.width}px`;
         const valueCell = buckets[i].find(cell => cell.closest('tbody'));

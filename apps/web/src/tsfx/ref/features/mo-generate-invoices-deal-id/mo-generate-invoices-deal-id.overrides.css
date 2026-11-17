@@ -61,17 +61,17 @@
 .tsfx:not([data-theme='dark']) .invblotter .hdr-btn.primary,
 .tsfx:not([data-theme='dark']) .invblotter .small-btn.primary,
 .tsfx:not([data-theme='dark']) .invblotter .action-btn.primary {
-  background: #0a6ed1;
-  border-color: #0a6ed1;
+  background: #0854a0;
+  border-color: #0854a0;
   color: #fff;
   box-shadow: none;
 }
 .tsfx:not([data-theme='dark']) .invblotter .hdr-btn.primary:hover,
 .tsfx:not([data-theme='dark']) .invblotter .small-btn.primary:hover,
 .tsfx:not([data-theme='dark']) .invblotter .action-btn.primary:hover {
-  background: #085caf;
-  border-color: #085caf;
-  box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22);
+  background: #06477f;
+  border-color: #06477f;
+  box-shadow: 0 2px 6px rgba(8,84,160, 0.22);
 }
 .tsfx:not([data-theme='dark']) .invblotter .hdr-btn.danger { color: #bb0000; border-color: #bb0000; }
 .tsfx:not([data-theme='dark']) .invblotter .action-btn.danger { background: #bb0000; border-color: #bb0000; color: #fff; }
@@ -100,8 +100,8 @@
 .tsfx:not([data-theme='dark']) .invblotter .control:focus,
 .tsfx:not([data-theme='dark']) .invblotter .search:focus,
 .tsfx:not([data-theme='dark']) .invblotter .cell-input:focus {
-  border-color: #0a6ed1;
-  box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.12);
+  border-color: #0854a0;
+  box-shadow: 0 0 0 3px rgba(8,84,160, 0.12);
 }
 .tsfx:not([data-theme='dark']) .invblotter .control.readonly,
 .tsfx:not([data-theme='dark']) .invblotter .control:disabled,
@@ -111,15 +111,15 @@
 /* ---- 6. Tables: sticky uppercase grey header, 14px data, lift on hover, selected blue --- */
 .tsfx .invblotter table { font-size: 14px; }
 .tsfx .invblotter thead th {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  padding: 8px 10px;
+  padding: 8px 6px;
 }
-.tsfx .invblotter tbody td { padding: 8px 10px; font-size: 14px; }
+.tsfx .invblotter tbody td { padding: 8px 6px; font-size: 15.5px; }
 .tsfx .invblotter tbody td.editable-cell { padding: 4px 6px !important; }
-.tsfx .invblotter tbody td.select-cell { padding-left: 8px !important; padding-right: 8px !important; }
+.tsfx .invblotter tbody td.select-cell { padding-left: 6px !important; padding-right: 6px !important; }
 .tsfx .invblotter tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tsfx .invblotter tbody tr {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -140,14 +140,14 @@
 .tsfx:not([data-theme='dark']) .invblotter tbody tr:hover td { background: #f7fbff; }
 .tsfx:not([data-theme='dark']) .invblotter tbody tr.selected td,
 .tsfx:not([data-theme='dark']) .invblotter tbody tr.selected:hover td { background: #eaf3fc; }
-.tsfx:not([data-theme='dark']) .invblotter tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(10, 110, 209, 0.14); }
+.tsfx:not([data-theme='dark']) .invblotter tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(8,84,160, 0.14); }
 .tsfx:not([data-theme='dark']) .invblotter .deal-lookup-row:hover td { background: #f7fbff; }
 .tsfx:not([data-theme='dark']) .invblotter .bl-locked:hover { box-shadow: none; }
 
 /* ---- 7. Status colours (OTTK palette) --------------------------------------------------- */
 .tsfx:not([data-theme='dark']) .invblotter .status-ok { color: #107e3e; }
 .tsfx:not([data-theme='dark']) .invblotter .status-warn { color: #9b6b00; }
-.tsfx:not([data-theme='dark']) .invblotter .status-info { color: #0a6ed1; }
+.tsfx:not([data-theme='dark']) .invblotter .status-info { color: #0854a0; }
 .tsfx:not([data-theme='dark']) .invblotter .status-danger { color: #bb0000; }
 .tsfx:not([data-theme='dark']) .invblotter .status-control { color: #107e3e; }
 
@@ -155,8 +155,8 @@
 .tsfx .invblotter .page-btn { width: 28px; height: 28px; border-radius: 4px; }
 .tsfx:not([data-theme='dark']) .invblotter .page-btn { border-color: #d5dadd; color: #475e75; }
 .tsfx:not([data-theme='dark']) .invblotter .page-btn.active {
-  background: #0a6ed1;
-  border-color: #0a6ed1;
+  background: #0854a0;
+  border-color: #0854a0;
   color: #fff;
 }
 
@@ -180,14 +180,14 @@
 
 /* ---- 12. Drag and drop (styling only): row being dragged fades, drop target glows blue ---- */
 .tsfx:not([data-theme='dark']) .invblotter .drop-ready {
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.18) !important;
-  border-color: #0a6ed1 !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.18) !important;
+  border-color: #0854a0 !important;
 }
 .tsfx:not([data-theme='dark']) .invblotter .drop-hover {
   background: #eaf3fc !important;
-  border-color: #0a6ed1 !important;
-  color: #0a6ed1 !important;
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.12) !important;
+  border-color: #0854a0 !important;
+  color: #0854a0 !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.12) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -223,7 +223,7 @@
 /* What stops a confirmation, in one line above the Trade Invoices; and the "working in SAP" banner while it runs. */
 .tsfx .invblotter .inv-prereq { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--amber, #b7791f) 40%, var(--line, #D7E0E9)); background: color-mix(in srgb, var(--amber, #b7791f) 9%, var(--surface, #fff)); font-size: 12.5px; }
 .tsfx .invblotter .inv-prereq span { flex: 1 1 320px; }
-.tsfx .invblotter .inv-busy { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 960; display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px; background: #0B5CD5; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 8px 22px rgba(11, 92, 213, .35); }
+.tsfx .invblotter .inv-busy { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 960; display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px; background: #0854a0; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 8px 22px rgba(11, 92, 213, .35); }
 .tsfx .invblotter .inv-busy__dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; animation: inv-pulse 1s ease-in-out infinite; }
 @keyframes inv-pulse { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .tsfx .invblotter .inv-busy__dot { animation: none; } }
@@ -231,7 +231,7 @@
 /* The workflow status badge opens a read-only progress list (viewing only). */
 .tsfx .invblotter .wf-status { position: relative; display: inline-flex; }
 .tsfx .invblotter .wf-status__badge { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: inherit; }
-.tsfx .invblotter .wf-status__badge:focus-visible { outline: 2px solid var(--blue, #0B5CD5); outline-offset: 2px; }
+.tsfx .invblotter .wf-status__badge:focus-visible { outline: 2px solid var(--blue, #0854a0); outline-offset: 2px; }
 .tsfx .invblotter .wf-status__panel { position: absolute; left: 0; top: calc(100% + 8px); z-index: 80; width: min(460px, 86vw); padding: 12px 14px; border-radius: 12px; background: var(--surface, #fff); border: 1px solid var(--line, #D7E0E9); box-shadow: 0 14px 34px rgba(20, 42, 63, .2); font-size: 12.5px; font-weight: 400; }
 .tsfx .invblotter .wf-status__head { display: flex; align-items: baseline; gap: 8px; font-weight: 700; margin-bottom: 8px; color: var(--text, #1D2D3E); }
 .tsfx .invblotter .wf-status__head small { font-weight: 500; color: var(--muted, #5B7288); }
@@ -243,10 +243,10 @@
 .tsfx .invblotter .wf-status__row--completed { color: var(--text, #1D2D3E); }
 .tsfx .invblotter .wf-status__row--completed .wf-status__mark { background: #1F9D55; border-color: #1F9D55; color: #fff; }
 .tsfx .invblotter .wf-status__row--completed .wf-status__state { color: #1F9D55; }
-.tsfx .invblotter .wf-status__row--current { background: color-mix(in srgb, #0B5CD5 12%, transparent); color: var(--text, #1D2D3E); font-weight: 700; }
-.tsfx .invblotter .wf-status__row--current .wf-status__mark { background: #0B5CD5; border-color: #0B5CD5; }
+.tsfx .invblotter .wf-status__row--current { background: color-mix(in srgb, #0854a0 12%, transparent); color: var(--text, #1D2D3E); font-weight: 700; }
+.tsfx .invblotter .wf-status__row--current .wf-status__mark { background: #0854a0; border-color: #0854a0; }
 .tsfx .invblotter .wf-status__row--current .wf-status__mark::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
-.tsfx .invblotter .wf-status__row--current .wf-status__state { color: #0B5CD5; }
+.tsfx .invblotter .wf-status__row--current .wf-status__state { color: #0854a0; }
 .tsfx .invblotter .wf-status__note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--muted, #5B7288); }
 .tsfx .invblotter .wf-status__empty { margin: 0; color: var(--muted, #5B7288); }
 /* The badge keeps the pill's size inside the Deal ID heading; the panel is ordinary text, not heading text. */

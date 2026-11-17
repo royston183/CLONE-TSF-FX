@@ -1,0 +1,42 @@
+/*
+ * Every pop-up: as wide as its content needs (up to the screen), never taller than the screen, so a
+ * table or form inside is shown whole instead of behind a sideways scroll bar. Only a list too tall
+ * for the screen scrolls, and only vertically.
+ */
+.modal,
+.modal-card,
+.modal-dialog,
+.dpm-modal,
+.mp-detail-dialog,
+.mp-n-dialog,
+.fx-transaction-dialog,
+.ottk-modal,
+.dms-modal,
+.txn-modal,
+.detail-modal,
+.request-modal,
+.correction-modal,
+.workflow-modal,
+.sub-modal,
+.success-modal {
+  width: fit-content !important;
+  min-width: min(520px, calc(100vw - 48px)) !important;
+  max-width: calc(100vw - 48px) !important;
+  max-height: calc(100vh - 48px) !important;
+  box-sizing: border-box;
+}
+
+/* Tables and their wrappers inside a pop-up size to their content rather than a fixed minimum. */
+:is(.modal, .modal-card, .modal-dialog, .dpm-modal, .mp-detail-dialog, .mp-n-dialog, .fx-transaction-dialog, .ottk-modal, .dms-modal, .txn-modal, .detail-modal, .request-modal, .correction-modal, .workflow-modal, .sub-modal) :is(.popup-table-wrap, .table-wrap, .table-scroll, .tbl-wrap, .child-table-wrap, .alv-wrap, [class*='table-wrap'], [class*='tbl-wrap']) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+:is(.modal, .modal-card, .modal-dialog, .dpm-modal, .mp-detail-dialog, .mp-n-dialog, .fx-transaction-dialog) table {
+  min-width: 0 !important;
+}
+:is(.modal, .modal-card, .modal-dialog, .dpm-modal, .mp-detail-dialog, .mp-n-dialog, .fx-transaction-dialog) :is(th, td) {
+  white-space: nowrap;
+}
+:is(.modal, .modal-card, .modal-dialog, .dpm-modal, .mp-detail-dialog, .mp-n-dialog, .fx-transaction-dialog) :is(td, th) :is(textarea, p, .note, .remarks) {
+  white-space: normal;
+}

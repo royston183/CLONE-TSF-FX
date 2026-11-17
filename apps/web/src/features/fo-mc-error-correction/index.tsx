@@ -178,7 +178,7 @@ export default function FoMcErrorCorrection() {
     setSelectedRef(null)
     showToast(
       loaded === 'mysql'
-        ? 'Correction queue reloaded from MySQL.'
+        ? 'Correction queue reloaded.'
         : 'Hard reset — the middleware could not be reached, so the dummy Master Contracts were restored.',
       'warn',
     )
@@ -580,9 +580,9 @@ export default function FoMcErrorCorrection() {
 function SourceNote({ source }: { source: MasterSource | 'loading' }) {
   const text =
     source === 'loading'
-      ? 'Loading from MySQL…'
+      ? 'Loading…'
       : source === 'mysql'
-        ? 'ZSGTSFTR_MAS_CON · MySQL'
+        ? 'Live data'
         : 'Dummy data — the middleware could not be reached, so changes stay on this screen'
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

@@ -137,7 +137,7 @@ export default function MoDealIdInvoiceMark() {
   const refreshWorkbench = () => {
     setGeneration((g) => g + 1)
     resetFilters()
-    pushNote('Workbench reloaded from MySQL.')
+    pushNote('Workbench reloaded.')
   }
 
   const toggleRow = (id: string, checked: boolean) => {
@@ -164,7 +164,7 @@ export default function MoDealIdInvoiceMark() {
   const markRows = async (targetRows: readonly DealRow[]) => {
     if (busy.current) return
     if (source !== 'sap') {
-      pushToast(`${WAITING_DEAL_ID_API} — ZSGTSFTR_DEALID could not be read, so nothing was marked.`, 'warn')
+      pushToast(`${WAITING_DEAL_ID_API} — the Deal ID could not be read, so nothing was marked.`, 'warn')
       return
     }
     const targets = targetRows.map((r) => keys.current.get(r.dealId)).filter((d): d is DealIdRow => !!d)
@@ -510,7 +510,7 @@ export default function MoDealIdInvoiceMark() {
                 row={liveRow}
                 onClose={() => setDetail(null)}
                 onOpenBl={() => setSub({ kind: 'bl', row: liveRow })}
-                onViewInvoiceInfo={() => pushToast('View List of Invoice routes to ZSGTSF_RDEAL_ID_INV in SAP.', 'info')}
+                onViewInvoiceInfo={() => pushToast('View List of Invoice opens the invoice list.', 'info')}
                 onOpenPlannedPnl={() => setWorkflow({ kind: 'plannedPnl', row: liveRow })}
                 onOpenInvoicing={() => setWorkflow({ kind: 'invoicing', row: liveRow })}
                 onOpenSettlement={() => setWorkflow({ kind: 'settlement', row: liveRow })}
@@ -530,6 +530,6 @@ export default function MoDealIdInvoiceMark() {
 
 /** Says where the rows came from, and which columns / checks are waiting for an API. */
 function SourceNote({ source, notes }: { source: DataSource | 'loading'; notes: readonly string[] }) {
-  const text = source === 'loading' ? 'Loading from MySQL…' : source === 'sap' ? ['ZSGTSFTR_DEALID · MySQL', ...notes].join(' · ') : notes.join(' · ')
+  const text = source === 'loading' ? 'Loading…' : source === 'sap' ? ['Live data', ...notes].join(' · ') : notes.join(' · ')
   return <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>{text}</span>
 }

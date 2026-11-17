@@ -8,6 +8,7 @@ export const contract: ODataContract = {
   pageSize: 5000,
   etag: true,
   numbers: ['quantity', 'assignedUsd'],
+  writable: { bls: ['dealId', 'assignedUsd'] },
   keyTypes: { blRecordDate: 'date', tfDate: 'date' },
   tables: { bls: { entitySet: 'BillOfLading' } }
 };

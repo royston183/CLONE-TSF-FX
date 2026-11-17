@@ -6,8 +6,8 @@
   --ss-muted: #67768c;
   --ss-border: #d5dde8;
   --ss-hover: #eaf3ff;
-  --ss-selected: #1265c8;
-  --ss-focus: #1265c8;
+  --ss-selected: #0854a0;
+  --ss-focus: #0854a0;
   position: fixed;
   z-index: 100000;
   display: flex;

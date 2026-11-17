@@ -13,7 +13,7 @@
   --muted:#667085;
   --muted-2:#98a2b3;
   --blue:#2f6fed;
-  --blue-dark:#1d4fd1;
+  --blue-dark:#0854a0;
   --blue-pale:#eaf1ff;
   --green:#16a34a;
   --green-pale:#e7f8ee;
@@ -214,16 +214,16 @@
 /* ---------- tables ---------- */
 .mo-bank-settlement-fx-non-flow .table-wrap {overflow-x:auto;}
 .mo-bank-settlement-fx-non-flow table {width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;}
-.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {white-space:nowrap;padding:12px 12px;text-align:right;}
+.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {white-space:nowrap;padding: 12px 7px;text-align:right;}
 .mo-bank-settlement-fx-non-flow .list-table thead th {
-  font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);
+  font-size: 12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);
   border-bottom:1px solid var(--border);background:transparent;
 }
 .mo-bank-settlement-fx-non-flow .list-table thead th:first-child {text-align:center;}
 .mo-bank-settlement-fx-non-flow .list-table thead th.left {text-align:left;}
 .mo-bank-settlement-fx-non-flow .list-table thead th.sortable {cursor:pointer;user-select:none;}
 .mo-bank-settlement-fx-non-flow .list-table thead th.sortable:hover {color:var(--blue-dark);}
-.mo-bank-settlement-fx-non-flow .list-table thead th.sortable .arrow {font-size:9px;margin-left:3px;color:var(--blue);}
+.mo-bank-settlement-fx-non-flow .list-table thead th.sortable .arrow {font-size: 10.5px;margin-left:3px;color:var(--blue);}
 .mo-bank-settlement-fx-non-flow .list-table tbody td {text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
 .mo-bank-settlement-fx-non-flow .list-table tbody td:first-child {text-align:center;}
 .mo-bank-settlement-fx-non-flow .list-table tbody td.left {text-align:left;}
@@ -231,7 +231,7 @@
 .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {background:#f7faff;}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr.row-checked td {background:#fff8ea !important;}
 .mo-bank-settlement-fx-non-flow .num {font-variant-numeric:tabular-nums;}
-.mo-bank-settlement-fx-non-flow .empty-row td {text-align:center !important;color:var(--muted);padding:30px 12px;font-style:italic;}
+.mo-bank-settlement-fx-non-flow .empty-row td {text-align:center !important;color:var(--muted);padding: 30px 7px;font-style:italic;}
 /* Keep checkbox / status / MC number visible while scrolling this wide a table */
 .mo-bank-settlement-fx-non-flow .sticky-col {position:sticky;background:var(--surface);z-index:2;box-shadow:none;}
 .mo-bank-settlement-fx-non-flow .sticky-1 {left:0;width:40px;min-width:40px;}
@@ -361,8 +361,8 @@
   --ink-soft:#1D2D3E;
   --muted:#5C7085;
   --muted-2:#8CA0B3;
-  --blue:#1F6FEB;
-  --blue-dark:#1657C4;
+  --blue:#0854a0;
+  --blue-dark:#0854a0;
   --blue-pale:#EAF2FF;
   --green:#27AE60;
   --green-pale:#E8F8EF;
@@ -551,13 +551,13 @@
 .mo-bank-settlement-fx-non-flow .table-wrap {width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
 .mo-bank-settlement-fx-non-flow table {font-size:12px;}
 .mo-bank-settlement-fx-non-flow #mc-table {width:max-content;min-width:100%;}
-.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {padding:9px 14px;}
+.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {padding: 9px 8px;}
 .mo-bank-settlement-fx-non-flow .list-table thead th {
   position:sticky;
   top:0;
   background:#F7FAFD;
   border-bottom:1px solid var(--border);
-  font-size:11px;
+  font-size: 12.5px;
   text-transform:uppercase;
   letter-spacing:.4px;
   color:var(--muted);
@@ -566,7 +566,7 @@
 }
 .mo-bank-settlement-fx-non-flow .list-table thead th.sortable:hover {color:var(--blue-dark);}
 .mo-bank-settlement-fx-non-flow .list-table thead th.sortable .arrow {color:var(--muted-2);}
-.mo-bank-settlement-fx-non-flow .list-table tbody td {font-size:12px;color:var(--ink);border-bottom:1px solid var(--border);}
+.mo-bank-settlement-fx-non-flow .list-table tbody td {font-size: 13.5px;color:var(--ink);border-bottom:1px solid var(--border);}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {background:#F7FAFD;}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr.row-checked td {background:var(--blue-pale)!important;}
 .mo-bank-settlement-fx-non-flow .sticky-col {background:#fff;}
@@ -652,8 +652,8 @@
   --text-faint:#8CA0B3;
   --border:#E1E9F2;
   --border-strong:#CBD9E8;
-  --primary:#1F6FEB;
-  --primary-dark:#1657C4;
+  --primary:#0854a0;
+  --primary-dark:#0854a0;
   --primary-light:#6FA8FF;
   --primary-tint:#EAF2FF;
   --success:#27AE60;
@@ -844,14 +844,14 @@
 /* Table — same compact ALV-like treatment as the rest of the app. */
 .mo-bank-settlement-fx-non-flow .table-wrap {width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
 .mo-bank-settlement-fx-non-flow #mc-table {width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;}
-.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {padding:9px 12px;white-space:nowrap;}
+.mo-bank-settlement-fx-non-flow .list-table th, .mo-bank-settlement-fx-non-flow .list-table td {padding: 9px 7px;white-space:nowrap;}
 .mo-bank-settlement-fx-non-flow .list-table thead th {
   position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;
-  font-size:11.5px;font-weight:600;letter-spacing:0;text-transform:none;z-index:5;
+  font-size: 13px;font-weight:600;letter-spacing:0;text-transform:none;z-index:5;
 }
 .mo-bank-settlement-fx-non-flow .list-table thead th.sortable:hover {color:var(--primary-dark);}
-.mo-bank-settlement-fx-non-flow .list-table thead th.sortable .arrow {font-size:9px;color:var(--text-faint);}
-.mo-bank-settlement-fx-non-flow .list-table tbody td {border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text);}
+.mo-bank-settlement-fx-non-flow .list-table thead th.sortable .arrow {font-size: 10.5px;color:var(--text-faint);}
+.mo-bank-settlement-fx-non-flow .list-table tbody td {border-bottom:1px solid var(--border);font-size: 14px;color:var(--text);}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr {transition:background .15s;}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr:hover td {background:#F7FAFD;}
 .mo-bank-settlement-fx-non-flow .list-table tbody tr.row-checked td {background:var(--primary-tint)!important;}
@@ -1004,7 +1004,7 @@
 }
 .mo-bank-settlement-fx-non-flow .metric-card::before {display:none!important;}
 .mo-bank-settlement-fx-non-flow .metric-card:hover {transform:none;border-color:#C7D3E0;box-shadow:0 3px 8px rgba(18,38,63,.13);}
-.mo-bank-settlement-fx-non-flow .metric-card.active {border-color:#B9CBE0;border-left-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(31,111,235,.10);}
+.mo-bank-settlement-fx-non-flow .metric-card.active {border-color:#B9CBE0;border-left-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(8,84,160,.10);}
 .mo-bank-settlement-fx-non-flow .metric-inner {position:relative;min-height:104px;padding:20px 20px 13px!important;}
 .mo-bank-settlement-fx-non-flow .metric-val {font-size:30px;font-weight:700;line-height:1;color:#102A43;margin-bottom:12px;}
 .mo-bank-settlement-fx-non-flow .metric-lbl {font-size:11.5px;font-weight:700;color:#214B72;max-width:55%;white-space:normal;overflow:visible;}
@@ -1015,7 +1015,7 @@
 .mo-bank-settlement-fx-non-flow .panel {border:1px solid #D1D9E2;border-radius:12px;box-shadow:none;margin-bottom:8px;}
 .mo-bank-settlement-fx-non-flow .panel-title {min-height:39px;padding:9px 16px;border-bottom:1px solid #D1D9E2;}
 .mo-bank-settlement-fx-non-flow .dot-bullet {width:6px;height:6px;background:var(--primary);}
-.mo-bank-settlement-fx-non-flow .panel-title h2 {font-size:11.5px;font-weight:700;color:#075BAE;}
+.mo-bank-settlement-fx-non-flow .panel-title h2 {font-size:11.5px;font-weight:700;color:#06477f;}
 /* One compact toolbar like the supplied Create Master Contract screen. */
 .mo-bank-settlement-fx-non-flow .master-toolbar {
   display:flex!important;
@@ -1067,7 +1067,7 @@
 /* Confirm / Reject become explicit drop targets while a selected row is dragged. */
 .mo-bank-settlement-fx-non-flow .drag-target {position:relative;}
 .mo-bank-settlement-fx-non-flow body.row-dragging .drag-target:not(:disabled) {
-  box-shadow:0 0 0 2px rgba(31,111,235,.13);
+  box-shadow:0 0 0 2px rgba(8,84,160,.13);
   transform:translateY(-1px);
 }
 .mo-bank-settlement-fx-non-flow body.row-dragging .drag-target:not(:disabled)::after {
@@ -1077,7 +1077,7 @@
 }
 .mo-bank-settlement-fx-non-flow .drag-target.drag-over:not(:disabled) {
   transform:translateY(-2px) scale(1.03)!important;
-  box-shadow:0 0 0 3px rgba(31,111,235,.20),0 7px 18px rgba(18,38,63,.16)!important;
+  box-shadow:0 0 0 3px rgba(8,84,160,.20),0 7px 18px rgba(18,38,63,.16)!important;
 }
 .mo-bank-settlement-fx-non-flow #btn-reject-sel.drag-over:not(:disabled) {box-shadow:0 0 0 3px rgba(231,76,60,.18),0 7px 18px rgba(18,38,63,.16)!important;}
 @media (max-width:1500px) {
@@ -1136,5 +1136,5 @@
 /* Deal picker inline inside detail / doc modals */
 .mo-bank-settlement-fx-non-flow .entity-flow {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .mo-bank-settlement-fx-non-flow .mini-table {width:100%;border-collapse:collapse;margin-top:4px;}
-.mo-bank-settlement-fx-non-flow .mini-table th, .mo-bank-settlement-fx-non-flow .mini-table td {padding:7px 10px;font-size:12px;border-bottom:1px solid var(--border);text-align:left;}
-.mo-bank-settlement-fx-non-flow .mini-table th {color:var(--text-muted);font-weight:600;font-size:11px;}
+.mo-bank-settlement-fx-non-flow .mini-table th, .mo-bank-settlement-fx-non-flow .mini-table td {padding: 7px 6px;font-size: 13.5px;border-bottom:1px solid var(--border);text-align:left;}
+.mo-bank-settlement-fx-non-flow .mini-table th {color:var(--text-muted);font-weight:600;font-size: 12.5px;}

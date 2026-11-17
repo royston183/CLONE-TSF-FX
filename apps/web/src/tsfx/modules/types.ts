@@ -241,6 +241,8 @@ export interface ODataContract {
   etag?: boolean;
   /** Edm.Decimal / Edm.Int fields, sent as JSON numbers ('' as null). */
   numbers?: string[];
+  /** Per table: the only fields an update sends (the rest are read-only on SAP). Default: every field of the row. */
+  writable?: Record<string, string[]>;
   flagType?: 'boolean' | 'char';
   keyTypes?: Record<string, 'string' | 'date' | 'number'>;
   /** Every table, also an object's header and item tables. */

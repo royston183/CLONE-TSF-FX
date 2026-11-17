@@ -28,7 +28,7 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .ccdiscloans .req {color:#bb0000;margin-left:2px}
 .ccdiscloans .input, .ccdiscloans .select {height:30px;width:100%;max-width:310px;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;
 color:#1d2d3e;font-size:12px}
-.ccdiscloans .input:focus, .ccdiscloans .select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.ccdiscloans .input:focus, .ccdiscloans .select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .ccdiscloans .selection-main-row {display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
 .ccdiscloans .structure-field {width:auto;grid-template-columns:max-content 230px;gap:6px;flex:0 0 auto}
 .ccdiscloans .structure-field .select, .ccdiscloans .structure-field .input {width:230px;max-width:230px}
@@ -39,16 +39,16 @@ color:#1d2d3e;font-size:12px}
 .ccdiscloans .date-input-wrap {position:relative;width:230px;max-width:230px}
 .ccdiscloans .date-input-wrap .input {width:100%;max-width:none;padding-right:26px}
 .ccdiscloans .calendar-btn-wrap {position:absolute;right:5px;top:50%;transform:translateY(-50%);width:16px;height:16px}
-.ccdiscloans .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0a6ed1;border-radius:2px;position:relative;
-background:linear-gradient(#0a6ed1,#0a6ed1) top/100% 4px no-repeat,
+.ccdiscloans .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0854a0;border-radius:2px;position:relative;
+background:linear-gradient(#0854a0,#0854a0) top/100% 4px no-repeat,
 repeating-linear-gradient(90deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,
 repeating-linear-gradient(0deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,#ffffff}
-.ccdiscloans .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
-.ccdiscloans .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
+.ccdiscloans .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
+.ccdiscloans .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
 .ccdiscloans .calendar-btn-wrap:hover .calendar-btn {border-color:#0854a0}
 .ccdiscloans .calendar-native {position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer}
 .ccdiscloans .filter-icon-btn {width:30px;height:30px;padding:0;border:1px solid #b8b8b8;border-radius:4px;background:#fff;position:relative}
-.ccdiscloans .filter-icon-btn:hover {background:#f7f8f9;border-color:#0a6ed1}
+.ccdiscloans .filter-icon-btn:hover {background:#f7f8f9;border-color:#0854a0}
 .ccdiscloans .filter-icon-btn:before {content:"";position:absolute;left:8px;top:7px;width:0;height:0;border-left:7px solid transparent;
 border-right:7px solid transparent;border-top:9px solid #556b82}
 .ccdiscloans .filter-icon-btn:after {content:"";position:absolute;left:13px;top:14px;width:3px;height:7px;background:#556b82}
@@ -65,9 +65,9 @@ border-right:7px solid transparent;border-top:9px solid #556b82}
 .ccdiscloans .table-card {overflow:hidden}
 .ccdiscloans .table-wrap {width:100%;overflow:auto;background:#fff}
 .ccdiscloans .data-table {width:100%;min-width:1900px;border-collapse:separate;border-spacing:0;font-size:12px}
-.ccdiscloans .data-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 24px 6px 8px;background:#f5f8fa;color:#1d2d3e;
+.ccdiscloans .data-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 13px 6px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
-.ccdiscloans .data-table td {height:34px;padding:4px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;
+.ccdiscloans .data-table td {height:34px;padding: 4px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;
 white-space:nowrap;color:#1d2d3e}
 .ccdiscloans .data-table tbody tr:hover td {background:#f2f8fd}
 .ccdiscloans .data-table tbody tr.selected td {background:#eaf3fc}
@@ -76,30 +76,30 @@ white-space:nowrap;color:#1d2d3e}
 .ccdiscloans .sort-up, .ccdiscloans .sort-down {position:absolute;left:0;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent}
 .ccdiscloans .sort-up {top:0;border-bottom:5px solid #9aa7b4}
 .ccdiscloans .sort-down {bottom:0;border-top:5px solid #9aa7b4}
-.ccdiscloans th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.ccdiscloans th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.ccdiscloans th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.ccdiscloans th.sort-desc .sort-down {border-top-color:#0854a0}
 .ccdiscloans .money {text-align:right;font-variant-numeric:tabular-nums}
 .ccdiscloans .badge {display:inline-block;padding:3px 7px;border-radius:10px;font-size:10px;font-weight:600}
 .ccdiscloans .badge-open {background:#fff4e5;color:#8d4f00}
-.ccdiscloans .badge-created {background:#eaf3fc;color:#004b93}
+.ccdiscloans .badge-created {background:#eaf3fc;color:#06477f}
 .ccdiscloans .badge-closed {background:#ebf5eb;color:#107e3e}
 .ccdiscloans .actions {display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:14px}
-.ccdiscloans .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:12px;
+.ccdiscloans .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:12px;
 font-weight:600}
-.ccdiscloans .btn:hover {background:#d1e8ff;border-color:#0a6ed1;color:#0854a0}
-.ccdiscloans .btn-primary {background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+.ccdiscloans .btn:hover {background:#d1e8ff;border-color:#0854a0;color:#0854a0}
+.ccdiscloans .btn-primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .ccdiscloans .btn-primary:hover {background:#0854a0;border-color:#0854a0;color:#fff}
 .ccdiscloans .btn-ghost {background:#fff;border-color:#d9d9d9;color:#1d2d3e}
 .ccdiscloans .btn-ghost:hover {background:#f7f8f9;border-color:#b8b8b8;color:#1d2d3e}
-.ccdiscloans .btn-icon {width:30px;height:30px;padding:0;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;
+.ccdiscloans .btn-icon {width:30px;height:30px;padding:0;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;
 font-size:14px;font-weight:700}
-.ccdiscloans .btn-icon:hover {background:#d1e8ff;border-color:#0a6ed1}
+.ccdiscloans .btn-icon:hover {background:#d1e8ff;border-color:#0854a0}
 .ccdiscloans .pagination-bar {display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:8px 10px;background:#fff;
 border-top:1px solid #e5e9ed}
 .ccdiscloans .page-btn {min-width:30px;height:28px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#1d2d3e;
 font-size:11px}
 .ccdiscloans .page-btn:hover {background:#f7f8f9;border-color:#b8b8b8}
-.ccdiscloans .page-btn.active {background:#eaf3fc;border-color:#0a6ed1;color:#004b93;font-weight:600}
+.ccdiscloans .page-btn.active {background:#eaf3fc;border-color:#0854a0;color:#06477f;font-weight:600}
 .ccdiscloans .page-btn:disabled {background:#f7f8f9;color:#9aa7b4}
 .ccdiscloans .empty {padding:28px;text-align:center;color:#6a6d70}
 .ccdiscloans .detail-grid {display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:10px 34px}
@@ -119,7 +119,7 @@ background:#f8fafc;border-radius:4px;overflow:hidden}
 .ccdiscloans .detail-control-sm {width:160px!important;max-width:160px!important}
 .ccdiscloans .detail-control-md {width:230px!important;max-width:230px!important}
 .ccdiscloans .edit-table {width:100%;min-width:980px;border-collapse:separate;border-spacing:0;font-size:12px}
-.ccdiscloans .edit-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 24px 6px 8px;background:#f5f8fa;color:#1d2d3e;
+.ccdiscloans .edit-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 13px 6px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
 .ccdiscloans .edit-table td {height:38px;padding:4px 6px;background:#f7f8f9;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;
 white-space:nowrap}
@@ -127,10 +127,10 @@ white-space:nowrap}
 .ccdiscloans .cell-input, .ccdiscloans .cell-select {width:100%;min-width:90px;height:28px;padding:3px 6px;border:1px solid transparent;border-radius:3px;
 background:#fff;color:#1d2d3e;font-size:12px}
 .ccdiscloans .cell-input:hover, .ccdiscloans .cell-select:hover {border-color:#b8b8b8}
-.ccdiscloans .cell-input:focus, .ccdiscloans .cell-select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.ccdiscloans .cell-input:focus, .ccdiscloans .cell-select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .ccdiscloans .cell-input[readonly] {background:transparent;color:#556b82}
 .ccdiscloans .icon-cell {text-align:center}
-.ccdiscloans .link-button {border:0;background:transparent;color:#0a6ed1;text-decoration:underline;padding:0;font-size:12px;font-weight:600}
+.ccdiscloans .link-button {border:0;background:transparent;color:#0854a0;text-decoration:underline;padding:0;font-size:12px;font-weight:600}
 .ccdiscloans .modal-bg {display:none;position:fixed;inset:0;z-index:2000;background:rgba(29,45,62,.30);padding:28px 18px;overflow:auto}
 .ccdiscloans .modal-bg.open {display:block}
 .ccdiscloans #confirmModal.open {display:flex;align-items:center;justify-content:center}
@@ -160,7 +160,7 @@ color:#556b82;font-weight:600}
 .ccdiscloans .toast-message {color:#556b82;font-size:12px;line-height:17px}
 .ccdiscloans .statusbar {position:fixed;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;padding:0 12px;background:#fff;
 border-top:1px solid #e1e6ea;color:#6a6d70;font-size:11px;z-index:900}
-.ccdiscloans .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0a6ed1}
+.ccdiscloans .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0854a0}
 @media screen and (max-width:980px) {
 .ccdiscloans .detail-grid {grid-template-columns:1fr}
 .ccdiscloans .content {padding-left:8px;padding-right:8px}

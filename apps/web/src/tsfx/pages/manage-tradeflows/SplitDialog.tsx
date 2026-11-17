@@ -1,6 +1,7 @@
 // Split a BL (or add BLs from the trade flow's open quantity) in two numbered steps: how many BLs, then their
 // quantities (an equal split, each editable) with a live total, what is left, and each BL's value.
 import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Save, X } from 'lucide-react';
 import { Modal } from '@tsfx/components/ui/Modal';
 import { DataTable } from '@tsfx/components/table/DataTable';
 import { Notice } from '@tsfx/components/ui/Notice';
@@ -33,11 +34,11 @@ export function SplitDialog({ tf, source, open, busy, onClose, onSave }: {
     <Modal title={title} subtitle={`Trade flow ${str(tf.tfNo)} · ${fmtQty(limit)} ${unit} available`} busy={busy} onClose={onClose}
       onEnter={step === 0 ? next : save}
       footer={<>
-        {step === 1 && <button className="button secondary" disabled={busy} onClick={() => setStep(0)}>Back</button>}
-        <button className="button secondary" disabled={busy} onClick={onClose}>Cancel</button>
+        {step === 1 && <button className="button secondary" disabled={busy} onClick={() => setStep(0)}><ArrowLeft size={14} />Back</button>}
+        <button className="button secondary" disabled={busy} onClick={onClose}><X size={14} />Cancel</button>
         {step === 0
-          ? <button className="button" disabled={!countOk} onClick={next}>Next</button>
-          : <button className="button" disabled={busy || summary.problems.length > 0} onClick={save}>{busy ? 'Saving…' : `Save ${quantities.length} BLs`}</button>}
+          ? <button className="button" disabled={!countOk} onClick={next}>Next<ArrowRight size={14} /></button>
+          : <button className="button" disabled={busy || summary.problems.length > 0} onClick={save}><Save size={14} />{busy ? 'Saving…' : `Save ${quantities.length} BLs`}</button>}
       </>}>
       <div className="tsf-split">
         <WizardSteps steps={STEPS} current={step} />

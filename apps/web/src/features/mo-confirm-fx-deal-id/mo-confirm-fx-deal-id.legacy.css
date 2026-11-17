@@ -15,8 +15,8 @@
   --text-faint:#687B8D;
   --border:#D5DADD;
   --border-strong:#8996A1;
-  --primary:#0A6ED1;
-  --primary-dark:#085CAF;
+  --primary:#0854a0;
+  --primary-dark:#06477f;
   --primary-tint:#EAF3FC;
   --secondary:#4FA3E8;
   --success:#107E3E;
@@ -94,7 +94,7 @@
 .mo-confirm-fx-deal-id .btn:active:not(:disabled) {transform:translateY(1px);}
 .mo-confirm-fx-deal-id .btn:disabled {opacity:.45;cursor:not-allowed;}
 .mo-confirm-fx-deal-id .btn-primary {background:var(--primary);color:#fff;}
-.mo-confirm-fx-deal-id .btn-primary:hover:not(:disabled) {background:var(--primary-dark);box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.mo-confirm-fx-deal-id .btn-primary:hover:not(:disabled) {background:var(--primary-dark);box-shadow:0 2px 6px rgba(8,84,160,.22);}
 .mo-confirm-fx-deal-id .btn-secondary {background:var(--surface);color:var(--text);border-color:var(--border-strong);}
 .mo-confirm-fx-deal-id .btn-secondary:hover:not(:disabled) {border-color:var(--primary);color:var(--primary);box-shadow:0 1px 4px rgba(34,53,72,.1);}
 .mo-confirm-fx-deal-id .btn-danger {background:var(--surface);color:var(--danger);border-color:#F3C6C0;}
@@ -155,19 +155,19 @@
 .mo-confirm-fx-deal-id table {width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
 .mo-confirm-fx-deal-id thead th {
   position:sticky;top:0;background:var(--gray-tint);color:var(--text-muted);
-  font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-  text-align:left;padding:8px 10px;border-bottom:1px solid #E6E9EB;white-space:nowrap;
+  font-size: 14.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+  text-align:left;padding: 8px 6px;border-bottom:1px solid #E6E9EB;white-space:nowrap;
   cursor:pointer;user-select:none;
 }
 .mo-confirm-fx-deal-id thead th:hover {color:var(--primary-dark);}
 .mo-confirm-fx-deal-id thead th.num, .mo-confirm-fx-deal-id td.num {text-align:right;}
-.mo-confirm-fx-deal-id thead th .sort-ind {opacity:.35;margin-left:3px;font-size:10px;}
+.mo-confirm-fx-deal-id thead th .sort-ind {opacity:.35;margin-left:3px;font-size: 11.5px;}
 .mo-confirm-fx-deal-id thead th.sorted .sort-ind {opacity:1;color:var(--primary);}
-.mo-confirm-fx-deal-id tbody td {padding:8px 10px;border-bottom:1px solid #E6E9EB;white-space:nowrap;color:var(--text);font-size:14px;}
+.mo-confirm-fx-deal-id tbody td {padding: 8px 6px;border-bottom:1px solid #E6E9EB;white-space:nowrap;color:var(--text);font-size: 15.5px;}
 .mo-confirm-fx-deal-id tbody tr {cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;}
 .mo-confirm-fx-deal-id tbody tr:hover {background:#F7FBFF;transform:translateY(-1px) scale(1.002);box-shadow:0 3px 9px rgba(34,53,72,.10);position:relative;z-index:2;}
 .mo-confirm-fx-deal-id tbody tr.row-selected {background:#EAF3FC !important;}
-.mo-confirm-fx-deal-id tbody tr.row-selected:hover {background:#EAF3FC !important;box-shadow:0 3px 9px rgba(10,110,209,.14);}
+.mo-confirm-fx-deal-id tbody tr.row-selected:hover {background:#EAF3FC !important;box-shadow:0 3px 9px rgba(8,84,160,.14);}
 .mo-confirm-fx-deal-id tbody tr.row-pending td {background:#FFF9EC;}
 .mo-confirm-fx-deal-id tbody tr.row-pending.row-selected td {background:#FFF3D6;}
 .mo-confirm-fx-deal-id tbody tr.dragging {opacity:.5;}
@@ -276,7 +276,7 @@
   border-color:var(--primary) !important;
   background:var(--primary-tint) !important;
   color:var(--primary) !important;
-  box-shadow:0 0 0 2px rgba(10,110,209,.12);
+  box-shadow:0 0 0 2px rgba(8,84,160,.12);
 }
 @media (max-width:900px) {
 .mo-confirm-fx-deal-id .detail-grid {grid-template-columns:repeat(2,1fr);}

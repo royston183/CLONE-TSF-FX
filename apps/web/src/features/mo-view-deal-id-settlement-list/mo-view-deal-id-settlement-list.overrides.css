@@ -32,8 +32,8 @@
   --text-faint: #687b8d;
   --border: #d5dadd;
   --border-strong: #8996a1;
-  --primary: #0a6ed1;
-  --primary-dark: #085caf;
+  --primary: #0854a0;
+  --primary-dark: #06477f;
   --primary-light: #4fa3e8;
   --primary-tint: #eaf3fc;
   --success: #107e3e;
@@ -68,7 +68,7 @@
 .mo-view-deal-id-settlement-list .btn-cancel,
 .mo-view-deal-id-settlement-list .btn-confirm { padding: 0 12px; }
 .mo-view-deal-id-settlement-list .btn-cancel:hover { box-shadow: 0 1px 4px rgba(34, 53, 72, 0.1); }
-.mo-view-deal-id-settlement-list .btn-confirm:hover { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+.mo-view-deal-id-settlement-list .btn-confirm:hover { box-shadow: 0 2px 6px rgba(8,84,160, 0.22); }
 
 /* 5. KPI cards: 30px value, 12px label, description bottom-right, 4px left accent, hover lift */
 .mo-view-deal-id-settlement-list .metric-card {
@@ -117,12 +117,12 @@
 
 /* 8. Table: #F2F4F5 13px uppercase sticky header, 14px data, tabular amounts, hover lift */
 .mo-view-deal-id-settlement-list .list-table thead th {
-  font-size: 13px;
+  font-size: 14.5px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   font-weight: 700;
 }
-.mo-view-deal-id-settlement-list .list-table tbody td { font-size: 14px; }
+.mo-view-deal-id-settlement-list .list-table tbody td { font-size: 15.5px; }
 .mo-view-deal-id-settlement-list .list-table tbody td[style*='text-align: right'] {
   font-variant-numeric: tabular-nums;
 }

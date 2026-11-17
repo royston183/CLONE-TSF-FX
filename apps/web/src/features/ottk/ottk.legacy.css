@@ -3,7 +3,7 @@
  * prefixed and @keyframes renamed, so each converted app keeps its exact original look
  * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
  */
-.ottk {--bg:#f5f7f9;--surface:#fff;--surface-2:#f2f4f5;--border:#d5dadd;--border-strong:#8996a1;--text:#1d2d3e;--sub:#475e75;--muted:#687b8d;--blue:#0a6ed1;--blue-hover:#085caf;--blue-soft:#eaf3fc;--blue-soft-2:#d1e8ff;--green:#107e3e;--shadow:0 1px 3px rgba(34,53,72,.13);--radius:8px;--sidebar:355px;--header:52px}
+.ottk {--bg:#f5f7f9;--surface:#fff;--surface-2:#f2f4f5;--border:#d5dadd;--border-strong:#8996a1;--text:#1d2d3e;--sub:#475e75;--muted:#687b8d;--blue:#0854a0;--blue-hover:#06477f;--blue-soft:#eaf3fc;--blue-soft-2:#d1e8ff;--green:#107e3e;--shadow:0 1px 3px rgba(34,53,72,.13);--radius:8px;--sidebar:355px;--header:52px}
 .ottk *, .ottk {box-sizing:border-box}
 .ottk {margin:0;min-height:100%;font-family:"72","Segoe UI",Arial,sans-serif;color:var(--text);background:var(--bg);font-size:13px}
 .ottk button, .ottk input, .ottk select {font:inherit;color:inherit}
@@ -11,7 +11,7 @@
 .ottk .app {height:100vh;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);grid-template-rows:var(--header) minmax(0,1fr);overflow:hidden}
 .ottk .topbar {grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:10}
 .ottk .title-wrap {display:flex;align-items:center;gap:11px;min-width:0}
-.ottk .mark {width:30px;height:30px;border-radius:6px;background:linear-gradient(145deg,#0a6ed1,#35a5dc);display:grid;place-items:center;color:#fff;box-shadow:0 2px 7px rgba(10,110,209,.22)}
+.ottk .mark {width:30px;height:30px;border-radius:6px;background:linear-gradient(145deg,#0854a0,#35a5dc);display:grid;place-items:center;color:#fff;box-shadow:0 2px 7px rgba(8,84,160,.22)}
 .ottk .title {font-size:17px;font-weight:700;white-space:nowrap}
 .ottk .title small {font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
 .ottk .actions {display:flex;align-items:center;gap:6px}
@@ -51,8 +51,8 @@
 .ottk .search:focus {border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
 .ottk .table-wrap {overflow:auto;flex:1;scrollbar-width:thin}
 .ottk table {border-collapse:collapse;width:100%;min-width:1060px;table-layout:fixed}
-.ottk th {position:sticky;top:0;z-index:2;background:var(--surface-2);color:var(--sub);font-size:11px;text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ottk td {padding:6px 8px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff}
+.ottk th {position:sticky;top:0;z-index:2;background:var(--surface-2);color:var(--sub);font-size: 12.5px;text-align:left;padding: 7px 6px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ottk td {padding: 6px 6px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size: 13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff}
 .ottk tbody tr:hover td {background:#f7fbff}
 .ottk tbody tr.selected td {background:var(--blue-soft)}
 .ottk td.num {text-align:right;font-variant-numeric:tabular-nums}
@@ -97,7 +97,7 @@
 .ottk .app {grid-template-columns:minmax(0,1fr)}
 .ottk .main {grid-column:1;overflow:hidden;padding:12px 14px}
 .ottk .sidebar, .ottk .collapse {display:none!important}
-.ottk .create-btn {height:34px;padding:0 15px;border-radius:5px;box-shadow:0 2px 6px rgba(10,110,209,.18)}
+.ottk .create-btn {height:34px;padding:0 15px;border-radius:5px;box-shadow:0 2px 6px rgba(8,84,160,.18)}
 .ottk .modal-backdrop {position:fixed;inset:0;z-index:100;background:rgba(23,43,61,.48);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:opacity .18s ease,visibility .18s ease}
 .ottk .modal-backdrop.open {opacity:1;visibility:visible}
 .ottk .ottk-modal {width:min(1240px,calc(100vw - 32px));max-height:min(850px,calc(100vh - 32px));background:var(--surface);border:1px solid #b9c2c9;border-radius:12px;box-shadow:0 22px 70px rgba(16,38,58,.3);display:grid;grid-template-rows:58px minmax(0,1fr) 58px;overflow:hidden;transform:translateY(10px) scale(.992);transition:transform .18s ease}
@@ -186,8 +186,8 @@
 .ottk .modal-content-grid .compound input {height:28px}
 .ottk .modal-content-grid .suffix {height:28px;width:70px;min-width:70px;flex:none;border:0;border-bottom:1px solid #dfe5ea;border-radius:0;background:transparent;padding:5px 3px;font-size:11px;font-weight:700}
 .ottk .modal-content-grid .section:nth-child(3) {border:1px solid #cfe2f7;border-radius:7px;background:#eef6ff;padding:9px 13px}
-.ottk .modal-content-grid .section:nth-child(3) .section-title {color:#1265b4;border-bottom-color:#c6d9ed}
-.ottk .modal-content-grid .section:nth-child(3) .section-title::before {background:#1265b4}
+.ottk .modal-content-grid .section:nth-child(3) .section-title {color:#0854a0;border-bottom-color:#c6d9ed}
+.ottk .modal-content-grid .section:nth-child(3) .section-title::before {background:#0854a0}
 .ottk .modal-content-grid .section:nth-child(3) .field input, .ottk .modal-content-grid .section:nth-child(3) .field select {background:transparent}
 .ottk .modal-content-grid .section:nth-child(4), .ottk .modal-content-grid .section:nth-child(5) {border:1px solid #cfead8;border-radius:7px;background:#effbf3;padding:9px 13px}
 .ottk .modal-content-grid .section:nth-child(4) .section-title, .ottk .modal-content-grid .section:nth-child(5) .section-title {color:#237b3b;border-bottom-color:#c5e0cd}
@@ -200,7 +200,7 @@
 .ottk .modal-note {font-size:10px}
 .ottk .modal-actions {gap:8px}
 .ottk .modal-actions .btn {height:31px;border-radius:4px;font-size:12px;min-width:96px}
-.ottk .modal-actions .btn.primary {box-shadow:0 2px 5px rgba(10,110,209,.2)}
+.ottk .modal-actions .btn.primary {box-shadow:0 2px 5px rgba(8,84,160,.2)}
 @media(max-height:760px) and (min-width:801px) {
 .ottk .ottk-modal {height:calc(100vh - 16px);grid-template-rows:52px minmax(0,1fr) 50px}
 .ottk .modal-content-grid {padding:9px 14px;gap:7px 11px}
@@ -225,7 +225,7 @@
 /* Content-sized table columns: single-line, fully visible values */
 .ottk .table-wrap table {width:max-content!important;min-width:100%!important;table-layout:auto!important}
 .ottk .table-wrap col {width:auto!important}
-.ottk .table-wrap th, .ottk .table-wrap td {width:auto!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;padding-left:10px;padding-right:10px}
+.ottk .table-wrap th, .ottk .table-wrap td {width:auto!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;padding-left: 6px;padding-right: 6px}
 .ottk .modal-content-grid .num-input {text-align:right;font-variant-numeric:tabular-nums}
 .ottk #interestRateField input {max-width:92px}
 .ottk .modal-content-grid .fs-amount-input {text-align:right;font-variant-numeric:tabular-nums}
@@ -248,7 +248,7 @@
 .ottk .charges-body {min-height:0;padding:12px 16px;overflow:auto;background:#f7f9fa}
 .ottk .charges-table-wrap {border:1px solid var(--border);border-radius:6px;overflow:auto;background:#fff}
 .ottk .charges-table {border-collapse:collapse;width:100%;min-width:920px}
-.ottk .charges-table th {position:sticky;top:0;background:var(--surface-2);color:var(--sub);font-size:11px;text-align:left;padding:6px 7px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap}
+.ottk .charges-table th {position:sticky;top:0;background:var(--surface-2);color:var(--sub);font-size: 12.5px;text-align:left;padding: 6px 6px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap}
 .ottk .charges-table td {padding:4px 6px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2}
 .ottk .charges-table td.num {text-align:right}
 .ottk .charges-table input, .ottk .charges-table select {width:100%;height:27px;border:1px solid var(--border-strong);border-radius:3px;background:#fff;padding:2px 6px;font-size:12px}

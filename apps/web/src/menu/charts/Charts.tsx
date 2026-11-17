@@ -7,11 +7,11 @@ import type { Slice } from '../mock/overview.ts'
  * fixed size so it scales with its container.
  */
 
-/** Ordered so adjacent series stay distinguishable; all six sit on the page's blue-teal axis. */
-export const SERIES_COLOURS = ['#1565c0', '#1e88e5', '#42a5f5', '#00acc1', '#7cb3e8', '#9ccce0']
+/** The dashboard's series colours: the ZFS_CASHPOS3 report's blue, light blue, green, amber, violet and red, as custom properties so night mode swaps them (menu-dashboard.css). */
+export const SERIES_COLOURS = ['var(--ch-1)', 'var(--ch-2)', 'var(--ch-3)', 'var(--ch-4)', 'var(--ch-5)', 'var(--ch-6)']
 
 function colourAt(index: number): string {
-  return SERIES_COLOURS[index % SERIES_COLOURS.length] ?? '#1565c0'
+  return SERIES_COLOURS[index % SERIES_COLOURS.length] ?? 'var(--ch-1)'
 }
 
 export function Sparkline({ values, rising }: { values: number[]; rising: boolean }) {

@@ -12,7 +12,7 @@
   --ink-soft:#344054;
   --muted:#667085;
   --muted-2:#98a2b3;
-  --blue:#0A6ED1;
+  --blue:#0854a0;
   --blue-dark:#0854A0;
   --blue-pale:#eaf2fc;
   --green:#16a34a;
@@ -214,16 +214,16 @@
 /* ---------- tables ---------- */
 .ssdid .table-wrap {overflow-x:auto;}
 .ssdid table {width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;}
-.ssdid .list-table th, .ssdid .list-table td {white-space:nowrap;padding:12px 12px;text-align:right;}
+.ssdid .list-table th, .ssdid .list-table td {white-space:nowrap;padding: 12px 7px;text-align:right;}
 .ssdid .list-table thead th {
-  font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);
+  font-size: 12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);
   border-bottom:1px solid var(--border);background:transparent;
 }
 .ssdid .list-table thead th:first-child {text-align:center;}
 .ssdid .list-table thead th.left {text-align:left;}
 .ssdid .list-table thead th.sortable {cursor:pointer;user-select:none;}
 .ssdid .list-table thead th.sortable:hover {color:var(--blue-dark);}
-.ssdid .list-table thead th.sortable .arrow {font-size:9px;margin-left:3px;color:var(--blue);}
+.ssdid .list-table thead th.sortable .arrow {font-size: 10.5px;margin-left:3px;color:var(--blue);}
 .ssdid .list-table tbody td {text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
 .ssdid .list-table tbody td:first-child {text-align:center;}
 .ssdid .list-table tbody td.left {text-align:left;}
@@ -231,7 +231,7 @@
 .ssdid .list-table tbody tr:hover td {background:#f7faff;}
 .ssdid .list-table tbody tr.row-checked td {background:#fff8ea !important;}
 .ssdid .num {font-variant-numeric:tabular-nums;}
-.ssdid .empty-row td {text-align:center !important;color:var(--muted);padding:30px 12px;font-style:italic;}
+.ssdid .empty-row td {text-align:center !important;color:var(--muted);padding: 30px 7px;font-style:italic;}
 /* Keep checkbox / status / MC number visible while scrolling this wide a table */
 .ssdid .sticky-col {position:sticky;background:var(--surface);z-index:2;box-shadow:none;}
 .ssdid .sticky-1 {left:0;width:40px;min-width:40px;}
@@ -359,7 +359,7 @@
   --text-faint:#8CA0B3;
   --border:#E1E9F2;
   --border-strong:#CBD9E8;
-  --primary:#0A6ED1;
+  --primary:#0854a0;
   --primary-dark:#0854A0;
   --primary-light:#5A9BDB;
   --primary-tint:#EAF2FC;
@@ -551,14 +551,14 @@
 /* Table — same compact ALV-like treatment as the rest of the app. */
 .ssdid .table-wrap {width:100%;max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;}
 .ssdid #mc-table {width:max-content;min-width:100%;border-collapse:collapse;border-spacing:0;font-size:12px;}
-.ssdid .list-table th, .ssdid .list-table td {padding:9px 12px;white-space:nowrap;}
+.ssdid .list-table th, .ssdid .list-table td {padding: 9px 7px;white-space:nowrap;}
 .ssdid .list-table thead th {
   position:sticky;top:0;background:#F1F3F6;border-bottom:1px solid var(--border);color:#3E4C5E;
-  font-size:11.5px;font-weight:600;letter-spacing:0;text-transform:none;z-index:5;
+  font-size: 13px;font-weight:600;letter-spacing:0;text-transform:none;z-index:5;
 }
 .ssdid .list-table thead th.sortable:hover {color:var(--primary-dark);}
-.ssdid .list-table thead th.sortable .arrow {font-size:9px;color:var(--text-faint);}
-.ssdid .list-table tbody td {border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text);}
+.ssdid .list-table thead th.sortable .arrow {font-size: 10.5px;color:var(--text-faint);}
+.ssdid .list-table tbody td {border-bottom:1px solid var(--border);font-size: 14px;color:var(--text);}
 .ssdid .list-table tbody tr {transition:background .15s;}
 .ssdid .list-table tbody tr:hover td {background:#F7FAFD;}
 .ssdid .list-table tbody tr.row-checked td {background:var(--primary-tint)!important;}
@@ -709,7 +709,7 @@
 }
 .ssdid .metric-card::before {display:none!important;}
 .ssdid .metric-card:hover {transform:none;border-color:#C7D3E0;box-shadow:0 3px 8px rgba(18,38,63,.13);}
-.ssdid .metric-card.active {border-color:#B9CBE0;border-left-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(31,111,235,.10);}
+.ssdid .metric-card.active {border-color:#B9CBE0;border-left-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(8,84,160,.10);}
 .ssdid .metric-inner {position:relative;min-height:104px;padding:20px 20px 13px!important;}
 .ssdid .metric-val {font-size:30px;font-weight:700;line-height:1;color:#102A43;margin-bottom:12px;}
 .ssdid .metric-lbl {font-size:11.5px;font-weight:700;color:#214B72;max-width:55%;white-space:normal;overflow:visible;}
@@ -720,7 +720,7 @@
 .ssdid .panel {border:1px solid #D1D9E2;border-radius:12px;box-shadow:none;margin-bottom:8px;}
 .ssdid .panel-title {min-height:39px;padding:9px 16px;border-bottom:1px solid #D1D9E2;}
 .ssdid .dot-bullet {width:6px;height:6px;background:var(--primary);}
-.ssdid .panel-title h2 {font-size:11.5px;font-weight:700;color:#075BAE;}
+.ssdid .panel-title h2 {font-size:11.5px;font-weight:700;color:#06477f;}
 .ssdid .master-toolbar {
   display:flex!important;
   align-items:center!important;
@@ -817,8 +817,8 @@
 .ssdid .exp-amt {color:var(--error)!important;font-weight:700;}
 .ssdid .zero-amt {color:var(--text-faint)!important;}
 .ssdid .deal-mini-table {width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}
-.ssdid .deal-mini-table th {background:#F1F3F6;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#5C7085;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
-.ssdid .deal-mini-table td {padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.ssdid .deal-mini-table th {background:#F1F3F6;font-size: 12px;font-weight:700;text-transform:uppercase;color:#5C7085;padding: 8px 6px;text-align:left;border-bottom:1px solid var(--border);}
+.ssdid .deal-mini-table td {padding: 8px 6px;border-bottom:1px solid var(--border);font-size: 13.5px;color:var(--text);}
 .ssdid .deal-mini-table tr.excluded td {opacity:.45;text-decoration:line-through;}
 .ssdid .status-chip {display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;}
 .ssdid .status-chip.created {background:var(--primary-tint);color:var(--primary-dark);}
@@ -848,7 +848,7 @@
 .ssdid #mc-table tbody tr.dragging-row td {background:#DDEBFF!important;}
 .ssdid .rowaction-btn.drag-target {position:relative;}
 .ssdid body.row-dragging .rowaction-btn.drag-target:not(:disabled) {
-  box-shadow:0 0 0 2px rgba(31,111,235,.18);
+  box-shadow:0 0 0 2px rgba(8,84,160,.18);
   transform:translateY(-1px);
 }
 .ssdid body.row-dragging .rowaction-btn.drag-target:not(:disabled)::after {
@@ -858,7 +858,7 @@
 }
 .ssdid .rowaction-btn.drag-target.drag-over:not(:disabled) {
   transform:translateY(-2px) scale(1.05)!important;
-  box-shadow:0 0 0 3px rgba(31,111,235,.24),0 7px 18px rgba(18,38,63,.18)!important;
+  box-shadow:0 0 0 3px rgba(8,84,160,.24),0 7px 18px rgba(18,38,63,.18)!important;
 }
 .ssdid #btn-reverse-mc.drag-target.drag-over:not(:disabled) {
   box-shadow:0 0 0 3px rgba(231,76,60,.22),0 7px 18px rgba(18,38,63,.18)!important;
@@ -939,7 +939,7 @@
 /* =========================================================================
    DESIGN-SYSTEM REFRESH - align header bar, buttons, badges and pager with
    the "Origination Ticket" (OTTK) reference screen: SAP Fiori-blue primary
-   (#0A6ED1), a "Back" button + small gray module-code badge in the header,
+   (#0854a0), a "Back" button + small gray module-code badge in the header,
    plain white bordered icon+text buttons, and a lighter pager treatment.
    Layout/structure elsewhere is unchanged - this is a visual-only pass.
    ========================================================================= */
@@ -1014,7 +1014,7 @@
   --ref-head:#F2F4F5;
   --ref-text:#1D2D3E;
   --ref-muted:#5C7085;
-  --ref-blue:#0A6ED1;
+  --ref-blue:#0854a0;
 }
 .ssdid {background:var(--ref-bg)!important;}
 .ssdid {color:var(--ref-text)!important;font-size:12px!important;}
@@ -1140,9 +1140,9 @@
 .ssdid .list-table thead th {
   background:#F1F3F4!important;
   color:#425E77!important;
-  font-size:11.5px!important;
+  font-size: 13px!important;
   font-weight:700!important;
-  padding:8px 11px!important;
+  padding: 8px 6px!important;
   border-bottom:1px solid #D8DDE2!important;
   border-right:1px solid #E1E5E9!important;
   text-transform:none!important;
@@ -1152,8 +1152,8 @@
 .ssdid .list-table tbody td {
   background:#fff!important;
   color:#16324A!important;
-  font-size:12px!important;
-  padding:8px 11px!important;
+  font-size: 13.5px!important;
+  padding: 8px 6px!important;
   border-bottom:1px solid #E3E7EA!important;
   border-right:1px solid #E6EAED!important;
 }
@@ -1164,8 +1164,8 @@
 .ssdid #mc-table thead th.sticky-col {background:#F1F3F4!important;}
 .ssdid #mc-table tbody tr:hover .sticky-col {background:#F7F9FA!important;}
 .ssdid #mc-table tbody tr.row-selected .sticky-col, .ssdid #mc-table tbody tr.row-checked .sticky-col {background:#EAF3FC!important;}
-.ssdid .tbl-link {color:#0064D9!important;font-weight:700!important;}
-.ssdid .tbl-link:hover {color:#004A9F!important;}
+.ssdid .tbl-link {color:#0854a0!important;font-weight:700!important;}
+.ssdid .tbl-link:hover {color:#06477f!important;}
 .ssdid .status-cell {font-size:12px!important;}
 /* Footer/pager follows the reference's light white strip. */
 .ssdid .pager {

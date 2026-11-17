@@ -14,8 +14,8 @@
 .tsfx .ds-modal.transaction .ds-modal-body{padding:18px}
 .tsfx .ds-modal.transaction .ds-modal-foot{gap:8px;padding:12px 18px;background:var(--surface)}
 .tsfx .ds-modal.transaction .ftr{--ftr-label:156px}
-.tsfx .ds-modal.transaction .kit-data-table.ftr-grid th{padding:6px 10px}
-.tsfx .ds-modal.transaction .kit-data-table.ftr-grid td{padding:5px 10px}
+.tsfx .ds-modal.transaction .kit-data-table.ftr-grid th{padding: 6px 6px}
+.tsfx .ds-modal.transaction .kit-data-table.ftr-grid td{padding: 5px 6px}
 @media(max-width:640px){
   .tsfx .ds-modal.transaction .ftr{--ftr-label:108px}
   .tsfx .ds-modal.transaction .ftr-cols{grid-template-columns:minmax(0,1fr)}

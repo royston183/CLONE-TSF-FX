@@ -113,8 +113,8 @@
 }
 .ccirs .input:focus, .ccirs .select:focus {
   outline:0;
-  border-color:#0a6ed1;
-  box-shadow:0 0 0 1px #0a6ed1;
+  border-color:#0854a0;
+  box-shadow:0 0 0 1px #0854a0;
 }
 .ccirs .company-select {width:220px}
 .ccirs .date-shell {
@@ -169,7 +169,7 @@
 }
 .ccirs .filter-icon-btn:hover {
   background:#f7f8f9;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
 }
 .ccirs .filter-icon-btn:before {
   content:"";
@@ -288,18 +288,18 @@
   border:1px solid #d1e8ff;
   border-radius:4px;
   background:#eaf3fc;
-  color:#004b93;
+  color:#06477f;
   font-size:12px;
   font-weight:600;
 }
 .ccirs .btn:hover {
   background:#d1e8ff;
-  border-color:#0a6ed1;
+  border-color:#0854a0;
   color:#0854a0;
 }
 .ccirs .btn-primary {
-  background:#0a6ed1;
-  border-color:#0a6ed1;
+  background:#0854a0;
+  border-color:#0854a0;
   color:#fff;
 }
 .ccirs .btn-primary:hover {
@@ -367,7 +367,7 @@
   top:0;
   z-index:2;
   height:34px;
-  padding:6px 24px 6px 8px;
+  padding: 6px 13px 6px 6px;
   background:#f5f8fa;
   color:#1d2d3e;
   border-right:1px solid #d9d9d9;
@@ -378,7 +378,7 @@
 }
 .ccirs .data-table td {
   height:34px;
-  padding:4px 8px;
+  padding: 4px 6px;
   background:#fff;
   border-right:1px solid #e7ebee;
   border-bottom:1px solid #e7ebee;
@@ -400,7 +400,7 @@
   padding:0;
   border:0;
   background:transparent;
-  color:#0a6ed1;
+  color:#0854a0;
   font-size:12px;
   font-weight:400;
   text-decoration:none;
@@ -513,7 +513,7 @@
 }
 .ccirs .cashflow-table th {
   height:34px;
-  padding:6px 8px;
+  padding: 6px 6px;
   background:#f5f8fa;
   color:#1d2d3e;
   border-right:0;
@@ -524,7 +524,7 @@
 }
 .ccirs .cashflow-table td {
   height:34px;
-  padding:6px 8px;
+  padding: 6px 6px;
   background:#fff;
   color:#1d2d3e;
   border-right:0;
@@ -583,8 +583,8 @@
   bottom:0;
   border-top:5px solid #9aa7b4;
 }
-.ccirs th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.ccirs th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.ccirs th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.ccirs th.sort-desc .sort-down {border-top-color:#0854a0}
 .ccirs .pagination-bar {
   display:flex;
   align-items:center;
@@ -611,8 +611,8 @@
 }
 .ccirs .page-btn.active {
   background:#eaf3fc;
-  border-color:#0a6ed1;
-  color:#004b93;
+  border-color:#0854a0;
+  color:#06477f;
   font-weight:600;
 }
 .ccirs .page-btn:disabled {
@@ -746,7 +746,7 @@
   height:7px;
   margin-right:6px;
   border-radius:50%;
-  background:#0a6ed1;
+  background:#0854a0;
 }
 .ccirs .calendar-popup {
   display:none;
@@ -860,7 +860,7 @@
 .ccirs .cal-link {
   border:0;
   background:#fff;
-  color:#0a6ed1;
+  color:#0854a0;
   font-size:11px;
   padding:4px 0;
 }

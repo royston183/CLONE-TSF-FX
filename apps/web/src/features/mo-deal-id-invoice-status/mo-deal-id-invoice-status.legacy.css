@@ -11,8 +11,8 @@
   --text: #14263a;
   --muted: #657a90;
   --head: #405b76;
-  --primary: #0878d1;
-  --primary-dark: #0564b1;
+  --primary: #0854a0;
+  --primary-dark: #06477f;
   --primary-soft: #eaf5fe;
   --success: #168a67;
   --warning: #d47b00;
@@ -242,7 +242,7 @@
   top: 0;
   z-index: 4;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 6px;
   background: #f1f4f6;
   color: var(--head);
   text-align: left;
@@ -257,7 +257,7 @@
 .modinvstat .sort-mark { margin-left: 4px; font-size: 10px; color: #758a9f; }
 .modinvstat tbody td {
   height: 38px;
-  padding: 0 10px;
+  padding: 0 6px;
   border-bottom: 1px solid var(--line-soft);
   border-right: 1px solid #eef2f5;
   background: #fff;
@@ -291,19 +291,19 @@
 .modinvstat tbody tr.selected td.deal-sticky { background: var(--row-select); }
 .modinvstat .row-check { width: 15px; height: 15px; accent-color: var(--primary); }
 .modinvstat .link-cell {
-  color: #006ac6;
+  color: #0854a0;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
-.modinvstat .link-cell:hover { color: #004f98; }
+.modinvstat .link-cell:hover { color: #06477f; }
 .modinvstat .amount { text-align: right; font-variant-numeric: tabular-nums; }
 .modinvstat .code { font-variant-numeric: tabular-nums; }
 .modinvstat .empty-value { color: #9aa8b5; }
 .modinvstat .status-text { font-weight: 700; }
 .modinvstat .status-created { color: #715bd8; }
-.modinvstat .status-confirmed { color: #1972b8; }
+.modinvstat .status-confirmed { color: #0854a0; }
 .modinvstat .status-active { color: var(--success); }
 .modinvstat .status-closed { color: #5b6f82; }
 .modinvstat .footer {
@@ -563,7 +563,7 @@
   color: #20364d;
   overflow-wrap: anywhere;
 }
-.modinvstat .readonly-field.strong { font-weight: 800; color: #0a6ed1; }
+.modinvstat .readonly-field.strong { font-weight: 800; color: #0854a0; }
 .modinvstat .analysis-select {
   width: 100%;
   height: 35px;
@@ -585,25 +585,25 @@
   top: 0;
   z-index: 1;
   height: 34px;
-  padding: 0 9px;
+  padding: 0 6px;
   border-bottom: 1px solid #c8d3de;
   background: #eef3f7;
   color: #3f5c78;
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 800;
   text-align: left;
   white-space: nowrap;
 }
 .modinvstat .analysis-table td {
   height: 34px;
-  padding: 0 9px;
+  padding: 0 6px;
   border-bottom: 1px solid #e8edf2;
   color: #263e55;
   white-space: nowrap;
 }
 .modinvstat .analysis-table tbody tr:hover { background: #f5f9fc; }
 .modinvstat .analysis-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.modinvstat .analysis-table .hot { color: #0064b0; text-decoration: underline; font-weight: 700; }
+.modinvstat .analysis-table .hot { color: #06477f; text-decoration: underline; font-weight: 700; }
 .modinvstat .analysis-empty {
   padding: 20px;
   color: #73879a;

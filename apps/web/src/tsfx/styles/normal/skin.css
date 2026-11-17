@@ -1058,19 +1058,19 @@
   border-bottom: 1px solid var(--border);
   background: var(--surface-head);
   color: var(--text-primary);
-  font-size: var(--text-xs);
+  font-size: calc(var(--text-xs) + 1.5px);
   font-weight: 700;
   letter-spacing: 0.02em;
   vertical-align: middle;
 }
 [data-app-theme='normal'] .tsfx th.sortable {
-  padding: 0;
+  padding: 0 0;
 }
 [data-app-theme='normal'] .tsfx .ds-table th,
 [data-app-theme='normal'] .tsfx .ds-table.md-table th {
   background: var(--surface-head);
   color: var(--text-primary);
-  font-size: var(--text-xs);
+  font-size: calc(var(--text-xs) + 1.5px);
   font-weight: 700;
 }
 [data-app-theme='normal'] .tsfx .ds-table th:not(.sortable):not(.ds-cb) {
@@ -1149,7 +1149,7 @@
 }
 [data-app-theme='normal'] .tsfx th.sortable:first-child,
 [data-app-theme='normal'] .tsfx th.sortable:last-child {
-  padding: 0;
+  padding: 0 0;
 }
 [data-app-theme='normal'] .tsfx th.sortable:first-child .sort-th,
 [data-app-theme='normal'] .tsfx th.sortable:first-child .ds-th {
@@ -1157,7 +1157,7 @@
 }
 [data-app-theme='normal'] .tsfx .ds-table td small {
   color: var(--text-secondary);
-  font-size: var(--text-xs);
+  font-size: calc(var(--text-xs) + 1.5px);
 }
 [data-app-theme='normal'] .tsfx tbody tr:last-child td {
   border-bottom: 0;
@@ -1610,11 +1610,11 @@
 }
 [data-app-theme='normal'] .tsfx .ds-modal .ds-table th {
   color: var(--text-primary);
-  font-size: var(--text-xs);
+  font-size: calc(var(--text-xs) + 1.5px);
   font-weight: 700;
 }
 [data-app-theme='normal'] .tsfx .ds-modal .ds-table td {
-  font-size: var(--text-sm);
+  font-size: calc(var(--text-sm) + 1.5px);
 }
 [data-app-theme='normal'] .tsfx .kit-wizard li {
   color: var(--text-secondary);

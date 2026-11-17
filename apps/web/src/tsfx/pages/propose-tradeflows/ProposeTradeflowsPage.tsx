@@ -2,11 +2,12 @@
 // commodity that add up to that amount (±1%). The app finds the combinations (deterministic, on real SAP rows); typed
 // conditions filter what it may use (read by the app, or by the AI for what the app cannot read); the AI ranks and
 // explains. A proposal opens in a modal, where it is accepted after the BLs are checked again against SAP.
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, HelpCircle, ListChecks, Search, SlidersHorizontal, Sparkles, Wand2, X } from 'lucide-react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AlertCircle, ArrowLeft, Banknote, Check, Clock, Layers, Scale, Target, ChevronLeft, ChevronRight, HelpCircle, ListChecks, Search, SlidersHorizontal, Sparkles, Wand2, X } from 'lucide-react';
 import { DataTable } from '@tsfx/components/table/DataTable';
 import { TrafficLightTag } from '@tsfx/components/ui/Badge';
 import { Notice } from '@tsfx/components/ui/Notice';
+import { KpiRow, useRowDrag } from '@tsfx/components/ui/McKpi';
 import { Toast, useToast } from '@tsfx/components/ui/Toast';
 import { onSampleData } from '@tsfx/lib/client/data';
 import { formatAmount4, formatCompact, formatDate } from '@tsfx/lib/fields/parse';
@@ -43,6 +44,7 @@ const WAY: Record<string, { name: string; note: string }> = {
   parties: { name: 'Fewest notify parties', note: 'Keeps to as few notify parties as it can: fewer counterparties.' }
 };
 const SHOWN = 6;
+const FILL_ICON: Partial<Record<Fill, ReactNode>> = { fewest: <Layers size={12} />, closest: <Target size={12} />, oldest: <Clock size={12} /> };
 /** What is left of the deals shown, open ones only (a filled deal can be a little over or under). */
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 /** What can be typed in the bar, by kind (the guide under "What can I type?"). */
@@ -167,13 +169,6 @@ export default function ProposeTradeflowsPage() {
           </aside>}
           <div className="tsf-propose__main">
             {selected !== opened && <p className="tsf-propose__updating" role="status"><span aria-hidden="true" />Opening {selected}…</p>}
-            {!deal && !selected && (
-              <div className="panel tsf-propose__empty">
-                <Wand2 size={24} />
-                <h3>Choose a Deal ID</h3>
-                <p>Its proposals appear here: free BLs of the same commodity whose USD value comes within 1% of what is left of the deal.</p>
-              </div>
-            )}
             {deal && selected && <DealPanel key={deal.dealId} deal={deal} loaded={loaded} data={data} answers={answers} onAnswers={setAnswers}
               nav={{ back: () => setSelected(''), prev: neighbour(-1), next: neighbour(1), go: setSelected, at: Math.max(0, shown.findIndex(d => d.dealId === deal.dealId)) + 1, of: shown.length }}
               entries={entries} onEntries={setEntries} criteria={criteria}
@@ -195,6 +190,7 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
   entries: Entry[]; onEntries: (e: Entry[] | ((list: Entry[]) => Entry[])) => void; criteria: Criteria; firstTab: 'proposals' | 'assigned';
   onChanged: (t: string) => void; onError: (t: string) => void;
 }) {
+  const drag = useRowDrag<Proposal>();
   const [typed, setTyped] = useState('');
   // The assistant's answer to the last request: what it understood and did, or what it could not place.
   const [reply, setReply] = useState<{ applied: string[]; notUnderstood: string[] } | null>(null);
@@ -318,7 +314,7 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
 
   return (
     <>
-      <div className="panel tsf-dealhero">
+      <div className={`panel tsf-dealhero mc-drop${drag.active ? ' mc-ready' : ''}${drag.over === 'deal' ? ' drag-over' : ''}`} {...drag.target('deal', p => setOpen(p))}>
         <div className="tsf-dealhero__id">
           <div className="tsf-dealhero__nav">
             <button type="button" className="button secondary small" onClick={nav.back}><ArrowLeft size={14} />All Deal IDs</button>
@@ -332,10 +328,10 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
             <span>{pct}% assigned · {assignedCountHere} BL{assignedCountHere === 1 ? '' : 's'}</span>
           </div>
         </div>
-        <dl className="tsf-dealhero__figs">
-          <div><dt>Deal amount</dt><dd>{formatCompact(deal.amount)} <small>{deal.currency}</small></dd><span>{formatAmount4(deal.amount)}</span></div>
-          <div className="key"><dt>{Number(deal.remainingUsd) < 0 ? 'Over by' : 'Unassigned'}</dt><dd>{deal.remainingUsd ? formatCompact(Math.abs(Number(deal.remainingUsd))) : '—'} <small>USD</small></dd><span>{deal.remainingUsd ? formatAmount4(Math.abs(Number(deal.remainingUsd)).toFixed(2)) : ''}</span></div>
-        </dl>
+        <KpiRow label="Deal figures" items={[
+          { value: formatCompact(deal.amount), unit: deal.currency, label: 'Deal amount', note: formatAmount4(deal.amount), icon: <Banknote size={16} /> },
+          { value: deal.remainingUsd ? formatCompact(Math.abs(Number(deal.remainingUsd))) : '—', unit: 'USD', label: Number(deal.remainingUsd) < 0 ? 'Over by' : 'Unassigned', note: deal.remainingUsd ? formatAmount4(Math.abs(Number(deal.remainingUsd)).toFixed(2)) : '', tone: Number(deal.remainingUsd) < 0 ? 'bad' : 'warn', icon: <Scale size={16} /> }
+        ]} />
       </div>
       {deal.dealStatus !== undefined && assignStatusProblem(deal.dealId, deal.dealStatus) && <Notice kind="warn">{assignStatusProblem(deal.dealId, deal.dealStatus)}</Notice>}
       {deal.status === 'No USD rate' && <Notice kind="warn">No USD rate for {deal.currency} today: this Deal ID gets no proposals until SAP has one (rate type M).</Notice>}
@@ -351,7 +347,7 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
       <div className="tsf-propose__options">
         <div role="group" aria-label="Fill the deal with">
           <span>Fill with</span>
-          {FILLS.map(([id, label]) => <button key={id} className={`tsf-propose__opt${answers.fill.includes(id) ? ' on' : ''}`} aria-pressed={answers.fill.includes(id)} onClick={() => toggleFill(id)}>{label}</button>)}
+          {FILLS.map(([id, label]) => <button key={id} className={`tsf-propose__opt${answers.fill.includes(id) ? ' on' : ''}`} aria-pressed={answers.fill.includes(id)} onClick={() => toggleFill(id)}>{FILL_ICON[id]}{label}</button>)}
           <button type="button" className="tsf-propose__reset" aria-label="Clear all selections and conditions" onClick={clearAll}><X size={12} />Clear all</button>
           {!answers.fill.length && <span className="tsf-propose__allways">All ways</span>}
         </div>
@@ -368,7 +364,7 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
               <span className="tsf-cmd__ai" aria-hidden="true"><Sparkles size={14} /></span>
               <input ref={input} value={typed} onChange={e => setTyped(e.target.value)} aria-label="Conditions"
                 placeholder={hint ? `Ask anything, e.g. ${hint}` : 'Ask anything: which BLs to use, leave out, how many…'} />
-              <button className="button small" disabled={reading_ || (!typed.trim() && !hint)} title={typed.trim() ? undefined : `Applies: ${hint}`}>{reading_ ? 'Thinking…' : 'Apply'}</button>
+              <button className="button small" disabled={reading_ || (!typed.trim() && !hint)} title={typed.trim() ? undefined : `Applies: ${hint}`}><Check size={13} />{reading_ ? 'Thinking…' : 'Apply'}</button>
             </div>
             {(reading_ || reply) && (
               <div className="tsf-cmd__reply" role="status" aria-live="polite">
@@ -421,8 +417,8 @@ function DealPanel({ deal, nav, loaded, data, answers, onAnswers, entries, onEnt
                 const nos = p.combo.bls;
                 const label = `${p.combo.fit ? FIT_LABEL[p.combo.fit] : i === 0 ? 'Best match' : `Option ${i + 1}`}${way ? ` · ${way}` : ''}`;
                 return (
-                  <tr key={nos.join('+')} data-table-row="" className={i === 0 ? 'best' : ''} onDoubleClick={() => setOpen(p)}>
-                    <td><button className="tsf-propose__link tsf-propose__open" title={note} onClick={() => setOpen(p)} aria-label={`Proposal ${i + 1}: ${nos.length} BLs, ${assignedTotal(p.combo, aimUsd)} USD`}>{i + 1}. {label}</button>
+                  <tr key={nos.join('+')} data-table-row="" className={i === 0 ? 'best' : ''} title="Drag onto the deal card to review and assign" onDoubleClick={() => setOpen(p)} {...drag.source(p, `Proposal ${i + 1} · ${nos.length} BLs`)}>
+                    <td><button className="tsf-propose__link tsf-propose__open" title={note} onClick={() => setOpen(p)} aria-label={`Proposal ${i + 1}: ${nos.length} BLs, ${assignedTotal(p.combo, aimUsd)} USD`}><span className="mc-rank">{i + 1}.</span>{label}</button>
                       {p.reason && <span className="tsf-propose__reason" title={p.reason}><Sparkles size={11} />{p.reason}</span>}</td>
                     <td className="num"><b>{formatAmount4(assignedTotal(p.combo, aimUsd))}</b>{p.combo.cap && <small className="tsf-propose__sub">BL {p.combo.cap.blNo} capped at {formatAmount4(p.combo.cap.usd)}</small>}</td>
                     <td className="num"><span className={`tsf-propose__match${p.combo.fit ? ' out' : Math.abs(p.combo.diffPct) <= 0.1 ? ' exact' : ''}`}>{p.combo.cap ? 'fills exactly' : `${p.combo.diffPct > 0 ? '+' : ''}${p.combo.diffPct.toFixed(2)}%`}</span></td>

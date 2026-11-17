@@ -78,7 +78,7 @@
 .tsfx .kit-overview .ov-stmt-wrap{margin:0;max-width:100%}
 .tsfx .kit-overview .ov-stmt{min-width:720px}
 .tsfx .kit-overview .ov-stmt td:first-child{font-weight:600}
-.tsfx .kit-overview .ov-stmt th,.tsfx .kit-overview .ov-stmt td{padding:10px 18px}
+.tsfx .kit-overview .ov-stmt th,.tsfx .kit-overview .ov-stmt td{padding: 10px 10px}
 .tsfx .kit-overview .ov-stmt .kit-total td{background:color-mix(in srgb,#f3d85c 20%,var(--surface));font-weight:700}
 .tsfx .kit-accent{color:var(--blue)}.tsfx .kit-sub{font-weight:400;color:var(--muted);font-size:10px}
 .tsfx .kit-ov-footnote{margin:0;padding:12px 18px;border-top:1px solid var(--line);color:var(--muted);font-size:10.5px;line-height:1.6}

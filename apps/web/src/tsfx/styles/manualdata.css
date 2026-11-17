@@ -15,13 +15,13 @@
 .tsfx .md-hint{font-size:11.5px;color:var(--muted);align-self:center;margin-right:4px}
 .tsfx .md-hint.bad{color:var(--ds-bad)}
 .tsfx .md-wrap{max-height:calc(100vh - 380px)}
-.tsfx .md-table th{padding:8px 12px;vertical-align:bottom}
+.tsfx .md-table th{padding: 8px 7px;vertical-align:bottom}
 .tsfx .md-table th.md-amt{text-align:right}
 .tsfx .md-table th.md-amt span{display:block;max-width:150px;margin-left:auto;overflow:hidden;text-overflow:ellipsis}
-.tsfx .md-table th small{display:block;font-size:10px;font-weight:500;opacity:.75;margin-top:2px}
+.tsfx .md-table th small{display:block;font-size: 11.5px;font-weight:500;opacity:.75;margin-top:2px}
 .tsfx .md-amt{text-align:right;font-variant-numeric:tabular-nums;min-width:110px}
-.tsfx .md-table td.md-amt{padding:5px 8px}
-.tsfx .md-table td:not(.md-amt){padding:8px 12px}
+.tsfx .md-table td.md-amt{padding: 5px 6px}
+.tsfx .md-table td:not(.md-amt){padding: 8px 7px}
 /* Group ID and description stay in view while the buckets scroll sideways. */
 .tsfx .md-id,.tsfx .md-name{position:sticky;background:var(--surface);z-index:1}
 .tsfx .md-id{left:0;min-width:130px}
@@ -39,5 +39,5 @@
 @media(max-width:750px){.tsfx .md-period{padding:4px 12px 12px}.tsfx .md-period .field,.tsfx .md-period .field:first-child{min-width:0;flex:1 1 140px}.tsfx .md-period-right{margin-left:0;justify-content:flex-start;width:100%}.tsfx .md-period-right .ds-search{flex:1}.tsfx .md-id,.tsfx .md-name{position:static}}
 /* Every report table uses the ALM 1 Quarterly Report's type sizes: 11px data, 10.5px headings. */
 .tsfx .ds-table.md-table{font-size:11px}
-.tsfx .ds-table.md-table th{font-size:10.5px}
+.tsfx .ds-table.md-table th{font-size: 12px}
 .tsfx .md-table .md-cell{font-size:11px}

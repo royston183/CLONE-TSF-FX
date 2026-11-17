@@ -205,7 +205,7 @@ export default function FoChangeDealId() {
     const dealId = deal?.dealId
     const loaded = await reload().catch(() => undefined)
     if (!loaded) {
-      toast('Could not reload from MySQL.', true)
+      toast('Could not reload.', true)
       return
     }
     if (!dealId) {
@@ -486,9 +486,9 @@ export default function FoChangeDealId() {
               <span className="sub" style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
                 Search by Deal ID, entity string or trader to open the Deal ID analysis workbench.{' '}
                 {source === 'loading'
-                  ? 'Loading from MySQL…'
+                  ? 'Loading…'
                   : source === 'sap'
-                    ? 'ZSGTSFTR_DEALID · MySQL'
+                    ? 'Live data'
                     : 'ZSGTSFTR_DEALID could not be read — no Deal IDs to show.'}
               </span>
             </div>

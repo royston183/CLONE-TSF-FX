@@ -1,7 +1,7 @@
 // One proposal in detail: how it changes the deal, each BL (numbered) with its reference, BL date, quantity and USD value,
 // and the AI's reasoning. Untick BLs to propose again without them; Assign writes the Deal ID on the BLs.
 import { useState } from 'react';
-import { CheckCircle2, FileSpreadsheet, RefreshCw, Sparkles } from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, RefreshCw, Sparkles, X } from 'lucide-react';
 import { DataTable } from '@tsfx/components/table/DataTable';
 import { downloadFile, sheetXlsx } from '@tsfx/lib/client/xlsx-write';
 import { Modal } from '@tsfx/components/ui/Modal';
@@ -44,7 +44,7 @@ export function ProposalModal({ proposal, rank, deal, aimUsd, bls, busy, onClose
       size="wide" busy={busy} onClose={onClose}
       footer={<>
         <button className="button secondary" disabled={busy} onClick={exportXlsx} title="The deal, this proposal and its BLs as an Excel file"><FileSpreadsheet size={15} />Export to Excel</button>
-        <button className="button secondary" disabled={busy} onClick={onClose}>Close</button>
+        <button className="button secondary" disabled={busy} onClick={onClose}><X size={14} />Close</button>
         {dropped.size > 0 && <button className="button secondary" disabled={busy} onClick={() => onDrop([...dropped])}><RefreshCw size={14} />Re-propose without {dropped.size} BL{dropped.size > 1 ? 's' : ''}</button>}
         <button className="button" disabled={busy || dropped.size > 0} title={dropped.size ? 'Tick every BL to assign this proposal, or re-propose without the unticked ones' : undefined} onClick={onAccept}>
           <CheckCircle2 size={15} />{busy ? 'Assigning…' : `Assign ${combo.bls.length} BL${combo.bls.length > 1 ? 's' : ''} to ${deal.dealId}`}</button>

@@ -13,7 +13,7 @@
   --muted:#6b7686;
   --muted-2:#9aa4b2;
   --blue:#2f6fed;
-  --blue-dark:#1d4fd1;
+  --blue-dark:#0854a0;
   --blue-pale:#eaf1ff;
   --green:#16a34a;
   --green-pale:#e5f7ea;
@@ -111,18 +111,18 @@
 /* ---------- tables ---------- */
 .modiv .table-wrap {overflow:auto;max-height:460px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);}
 .modiv table {width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;}
-.modiv .list-table th, .modiv .list-table td {white-space:nowrap;padding:10px 12px;text-align:right;}
-.modiv .list-table thead th {position:sticky;top:0;font-size:12px;font-weight:700;color:var(--ink-soft);border-bottom:1px solid var(--border);background:#fafbfc;z-index:1;}
+.modiv .list-table th, .modiv .list-table td {white-space:nowrap;padding: 10px 7px;text-align:right;}
+.modiv .list-table thead th {position:sticky;top:0;font-size: 13.5px;font-weight:700;color:var(--ink-soft);border-bottom:1px solid var(--border);background:#fafbfc;z-index:1;}
 .modiv .list-table thead th.left {text-align:left;}
 .modiv .list-table thead th.sortable {cursor:pointer;user-select:none;}
 .modiv .list-table thead th.sortable:hover {color:var(--blue-dark);}
-.modiv .list-table thead th .arrow {font-size:9px;margin-left:3px;color:var(--blue);}
+.modiv .list-table thead th .arrow {font-size: 10.5px;margin-left:3px;color:var(--blue);}
 .modiv .list-table tbody td {text-align:right;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);}
 .modiv .list-table tbody td.left {text-align:left;}
 .modiv .list-table tbody tr:last-child td {border-bottom:none;}
 .modiv .list-table tbody tr:hover td {background:#f7faff;}
 .modiv .num {font-variant-numeric:tabular-nums;}
-.modiv .empty-row td {text-align:center !important;color:var(--muted);padding:30px 12px;font-style:italic;}
+.modiv .empty-row td {text-align:center !important;color:var(--muted);padding: 30px 7px;font-style:italic;}
 /* ---------- pager ---------- */
 .modiv .pager {display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:2px;flex-wrap:wrap;gap:10px;}
 .modiv .pager-info {font-size:11.5px;font-weight:500;color:var(--muted);white-space:nowrap;}
@@ -141,7 +141,7 @@
 .modiv .status-cell .dot {width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .modiv .st-booked {color:var(--amber);}
 .modiv .st-booked .dot {background:var(--amber);}
-.modiv .st-partial {color:#1d4fd1;}
+.modiv .st-partial {color:#0854a0;}
 .modiv .st-partial .dot {background:#5b8def;}
 .modiv .st-confirmed {color:var(--green);}
 .modiv .st-confirmed .dot {background:var(--green);}
@@ -202,7 +202,7 @@
 .modiv .toast.error {background:#9b1c1c;}
 .modiv .checklist {font-size:12.5px;line-height:1.75;color:var(--ink-soft);}
 .modiv .checklist li {margin-left:18px;margin-bottom:4px;}
-.modiv .note-box {background:var(--blue-pale);border:1px solid #c7dbfb;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#123a80;margin-top:12px;}
+.modiv .note-box {background:var(--blue-pale);border:1px solid #c7dbfb;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#06477f;margin-top:12px;}
 .modiv .warn-box {background:var(--red-pale);border:1px solid #f4c2c2;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#9b1c1c;margin-top:10px;}
 .modiv .ok-box {background:var(--green-pale);border:1px solid #bfead1;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#0f7a37;margin-top:10px;}
 .modiv textarea.remark-box {width:100%;min-height:90px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:12.5px;resize:vertical;}

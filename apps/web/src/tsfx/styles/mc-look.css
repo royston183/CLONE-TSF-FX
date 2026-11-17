@@ -1,0 +1,421 @@
+/* ==========================================================================================================
+ * Shared design system for the Trade Flows screens and FX Invoicing > Generate Invoices, copied from the
+ * ZFS_CASHPOS3 report's stylesheet: its tokens (page #eef2f8, ink/text/sub/mute, blue #0854a0, pale tones), 12px
+ * "72"/Inter type, 26px titles, white shadow cards with no border, KPI cards with a corner icon, tables with a soft
+ * grey 11.5px header and 12px rows, 34px controls with 8px corners, pills and badges, dark theme. Typography, KPI
+ * cards, page header, buttons, form controls, tables, tabs, badges, pagination, dialogs and drag-and-drop live
+ * here once; screens add layout only.
+ *
+ * Scope: .tsfx:is(.tsfx-frame, .tsfx-portal): the page frame, and the portal root the dialogs and toasts render in.
+ * The tokens also remap the application's own variables (--bg, --surface, --line, --blue, --pale, --muted), so
+ * everything already built on them follows, in light and dark.
+ * ========================================================================================================== */
+
+.tsfx:is(.tsfx-frame, .tsfx-portal) {
+  /* ZFS_CASHPOS3 tokens (light) */
+  --mc-bg: #eef2f8; --mc-card: #ffffff; --mc-soft: #f6f8fc; --mc-row: #f0f6fd; --mc-line: #e2e8f4; --mc-input-line: #cfdaed;
+  --mc-heading: #1d3557; --mc-text: #2b3f5c; --mc-label: #5b6f8a; --mc-muted: #6b7f99;
+  --mc-blue: #0854a0; --mc-blue-d: #06477f; --mc-button: #0854a0; --mc-pale: #e8f1fb; --mc-on-blue: #fff;
+  --mc-ok: #2f7d57; --mc-ok-bg: #e6f4ec; --mc-warn: #a8660f; --mc-warn-bg: #fdf3e3; --mc-bad: #b85454; --mc-bad-bg: #f9e9e9;
+  --mc-violet: #5b52b8; --mc-violet-bg: #eeedfb;
+  --mc-shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.04); --mc-popup-shadow: 0 18px 48px rgba(15,23,42,.2);
+  --mc-font: "72", "72full", "Inter", Arial, Helvetica, sans-serif;
+
+  /* The application's own variables, remapped */
+  --bg: var(--mc-bg); --surface: var(--mc-card); --text: var(--mc-text); --muted: var(--mc-muted); --line: var(--mc-line);
+  --blue: var(--mc-blue); --pale: var(--mc-pale); --ds-row: var(--mc-row); --heading: var(--mc-heading);
+  --ds-bad: var(--mc-bad); --ds-bad-bg: var(--mc-bad-bg); --ds-ok: var(--mc-ok);
+
+  font: 12px/1.45 var(--mc-font); -webkit-font-smoothing: antialiased;
+  background: var(--mc-bg); color: var(--mc-text);
+}
+:root[data-theme='dark'] .tsfx:is(.tsfx-frame, .tsfx-portal) {
+  --mc-bg: #181f2b; --mc-card: #1d222a; --mc-soft: #171d26; --mc-row: #202a36; --mc-line: #2f3f53; --mc-input-line: #37506a;
+  --mc-heading: #d3deef; --mc-text: #cfdae5; --mc-label: #97a7b8; --mc-muted: #8696a8;
+  --mc-blue: #7cb7f2; --mc-blue-d: #9ccbf7; --mc-button: #7cb7f2; --mc-pale: #22334a; --mc-on-blue: #10243e;
+  --mc-ok: #7fcca0; --mc-ok-bg: #1d3328; --mc-warn: #e3b46a; --mc-warn-bg: #392f1d; --mc-bad: #e59a9a; --mc-bad-bg: #3a2426;
+  --mc-violet: #a9a3ee; --mc-violet-bg: #2a2a45;
+  --mc-shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.28); --mc-popup-shadow: 0 18px 48px rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(button, input, select, textarea, table, th, td) { font-family: var(--mc-font); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) ::-webkit-scrollbar { width: 10px; height: 10px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) ::-webkit-scrollbar-track { background: var(--mc-soft); border-radius: 6px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) ::-webkit-scrollbar-thumb { background: var(--mc-input-line); border-radius: 6px; border: 2px solid var(--mc-soft); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--mc-blue); outline-offset: 2px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mono { font-variant-numeric: tabular-nums; }
+
+/* ---- Page header: title 26/800 ink, description 13 muted, Back left and Sign out right ---- */
+.tsfx.tsfx-frame .mc-page-header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0; padding: 24px 28px 0; background: transparent; border: 0; }
+.tsfx.tsfx-frame .mc-page-header__text { display: flex; flex-direction: column; min-width: 0; }
+.tsfx.tsfx-frame .mc-page-header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--mc-heading); text-transform: none; }
+.tsfx.tsfx-frame .mc-page-header p { margin: 4px 0 0; font-size: 13px; font-weight: 400; color: var(--mc-muted); }
+.tsfx.tsfx-frame .mc-page-header .mc-grow { flex: 1; }
+.tsfx.tsfx-frame .content { padding: 18px 28px 48px; }
+.tsfx.tsfx-frame .tsfx-frame--ref .content { padding: 0; }
+.tsfx.tsfx-frame .tsfx-frame--ref .tsfx-body { padding: 0 28px 48px; }
+
+/* ---- KPI cards: white shadow card, 10.5px uppercase label, 21px value, 11px subtitle, tinted icon in the corner ---- */
+.mc-kpi-row { display: grid; gap: 16px; margin: 0 0 18px; }
+.mc-kpi {
+  position: relative; min-width: 0; display: block; padding: 16px 18px; background: var(--mc-card); border: 0; border-radius: 12px; box-shadow: var(--mc-shadow);
+  text-align: left; color: inherit; font: inherit; cursor: default; animation: mc-rise .35s ease-out both;
+}
+.mc-kpi:nth-child(2) { animation-delay: .05s; } .mc-kpi:nth-child(3) { animation-delay: .1s; } .mc-kpi:nth-child(4) { animation-delay: .15s; }
+button.mc-kpi { cursor: pointer; }
+.mc-kpi__label { display: block; padding-right: 44px; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-label); }
+.mc-kpi__value { margin-top: 10px; font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: var(--mc-heading); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mc-kpi.wide .mc-kpi__value { font-size: 25px; }
+.mc-kpi__value small { margin-left: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0; color: var(--mc-muted); }
+.mc-kpi__note { margin-top: 4px; font-size: 11px; font-weight: 600; color: var(--mc-muted); overflow-wrap: anywhere; }
+.mc-kpi__icon { position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--mc-pale); color: var(--mc-blue); }
+.mc-kpi__icon svg { width: 16px; height: 16px; }
+.mc-kpi.t-green .mc-kpi__icon { background: var(--mc-ok-bg); color: var(--mc-ok); }
+.mc-kpi.t-amber .mc-kpi__icon { background: var(--mc-warn-bg); color: var(--mc-warn); }
+.mc-kpi.t-violet .mc-kpi__icon { background: var(--mc-violet-bg); color: var(--mc-violet); }
+.mc-kpi.t-red .mc-kpi__icon { background: var(--mc-bad-bg); color: var(--mc-bad); }
+@keyframes mc-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1100px) { .mc-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+
+/* ---- Cards and section headings ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.panel, .ds-app) { background: var(--mc-card); border: 0; border-radius: 12px; box-shadow: var(--mc-shadow); animation: mc-rise .3s ease-out both; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app .panel :is(h2, h3), .tsfx:is(.tsfx-frame, .tsfx-portal) .ds-app .ds-title h2 { font-size: 14px; font-weight: 700; letter-spacing: normal; color: var(--mc-heading); text-transform: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app .panel > h2::before { display: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.panel-note, .tsf-propose__muted, .tsf-manage__sub, .empty, .tsf-manage__empty, .tsf-manage__pick) { color: var(--mc-muted); font-weight: 600; }
+
+/* ---- Buttons: 34px, 8px radius, 12/700; primary in the report blue ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button { min-height: 34px; height: 34px; padding: 0 16px; border-radius: 8px; font-size: 12px; font-weight: 700; gap: 6px; text-transform: none; box-shadow: none;
+  background: var(--mc-blue); border: 1px solid var(--mc-blue); color: var(--mc-on-blue); transition: background .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button:not(:disabled):hover { background: var(--mc-blue-d); border-color: var(--mc-blue-d); color: var(--mc-on-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button.secondary { background: var(--mc-card); color: var(--mc-heading); border-color: var(--mc-input-line); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button.secondary:not(:disabled):hover { background: var(--mc-card); border-color: var(--mc-blue); color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button:is(.danger, .secondary.danger) { background: var(--mc-card); color: var(--mc-bad); border-color: var(--mc-bad); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button:is(.danger, .secondary.danger):not(:disabled):hover { background: var(--mc-bad-bg); color: var(--mc-bad); border-color: var(--mc-bad); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button.small { min-height: 28px; height: 28px; padding: 0 12px; font-size: 11px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .button:disabled { opacity: .45; cursor: not-allowed; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .icon-button { width: 34px; height: 34px; border: 1px solid var(--mc-input-line); background: var(--mc-card); border-radius: 8px; color: var(--mc-label); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .icon-button:hover { border-color: var(--mc-blue); color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .text-button { color: var(--mc-blue); font-size: 11px; font-weight: 700; }
+
+/* ---- Form controls: 10.5px/700 labels, 12px/600 controls, 34px high, 8px corners ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.field > span, .field > label) { font-size: 10.5px; font-weight: 700; color: var(--mc-label); line-height: 1.3; text-transform: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, .input),
+.tsfx:is(.tsfx-frame, .tsfx-portal) .field :is(input:not([type=checkbox]):not([type=radio]), select) {
+  min-height: 34px; height: 34px; padding: 0 10px; border: 1px solid var(--mc-input-line); border-radius: 8px; background-color: var(--mc-card); color: var(--mc-heading); font-size: 12px; font-weight: 600; outline: none; transition: border-color .15s, box-shadow .15s; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) textarea { border: 1px solid var(--mc-input-line); border-radius: 8px; background: var(--mc-card); color: var(--mc-heading); font-size: 12px; font-weight: 600; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(input, textarea)::placeholder { color: var(--mc-muted); font-weight: 500; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(input:not([type=checkbox]):not([type=radio]), select, textarea):focus { border-color: var(--mc-blue); box-shadow: 0 0 0 2px rgba(8,84,160,.14); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(input, select, textarea):disabled, .tsfx:is(.tsfx-frame, .tsfx-portal) :is(input, textarea)[readonly] { background: var(--mc-soft); color: var(--mc-label); cursor: not-allowed; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(input[type=checkbox], input[type=radio]) { accent-color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .kit-error { color: var(--mc-bad); font-size: 11px; font-weight: 600; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) [aria-invalid=true] { border-color: var(--mc-bad) !important; background: var(--mc-bad-bg) !important; }
+
+/* ---- Tables: soft grey 11.5px/700 header, 12px rows, hairlines, tinted hover, bold footer ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) table { width: 100%; border-collapse: collapse; border: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) :is(th, td) { border: 0; border-bottom: 1px solid var(--mc-line); vertical-align: middle; letter-spacing: normal; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) thead th {
+  position: sticky; top: 0; z-index: 5; padding: 11px 8px; font-size: 13px; font-weight: 700; text-transform: none; text-align: left; white-space: nowrap;
+  color: var(--mc-heading); background: var(--mc-soft); user-select: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) thead th:hover { color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) thead th:is(.num, .numeric, .right, .amount, .text-right) { text-align: right; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) tbody td { padding: 12px 8px; font-size: 13.5px; font-weight: 400; color: var(--mc-text); background: var(--mc-card); white-space: nowrap; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) :is(tbody td, tfoot th, tfoot td).num, .tsfx:is(.tsfx-frame, .tsfx-portal) .app table td:is(.numeric, .right, .amount, .text-right) { text-align: right; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) tfoot :is(th, td) { padding: 12px 8px; font-size: 13.5px; font-weight: 800; color: var(--mc-heading); background: var(--mc-soft); border-bottom: 0; position: static; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) tbody tr { transition: background .15s ease; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) tbody tr:hover td { background: var(--mc-row); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app :is(table, .kit-data-table, .ds-table) tbody tr:is(.selected, .checked) td { background: var(--mc-pale); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app table :is(.ds-code, .mc-link, .tsf-propose__dealid, .tsf-propose__link) { color: var(--mc-blue); font-weight: 700; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .app table .mc-link:hover { text-decoration: underline; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.ds-table-wrap, .table-wrap) { overflow: auto; border-top: 0; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) tr.deleted td { color: var(--mc-muted); }
+
+/* ---- Toolbar: Search, combos and range filters share one 34px control ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-filters { align-items: center; gap: 12px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.search, .app .ds-search) { display: flex; align-items: center; gap: 6px; height: 34px; min-height: 34px; padding: 0 10px; border: 1px solid var(--mc-input-line); border-radius: 8px; background: var(--mc-card); color: var(--mc-muted); transition: border-color .15s, box-shadow .15s; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .search:focus-within { border-color: var(--mc-blue); box-shadow: 0 0 0 2px rgba(8,84,160,.14); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .search input { flex: 1; min-width: 0; height: 32px; min-height: 32px; padding: 0; border: 0; box-shadow: none; background: transparent; outline: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .search input:focus { border: 0; box-shadow: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .search button { border: 0; background: none; color: var(--mc-muted); cursor: pointer; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.ds-combo input, .ds-colfilter > input, .kit-filter input, .kit-range input, .kit-range select) { height: 34px; min-height: 34px; padding: 0 10px; border-radius: 8px; font-size: 12px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-combo { width: 200px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.kit-filter, .kit-filter > span) { font-size: 10.5px; font-weight: 700; color: var(--mc-label); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.ds-actions select, .kit-page-size select) { height: 28px; min-height: 28px; font-size: 11px; font-weight: 600; padding: 0 8px; border-radius: 8px; }
+
+/* ---- Tabs and pills ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.tsf-tabs, .kit-tabs, .ds-tabs) button { font-size: 12px; font-weight: 700; color: var(--mc-label); text-transform: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.tsf-tabs, .kit-tabs) button:hover { color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.tsf-tabs, .kit-tabs) button:is(.on, [aria-selected=true]), .tsfx:is(.tsfx-frame, .tsfx-portal) .ds-tabs button.active { color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.tsf-tabs, .kit-tabs, .ds-tabs) .count, .tsfx:is(.tsfx-frame, .tsfx-portal) .ds-tabs button span { background: var(--mc-pale); color: var(--mc-blue); font-size: 10.5px; font-weight: 700; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-propose__opt { height: 24px; padding: 0 10px; border: 1px solid var(--mc-input-line); border-radius: 999px; background: var(--mc-card); color: var(--mc-label); font-size: 11px; font-weight: 700; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-propose__opt.on { background: var(--mc-blue); border-color: var(--mc-blue); color: var(--mc-on-blue); }
+
+/* ---- Badges ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.pill, .kit-status) { padding: 2px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+
+/* ---- Pagination ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.pagination, .kit-pager) button, .tsfx:is(.tsfx-frame, .tsfx-portal) .page-btn { min-width: 30px; min-height: 30px; border: 1px solid var(--mc-input-line); border-radius: 8px; background: var(--mc-card); color: var(--mc-label); font-size: 11px; font-weight: 600; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.pagination, .kit-pager) button:hover:not(:disabled) { border-color: var(--mc-blue); color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.pagination, .kit-pager) button:is(.active, .on), .tsfx:is(.tsfx-frame, .tsfx-portal) .page-btn.active { background: var(--mc-blue); color: var(--mc-on-blue); border-color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.kit-page-size, .kit-pager) { font-size: 11px; color: var(--mc-muted); font-weight: 600; }
+
+/* ---- Dialogs: 12px radius, report shadow, 16px/800 title, soft footer ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.ds-overlay, .modal-overlay) { background: rgba(15,23,42,.4); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal { background: var(--mc-card); color: var(--mc-text); border: 0; border-radius: 12px; box-shadow: var(--mc-popup-shadow); animation: mc-popIn .18s ease-out; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head { background: var(--mc-card); padding: 16px 22px; border-bottom: 1px solid var(--mc-line); position: sticky; top: 0; z-index: 6; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head::after { display: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head h2 { font-size: 16px; font-weight: 800; letter-spacing: normal; color: var(--mc-heading); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head p { font-size: 11px; font-weight: 600; color: var(--mc-muted); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-body { padding: 14px 22px 22px; font-size: 12px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-foot { padding: 12px 22px; border-top: 1px solid var(--mc-line); background: var(--mc-soft); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal.wide { width: min(1180px, 90vw); }
+@keyframes mc-popIn { from { transform: scale(.98); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---- Notices, toasts ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .notice { border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--mc-line); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-toast { background: var(--mc-card); color: var(--mc-heading); border: 1px solid var(--mc-line); border-left: 4px solid var(--mc-blue); border-radius: 8px; padding: 10px 14px; font-weight: 600; box-shadow: var(--mc-popup-shadow); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-toast.success { border-left-color: var(--mc-ok); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-toast.error { border-left-color: var(--mc-bad); }
+
+/* ---- Drag and drop (rows, drop targets, ghost) ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) tr[draggable='true'] { cursor: grab; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) tr[draggable='true']:active { cursor: grabbing; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) tr.mc-dragging { opacity: .5; }
+.mc-drag-ghost { position: fixed; top: -1000px; left: -1000px; padding: 6px 10px; background: #1d3557; color: #fff; border-radius: 6px; font: 600 11px "72", "72full", "Inter", Arial, sans-serif; white-space: nowrap; pointer-events: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-drop { transition: border-color .15s ease, background .15s ease, box-shadow .15s ease; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-drop.mc-ready { outline: 2px dashed var(--mc-input-line); outline-offset: -2px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-drop.drag-over { outline: 2px dashed var(--mc-blue); background: var(--mc-pale) !important; }
+.mc-dropzone { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 1px dashed var(--mc-input-line); border-radius: 8px; color: var(--mc-muted); font-weight: 700; font-size: 11px; transition: border-color .15s ease, background .15s ease, color .15s ease; }
+.mc-dropzone.drag-over { border-color: var(--mc-blue); background: var(--mc-pale); color: var(--mc-blue); }
+
+/* ---- Tradeflows Upload: compact click-or-drop area ---- */
+.tsfx.tsfx-frame .mc-upload { display: flex; align-items: center; gap: 14px; margin: 4px 20px 12px; padding: 14px 18px; border: 1.5px dashed var(--mc-input-line); border-radius: 12px; background: var(--mc-soft); cursor: pointer; transition: border-color .15s ease, background .15s ease, box-shadow .15s ease; }
+.tsfx.tsfx-frame .mc-upload:hover, .tsfx.tsfx-frame .mc-upload.over { border-color: var(--mc-blue); background: var(--mc-pale); }
+.tsfx.tsfx-frame .mc-upload:focus-visible { outline: none; border-color: var(--mc-blue); box-shadow: 0 0 0 2px rgba(8,84,160,.14); }
+.tsfx.tsfx-frame .mc-upload.disabled { opacity: .5; cursor: not-allowed; }
+.tsfx.tsfx-frame .mc-upload__icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 9px; background: var(--mc-pale); color: var(--mc-blue); }
+.tsfx.tsfx-frame .mc-upload__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tsfx.tsfx-frame .mc-upload__text b { font-size: 13px; font-weight: 700; color: var(--mc-blue); }
+.tsfx.tsfx-frame .mc-upload__text span { font-size: 11px; font-weight: 600; color: var(--mc-muted); }
+.tsfx.tsfx-frame .mc-upload__cols { margin: 0 20px 12px; font-size: 11px; color: var(--mc-muted); font-weight: 600; }
+.tsfx.tsfx-frame .mc-upload__cols summary { cursor: pointer; font-weight: 700; }
+.tsfx.tsfx-frame .mc-upload__cols p { margin: 6px 0 0; }
+
+/* ---- Trade Flow Details dialog (Manage Tradeflows): tiles, section titles, BL links ---- */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-section { margin: 0 0 10px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin: 0 0 18px; padding: 0; background: none; border: 0; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 10px 12px; border: 1px solid var(--mc-line); border-radius: 10px; background: var(--mc-soft); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts dt { font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--mc-muted); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts dd { margin: 0; font-size: 14px; font-weight: 800; color: var(--mc-heading); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts .mc-open { color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--mc-blue); cursor: pointer; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-link:hover { text-decoration: underline; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-body .tsf-manage__table { overflow-x: auto; }
+
+/* The selected Deal ID's two KPI cards sit in its header card and are wide enough for every digit. */
+.tsfx.tsfx-frame .tsf-dealhero .mc-kpi-row { display: flex; margin: 0; flex-wrap: nowrap; }
+.tsfx.tsfx-frame .tsf-dealhero .mc-kpi { flex: 0 0 auto; min-width: 300px; }
+@media (max-width: 900px) { .tsfx.tsfx-frame .tsf-dealhero .mc-kpi-row { flex-wrap: wrap; } }
+
+/* Propose Tradeflow, once a Deal ID is chosen: the whole width, with slimmer side margins. */
+.tsfx.tsfx-frame .content:has(.tsf-propose__layout--deal) { padding-left: 14px; padding-right: 14px; }
+.tsfx.tsfx-frame .tsf-propose__layout--deal .tsf-propose__main { max-width: none; width: 100%; }
+
+/* ---- Deal information ticker (Generate Invoices): the report's KPI strip, crawling ---- */
+.mc-ticker { display: flex; overflow-x: auto; overflow-y: hidden; white-space: nowrap; margin: 0 0 16px; background: var(--mc-card); border-radius: 12px; box-shadow: var(--mc-shadow); scrollbar-width: none; outline: none; animation: mc-rise .3s ease-out both;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); }
+.mc-ticker::-webkit-scrollbar { display: none; }
+.mc-ticker:focus-visible { box-shadow: 0 0 0 2px rgba(8,84,160,.3); }
+.mc-ticker__list { display: flex; flex: none; margin: 0; padding: 0; list-style: none; }
+.mc-ticker__item { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 24px; border-right: 1px solid var(--mc-line); }
+.mc-ticker__label { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-label); }
+.mc-ticker__value { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--mc-heading); font-variant-numeric: tabular-nums; }
+.mc-ticker__value.key { color: var(--mc-blue); }
+
+/* ---- Generate Invoices (.invblotter): the same tokens over its own sheets (the .app prefix out-ranks them) ---- */
+.tsfx.tsfx-frame .invblotter { font: 12px/1.45 var(--mc-font); color: var(--mc-text); }
+.tsfx.tsfx-frame .invblotter .card { background: var(--mc-card); border: 0; border-radius: 12px; box-shadow: var(--mc-shadow); animation: mc-rise .3s ease-out both; }
+.tsfx.tsfx-frame .invblotter .app .app-title { font-size: 16px; font-weight: 800; letter-spacing: normal; color: var(--mc-heading); }
+.tsfx.tsfx-frame .invblotter .app :is(.section-title, .table-title) { font-size: 14px; font-weight: 700; color: var(--mc-heading); }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__pick label { font-size: 10.5px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--mc-label); }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__id h2 { font-size: 16px; font-weight: 800; letter-spacing: normal; color: var(--mc-heading); }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__id p { font-size: 12px; color: var(--mc-muted); }
+.tsfx.tsfx-frame .invblotter .app :is(.back-btn, .hdr-btn, .icon-btn, .small-btn, .action-btn, .view-deals-btn) { height: 34px; padding: 0 16px; border: 1px solid var(--mc-input-line); border-radius: 8px; background: var(--mc-card); color: var(--mc-heading); font-size: 12px; font-weight: 700; box-shadow: none; }
+.tsfx.tsfx-frame .invblotter .app :is(.back-btn, .hdr-btn, .icon-btn, .small-btn, .action-btn, .view-deals-btn):not(:disabled):hover { background: var(--mc-card); border-color: var(--mc-blue); color: var(--mc-blue); box-shadow: none; }
+.tsfx.tsfx-frame .invblotter .app :is(.hdr-btn, .small-btn, .action-btn).primary { background: var(--mc-blue); border-color: var(--mc-blue); color: var(--mc-on-blue); }
+.tsfx.tsfx-frame .invblotter .app :is(.hdr-btn, .small-btn, .action-btn).primary:not(:disabled):hover { background: var(--mc-blue-d); border-color: var(--mc-blue-d); color: var(--mc-on-blue); }
+.tsfx.tsfx-frame .invblotter .app :is(.hdr-btn, .action-btn).danger { background: var(--mc-card); border-color: var(--mc-bad); color: var(--mc-bad); }
+.tsfx.tsfx-frame .invblotter .app :is(.hdr-btn, .small-btn, .action-btn):disabled { opacity: .45; }
+.tsfx.tsfx-frame .invblotter .app .control, .tsfx.tsfx-frame .invblotter .app .search, .tsfx.tsfx-frame .invblotter .app .date-value { height: 34px; min-height: 34px; border: 1px solid var(--mc-input-line); border-radius: 8px; background: var(--mc-card); color: var(--mc-heading); font-size: 12px; font-weight: 600; }
+.tsfx.tsfx-frame .invblotter .app .field label { font-size: 10.5px; font-weight: 700; color: var(--mc-label); }
+.tsfx.tsfx-frame .invblotter .app thead th { background: var(--mc-soft); color: var(--mc-heading); font-size: 13px; font-weight: 700; text-transform: none; letter-spacing: normal; padding: 11px 8px; border-bottom: 1px solid var(--mc-line); }
+.tsfx.tsfx-frame .invblotter .app tbody td { font-size: 13.5px; padding: 12px 8px; color: var(--mc-text); border-bottom: 1px solid var(--mc-line); }
+.tsfx.tsfx-frame .invblotter .app tbody td.editable-cell { padding: 4px 6px; }
+.tsfx.tsfx-frame .invblotter .app tbody tr { transform: none; box-shadow: none; }
+.tsfx.tsfx-frame .invblotter .app tbody tr:hover { transform: none; box-shadow: none; }
+.tsfx.tsfx-frame .invblotter .app tbody tr:hover td { background: var(--mc-row); }
+.tsfx.tsfx-frame .invblotter .app tbody tr.selected td, .tsfx.tsfx-frame .invblotter .app tbody tr.selected:hover td { background: var(--mc-pale); }
+.tsfx.tsfx-frame .invblotter .app .page-btn { width: 30px; height: 30px; border: 1px solid var(--mc-input-line); border-radius: 8px; color: var(--mc-label); background: var(--mc-card); }
+.tsfx.tsfx-frame .invblotter .app .page-btn.active { background: var(--mc-blue); border-color: var(--mc-blue); color: var(--mc-on-blue); }
+.tsfx.tsfx-frame .invblotter .modal { border: 0; border-radius: 12px; background: var(--mc-card); box-shadow: var(--mc-popup-shadow); }
+.tsfx.tsfx-frame .invblotter .modal-title { font-size: 16px; font-weight: 800; letter-spacing: normal; color: var(--mc-heading); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-kpi, .mc-ticker, .tsfx:is(.tsfx-frame, .tsfx-portal) :is(.panel, .ds-app, .ds-modal, .invblotter .card) { animation: none; }
+}
+
+/* ==== Generate Invoices, compact: the deal strip, KPIs and both tables fit in one screen with little scrolling ==== */
+.tsfx.tsfx-frame:has(.invblotter) .mc-page-header { padding: 12px 28px 0; }
+.tsfx.tsfx-frame:has(.invblotter) .mc-page-header h1 { font-size: 20px; }
+.tsfx.tsfx-frame:has(.invblotter) .mc-page-header p { margin-top: 2px; }
+.tsfx.tsfx-frame .invblotter .workspace { padding: 8px 16px 12px; gap: 8px; }
+.tsfx.tsfx-frame .invblotter .app .topbar { padding-top: 2px; padding-bottom: 2px; }
+
+/* KPI cards: shorter, same look */
+.mc-kpi-row.compact { gap: 10px; margin: 0; }
+.mc-kpi-row.compact .mc-kpi { padding: 9px 14px 10px; }
+.mc-kpi-row.compact .mc-kpi__label { font-size: 9.5px; padding-right: 34px; }
+.mc-kpi-row.compact .mc-kpi__value { margin-top: 3px; font-size: 17px; }
+.mc-kpi-row.compact .mc-kpi.wide .mc-kpi__value { font-size: 19px; }
+.mc-kpi-row.compact .mc-kpi__note { margin-top: 1px; font-size: 10.5px; }
+.mc-kpi-row.compact .mc-kpi__icon { top: 8px; right: 12px; width: 26px; height: 26px; border-radius: 8px; }
+.mc-kpi-row.compact .mc-kpi__icon svg { width: 14px; height: 14px; }
+
+/* Deal ID picker and the deal's id, status and description on one row */
+.tsfx.tsfx-frame .invblotter .app .inv-hero { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 28px; padding: 8px 16px; }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__body { display: flex; flex: 1 1 420px; min-width: 0; border-top: 0; padding-top: 0; }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__id { flex: 1; min-width: 0; }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__id h2 { flex-wrap: nowrap; gap: 10px; font-size: 15px; }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__desc { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; letter-spacing: normal; color: var(--mc-muted); }
+.tsfx.tsfx-frame .invblotter .app .inv-hero__meta { margin-left: 0; }
+
+/* Ticker: slimmer */
+.mc-ticker { margin: 0; }
+.mc-ticker__item { gap: 2px; padding: 6px 18px; }
+.mc-ticker__label { font-size: 9.5px; }
+.mc-ticker__value { font-size: 13px; letter-spacing: normal; }
+
+/* Tables: no forced height, one tools row, one-line headers, tighter rows */
+.tsfx.tsfx-frame .invblotter .app .table-card { min-height: 0; }
+.tsfx.tsfx-frame .invblotter .app .table-toolbar { height: 38px; min-height: 38px; }
+.tsfx.tsfx-frame .invblotter .app .kit-table-tools { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 4px 12px; }
+.tsfx.tsfx-frame .invblotter .app .kit-table-tools > .button { order: -1; margin-right: auto; }
+.tsfx.tsfx-frame .invblotter .app .kit-table-heading { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 2px; white-space: nowrap; }
+.tsfx.tsfx-frame .invblotter .app thead th { padding: 7px 7px; }
+.tsfx.tsfx-frame .invblotter .app tbody td { padding: 6px 7px; }
+.tsfx.tsfx-frame .invblotter .app .tables { gap: 8px; }
+
+/* ==== Page header: the FS logo ==== */
+.tsfx.tsfx-frame .mc-logo { height: 34px; width: auto; max-width: 100px; object-fit: contain; flex: none; }
+/* One-line table headers everywhere (a label and its sort and filter icons no longer wrap onto a second row) */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .kit-table-heading { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 2px; white-space: nowrap; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) table :is(th.num, th.right) .kit-table-heading { justify-content: flex-end; }
+
+/* ==== Propose Tradeflow ==== */
+/* Deal selection: the Deal IDs table takes the whole width (the Choose-a-Deal panel is gone) */
+.tsfx.tsfx-frame .tsf-propose__layout { grid-template-columns: minmax(0, 1fr) !important; }
+.tsfx.tsfx-frame .tsf-propose__deals { max-width: none; }
+.tsfx.tsfx-frame .tsf-propose__dealtable :is(th, td) { padding-left: 10px; padding-right: 10px; }
+.tsfx.tsfx-frame .app .tsf-propose__dealtable tbody td { font-size: 14.5px; }
+.tsfx.tsfx-frame .app .tsf-propose__dealtable thead th { font-size: 13.5px; }
+.tsfx.tsfx-frame .tsf-propose__dealtable td:nth-child(2) { max-width: none; overflow: visible; text-overflow: clip; }
+.tsfx.tsfx-frame .tsf-propose__search { max-width: 520px; }
+/* Assigned BLs: full width, columns that keep their totals apart */
+.tsfx.tsfx-frame .tsf-propose__groups { gap: 12px; }
+.tsfx.tsfx-frame .tsf-propose__groups .tsf-propose__scroll { max-height: min(52vh, 520px); overflow: auto; }
+.tsfx.tsfx-frame .tsf-propose__groups table, .tsfx.tsfx-frame .tsf-propose__list { width: 100% !important; min-width: 0 !important; table-layout: auto !important; }
+.tsfx.tsfx-frame .app .tsf-propose__groups tbody td { font-size: 14.5px; }
+.tsfx.tsfx-frame .app .tsf-propose__groups tfoot :is(th, td) { white-space: nowrap; padding: 12px 10px; font-size: 14.5px; }
+.tsfx.tsfx-frame .app .tsf-propose__groups :is(th, td):is(.num) { padding-left: 13px; padding-right: 10px; min-width: 150px; }
+.tsfx.tsfx-frame .app .tsf-propose__groups tfoot { position: sticky; bottom: 0; }
+/* Proposals */
+.tsfx.tsfx-frame .app .tsf-propose__list tbody td { font-size: 14.5px; padding-top: 10px; padding-bottom: 10px; }
+.tsfx.tsfx-frame .app .tsf-propose__list tbody tr.best td { background: var(--mc-pale); }
+.tsfx.tsfx-frame .app .tsf-propose__list tbody tr.best:hover td { background: var(--mc-pale); }
+.tsfx.tsfx-frame .tsf-propose__open { display: inline-flex; align-items: center; gap: 8px; }
+.tsfx.tsfx-frame .tsf-propose__opt { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ==== Update Price: the commodities on top, the chosen commodity's prices below, both in view ==== */
+.tsfx.tsfx-frame .tsf-price__layout { grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.tsfx.tsfx-frame .tsf-price__list .ds-table-wrap { max-height: clamp(150px, 30vh, 320px); overflow: auto; }
+.tsfx.tsfx-frame .tsf-price__histwrap { max-height: clamp(110px, 20vh, 220px); overflow: auto; }
+.tsfx.tsfx-frame .tsf-price__detail { gap: 6px; }
+.tsfx.tsfx-frame .tsf-price__detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.tsfx.tsfx-frame .tsf-price__detail-head h2 { font-size: 14px; margin: 0; }
+.tsfx.tsfx-frame .tsf-price__detail-head p { margin: 0; }
+.tsfx.tsfx-frame .tsf-price .panel-note { margin: 0; padding: 0 4px; }
+.tsfx.tsfx-frame .tsf-price__table tbody tr { cursor: pointer; }
+.tsfx.tsfx-frame .app .tsf-price__table tbody td, .tsfx.tsfx-frame .app .tsf-price__histwrap tbody td { padding-top: 8px; padding-bottom: 8px; }
+/* Price timeline popup */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-timeline { max-height: min(54vh, 480px); overflow: auto; border: 1px solid var(--mc-line); border-radius: 10px; outline: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-timeline:focus-visible { border-color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-timeline tr.today td { background: var(--mc-pale); font-weight: 700; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-timeline tr.future td { background: var(--mc-soft); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-timeline tr.today.future td { background: var(--mc-pale); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-today { margin-left: 8px; background: var(--mc-blue); color: var(--mc-on-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) :is(.mc-none) { color: var(--mc-muted); font-weight: 600; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-set { color: var(--mc-ok); font-weight: 700; font-size: 11px; }
+
+/* ==== One popup design for every screen: the Master Contract details popup (see alm-theme.css) ==== */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal { border-radius: 14px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head { padding: 16px 24px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head h2 { font-size: 15px; font-weight: 700; letter-spacing: normal; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head .icon-button { width: 28px; height: 28px; border: 0; background: transparent; color: var(--mc-muted); border-radius: 8px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-head .icon-button:hover { background: var(--mc-soft); color: var(--mc-heading); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-body { padding: 18px 24px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-foot { padding: 12px 24px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-section { margin: 16px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--mc-line); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-body > .mc-section:first-child { margin-top: 0; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px 24px; margin-bottom: 8px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts > div { gap: 3px; padding: 0; border: 0; border-radius: 0; background: none; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts dt { font-size: 11px; font-weight: 600; letter-spacing: normal; text-transform: none; color: var(--mc-muted); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .mc-facts dd { font-size: 13px; font-weight: 700; }
+/* Generate Invoices dialogs */
+.tsfx.tsfx-frame .invblotter .modal { border-radius: 14px; }
+.tsfx.tsfx-frame .invblotter .modal-title { font-size: 15px; font-weight: 700; }
+.tsfx.tsfx-frame .invblotter :is(.modal-head, .modal-footer) { padding-left: 24px; padding-right: 24px; }
+.tsfx.tsfx-frame .invblotter .modal-body { padding: 18px 24px; }
+.tsfx.tsfx-frame .invblotter .modal-close { width: 28px; height: 28px; border: 0; background: transparent; color: var(--mc-muted); border-radius: 8px; }
+.tsfx.tsfx-frame .invblotter .modal-close:hover { background: var(--mc-soft); color: var(--mc-heading); }
+
+/* Confirm Invoice stays the blue primary button, also while it waits for its conditions */
+.tsfx #tsfx-alm-ui .invblotter .hdr-btn.primary, .tsfx #tsfx-alm-ui .invblotter .hdr-btn.primary:disabled {
+  background: var(--mc-blue) !important; border-color: var(--mc-blue) !important; color: var(--mc-on-blue) !important;
+}
+.tsfx #tsfx-alm-ui .invblotter .hdr-btn.primary:disabled { opacity: .6; }
+.tsfx #tsfx-alm-ui .invblotter .hdr-btn.primary:not(:disabled):hover { background: var(--mc-blue-d) !important; border-color: var(--mc-blue-d) !important; }
+
+/* Proposal numbers are plain numbers */
+.tsfx.tsfx-frame .mc-rank { font-weight: 700; color: var(--mc-label); }
+
+/* ==== Proposal popup: everything in one view ====
+ * The figures sit in one row, the BL table takes the rest of the popup's height and scrolls inside itself with its header and
+ * its total row kept in view, so the popup itself never scrolls and the Assign button is always in sight. */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .ds-modal-body:has(> .tsf-proposal) { overflow: hidden; padding-bottom: 14px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal { height: calc(100dvh - 250px); min-height: 280px; gap: 10px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__section { border: 0; padding: 0; overflow: visible; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__section h4 { margin-bottom: 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures div { padding: 8px 12px; border: 1px solid var(--mc-line); border-radius: 10px; background: var(--mc-soft); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures div.plus { background: var(--mc-pale); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures dt { font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--mc-muted); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures dd { margin-top: 4px; font-size: 14px; font-weight: 800; color: var(--mc-heading); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures div.good dd { color: var(--mc-ok); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures .num-short { margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--mc-blue); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__why { padding: 8px 12px; border-radius: 10px; background: var(--mc-pale); }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__why h4 { margin-bottom: 2px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__why p { font-size: 12px; line-height: 1.4; }
+/* the BL section fills what is left; its table scrolls inside */
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__section:has(.tsf-proposal__table) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__table { flex: 1 1 auto; min-height: 0; width: 100%; max-width: none; overflow: auto; border: 1px solid var(--mc-line); border-radius: 10px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__table table { table-layout: auto; width: 100%; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal .app table thead th, .tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal table thead th { padding: 8px 7px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal table tbody td { padding: 6px 7px; font-size: 13.5px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal table tfoot :is(th, td) { position: sticky; bottom: 0; z-index: 4; padding: 9px 7px; background: var(--mc-soft); border-top: 1px solid var(--mc-line); font-size: 14px; }
+.tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__note { font-size: 11px; }
+@media (max-width: 1000px) { .tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal__figures { grid-template-columns: repeat(3, minmax(0, 1fr)); } .tsfx:is(.tsfx-frame, .tsfx-portal) .tsf-proposal { height: calc(100dvh - 300px); } }
+
+/* ==== Assigned BLs: a full-width table with roomier rows; the footer's totals each sit under their own column ==== */
+.tsfx.tsfx-frame .app .tsf-propose__groups tbody td { padding: 14px 11px; font-size: 14.5px; }
+.tsfx.tsfx-frame .app .tsf-propose__groups thead th { padding: 13px 11px; font-size: 13.5px; }
+.tsfx.tsfx-frame .app .tsf-propose__groups tfoot :is(th, td) { padding: 14px 11px; font-size: 14.5px; white-space: nowrap; }
+.tsfx.tsfx-frame .tsf-propose__groups .tsf-propose__scroll { max-height: min(60vh, 640px); }

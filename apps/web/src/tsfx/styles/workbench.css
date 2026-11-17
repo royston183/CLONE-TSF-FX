@@ -23,20 +23,20 @@
 .tsfx .ds-app .ds-search{width:300px;padding:6px 10px}
 .tsfx .ds-table-wrap{border-top:1px solid var(--line);max-height:calc(100vh - 330px);min-height:220px}
 .tsfx .ds-table{width:100%;border-collapse:collapse;font-size:12px}
-.tsfx .ds-table th{background:var(--bg);color:var(--muted);font-size:11px;font-weight:600;padding:0;white-space:nowrap;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
+.tsfx .ds-table th{background:var(--bg);color:var(--muted);font-size: 12.5px;font-weight:600;padding: 0 0;white-space:nowrap;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
 .tsfx .ds-table th.filtered{color:var(--blue)}
 .tsfx .ds-th{display:flex;align-items:center;justify-content:space-between;gap:2px;padding:0 6px 0 12px}
 .tsfx .ds-sort{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:inherit;font:inherit;padding:9px 0;text-align:left}
 .tsfx .ds-flt{border:1px solid transparent;background:none;color:var(--muted);border-radius:5px;padding:3px;display:grid;place-items:center;opacity:.55}
 .tsfx .ds-flt:hover,.tsfx .ds-flt.on{opacity:1;color:var(--blue);border-color:var(--line);background:var(--surface)}
-.tsfx .ds-table td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.tsfx .ds-table td{padding: 8px 7px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 .tsfx .ds-table tbody tr:hover{background:var(--ds-row)}
 .tsfx .ds-table tbody tr.checked{background:var(--pale)}
 .tsfx .ds-cb{width:38px;text-align:center}
-.tsfx .ds-table th.ds-cb{padding:0 12px}
+.tsfx .ds-table th.ds-cb{padding: 0 7px}
 .tsfx .ds-code{font-family:inherit;font-variant-numeric:tabular-nums;font-weight:600;color:var(--blue);white-space:nowrap}
 .tsfx .ds-bold{font-weight:600}
-.tsfx .ds-table td small{display:block;color:var(--muted);font-size:10px;margin-top:2px;font-family:inherit;font-weight:400}
+.tsfx .ds-table td small{display:block;color:var(--muted);font-size: 11.5px;margin-top:2px;font-family:inherit;font-weight:400}
 .tsfx .ds-app .panel-note{margin:0;padding:10px 18px 14px}
 .tsfx .ds-app .empty{padding:36px 16px}
 .tsfx .ds-app input[type=checkbox]{accent-color:var(--blue);width:15px;height:15px}
@@ -58,7 +58,7 @@
 .tsfx .ds-foot-hint{margin-right:auto;font-size:11px;color:var(--muted)}
 .tsfx .ds-add-row{margin-right:4px}
 .tsfx .ds-grid-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}
-.tsfx .ds-grid td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.tsfx .ds-grid td{padding: 6px 6px;border-bottom:1px solid var(--line)}
 .tsfx .ds-grid tr.ready td:first-child{box-shadow:inset 3px 0 0 var(--ds-ok)}
 .tsfx .ds-cell{width:100%;min-height:30px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);padding:4px 8px;font-size:12px}
 .tsfx .ds-cell.mono{font-family:inherit;font-variant-numeric:tabular-nums;text-transform:uppercase}
@@ -69,7 +69,7 @@
 .tsfx .ds-grid small.bad{color:var(--ds-bad)}
 .tsfx .ds-flag{text-align:center}
 .tsfx .ds-rm-col{width:40px;text-align:center}
-.tsfx .ds-row-msg td{padding:0 10px 8px;color:var(--ds-bad);font-size:11px;border-bottom:1px solid var(--line)}
+.tsfx .ds-row-msg td{padding: 0 6px 8px;color:var(--ds-bad);font-size: 12.5px;border-bottom:1px solid var(--line)}
 .tsfx .button.danger,:root[data-theme=dark] .tsfx .button.danger:not(.secondary){background:#c0392b;border-color:#c0392b;color:#fff}
 .tsfx .ds-toast{position:fixed;right:24px;bottom:24px;z-index:1300;display:flex;align-items:center;gap:8px;max-width:420px;padding:11px 15px;border-radius:9px;background:#16314f;color:#fff;font-size:12px;box-shadow:0 12px 30px -8px #0b1a2b80}
 .tsfx .ds-toast.success{background:#1e7a52}
@@ -78,7 +78,7 @@
 @keyframes ds-spin{to{transform:rotate(360deg)}}
 @media(max-width:750px){.tsfx .ds-combo,.tsfx .ds-app .ds-search{width:100%}.tsfx .ds-toolbar{padding:12px}.tsfx .ds-filters{padding:0 12px 10px}.tsfx .ds-table-wrap{max-height:none}.tsfx .ds-foot-hint{display:none}}
 @media(prefers-reduced-motion:reduce){.tsfx .spin{animation:none}}
-.tsfx .ds-modal .ds-table th{padding:8px 10px}
+.tsfx .ds-modal .ds-table th{padding: 8px 6px}
 .tsfx .ds-table td.ds-stamp{white-space:nowrap;color:var(--muted)}
 .tsfx .ds-cell.computed{background:var(--bg);color:var(--blue);font-family:inherit;font-variant-numeric:tabular-nums;border-style:dashed}
 .tsfx .ds-foot-hint.bad{color:var(--ds-bad);font-weight:600}
@@ -91,14 +91,14 @@
 .tsfx .ds-table .ds-inline small{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;min-width:0}
 .tsfx .ds-modal .ds-table td small{display:inline;margin:0 0 0 8px}
 /* Popup typography: readable cells, calm secondary text. */
-.tsfx .ds-modal .ds-table th{padding:10px 12px;font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--text) 62%,var(--muted));white-space:nowrap;vertical-align:middle;letter-spacing:.1px}
-.tsfx .ds-modal .ds-table th .sort-th{padding:10px 12px}
-.tsfx .ds-modal .ds-table th.sortable{padding:0}
-.tsfx .ds-modal .ds-table td{font-size:12.5px;padding:9px 12px;line-height:1.4}
-.tsfx .ds-modal .ds-grid td{padding:7px 10px}
+.tsfx .ds-modal .ds-table th{padding: 10px 7px;font-size: 13px;font-weight:600;color:color-mix(in srgb,var(--text) 62%,var(--muted));white-space:nowrap;vertical-align:middle;letter-spacing:.1px}
+.tsfx .ds-modal .ds-table th .sort-th{padding: 10px 7px}
+.tsfx .ds-modal .ds-table th.sortable{padding: 0 0}
+.tsfx .ds-modal .ds-table td{font-size: 14px;padding: 9px 7px;line-height:1.4}
+.tsfx .ds-modal .ds-grid td{padding: 7px 6px}
 .tsfx .ds-modal .ds-cell{font-size:12.5px;min-height:32px;padding:5px 9px}
 .tsfx .ds-modal .ds-cell.mono,.tsfx .ds-modal .ds-cell.computed{font-size:12px;letter-spacing:.4px}
 .tsfx .ds-modal .ds-cell::placeholder{font-size:12px;color:var(--muted);opacity:.65}
-.tsfx .ds-modal .ds-table td small{font-size:11.5px;font-weight:500;color:var(--muted)}
-.tsfx .ds-modal .ds-row-msg td{font-size:11.5px;padding:0 12px 9px}
+.tsfx .ds-modal .ds-table td small{font-size: 13px;font-weight:500;color:var(--muted)}
+.tsfx .ds-modal .ds-row-msg td{font-size: 13px;padding: 0 7px 9px}
 .tsfx .ds-modal .ds-foot-hint{font-size:11.5px}

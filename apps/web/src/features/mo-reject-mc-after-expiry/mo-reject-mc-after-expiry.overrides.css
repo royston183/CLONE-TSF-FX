@@ -25,8 +25,8 @@
   --text-faint: #687b8d;
   --border: #d5dadd;
   --border-strong: #8996a1;
-  --blue: #0a6ed1;
-  --blue-hover: #085caf;
+  --blue: #0854a0;
+  --blue-hover: #06477f;
   --blue-soft: #eaf3fc;
   --blue2: #4fa3e8;
   --success: #107e3e;
@@ -61,7 +61,7 @@
 
 /* ---- 4. Buttons ---------------------------------------------------------------------------- */
 .mormc .btn { padding: 0 12px; border-radius: var(--radius-sm); }
-.mormc .btn-primary:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(10, 110, 209, 0.22); }
+.mormc .btn-primary:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(8,84,160, 0.22); }
 :root:not([data-theme='dark']) .mormc .btn-danger:hover:not(:disabled) { background: #9e0000; }
 
 /* ---- 5. Cards (panels) -------------------------------------------------------------------- */
@@ -80,21 +80,21 @@
 :root:not([data-theme='dark']) .mormc .search-box input:hover { border-color: #a6b0b9; }
 :root:not([data-theme='dark']) .mormc .control:focus,
 :root:not([data-theme='dark']) .mormc .search-box input:focus {
-  border-color: #0a6ed1;
-  box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.12);
+  border-color: #0854a0;
+  box-shadow: 0 0 0 3px rgba(8,84,160, 0.12);
 }
 
 /* ---- 7. Table: sticky uppercase grey header, 14px data, lift on hover, selected blue --------- */
 .mormc table.data-table thead th {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  padding: 0 10px;
+  padding: 0 6px;
 }
 .mormc table.data-table thead th.col-num .th-inner,
 .mormc table.data-table thead th.num .th-inner { justify-content: flex-end; }
-.mormc table.data-table tbody td { font-size: 14px; }
+.mormc table.data-table tbody td { font-size: 15.5px; }
 .mormc .mc-link { font-size: 14px; }
 .mormc .num-cell { text-align: right; font-variant-numeric: tabular-nums; }
 :root:not([data-theme='dark']) .mormc table.data-table thead th {
@@ -131,10 +131,10 @@
 }
 :root:not([data-theme='dark']) .mormc .drag-ghost { background: #1d2d3e; color: #fff; }
 :root:not([data-theme='dark']) .mormc .btn.expiry-drag-over {
-  border-color: #0a6ed1 !important;
+  border-color: #0854a0 !important;
   background: #eaf3fc !important;
-  color: #0a6ed1 !important;
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.12);
+  color: #0854a0 !important;
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {

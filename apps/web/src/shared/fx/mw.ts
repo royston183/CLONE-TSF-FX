@@ -1,4 +1,5 @@
 import { apiFetch, apiRequest, service } from '@slc/api-client'
+import { SPECS, listFromOData, odataReadable } from './odata-source.ts'
 
 /**
  * The FX screens' client for the SLC middleware.
@@ -31,6 +32,15 @@ export async function fxList(
   filter: FxFilter = {},
   options: { sort?: string | undefined; signal?: AbortSignal | undefined } = {},
 ): Promise<FxRow[]> {
+  // The Deal ID table and the FX view have their own SAP services; they serve these reads once they return data.
+  if (SPECS[resource] && (await odataReadable(resource))) {
+    try {
+      return await listFromOData(resource, filter, options)
+    } catch (error) {
+      if (isAbort(error)) throw error
+      console.warn(`[fx] ${resource}: the OData read failed, using the middleware instead`, error)
+    }
+  }
   const rows: FxRow[] = []
   for (let offset = 0; ; offset += PAGE) {
     const params = new URLSearchParams(filter)

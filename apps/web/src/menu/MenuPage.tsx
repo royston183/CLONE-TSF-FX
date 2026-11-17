@@ -19,6 +19,7 @@ import type { AppEntry, MenuNode, MenuTile } from './types.ts'
 import './menu-path.css'
 import './menu-path.overrides.css'
 import './menu-shell.css'
+import './menu-dashboard.css'
 
 /**
  * TSF hub shell: header, sign-out and the toast, hosting the menu path section below.

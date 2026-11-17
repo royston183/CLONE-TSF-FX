@@ -232,7 +232,6 @@ export default function ViewSpotForwardSettlement() {
           <div className="page-title">View Spot-Forward Deals Settlement</div>
         </div>
         <div className="head-actions">
-          <span className="tcode-pill">ZSGTSFR062</span>
           <button type="button" className="btn-icon" title="Refresh (REF)" onClick={refresh}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />

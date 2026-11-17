@@ -14,6 +14,7 @@ import { formatDate } from '@tsfx/lib/fields/parse';
 import { isoDay, str } from '@tsfx/lib/grid/grid';
 import type { Row, View } from '@tsfx/lib/grid/types';
 import { savePlan, sheetFigures, sheetFor, type SheetLine } from './logic';
+import { PriceTimeline } from './PriceTimeline';
 import './update-price.css';
 
 const ID = 'commodity-price';
@@ -32,6 +33,8 @@ export default function UpdatePricePage() {
   const [remove, setRemove] = useState<{ line: SheetLine; row: Row } | null>(null);
   // The commodity whose price history shows on the right.
   const [picked, setPicked] = useState('');
+  // The commodity whose date-wise price timeline is open (double-click).
+  const [timeline, setTimeline] = useState('');
   const [toast, notify] = useToast();
 
   useEffect(() => {
@@ -77,6 +80,26 @@ export default function UpdatePricePage() {
       setBusy(false); setRemove(null); setReload(r => r + 1);
     }
   };
+  /** The timeline's save for one day: the same checks and the same create / update as the sheet's Save. */
+  const saveOn = async (d: string, typedPrice: string) => {
+    const rows = (view?.lookups.commodities ?? []).filter(c => str(c.commodity) === timeline);
+    const line = sheetFor(d, rows, view?.tables.prices ?? [])[0];
+    if (!line) return;
+    const p = savePlan(d, [line], { [timeline]: typedPrice });
+    if (p.problems.length) { notify(p.problems[0].message, 'error'); return; }
+    if (!p.creates.length && !p.updates.length) return;
+    setBusy(true);
+    try {
+      if (p.creates.length) await moduleChange(ID, 'prices', 'create', p.creates);
+      if (p.updates.length) await moduleChange(ID, 'prices', 'update', p.updates);
+      notify(`The price of ${timeline} was saved for ${formatDate(d)}.`, 'success');
+    } catch (e) {
+      notify((e as Error).message, 'error');
+    } finally {
+      setBusy(false);
+      setReload(r => r + 1);
+    }
+  };
   const fillMissing = () => setEdits(e => ({ ...e, ...Object.fromEntries(lines.filter(l => l.status === 'Missing' && l.last && e[l.commodity] === undefined).map(l => [l.commodity, shownPrice(l.last!.price)])) }));
 
   const focus = lines.find(l => l.commodity === picked) ?? shown[0] ?? lines[0] ?? null;
@@ -120,7 +143,7 @@ export default function UpdatePricePage() {
                   const v = valueOf(l);
                   const changed = edits[l.commodity] !== undefined && v !== shownPrice(l.onDate?.price);
                   return (
-                    <tr key={l.commodity} data-table-row="" className={`${changed ? 'tsf-price__changed' : ''}${focus?.commodity === l.commodity ? ' selected' : ''}`} onClick={() => setPicked(l.commodity)}>
+                    <tr key={l.commodity} data-table-row="" className={`${changed ? 'tsf-price__changed' : ''}${focus?.commodity === l.commodity ? ' selected' : ''}`} onClick={() => setPicked(l.commodity)} onDoubleClick={() => { setPicked(l.commodity); setTimeline(l.commodity); }} title="Double-click for the date-wise prices">
                       <td><button className="tsf-price__pick" onClick={e => { e.stopPropagation(); setPicked(l.commodity); }} aria-pressed={focus?.commodity === l.commodity} aria-label={`Open ${l.commodity}`}>{l.description ? `${l.commodity} · ${l.description}` : l.commodity}</button></td>
                       <td className="num" onClick={e => e.stopPropagation()}><input className="input tsf-price__input" inputMode="decimal" aria-label={`Price of ${l.commodity} on ${formatDate(day)}`}
                         placeholder="Enter price" value={v} onChange={e => setEdits(x => ({ ...x, [l.commodity]: e.target.value }))} /></td>
@@ -143,6 +166,7 @@ export default function UpdatePricePage() {
                   : focus.last ? <b>{shownPrice(focus.last.price)} {focus.currency} (from {formatDate(str(focus.last.effectiveFrom).slice(0, 10))}; none set on this date)</b> : <b>no price</b>}</p>
               </div>
               <div className="panel">
+                <div className="tsf-price__histwrap">
                 <DataTable nativeLayout nativeExport aria-label={`Price history of ${focus.commodity}`} className="ds-table">
                   <thead><tr><th>Effective From</th><th className="num">Price ({focus.currency}/{focus.unit || 'unit'})</th><th>Applies</th><th className="actions">Actions</th></tr></thead>
                   <tbody>{history.map(r => {
@@ -158,6 +182,7 @@ export default function UpdatePricePage() {
                     );
                   })}</tbody>
                 </DataTable>
+                </div>
                 {!history.length && <div className="empty">No price yet for {focus.commodity}. Type one on the left and choose Save.</div>}
               </div>
             </> : <div className="panel empty">Choose a commodity on the left.</div>}
@@ -168,6 +193,7 @@ export default function UpdatePricePage() {
       {remove && <ConfirmDialog danger title={`Delete the ${formatDate(isoDay(remove.row.effectiveFrom))} price of ${remove.line.commodity}?`} busy={busy} confirmLabel="Delete"
         message={`${shownPrice(remove.row.price)} ${remove.line.currency} effective from ${formatDate(isoDay(remove.row.effectiveFrom))} is removed from SAP.`}
         onClose={() => setRemove(null)} onConfirm={() => { void doRemove(remove.row); }} />}
+      {timeline && view && lines.some(l => l.commodity === timeline) && <PriceTimeline line={lines.find(l => l.commodity === timeline)!} prices={view.tables.prices ?? []} today={today()} busy={busy} onSave={saveOn} onClose={() => setTimeline('')} />}
       <Toast toast={toast} />
     </section>
   );

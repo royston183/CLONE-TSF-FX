@@ -12,8 +12,8 @@
   --ink-soft:#1D2D3E;
   --muted:#5C7085;
   --muted-2:#8CA0B3;
-  --blue:#1F6FEB;
-  --blue-dark:#1657C4;
+  --blue:#0854a0;
+  --blue-dark:#0854a0;
   --blue-pale:#EAF2FF;
   --green:#27AE60;
   --green-pale:#E8F8EF;
@@ -178,9 +178,9 @@
 /* ---------- tables ---------- */
 .mo-execute-settlement-deal-id .table-wrap {overflow-x:auto;}
 .mo-execute-settlement-deal-id table {width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
-.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {white-space:nowrap;padding:9px 11px;text-align:right;}
+.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {white-space:nowrap;padding: 9px 6px;text-align:right;}
 .mo-execute-settlement-deal-id .data-table thead th {
-  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
+  font-size: 11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);
   border-bottom:1px solid var(--border);background:#FBFCFE;position:sticky;top:0;
 }
 .mo-execute-settlement-deal-id .data-table thead th.left {text-align:left;}
@@ -191,7 +191,7 @@
 .mo-execute-settlement-deal-id .data-table tbody tr.row-sel td {background:#fff8ea !important;}
 .mo-execute-settlement-deal-id .data-table tbody tr:last-child td {border-bottom:none;}
 .mo-execute-settlement-deal-id .num {font-variant-numeric:tabular-nums;}
-.mo-execute-settlement-deal-id .empty-row td {text-align:center !important;color:var(--muted);padding:26px 12px;font-style:italic;}
+.mo-execute-settlement-deal-id .empty-row td {text-align:center !important;color:var(--muted);padding: 26px 7px;font-style:italic;}
 .mo-execute-settlement-deal-id .hotspot {color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none;}
 .mo-execute-settlement-deal-id .hotspot:hover {text-decoration:underline;color:var(--blue-dark);}
 .mo-execute-settlement-deal-id .chip {display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;}
@@ -273,7 +273,7 @@
 .mo-execute-settlement-deal-id .form-grid {grid-template-columns:1fr;}
 }
 /* ===== OTTK MASTER UI PROFILE OVERRIDES ===== */
-.mo-execute-settlement-deal-id {--bg:#F4F6F8;--surface:#FFFFFF;--border:#CDD6DF;--border-soft:#E6EBF0;--ink:#1D2D3E;--muted:#5D7287;--blue:#0A72CE;--blue-dark:#075FAE;--blue-pale:#EAF4FC;--green:#118A76;--green-pale:#E1F5F1;--radius-lg:7px;--radius-md:6px;--radius-sm:5px;--shadow:0 1px 3px rgba(29,45,62,.08);}
+.mo-execute-settlement-deal-id {--bg:#F4F6F8;--surface:#FFFFFF;--border:#CDD6DF;--border-soft:#E6EBF0;--ink:#1D2D3E;--muted:#5D7287;--blue:#0854a0;--blue-dark:#06477f;--blue-pale:#EAF4FC;--green:#118A76;--green-pale:#E1F5F1;--radius-lg:7px;--radius-md:6px;--radius-sm:5px;--shadow:0 1px 3px rgba(29,45,62,.08);}
 .mo-execute-settlement-deal-id {background:#F4F6F8;font-size:12px;}
 .mo-execute-settlement-deal-id .page-head {padding:7px 16px;gap:12px;min-height:56px;border-bottom:1px solid #CDD6DF;}
 .mo-execute-settlement-deal-id .head-badge {width:28px;height:34px;border-radius:0;background:none;position:relative;}
@@ -282,7 +282,7 @@
 .mo-execute-settlement-deal-id .page-title {font-size:18px;font-weight:700;}
 .mo-execute-settlement-deal-id .page-code {font-size:12px;color:#74869A;}
 .mo-execute-settlement-deal-id .btn-outline, .mo-execute-settlement-deal-id .btn-primary {height:38px;border-radius:5px;font-size:12px;padding:0 13px;}
-.mo-execute-settlement-deal-id .btn-primary {background:#0A72CE;border-color:#0A72CE;box-shadow:0 2px 5px rgba(10,114,206,.18);}
+.mo-execute-settlement-deal-id .btn-primary {background:#0854a0;border-color:#0854a0;box-shadow:0 2px 5px rgba(10,114,206,.18);}
 .mo-execute-settlement-deal-id .live-dot {width:9px;height:9px;background:#29AE68;box-shadow:0 0 0 3px #DDF4E8;}
 .mo-execute-settlement-deal-id main {max-width:none;margin:0;padding:14px 16px 40px;}
 .mo-execute-settlement-deal-id .select-card {border-radius:7px;box-shadow:var(--shadow);}
@@ -297,17 +297,17 @@
 .mo-execute-settlement-deal-id .btn-icon {height:33px;width:34px;border-radius:4px;border-color:#B7C4D0;}
 .mo-execute-settlement-deal-id .action-toolbar {padding:8px 12px;background:#fff;border-bottom:1px solid #CDD6DF;}
 .mo-execute-settlement-deal-id .action-btn {height:33px;border-radius:5px;font-size:12px;padding:0 11px;}
-.mo-execute-settlement-deal-id .action-btn.primary {background:#0A72CE;border-color:#0A72CE}
+.mo-execute-settlement-deal-id .action-btn.primary {background:#0854a0;border-color:#0854a0}
 .mo-execute-settlement-deal-id .action-btn.success {background:#E1F5F1;border-color:#BDE6DE;color:#087766;}
 .mo-execute-settlement-deal-id .drag-hint {font-size:10.5px;padding:6px 12px;background:#FAFBFC;}
 .mo-execute-settlement-deal-id .table-wrap {background:#fff;}
 .mo-execute-settlement-deal-id table {font-size:12px}
-.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {padding:8px 10px;}
-.mo-execute-settlement-deal-id .data-table thead th {font-size:11px;text-transform:none;letter-spacing:0;color:#405C76;background:#F5F7F9;border-bottom:1px solid #CDD6DF;font-weight:700;}
+.mo-execute-settlement-deal-id .data-table th, .mo-execute-settlement-deal-id .data-table td {padding: 8px 6px;}
+.mo-execute-settlement-deal-id .data-table thead th {font-size: 12.5px;text-transform:none;letter-spacing:0;color:#405C76;background:#F5F7F9;border-bottom:1px solid #CDD6DF;font-weight:700;}
 .mo-execute-settlement-deal-id .data-table tbody td {border-bottom:1px solid #E1E7EC;color:#1D2D3E;}
 .mo-execute-settlement-deal-id .data-table tbody tr:hover td {background:#F7FAFC}
 .mo-execute-settlement-deal-id .data-table tbody tr.row-sel td {background:#EAF4FC !important;}
-.mo-execute-settlement-deal-id .hotspot {color:#0067B8;text-decoration:underline}
+.mo-execute-settlement-deal-id .hotspot {color:#06477f;text-decoration:underline}
 .mo-execute-settlement-deal-id .chip, .mo-execute-settlement-deal-id .pill {border-radius:999px;padding:3px 9px;font-size:10.5px;}
 .mo-execute-settlement-deal-id .pill-done, .mo-execute-settlement-deal-id .chip-done {background:#DDF3EF;color:#087766}
 .mo-execute-settlement-deal-id .pager-row {padding:7px 11px}

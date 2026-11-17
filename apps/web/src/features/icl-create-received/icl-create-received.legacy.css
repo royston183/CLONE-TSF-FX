@@ -20,13 +20,13 @@
 .iclcreate .main-date-item label {height:30px;display:flex;align-items:center;margin-right:7px;color:#1d2d3e;font-size:12px}
 .iclcreate .inline-date-shell {position:relative;display:flex;align-items:center;width:142px;height:30px}
 .iclcreate .inline-date-input {width:142px;height:30px;padding:4px 32px 4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;color:#1d2d3e}
-.iclcreate .inline-date-input:focus, .iclcreate .filter-input:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.iclcreate .inline-date-input:focus, .iclcreate .filter-input:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .iclcreate .inline-calendar-btn {position:absolute;right:1px;top:1px;width:29px;height:28px;padding:0;border:0;border-left:1px solid #e1e6ea;background:#fff}
 .iclcreate .inline-calendar-btn:hover {background:#f7f8f9}
-.iclcreate .inline-calendar-btn:before {content:"";position:absolute;left:8px;top:6px;width:12px;height:13px;border:1px solid #0a6ed1;border-radius:2px}
-.iclcreate .inline-calendar-btn:after {content:"";position:absolute;left:10px;top:11px;width:8px;height:1px;background:#0a6ed1;box-shadow:0 4px #0a6ed1}
+.iclcreate .inline-calendar-btn:before {content:"";position:absolute;left:8px;top:6px;width:12px;height:13px;border:1px solid #0854a0;border-radius:2px}
+.iclcreate .inline-calendar-btn:after {content:"";position:absolute;left:10px;top:11px;width:8px;height:1px;background:#0854a0;box-shadow:0 4px #0854a0}
 .iclcreate .filter-icon-btn {width:36px;height:30px;margin-right:10px;padding:0;border:1px solid #8ea2b5;border-radius:4px;background:#fff;position:relative}
-.iclcreate .filter-icon-btn:hover {background:#f7f8f9;border-color:#0a6ed1}
+.iclcreate .filter-icon-btn:hover {background:#f7f8f9;border-color:#0854a0}
 .iclcreate .filter-icon-btn:before {content:"";position:absolute;left:10px;top:7px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #556b82}
 .iclcreate .filter-icon-btn:after {content:"";position:absolute;left:15px;top:15px;width:4px;height:7px;background:#556b82}
 .iclcreate .filter-body {display:none;height:44px;overflow:visible}
@@ -51,12 +51,12 @@
 .iclcreate .combo-list.open {display:block}
 .iclcreate .combo-option {display:block;width:100%;min-height:29px;padding:6px 8px;border:0;border-bottom:1px solid #eef1f3;background:#fff;text-align:left}
 .iclcreate .combo-option {color:#1d2d3e;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.iclcreate .combo-option:hover {background:#eaf3fc;color:#004b93}
+.iclcreate .combo-option:hover {background:#eaf3fc;color:#06477f}
 .iclcreate .combo-empty {padding:7px 8px;color:#6a6d70;font-size:11px}
-.iclcreate .btn {height:30px;margin-left:7px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:12px;font-weight:600}
+.iclcreate .btn {height:30px;margin-left:7px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:12px;font-weight:600}
 .iclcreate .btn:first-child {margin-left:0}
-.iclcreate .btn:hover {background:#d1e8ff;border-color:#0a6ed1;color:#0854a0}
-.iclcreate .btn-primary {background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+.iclcreate .btn:hover {background:#d1e8ff;border-color:#0854a0;color:#0854a0}
+.iclcreate .btn-primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .iclcreate .btn-primary:hover {background:#0854a0;border-color:#0854a0;color:#fff}
 .iclcreate .btn-ghost {background:#fff;border-color:#d9d9d9;color:#1d2d3e}
 .iclcreate .btn-ghost:hover {background:#f7f8f9;border-color:#b8b8b8;color:#1d2d3e}
@@ -72,9 +72,9 @@
 .iclcreate .card-meta {font-size:11px;color:#6a6d70}
 .iclcreate .table-wrap {width:100%;min-height:0;flex:1 1 auto;overflow:auto;background:#fff}
 .iclcreate .data-table {width:auto;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.iclcreate .data-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 22px 6px 8px;background:#f5f8fa;color:#1d2d3e;border-right:1px solid #d9d9d9}
+.iclcreate .data-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 12px 6px 6px;background:#f5f8fa;color:#1d2d3e;border-right:1px solid #d9d9d9}
 .iclcreate .data-table th {border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap;cursor:pointer}
-.iclcreate .data-table td {height:34px;padding:4px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
+.iclcreate .data-table td {height:34px;padding: 4px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
 .iclcreate .data-table tbody tr:hover td {background:#f2f8fd}
 .iclcreate .data-table tbody tr.selected td {background:#eaf3fc}
 .iclcreate .data-table .number {text-align:right;font-variant-numeric:tabular-nums}
@@ -89,12 +89,12 @@
 .iclcreate .sort-up, .iclcreate .sort-down {position:absolute;left:0;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent}
 .iclcreate .sort-up {top:0;border-bottom:5px solid #9aa7b4}
 .iclcreate .sort-down {bottom:0;border-top:5px solid #9aa7b4}
-.iclcreate th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.iclcreate th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.iclcreate th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.iclcreate th.sort-desc .sort-down {border-top-color:#0854a0}
 .iclcreate .pagination {display:flex;align-items:center;justify-content:flex-end;min-height:42px;padding:7px 10px;background:#fff;border-top:1px solid #e5e9ed}
 .iclcreate .page-btn {min-width:30px;height:28px;margin-left:5px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#1d2d3e;font-size:11px}
 .iclcreate .page-btn:hover {background:#f7f8f9;border-color:#b8b8b8}
-.iclcreate .page-btn.active {background:#eaf3fc;border-color:#0a6ed1;color:#004b93;font-weight:600}
+.iclcreate .page-btn.active {background:#eaf3fc;border-color:#0854a0;color:#06477f;font-weight:600}
 .iclcreate .page-btn:disabled {background:#f7f8f9;color:#9aa7b4}
 .iclcreate .empty {padding:28px;text-align:center;color:#6a6d70}
 .iclcreate .modal-bg {display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:2000;background:rgba(29,45,62,.30);padding:28px 18px;overflow:auto}
@@ -109,13 +109,13 @@
 .iclcreate .dms-detail-label {width:116px;color:#556b82}
 .iclcreate .dms-detail-value {font-weight:600;color:#1d2d3e}
 .iclcreate .dms-table {width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.iclcreate .dms-table th {height:34px;padding:6px 8px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
-.iclcreate .dms-table td {height:40px;padding:5px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
+.iclcreate .dms-table th {height:34px;padding: 6px 6px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
+.iclcreate .dms-table td {height:40px;padding: 5px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
 .iclcreate .path-cell {min-width:250px;max-width:360px;height:30px;display:flex;align-items:center;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;cursor:pointer}
 .iclcreate .path-cell span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .iclcreate .path-cell.disabled {background:#f7f8f9;color:#6a6d70;cursor:default}
-.iclcreate .action-btn {height:28px;min-width:72px;padding:0 10px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:11px;font-weight:600}
-.iclcreate .action-btn:hover {background:#d1e8ff;border-color:#0a6ed1}
+.iclcreate .action-btn {height:28px;min-width:72px;padding:0 10px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:11px;font-weight:600}
+.iclcreate .action-btn:hover {background:#d1e8ff;border-color:#0854a0}
 .iclcreate .action-btn:disabled {background:#f2f4f5;border-color:#e1e6ea;color:#9aa7b4}
 .iclcreate .toast-region {position:fixed;right:22px;bottom:28px;z-index:4000;width:360px;max-width:calc(100% - 44px)}
 .iclcreate .toast {display:flex;margin-top:8px;padding:12px 14px;background:#f2f4f5;border:1px solid #d9d9d9;border-left:3px solid #a8b3bd;border-radius:4px}
@@ -128,7 +128,7 @@
 .iclcreate .toast-message {color:#556b82;font-size:12px;line-height:17px}
 .iclcreate .statusbar {position:fixed;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;padding:0 12px;background:#fff;border-top:1px solid #e1e6ea;color:#6a6d70}
 .iclcreate .statusbar {font-size:11px;z-index:900}
-.iclcreate .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0a6ed1}
+.iclcreate .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0854a0}
 .iclcreate .calendar-popup {display:none;position:absolute;z-index:2600;top:34px;left:0;width:294px;border:1px solid #9aa7b4;border-radius:5px;background:#fff;overflow:hidden}
 .iclcreate .calendar-popup.open {display:block}
 .iclcreate .calendar-top {height:44px;display:flex;align-items:center;padding:0 12px;background:#fff}
@@ -145,20 +145,20 @@
 .iclcreate .calendar-week span {width:14.285%;height:26px;display:flex;align-items:center;justify-content:center;color:#556b82;font-size:10px;font-weight:600}
 .iclcreate .calendar-days {display:flex;flex-wrap:wrap;padding:0 12px 8px}
 .iclcreate .calendar-cell {width:14.285%;height:32px;border:0;border-radius:3px;background:#fff;color:#1d2d3e;font-size:11px}
-.iclcreate .calendar-cell:hover {background:#eaf3fc;color:#004b93}
+.iclcreate .calendar-cell:hover {background:#eaf3fc;color:#06477f}
 .iclcreate .calendar-cell.other {color:#8a9bad}
-.iclcreate .calendar-cell.selected {background:#eaf3fc;box-shadow:inset 0 0 0 2px #0a6ed1}
+.iclcreate .calendar-cell.selected {background:#eaf3fc;box-shadow:inset 0 0 0 2px #0854a0}
 .iclcreate .calendar-foot {height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-top:1px solid #e1e6ea}
-.iclcreate .calendar-foot-btn {border:0;background:#fff;color:#0a6ed1;font-size:11px;font-weight:600;padding:5px 0}
+.iclcreate .calendar-foot-btn {border:0;background:#fff;color:#0854a0;font-size:11px;font-weight:600;padding:5px 0}
 .iclcreate .calendar-picker {padding:8px 10px 10px}
 .iclcreate .month-grid {display:flex;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid #e1e6ea}
 .iclcreate .month-btn {width:24%;height:34px;margin:.5%;border:0;border-radius:3px;background:#f2f4f5;color:#1d2d3e;font-size:11px;font-weight:600}
 .iclcreate .month-btn:hover {background:#eaf3fc}
-.iclcreate .month-btn.selected {background:#0a6ed1;color:#fff}
+.iclcreate .month-btn.selected {background:#0854a0;color:#fff}
 .iclcreate .year-list {display:block;width:100%;height:128px;margin-top:7px;overflow-y:auto;overflow-x:hidden}
 .iclcreate .year-btn {display:block;width:100%;height:31px;margin-bottom:2px;border:0;background:#f2f4f5;color:#1d2d3e;text-align:left;padding:0 8px;font-size:11px}
 .iclcreate .year-btn:hover {background:#eaf3fc}
-.iclcreate .year-btn.selected {background:#eaf3fc;color:#004b93;font-weight:600}
+.iclcreate .year-btn.selected {background:#eaf3fc;color:#06477f;font-weight:600}
 @media screen and (max-width:1180px) {
 .iclcreate .selection-row {overflow-x:auto}
 .iclcreate .content {padding-left:8px;padding-right:8px}

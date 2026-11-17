@@ -101,11 +101,11 @@
 .tsfx :is(.app,.ds-overlay) :is(th.ds-cb,th.ds-flag){text-align:center}
 .tsfx :is(.app,.ds-overlay) .sort-th{justify-content:flex-start;text-align:left}
 .tsfx :is(.app,.ds-overlay) :is(th.kit-num,th.md-amt) :is(.sort-th,.ds-sort){flex-direction:row-reverse;justify-content:flex-start;text-align:right}
-.tsfx :is(.app,.ds-overlay) th.kit-num .ds-th{flex-direction:row-reverse;padding:0 12px 0 6px}
-.tsfx :where(.ds-table) th:not(.sortable){padding:8px 12px}
-.tsfx :where(.ds-table) th.sortable{padding:0}
-.tsfx .md-table th.md-amt:not(.sortable),.tsfx .md-table th.md-amt .sort-th,.tsfx .ds-modal .md-table th.md-amt .sort-th{padding-right:8px}
-.tsfx .ov-stmt th.md-amt:has(>.ov-bucket-btn){padding:0}
+.tsfx :is(.app,.ds-overlay) th.kit-num .ds-th{flex-direction:row-reverse;padding: 0 7px 0 6px}
+.tsfx :where(.ds-table) th:not(.sortable){padding: 8px 7px}
+.tsfx :where(.ds-table) th.sortable{padding: 0 0}
+.tsfx .md-table th.md-amt:not(.sortable),.tsfx .md-table th.md-amt .sort-th,.tsfx .ds-modal .md-table th.md-amt .sort-th{padding-right: 6px}
+.tsfx .ov-stmt th.md-amt:has(>.ov-bucket-btn){padding: 0 0}
 .tsfx .ov-stmt .ov-bucket-btn{text-align:right}
 /* The transaction pop-up (components/trm): SAP Reporting's label width, loading line, class pagination and lookup preview
    (kept out of trmdeal.css, which stays a byte-identical copy of ALM's). */
@@ -118,8 +118,8 @@
 .tsfx .td-pagination{padding:12px 0 0}
 .tsfx .td-table .num{text-align:right;font-variant-numeric:tabular-nums}
 /* The flow grids keep their own compact cells inside the pop-up, heading and cell on the same side padding. */
-.tsfx .ds-modal .ds-table.ftr-grid th{padding:6px 10px}
-.tsfx .ds-modal .ds-table.ftr-grid td{padding:5px 10px}
+.tsfx .ds-modal .ds-table.ftr-grid th{padding: 6px 6px}
+.tsfx .ds-modal .ds-table.ftr-grid td{padding: 5px 6px}
 .tsfx .transaction-hotspot-preview{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:7px;background:var(--bg);padding:12px;margin-top:18px;font-size:12px}
 .tsfx .transaction-hotspot-preview>span{color:var(--muted)}
 .tsfx .transaction-hotspot-preview .td-link{display:inline-flex;align-items:center;gap:5px}

@@ -79,15 +79,15 @@
 .tsfx .kit-amount-toolbar .kit-amount-unit{width:120px;min-height:30px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
 /* A single column plan, including sortable headers, controls, subheaders and totals. */
 .tsfx .kit-data-table{table-layout:fixed;width:var(--kit-table-width,100%);max-width:none;font-variant-numeric:tabular-nums}
-.tsfx .kit-data-table.ds-table :is(th,td){box-sizing:border-box;padding:8px 12px;white-space:normal;overflow-wrap:anywhere;vertical-align:middle}
+.tsfx .kit-data-table.ds-table :is(th,td){box-sizing:border-box;padding: 8px 7px;white-space:normal;overflow-wrap:anywhere;vertical-align:middle}
 .tsfx .kit-data-table.ds-table [data-table-align=left]{text-align:left}
 .tsfx .kit-data-table.ds-table [data-table-align=right]{text-align:right}
 .tsfx .kit-data-table.ds-table [data-table-align=center]{text-align:center}
 .tsfx .kit-data-table.ds-table [data-table-kind=flag],.tsfx .kit-data-table.ds-table [data-table-kind=actions]{padding:6px;text-align:center}
 .tsfx .kit-data-table.ds-table :is([data-table-kind=date],[data-table-kind=number],[data-table-kind=amount]){white-space:nowrap}
 .tsfx .kit-data-table.ds-table td[data-table-kind=code],.tsfx .kit-data-table.ds-table td[data-table-kind=code] :is(a,button),.tsfx .kit-data-table .kit-status{white-space:nowrap;overflow-wrap:normal}
-.tsfx .kit-data-table.ds-table th:is(.sortable,:has(>.ov-bucket-btn)){padding:8px 12px}
-.tsfx .kit-data-table.ds-table th :is(.sort-th,.ds-sort,.ds-th,.ov-bucket-btn){padding:0;min-width:0;width:100%;white-space:normal;line-height:1.5;text-align:inherit}
+.tsfx .kit-data-table.ds-table th:is(.sortable,:has(>.ov-bucket-btn)){padding: 8px 7px}
+.tsfx .kit-data-table.ds-table th :is(.sort-th,.ds-sort,.ds-th,.ov-bucket-btn){padding: 0 0;min-width:0;width:100%;white-space:normal;line-height:1.5;text-align:inherit}
 .tsfx .kit-data-table.ds-table th .ds-th{gap:5px}
 .tsfx .kit-data-table.ds-table th .ds-sort{flex:1}
 .tsfx .kit-data-table.ds-table th .ds-flt{flex:0 0 auto}
@@ -95,7 +95,7 @@
 .tsfx .kit-data-table.ds-table th[data-table-align=left] :is(.sort-th,.ds-sort){flex-direction:row;justify-content:flex-start}
 .tsfx .kit-data-table.ds-table th[data-table-align=center] :is(.sort-th,.ds-sort){justify-content:center}
 .tsfx .kit-data-table.ds-table th[data-table-align=right] .ds-th{flex-direction:row-reverse}
-.tsfx .kit-data-table.ds-grid td{padding:4px 12px}
+.tsfx .kit-data-table.ds-grid td{padding: 4px 7px}
 .tsfx .kit-data-table.ds-grid :is(input.ds-cell,select.ds-cell){box-sizing:border-box;max-width:100%;min-width:0;padding-inline:0}
 .tsfx .kit-data-table.ds-grid .ds-inline{max-width:100%;min-width:0}
 .tsfx .kit-data-table.ds-grid .kit-range{max-width:100%}

@@ -1,3 +1,5 @@
+import { useMiddlewareOnly } from '../../shared/fx/odata-source.ts'
+useMiddlewareOnly()
 import { deepStrictEqual, ok, strictEqual } from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import {

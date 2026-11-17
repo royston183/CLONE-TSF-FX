@@ -26,7 +26,7 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .icldeposit .field {display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px}
 .icldeposit .field label {color:#1d2d3e;font-size:12px;font-weight:400}
 .icldeposit .input, .icldeposit .select {height:30px;width:100%;max-width:310px;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;color:#1d2d3e;font-size:12px}
-.icldeposit .input:focus, .icldeposit .select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.icldeposit .input:focus, .icldeposit .select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .icldeposit .selection-main-row {display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .icldeposit .structure-field {width:auto;grid-template-columns:150px 230px;gap:10px}
 .icldeposit .structure-field .select, .icldeposit .structure-field .input {width:230px;max-width:230px}
@@ -37,16 +37,16 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .icldeposit .date-input-wrap {position:relative;width:230px;max-width:230px}
 .icldeposit .date-input-wrap .input {width:100%;max-width:none;padding-right:26px}
 .icldeposit .calendar-btn-wrap {position:absolute;right:5px;top:50%;transform:translateY(-50%);width:16px;height:16px}
-.icldeposit .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0a6ed1;border-radius:2px;position:relative;
-background:linear-gradient(#0a6ed1,#0a6ed1) top/100% 4px no-repeat,
+.icldeposit .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0854a0;border-radius:2px;position:relative;
+background:linear-gradient(#0854a0,#0854a0) top/100% 4px no-repeat,
 repeating-linear-gradient(90deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,
 repeating-linear-gradient(0deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,#ffffff}
-.icldeposit .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
-.icldeposit .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
+.icldeposit .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
+.icldeposit .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
 .icldeposit .calendar-btn-wrap:hover .calendar-btn {border-color:#0854a0}
 .icldeposit .calendar-native {position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer}
 .icldeposit .filter-icon-btn {width:30px;height:30px;padding:0;border:1px solid #b8b8b8;border-radius:4px;background:#fff;position:relative}
-.icldeposit .filter-icon-btn:hover {background:#f7f8f9;border-color:#0a6ed1}
+.icldeposit .filter-icon-btn:hover {background:#f7f8f9;border-color:#0854a0}
 .icldeposit .filter-icon-btn:before {content:"";position:absolute;left:8px;top:7px;width:0;height:0;border-left:7px solid transparent;
 border-right:7px solid transparent;border-top:9px solid #556b82}
 .icldeposit .filter-icon-btn:after {content:"";position:absolute;left:13px;top:14px;width:3px;height:7px;background:#556b82}
@@ -61,9 +61,9 @@ border-right:7px solid transparent;border-top:9px solid #556b82}
 .icldeposit .table-card {overflow:hidden}
 .icldeposit .table-wrap {width:100%;overflow:auto;background:#fff}
 .icldeposit .data-table {width:100%;min-width:1000px;border-collapse:separate;border-spacing:0;font-size:12px}
-.icldeposit .data-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 24px 6px 8px;background:#f5f8fa;color:#1d2d3e;
+.icldeposit .data-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 13px 6px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
-.icldeposit .data-table td {height:34px;padding:4px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
+.icldeposit .data-table td {height:34px;padding: 4px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
 .icldeposit .data-table tbody tr:hover td {background:#f2f8fd}
 .icldeposit .data-table tbody tr.selected td {background:#eaf3fc}
 .icldeposit .data-table .number {text-align:right;font-variant-numeric:tabular-nums}
@@ -71,31 +71,31 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .icldeposit .sort-up, .icldeposit .sort-down {position:absolute;left:0;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent}
 .icldeposit .sort-up {top:0;border-bottom:5px solid #9aa7b4}
 .icldeposit .sort-down {bottom:0;border-top:5px solid #9aa7b4}
-.icldeposit th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.icldeposit th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.icldeposit th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.icldeposit th.sort-desc .sort-down {border-top-color:#0854a0}
 .icldeposit .money {text-align:right;font-variant-numeric:tabular-nums}
 .icldeposit .badge {display:inline-block;padding:3px 7px;border-radius:10px;font-size:10px;font-weight:600}
 .icldeposit .badge-open {background:#fff4e5;color:#8d4f00}
-.icldeposit .badge-created {background:#eaf3fc;color:#004b93}
+.icldeposit .badge-created {background:#eaf3fc;color:#06477f}
 .icldeposit .badge-closed {background:#ebf5eb;color:#107e3e}
 .icldeposit .actions {display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:14px}
-.icldeposit .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:12px;font-weight:600}
-.icldeposit .btn:hover {background:#d1e8ff;border-color:#0a6ed1;color:#0854a0}
-.icldeposit .btn-primary {background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+.icldeposit .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:12px;font-weight:600}
+.icldeposit .btn:hover {background:#d1e8ff;border-color:#0854a0;color:#0854a0}
+.icldeposit .btn-primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .icldeposit .btn-primary:hover {background:#0854a0;border-color:#0854a0;color:#fff}
 .icldeposit .btn-ghost {background:#fff;border-color:#d9d9d9;color:#1d2d3e}
 .icldeposit .btn-ghost:hover {background:#f7f8f9;border-color:#b8b8b8;color:#1d2d3e}
-.icldeposit .btn-icon {width:30px;height:30px;padding:0;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:14px;font-weight:700}
-.icldeposit .btn-icon:hover {background:#d1e8ff;border-color:#0a6ed1}
+.icldeposit .btn-icon {width:30px;height:30px;padding:0;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:14px;font-weight:700}
+.icldeposit .btn-icon:hover {background:#d1e8ff;border-color:#0854a0}
 .icldeposit .pagination-bar {display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:8px 10px;background:#fff;border-top:1px solid #e5e9ed}
 .icldeposit .page-btn {min-width:30px;height:28px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#1d2d3e;font-size:11px}
 .icldeposit .page-btn:hover {background:#f7f8f9;border-color:#b8b8b8}
-.icldeposit .page-btn.active {background:#eaf3fc;border-color:#0a6ed1;color:#004b93;font-weight:600}
+.icldeposit .page-btn.active {background:#eaf3fc;border-color:#0854a0;color:#06477f;font-weight:600}
 .icldeposit .page-btn:disabled {background:#f7f8f9;color:#9aa7b4}
 .icldeposit .empty {padding:28px;text-align:center;color:#6a6d70}
 .icldeposit .workspace-tabs {display:flex;align-items:center;gap:0;margin-bottom:8px;border-bottom:1px solid #d9d9d9}
 .icldeposit .workspace-tab {padding:9px 14px;border:0;border-bottom:2px solid transparent;background:transparent;color:#6a6d70;font-size:12px;font-weight:600}
-.icldeposit .workspace-tab.active {color:#0a6ed1;border-bottom-color:#0a6ed1}
+.icldeposit .workspace-tab.active {color:#0854a0;border-bottom-color:#0854a0}
 .icldeposit .workspace-tab.done {color:#6a6d70}
 .icldeposit .workspace-tab:disabled {opacity:1;cursor:default}
 .icldeposit .detail-grid {display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:10px 34px}
@@ -114,17 +114,17 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .icldeposit .detail-control-sm {width:160px!important;max-width:160px!important}
 .icldeposit .detail-control-md {width:230px!important;max-width:230px!important}
 .icldeposit .edit-table {width:100%;min-width:1080px;border-collapse:separate;border-spacing:0;font-size:12px}
-.icldeposit .edit-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 24px 6px 8px;background:#f5f8fa;color:#1d2d3e;
+.icldeposit .edit-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 13px 6px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
 .icldeposit .edit-table td {height:38px;padding:4px 6px;background:#f7f8f9;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
 .icldeposit .edit-table td.editable {background:#fff}
 .icldeposit .cell-input, .icldeposit .cell-select {width:100%;min-width:90px;height:28px;padding:3px 6px;border:1px solid transparent;border-radius:3px;background:#fff;color:#1d2d3e;font-size:12px}
 .icldeposit .cell-input:hover, .icldeposit .cell-select:hover {border-color:#b8b8b8}
-.icldeposit .cell-input:focus, .icldeposit .cell-select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.icldeposit .cell-input:focus, .icldeposit .cell-select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .icldeposit .cell-input[readonly] {background:transparent;color:#556b82}
 .icldeposit .icon-cell {text-align:center}
 .icldeposit .inline-actions {display:flex;align-items:center;gap:6px;justify-content:center}
-.icldeposit .link-button {border:0;background:transparent;color:#0a6ed1;text-decoration:underline;padding:0;font-size:12px;font-weight:600}
+.icldeposit .link-button {border:0;background:transparent;color:#0854a0;text-decoration:underline;padding:0;font-size:12px;font-weight:600}
 .icldeposit .section-copy {margin-top:2px;color:#6a6d70;font-size:11px}
 .icldeposit .modal-bg {display:none;position:fixed;inset:0;z-index:2000;background:rgba(29,45,62,.30);padding:28px 18px;overflow:auto}
 .icldeposit .modal-bg.open {display:block}
@@ -139,8 +139,8 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .icldeposit .search-row {display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .icldeposit .search-input {height:30px;flex:1;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;font-size:12px}
 .icldeposit .bank-table {width:100%;min-width:760px;border-collapse:separate;border-spacing:0}
-.icldeposit .bank-table th {position:sticky;top:0;padding:7px 22px 7px 7px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
-.icldeposit .bank-table td {padding:7px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
+.icldeposit .bank-table th {position:sticky;top:0;padding: 7px 12px 7px 6px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
+.icldeposit .bank-table td {padding: 7px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
 .icldeposit .bank-table tr:hover td {background:#f2f8fd}
 .icldeposit .bank-table tr.selected td {background:#eaf3fc}
 .icldeposit .toast-region {position:fixed;right:22px;bottom:28px;z-index:4000;width:350px;max-width:calc(100% - 44px)}
@@ -155,7 +155,7 @@ border-left:3px solid #a8b3bd;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,
 .icldeposit .toast-message {color:#556b82;font-size:12px;line-height:17px}
 .icldeposit .statusbar {position:fixed;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;padding:0 12px;background:#fff;
 border-top:1px solid #e1e6ea;color:#6a6d70;font-size:11px;z-index:900}
-.icldeposit .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0a6ed1}
+.icldeposit .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0854a0}
 @media screen and (max-width:980px) {
 .icldeposit .detail-grid {grid-template-columns:1fr}
 .icldeposit .content {padding-left:8px;padding-right:8px}

@@ -61,7 +61,7 @@ export function TxnListModal({
       <div className="modal-card" style={{ maxWidth: 'min(1200px, 96vw, calc(100vw - 40px))' }}>
         <ModalHeader
           title="FX Transaction List"
-          subtitle="Standalone representation of ZSGTSF_RFX_LIST"
+          subtitle="Transaction list"
           onClose={close}
         />
         <div className="modal-body">

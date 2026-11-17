@@ -27,6 +27,17 @@ const PASSTHROUGH = ['content-type', 'odata-entityid', 'location', 'odata-versio
  * the ONLY status that means "disconnected". Every other status, success or failure,
  * means the backend answered — a 400 on a bad save must not paint the UI as offline.
  */
+/**
+ * The Accept header sent to the backend: JSON, except XML when the caller asks for it ($metadata is only served as XML)
+ * and multipart/mixed on a $batch (its answer is multipart; SAP refuses JSON there with 406 Not Acceptable).
+ */
+export function upstreamAccept(accept: string | undefined, path: string): string {
+  if (!accept) return 'application/json'
+  if (/xml/i.test(accept)) return accept
+  if (/^multipart\/mixed/i.test(accept.trim()) && path.replace(/^\/+/, '').startsWith('$batch')) return accept
+  return 'application/json'
+}
+
 export async function proxyRequest(
   service: Service,
   method: string,
@@ -36,7 +47,7 @@ export async function proxyRequest(
   contentType: string | undefined,
   /** A managed RAP entity with an ETag refuses an update without If-Match (428), so it is forwarded. */
   ifMatch?: string | undefined,
-  /** What the caller accepts. JSON unless it asks for XML: $metadata is only served as XML (406 otherwise). */
+  /** What the caller accepts. JSON unless it asks for XML ($metadata is only served as XML, 406 otherwise) or, on `$batch`, for multipart/mixed (its answer is multipart, 406 for JSON). */
   accept?: string | undefined,
   /** `odata.maxpagesize=…`: how many rows a page may hold (the Trade Flows screens read whole entity sets by paging). */
   prefer?: string | undefined,
@@ -48,7 +59,7 @@ export async function proxyRequest(
   if (needsToken && !session.token) await fetchCsrfToken(service)
 
   const attempt = async (): Promise<ProxyResult> => {
-    const headers: Record<string, string> = { accept: accept && /xml/i.test(accept) ? accept : 'application/json' }
+    const headers: Record<string, string> = { accept: upstreamAccept(accept, path) }
     if (service.authHeader) headers['authorization'] = service.authHeader
     if (contentType) headers['content-type'] = contentType
     if (ifMatch && WRITE_METHODS.has(method)) headers['if-match'] = ifMatch

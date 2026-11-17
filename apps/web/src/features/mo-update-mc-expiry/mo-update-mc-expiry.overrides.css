@@ -16,7 +16,7 @@
 /* 1. Tokens: OTTK palette and shape. --bg/--card/--text/--border/--blue-soft/... are remapped
    at night by the dark sheet (higher specificity), so only identity colours are set here. */
 .moume {
-  --blue-hover: #085caf;
+  --blue-hover: #06477f;
   --blue2: #4fa3e8;
   --blue-soft: #eaf3fc;
   --error-soft: #fceaea;
@@ -46,12 +46,12 @@
 /* 8. Table: muted uppercase 13px sticky header on a secondary surface, 14px data */
 .moume table.data-table thead th {
   background: var(--surface-2);
-  font-size: 13px;
+  font-size: 14.5px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 .moume table.data-table tbody td,
-.moume .mc-link { font-size: 14px; }
+.moume .mc-link { font-size: 15.5px; }
 .moume table.data-table tbody td.num-cell,
 .moume table.data-table tbody td.date-cell { font-variant-numeric: tabular-nums; }
 .moume table.data-table tbody td.num-cell { text-align: right; }
@@ -74,7 +74,7 @@
   border-color: var(--blue) !important;
   background: var(--blue-soft) !important;
   color: var(--blue) !important;
-  box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.12);
+  box-shadow: 0 0 0 2px rgba(8,84,160, 0.12);
 }
 .moume .drag-ghost { font-family: inherit; }
 

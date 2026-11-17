@@ -35,7 +35,7 @@
 /* Statement summary tables: buckets across, rows down; the row label column stays in view on a sideways scroll. */
 .tsfx .ov-stmt-wrap{max-height:none;border:1px solid var(--line);border-radius:8px}
 .tsfx .ov-stmt .md-id{min-width:260px;white-space:normal}
-.tsfx .ov-stmt th.md-amt{padding:0;white-space:normal;min-width:88px}
+.tsfx .ov-stmt th.md-amt{padding: 0 0;white-space:normal;min-width:88px}
 .tsfx .ov-bucket-btn{width:100%;border:0;background:none;padding:8px 8px;font:inherit;color:inherit;cursor:pointer;text-align:center;white-space:normal}
 .tsfx .ov-bucket-btn:hover{color:var(--blue)}
 .tsfx .ov-stmt :is(th,td).on{background:var(--pale)}
@@ -63,7 +63,7 @@
 .tsfx .ov-turn.user{align-self:flex-end;background:var(--pale);color:var(--blue);max-width:80%}.tsfx .ov-turn.assistant{background:var(--bg)}
 .tsfx .ov-suggest{display:flex;gap:8px;flex-wrap:wrap}
 .tsfx .ov-whatif{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:var(--surface);white-space:normal}
-.tsfx .ov-whatif b{display:flex;align-items:center;gap:6px;font-size:11.5px}.tsfx .ov-whatif table{font-size:11.5px;margin-top:6px}.tsfx .ov-whatif td,.tsfx .ov-whatif th{padding:4px 8px}
+.tsfx .ov-whatif b{display:flex;align-items:center;gap:6px;font-size:11.5px}.tsfx .ov-whatif table{font-size:11.5px;margin-top:6px}.tsfx .ov-whatif td,.tsfx .ov-whatif th{padding: 4px 6px}
 .tsfx .ov-ask{display:flex;gap:8px}.tsfx .ov-ask input{flex:1;min-height:34px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text);font-size:12.5px}
 .tsfx .ov-ai-note{font-size:10.5px;color:var(--muted);margin:0}.tsfx .ov-ai-error{display:flex;align-items:center;gap:6px;color:var(--ov-red);font-size:12px;margin:0}
 @media(max-width:750px){.tsfx .ov-two{grid-template-columns:1fr}.tsfx .ov-ai-head .button{margin-left:0}}
@@ -132,7 +132,7 @@
 .tsfx .ov-md pre{overflow:auto;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--line)}.tsfx .ov-md pre code{border:0;padding:0}
 .tsfx .ov-md hr{border:0;border-top:1px solid var(--line)}
 .tsfx .ov-md-table{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
-.tsfx .ov-md-table table{font-size:11.5px;width:100%}.tsfx .ov-md-table th{position:static;padding:7px 10px;white-space:nowrap;text-align:left}.tsfx .ov-md-table td{padding:6px 10px;white-space:nowrap}
+.tsfx .ov-md-table table{font-size:11.5px;width:100%}.tsfx .ov-md-table th{position:static;padding: 7px 6px;white-space:nowrap;text-align:left}.tsfx .ov-md-table td{padding: 6px 6px;white-space:nowrap}
 .tsfx .ov-md-table .num{text-align:right;font-variant-numeric:tabular-nums}.tsfx .ov-md-table tbody tr:last-child td{border-bottom:0}.tsfx .ov-md-table tbody tr:hover td{background:var(--bg)}
 .tsfx .ov-ch{margin:2px 0;padding:10px 12px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .tsfx .ov-ch figcaption{font-size:12px;font-weight:700;margin-bottom:6px}

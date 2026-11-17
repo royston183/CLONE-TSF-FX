@@ -1,0 +1,20 @@
+/* Master Contract status: plain coloured text, no badge. Created red, In Use yellow, Released to MO green. */
+[data-mcs='created'] { --mcs-fg: #dc2626; --mcs-dot: #dc2626; }
+[data-mcs='inuse'] { --mcs-fg: #ca8a04; --mcs-dot: #eab308; }
+[data-mcs='released'] { --mcs-fg: #16a34a; --mcs-dot: #16a34a; }
+
+:root[data-theme='dark'] [data-mcs='created'] { --mcs-fg: #f87171; }
+:root[data-theme='dark'] [data-mcs='inuse'] { --mcs-fg: #facc15; }
+:root[data-theme='dark'] [data-mcs='released'] { --mcs-fg: #4ade80; }
+
+[data-mcs].status-text,
+[data-mcs].status-pill,
+[data-mcs].status-cell {
+  color: var(--mcs-fg) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  font-weight: 700;
+}
+[data-mcs] .status-dot { display: none !important; }

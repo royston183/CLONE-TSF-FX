@@ -6,18 +6,18 @@
  * appearance properties are superseded here. Do not override display/state classes.
  */
 .tsfx #tsfx-alm-ui {
-  --alm-bg: #f4f7fb;
+  --alm-bg: #eef2f8;
   --alm-surface: #fff;
-  --alm-text: #22354c;
-  --alm-heading: #16314f;
-  --alm-muted: #718096;
-  --alm-label: #4a5e76;
-  --alm-line: #e6ebf2;
-  --alm-input-line: #d9e1eb;
-  --alm-blue: #1265c8;
-  --alm-button: #1265c8;
-  --alm-pale: #eaf3ff;
-  --alm-row: #f7faff;
+  --alm-text: #2b3f5c;
+  --alm-heading: #1d3557;
+  --alm-muted: #6b7f99;
+  --alm-label: #5b6f8a;
+  --alm-line: #e2e8f4;
+  --alm-input-line: #cfdaed;
+  --alm-blue: #0854a0;
+  --alm-button: #0854a0;
+  --alm-pale: #e8f1fb;
+  --alm-row: #f0f6fd;
   --alm-ok: #1e8a5a;
   --alm-ok-bg: #e5f5ee;
   --alm-bad: #c0392b;
@@ -45,7 +45,7 @@
   --alm-line: #2a3e53;
   --alm-input-line: #2a3e53;
   --alm-blue: #78b7ff;
-  --alm-button: #2464a7;
+  --alm-button: #0854a0;
   --alm-pale: #17304a;
   --alm-row: #1d3044;
   --alm-ok: #8cdabf;
@@ -142,12 +142,12 @@
 }
 .tsfx #tsfx-alm-ui table thead th,
 .tsfx #tsfx-alm-ui :is(#mc-table, #fx-table) thead th {
-  padding: 9px 12px !important; font-size: 11px !important; font-weight: 600 !important;
+  padding: 9px 7px !important; font-size: 12.5px !important; font-weight: 600 !important;
   text-transform: none !important; text-align: center !important;
   color: var(--alm-muted) !important; background: var(--alm-bg) !important;
 }
 .tsfx #tsfx-alm-ui table tbody td,
-.tsfx #tsfx-alm-ui :is(#mc-table, #fx-table) tbody td { padding: 8px 12px !important; font-size: 12px !important; font-weight: 400; color: var(--alm-text) !important; background: var(--alm-surface) !important; }
+.tsfx #tsfx-alm-ui :is(#mc-table, #fx-table) tbody td { padding: 8px 7px !important; font-size: 13.5px !important; font-weight: 400; color: var(--alm-text) !important; background: var(--alm-surface) !important; }
 .tsfx #tsfx-alm-ui table tbody tr { transform: none; box-shadow: none; }
 .tsfx #tsfx-alm-ui table tbody tr:hover { transform: none; box-shadow: none; }
 .tsfx #tsfx-alm-ui table tbody tr:hover td,
@@ -210,8 +210,8 @@
 .tsfx #tsfx-alm-ui :is(.modal-subtitle, .modal-head-row .mh-sub) { font-size: 12px; color: var(--alm-muted); }
 .tsfx #tsfx-alm-ui :is(.modal-body, .modal-body-scroll) { min-height: 0; padding: 14px 18px; overflow: auto; background: var(--alm-surface) !important; color: var(--alm-text); font-size: 12.5px; }
 .tsfx #tsfx-alm-ui :is(.modal-footer, .modal-foot, .modal-actions) { flex-wrap: wrap; gap: 8px; padding: 12px 18px; background: var(--alm-surface) !important; border-top: 1px solid var(--alm-line); }
-.tsfx #tsfx-alm-ui :is(.modal, .modal-card) table th { font-size: 11.5px !important; padding: 10px 12px !important; }
-.tsfx #tsfx-alm-ui :is(.modal, .modal-card) table td { font-size: 12.5px !important; padding: 9px 12px !important; }
+.tsfx #tsfx-alm-ui :is(.modal, .modal-card) table th { font-size: 13px !important; padding: 10px 7px !important; }
+.tsfx #tsfx-alm-ui :is(.modal, .modal-card) table td { font-size: 14px !important; padding: 9px 7px !important; }
 .tsfx #tsfx-alm-ui :is(.detail-lbl, .detail-label, .dl) { font-size: 11px; font-weight: 600; color: var(--alm-muted); }
 .tsfx #tsfx-alm-ui :is(.detail-val, .detail-value, .dv) { font-size: 13px; font-weight: 600; color: var(--alm-text); overflow-wrap: anywhere; }
 .tsfx #tsfx-alm-ui :is(.dd-menu, .dropdown-panel, .sdd-pop, .calendar-pop, .dp-popup, .cal-popup) { border-color: var(--alm-line); border-radius: 8px; background: var(--alm-surface); color: var(--alm-text); }
@@ -230,9 +230,9 @@
 .tsfx:has(#tsfx-alm-ui) :is(.std-pop-overlay, .slc-dialog-overlay, .slc-select-search) { font-family: 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif; }
 .tsfx:has(#tsfx-alm-ui) .std-pop-overlay {
   --sp-font: 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
-  --sp-card: #fff; --sp-text: #22354c; --sp-muted: #718096; --sp-faint: #718096;
-  --sp-border: #e6ebf2; --sp-border-strong: #d9e1eb; --sp-card-border: #e6ebf2; --sp-box: #f4f7fb;
-  --sp-primary: #1265c8; --sp-primary-dark: #1265c8; --sp-primary-tint: #eaf3ff;
+  --sp-card: #fff; --sp-text: #2b3f5c; --sp-muted: #6b7f99; --sp-faint: #6b7f99;
+  --sp-border: #e2e8f4; --sp-border-strong: #cfdaed; --sp-card-border: #e2e8f4; --sp-box: #eef2f8;
+  --sp-primary: #0854a0; --sp-primary-dark: #0854a0; --sp-primary-tint: #e8f1fb;
   --sp-success: #1e8a5a; --sp-success-tint: #e5f5ee; --sp-error: #c0392b; --sp-error-tint: #fff1f0;
   --sp-shadow: 0 24px 60px -12px #0b1a2b80;
   background: #0b1a2b73;

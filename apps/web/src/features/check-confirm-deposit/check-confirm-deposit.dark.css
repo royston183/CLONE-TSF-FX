@@ -62,7 +62,7 @@
   color: #e6eef8;
 }
 :root[data-theme='dark'] .ccdeposit .calendar-btn {
-  background: linear-gradient(#0a6ed1,#0a6ed1) top/100% 4px no-repeat,
+  background: linear-gradient(#0854a0,#0854a0) top/100% 4px no-repeat,
 repeating-linear-gradient(90deg,#1e4368 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,
 repeating-linear-gradient(0deg,#1e4368 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,#14212f;
 }

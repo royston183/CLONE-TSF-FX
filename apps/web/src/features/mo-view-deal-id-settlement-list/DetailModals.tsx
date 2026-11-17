@@ -120,7 +120,7 @@ export function McModal({
       <ModalHeader
         icon={'\u{1F4C4}'}
         title={mc ? `Master Contract ${mc.mcRef}` : 'Master Contract Details'}
-        subtitle={mc ? `Function module ZSGTSFFM_MC_DETAILS · ${mc.commodityDesc}` : 'Function module ZSGTSFFM_MC_DETAILS'}
+        subtitle={mc ? `Master contract details · ${mc.commodityDesc}` : 'Master contract details'}
         onClose={modal.close}
       />
       <div className="modal-body">

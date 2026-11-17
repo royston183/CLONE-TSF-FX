@@ -26,7 +26,7 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .maintainlimits .field {display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px}
 .maintainlimits .field label {color:#1d2d3e;font-size:12px;font-weight:400}
 .maintainlimits .input, .maintainlimits .select {height:30px;width:100%;max-width:310px;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;color:#1d2d3e;font-size:12px}
-.maintainlimits .input:focus, .maintainlimits .select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.maintainlimits .input:focus, .maintainlimits .select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .maintainlimits .selection-main-row {display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
 .maintainlimits .ml-field {width:auto;min-width:150px;flex:0 0 auto;display:flex;flex-direction:column;gap:3px}
 .maintainlimits .ml-field.cc {width:230px}
@@ -41,17 +41,17 @@ border-bottom:1px solid #e5e9ed;border-radius:8px 8px 0 0}
 .maintainlimits .date-input-wrap .input, .maintainlimits .date-input-wrap .cell-input {width:100%;max-width:none;padding-right:26px}
 .maintainlimits .date-input-wrap.compact {width:120px}
 .maintainlimits .calendar-btn-wrap {position:absolute;right:5px;top:50%;transform:translateY(-50%);width:16px;height:16px}
-.maintainlimits .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0a6ed1;border-radius:2px;position:relative;
-background:linear-gradient(#0a6ed1,#0a6ed1) top/100% 4px no-repeat,
+.maintainlimits .calendar-btn {width:16px;height:16px;padding:0;border:1px solid #0854a0;border-radius:2px;position:relative;
+background:linear-gradient(#0854a0,#0854a0) top/100% 4px no-repeat,
 repeating-linear-gradient(90deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,
 repeating-linear-gradient(0deg,#cfe3fb 0 2px,transparent 2px 4px) 2px 6px/11px 7px no-repeat,#ffffff}
-.maintainlimits .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
-.maintainlimits .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0a6ed1;border-radius:1px}
+.maintainlimits .calendar-btn:before {content:"";position:absolute;top:-2px;left:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
+.maintainlimits .calendar-btn:after {content:"";position:absolute;top:-2px;right:3px;width:2px;height:2px;background:#0854a0;border-radius:1px}
 .maintainlimits .calendar-btn-wrap:hover .calendar-btn {border-color:#0854a0}
 .maintainlimits .calendar-native {position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer}
 .maintainlimits .detail-readonly-input {background:#f8fafc!important;color:#1d2d3e!important;border-color:#e1e6ea}
 .maintainlimits .filter-icon-btn {width:30px;height:30px;padding:0;border:1px solid #b8b8b8;border-radius:4px;background:#fff;position:relative;flex:0 0 auto}
-.maintainlimits .filter-icon-btn:hover {background:#f7f8f9;border-color:#0a6ed1}
+.maintainlimits .filter-icon-btn:hover {background:#f7f8f9;border-color:#0854a0}
 .maintainlimits .filter-icon-btn:before {content:"";position:absolute;left:8px;top:7px;width:0;height:0;border-left:7px solid transparent;
 border-right:7px solid transparent;border-top:9px solid #556b82}
 .maintainlimits .filter-icon-btn:after {content:"";position:absolute;left:13px;top:14px;width:3px;height:7px;background:#556b82}
@@ -66,9 +66,9 @@ border-right:7px solid transparent;border-top:9px solid #556b82}
 .maintainlimits .table-card {overflow:hidden}
 .maintainlimits .table-wrap {width:100%;overflow:auto;background:#fff}
 .maintainlimits .data-table {width:100%;min-width:920px;border-collapse:separate;border-spacing:0;font-size:12px}
-.maintainlimits .data-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 24px 6px 8px;background:#f5f8fa;color:#1d2d3e;
+.maintainlimits .data-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 13px 6px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
-.maintainlimits .data-table td {height:34px;padding:4px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
+.maintainlimits .data-table td {height:34px;padding: 4px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
 .maintainlimits .data-table tbody tr:hover td {background:#f2f8fd}
 .maintainlimits .data-table tbody tr.selected td {background:#eaf3fc}
 .maintainlimits .data-table .number {text-align:right;font-variant-numeric:tabular-nums}
@@ -76,23 +76,23 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .maintainlimits .sort-up, .maintainlimits .sort-down {position:absolute;left:0;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent}
 .maintainlimits .sort-up {top:0;border-bottom:5px solid #9aa7b4}
 .maintainlimits .sort-down {bottom:0;border-top:5px solid #9aa7b4}
-.maintainlimits th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.maintainlimits th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.maintainlimits th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.maintainlimits th.sort-desc .sort-down {border-top-color:#0854a0}
 .maintainlimits .badge {display:inline-block;padding:3px 7px;border-radius:10px;font-size:10px;font-weight:600}
 .maintainlimits .badge-open {background:#fff4e5;color:#8d4f00}
-.maintainlimits .badge-created {background:#eaf3fc;color:#004b93}
+.maintainlimits .badge-created {background:#eaf3fc;color:#06477f}
 .maintainlimits .badge-closed {background:#ebf5eb;color:#107e3e}
 .maintainlimits .badge-override {background:#eef0f2;color:#556b82}
-.maintainlimits .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:12px;font-weight:600}
-.maintainlimits .btn:hover {background:#d1e8ff;border-color:#0a6ed1;color:#0854a0}
-.maintainlimits .btn-primary {background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+.maintainlimits .btn {height:30px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:12px;font-weight:600}
+.maintainlimits .btn:hover {background:#d1e8ff;border-color:#0854a0;color:#0854a0}
+.maintainlimits .btn-primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .maintainlimits .btn-primary:hover {background:#0854a0;border-color:#0854a0;color:#fff}
 .maintainlimits .btn-ghost {background:#fff;border-color:#d9d9d9;color:#1d2d3e}
 .maintainlimits .btn-ghost:hover {background:#f7f8f9;border-color:#b8b8b8;color:#1d2d3e}
 .maintainlimits .pagination-bar {display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:8px 10px;background:#fff;border-top:1px solid #e5e9ed}
 .maintainlimits .page-btn {min-width:30px;height:28px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#1d2d3e;font-size:11px}
 .maintainlimits .page-btn:hover {background:#f7f8f9;border-color:#b8b8b8}
-.maintainlimits .page-btn.active {background:#eaf3fc;border-color:#0a6ed1;color:#004b93;font-weight:600}
+.maintainlimits .page-btn.active {background:#eaf3fc;border-color:#0854a0;color:#06477f;font-weight:600}
 .maintainlimits .page-btn:disabled {background:#f7f8f9;color:#9aa7b4}
 .maintainlimits .empty {padding:28px;text-align:center;color:#6a6d70}
 .maintainlimits .detail-grid {display:grid;grid-template-columns:repeat(2,minmax(300px,1fr));gap:8px 26px}
@@ -122,13 +122,13 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .maintainlimits .code {font-weight:600;color:#1d2d3e}
 .maintainlimits .description {color:#556b82;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .maintainlimits .edit-table {width:100%;min-width:860px;border-collapse:separate;border-spacing:0;font-size:12px}
-.maintainlimits .edit-table th {position:sticky;top:0;z-index:2;height:30px;padding:5px 20px 5px 8px;background:#f5f8fa;color:#1d2d3e;
+.maintainlimits .edit-table th {position:sticky;top:0;z-index:2;height:30px;padding: 5px 11px 5px 6px;background:#f5f8fa;color:#1d2d3e;
 border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap}
 .maintainlimits .edit-table td {height:32px;padding:3px 6px;background:#f7f8f9;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
 .maintainlimits .edit-table td.editable {background:#fff}
 .maintainlimits .cell-input, .maintainlimits .cell-select {width:100%;min-width:90px;height:24px;padding:2px 6px;border:1px solid transparent;border-radius:3px;background:#fff;color:#1d2d3e;font-size:12px}
 .maintainlimits .cell-input:hover, .maintainlimits .cell-select:hover {border-color:#b8b8b8}
-.maintainlimits .cell-input:focus, .maintainlimits .cell-select:focus {outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1}
+.maintainlimits .cell-input:focus, .maintainlimits .cell-select:focus {outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0}
 .maintainlimits .cell-input[readonly] {background:transparent;color:#556b82}
 .maintainlimits .icon-cell {text-align:center}
 .maintainlimits .modal-bg {display:none;position:fixed;inset:0;z-index:2000;background:rgba(29,45,62,.30);padding:28px 18px;overflow:auto}
@@ -144,10 +144,10 @@ border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;f
 .maintainlimits .subhead {font-size:12px;font-weight:600;color:#1d2d3e;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e5e9ed}
 .maintainlimits .dms-card {border:1px solid #e1e6ea;border-radius:6px;overflow:hidden;margin-top:4px}
 .maintainlimits .dms-card-head {display:flex;align-items:center;height:34px;padding:0 12px;background:#fafcfe;
-border-bottom:1px solid #e5e9ed;border-left:4px solid #0a6ed1;font-size:12px;font-weight:700;color:#1d2d3e}
-.maintainlimits .dms-action-btn {height:22px;padding:0 8px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;
+border-bottom:1px solid #e5e9ed;border-left:4px solid #0854a0;font-size:12px;font-weight:700;color:#1d2d3e}
+.maintainlimits .dms-action-btn {height:22px;padding:0 8px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;
 font-size:11px;font-weight:600;white-space:nowrap}
-.maintainlimits .dms-action-btn:hover {background:#d1e8ff;border-color:#0a6ed1}
+.maintainlimits .dms-action-btn:hover {background:#d1e8ff;border-color:#0854a0}
 .maintainlimits .dms-action-btn:disabled {background:#f2f4f5;border-color:#e1e6ea;color:#9aa7b4}
 .maintainlimits .email-note {width:100%;min-height:68px;padding:8px;border:1px solid #b8b8b8;border-radius:4px;font-size:12px;color:#1d2d3e;resize:vertical}
 .maintainlimits .toast-region {position:fixed;right:22px;bottom:28px;z-index:4000;width:350px;max-width:calc(100% - 44px)}
@@ -162,7 +162,7 @@ border-left:3px solid #a8b3bd;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,
 .maintainlimits .toast-message {color:#556b82;font-size:12px;line-height:17px}
 .maintainlimits .statusbar {position:fixed;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;padding:0 12px;background:#fff;
 border-top:1px solid #e1e6ea;color:#6a6d70;font-size:11px;z-index:900}
-.maintainlimits .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0a6ed1}
+.maintainlimits .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0854a0}
 @media screen and (max-width:980px) {
 .maintainlimits .detail-grid {grid-template-columns:1fr}
 .maintainlimits .content {padding-left:8px;padding-right:8px}

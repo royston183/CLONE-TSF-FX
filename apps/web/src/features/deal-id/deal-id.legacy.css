@@ -3,7 +3,7 @@
  * prefixed and @keyframes renamed, so each converted app keeps its exact original look
  * while several can coexist in one SPA. Do not hand-edit; re-run tools/scope-css.mjs.
  */
-.dealid {--bg:#f5f7f9;--surface:#fff;--surface-2:#f2f4f5;--border:#d5dadd;--border-strong:#8996a1;--text:#1d2d3e;--sub:#475e75;--muted:#687b8d;--blue:#0a6ed1;--blue-hover:#085caf;--blue-soft:#eaf3fc;--blue-soft-2:#d1e8ff;--green:#107e3e;--red:#bb0000;--red-soft:#fdeaea;--shadow:0 1px 3px rgba(34,53,72,.13);--radius:8px;--sidebar:360px;--header:52px}
+.dealid {--bg:#f5f7f9;--surface:#fff;--surface-2:#f2f4f5;--border:#d5dadd;--border-strong:#8996a1;--text:#1d2d3e;--sub:#475e75;--muted:#687b8d;--blue:#0854a0;--blue-hover:#06477f;--blue-soft:#eaf3fc;--blue-soft-2:#d1e8ff;--green:#107e3e;--red:#bb0000;--red-soft:#fdeaea;--shadow:0 1px 3px rgba(34,53,72,.13);--radius:8px;--sidebar:360px;--header:52px}
 .dealid *, .dealid {box-sizing:border-box}
 .dealid {margin:0;min-height:100%;font-family:"72","Segoe UI",Arial,sans-serif;color:var(--text);background:var(--bg);font-size:13px}
 .dealid button, .dealid input, .dealid select {font:inherit;color:inherit}
@@ -11,7 +11,7 @@
 .dealid .app {height:100vh;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);grid-template-rows:var(--header) minmax(0,1fr);overflow:hidden}
 .dealid .topbar {grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:10}
 .dealid .title-wrap {display:flex;align-items:center;gap:11px;min-width:0}
-.dealid .mark {width:30px;height:30px;border-radius:6px;background:linear-gradient(145deg,#0a6ed1,#35a5dc);display:grid;place-items:center;color:#fff;box-shadow:0 2px 7px rgba(10,110,209,.22)}
+.dealid .mark {width:30px;height:30px;border-radius:6px;background:linear-gradient(145deg,#0854a0,#35a5dc);display:grid;place-items:center;color:#fff;box-shadow:0 2px 7px rgba(8,84,160,.22)}
 .dealid .title {font-size:17px;font-weight:700;white-space:nowrap}
 .dealid .title small {font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
 .dealid .actions {display:flex;align-items:center;gap:6px}
@@ -53,8 +53,8 @@
 .dealid .table-wrap {overflow:auto;flex:1;scrollbar-width:thin}
 .dealid table {border-collapse:collapse;width:100%;min-width:900px;table-layout:auto}
 .dealid th, .dealid td {max-width:360px}
-.dealid th {position:sticky;top:0;z-index:2;background:var(--surface-2);color:var(--sub);font-size:11px;text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dealid td {padding:6px 8px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff}
+.dealid th {position:sticky;top:0;z-index:2;background:var(--surface-2);color:var(--sub);font-size: 12.5px;text-align:left;padding: 7px 6px;border-bottom:1px solid var(--border);border-right:1px solid #e6e9eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dealid td {padding: 6px 6px;border-bottom:1px solid #edf0f2;border-right:1px solid #edf0f2;font-size: 13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff}
 .dealid tbody tr:hover td {background:#f7fbff}
 .dealid tbody tr.selected td {background:var(--blue-soft)}
 .dealid td.num {text-align:right;font-variant-numeric:tabular-nums}

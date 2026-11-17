@@ -37,9 +37,9 @@
 .tsf-deals .tsf-legend .reversed { background: var(--alm-bad); }
 .tsf-deals .tsf-table-scroll { max-height: min(560px, 60vh); min-height: 180px; overflow: auto; border-block: 1px solid var(--alm-line); }
 .tsf-deals .tsf-deal-table { width: 100%; min-width: 3700px; border-collapse: separate; border-spacing: 0; font-size: 12px; }
-.tsf-deals .tsf-deal-table :is(th, td) { white-space: nowrap; text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--alm-line); max-width: 300px; overflow: hidden; text-overflow: ellipsis; background: var(--alm-surface); }
-.tsf-deals .tsf-deal-table th { position: sticky; top: 0; z-index: 2; background: var(--alm-bg); color: var(--alm-label); font-size: 11px; }
-.tsf-deals .tsf-deal-table th button { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; font: inherit; color: inherit; font-weight: 600; white-space: nowrap; }
+.tsf-deals .tsf-deal-table :is(th, td) { white-space: nowrap; text-align: left; padding: 11px 7px; border-bottom: 1px solid var(--alm-line); max-width: 300px; overflow: hidden; text-overflow: ellipsis; background: var(--alm-surface); }
+.tsf-deals .tsf-deal-table th { position: sticky; top: 0; z-index: 2; background: var(--alm-bg); color: var(--alm-label); font-size: 12.5px; }
+.tsf-deals .tsf-deal-table th button { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0 0; font: inherit; color: inherit; font-weight: 600; white-space: nowrap; }
 .tsf-deals .tsf-deal-table th button span { color: var(--alm-muted); }
 .tsf-deals .tsf-deal-table .tsf-num { text-align: right; font-variant-numeric: tabular-nums; }
 .tsf-deals .tsf-deal-table .tsf-check-col { position: sticky; left: 0; width: 42px; min-width: 42px; text-align: center; z-index: 1; padding-inline: 12px; }

@@ -5,16 +5,16 @@
  */
 .std-pop-overlay {
   --sp-card: #FFFFFF;
-  --sp-text: #1D2D3E;
-  --sp-muted: #475E75;
-  --sp-faint: #687B8D;
-  --sp-border: #D5DADD;
-  --sp-border-strong: #8996A1;
-  --sp-card-border: #B9C2C9;
-  --sp-box: #F5F7F9;
-  --sp-primary: #0A6ED1;
-  --sp-primary-dark: #085CAF;
-  --sp-primary-tint: #EAF3FC;
+  --sp-text: #2b3f5c;
+  --sp-muted: #6b7f99;
+  --sp-faint: #6b7f99;
+  --sp-border: #e2e8f4;
+  --sp-border-strong: #cfdaed;
+  --sp-card-border: #e2e8f4;
+  --sp-box: #eef2f8;
+  --sp-primary: #0854a0;
+  --sp-primary-dark: #06477f;
+  --sp-primary-tint: #e8f1fb;
   --sp-success: #107E3E;
   --sp-success-tint: #E4F5E9;
   --sp-error: #BB0000;
@@ -22,8 +22,8 @@
   --sp-error-border: #F3C6C0;
   --sp-warning: #9B6B00;
   --sp-warning-tint: #FFF4CC;
-  --sp-shadow: 0 22px 70px rgba(16, 38, 58, .3);
-  --sp-font: "72", "Segoe UI", Arial, Helvetica, sans-serif;
+  --sp-shadow: 0 18px 48px rgba(15, 23, 42, .2);
+  --sp-font: "72", "72full", "Inter", Arial, Helvetica, sans-serif;
 
   position: fixed;
   inset: 0;
@@ -133,7 +133,7 @@
 .std-pop-btn.secondary { background: #FFFFFF; color: var(--sp-text); border-color: var(--sp-border-strong); }
 .std-pop-btn.secondary:hover:not(:disabled) { border-color: var(--sp-primary); color: var(--sp-primary); box-shadow: 0 1px 4px rgba(34, 53, 72, .1); }
 .std-pop-btn.primary { background: var(--sp-primary); color: #FFFFFF; }
-.std-pop-btn.primary:hover:not(:disabled) { background: var(--sp-primary-dark); box-shadow: 0 2px 6px rgba(10, 110, 209, .22); }
+.std-pop-btn.primary:hover:not(:disabled) { background: var(--sp-primary-dark); box-shadow: 0 2px 6px rgba(8,84,160, .22); }
 .std-pop-btn.danger { background: #FFFFFF; color: var(--sp-error); border-color: var(--sp-error-border); }
 .std-pop-btn.danger:hover:not(:disabled) { background: var(--sp-error-tint); }
 

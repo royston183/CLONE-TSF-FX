@@ -28,16 +28,16 @@ font-family:"Inter","Segoe UI",Arial,sans-serif;font-size:12px
 .sblcterminate .company-shell .main-input {width:150px}
 .sblcterminate .date-shell .main-input {width:142px}
 .sblcterminate .main-input:focus, .sblcterminate .filter-input:focus, .sblcterminate .dms-date-input:focus {
-outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
+outline:0;border-color:#0854a0;box-shadow:0 0 0 1px #0854a0
 }
 .sblcterminate .search-btn, .sblcterminate .calendar-btn {position:absolute;right:1px;top:1px;width:29px;height:28px;padding:0;border:0;border-left:1px solid #e1e6ea;background:#fff}
 .sblcterminate .search-btn:hover, .sblcterminate .calendar-btn:hover {background:#f7f8f9}
-.sblcterminate .search-btn:before {content:"";position:absolute;left:8px;top:6px;width:10px;height:10px;border:1px solid #0a6ed1;border-radius:50%}
-.sblcterminate .search-btn:after {content:"";position:absolute;left:17px;top:16px;width:7px;height:1px;background:#0a6ed1;transform:rotate(45deg)}
-.sblcterminate .calendar-btn:before {content:"";position:absolute;left:8px;top:6px;width:12px;height:13px;border:1px solid #0a6ed1;border-radius:2px}
-.sblcterminate .calendar-btn:after {content:"";position:absolute;left:10px;top:11px;width:8px;height:1px;background:#0a6ed1;box-shadow:0 4px #0a6ed1}
+.sblcterminate .search-btn:before {content:"";position:absolute;left:8px;top:6px;width:10px;height:10px;border:1px solid #0854a0;border-radius:50%}
+.sblcterminate .search-btn:after {content:"";position:absolute;left:17px;top:16px;width:7px;height:1px;background:#0854a0;transform:rotate(45deg)}
+.sblcterminate .calendar-btn:before {content:"";position:absolute;left:8px;top:6px;width:12px;height:13px;border:1px solid #0854a0;border-radius:2px}
+.sblcterminate .calendar-btn:after {content:"";position:absolute;left:10px;top:11px;width:8px;height:1px;background:#0854a0;box-shadow:0 4px #0854a0}
 .sblcterminate .filter-icon-btn {width:36px;height:30px;margin-right:10px;padding:0;border:1px solid #8ea2b5;border-radius:4px;background:#fff;position:relative}
-.sblcterminate .filter-icon-btn:hover {background:#f7f8f9;border-color:#0a6ed1}
+.sblcterminate .filter-icon-btn:hover {background:#f7f8f9;border-color:#0854a0}
 .sblcterminate .filter-icon-btn:before {content:"";position:absolute;left:10px;top:7px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #556b82}
 .sblcterminate .filter-icon-btn:after {content:"";position:absolute;left:15px;top:15px;width:4px;height:7px;background:#556b82}
 .sblcterminate .filter-body {display:none;height:44px;overflow:visible}
@@ -59,12 +59,12 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .combo-list.open {display:block}
 .sblcterminate .combo-option {display:block;width:100%;min-height:29px;padding:6px 8px;border:0;border-bottom:1px solid #eef1f3;background:#fff;text-align:left}
 .sblcterminate .combo-option {color:#1d2d3e;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sblcterminate .combo-option:hover {background:#eaf3fc;color:#004b93}
+.sblcterminate .combo-option:hover {background:#eaf3fc;color:#06477f}
 .sblcterminate .combo-empty {padding:7px 8px;color:#6a6d70;font-size:11px}
-.sblcterminate .btn {height:30px;margin-left:7px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:12px;font-weight:600}
+.sblcterminate .btn {height:30px;margin-left:7px;padding:0 12px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:12px;font-weight:600}
 .sblcterminate .btn:first-child {margin-left:0}
-.sblcterminate .btn:hover {background:#d1e8ff;border-color:#0a6ed1;color:#0854a0}
-.sblcterminate .btn-primary {background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+.sblcterminate .btn:hover {background:#d1e8ff;border-color:#0854a0;color:#0854a0}
+.sblcterminate .btn-primary {background:#0854a0;border-color:#0854a0;color:#fff}
 .sblcterminate .btn-primary:hover {background:#0854a0;border-color:#0854a0;color:#fff}
 .sblcterminate .btn-ghost {background:#fff;border-color:#d9d9d9;color:#1d2d3e}
 .sblcterminate .btn-ghost:hover {background:#f7f8f9;border-color:#b8b8b8;color:#1d2d3e}
@@ -80,9 +80,9 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .card-meta {font-size:11px;color:#6a6d70}
 .sblcterminate .table-wrap {width:100%;min-height:0;flex:1 1 auto;overflow:auto;background:#fff}
 .sblcterminate .data-table {width:auto;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.sblcterminate .data-table th {position:sticky;top:0;z-index:2;height:34px;padding:6px 22px 6px 8px;background:#f5f8fa;color:#1d2d3e;border-right:1px solid #d9d9d9}
+.sblcterminate .data-table th {position:sticky;top:0;z-index:2;height:34px;padding: 6px 12px 6px 6px;background:#f5f8fa;color:#1d2d3e;border-right:1px solid #d9d9d9}
 .sblcterminate .data-table th {border-bottom:1px solid #c7d4e0;text-align:left;font-weight:600;white-space:nowrap;cursor:pointer}
-.sblcterminate .data-table td {height:34px;padding:4px 8px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
+.sblcterminate .data-table td {height:34px;padding: 4px 6px;background:#fff;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;color:#1d2d3e}
 .sblcterminate .data-table tbody tr:hover td {background:#f2f8fd}
 .sblcterminate .data-table tbody tr.selected td {background:#eaf3fc}
 .sblcterminate .data-table .number {text-align:right;font-variant-numeric:tabular-nums}
@@ -92,14 +92,14 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .sort-up, .sblcterminate .sort-down {position:absolute;left:0;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent}
 .sblcterminate .sort-up {top:0;border-bottom:5px solid #9aa7b4}
 .sblcterminate .sort-down {bottom:0;border-top:5px solid #9aa7b4}
-.sblcterminate th.sort-asc .sort-up {border-bottom-color:#0a6ed1}
-.sblcterminate th.sort-desc .sort-down {border-top-color:#0a6ed1}
+.sblcterminate th.sort-asc .sort-up {border-bottom-color:#0854a0}
+.sblcterminate th.sort-desc .sort-down {border-top-color:#0854a0}
 .sblcterminate .termination-pending {display:inline-block;padding:4px 7px;border-radius:3px;background:#fff8e1;color:#b87500;font-weight:600}
 .sblcterminate .termination-done {display:inline-block;padding:4px 7px;border-radius:3px;background:#e7f8ee;color:#107e3e;font-weight:600}
 .sblcterminate .pagination {display:flex;align-items:center;justify-content:flex-end;min-height:42px;padding:7px 10px;background:#fff;border-top:1px solid #e5e9ed}
 .sblcterminate .page-btn {min-width:30px;height:28px;margin-left:5px;padding:0 8px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#1d2d3e;font-size:11px}
 .sblcterminate .page-btn:hover {background:#f7f8f9;border-color:#b8b8b8}
-.sblcterminate .page-btn.active {background:#eaf3fc;border-color:#0a6ed1;color:#004b93;font-weight:600}
+.sblcterminate .page-btn.active {background:#eaf3fc;border-color:#0854a0;color:#06477f;font-weight:600}
 .sblcterminate .page-btn:disabled {background:#f7f8f9;color:#9aa7b4}
 .sblcterminate .empty {padding:28px;text-align:center;color:#6a6d70}
 .sblcterminate .modal-bg {display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:2000;background:rgba(29,45,62,.30);padding:28px 18px;overflow:auto}
@@ -114,8 +114,8 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .modal-body {padding:14px}
 .sblcterminate .modal-foot {display:flex;align-items:center;justify-content:flex-end;padding:10px 14px;background:#f7f8f9;border-top:1px solid #d9d9d9;border-radius:0 0 8px 8px}
 .sblcterminate .company-table {width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-.sblcterminate .company-table th {height:32px;padding:6px 8px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left}
-.sblcterminate .company-table td {height:31px;padding:5px 8px;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
+.sblcterminate .company-table th {height:32px;padding: 6px 6px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left}
+.sblcterminate .company-table td {height:31px;padding: 5px 6px;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap}
 .sblcterminate .company-table tr:hover td {background:#f2f8fd}
 .sblcterminate .company-table tr.selected td {background:#eaf3fc}
 .sblcterminate .company-scroll {max-height:420px;overflow:auto;border:1px solid #e1e6ea;border-radius:5px}
@@ -124,7 +124,7 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .form-date-shell {position:relative;width:150px;height:30px}
 .sblcterminate .form-date-input {width:150px;height:30px;padding:4px 32px 4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;color:#1d2d3e}
 .sblcterminate .confirm-message {display:flex;align-items:flex-start;padding:10px 2px;color:#1d2d3e;line-height:18px}
-.sblcterminate .confirm-mark {width:24px;height:24px;flex:0 0 24px;margin-right:10px;border-radius:50%;background:#eaf3fc;color:#0a6ed1;font-weight:700;text-align:center;line-height:24px}
+.sblcterminate .confirm-mark {width:24px;height:24px;flex:0 0 24px;margin-right:10px;border-radius:50%;background:#eaf3fc;color:#0854a0;font-weight:700;text-align:center;line-height:24px}
 .sblcterminate .dms-detail {display:flex;align-items:center;margin-bottom:12px;padding:9px 10px;background:#fafcfe;border:1px solid #e1e6ea;border-radius:5px}
 .sblcterminate .dms-detail-block {margin-right:26px}
 .sblcterminate .dms-detail-label {display:block;color:#556b82;font-size:10px;margin-bottom:2px}
@@ -132,8 +132,8 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .dms-modal {width:1180px}
 .sblcterminate .dms-wrap {width:100%;overflow:visible}
 .sblcterminate .dms-table {width:100%;min-width:0;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:12px}
-.sblcterminate .dms-table th {height:34px;padding:6px 8px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
-.sblcterminate .dms-table td {height:42px;padding:5px 8px;background:#f7f8f9;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;overflow:hidden}
+.sblcterminate .dms-table th {height:34px;padding: 6px 6px;background:#f5f8fa;border-right:1px solid #d9d9d9;border-bottom:1px solid #c7d4e0;text-align:left;white-space:nowrap}
+.sblcterminate .dms-table td {height:42px;padding: 5px 6px;background:#f7f8f9;border-right:1px solid #e7ebee;border-bottom:1px solid #e7ebee;white-space:nowrap;overflow:hidden}
 .sblcterminate .dms-table td.editable {background:#fff}
 .sblcterminate .dms-table th:nth-child(1) {width:7%}
 .sblcterminate .dms-table th:nth-child(2) {width:23%}
@@ -148,8 +148,8 @@ outline:0;border-color:#0a6ed1;box-shadow:0 0 0 1px #0a6ed1
 .sblcterminate .path-cell {width:100%;height:30px;display:flex;align-items:center;padding:4px 8px;border:1px solid #b8b8b8;border-radius:4px;background:#fff;cursor:pointer}
 .sblcterminate .path-cell span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sblcterminate .path-cell.disabled {background:#f2f4f5;color:#6a6d70;cursor:default}
-.sblcterminate .action-btn {width:100%;height:28px;min-width:0;padding:0 6px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#004b93;font-size:11px;font-weight:600}
-.sblcterminate .action-btn:hover {background:#d1e8ff;border-color:#0a6ed1}
+.sblcterminate .action-btn {width:100%;height:28px;min-width:0;padding:0 6px;border:1px solid #d1e8ff;border-radius:4px;background:#eaf3fc;color:#06477f;font-size:11px;font-weight:600}
+.sblcterminate .action-btn:hover {background:#d1e8ff;border-color:#0854a0}
 .sblcterminate .action-btn:disabled {background:#f2f4f5;border-color:#e1e6ea;color:#9aa7b4}
 .sblcterminate .toast-region {position:fixed;right:22px;bottom:28px;z-index:4000;width:360px;max-width:calc(100% - 44px)}
 .sblcterminate .toast {display:flex;margin-top:8px;padding:12px 14px;background:#f2f4f5;border:1px solid #d9d9d9;
@@ -162,7 +162,7 @@ border-left:3px solid #a8b3bd;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,
 .sblcterminate .toast-message {color:#556b82;font-size:12px;line-height:17px}
 .sblcterminate .statusbar {position:fixed;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;padding:0 12px;
 background:#fff;border-top:1px solid #e1e6ea;color:#6a6d70;font-size:11px;z-index:900}
-.sblcterminate .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0a6ed1}
+.sblcterminate .status-dot {width:7px;height:7px;margin-right:6px;border-radius:50%;background:#0854a0}
 .sblcterminate .calendar-popup {display:none;position:absolute;z-index:3600;top:34px;left:0;width:294px;border:1px solid #9aa7b4;
 border-radius:5px;background:#fff;overflow:hidden;box-shadow:0 7px 18px rgba(29,45,62,.16)}
 .sblcterminate .calendar-popup.open {display:block}
@@ -178,20 +178,20 @@ border-radius:5px;background:#fff;overflow:hidden;box-shadow:0 7px 18px rgba(29,
 .sblcterminate .calendar-week span {width:14.285%;height:26px;display:flex;align-items:center;justify-content:center;color:#556b82;font-size:10px;font-weight:600}
 .sblcterminate .calendar-days {display:flex;flex-wrap:wrap;padding:0 12px 8px}
 .sblcterminate .calendar-cell {width:14.285%;height:32px;border:0;border-radius:3px;background:#fff;color:#1d2d3e;font-size:11px}
-.sblcterminate .calendar-cell:hover {background:#eaf3fc;color:#004b93}
+.sblcterminate .calendar-cell:hover {background:#eaf3fc;color:#06477f}
 .sblcterminate .calendar-cell.other {color:#8a9bad}
-.sblcterminate .calendar-cell.selected {background:#eaf3fc;box-shadow:inset 0 0 0 2px #0a6ed1}
+.sblcterminate .calendar-cell.selected {background:#eaf3fc;box-shadow:inset 0 0 0 2px #0854a0}
 .sblcterminate .calendar-foot {height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-top:1px solid #e1e6ea}
-.sblcterminate .calendar-foot-btn {border:0;background:#fff;color:#0a6ed1;font-size:11px;font-weight:600;padding:5px 0}
+.sblcterminate .calendar-foot-btn {border:0;background:#fff;color:#0854a0;font-size:11px;font-weight:600;padding:5px 0}
 .sblcterminate .calendar-picker {padding:8px 10px 10px}
 .sblcterminate .month-grid {display:flex;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid #e1e6ea}
 .sblcterminate .month-btn {width:24%;height:34px;margin:.5%;border:0;border-radius:3px;background:#f2f4f5;color:#1d2d3e;font-size:11px;font-weight:600}
 .sblcterminate .month-btn:hover {background:#eaf3fc}
-.sblcterminate .month-btn.selected {background:#0a6ed1;color:#fff}
+.sblcterminate .month-btn.selected {background:#0854a0;color:#fff}
 .sblcterminate .year-list {display:block;width:100%;height:128px;margin-top:7px;overflow-y:auto;overflow-x:hidden}
 .sblcterminate .year-btn {display:block;width:100%;height:31px;margin-bottom:2px;border:0;background:#f2f4f5;color:#1d2d3e;text-align:left;padding:0 8px;font-size:11px}
 .sblcterminate .year-btn:hover {background:#eaf3fc}
-.sblcterminate .year-btn.selected {background:#eaf3fc;color:#004b93;font-weight:600}
+.sblcterminate .year-btn.selected {background:#eaf3fc;color:#06477f;font-weight:600}
 @media screen and (max-width:1180px) {
 .sblcterminate .selection-row {overflow-x:auto}
 .sblcterminate .content {padding-left:8px;padding-right:8px}

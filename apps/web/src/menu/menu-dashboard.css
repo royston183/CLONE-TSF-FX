@@ -1,0 +1,75 @@
+/* The FX dashboard (the hub's Overview) in the ZFS_CASHPOS3 report's colours and chart style: its palette on the hub's own
+ * custom properties (so every hub surface follows), its chart series colours as --ch-1…6 (the charts paint with them),
+ * white shadow cards, KPI cards with a tinted corner icon, bar tracks, ring charts with a ruled legend, grey grid lines. */
+.mp {
+  --bg: #eef2f8; --bg2: #f6f8fc; --white: #ffffff; --border: #e2e8f4; --border2: #cfdaed;
+  --text: #2b3f5c; --text-sub: #5b6f8a; --text-muted: #6b7f99;
+  --blue: #0854a0; --blue-dark: #06477f; --blue-mid: #8fb6e4; --blue-pale: #e8f1fb; --blue-pale2: #d3deee;
+  --ch-1: #0854a0; --ch-2: #8fb6e4; --ch-3: #2f7d57; --ch-4: #a8660f; --ch-5: #5b52b8; --ch-6: #b85454;
+  --ch-shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.04);
+  font-family: "72", "72full", "Inter", Arial, Helvetica, sans-serif;
+}
+:root[data-theme='dark'] .mp {
+  --bg: #181f2b; --bg2: #171d26; --white: #1d222a; --border: #2f3f53; --border2: #37506a;
+  --text: #cfdae5; --text-sub: #97a7b8; --text-muted: #8696a8;
+  --blue: #7cb7f2; --blue-dark: #9ccbf7; --blue-mid: #4d7fb6; --blue-pale: #22334a; --blue-pale2: #2c4260;
+  --ch-1: #7cb7f2; --ch-2: #4d7fb6; --ch-3: #7fcca0; --ch-4: #e3b46a; --ch-5: #a9a3ee; --ch-6: #e59a9a;
+  --ch-shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.28);
+}
+
+/* KPI cards */
+.mp .mp-kpi { border: 0; border-radius: 12px; box-shadow: var(--ch-shadow); padding: 16px 18px; gap: 0; }
+.mp .mp-kpi::before { display: none; }
+.mp .mp-kpi-label { padding-right: 44px; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: var(--text-sub); }
+.mp .mp-kpi-value { margin-top: 10px; font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.mp .mp-kpi-delta { margin-top: 4px; font-size: 11px; font-weight: 600; }
+.mp .mp-kpi-delta.up { color: var(--ch-3); }
+.mp .mp-kpi-delta.down { color: var(--ch-6); }
+.mp .mp-kpi::after { content: ''; position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; border-radius: 9px; background: var(--blue-pale) center / 16px 16px no-repeat; background-image: var(--kpi-ico, none); }
+.mp .mp-kpi:nth-child(4n+1) { --kpi-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230854a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M18 17V9'/%3E%3Cpath d='M13 17V5'/%3E%3Cpath d='M8 17v-3'/%3E%3C/svg%3E"); }
+.mp .mp-kpi:nth-child(4n+2) { --kpi-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f7d57' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E"); }
+.mp .mp-kpi:nth-child(4n+2)::after { background-color: #e6f4ec; }
+.mp .mp-kpi:nth-child(4n+3) { --kpi-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8660f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 2 10 5-10 5L2 7z'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3C/svg%3E"); }
+.mp .mp-kpi:nth-child(4n+3)::after { background-color: #fdf3e3; }
+.mp .mp-kpi:nth-child(4n+4) { --kpi-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b52b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.21 15.89A10 10 0 1 1 8 2.83'/%3E%3Cpath d='M22 12A10 10 0 0 0 12 2v10z'/%3E%3C/svg%3E"); }
+.mp .mp-kpi:nth-child(4n+4)::after { background-color: #eeedfb; }
+:root[data-theme='dark'] .mp .mp-kpi:nth-child(4n+2)::after { background-color: #1d3328; }
+:root[data-theme='dark'] .mp .mp-kpi:nth-child(4n+3)::after { background-color: #392f1d; }
+:root[data-theme='dark'] .mp .mp-kpi:nth-child(4n+4)::after { background-color: #2a2a45; }
+:root[data-theme='dark'] .mp .mp-kpi:nth-child(4n+1) { --kpi-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237cb7f2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M18 17V9'/%3E%3Cpath d='M13 17V5'/%3E%3Cpath d='M8 17v-3'/%3E%3C/svg%3E"); }
+
+/* Chart cards: white, shadow, 14px title */
+.mp .mp-panel { border: 0; border-radius: 12px; box-shadow: var(--ch-shadow); }
+.mp .mp-panel-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: normal; }
+
+/* Bars: a soft track with a hairline, 14px high */
+.mp .mp-bar-label { font-size: 12px; font-weight: 700; color: var(--text); }
+.mp .mp-bar-track { height: 14px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; }
+.mp .mp-bar-fill { height: 100%; border-radius: 0; }
+.mp .mp-bar-value { font-size: 11.5px; font-weight: 800; color: var(--text); }
+.mp .mp-bar-row:hover { background: var(--blue-pale); border-radius: 8px; }
+.mp .mp-bar-axis span { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+
+/* Ring charts: centred total and caption, ruled legend */
+.mp .mp-donut-total { font-size: 14px; font-weight: 800; fill: var(--text); }
+.mp .mp-donut-cap { font-size: 9px; font-weight: 700; letter-spacing: .06em; fill: var(--text-muted); }
+.mp .mp-legend li { padding: 5px 8px; border-radius: 8px; font-size: 11.5px; }
+.mp .mp-legend li:hover { background: var(--blue-pale); }
+.mp .mp-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+.mp .mp-legend-label { font-weight: 700; color: var(--text); }
+.mp .mp-legend-value { font-weight: 700; color: var(--text-muted); }
+
+/* Lines, areas, axes: grey grid, 2.2px blue line, 10px axis text */
+.mp .mp-axis { font-size: 10px; font-weight: 600; fill: var(--text-muted); }
+.mp .mp-line polyline, .mp .mp-line path.line { stroke: var(--ch-1); stroke-width: 2.2; }
+.mp .mp-line line { stroke: var(--border); }
+.mp .mp-spark polyline { stroke: var(--ch-1); }
+
+/* Treemap, funnel, gantt, radial gauges and heat map take the report's tones */
+.mp .mp-tree-head { color: var(--text); font-weight: 700; }
+.mp .mp-gantt-bar { background: var(--ch-1); }
+.mp .mp-gantt-today { background: var(--ch-6); }
+.mp .mp-gantt-label, .mp .mp-funnel-row, .mp .mp-radial-label { color: var(--text); font-weight: 700; }
+.mp .mp-radial-sub, .mp .mp-gantt-axis { color: var(--text-muted); font-weight: 600; }
+.mp .mp-radial-pct { fill: var(--text); font-weight: 800; }
+.mp .mp-heat-legend i { background: linear-gradient(90deg, var(--blue-pale), var(--ch-1)); }

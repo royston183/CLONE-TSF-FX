@@ -7,7 +7,7 @@ import type { Slice } from '../mock/overview.ts'
  * prop, already summed, and `format` turns a value into the text shown.
  */
 
-const colour = (i: number) => SERIES_COLOURS[i % SERIES_COLOURS.length] ?? '#1565c0'
+const colour = (i: number) => SERIES_COLOURS[i % SERIES_COLOURS.length] ?? 'var(--ch-1)'
 type Format = (value: number) => string
 
 // ------------------------------------------------------------------ treemap
@@ -295,7 +295,7 @@ export function MaturityHeatmap({ columns, format }: { columns: StackColumn[]; f
     <div className="mp-maturity-grid"><span />{columns.map(col => <strong key={col.label}>{col.label}</strong>)}
       {products.map(product => <div className="mp-maturity-row" key={product}><strong>{product}</strong>{columns.map(col => {
         const value = col.parts.find(part => part.label === product)?.value ?? 0
-        return <div className="mp-maturity-cell" key={col.label} data-drill={col.label + '|' + product} title={col.label + ' / ' + product + ': ' + format(value)} style={{ background: value ? 'rgba(21, 101, 192, ' + (0.12 + value / max * 0.88) + ')' : 'var(--bg2)', color: value / max > 0.45 ? '#fff' : 'var(--text)' }}>{format(value)}</div>
+        return <div className="mp-maturity-cell" key={col.label} data-drill={col.label + '|' + product} title={col.label + ' / ' + product + ': ' + format(value)} style={{ background: value ? `color-mix(in srgb, var(--ch-1) ${Math.round((0.12 + value / max * 0.88) * 100)}%, transparent)` : 'var(--bg2)', color: value / max > 0.45 ? '#fff' : 'var(--text)' }}>{format(value)}</div>
       })}</div>)}
     </div><div className="mp-heat-legend"><span>Lower exposure</span><i /><span>Higher exposure</span></div>
   </div>

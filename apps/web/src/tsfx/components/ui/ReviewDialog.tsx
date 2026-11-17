@@ -1,5 +1,6 @@
 import { DataTable } from '@tsfx/components/table/DataTable';
 import { useState } from 'react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { behaviourOf, formatField, labelOf, typeOf, valueFields, type AnyField } from '@tsfx/lib/fields';
 import { amountInUnit } from '@tsfx/lib/fields/amount-units';
 import { formatAmount } from '@tsfx/lib/fields/parse';
@@ -28,8 +29,8 @@ export function ReviewDialog({ title, fields, before, after, lk, busy = false, c
   const nothing = !changed.length && !summary.length;
   return (
     <Modal title={title} wide onClose={onBack} busy={busy} onPrimary={nothing ? undefined : onConfirm} footer={<>
-      <button className="button secondary" disabled={busy} onClick={onBack}>Back</button>
-      <button className="button" disabled={busy || nothing} onClick={onConfirm}>{busy ? 'Saving…' : confirmLabel}</button>
+      <button className="button secondary" disabled={busy} onClick={onBack}><ArrowLeft size={14} />Back</button>
+      <button className="button" disabled={busy || nothing} onClick={onConfirm}><Save size={14} />{busy ? 'Saving…' : confirmLabel}</button>
     </>}>
       <WizardSteps steps={['Edit details', 'Review changes', 'Save']} current={busy ? 2 : 1} />
       <DialogSection title="Change summary" description="Review the current and proposed values before saving.">

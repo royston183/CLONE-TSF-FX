@@ -42,8 +42,8 @@
   background: #f6f9fc;
 }
 .fondfec .primary-btn {
-  border: 1px solid #0b6fcf;
-  background: #0b74d1;
+  border: 1px solid #0854a0;
+  background: #0854a0;
   color: #ffffff;
   border-radius: 5px;
   height: 36px;
@@ -51,7 +51,7 @@
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(11,116,209,.18);
 }
-.fondfec .primary-btn:hover { background: #0968bc; }
+.fondfec .primary-btn:hover { background: #0854a0; }
 .fondfec .primary-btn:disabled {
   border-color: #b9c9d6;
   background: #dfe8ef;
@@ -132,7 +132,7 @@
 .fondfec .reset-btn { height: 34px; padding: 0 11px; }
 .fondfec .action-spacer { flex: 1 1 10px; }
 .fondfec .drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(11,116,209,.16); }
-.fondfec .drop-target.drag-over { background: #085fac; transform: translateY(-1px); }
+.fondfec .drop-target.drag-over { background: #06477f; transform: translateY(-1px); }
 .fondfec .icon-btn { width: 36px; padding: 0; height: 34px; }
 .fondfec .table-shell { width: 100%; overflow: auto; max-height: 500px; }
 .fondfec table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1760px; }
@@ -141,13 +141,13 @@
   top: 0;
   z-index: 2;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 6px;
   background: #f1f3f5;
   border-bottom: 1px solid #d5dde4;
   border-right: 1px solid #e2e7eb;
   color: #466079;
   text-align: left;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   white-space: nowrap;
   user-select: none;
@@ -157,7 +157,7 @@
 .fondfec thead th:last-child { border-right: 0; }
 .fondfec tbody td {
   height: 38px;
-  padding: 0 10px;
+  padding: 0 6px;
   border-bottom: 1px solid #e5eaee;
   border-right: 1px solid #edf0f2;
   background: #ffffff;
@@ -173,7 +173,7 @@
 .fondfec .link-btn {
   border: 0;
   background: transparent;
-  color: #006dcc;
+  color: #0854a0;
   text-decoration: underline;
   font-weight: 700;
   padding: 0;
@@ -254,7 +254,7 @@
 .fondfec .cal-date { cursor: pointer; }
 .fondfec .cal-date:hover { background: #eef5fb; }
 .fondfec .cal-date.today { box-shadow: inset 0 0 0 1px #62a3dd; }
-.fondfec .cal-date.selected { background: #0b74d1; color: #ffffff; font-weight: 700; }
+.fondfec .cal-date.selected { background: #0854a0; color: #ffffff; font-weight: 700; }
 .fondfec .cal-date.blank { cursor: default; }
 .fondfec .overlay {
   position: fixed;
@@ -372,7 +372,7 @@
 /* ---- 1. Tokens ---- */
 .fondfec {
   --bg:#F5F7F9;--card:#FFFFFF;--text:#1D2D3E;--text-muted:#475E75;--text-faint:#687B8D;
-  --border:#D5DADD;--border-strong:#8996A1;--primary:#0A6ED1;--primary-dark:#085CAF;
+  --border:#D5DADD;--border-strong:#8996A1;--primary:#0854a0;--primary-dark:#06477f;
   --primary-light:#4FA3E8;--primary-tint:#EAF3FC;--success:#107E3E;--success-tint:#E4F5E9;
   --warning:#E9730C;--warning-tint:#FFF4CC;--error:#BB0000;--error-tint:#FCEAEA;
   --teal:#0F828C;--teal-tint:#E4F5F5;--purple:#6B3FA0;--purple-tint:#F1EAF8;--gray-tint:#F2F4F5;
@@ -401,20 +401,20 @@
   background: #fff; border-color: var(--primary); color: var(--primary); box-shadow: 0 1px 4px rgba(34,53,72,.1);
 }
 .fondfec .primary-btn { border: 1px solid var(--primary); background: var(--primary); color: #fff; box-shadow: none; }
-.fondfec .primary-btn:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 2px 6px rgba(10,110,209,.22); }
+.fondfec .primary-btn:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 2px 6px rgba(8,84,160,.22); }
 .fondfec .primary-btn:disabled { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: none; }
 .fondfec button:active:not(:disabled) { transform: translateY(1px); }
 .fondfec .back-btn:disabled, .fondfec .header-btn:disabled, .fondfec .icon-btn:disabled, .fondfec .secondary-btn:disabled, .fondfec .primary-btn:disabled { opacity: .45; cursor: not-allowed; }
 .fondfec .icon-btn { width: 32px; height: 32px; padding: 0; }
 .fondfec .reset-btn { height: 32px; padding: 0 12px; }
 /* existing drag-a-row-onto-"NDF Rate Correction" drop target: reference .drag-over look */
-.fondfec .drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(10,110,209,.16); }
+.fondfec .drop-target.drag-ready { box-shadow: 0 0 0 3px rgba(8,84,160,.16); }
 .fondfec .drop-target.drag-over {
   transform: none;
   border-color: var(--primary) !important;
   background: var(--primary-tint) !important;
   color: var(--primary) !important;
-  box-shadow: 0 0 0 2px rgba(10,110,209,.12);
+  box-shadow: 0 0 0 2px rgba(8,84,160,.12);
 }
 /* ---- 4. Card + section title ---- */
 .fondfec .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
@@ -438,16 +438,16 @@
 /* ---- 6. Table (vertical scroll container: header stays sticky) ---- */
 .fondfec .table-shell { overflow-x: auto; overflow-y: auto; background: #fff; }
 .fondfec thead th {
-  z-index: 3; height: auto; padding: 8px 10px; background: var(--gray-tint);
+  z-index: 3; height: auto; padding: 8px 6px; background: var(--gray-tint);
   border-bottom: 1px solid #E6E9EB; border-right-color: #E6E9EB;
-  color: #475E75; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+  color: #475E75; font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
   transition: color .15s ease;
 }
-.fondfec thead th.sortable:hover { background: var(--gray-tint); color: #085CAF; }
-.fondfec thead th.sortable:hover .sort-ind { color: #085CAF; }
+.fondfec thead th.sortable:hover { background: var(--gray-tint); color: #06477f; }
+.fondfec thead th.sortable:hover .sort-ind { color: #06477f; }
 .fondfec .sort-ind { font-size: 9px; color: #687B8D; }
 .fondfec tbody td {
-  height: auto; padding: 8px 10px; font-size: 14px; font-weight: 400; color: #1D2D3E;
+  height: auto; padding: 8px 6px; font-size: 15.5px; font-weight: 400; color: #1D2D3E;
   border-bottom: 1px solid #E6E9EB; border-right-color: #EEF0F2; white-space: nowrap;
   transition: background .15s ease;
 }
@@ -460,11 +460,11 @@
 }
 .fondfec tbody tr:hover td { background: #F7FBFF; }
 .fondfec tbody tr.selected td, .fondfec tbody tr.selected:hover td { background: #EAF3FC; }
-.fondfec tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(10,110,209,.14); }
+.fondfec tbody tr.selected:hover { box-shadow: 0 3px 9px rgba(8,84,160,.14); }
 .fondfec tbody tr.dragging { opacity: .5; }
-.fondfec .row-check, .fondfec .cell-check input[type="checkbox"] { accent-color: #0A6ED1; }
-.fondfec .link-btn { color: #085CAF; font-weight: 700; text-decoration: none; font-size: inherit; }
-.fondfec .link-btn:hover { color: #0A6ED1; text-decoration: underline; }
+.fondfec .row-check, .fondfec .cell-check input[type="checkbox"] { accent-color: #0854a0; }
+.fondfec .link-btn { color: #06477f; font-weight: 700; text-decoration: none; font-size: inherit; }
+.fondfec .link-btn:hover { color: #0854a0; text-decoration: underline; }
 .fondfec .num { font-variant-numeric: tabular-nums; }
 .fondfec .empty-state { color: var(--text-faint); }
 /* ---- 7. Status (pending correction meaning, class assignment untouched) ---- */

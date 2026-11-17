@@ -24,7 +24,7 @@
 
 /* 8. Table: 13px uppercase sticky head (was 11px), 14px data (already), right-aligned tabular numbers */
 .mo-confirm-fx-deal-id-ss table.data thead th {
-  font-size: 13px;
+  font-size: 14.5px;
   letter-spacing: 0.3px;
 }
 .mo-confirm-fx-deal-id-ss table.data thead th.num,

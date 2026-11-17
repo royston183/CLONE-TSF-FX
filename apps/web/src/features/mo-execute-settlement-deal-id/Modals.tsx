@@ -311,7 +311,7 @@ export function ViewInvModal({
       size="wide"
       icon={<>&#128203;</>}
       title="View Trade Invoice"
-      subtitle={<>ZSGTSF_RDEAL_ID_INV &ndash; read-only invoice list for Deal ID <span>{dealId}</span></>}
+      subtitle={<>Read-only invoice list for Deal ID <span>{dealId}</span></>}
       footer={<Cancel onClick={onClose} label="Close" />}
     >
       <div className="table-wrap">
@@ -440,7 +440,7 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.bDoc || entries.entries?.buy?.document || ''} />
+            <input type="text" disabled readOnly placeholder="posted by BO" value={form.bDoc || entries.entries?.buy?.document || ''} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
@@ -491,7 +491,7 @@ export function FxPostModal({
           </div>
           <div className="ffield">
             <label>FI Document</label>
-            <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.sDoc || entries.entries?.sell?.document || ''} />
+            <input type="text" disabled readOnly placeholder="posted by BO" value={form.sDoc || entries.entries?.sell?.document || ''} />
           </div>
           <div className="ffield">
             <label>Bank Type</label>
@@ -675,7 +675,7 @@ export function InvPostModal({
         </div>
         <div className="ffield">
           <label>FI Document No</label>
-          <input type="text" disabled readOnly placeholder="posted by BO (ZSGTSFR081)" value={form.fiDoc} />
+          <input type="text" disabled readOnly placeholder="posted by BO" value={form.fiDoc} />
         </div>
       </div>
       <div className="fbox" style={{ marginTop: '10px', marginBottom: 0 }}>

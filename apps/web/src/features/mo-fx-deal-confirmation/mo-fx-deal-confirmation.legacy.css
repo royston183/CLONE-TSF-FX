@@ -15,8 +15,8 @@
   --sub:#475e75;
   --muted:#687b8d;
 
-  --blue:#0a6ed1;
-  --blue-hover:#085caf;
+  --blue:#0854a0;
+  --blue-hover:#06477f;
   --blue-soft:#eaf3fc;
 
   --border:#d5dadd;
@@ -398,10 +398,10 @@
   z-index:5;
   background:var(--surface-2);
   color:var(--sub);
-  font-size:13px;
+  font-size: 14.5px;
   font-weight:600;
   text-align:left;
-  padding:9px 12px;
+  padding: 9px 7px;
   border-bottom:1px solid var(--border);
   white-space:nowrap;
   cursor:pointer;
@@ -409,13 +409,13 @@
 }
 .mo-fx-deal-confirmation table.deals-table thead th.no-sort {cursor:default;}
 .mo-fx-deal-confirmation table.deals-table thead th .th-inner {display:flex;align-items:center;gap:5px;}
-.mo-fx-deal-confirmation table.deals-table thead th .sort-arrow {font-size:9px;color:var(--muted);}
+.mo-fx-deal-confirmation table.deals-table thead th .sort-arrow {font-size: 10.5px;color:var(--muted);}
 .mo-fx-deal-confirmation table.deals-table thead th.sorted .sort-arrow {color:var(--blue);}
 .mo-fx-deal-confirmation table.deals-table thead th.col-select {width:38px;text-align:center;}
 .mo-fx-deal-confirmation table.deals-table thead th.num {text-align:right;}
 .mo-fx-deal-confirmation table.deals-table tbody td {
-  padding:8px 12px;
-  font-size:13px;
+  padding: 8px 7px;
+  font-size: 14.5px;
   font-weight:400;
   color:var(--text);
   border-bottom:1px solid var(--border);
@@ -447,7 +447,7 @@
 .mo-fx-deal-confirmation .status-matched {color:var(--green);}
 .mo-fx-deal-confirmation .empty-row td {
   text-align:center;
-  padding:48px 16px;
+  padding: 48px 9px;
   color:var(--muted);
 }
 /* ============================================================

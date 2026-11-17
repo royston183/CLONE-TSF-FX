@@ -72,11 +72,16 @@ export function odataBackend({ service, settings }: SapTarget, def: AnyModuleDef
     Object.fromEntries(Object.entries(key).map(([f, v]) => [prop(table, f), v])),
     Object.fromEntries(Object.entries(contract.keyTypes ?? {}).map(([f, t]) => [prop(table, f), t]))
   );
+  /** An update sends only the contract's writable fields of its table (all of them when it names none). */
+  const writableOnly = (table: string, data: Row): Row => {
+    const only = contract.writable?.[table];
+    return only ? Object.fromEntries(Object.entries(data).filter(([f]) => only.includes(f))) : data;
+  };
   // Never send If-Match to an entity without an ETag: SAP rejects it.
   const etagOf = (o: PlanOp) => o.etag ?? (contract.etag ? '*' : undefined);
   const request = (table: string, o: PlanOp): BatchOp => (o.op === 'create'
     ? { method: 'POST', path: contract.tables[table].entitySet, body: bodyOf(table, o.data ?? {}) }
-    : { method: o.op === 'update' ? 'PATCH' : 'DELETE', path: keyPath(table, o.key), body: o.op === 'update' ? bodyOf(table, o.data ?? {}) : undefined, etag: etagOf(o) });
+    : { method: o.op === 'update' ? 'PATCH' : 'DELETE', path: keyPath(table, o.key), body: o.op === 'update' ? bodyOf(table, writableOnly(table, o.data ?? {})) : undefined, etag: etagOf(o) });
   const fail = (status: number, message: string, id?: string): never => {
     if (status === 401) throw new HttpError(502, REJECTED_MESSAGE);
     if (status === 412) throw new HttpError(409, CONFLICT_MESSAGE);

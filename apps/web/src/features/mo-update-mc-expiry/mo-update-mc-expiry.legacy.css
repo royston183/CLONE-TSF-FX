@@ -15,8 +15,8 @@
   --text-faint:#687b8d;
   --border:#d5dadd;
   --border-strong:#8996a1;
-  --blue:#0a6ed1;
-  --blue-hover:#085caf;
+  --blue:#0854a0;
+  --blue-hover:#06477f;
   --blue-soft:#eaf3fc;
   --blue2:#4b9fe1;
   --success:#107e3e;
@@ -312,7 +312,7 @@
 }
 .moume .btn:active:not(:disabled) {transform:translateY(1px);}
 .moume .btn-primary {background:var(--blue); color:#fff; border-color:var(--blue);}
-.moume .btn-primary:hover:not(:disabled) {background:var(--blue-hover); border-color:var(--blue-hover); box-shadow:0 2px 6px rgba(10,110,209,.22);}
+.moume .btn-primary:hover:not(:disabled) {background:var(--blue-hover); border-color:var(--blue-hover); box-shadow:0 2px 6px rgba(8,84,160,.22);}
 .moume .btn-secondary {background:#fff; color:var(--text-muted); border-color:var(--border-strong);}
 .moume .btn-secondary:hover:not(:disabled) {border-color:var(--blue); color:var(--blue); box-shadow:0 1px 4px rgba(34,53,72,.1);}
 .moume .btn-danger {background:var(--error); color:#fff;}
@@ -402,10 +402,10 @@
   z-index:5;
   background:var(--surface-2);
   border-bottom:1px solid var(--border);
-  padding:0 10px;
+  padding: 0 6px;
   height:38px;
   text-align:left;
-  font-size:15px;
+  font-size: 16.5px;
   font-weight:700;
   color:var(--text-muted);
   letter-spacing:.15px;
@@ -420,7 +420,7 @@
   gap:5px;
 }
 .moume table.data-table thead th .sort-ind {
-  font-size:9px;
+  font-size: 10.5px;
   color:var(--text-faint);
   width:10px;
 }
@@ -429,9 +429,9 @@
 .moume table.data-table thead th:last-child {border-top-right-radius:var(--radius-md);}
 .moume table.data-table tbody td {
   height:var(--row-h);
-  padding:0 10px;
+  padding: 0 6px;
   border-bottom:1px solid var(--border);
-  font-size:15px;
+  font-size: 16.5px;
   font-weight:400;
   color:var(--text);
   white-space:nowrap;
@@ -451,7 +451,7 @@
 .moume table.data-table tbody tr.row-selected {background:var(--blue-soft);}
 .moume table.data-table tbody tr.row-selected:hover {
   background:var(--blue-soft);
-  box-shadow:0 3px 9px rgba(10,110,209,.14);
+  box-shadow:0 3px 9px rgba(8,84,160,.14);
 }
 .moume table.data-table tbody tr.dragging {opacity:.5;}
 .moume table.data-table tbody tr.drag-range-selected {background:var(--blue-soft);}
@@ -503,7 +503,7 @@
   gap:10px;
   background:var(--blue-soft);
   border:1px solid #CFE1FB;
-  color:#154E9E;
+  color:#06477f;
   border-radius:var(--radius-md);
   padding:10px 12px;
   font-size:13px;
@@ -571,7 +571,7 @@
   background:var(--blue) !important;
   color:#fff !important;
   border-color:var(--blue) !important;
-  box-shadow:0 0 0 3px rgba(10,110,209,.15);
+  box-shadow:0 0 0 3px rgba(8,84,160,.15);
   transform:translateY(-1px);
 }
 /* =========================================================

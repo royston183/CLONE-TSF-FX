@@ -1,6 +1,6 @@
 import { DataTable, columnsFor } from '@tsfx/components/table/DataTable';
-import { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, Upload, X } from 'lucide-react';
 import { FieldControl } from '@tsfx/components/fields/FieldControl';
 import { alignClass } from '@tsfx/lib/fields';
 import { amountInUnit } from '@tsfx/lib/fields/amount-units';
@@ -38,12 +38,14 @@ export function latestPick<T>() {
 export const postedRows = (lines: UploadLine[]): Row[] => lines.flatMap(l => (l.values ? [l.values] : []));
 
 /** Pick a file, preview every row with its status and problem (ALM .trm-seg filter, .tb-table), then post the valid rows. */
-export function UploadDialog({ title, accept, maxBytes, columns, parse, onPost, onClose, busy = false }: {
+export function UploadDialog({ title, accept, maxBytes, columns, parse, onPost, onClose, busy = false, initialFile }: {
   title: string; accept: string[]; maxBytes: number; columns: { field: string; label: string; align?: 'left' | 'right'; type?: 'amount'; scale?: number }[];
   /** Reads the picked file and returns its checked rows (the server's preview). */
   parse: (file: File) => Promise<UploadLine[]>;
   /** `valid`: the lines that will be stored; `all`: every line on screen (see `postedRows`). */
   onPost: (valid: UploadLine[], all: UploadLine[]) => void; onClose: () => void; busy?: boolean;
+  /** A file already chosen on the page: read and checked at once, as if it had been picked here. */
+  initialFile?: File;
 }) {
   const [file, setFile] = useState('');
   const [lines, setLines] = useState<UploadLine[] | null>(null);
@@ -66,11 +68,13 @@ export function UploadDialog({ title, accept, maxBytes, columns, parse, onPost, 
       e => { setLines(null); setError(e.message); setReading(false); }
     );
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the dialog opens with a file already chosen
+  useEffect(() => { if (initialFile) pick(initialFile); }, []);
   return (
     <Modal title={title} subtitle="Choose a file, review the checked rows, then post the valid entries." wide onClose={onClose} busy={busy || reading} footer={<>
       {lines && <span className="ds-foot-hint">{valid.length} of {lines.length} rows ready</span>}
-      <button className="button secondary" disabled={busy || reading} onClick={onClose}>Cancel</button>
-      <button className="button" disabled={busy || reading || !valid.length} onClick={() => onPost(valid, lines ?? [])}>{busy ? 'Posting…' : `Post ${valid.length} Rows`}</button>
+      <button className="button secondary" disabled={busy || reading} onClick={onClose}><X size={14} />Cancel</button>
+      <button className="button" disabled={busy || reading || !valid.length} onClick={() => onPost(valid, lines ?? [])}><Upload size={14} />{busy ? 'Posting…' : `Post ${valid.length} Rows`}</button>
     </>}>
       <WizardSteps steps={['Choose file', 'Review rows', 'Post entries']} current={busy ? 2 : lines ? 1 : 0} />
       <DialogSection title="Source file" description={`Accepted formats: ${accept.join(', ')} · Maximum ${Math.round(maxBytes / 1048576)} MB`}>

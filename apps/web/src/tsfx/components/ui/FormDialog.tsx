@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Save, X } from 'lucide-react';
 import { checkFields, valueFields, behaviourOf, type AnyField } from '@tsfx/lib/fields';
 import type { Row } from '@tsfx/lib/grid/types';
 import { FieldControl } from '@tsfx/components/fields/FieldControl';
@@ -37,8 +37,8 @@ export function FormDialog({ title, subtitle, fields, initial, lk, columns = 1, 
   return (
     <Modal title={title} subtitle={subtitle} wide={columns === 2} onClose={onClose} busy={busy} onPrimary={save} footer={<>
       <span className={`ds-foot-hint ${tried && invalid ? 'bad' : ''}`}>{tried && invalid ? 'Fix the highlighted fields to save' : 'Ctrl+S saves'}</span>
-      <button className="button secondary" disabled={busy} onClick={onClose}>Cancel</button>
-      <button className="button" disabled={busy} onClick={save}>{busy ? 'Saving…' : saveLabel}</button>
+      <button className="button secondary" disabled={busy} onClick={onClose}><X size={14} />Cancel</button>
+      <button className="button" disabled={busy} onClick={save}><Save size={14} />{busy ? 'Saving…' : saveLabel}</button>
     </>}>
       {serverMessage && <Notice error><AlertCircle size={16} />{serverMessage}</Notice>}
       <DialogSection title={section?.title ?? 'Record details'} description={section ? section.description : 'Complete the fields below. Fields marked * are required.'}>
