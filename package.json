@@ -28,6 +28,8 @@
     "db:seed:set-fx": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts seed-set-fx",
     "db:ensure": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts ensure",
     "db:setup": "node --env-file-if-exists=.env packages/gateway/src/sqlite/cli.ts setup",
+    "db:import-deals": "node tools/import-demo-deals.mjs import",
+    "db:clear-deals": "node tools/import-demo-deals.mjs clear",
     "gen:dark-css": "node tools/gen-dark-css.mjs",
     "verify": "npm run typecheck && npm test && node tools/gen-dark-css.mjs --check && npm run build"
   },

@@ -8,7 +8,10 @@ export function DateField({
   onChange,
   onPicked,
   min,
+  locked = false,
 }: {
+  /** Greyed out: the value is shown but cannot be typed or picked. */
+  locked?: boolean
   value: string
   onChange: (value: string) => void
   /** A date was chosen from the calendar (the original clears the field's error then). */
@@ -19,19 +22,24 @@ export function DateField({
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => setOpen(false), [])
-  const toggle = () => setOpen((o) => !o)
+  const toggle = () => {
+    if (!locked) setOpen((o) => !o)
+  }
 
   return (
     <div ref={wrapRef} className="date-field">
       <input
         className="control"
+        readOnly={locked}
+        aria-disabled={locked || undefined}
+        style={locked ? { cursor: 'not-allowed' } : undefined}
         placeholder="DD-MM-YYYY"
         autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onClick={toggle}
       />
-      <button type="button" className="date-icon" onClick={toggle}>
+      <button type="button" className="date-icon" onClick={toggle} disabled={locked} style={locked ? { cursor: 'not-allowed', opacity: 0.5 } : undefined}>
         📅
       </button>
       <DatePopup

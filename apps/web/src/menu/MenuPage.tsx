@@ -12,6 +12,7 @@ import { MasterDataView } from './sections/MasterDataView.tsx'
 import { OverviewView } from './sections/OverviewView.tsx'
 import { ReportingStructureView } from './sections/ReportingStructureView.tsx'
 import { ReportingView } from './sections/ReportingView.tsx'
+import { ImportDeals } from './sections/ImportDeals.tsx'
 import { SlcStructureView } from './sections/SlcStructureView.tsx'
 import { TradeFlowsView } from './sections/TradeFlowsView.tsx'
 import { XlcCrpStructureView } from './sections/XlcCrpStructureView.tsx'
@@ -54,6 +55,7 @@ export type HubSection =
   | 'icfs-structure'
   | 'reporting'
   | 'reporting-fx-structure'
+  | 'import-deals'
   | 'reporting-slc-structure'
   | 'reporting-xlc-crp-structure'
   | 'reporting-icfs-structure'
@@ -146,6 +148,8 @@ export function MenuPage({ section }: { section: HubSection }) {
             <XlcCrpStructureView />
           ) : section === 'icfs-structure' ? (
             <IcfsStructureView />
+          ) : section === 'import-deals' ? (
+            <ImportDeals />
           ) : reportingStructure ? (
             <ReportingStructureView
               structure={reportingStructure}

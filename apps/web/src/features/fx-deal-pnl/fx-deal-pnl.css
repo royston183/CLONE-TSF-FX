@@ -1,0 +1,81 @@
+/* FX Deal P&L: what the Master Contract stylesheet (.fomc) and shared/report/report.css do not already give. */
+
+.fomc .rpt-modal-sub { margin: -6px 0 12px; color: var(--text-muted); font-weight: 600; }
+.fomc .rpt-note { margin: 10px 2px 0; color: var(--text-faint); font-size: 11.5px; line-height: 1.5; }
+.fomc .rpt-drill { position: relative; cursor: pointer; transition: background .15s, box-shadow .15s; }
+.fomc .rpt-drill:hover, .fomc .rpt-drill:focus-visible { background: var(--primary-tint); box-shadow: inset 0 -2px 0 var(--primary); outline: none; }
+.fomc .rpt-drill-ic { width: 12px; height: 12px; margin-right: 6px; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: translateX(4px); transition: opacity .15s, transform .15s; vertical-align: -1px; }
+.fomc .rpt-drill:hover .rpt-drill-ic, .fomc .rpt-drill:focus-visible .rpt-drill-ic { opacity: 1; transform: none; }
+.fomc table.popup-table tr.rpt-hot td { background: var(--primary-tint); }
+.fomc table.popup-table tr.rpt-total-row td { background: var(--gray-tint); font-weight: 700; }
+
+/* Two compact pop-ups: the breakdown, and beside it (top left) the calculation that opened from it. Both stay visible. */
+.fomc .modal-overlay .modal.rpt-modal { position: absolute; padding: 16px 18px 14px; animation: rpt-fade-in .18s ease both; transition: top .32s ease, left .32s ease, transform .32s ease; }
+.fomc .modal-overlay.closing .modal.rpt-modal { animation: rpt-fade-out .16s ease forwards; }
+.fomc .modal.rpt-base { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.fomc .modal.rpt-base.shifted { top: 24px; left: calc(100% - 24px); transform: translate(-100%, 0); }
+.fomc .modal.rpt-drill-modal { top: 24px; left: 24px; max-width: calc(100vw - 720px) !important; animation: rpt-from-left .3s cubic-bezier(.2, .8, .2, 1) both; box-shadow: var(--shadow-pop), 0 0 0 2px var(--primary-tint); }
+.fomc .modal.rpt-drill-modal h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.fomc .modal.rpt-base .modal-head-row h2 { font-size: 22px; font-weight: 700; }
+.fomc .rpt-drill-btns { display: flex; align-items: center; gap: 8px; margin-left: 16px; }
+@keyframes rpt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rpt-fade-out { to { opacity: 0; } }
+@keyframes rpt-from-left { from { opacity: 0; transform: translateX(-56px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1180px) {
+  .fomc .modal.rpt-drill-modal { max-width: calc(100vw - 24px) !important; left: 12px; top: 12px; }
+}
+.fomc .rpt-drill.on { background: var(--primary-tint); box-shadow: inset 0 -2px 0 var(--primary); }
+
+/* Tables in the pop-ups: only as wide as their columns need */
+.fomc .rpt-modal .popup-table-wrap { overflow-x: auto; }
+.fomc .rpt-modal table.popup-table { width: auto; min-width: 0; }
+.fomc .rpt-modal table.popup-table thead th { padding: 6px 12px 6px 8px; font-size: 11px; letter-spacing: .3px; text-transform: uppercase; background: var(--gray-tint); }
+.fomc .rpt-modal table.popup-table td { padding: 6px 12px 6px 8px; font-size: 12.5px; }
+.fomc .rpt-modal .detail-section { margin-bottom: 12px; }
+.fomc .rpt-modal .rpt-note, .fomc .rpt-modal .rpt-inputs { max-width: 60ch; }
+.fomc .rpt-modal .kv-list { max-width: 60ch; }
+.fomc .rpt-modal-sub { max-width: 60ch; }
+
+/* The two linked transactions */
+.fomc .rpt-legs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 14px; }
+.fomc .rpt-leg { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow-card); transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, border-color .18s ease; }
+.fomc .rpt-leg.buy { border-top: 4px solid var(--success); }
+.fomc .rpt-leg.sell { border-top: 4px solid var(--error); }
+.fomc .rpt-leg.active { transform: translateY(-3px); box-shadow: var(--shadow-pop); border-color: var(--primary); }
+.fomc .rpt-leg.dim { opacity: .55; }
+.fomc .rpt-leg:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fomc .rpt-leg-t { font-weight: 600; }
+.fomc .rpt-leg-d { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.fomc .rpt-leg-r { font-size: 26px; font-weight: 700; color: var(--primary-dark); font-variant-numeric: tabular-nums; }
+.fomc .rpt-leg-a { display: flex; gap: 12px; flex-wrap: wrap; font-weight: 600; }
+.fomc .rpt-link { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 120px; color: var(--primary); }
+.fomc .rpt-link .arrow { font-size: 30px; line-height: 1; animation: rpt-nudge 1.8s ease-in-out infinite; }
+.fomc .rpt-link .spread { padding: 3px 10px; border-radius: 999px; background: var(--warning-tint); color: var(--warning); font-weight: 700; font-size: 12px; }
+.fomc .rpt-link small { font-weight: 600; color: var(--text-faint); }
+@keyframes rpt-nudge { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+.fomc .rpt-inputs { margin: 0; min-height: 34px; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--gray-tint); color: var(--text-muted); font-weight: 600; }
+.fomc .rpt-inputs b { color: var(--text); }
+
+/* Settlement flows */
+.fomc table.rpt-flows tbody th { padding: 9px 8px; text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); }
+.fomc table.rpt-flows tr.rpt-flow-pay th { box-shadow: inset 4px 0 0 var(--error); }
+.fomc table.rpt-flows tr.rpt-flow-receive th { box-shadow: inset 4px 0 0 var(--success); }
+.fomc table.rpt-flows tr.rpt-flow-net th, .fomc table.rpt-flows tr.rpt-flow-net td { background: var(--primary-tint); font-weight: 700; }
+.fomc table.rpt-flows tr.rpt-flow-net th { box-shadow: inset 4px 0 0 var(--primary); }
+.fomc .rpt-flow { cursor: help; transition: background .12s; }
+.fomc .rpt-flow:hover, .fomc .rpt-flow:focus-visible { background: var(--primary-tint); outline: none; }
+.fomc .rpt-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.fomc .rpt-summary div { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--gray-tint); animation: rpt-slide .3s ease both; }
+.fomc .rpt-summary div:nth-child(2) { animation-delay: .06s; }
+.fomc .rpt-summary div:nth-child(3) { animation-delay: .12s; }
+.fomc .rpt-summary span { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.fomc .rpt-summary strong { font-size: 19px; font-weight: 700; color: var(--primary-dark); }
+.fomc .rpt-summary small { color: var(--text-faint); font-weight: 600; }
+
+@media (max-width: 760px) {
+  .fomc .rpt-legs, .fomc .rpt-summary { grid-template-columns: 1fr; }
+  .fomc .rpt-link { flex-direction: row; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fomc .rpt-leg, .fomc .rpt-link .arrow, .fomc .rpt-summary div { animation: none !important; transition: none !important; }
+}

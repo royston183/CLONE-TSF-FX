@@ -19,8 +19,8 @@ import { donutArc, niceTicks, scaleLinear } from '../charts/geometry.ts'
 import type { Kpi, Slice } from '../mock/overview.ts'
 import './fx-dash.css'
 
-/* The FX dashboard, laid out like the ZFS_CASHPOS3 report: icon KPI cards, then white cards with a title, a subtitle and a
- * collapse button holding a share table, an area chart, rings with a ruled legend and track bars. */
+/* The FX overview, in the Create Master Contract look (see fx-dash.css): KPI cards with a blue edge, then white cards with a
+ * dotted section title and a collapse button holding a share table, an area chart, rings with a ruled legend and track bars. */
 
 /** Kept for the other screens that show a KPI's change. */
 export function KpiDelta({ kpi }: { kpi: Kpi }) {
@@ -35,19 +35,11 @@ export function KpiDelta({ kpi }: { kpi: Kpi }) {
 }
 
 const SERIES = ['var(--fxd-s1)', 'var(--fxd-s2)', 'var(--fxd-s3)', 'var(--fxd-s4)', 'var(--fxd-s5)', 'var(--fxd-s6)', 'var(--fxd-s7)', 'var(--fxd-s8)']
-const colourAt = (i: number) => SERIES[i % SERIES.length]
+export const colourAt = (i: number) => SERIES[i % SERIES.length]
 const PERIODS = [7, 30, 90] as const
-const TONES = ['blue', 'green', 'amber', 'violet', 'blue'] as const
-const ICONS = [
-  <path key="a" d="M3 3v18h18M18 17V9M13 17V5M8 17v-3" />,
-  <g key="b"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></g>,
-  <g key="c"><path d="m12 2 10 5-10 5L2 7z" /><path d="m2 12 10 5 10-5" /></g>,
-  <g key="d"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></g>,
-  <g key="e"><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /></g>,
-]
 const pct = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0)
 
-function Card({ title, sub, right, children, className = '' }: { title: string; sub?: string; right?: ReactNode; children: ReactNode; className?: string }) {
+export function Card({ title, sub, right, children, className = '' }: { title: string; sub?: string; right?: ReactNode; children: ReactNode; className?: string }) {
   const [open, setOpen] = useState(true)
   return (
     <DetailCard title={title}>
@@ -70,7 +62,7 @@ function Card({ title, sub, right, children, className = '' }: { title: string; 
   )
 }
 
-const Empty = ({ text = 'Nothing to show yet.' }: { text?: string }) => <p className="fxd-empty">{text}</p>
+export const Empty = ({ text = 'Nothing to show yet.' }: { text?: string }) => <p className="fxd-empty">{text}</p>
 
 function KpiCard({ kpi, index }: { kpi: Kpi; index: number }) {
   const up = (kpi.delta ?? 0) >= 0
@@ -83,16 +75,13 @@ function KpiCard({ kpi, index }: { kpi: Kpi; index: number }) {
           {kpi.delta === null ? null : <b className={up ? 'up' : 'down'}>{up ? '▲' : '▼'} {Math.abs(kpi.delta).toFixed(1)}% </b>}
           {kpi.deltaNote}
         </div>
-        <span className={`fxd-kpi-ic t-${TONES[index % TONES.length]}`} aria-hidden="true">
-          <svg viewBox="0 0 24 24">{ICONS[index % ICONS.length]}</svg>
-        </span>
       </div>
     </DetailCard>
   )
 }
 
 /** A ring with the total in the middle and a ruled legend beside it. */
-function Ring({ data, caption, title }: { data: Slice[]; caption: string; title: string }) {
+export function Ring({ data, caption, title }: { data: Slice[]; caption: string; title: string }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   let cursor = 0
   const parts = data.map((d, i) => {
@@ -126,7 +115,7 @@ function Ring({ data, caption, title }: { data: Slice[]; caption: string; title:
 }
 
 /** Label, a soft track with a fill, and the value at the right edge. */
-function Bars({ data, format = (v: number) => v.toLocaleString(), title }: { data: Slice[]; format?: (v: number) => string; title: string }) {
+export function Bars({ data, format = (v: number) => v.toLocaleString(), title }: { data: Slice[]; format?: (v: number) => string; title: string }) {
   const max = Math.max(...data.map((d) => d.value), 1)
   return (
     <div className="fxd-bars" role="img" aria-label={title}>

@@ -738,6 +738,26 @@
       ],
       "legacy": "legacy/ZSGTSF_RDEAL_ID_DETAIL_Demo.html",
       "note": "Read-only React report. FS Cloud Deal IDs joined to Master Contracts, COMP, model configuration and subtype-specific status texts; linked FX partners use tsfvFx by company and transaction. CDS FX/Option utilization and option partners are unavailable and shown as missing. CO Area is a filter, not authorization."
+    },
+    {
+      "code": "ZFS_FX_POSITION",
+      "id": "fx-position-dashboard",
+      "route": "/apps/fx-position-dashboard",
+      "title": "FX Position Dashboard",
+      "status": "ready",
+      "services": [
+        "middleware"
+      ],
+      "note": "Reporting dashboard, laid out like the Create Master Contract screen. Deal IDs (ZSGTSFTR_DEALID, read through the SAP OData service once it returns rows, otherwise the middleware) joined to FX legs for the counterparty bank. Four interactive charts: BP wise summary, maturity ladder, Deal ID status, planned P&L, each opening the Deal IDs behind it, as of a key date."
+    },
+    {
+      "code": "ZFS_FX_PNL",
+      "id": "fx-deal-pnl",
+      "route": "/apps/fx-deal-pnl",
+      "title": "FX Deal P&L Analysis",
+      "status": "ready",
+      "services": [],
+      "note": "Reporting screen, laid out like the Create Master Contract screen. Deal-wise planned vs actual P&L: portfolio of Deal IDs, entity-wise P&L popup, planned (arbitrage) and settlement (maturity + settlement flows) drilldowns. Runs on sample deals behind features/fx-deal-pnl/api.ts until the /api/fx-pnl endpoints exist; every figure is calculated by features/fx-deal-pnl/calc.ts."
     }
   ]
 }

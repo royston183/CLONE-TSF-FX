@@ -10,6 +10,7 @@ import {
   filterSortContracts,
   formFromContract,
   originAmount,
+  paymentDueDate,
   releaseToMO,
   seedChildStore,
   validateForm as validateFormAt,
@@ -211,5 +212,18 @@ describe('MC Date window (one calendar month before today)', () => {
     strictEqual(validateForm(filled({ mcDate: '21-09-2026' })).valid, true)
     strictEqual(validateForm(filled({ mcDate: '20-09-2026' }), { originalMcDate: '20-09-2026' }).valid, true)
     deepStrictEqual(validateForm(filled({ mcDate: '19-09-2026' }), { originalMcDate: '20-09-2026' }).errors, { mcDate: true })
+  })
+})
+
+describe('paymentDueDate', () => {
+  it('counts the days from the shipment end, or from the MC date for a contract-date term', () => {
+    strictEqual(paymentDueDate('P01 - 270 days from bill of lading date', '18-11-2026', '31-12-2026'), '27-09-2027')
+    strictEqual(paymentDueDate('P03 - 270 days from contract date', '18-11-2026', '31-12-2026'), '15-08-2027')
+    strictEqual(paymentDueDate('P04 - 360 days from bill of lading date', '18-11-2026', '31-12-2026'), '26-12-2027')
+  })
+  it('gives nothing when the term names no days or the base date is missing', () => {
+    strictEqual(paymentDueDate('Immediate', '18-11-2026', '31-12-2026'), null)
+    strictEqual(paymentDueDate(undefined, '18-11-2026', '31-12-2026'), null)
+    strictEqual(paymentDueDate('P01 - 270 days from bill of lading date', '18-11-2026', ''), null)
   })
 })

@@ -13,7 +13,8 @@ import {
 } from './data.ts'
 import { DateField } from './DateField.tsx'
 import { commitAmount } from './format.ts'
-import { commodityDescription, isMcDateTooOld, MC_DATE_TOO_OLD, originAmount } from './logic.ts'
+import { commodityDescription, isMcDateTooOld, MC_DATE_TOO_OLD, originAmount, paymentDueDate } from './logic.ts'
+import { useEffect } from 'react'
 import { earliestMcDate } from '../../shared/fx/dates.ts'
 import { matchPortGroup, portValue, type PortGroup } from '../../shared/fx/ports.ts'
 import { Overlay, useModal, type Modal } from './modal.tsx'
@@ -67,6 +68,11 @@ export function ContractFormModal({
     onChange(patch)
     if (clear) onClearError(clear)
   }
+  // The payment terms decide the payment date: it follows the term and the dates it counts from, and is locked while it does.
+  const dueDate = paymentDueDate(findPaymentTerm(values.paymentTerms)?.label, values.mcDate, values.shipEnd)
+  useEffect(() => {
+    if (dueDate && dueDate !== values.paymentDate) onChange({ paymentDate: dueDate })
+  }, [dueDate, values.paymentDate, onChange])
   const fieldCls = (key: FieldKey, span: string) => `field ${span}${errors[key] ? ' has-error' : ''}`
 
   const title =
@@ -327,7 +333,7 @@ export function ContractFormModal({
 
                   <div className="field gc-3">
                     <label>Payment Date</label>
-                    <DateField value={values.paymentDate} onChange={(v) => set({ paymentDate: v })} />
+                    <DateField value={values.paymentDate} onChange={(v) => set({ paymentDate: v })} locked={!!dueDate} />
                   </div>
 
                   <div className="field gc-4">

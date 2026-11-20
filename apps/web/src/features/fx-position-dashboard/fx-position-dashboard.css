@@ -1,0 +1,59 @@
+/* FX Position Dashboard: what the Master Contract stylesheet (.fomc) and shared/report/report.css do not already give. */
+
+.fomc .pos-key-date { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-muted); }
+.fomc .pos-key-date input { height: 32px; width: 150px; }
+
+/* Four cards with an equal gap in both directions; a card lifts when the pointer is over it */
+.fomc .pos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1080px) { .fomc .pos-grid { grid-template-columns: minmax(0, 1fr); } }
+.fomc .pos-card { margin-bottom: 0; display: flex; flex-direction: column; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.fomc .pos-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); border-color: var(--primary); }
+.fomc .pos-card .section-title { flex-wrap: wrap; }
+.fomc .pos-sub { display: block; margin-top: 1px; font-size: 11px; font-weight: 500; color: var(--text-faint); letter-spacing: 0; }
+.fomc .pos-tools { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.fomc .pos-body { padding: 10px 16px 14px; flex: 1 1 auto; min-width: 0; }
+.fomc .pos-swap { animation: pos-swap .26s ease both; }
+@keyframes pos-swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fomc .pos-body .table-scroll { max-height: 420px; overflow: auto; }
+.fomc .pos-body table.mc-table tbody tr[data-drill]:hover td, .fomc .pos-body table.mc-table td[data-drill]:hover { background: var(--primary-tint); }
+.fomc .pos-body table.mc-table td[data-drill], .fomc .pos-body table.mc-table tr[data-drill] { cursor: pointer; }
+
+/* SVG charts */
+.fomc .pos-svg { width: 100%; height: auto; display: block; }
+.fomc .pos-svg .grid { stroke: var(--border); stroke-width: 1; }
+.fomc .pos-svg .grid.zero { stroke: var(--text-muted); stroke-width: 1.2; }
+.fomc .pos-svg .ax { font-size: 10px; font-weight: 600; fill: var(--text-muted); }
+.fomc .pos-svg.slim .ax { font-size: 9px; }
+.fomc .pos-svg .ax.sub { font-size: 10px; fill: var(--text-faint); }
+.fomc .pos-svg .dl { font-size: 10.5px; font-weight: 700; fill: var(--text); }
+.fomc .pos-svg .seg { cursor: pointer; transition: opacity .15s, filter .15s; }
+.fomc .pos-svg:hover .seg { opacity: .7; }
+.fomc .pos-svg .seg:hover { opacity: 1; filter: drop-shadow(0 2px 5px rgba(22, 39, 64, .28)); }
+.fomc .pos-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 11.5px; font-weight: 600; color: var(--text); }
+.fomc .pos-key li { display: flex; align-items: center; gap: 6px; }
+.fomc .pos-key i { width: 10px; height: 10px; border-radius: 3px; }
+
+/* Donut: a little air above it */
+.fomc .pos-ringwrap { padding-top: 38px; }
+.fomc .pos-donut { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+.fomc .pos-donut svg { width: 190px; height: 190px; flex: none; }
+.fomc .pos-donut .cap { font-size: 7px; font-weight: 700; letter-spacing: .08em; fill: var(--text-faint); }
+.fomc .pos-donut .tot { font-size: 18px; font-weight: 700; fill: var(--text); }
+.fomc .pos-legend { flex: 1 1 260px; margin: 0; padding: 0; list-style: none; }
+.fomc .pos-legend li { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+.fomc .pos-legend li:last-child { border-bottom: 0; }
+.fomc .pos-legend li:hover { background: var(--primary-tint); }
+.fomc .pos-legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.fomc .pos-legend span { flex: 1; font-weight: 600; }
+.fomc .pos-legend b { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+.fomc .pos-count { align-self: center; margin-right: auto; color: var(--text-muted); font-weight: 600; }
+.fomc .modal.pos-modal { width: min(1100px, 100%); }
+.fomc .modal.pos-modal table.popup-table { min-width: 0; }
+.fomc .modal.pos-modal table.popup-table td, .fomc .modal.pos-modal table.popup-table th { white-space: nowrap; }
+.fomc .modal.pos-modal .modal-actions .btn { flex: 0 0 auto; min-width: 110px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fomc .pos-swap, .fomc .pos-card, .fomc .pos-svg .seg { animation: none !important; transition: none !important; }
+  .fomc .pos-card:hover { transform: none; }
+}

@@ -13,7 +13,7 @@ import {
   findPaymentTerm,
 } from './data.ts'
 import { earliestMcDate } from '../../shared/fx/dates.ts'
-import { formatAmount, formatRate, formatTolerance, parseAmountInput, parseRateInput, parseDMY } from './format.ts'
+import { formatAmount, formatRate, formatTolerance, parseAmountInput, parseRateInput, parseDMY, formatDMY } from './format.ts'
 import type {
   ChildContract,
   ChildStore,
@@ -160,6 +160,20 @@ export function commodityDescription(values: FormValues): { value: string; title
 export const MC_DATE_TOO_OLD = "Master Contract Date cannot be earlier than one month before today's date."
 
 /** True when a well-formed MC Date is earlier than one calendar month before today. */
+/**
+ * The payment date a term works out to: "270 days from bill of lading date" is the shipment end plus 270 days,
+ * "… from contract date" the MC date plus 270 days (shipment and bill of lading dates both read the shipment end).
+ * null when the label names no number of days or the base date is not filled in yet.
+ */
+export function paymentDueDate(label: string | undefined, mcDate: string, shipEnd: string): string | null {
+  const m = /(\d+)\s*days?\s+from\s+(.+)/i.exec(label ?? '')
+  if (!m) return null
+  const base = parseDMY(/contract/i.test(m[2] ?? '') ? mcDate : shipEnd)
+  if (!base) return null
+  base.setDate(base.getDate() + Number(m[1]))
+  return formatDMY(base)
+}
+
 export function isMcDateTooOld(value: string, today: Date = new Date()): boolean {
   const date = parseDMY(value)
   return !!date && date < earliestMcDate(today)

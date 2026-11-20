@@ -89,6 +89,7 @@ export function App() {
               <Route path="/icfs-structure" element={<RequireAuth><MenuPage section="icfs-structure" /></RequireAuth>} />
               <Route path="/reporting" element={<RequireAuth><MenuPage section="reporting" /></RequireAuth>} />
               <Route path="/reporting/fx-structure" element={<RequireAuth><MenuPage section="reporting-fx-structure" /></RequireAuth>} />
+              <Route path="/admin/import-deals" element={<RequireAuth><MenuPage section="import-deals" /></RequireAuth>} />
               <Route path="/reporting/slc-structure" element={<RequireAuth><MenuPage section="reporting-slc-structure" /></RequireAuth>} />
               <Route path="/reporting/xlc-crp-structure" element={<RequireAuth><MenuPage section="reporting-xlc-crp-structure" /></RequireAuth>} />
               <Route path="/reporting/icfs-structure" element={<RequireAuth><MenuPage section="reporting-icfs-structure" /></RequireAuth>} />

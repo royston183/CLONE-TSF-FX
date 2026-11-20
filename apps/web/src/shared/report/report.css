@@ -1,0 +1,50 @@
+/* Extras the report screens need on top of the Create Master Contract stylesheet (.fomc). Everything uses its tokens. */
+
+.fomc .rpt-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.fomc .rpt-nil { color: var(--text-faint); }
+.fomc .rpt-amt { font-variant-numeric: tabular-nums; }
+.fomc .rpt-amt small { margin-left: 4px; font-size: 10.5px; font-weight: 700; color: var(--text-faint); }
+.fomc .rpt-amt.pos { color: var(--success); }
+.fomc .rpt-amt.neg { color: var(--error); }
+.fomc .rpt-sub { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 600; color: var(--text-faint); }
+.fomc .rpt-source { margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: var(--warning-tint); color: var(--warning); font-size: 10.5px; font-weight: 700; letter-spacing: 0; }
+
+/* KPI cards: the Master Contract ones, with a number that can be positive or negative */
+.fomc .kpi-card.rpt-kpi { cursor: default; }
+.fomc .kpi-card .kpi-value.pos { color: var(--success); }
+.fomc .kpi-card .kpi-value.neg { color: var(--error); }
+.fomc .kpi-card .kpi-value small { margin-left: 6px; font-size: 12px; font-weight: 700; color: var(--text-faint); }
+.fomc .rpt-split { display: flex; height: 6px; gap: 2px; border-radius: 3px; overflow: hidden; }
+.fomc .rpt-split i { display: block; transition: flex .5s ease; }
+.fomc .rpt-split i.pos { background: var(--success); }
+.fomc .rpt-split i.neg { background: var(--error); }
+
+/* Tables: sortable header buttons, total row, hover cue */
+.fomc table.mc-table { min-width: 0; }
+.fomc table.mc-table thead th button { all: unset; cursor: pointer; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+.fomc table.mc-table tr.rpt-sum td { background: #F7FAFD; font-weight: 700; border-bottom: 0; cursor: default; }
+:root[data-theme='dark'] .fomc table.mc-table tr.rpt-sum td { background: #1b2b3d; }
+.fomc table.mc-table tbody tr:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.fomc .rpt-more { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--primary-tint); color: var(--primary); font-size: 10.5px; font-weight: 700; }
+.fomc .rpt-pager-info { font-size: 11.5px; color: var(--text-muted); margin-right: 8px; }
+
+/* States */
+.fomc .rpt-skel { display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; }
+.fomc .rpt-skel span { display: block; height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--border) 25%, var(--gray-tint) 50%, var(--border) 75%); background-size: 200% 100%; animation: rpt-shimmer 1.2s linear infinite; }
+@keyframes rpt-shimmer { to { background-position: -200% 0; } }
+.fomc .rpt-notice { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 16px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--primary-tint); color: var(--text); }
+.fomc .rpt-notice.error { background: var(--error-tint); color: var(--error); }
+
+/* Tooltip */
+.fomc .rpt-tip { position: fixed; z-index: 10020; display: flex; flex-direction: column; gap: 3px; min-width: 200px; padding: 10px 14px; border-radius: 10px; background: #17324d; color: #fff; box-shadow: var(--shadow-pop); pointer-events: none; font-size: 12px; animation: rpt-fade .12s ease both; }
+.fomc .rpt-tip b { font-size: 13px; }
+.fomc .rpt-tip .rpt-amt, .fomc .rpt-tip .rpt-amt small { color: #fff; }
+.fomc .rpt-tip .rpt-amt.pos { color: #7fe0a8; }
+.fomc .rpt-tip .rpt-amt.neg { color: #ff9c9c; }
+@keyframes rpt-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.fomc .rpt-deal-id { font-size: 19px; font-weight: 700; letter-spacing: -.02em; color: var(--primary-dark); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fomc .rpt-skel span, .fomc .rpt-tip, .fomc .rpt-split i { animation: none !important; transition: none !important; }
+}
