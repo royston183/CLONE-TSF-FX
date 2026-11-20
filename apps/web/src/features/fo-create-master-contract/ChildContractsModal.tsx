@@ -1,6 +1,9 @@
+import { formatAmount, formatRate } from './format.ts'
+import { childListRows } from './logic.ts'
 import { Overlay, type Modal } from './modal.tsx'
 import type { ChildContract, MasterContract } from './types.ts'
 
+/** SAP's "MC: View Child Contract List", in the Master Contract pop-up: the parent's header, then its child contracts by trade type. */
 export function ChildContractsModal({
   modal,
   parent,
@@ -10,11 +13,12 @@ export function ChildContractsModal({
   parent: MasterContract | undefined
   items: ChildContract[]
 }) {
+  const rows = parent ? childListRows(parent, items) : []
   return (
     <Overlay modal={modal} onBackdrop={modal.close}>
       <div className="modal modal-left modal-scrollable child-contract-modal">
         <div className="modal-head-row">
-          <h2>{parent ? `Child Contracts — ${parent.mcNumber}` : 'Child Contracts'}</h2>
+          <h2>MC: View Child Contract List</h2>
           <button type="button" className="modal-close-btn" aria-label="Close" onClick={modal.close}>
             ×
           </button>
@@ -22,39 +26,50 @@ export function ChildContractsModal({
         <div className="modal-body-scroll">
           {parent ? (
             <>
-              <div className="child-parent-summary">
-                Parent MC: <b>{parent.mcNumber}</b> &nbsp;|&nbsp; Origin: <b>{parent.originEntity}</b> &nbsp;|&nbsp; FX Model:{' '}
-                <b>{parent.fxModelCode}</b>
+              <div className="child-sap-head">
+                <div><span>Master Contract</span><b>{parent.mcNumber}</b></div>
+                <div>
+                  <span>Contract Amt</span>
+                  <b>
+                    USD {formatAmount(parent.mcAmountUsd)}
+                    {parent.originCurrency && parent.originCurrency !== 'USD' ? ` / ${parent.originCurrency} ${formatAmount(parent.mcAmountOrigin)}` : ''} / Ex Rate: {formatRate(parent.exchangeRate)}
+                  </b>
+                </div>
+                <div><span>Commodity</span><b>{[parent.commodityCode, parent.commodityName].filter(Boolean).join(' - ')}</b></div>
+                <div><span>MC Date</span><b>{parent.mcDate}</b></div>
+                <div><span>Entity String</span><b>{parent.entityString}</b></div>
               </div>
               <div className="popup-table-wrap">
-                <table className="popup-table" style={{ minWidth: 800 }}>
+                <table className="popup-table child-sap-table">
                   <thead>
                     <tr>
-                      <th>Child Type</th>
-                      <th>Child Contract No</th>
-                      <th>Child Ref</th>
-                      <th>Description</th>
-                      <th>Sell</th>
-                      <th>Buy</th>
-                      <th>Side</th>
                       <th>Trade Type</th>
+                      <th>Seller</th>
+                      <th>Buyer</th>
+                      <th>MC Child</th>
+                      <th>P/S</th>
+                      <th>MC Child Reference Contract No</th>
+                      <th>MC Description</th>
+                      <th className="num">MC Amt-USD</th>
+                      <th className="num">Bal Amt(USD)</th>
+                      <th className="num">Planned Inv Amt</th>
+                      <th>Inv Curr</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((ch) => (
-                      <tr key={ch.childType}>
-                        <td>
-                          <b>{ch.childType}</b>
-                        </td>
-                        <td className="mono">{ch.childContractNo}</td>
-                        <td className="mono">{ch.childReference}</td>
-                        <td>{ch.description}</td>
-                        <td>{ch.sellEntity}</td>
-                        <td>{ch.buyEntity}</td>
-                        <td>
-                          {ch.side} ({ch.sideCode})
-                        </td>
-                        <td>{ch.tradeType}</td>
+                    {rows.map((r, i) => (
+                      <tr key={r.mcChild} className={i > 0 && rows[i - 1]!.tradeType === r.tradeType ? 'same-trade' : undefined}>
+                        <td>{i > 0 && rows[i - 1]!.tradeType === r.tradeType ? '' : <b>{r.tradeType}</b>}</td>
+                        <td>{r.seller}</td>
+                        <td>{r.buyer}</td>
+                        <td>{r.mcChild}</td>
+                        <td>{r.ps}</td>
+                        <td className="mono">{r.referenceNo}</td>
+                        <td>{r.description}</td>
+                        <td className="num">{formatAmount(r.mcAmtUsd)}</td>
+                        <td className="num">{formatAmount(r.balAmtUsd)}</td>
+                        <td className="num">{formatAmount(r.plannedInvAmt)}</td>
+                        <td>{r.invCurr}</td>
                       </tr>
                     ))}
                   </tbody>

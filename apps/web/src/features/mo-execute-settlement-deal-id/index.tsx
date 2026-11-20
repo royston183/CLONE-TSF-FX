@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import { useSearchParams } from 'react-router-dom'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
@@ -616,6 +617,8 @@ export default function MoExecuteSettlementDealId() {
             onToast={showNote}
             emptyText={invoices.length ? undefined : invoicesWaiting}
           />
+
+          <PlannedForDeal dealId={deal.dealId} />
         </div>
       </main>
 

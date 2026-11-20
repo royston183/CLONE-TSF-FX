@@ -15,7 +15,7 @@
  * deals are refused with that reason, and the premium-adjustment interest rate (ZIRATE), which is simply
  * absent. Neither stops an ordinary FX1 deal.
  */
-import { listMasterContracts } from '../../shared/fx/master-contract.ts'
+import { listMasterContracts, type DealRow } from '../../shared/fx/master-contract.ts'
 import { getExchangeRate, type GetExchangeRate } from '../../shared/fx/exchange-rate.ts'
 import { txt } from '../../shared/fx/masters.ts'
 import { fxList, type FxRow } from '../../shared/fx/mw.ts'
@@ -112,7 +112,18 @@ export async function prepareConfirmation(
 ): Promise<Prepared | NotPrepared> {
   const check = await checkConfirmable(dealId, ports)
   if (!check.ok) return { ok: false, reason: check.error }
-  const row = check.row
+  return calculate(check.row, dealId, legs, mcRef, ports, plan)
+}
+
+/**
+ * The same calculation for a Deal ID of any status, to show its planned invoices and P&L (Planned Trade Invoices / Planned
+ * P&L). Nothing is checked or written: a deal that is not Created or has a transaction below 07 is simply calculated.
+ */
+export function planDeal(row: DealRow, legs: readonly Leg[], ports: Ports = livePorts, plan: PlanPorts = livePlanPorts): Promise<Prepared | NotPrepared> {
+  return calculate(row, txt(row, 'ZDEAL_ID'), legs, '', ports, plan)
+}
+
+async function calculate(row: DealRow, dealId: string, legs: readonly Leg[], mcRef: string, ports: Ports, plan: PlanPorts): Promise<Prepared | NotPrepared> {
   const wantedMc = mcRef.trim() || txt(row, 'ZMC_REF')
   const mc = await plan.masterContract(wantedMc)
   if (!mc) return { ok: false, reason: `Master Contract ${wantedMc || '(none)'} was not found, so its entity string and origin are unknown.` }

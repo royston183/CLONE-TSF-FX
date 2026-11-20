@@ -93,3 +93,44 @@
    box (text + the calendar button) and takes none of the table's spare width. width:1% makes an auto-layout column shrink to its content. */
 .fx-blotter #fx-table :is(th, td):is(:nth-child(5), :nth-child(18), :nth-child(23)) { width: 1% !important; }
 .fx-blotter #fx-table :is(td:nth-child(5), td:nth-child(18), td:nth-child(23)) .fx-date-field > input { padding-left: 6px !important; padding-right: 13px !important; }
+
+/* Auto Deal Creation pop-up in the Create Master Contract look: 16px frame, a quiet header, dotted uppercase section titles,
+   36px controls with the blue focus ring, tinted read-only fields, 8px-radius buttons. Scoped to .auto-modal. */
+.fx-blotter .modal-card.auto-modal { max-width: min(900px, calc(100vw - 40px)); border: 1px solid #E1E9F2; border-radius: 16px; box-shadow: 0 8px 28px rgba(22, 39, 64, .16); }
+.fx-blotter .modal-card.auto-modal .modal-header { padding: 18px 24px 12px !important; background: #fff !important; border-bottom: 1px solid #E1E9F2 !important; }
+.fx-blotter .modal-card.auto-modal .modal-title { font-size: 15.5px; font-weight: 700; color: #1D2D3E; }
+.fx-blotter .modal-card.auto-modal .modal-subtitle { font-size: 12.5px; color: #5C7085; }
+.fx-blotter .modal-card.auto-modal .modal-close { width: 30px; height: 30px; border-radius: 6px; color: #5C7085; font-size: 19px; }
+.fx-blotter .modal-card.auto-modal .modal-close:hover { background: #EEF2F6; color: #1D2D3E; }
+.fx-blotter .modal-card.auto-modal .modal-body { padding: 14px 24px 10px; }
+.fx-blotter .modal-card.auto-modal .section-label { margin: 16px 0 10px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #0854a0; }
+.fx-blotter .modal-card.auto-modal .section-label:first-child { margin-top: 0; }
+.fx-blotter .modal-card.auto-modal .form-field label, .fx-blotter .modal-card.auto-modal .auto-field-label { margin-bottom: 6px; font-size: 11.5px; font-weight: 600; color: #5C7085; line-height: 1.2; }
+.fx-blotter .modal-card.auto-modal .req { color: #E74C3C; margin-left: 2px; }
+.fx-blotter .modal-card.auto-modal .form-field input:not([type=checkbox]):not([type=radio]), .fx-blotter .modal-card.auto-modal .form-field select,
+.fx-blotter .modal-card.auto-modal .auto-control { height: 36px; padding: 0 11px; border: 1px solid #CBD9E8; border-radius: 8px; background: #fff; color: #1D2D3E; font-size: 12.5px; box-shadow: none; transition: border-color .15s, box-shadow .15s; }
+.fx-blotter .modal-card.auto-modal .form-field input:hover, .fx-blotter .modal-card.auto-modal .form-field select:hover, .fx-blotter .modal-card.auto-modal .auto-control:hover { border-color: #AFC2D8 !important; }
+.fx-blotter .modal-card.auto-modal .form-field input:focus, .fx-blotter .modal-card.auto-modal .form-field select:focus, .fx-blotter .modal-card.auto-modal .auto-control:focus { border-color: #0854a0 !important; box-shadow: 0 0 0 3px #EAF2FF; outline: none; }
+.fx-blotter .modal-card.auto-modal .form-field input[readonly] { cursor: pointer; }
+.fx-blotter .modal-card.auto-modal .auto-control::placeholder, .fx-blotter .modal-card.auto-modal .form-field input::placeholder { color: #8CA0B3; }
+.fx-blotter .modal-card.auto-modal .auto-control:disabled, .fx-blotter .modal-card.auto-modal .auto-control.auto-locked, .fx-blotter .modal-card.auto-modal .auto-control[readonly]:not(.num) { background: #EEF2F6 !important; color: #5C7085 !important; border-color: #E1E9F2 !important; cursor: not-allowed !important; }
+.fx-blotter .modal-card.auto-modal .auto-readonly-value { height: 36px; padding: 0 11px; border: 1px solid #E1E9F2; border-radius: 8px; background: #EEF2F6; color: #1D2D3E; font-size: 12.5px; font-weight: 600; }
+.fx-blotter .modal-card.auto-modal .auto-mc-entry-grid { gap: 12px 14px; margin-bottom: 12px; }
+.fx-blotter .modal-card.auto-modal .auto-mc-summary { gap: 10px 14px; border: 0; border-radius: 0; overflow: visible; margin: 0 0 4px; }
+.fx-blotter .modal-card.auto-modal .auto-mc-summary .auto-readonly-field { padding: 0; border: 0; background: transparent; }
+.fx-blotter .modal-card.auto-modal .auto-deal-block { border: 1px solid #E1E9F2; border-radius: 12px; background: #fff; overflow: hidden; }
+.fx-blotter .modal-card.auto-modal .auto-deal-title { padding: 8px 14px; background: #F7FAFD; border-bottom: 1px solid #E1E9F2; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #0854a0; }
+.fx-blotter .modal-card.auto-modal .auto-deal-grid { grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px 14px; padding: 12px 14px; }
+.fx-blotter .modal-card.auto-modal .auto-edit-field, .fx-blotter .modal-card.auto-modal .auto-edit-field.locked-field { min-height: 0; padding: 0; border: 0 !important; background: transparent !important; }
+.fx-blotter .modal-card.auto-modal .auto-edit-field.has-error .auto-control, .fx-blotter .modal-card.auto-modal .auto-edit-field.has-error .fx-date-field input { border-color: #E74C3C !important; background: #FDEAE8 !important; }
+.fx-blotter .modal-card.auto-modal .auto-error { margin-top: 3px; font-size: 11px; color: #E74C3C; }
+.fx-blotter .modal-card.auto-modal .auto-awaiting-mc { border-radius: 12px; border-color: #CBD9E8; background: #F7FAFD; color: #5C7085; }
+.fx-blotter .modal-card.auto-modal .validation-box { border-radius: 12px; font-size: 12px; }
+.fx-blotter .modal-card.auto-modal .modal-footer { padding: 12px 24px 16px; gap: 10px; border-top: 1px solid #E1E9F2; }
+.fx-blotter .modal-card.auto-modal .modal-footer .btn-cancel, .fx-blotter .modal-card.auto-modal .modal-footer .btn-confirm { height: 32px; min-height: 32px; padding: 0 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; }
+.fx-blotter .modal-card.auto-modal .modal-footer .btn-cancel { background: #fff !important; color: #1D2D3E !important; border: 1px solid #CBD9E8 !important; }
+.fx-blotter .modal-card.auto-modal .modal-footer .btn-cancel:hover { border-color: #0854a0 !important; color: #0854a0 !important; box-shadow: 0 1px 4px rgba(22, 39, 64, .08); }
+.fx-blotter .modal-card.auto-modal .modal-footer .btn-confirm { background: #0854a0 !important; border: 1px solid #0854a0 !important; color: #fff !important; }
+.fx-blotter .modal-card.auto-modal .modal-footer .btn-confirm:hover:not(:disabled) { background: #0854a0 !important; box-shadow: 0 2px 6px rgba(8, 84, 160, .25); }
+@media (max-width: 900px) { .fx-blotter .modal-card.auto-modal .auto-deal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .fx-blotter .modal-card.auto-modal .auto-deal-grid, .fx-blotter .modal-card.auto-modal .auto-mc-summary, .fx-blotter .modal-card.auto-modal .auto-mc-entry-grid { grid-template-columns: 1fr; } }

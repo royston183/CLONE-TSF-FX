@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { InfoTicker, type TickerItem } from '../../tsfx/components/ui/InfoTicker'
 import { BackButton } from '../../auth/BackButton.tsx'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './mo-generate-invoices-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
@@ -931,6 +932,7 @@ export default function MoGenerateInvoicesDealId() {
               </div>
             </section>
           </div>
+          {deal ? <PlannedForDeal dealId={deal.dealId} /> : null}
         </main>
       </div>
 

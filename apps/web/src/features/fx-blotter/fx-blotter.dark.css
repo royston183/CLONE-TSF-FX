@@ -990,3 +990,22 @@
 :root[data-theme='dark'] .fx-blotter #fx-table.list-table tbody td {
   border-bottom: 1px solid #2a3d52!important;
 }
+
+/* Auto Deal Creation pop-up, night mode (the Create Master Contract night palette). */
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal { background: #14212f; border-color: #2a3d52; box-shadow: 0 8px 28px rgba(0, 0, 0, .5); }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-header, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-body, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-footer { background: #14212f !important; border-color: #2a3d52 !important; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-title { color: #e6eef8; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-subtitle, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .form-field label, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-field-label { color: #a9c2dd; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-close { color: #a9c2dd; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-close:hover { background: #1b2b3d; color: #e6eef8; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .section-label, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-deal-title { color: #6fa8ff; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .form-field input:not([type=checkbox]):not([type=radio]), :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .form-field select, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-control { background: #14212f; border-color: #3d5670; color: #e6eef8; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .form-field input:focus, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .form-field select:focus, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-control:focus { border-color: #6fa8ff !important; box-shadow: 0 0 0 3px #17304a; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-control:disabled, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-control.auto-locked, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-control[readonly]:not(.num), :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-readonly-value { background: #1b2b3d !important; color: #a9c2dd !important; border-color: #2a3d52 !important; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-deal-block { background: #14212f; border-color: #2a3d52; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-deal-title { background: #1b2b3d; border-color: #2a3d52; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-edit-field.has-error .auto-control, :root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-edit-field.has-error .fx-date-field input { background: #3a1b1e !important; border-color: #f0715f !important; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-error { color: #f0715f; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .auto-awaiting-mc { background: #1b2b3d; border-color: #3d5670; color: #a9c2dd; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-footer .btn-cancel { background: #14212f !important; color: #e6eef8 !important; border-color: #3d5670 !important; }
+:root[data-theme='dark'] .fx-blotter .modal-card.auto-modal .modal-footer .btn-confirm { background: #6fa8ff !important; border-color: #6fa8ff !important; color: #0d1724 !important; }

@@ -13,7 +13,7 @@ import { DealDetails } from './DetailTables.tsx'
 import { FxLegTable } from './FxLegTable.tsx'
 import { actionVisibility, legNote, nextSort, resolveDealId, sortedFilteredLegs, statusMeta, toggleLeg } from './logic.ts'
 import { ConfirmModal, EditPairModal, PromptModal, type ConfirmPreview } from './Modals.tsx'
-import { InvoiceTable, NO_INV_NOTE, PlTable } from './PlanTables.tsx'
+import { PlannedForDeal } from './PlannedForDeal.tsx'
 import './mo-confirm-fx-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
@@ -455,8 +455,7 @@ export default function MoConfirmFxDealId() {
                 />
               </div>
 
-              <InvoiceTable rows={deal.invoices} notice={deal.noInv && !deal.invoices.length ? NO_INV_NOTE : undefined} />
-              <PlTable deal={deal} notice={deal.noInv && !deal.storedPl ? NO_INV_NOTE : undefined} planned={planned ? { loading: planned.loading, reason: planned.reason, preview: planned.prepared ? previewOf(planned.prepared) : null } : null} />
+              <PlannedForDeal dealId={deal.dealId} />
             </section>
           )}
 

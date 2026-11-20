@@ -22,6 +22,15 @@ const AWAITING = <div className="auto-awaiting-mc">Select a Master Contract to d
 /** The editable leg fields validateAutoLegs requires before Create Transaction is enabled. */
 const REQUIRED_LEG_FIELDS = new Set(['Trade Date', 'Value Date', 'Partner', 'Amount 1', 'All in Rate'])
 
+/** Whether a required field of a leg is still empty. */
+const isMissing = (l: AutoLeg, label: string): boolean =>
+  label === 'Trade Date' ? !l.tradeDate
+  : label === 'Value Date' ? !l.valueDate
+  : label === 'Partner' ? !l.partner
+  : label === 'Amount 1' ? !(l.amt1 > 0)
+  : label === 'All in Rate' ? !(l.rate > 0)
+  : false
+
 const optionList = (items: Option[]) =>
   items.map((o, i) => (
     <option key={`${i}:${o.value}`} value={o.value}>
@@ -65,11 +74,22 @@ export function AutoDealModal({
   const ready = !!(mc && legs)
   const ok = ready && msgs.length === 0
   const [mcPickerOpen, setMcPickerOpen] = useState(false)
+  /** Empty required fields turn red once the user has started filling the deals in, not while the form is still untouched. */
+  const [edited, setEdited] = useState(false)
+  const [editedFor, setEditedFor] = useState(mc?.mcNumber)
+  if (editedFor !== mc?.mcNumber) {
+    setEditedFor(mc?.mcNumber)
+    setEdited(false)
+  }
+  const change = (index: number, field: AutoLegField, value: string) => {
+    setEdited(true)
+    onLeg(index, field, value)
+  }
 
   return (
     <>
     <Overlay id="auto" modals={modals} closeOnBackdrop={false}>
-      <div className="modal-card" style={{ maxWidth: 'min(880px, calc(100vw - 40px))' }}>
+      <div className="modal-card auto-modal">
         <ModalHeader
           title="Auto Deal Creation"
           subtitle="Master Contract driven two-leg FX creation (Screen 9006 reference)"
@@ -125,7 +145,7 @@ export function AutoDealModal({
           <div className="section-label">Deal 1 / Deal 2 Details</div>
           <div id="auto-legs-table" className="auto-leg-stack">
             {mc && legs
-              ? legs.map((l, idx) => <LegBlock key={l.leg} l={l} idx={idx} partners={partners} onLeg={onLeg} active={modals.isOpen('auto')} />)
+              ? legs.map((l, idx) => <LegBlock key={l.leg} l={l} idx={idx} partners={partners} onLeg={change} showErrors={edited} active={modals.isOpen('auto')} />)
               : AWAITING}
           </div>
           <div id="auto-validation">
@@ -183,26 +203,30 @@ function LegBlock({
   partners,
   onLeg,
   active,
+  showErrors,
 }: {
   l: AutoLeg
   idx: number
   partners: BusinessPartner[]
   onLeg: (index: number, field: AutoLegField, value: string) => void
   active: boolean
+  showErrors: boolean
 }) {
   const date = (field: AutoLegField, label: string, value: Date | null) => (
     <DateField label={`${l.leg} ${label}`} className="auto-control" value={fmtDate(value)}
       active={active} onCommit={(v) => onLeg(idx, field, v)} />
   )
-  const input = (field: AutoLegField, value: string, cls = '') => (
+  const input = (field: AutoLegField, value: string, cls = '', placeholder?: string) => (
     <CommitInput
       className={cls ? `auto-control ${cls}` : 'auto-control'}
+      placeholder={placeholder}
       value={value}
       onCommit={(v) => onLeg(idx, field, v)}
     />
   )
   const select = (field: AutoLegField, opts: Option[], value: string) => (
     <select className="auto-control" value={value} onChange={(e) => onLeg(idx, field, e.target.value)}>
+      {field === 'partner' ? <option value="">Select partner</option> : null}
       {optionList(opts)}
     </select>
   )
@@ -223,11 +247,11 @@ function LegBlock({
     ['Partner', select('partner', autoBpOptions(partners), l.partner)],
     ['B/S 1', lockedSelect(bsOptions(), l.bs), true],
     ['Curr 1', lockedSelect(currOptions(), l.curr1), true],
-    ['Amount 1', input('amt1', fmtNum(l.amt1, 2), 'num')],
+    ['Amount 1', input('amt1', l.amt1 ? fmtNum(l.amt1, 2) : '', 'num', 'Enter amount')],
     ['B/S 2', lockedSelect(bsOptions(), l.bs2), true],
     ['Curr 2', lockedSelect(currOptions(), l.curr2), true],
     ['Amount 2', lockedValue(l.amt2 ? fmtNum(l.amt2, 2) : ''), true],
-    ['All in Rate', input('rate', l.rate ? fmtNum(l.rate, RATE_DP) : '', 'num')],
+    ['All in Rate', input('rate', l.rate ? fmtNum(l.rate, RATE_DP) : '', 'num', 'Enter rate')],
     ['Swap Rate', input('swap', l.swap ? fmtNum(l.swap, 6) : '', 'num')],
     ['Spot Rate', input('spot', l.spot ? fmtNum(l.spot, RATE_DP) : '', 'num')],
     ['Mode of Trade', select('mode', assignmentOptions(), l.mode)],
@@ -241,15 +265,19 @@ function LegBlock({
     <div className="auto-deal-block">
       <div className="auto-deal-title">{l.leg} - Details</div>
       <div className="auto-deal-grid">
-        {fields.map(([label, control, locked]) => (
-          <div className={locked ? 'auto-edit-field locked-field' : 'auto-edit-field'} key={label}>
-            <div className="auto-field-label">
-              {label}
-              {REQUIRED_LEG_FIELDS.has(label) ? <span className="req">*</span> : null}
+        {fields.map(([label, control, locked]) => {
+          const bad = showErrors && REQUIRED_LEG_FIELDS.has(label) && isMissing(l, label)
+          return (
+            <div className={`${locked ? 'auto-edit-field locked-field' : 'auto-edit-field'}${bad ? ' has-error' : ''}`} key={label}>
+              <div className="auto-field-label">
+                {label}
+                {REQUIRED_LEG_FIELDS.has(label) ? <span className="req">*</span> : null}
+              </div>
+              {control}
+              {bad ? <div className="auto-error">Required</div> : null}
             </div>
-            {control}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

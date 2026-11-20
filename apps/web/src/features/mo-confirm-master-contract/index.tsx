@@ -10,8 +10,9 @@ import { isAbort } from '../../shared/fx/mw.ts'
 import { ActionDialog } from './ActionDialog.tsx'
 import { actionMcs as writeAction, loadContracts, loadMasters, moRemark, saveEdit as writeEdit } from './api.ts'
 import { ChildContractModal } from './ChildContractModal.tsx'
+import { ConfirmedDialog, type ConfirmedBatch } from './ConfirmedDialog.tsx'
 import { ContractsTable } from './ContractsTable.tsx'
-import { ENTITIES, FX_MODELS, REGIONS } from './data.ts'
+import { ENTITIES, FX_MODELS, MO_REVIEWER, REGIONS, STATUS } from './data.ts'
 import { DatePicker } from './DatePicker.tsx'
 import { EditContractModal } from './EditContractModal.tsx'
 import { fmtCompactUsd, fmtNum } from './format.ts'
@@ -92,6 +93,9 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
   const childModal = useModal()
   const editModal = useModal()
   const linkedDealsModal = useModal()
+  const confirmedModal = useModal()
+  /** The contracts of the last Confirm, for the confirmation PDF (reopened from the header). */
+  const [lastBatch, setLastBatch] = useState<ConfirmedBatch | null>(null)
   const [linkedDealsMc, setLinkedDealsMc] = useState<number | null>(null)
   const [pendingAction, setPendingAction] = useState<McAction>('confirm')
   const [actionMcs, setActionMcs] = useState<MasterContract[]>([])
@@ -230,12 +234,14 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     }
     const numbers = mcs.map((mc) => mc.mcNumber)
     const action = pendingAction
+    let by = MO_REVIEWER
     if (source === 'mysql') {
       // ZMC_STAT 03 / 13 (and ZMO_REMARKS on a rejection), one update per MC.
       busy.current = true
       let changedBy: string
       try {
         changedBy = await writeAction(numbers, action, remark)
+        by = changedBy
       } catch (error) {
         showToast(messageOf(error), 'error')
         // Whatever did move is re-read, so the queue never shows a status MySQL lacks.
@@ -258,6 +264,11 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
     actionModal.close()
     childModal.close()
     refilter()
+    if (action === 'confirm') {
+      const on = new Date()
+      setLastBatch({ mcs: mcs.map((mc) => ({ ...mc, status: STATUS.CONFIRMED, changedBy: by, changedOn: on })), by, on })
+      confirmedModal.open()
+    }
   }
 
   // ------------------------------------------------------------------ drag a selection onto Confirm / Reject
@@ -382,6 +393,11 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
           <div className="page-title">MO: Confirm Master Contract</div>
         </div>
         <div className="head-actions">
+          {lastBatch ? (
+            <button className="btn-outline" type="button" title="Preview or download the PDF of the last confirmation" onClick={confirmedModal.open}>
+              📄 Confirmation PDF
+            </button>
+          ) : null}
           <button className="btn-outline" type="button" title="Reload data" onClick={onRefresh}>
             ↻ Refresh
           </button>
@@ -651,6 +667,8 @@ function ConfirmScreen({ onRefresh }: { onRefresh: () => void }) {
         }}
         onProceed={doAction}
       />
+
+      <ConfirmedDialog batch={lastBatch} open={confirmedModal.isOpen} onClose={confirmedModal.close} />
 
       <ChildContractModal modal={childModal} mc={childMc} onQuickAction={quickAction} />
 

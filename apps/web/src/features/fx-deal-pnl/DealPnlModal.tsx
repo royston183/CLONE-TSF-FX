@@ -58,7 +58,7 @@ export function DealPnlModal({ modal, deal }: { modal: Modal; deal: DealSummary 
         </div>
         {deal ? (
           <p className="rpt-modal-sub">
-            {deal.description} · {deal.pair} · <span className={statusClass(deal.status)}>{deal.status}</span>
+            {deal.model} · {deal.description} · {deal.pair} · <span className={statusClass(deal.status)}>{deal.status}</span>
           </p>
         ) : null}
 

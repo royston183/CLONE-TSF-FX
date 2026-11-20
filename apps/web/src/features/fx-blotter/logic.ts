@@ -1019,21 +1019,21 @@ export function recalcAutoLeg(input: AutoLeg): AutoLeg {
 }
 
 /**
- * Deal 1 / Deal 2 from the MC's model. The rates are left for the trader to enter: there is no rate source to fill them
- * from, and a made-up base rate would be booked in SAP as typed.
+ * Deal 1 / Deal 2 from the MC's model. Only what the model fixes is filled (company, transaction type, buy/sell, currencies, mode
+ * of trade). The fields the trader must enter, marked * on the screen (trade and value date, partner, Amount 1, All in Rate), start
+ * empty: there is no source to fill them from, and anything made up would be booked in SAP as typed.
  */
-export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
+export function initAutoLegs(mc: MasterContract, _ctxDate?: Date): AutoLeg[] {
   const m = modelOf(mc.fxModel)
   const p = pairOf(mc.currPair)
   if (!m || !p) return []
-  const amt = Math.min(mcBalance(mc), mc.amtUSD * 0.4)
-  const valueDate = nextWorkingDay(addDays(ctxDate, 32))
   const base = {
-    // The legs are booked in SAP, where only a real partner number is accepted.
-    partner: SPOT_PARTNER_CODE,
+    partner: '',
+    tradeDate: null,
+    valueDate: null,
     curr1: p.lead,
     curr2: p.follow,
-    amt1: amt,
+    amt1: 0,
     amt2: 0,
     swap: 0,
     mode: '360T',
@@ -1044,8 +1044,6 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
     recalcAutoLeg({
       ...base,
       leg: 'Deal 1',
-      tradeDate: new Date(ctxDate),
-      valueDate: new Date(valueDate),
       entity: m.d1.from,
       txnType: m.d1.txnType ?? 'FWD',
       bs: m.d1.bs1,
@@ -1056,8 +1054,6 @@ export function initAutoLegs(mc: MasterContract, ctxDate: Date): AutoLeg[] {
     recalcAutoLeg({
       ...base,
       leg: 'Deal 2',
-      tradeDate: new Date(ctxDate),
-      valueDate: addDays(valueDate, 1),
       entity: m.d2.from,
       txnType: m.d2.txnType ?? 'FWD',
       bs: m.d2.bs1,
@@ -1076,8 +1072,11 @@ export function updateAutoLeg(legs: AutoLeg[], index: number, field: AutoLegFiel
   if (!found) return legs
   let l: AutoLeg = { ...found }
   if (field === 'tradeDate' || field === 'valueDate' || field === 'fixingDate') {
-    const d = parseUiDate(value)
-    if (d) l[field] = d
+    if (!value.trim()) l[field] = null
+    else {
+      const d = parseUiDate(value)
+      if (d) l[field] = d
+    }
   } else if (field === 'rate' || field === 'spot') {
     l[field] = roundRate(parseAmount(value) || 0)
   } else if (field === 'amt1' || field === 'swap') {
@@ -1097,10 +1096,9 @@ export function validateAutoLegs(mc: MasterContract, legs: AutoLeg[]): string[] 
   const tolDays = m?.valueDateToleranceDays || 5
   const msgs: string[] = []
   const maxAmt = mcBalance(mc) * (1 + (m?.tolerancePct || 5) / 100)
-  if (!(a.amt1 > 0) && !(b.amt1 > 0)) msgs.push('Enter an amount greater than zero for both deals.')
-  if (Math.abs((a.amt1 || 0) - (b.amt1 || 0)) > 0.01) msgs.push('Deal 1 and Deal 2 Amount 1 must be identical.')
+  if (a.amt1 > 0 && b.amt1 > 0 && Math.abs(a.amt1 - b.amt1) > 0.01) msgs.push('Deal 1 and Deal 2 Amount 1 must be identical.')
   if ((a.amt1 || 0) > maxAmt) msgs.push('Deal amount exceeds the Master Contract available amount plus tolerance.')
-  const dayDiff = a.valueDate && b.valueDate ? workingDaysBetween(a.valueDate, b.valueDate) : 999
+  const dayDiff = a.valueDate && b.valueDate ? workingDaysBetween(a.valueDate, b.valueDate) : 0
   if (dayDiff > tolDays) msgs.push(`Deal 1 and Deal 2 value dates must be within ${tolDays} working days.`)
   legs.forEach((l, i) => {
     const n = i + 1
@@ -1109,6 +1107,7 @@ export function validateAutoLegs(mc: MasterContract, legs: AutoLeg[]): string[] 
     if (!l.entity) msgs.push(`Deal ${n}: Company Code is required.`)
     if (!l.txnType) msgs.push(`Deal ${n}: Transaction Type is required.`)
     if (!l.partner) msgs.push(`Deal ${n}: Partner is required.`)
+    if (!(l.amt1 > 0)) msgs.push(`Deal ${n}: Amount 1 is required.`)
     if (!(l.rate > 0)) msgs.push(`Deal ${n}: All in Rate must be greater than zero.`)
   })
   return msgs

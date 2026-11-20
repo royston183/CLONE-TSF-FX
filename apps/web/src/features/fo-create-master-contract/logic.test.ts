@@ -4,6 +4,8 @@ import { FIRST_CHILD_REFS, seedContracts } from './data.ts'
 import { commitAmount, parseAmountInput, parseDMY } from './format.ts'
 import {
   blankForm,
+  breakdownBy,
+  childListRows,
   buildContract,
   commodityDescription,
   ensureChildContracts,
@@ -225,5 +227,38 @@ describe('paymentDueDate', () => {
     strictEqual(paymentDueDate('Immediate', '18-11-2026', '31-12-2026'), null)
     strictEqual(paymentDueDate(undefined, '18-11-2026', '31-12-2026'), null)
     strictEqual(paymentDueDate('P01 - 270 days from bill of lading date', '18-11-2026', ''), null)
+  })
+})
+
+describe('childListRows (SAP: MC: View Child Contract List)', () => {
+  const [seed] = seedContracts()
+  const parent = { ...seed!, mcAmountUsd: 200_000_000, exchangeRate: 90, entityString: 'OIL-DMCC-OFIIPL', currencyString: 'USD-USD-INR' }
+  const { children } = ensureChildContracts({ byMc: {}, nextRef: { ...FIRST_CHILD_REFS } }, parent)
+  const rows = childListRows(parent, children)
+
+  it('has a Sale and a Purchase row per trade type, between the entities of the string', () => {
+    deepStrictEqual(rows.map((r) => [r.tradeType, r.mcChild, r.ps, r.seller, r.buyer]), [
+      ['T1', 'T1S', 'Sale', 'OIL', 'DMCC'], ['T1', 'T1P', 'Purchase', 'OIL', 'DMCC'],
+      ['T2', 'T2S', 'Sale', 'DMCC', 'OFIIPL'], ['T2', 'T2P', 'Purchase', 'DMCC', 'OFIIPL'],
+      ['T3', 'T3S', 'Sale', 'OFIIPL', 'OIL'], ['T3', 'T3P', 'Purchase', 'OFIIPL', 'OIL'],
+    ])
+  })
+  it('plans the USD amount for USD legs and amount x rate in INR for the INR leg', () => {
+    deepStrictEqual(rows.map((r) => [r.invCurr, r.plannedInvAmt]), [
+      ['USD', 200_000_000], ['USD', 200_000_000], ['USD', 200_000_000], ['USD', 200_000_000], ['INR', 18_000_000_000], ['INR', 18_000_000_000],
+    ])
+    strictEqual(rows[0]!.mcAmtUsd, 200_000_000)
+    strictEqual(rows[0]!.balAmtUsd, 200_000_000)
+  })
+})
+
+describe('breakdownBy', () => {
+  const list = seedContracts()
+  it('counts contracts and USD per model and per entity, largest first', () => {
+    for (const by of ['model', 'entity'] as const) {
+      const rows = breakdownBy(list, by)
+      strictEqual(rows.reduce((s, r) => s + r.count, 0), list.length)
+      strictEqual(rows.every((r, i) => i === 0 || rows[i - 1]!.amountUsd >= r.amountUsd), true)
+    }
   })
 })

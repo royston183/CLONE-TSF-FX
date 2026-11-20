@@ -25,6 +25,7 @@ import { LinkedDealsModal } from '../../shared/master-contract/LinkedDealsModal.
 import {
   blankForm,
   buildContract,
+  breakdownBy,
   ensureChildContracts,
   filterSortContracts,
   formFromContract,
@@ -36,6 +37,7 @@ import {
 import { useModal } from './modal.tsx'
 import { SuccessModal } from './SuccessModal.tsx'
 import './fo-create-master-contract.legacy.css'
+import './fo-create-master-contract.extra.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-create-master-contract.dark.css'
@@ -439,8 +441,8 @@ export default function FoCreateMasterContract() {
 
   // Per render: FX_MODELS is swapped for ZSGTSFTR_RULE_BT's rows once they load.
   const fxFilterOptions = FX_MODELS.filter((m, i) => FX_MODELS.findIndex((x) => x.code === m.code) === i)
-  const inUse = contracts.filter((c) => c.status === 'In Use').length
-  const confirmed = contracts.filter((c) => c.status === 'Confirmed').length
+  const models = breakdownBy(contracts, 'model')
+  const entities = breakdownBy(contracts, 'entity')
   const total = totalAmount(contracts)
 
   const detailContract = findContract(detailMc)
@@ -474,21 +476,21 @@ export default function FoCreateMasterContract() {
           </div>
           <div
             className="kpi-card"
-            title={`${inUse} contract${plural(inUse)} currently in use — double-click for details`}
-            onDoubleClick={() => openKpi({ type: 'status', status: 'In Use' })}
+            title={`${models.length} FX model${plural(models.length)} used across the contracts — double-click for details`}
+            onDoubleClick={() => openKpi({ type: 'models' })}
           >
-            <div className="kpi-value">{inUse}</div>
-            <div className="kpi-label">In Use</div>
-            <div className="kpi-description">Contracts currently being utilized</div>
+            <div className="kpi-value">{models.length}</div>
+            <div className="kpi-label">FX Models in Use</div>
+            <div className="kpi-description">{models[0] ? `Top: ${models[0].key} (${models[0].count} contract${plural(models[0].count)})` : 'No contracts yet'}</div>
           </div>
           <div
             className="kpi-card"
-            title={`${confirmed} confirmed contract${plural(confirmed)} — double-click for details`}
-            onDoubleClick={() => openKpi({ type: 'status', status: 'Confirmed' })}
+            title={`${entities.length} origin entit${entities.length === 1 ? 'y' : 'ies'} with contracts — double-click for details`}
+            onDoubleClick={() => openKpi({ type: 'entities' })}
           >
-            <div className="kpi-value">{confirmed}</div>
-            <div className="kpi-label">Confirmed</div>
-            <div className="kpi-description">Approved and confirmed contracts</div>
+            <div className="kpi-value">{entities.length}</div>
+            <div className="kpi-label">Origin Entities</div>
+            <div className="kpi-description">{entities[0] ? `Top: ${entities[0].key} (${entities[0].count} contract${plural(entities[0].count)})` : 'No contracts yet'}</div>
           </div>
           <div
             className="kpi-card"

@@ -68,7 +68,7 @@ export function ContractFormModal({
     onChange(patch)
     if (clear) onClearError(clear)
   }
-  // The payment terms decide the payment date: it follows the term and the dates it counts from, and is locked while it does.
+  // The payment terms decide the payment date, which is stored with the contract but not typed: it follows the term and the dates it counts from.
   const dueDate = paymentDueDate(findPaymentTerm(values.paymentTerms)?.label, values.mcDate, values.shipEnd)
   useEffect(() => {
     if (dueDate && dueDate !== values.paymentDate) onChange({ paymentDate: dueDate })
@@ -329,11 +329,6 @@ export function ContractFormModal({
                       onSelect={(p) => set({ paymentTerms: p.code })}
                       onClear={() => set({ paymentTerms: null })}
                     />
-                  </div>
-
-                  <div className="field gc-3">
-                    <label>Payment Date</label>
-                    <DateField value={values.paymentDate} onChange={(v) => set({ paymentDate: v })} locked={!!dueDate} />
                   </div>
 
                   <div className="field gc-4">

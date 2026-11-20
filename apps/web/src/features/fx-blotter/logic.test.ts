@@ -324,6 +324,19 @@ describe('release to MO', () => {
   })
 })
 
+/** What the trader types into the * fields of both deals. */
+function fillLegs(legs: ReturnType<typeof initAutoLegs>, rate = '83.0835', amount = '2,000,000') {
+  let out = legs
+  for (let i = 0; i < out.length; i++) {
+    out = updateAutoLeg(out, i, 'tradeDate', '01-10-2026')
+    out = updateAutoLeg(out, i, 'valueDate', '05-11-2026')
+    out = updateAutoLeg(out, i, 'partner', '400000002')
+    out = updateAutoLeg(out, i, 'amt1', amount)
+    out = updateAutoLeg(out, i, 'rate', rate)
+  }
+  return out
+}
+
 describe('auto deal creation', () => {
   it('offers the origins of contracts with balance and derives both legs from the model', () => {
     const b = fresh()
@@ -333,20 +346,23 @@ describe('auto deal creation', () => {
     let legs = initAutoLegs(mc, NOW)
     strictEqual(legs[0]?.entity, 'OGA')
     strictEqual(legs[1]?.entity, 'DMCC')
-    strictEqual(legs[0]?.amt1, 2_000_000)
-    // The rates are not filled in: the trader enters them, and nothing can be booked until both are entered.
-    deepStrictEqual(legs.map((l) => [l.rate, l.swap, l.spot, l.amt2]), [[0, 0, 0, 0], [0, 0, 0, 0]])
-    deepStrictEqual(validateAutoLegs(mc, legs), ['Deal 1: All in Rate must be greater than zero.', 'Deal 2: All in Rate must be greater than zero.'])
-    legs = updateAutoLeg(updateAutoLeg(legs, 0, 'rate', '83.0835'), 1, 'rate', '83.0835')
+    // Everything marked * starts empty: the trader enters it, and nothing can be booked until it is.
+    deepStrictEqual(legs.map((l) => [l.tradeDate, l.valueDate, l.partner, l.amt1, l.rate, l.swap, l.spot, l.amt2]), [[null, null, '', 0, 0, 0, 0, 0], [null, null, '', 0, 0, 0, 0, 0]])
+    const required = (n: number) => [`Deal ${n}: Trade Date is required.`, `Deal ${n}: Value Date is required.`, `Deal ${n}: Partner is required.`, `Deal ${n}: Amount 1 is required.`, `Deal ${n}: All in Rate must be greater than zero.`]
+    deepStrictEqual(validateAutoLegs(mc, legs), [...required(1), ...required(2)])
+    legs = fillLegs(legs)
     deepStrictEqual(validateAutoLegs(mc, legs), [])
     strictEqual(legs[0]?.spot, 83.0835, 'spot follows the entered rate while the swap is 0')
+    strictEqual(legs[0]?.amt2, 2_000_000 * 83.0835, 'Amount 2 follows the typed amount and rate')
+    legs = updateAutoLeg(legs, 0, 'partner', '')
+    legs = updateAutoLeg(legs, 0, 'tradeDate', '')
+    deepStrictEqual(validateAutoLegs(mc, legs), ['Deal 1: Trade Date is required.', 'Deal 1: Partner is required.'])
   })
 
   it('requires equal amounts and books both legs under one Deal ID', () => {
     const b = fresh()
     const mc = b.contracts[0]!
-    let legs = initAutoLegs(mc, NOW)
-    legs = updateAutoLeg(updateAutoLeg(legs, 0, 'rate', '83.2'), 1, 'rate', '83.2')
+    let legs = fillLegs(initAutoLegs(mc, NOW), '83.2')
     legs = updateAutoLeg(legs, 1, 'amt1', '1,000,000')
     deepStrictEqual(validateAutoLegs(mc, legs), ['Deal 1 and Deal 2 Amount 1 must be identical.'])
     legs = updateAutoLeg(legs, 0, 'amt1', '1,000,000')

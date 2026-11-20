@@ -1,4 +1,5 @@
 import { fmtDate, fmtNum, fmtRate } from './format.ts'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import { dealsForMc, regionName } from './logic.ts'
 import { DetailCell, ModalHeader, Overlay, type ModalTarget } from './modal.tsx'
 import { StatusCell } from './DealTable.tsx'
@@ -75,6 +76,7 @@ export function DealModal({
         ) : (
           <div className="detail-grid"></div>
         )}
+        {deal ? <PlannedForDeal dealId={deal.dealId} /> : null}
         <div className="note">
           <strong>Note:</strong> Clicking the Deal ID itself in the list does exactly this - plus a drill-through into
           its Trade Invoices (<em>SUBMIT ZSGTSF_RDEAL_TRD_INV ... AND RETURN</em>), reproduced below as a modal

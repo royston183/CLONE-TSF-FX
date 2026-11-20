@@ -4,7 +4,7 @@ import { ApiError } from '@slc/api-client'
 import { createSpotDeal, fromFxTransaction, sapMessage, toCreatePayload, txnTypeOfProduct, type FxTransaction } from './api.ts'
 import { BUSINESS_PARTNERS } from './data.ts'
 import { MC_SEED_FIXTURE as MC_SEED, installFixtures } from './fixtures.ts'
-import { applyCreated, autoSpotForm, buildMasterContracts, confirmAutoDeal, initAutoLegs, initialBlotter, mergeLiveRows, spotEntities, spotPartners, spotTxnOptions, txnTypeOptions } from './logic.ts'
+import { applyCreated, autoSpotForm, buildMasterContracts, confirmAutoDeal, initAutoLegs, initialBlotter, mergeLiveRows, spotEntities, updateAutoLeg, spotPartners, spotTxnOptions, txnTypeOptions } from './logic.ts'
 import type { BlotterRow } from './types.ts'
 
 // The running screen loads these lists from the middleware; the rules are tested against the values the lists used to hold.
@@ -283,12 +283,12 @@ describe('Auto Deal in SAP', () => {
   const now = new Date(2026, 8, 30)
   const blotter = () => initialBlotter(now, buildMasterContracts(now, MC_SEED), [...BUSINESS_PARTNERS])
 
-  it('starts both legs on the SAP partner, as forwards that map to a product type', () => {
+  it('starts both legs as forwards that map to a product type, with the partner left for the trader', () => {
     const mc = blotter().contracts.find((c) => c.mcNumber === 'MC-7001')!
     const legs = initAutoLegs(mc, now)
     strictEqual(legs.length, 2)
     for (const l of legs) {
-      strictEqual(l.partner, '400000002')
+      strictEqual(l.partner, '')
       strictEqual(l.txnType, 'FWD')
     }
   })
@@ -296,7 +296,13 @@ describe('Auto Deal in SAP', () => {
   it('turns both legs into rows that SAP can be sent, Deal 1 first', () => {
     const b = blotter()
     const mc = b.contracts.find((c) => c.mcNumber === 'MC-7001')!
-    const out = confirmAutoDeal(b, mc.mcNumber, initAutoLegs(mc, now))!
+    let legs = initAutoLegs(mc, now)
+    for (let i = 0; i < legs.length; i++) {
+      legs = updateAutoLeg(legs, i, 'partner', '400000002')
+      legs = updateAutoLeg(legs, i, 'amt1', '1,000,000')
+      legs = updateAutoLeg(legs, i, 'rate', '83.2')
+    }
+    const out = confirmAutoDeal(b, mc.mcNumber, legs)!
     const ids = out.blotter.deals[out.blotter.deals.length - 1]!.legs
     const rows = ids.map((id) => out.blotter.rows.find((r) => r.id === id)!)
     deepStrictEqual(rows.map((r) => r.dealType), ['Deal 1 (Auto Deal)', 'Deal 2 (Auto Deal)'])

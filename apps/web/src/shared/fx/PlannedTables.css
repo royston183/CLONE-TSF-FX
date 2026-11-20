@@ -1,0 +1,20 @@
+/* Planned Trade Invoices / Planned P&L: the host screen's tokens with the Master Contract palette as fallback. */
+.pt-wrap { display: flex; flex-direction: column; gap: 14px; margin: 14px 0; color: var(--text, #1d2d3e); font-size: 12.5px; }
+.pt-card { background: var(--card, #fff); border: 1px solid var(--border, #e1e9f2); border-radius: var(--radius-lg, 14px); box-shadow: var(--shadow-card, 0 1px 3px rgba(22, 39, 64, .06)); overflow: hidden; }
+.pt-title { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--border, #e1e9f2); font-size: 12.5px; font-weight: 700; letter-spacing: .3px; color: var(--primary-dark, #0854a0); }
+.pt-note { margin: 0; padding: 18px 16px; color: var(--text-muted, #5c7085); }
+.pt-note.err { color: var(--error, #e74c3c); }
+.pt-retry { margin-left: 12px; height: 26px; padding: 0 12px; border: 1px solid var(--border-strong, #cbd9e8); border-radius: 6px; background: var(--card, #fff); color: var(--text, #1d2d3e); font: inherit; font-weight: 600; cursor: pointer; }
+.pt-src { margin: 0; padding: 8px 16px 0; color: var(--text-muted, #5c7085); font-size: 11.5px; }
+.pt-src b { color: var(--text, #1d2d3e); }
+.pt-scroll { overflow: auto; max-height: 360px; padding: 8px 8px 10px; }
+.pt-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.pt-table th { position: sticky; top: 0; padding: 8px 10px; background: var(--gray-tint, #eef2f6); border-bottom: 1px solid var(--border, #e1e9f2); text-align: left; font-size: 11.5px; font-weight: 700; color: var(--text-muted, #5c7085); white-space: nowrap; }
+.pt-table td { padding: 7px 10px; border-bottom: 1px solid var(--border, #e1e9f2); white-space: nowrap; }
+.pt-table .num { text-align: right; }
+.pt-table .neg { color: var(--error, #e74c3c); }
+.pt-table td.key { font-weight: 700; color: var(--primary-dark, #0854a0); }
+.pt-table td.empty { padding: 18px 12px; text-align: center; color: var(--text-muted, #5c7085); white-space: normal; }
+.pt-table tbody tr:hover td { background: var(--primary-tint, #eaf2ff); }
+.pt-table tr.sum td { background: #fff7d6; font-weight: 700; }
+:root[data-theme='dark'] .pt-table tr.sum td { background: #3a3414; }

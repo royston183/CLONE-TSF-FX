@@ -54,12 +54,13 @@ import {
   type ChangeHint,
 } from './Modals.tsx'
 import { DealPickerModal, ViewDealsButton } from '../../shared/ui/DealPickerModal.tsx'
-import { DealTable, InvoiceTable, PlTable, StatusPill } from './Tables.tsx'
+import { DealTable, InvoiceTable, StatusPill } from './Tables.tsx'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import './fo-change-deal-id.legacy.css'
 // Night mode. Generated from the sheet above by tools/gen-dark-css.mjs; it only restates the
 // colours that change, at a higher specificity, so it must be imported after it.
 import './fo-change-deal-id.dark.css'
-import type { Deal, DealStore, MasterContract, PickedMc, PlTable as PlTableData, Toast } from './types.ts'
+import type { Deal, DealStore, MasterContract, PickedMc, Toast } from './types.ts'
 
 let toastSeq = 0
 
@@ -612,8 +613,8 @@ export default function FoChangeDealId() {
                   </div>
                 </div>
 
-                {/* Deal P&L table */}
-                <PlCard />
+                {/* Deal P&L: calculated from the FX legs, or the one stored on the Deal ID */}
+                <PlannedForDeal dealId={deal.dealId} parts="pnl" />
               </>
             ) : null}
           </div>
@@ -689,24 +690,3 @@ export default function FoChangeDealId() {
   )
 }
 
-/**
- * The legacy page derived these rows from the invoice amounts with fixed mock factors. That is
- * not a P&L, so the card stays empty until the real source (the P&L program's tables) exists.
- */
-const NO_PL: PlTableData = { empty: true }
-
-function PlCard() {
-  return (
-    <div className="card">
-      <div className="card-head">
-        <div className="htitle">
-          <h2>Deal ID: Planned P&amp;L</h2>
-          <span className="count">0 records</span>
-        </div>
-      </div>
-      <div className="table-scroll">
-        <PlTable data={NO_PL} />
-      </div>
-    </div>
-  )
-}

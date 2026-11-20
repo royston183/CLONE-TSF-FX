@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import { lookupEntity } from './data.ts'
 import { fmtAmount, fmtDate, fmtRate } from './format.ts'
 import { Overlay, type Modal } from './modal.tsx'
@@ -116,6 +117,8 @@ export function DealModal({ modal, deal, onClose }: { modal: Modal; deal: Deal |
               {`USD ${fmtAmount(deal.uti_amt)}`}
             </McItem>
           </div>
+          <div className="divider" />
+          <PlannedForDeal dealId={deal.zdeal_id} />
           <div className="divider" />
           <div className="mc-section-title">Audit Trail</div>
           <div className="mc-grid">

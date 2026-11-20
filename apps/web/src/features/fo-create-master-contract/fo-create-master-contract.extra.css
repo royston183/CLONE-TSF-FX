@@ -1,0 +1,11 @@
+/* Child contract list in SAP's layout, and the model / entity breakdown pop-ups. Uses the .fomc tokens, so night mode follows. */
+.fomc .child-contract-modal { width: fit-content; max-width: 96vw; }
+.fomc .child-sap-head { display: grid; grid-template-columns: max-content 1fr; gap: 3px 18px; margin-bottom: 12px; padding: 9px 12px; background: var(--primary-tint); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.fomc .child-sap-head > div { display: contents; }
+.fomc .child-sap-head span { color: var(--text-muted); font-weight: 600; }
+.fomc .child-sap-head b { color: var(--text); font-weight: 700; }
+.fomc table.child-sap-table { min-width: 0; width: auto; }
+.fomc table.child-sap-table th, .fomc table.child-sap-table td { padding: 6px 10px 6px 8px; white-space: nowrap; }
+.fomc table.child-sap-table thead th { font-size: 12px; }
+.fomc table.child-sap-table tr:not(.same-trade) td { border-top: 1px solid var(--border-strong); }
+.fomc .kpi-detail-modal.wide { width: 640px; }

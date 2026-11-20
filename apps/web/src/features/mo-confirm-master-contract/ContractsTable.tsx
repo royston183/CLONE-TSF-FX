@@ -98,7 +98,6 @@ export function ContractsTable({
           <th>MC Amt (Origin)</th>
           <th className="left">Curr1</th>
           <th>Exchange Rate</th>
-          <th className="left">Currency ID</th>
           <th className="left">Currency String</th>
           <th className="left">Payment Terms</th>
           <th>Payment Date</th>
@@ -119,7 +118,7 @@ export function ContractsTable({
       <tbody id="mc-tbody">
         {rows.length === 0 ? (
           <tr className="empty-row">
-            <td colSpan={33}>No Master Contracts match the selection criteria.</td>
+            <td colSpan={32}>No Master Contracts match the selection criteria.</td>
           </tr>
         ) : (
           rows.map((mc) => {
@@ -172,7 +171,6 @@ export function ContractsTable({
                 <td className="num">{fmtNum(mc.amtOrigin)}</td>
                 <td className="left">{mc.currOrigin}</td>
                 <td className="num">{mc.exRate.toFixed(4)}</td>
-                <td className="left">{mc.currId}</td>
                 <td className="left">{mc.currChain.join('-')}</td>
                 <td className="left">{mc.paymentTerms}</td>
                 <td>{fmtDate(mc.paymentDate)}</td>

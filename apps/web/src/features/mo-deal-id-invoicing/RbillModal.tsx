@@ -1,4 +1,5 @@
 import { FX_MODELS, STATUS_META, TRADERS, currStr, entStr } from './data.ts'
+import { PlannedForDeal } from '../mo-confirm-fx-deal-id/PlannedForDeal.tsx'
 import { fmtNdfCash, fmtNdfDate, fmtNdfRate } from '../../shared/fx/ndf-columns.ts'
 import { fmtAmt } from './format.ts'
 import { canAmendDeal, canLetters, canReverse, fxUtilAmt, uninvoicedExists } from './logic.ts'
@@ -261,6 +262,8 @@ export function RbillModal({
               </table>
             </div>
           </div>
+
+          <PlannedForDeal dealId={deal.dealId} />
 
           <div className="subgrid-panel">
             <div className="gridtitle">

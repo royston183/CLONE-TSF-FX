@@ -8,7 +8,7 @@ import type { MasterContract } from './types.ts'
  * Edit Master Contract. Mirrors the ABAP screen ZSGTSF_RMC_DETAIL_EDIT (dynpro 9001):
  * - Amount, Payment Terms and FX Model are editable; FX Model is offered only from models
  *   configured for this MC's origin entity (WHERE zorigin = ...).
- * - Entity ID/String, Currency ID/String and Model Description are re-derived read-only the
+ * - Entity ID/String, Currency String and Model Description are re-derived read-only the
  *   moment a model is picked (the SELECT SINGLE against zsgtsftr_rule_bt in STATUS_9001).
  * - Outside the MO review queue every field is locked (module MODIFY_SCR_9001:
  *   "IF gs_data-zmc_stat >= '03' ... screen-input = 0").
@@ -111,7 +111,6 @@ export function EditContractModal({
               <>
                 <Derived label="Entity ID" value={model.entityId} />
                 <Derived label="Entity String" value={model.entities.join('-')} />
-                <Derived label="Currency ID" value={model.currId} />
                 <Derived label="Currency String" value={model.curr.join('-')} />
                 <Derived label="Model Description" value={model.desc} />
               </>

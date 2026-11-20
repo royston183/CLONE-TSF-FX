@@ -91,6 +91,66 @@ export function seedChildStore(contracts: MasterContract[], firstRefs: Record<Tr
   return store
 }
 
+// ---------------------------------------------------------------- SAP child list (MC: View Child Contract List)
+
+export type ChildListRow = {
+  tradeType: string
+  seller: string
+  buyer: string
+  mcChild: string
+  ps: 'Sale' | 'Purchase'
+  referenceNo: number
+  description: string
+  mcAmtUsd: number
+  balAmtUsd: number
+  plannedInvAmt: number
+  invCurr: string
+}
+
+const TRADE_INDEX: Record<string, number> = { T1: 0, T2: 1, T3: 2 }
+const r2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100
+
+/**
+ * The rows of SAP's child contract list. The parent's currency string gives each trade type's invoice currency (position of
+ * T1/T2/T3); a USD leg plans the MC's USD amount, any other currency the USD amount times the exchange rate. No balance is
+ * held on the MC yet, so the balance equals the MC amount.
+ */
+export function childListRows(parent: MasterContract, children: readonly ChildContract[]): ChildListRow[] {
+  const currencies = String(parent.currencyString || '').split('-').filter(Boolean)
+  return children.map((ch) => {
+    const invCurr = currencies[TRADE_INDEX[ch.tradeType] ?? 0] ?? 'USD'
+    return {
+      tradeType: ch.tradeType,
+      seller: ch.sellEntity,
+      buyer: ch.buyEntity,
+      mcChild: ch.childType,
+      ps: ch.side === 'Sell' ? 'Sale' : 'Purchase',
+      referenceNo: ch.childReference,
+      description: ch.description,
+      mcAmtUsd: parent.mcAmountUsd,
+      balAmtUsd: parent.mcAmountUsd,
+      plannedInvAmt: invCurr === 'USD' ? parent.mcAmountUsd : r2(parent.mcAmountUsd * parent.exchangeRate),
+      invCurr,
+    }
+  })
+}
+
+export type Breakdown = { key: string; label: string; count: number; amountUsd: number }
+
+/** Contracts grouped by FX model or by origin entity, largest USD amount first. */
+export function breakdownBy(contracts: readonly MasterContract[], by: 'model' | 'entity'): Breakdown[] {
+  const map = new Map<string, Breakdown>()
+  for (const c of contracts) {
+    const key = by === 'model' ? c.fxModelCode : c.originEntity
+    const label = by === 'model' ? (c.fxModelDesc ? `${c.fxModelCode} - ${c.fxModelDesc}` : c.fxModelCode) : c.originEntity + (c.originEntityName ? ` - ${c.originEntityName}` : '')
+    const row = map.get(key) ?? { key, label, count: 0, amountUsd: 0 }
+    row.count += 1
+    row.amountUsd += c.mcAmountUsd || 0
+    map.set(key, row)
+  }
+  return [...map.values()].sort((a, b) => b.amountUsd - a.amountUsd || b.count - a.count)
+}
+
 // ---------------------------------------------------------------- form
 
 export function blankForm(mcDate = ''): FormValues {

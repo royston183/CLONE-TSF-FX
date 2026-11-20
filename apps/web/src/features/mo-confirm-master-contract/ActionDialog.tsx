@@ -1,9 +1,15 @@
+import { useState } from 'react'
+import { mcPdfSections } from '../../shared/pdf/mcPdf.ts'
+import { fmtNum } from './format.ts'
+import { McDialog } from './McDialog.tsx'
 import type { Modal } from './modal.tsx'
-import { MasterContractConfirmation } from '../../shared/master-contract/Confirmation.tsx'
-import { ContractReview } from './ContractReview.tsx'
+import { pdfInput } from './pdfInput.ts'
 import type { MasterContract, McAction } from './types.ts'
 
-/** The bulk (or single, from the child modal) Confirm / Reject confirmation dialog. */
+/**
+ * The Confirm / Reject dialog, in the Create Master Contract screen's pop-up style: one contract opens as its sectioned details,
+ * several as a table with their total, and a rejection asks for its remark.
+ */
 export function ActionDialog({
   modal,
   action,
@@ -22,54 +28,99 @@ export function ActionDialog({
   onRemarkChange: (remark: string) => void
   onProceed: () => void | Promise<void>
 }) {
+  const [busy, setBusy] = useState(false)
   const isReject = action === 'reject'
   const many = mcs.length > 1
-  return <MasterContractConfirmation open={modal.isOpen} danger={isReject} review eyebrow="Master Contract Review"
-    title={`${isReject ? 'Reject' : 'Confirm'} Master Contract${many ? 's' : ''}`}
-    subtitle={<div className="std-pop-message" id="action-subtitle">Review {many ? `all ${mcs.length} selected contracts` : 'the contract details'} before {isReject ? 'rejecting' : 'confirming'}.</div>}
-    iconId="action-icon" ids={{ overlay: 'action-overlay', title: 'action-title', body: 'action-body', confirm: 'action-confirm-btn', close: 'action-close-btn' }}
-    confirmLabel={`${isReject ? 'Reject' : 'Confirm'} ${many ? `${mcs.length} Contracts` : 'Contract'}`} onCancel={modal.close} onConfirm={onProceed}>
-          {mcs.map((mc, index) => (
-            <ContractReview key={mc.mcNumber} contract={mc} open={index === 0} />
-          ))}
-          {isReject ? (
-            <div className="confirmation-review-form">
-              <div>
-              <label htmlFor="action-remark">
-                Rejection Remark <span style={{ color: 'var(--sp-error)' }}>*</span>
-              </label>
-              <textarea
-                id="action-remark"
-                rows={2}
-                maxLength={80}
-                aria-invalid={remarkError}
-                placeholder="Why is this Master Contract being rejected? This is recorded as the MO Remark."
-                value={remark}
-                onChange={(e) => onRemarkChange(e.target.value)}
-                style={{
-                  width: '100%',
-                  resize: 'vertical',
-                  padding: '9px 12px',
-                  // The original's "border:1px solid var(--sp-border-strong)", split so the error colour
-                  // can replace just the colour without React warning about the shorthand.
-                  borderWidth: 1,
-                  borderStyle: 'solid',
-                  borderColor: remarkError ? 'var(--sp-error)' : 'var(--sp-border-strong)',
-                  borderRadius: '4px',
-                  fontSize: '12.5px',
-                  fontFamily: 'inherit',
-                  color: 'var(--sp-text)',
-                }}
-              />
-              <div
-                id="action-remark-error"
-                style={{ display: remarkError ? 'block' : 'none', color: 'var(--sp-error)', fontSize: 11, fontWeight: 600, marginTop: 4 }}
-              >
-                Please fill the MO Remarks and Update.
-              </div>
-              </div>
-            </div>
-          ) : null}
+  const total = mcs.reduce((sum, mc) => sum + mc.amtUSD, 0)
+  const proceed = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await onProceed()
+    } finally {
+      setBusy(false)
+    }
+  }
+  const verb = isReject ? 'Reject' : 'Confirm'
+  return (
+    <McDialog
+      open={modal.isOpen}
+      title={`${verb} Master Contract${many ? 's' : ''}${!many && mcs[0] ? ` — ${mcs[0].mcNumber}` : ''}`}
+      onClose={modal.close}
+      busy={busy}
+      ids={{ overlay: 'action-overlay', title: 'action-title', body: 'action-body', close: 'action-close-btn' }}
+      actions={
+        <>
+          <button className="btn btn-secondary" type="button" disabled={busy} onClick={modal.close}>Cancel</button>
+          <button className={`btn ${isReject ? 'btn-danger' : 'btn-primary'}`} type="button" id="action-confirm-btn" disabled={busy} onClick={() => void proceed()}>
+            {busy ? 'Processing...' : `${verb} ${many ? `${mcs.length} Contracts` : 'Contract'}`}
+          </button>
+        </>
+      }
+    >
+      <p id="action-subtitle" style={{ margin: '0 0 12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+        Review {many ? `all ${mcs.length} selected contracts` : 'the contract details'} before {isReject ? 'rejecting' : 'confirming'}.
+      </p>
 
-  </MasterContractConfirmation>
+      {many ? (
+        <>
+          <div className="popup-table-wrap">
+            <table className="popup-table">
+              <thead>
+                <tr><th>MC Number</th><th>Reference</th><th>Origin</th><th>FX Model</th><th className="num">MC Amount (USD)</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {mcs.map((mc) => (
+                  <tr key={mc.mcNumber}>
+                    <td><b>{mc.mcNumber}</b></td>
+                    <td>{mc.mcDescription}</td>
+                    <td>{mc.originEntity}</td>
+                    <td>{mc.fxModel}</td>
+                    <td className="num">{fmtNum(mc.amtUSD)}</td>
+                    <td>{mc.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="kv-list" style={{ marginTop: 10 }}>
+            <div className="kv-row kv-total"><span className="kv-label">Total MC Amount (USD)</span><span className="kv-value">{fmtNum(total)}</span></div>
+          </div>
+        </>
+      ) : mcs[0] ? (
+        mcPdfSections(pdfInput(mcs[0])).map((section) => (
+          <div className="detail-section" key={section.title}>
+            <div className="detail-section-title">{section.title}</div>
+            <div className="detail-grid">
+              {section.rows.map(([label, value]) => (
+                <div className="detail-item" key={label}>
+                  <span className="detail-label">{label}</span>
+                  <span className="detail-value">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : null}
+
+      {isReject ? (
+        <div className={`field${remarkError ? ' has-error' : ''}`} style={{ marginTop: 12 }}>
+          <label htmlFor="action-remark">Rejection Remark<span className="req">*</span></label>
+          <textarea
+            id="action-remark"
+            className="control"
+            rows={2}
+            maxLength={80}
+            aria-invalid={remarkError}
+            placeholder="Why is this Master Contract being rejected? This is recorded as the MO Remark."
+            value={remark}
+            disabled={busy}
+            onChange={(e) => onRemarkChange(e.target.value)}
+            style={{ width: '100%', resize: 'vertical', height: 'auto', padding: '8px 12px' }}
+          />
+          <div className="error-msg" id="action-remark-error">Please fill the MO Remarks and Update.</div>
+        </div>
+      ) : null}
+    </McDialog>
+  )
 }
