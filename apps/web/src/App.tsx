@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import { AppShell, Button, EmptyState, Spinner, ToastProvider } from '@slc/ui'
+import { AppShell, Button, EmptyState, Splash, ToastProvider } from '@slc/ui'
+import { RouteErrorBoundary } from './shared/ui/RouteErrorBoundary.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ThemeProvider } from './shared/ThemeContext.tsx'
 import { SelectSearch } from './shared/SelectSearch.tsx'
@@ -10,6 +11,8 @@ import { RequireAuth } from './auth/RequireAuth.tsx'
 import { MenuPage } from './menu/MenuPage.tsx'
 import { FEATURES } from './features/registry.ts'
 import './app.css'
+import './las/las-hub.css'
+import './las/las-theme.css'
 import './shared/fx/alm-theme.css'
 import './shared/fx/office-theme.css'
 import './shared/fx/tf-theme.css'
@@ -115,20 +118,19 @@ function FeatureRoute() {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="slc-page-center">
-          <Spinner label="Opening application" />
+    <RouteErrorBoundary>
+      <Suspense fallback={<Splash step="Opening application…" />}>
+        {/* #las-ui carries the LAS look to every screen, legacy or rebuilt (las/las-theme.css). */}
+        <div id="las-ui">
+          <div
+            id={ALM_FX_FEATURES.has(appId ?? '') || ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}
+            data-office={ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'true' : undefined}
+          >
+            <Feature />
+          </div>
         </div>
-      }
-    >
-      <div
-        id={ALM_FX_FEATURES.has(appId ?? '') || ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'alm-fx-ui' : undefined}
-        data-office={ALM_FX_OFFICE_FEATURES.has(appId ?? '') ? 'true' : undefined}
-      >
-        <Feature />
-      </div>
-    </Suspense>
+      </Suspense>
+    </RouteErrorBoundary>
   )
 }
 

@@ -1,9 +1,21 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  ArrowLeftRight,
+  ArrowUpDown,
+  BarChart3,
+  Database,
+  Layers,
+  LayoutDashboard,
+  LayoutGrid,
+  Network,
+  Settings,
+} from 'lucide-react'
+import { PageHeader } from '@slc/ui'
 import { apiFetch } from '@slc/api-client'
 import { useAsync } from '@slc/api-client/react'
 import { Sidebar } from './Sidebar.tsx'
-import { ThemeToggle } from './ThemeToggle.tsx'
+import { HubHeader } from './HubHeader.tsx'
 import { useTheme } from '../shared/ThemeContext.tsx'
 import { AdminView } from './sections/AdminView.tsx'
 import { FxStructureView } from './sections/FxStructureView.tsx'
@@ -40,9 +52,6 @@ import './menu-shell.css'
  * instead, because its topbar has none — porting that here as well would have meant two.
  */
 
-const BRAND_LOGO =
-  'https://raw.githubusercontent.com/ryannayak/fs-assets/e82f35a83e28689167b22b4300d4994a249acee0/fs-short-logo.png'
-
 export type HubSection =
   | 'master-data'
   | 'overview'
@@ -68,6 +77,27 @@ const REPORTING_STRUCTURES: Partial<Record<HubSection, string>> = {
   'reporting-slc-structure': 'SLC Structure',
   'reporting-xlc-crp-structure': 'XLC-CRP Structure',
   'reporting-icfs-structure': 'ICFS Structure',
+}
+
+/**
+ * What the page-header strip says for each section: its icon, and its path under "Workspace".
+ * `flat` sections have no title of their own inside the page, so the strip carries it; the
+ * others (the tile browsers) keep their own drill-down heading under the strip.
+ */
+const SECTION_HEAD: Record<HubSection, { icon: ReactNode; path: string[]; flat: boolean }> = {
+  overview: { icon: <LayoutDashboard />, path: ['Overview'], flat: true },
+  'master-data': { icon: <Database />, path: ['Master Data'], flat: true },
+  'trade-flows': { icon: <ArrowLeftRight />, path: ['Trade Flows'], flat: true },
+  'fx-structure': { icon: <ArrowUpDown />, path: ['FX Structure'], flat: false },
+  'slc-structure': { icon: <LayoutGrid />, path: ['SLC Structure'], flat: false },
+  'xlc-crp-structure': { icon: <Network />, path: ['XLC-CRP Structure'], flat: true },
+  'icfs-structure': { icon: <Layers />, path: ['ICFS Structure'], flat: true },
+  reporting: { icon: <BarChart3 />, path: ['Reporting'], flat: true },
+  'reporting-fx-structure': { icon: <BarChart3 />, path: ['Reporting', 'FX Structure'], flat: false },
+  'reporting-slc-structure': { icon: <BarChart3 />, path: ['Reporting', 'SLC Structure'], flat: false },
+  'reporting-xlc-crp-structure': { icon: <BarChart3 />, path: ['Reporting', 'XLC-CRP Structure'], flat: false },
+  'reporting-icfs-structure': { icon: <BarChart3 />, path: ['Reporting', 'ICFS Structure'], flat: false },
+  admin: { icon: <Settings />, path: ['Admin'], flat: true },
 }
 
 export function MenuPage({ section }: { section: HubSection }) {
@@ -117,22 +147,23 @@ export function MenuPage({ section }: { section: HubSection }) {
 
   return (
     <div className="mp">
-      <header>
-        <div className="brand">
-          <img className="brand-logo" alt="Fourth Signal" src={BRAND_LOGO} />
-          <div className="brand-text">
-            <h1>TSF</h1>
-            <p>FS &bull; VISTA</p>
-          </div>
-        </div>
-        <div className="header-right">
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-        </div>
-      </header>
+      <HubHeader
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onRefresh={() => {
+          menu.reload()
+          registry.reload()
+        }}
+      />
 
       <div className="mp-body">
         <Sidebar />
-        <main ref={mainRef}>
+        <main ref={mainRef} data-flat={SECTION_HEAD[section].flat || undefined}>
+          <PageHeader
+            icon={SECTION_HEAD[section].icon}
+            breadcrumb={['Workspace', ...SECTION_HEAD[section].path]}
+            title={SECTION_HEAD[section].path[SECTION_HEAD[section].path.length - 1] ?? ''}
+          />
           {section === 'master-data' ? (
             <MasterDataView onToast={showToast} />
           ) : section === 'overview' ? (

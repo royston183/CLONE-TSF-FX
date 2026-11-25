@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Loader } from '@slc/ui'
 import { ResultDialog } from '../../shared/ui/ResultDialog.tsx'
 import { fmtAmt, fmtRate } from './format.ts'
 
@@ -95,7 +96,7 @@ export function EditPairModal({
         </p>
         {error && <div className="inline-alert info">{error}</div>}
         {loading ? (
-          <p className="table-note">Loading replacement transactions…</p>
+          <p className="table-note"><Loader /> Loading replacement transactions…</p>
         ) : candidates.length === 0 ? (
           <p className="table-note">No transaction matches this one (same type, value date, side, currency and amount, status 03 or 07).</p>
         ) : (

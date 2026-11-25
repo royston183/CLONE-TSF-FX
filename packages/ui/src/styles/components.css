@@ -1,4 +1,4 @@
-/* Component styles. Every value comes from a token in tokens.css — no literal colour here. */
+/* Component styles (LAS Central design). Every value comes from a token in tokens.css. */
 
 .slc-visually-hidden {
   position: absolute;
@@ -11,234 +11,559 @@
   white-space: nowrap;
 }
 
-/* ---- Shell ---- */
-.slc-shell {
-  display: grid;
-  grid-template-rows: var(--header-h) minmax(0, 1fr);
-  height: 100vh;
-  overflow: hidden;
-}
-.slc-shell__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 18px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-.slc-shell__brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-}
-.slc-shell__mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  flex: none;
-}
-.slc-shell__title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.slc-shell__title small {
-  margin-left: 8px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-muted);
-}
-.slc-shell__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.slc-shell__main {
-  min-height: 0;
-  overflow: auto;
-}
-
-/* ---- Button ---- */
-.slc-btn {
+/* ── Loader: yellow · red · green · grey dots, lit one after another ─────── */
+.slc-loader {
+  --dot: 6px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+.slc-loader.is-lg {
+  --dot: 10px;
   gap: 7px;
-  height: var(--control-h);
-  padding: 0 11px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text-sub);
-  font-weight: 600;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
-.slc-btn:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.slc-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.slc-btn--primary {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: #fff;
-}
-.slc-btn--primary:hover:not(:disabled) {
-  background: var(--blue-hover);
-  border-color: var(--blue-hover);
-  color: #fff;
-}
-.slc-btn--ghost {
-  background: transparent;
-  border-color: transparent;
-}
-.slc-btn--ghost:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-.slc-btn--danger {
-  background: var(--red);
-  border-color: var(--red);
-  color: #fff;
-}
-.slc-btn__spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
+.slc-loader i {
+  width: var(--dot);
+  height: var(--dot);
   border-radius: 50%;
-  animation: slc-spin 700ms linear infinite;
+  background: var(--loader-grey);
+  opacity: 0.3;
+  transform: scale(0.8);
+  animation: slc-dot 1.2s ease-in-out infinite;
+}
+.slc-loader i:nth-child(1) {
+  background: var(--loader-red);
+}
+.slc-loader i:nth-child(2) {
+  background: var(--loader-yellow);
+  animation-delay: 0.15s;
+}
+.slc-loader i:nth-child(3) {
+  background: var(--loader-green);
+  animation-delay: 0.3s;
+}
+.slc-loader i:nth-child(4) {
+  animation-delay: 0.45s;
+}
+@keyframes slc-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slc-loader i {
+    animation: none;
+    opacity: 0.85;
+    transform: none;
+  }
+}
+/* A filled button's dots sit on blue / red: give them a light keyline. */
+.slc-btn--primary .slc-loader i,
+.slc-btn--danger .slc-loader i {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
 }
 
-/* ---- Spinner ---- */
 .slc-spinner {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
 }
-.slc-spinner__ring {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border);
-  border-top-color: var(--blue);
-  border-radius: 50%;
-  animation: slc-spin 700ms linear infinite;
+.slc-spin {
+  animation: slc-spin 1s linear infinite;
 }
 @keyframes slc-spin {
   to {
     transform: rotate(360deg);
   }
 }
+
+/* ── Splash: the full-screen loading state ──────────────────────────────── */
+.slc-splash {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 50% 38%, var(--surface-hover), transparent 55%),
+    var(--background);
+  color: var(--text-secondary);
+}
+.slc-splash__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(340px, 100%);
+  text-align: center;
+  animation: slc-splash-in 0.45s ease-out both;
+}
+.slc-splash__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+}
+/* The disc the logo sits on, inside the ring. */
+.slc-splash__mark::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.slc-splash__mark img {
+  position: relative;
+  width: 54px;
+  height: auto;
+  animation: slc-splash-breathe 2.4s ease-in-out infinite;
+}
+/* Four arcs in the logo's colours, turning. */
+.slc-splash__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--loader-red) 0 22%,
+    transparent 22% 25%,
+    var(--loader-yellow) 25% 47%,
+    transparent 47% 50%,
+    var(--loader-green) 50% 72%,
+    transparent 72% 75%,
+    var(--loader-grey) 75% 97%,
+    transparent 97%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  animation: slc-spin 1.6s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+.slc-splash__title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.slc-splash__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.slc-splash__step--error {
+  color: var(--text-danger);
+  line-height: 1.6;
+}
+.slc-splash__bar {
+  position: relative;
+  width: 180px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--border);
+}
+.slc-splash__bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--loader-red), var(--loader-yellow), var(--loader-green));
+  animation: slc-splash-sweep 1.4s ease-in-out infinite;
+}
+/* Failed: the ring stops and greys out, the logo dims. */
+.slc-splash--failed .slc-splash__ring {
+  animation: none;
+  background: var(--border);
+}
+.slc-splash--failed .slc-splash__mark img {
+  animation: none;
+  opacity: 0.6;
+}
+@keyframes slc-splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes slc-splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+}
+@keyframes slc-splash-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .slc-spinner__ring,
-  .slc-btn__spinner {
-    animation-duration: 2400ms;
+  .slc-splash__card,
+  .slc-splash__mark img,
+  .slc-splash__ring,
+  .slc-splash__bar i {
+    animation: none;
+  }
+  .slc-splash__bar i {
+    width: 100%;
+    opacity: 0.6;
   }
 }
 
-/* ---- Connection indicator ---- */
+/* ── Shell: one header, one content region ──────────────────────────────── */
+.slc-shell {
+  display: grid;
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+.slc-shell__header {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+.slc-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.slc-shell__mark {
+  box-sizing: content-box;
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  object-fit: contain;
+  flex: none;
+}
+.slc-shell__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.slc-shell__title small {
+  display: block;
+  margin: 1px 0 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+.slc-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.slc-shell__main {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Button: an outline in the action's colour, filled on hover ─────────── */
+.slc-btn {
+  --btn: var(--btn-neutral);
+  --btn-fill: var(--btn-neutral-fill);
+  --btn-on: var(--btn-on-fill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--control-height);
+  padding: 0 14px;
+  border: 1px solid var(--btn);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--btn);
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
+}
+.slc-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.slc-btn:hover:not(:disabled),
+.slc-btn:focus-visible:not(:disabled),
+.slc-btn:active:not(:disabled) {
+  border-color: var(--btn-fill);
+  background: var(--btn-fill);
+  color: var(--btn-on);
+}
+.slc-btn:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+.slc-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.slc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.slc-btn[aria-busy='true']:disabled {
+  opacity: 0.85;
+  cursor: progress;
+}
+.slc-btn--primary {
+  --btn: var(--btn-primary);
+  --btn-fill: var(--btn-primary-fill);
+}
+.slc-btn--danger {
+  --btn: var(--btn-danger);
+  --btn-fill: var(--btn-danger-fill);
+}
+.slc-btn--warning {
+  --btn: var(--btn-warning);
+  --btn-fill: var(--btn-warning-fill);
+  --btn-on: var(--btn-on-warning);
+}
+.slc-btn--ghost {
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.slc-btn--ghost:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.slc-btn--sm {
+  min-height: var(--control-height-sm);
+  padding: 0 12px;
+  font-size: var(--text-sm);
+}
+a.slc-btn,
+a.slc-btn:visited {
+  text-decoration: none;
+}
+
+/* Icon-only button: 36×36 in the top bar */
+.slc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+}
+.slc-icon-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.slc-icon-btn[aria-pressed='true'] {
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+/* ── Connection indicator ───────────────────────────────────────────────── */
+.slc-conn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+}
 .slc-conn__dot {
   display: block;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--status-success);
+  box-shadow: 0 0 0 3px var(--status-success-soft);
   transition: background var(--transition);
 }
 .slc-conn--unreachable .slc-conn__dot {
-  background: var(--red);
+  background: var(--status-error);
+  box-shadow: 0 0 0 3px var(--status-error-soft);
 }
 .slc-conn--unknown .slc-conn__dot {
-  background: var(--border-strong);
+  background: var(--status-neutral);
+  box-shadow: 0 0 0 3px var(--status-neutral-soft);
 }
 
-/* ---- Toast ---- */
+/* ── Toast ──────────────────────────────────────────────────────────────── */
 .slc-toasts {
   position: fixed;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
+  right: var(--space-6);
+  bottom: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 100;
+  z-index: 150;
   pointer-events: none;
 }
 .slc-toast {
+  --tone: var(--status-info);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 14px;
-  border-radius: var(--radius);
-  background: var(--text);
-  color: #fff;
-  box-shadow: var(--shadow-overlay);
+  gap: 10px;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--tone);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  line-height: 1.45;
   pointer-events: auto;
+  animation: slc-toast-in 0.22s var(--ease);
 }
 .slc-toast--success {
-  background: var(--green);
+  --tone: var(--status-success);
 }
 .slc-toast--error {
-  background: var(--red);
+  --tone: var(--status-error);
+}
+.slc-toast--error span {
+  color: var(--text-danger);
 }
 .slc-toast__close {
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: inherit;
-  font-size: 18px;
+  color: var(--text-secondary);
+  font-size: 16px;
   line-height: 1;
-  padding: 0 2px;
+}
+.slc-toast__close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+@keyframes slc-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
-/* ---- Table ---- */
+/* ── Table ──────────────────────────────────────────────────────────────── */
 .slc-table__scroll {
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 .slc-table {
   width: 100%;
-  border-collapse: collapse;
-}
-.slc-table th,
-.slc-table td {
-  padding: 8px 11px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
   text-align: left;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
 }
 .slc-table th {
   position: sticky;
   top: 0;
-  z-index: 1;
-  background: var(--surface-2);
-  font-weight: 600;
-  color: var(--text-sub);
+  z-index: 2;
+  padding: 7px var(--space-3);
+  vertical-align: bottom;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-head);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: left;
+  white-space: nowrap;
+}
+.slc-table td {
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--divider);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.slc-table th:first-child,
+.slc-table td:first-child {
+  padding-left: var(--space-5);
+}
+.slc-table th:last-child,
+.slc-table td:last-child {
+  padding-right: var(--space-5);
+}
+.slc-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 .slc-table td[data-align='end'],
 .slc-table th[data-align='end'] {
   text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 .slc-table td[data-align='center'],
 .slc-table th[data-align='center'] {
   text-align: center;
 }
-.slc-table tbody tr[tabindex]:hover {
-  background: var(--blue-soft);
+.slc-table tbody tr {
+  transition: background-color 0.12s var(--ease);
+}
+/* Hover: a pale blue row with a blue marker on its leading edge. */
+.slc-table tbody tr:hover td {
+  background: var(--surface-hover);
+}
+.slc-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--primary-blue);
+}
+.slc-table tbody tr[tabindex] {
   cursor: pointer;
 }
-.slc-table tbody tr.is-selected {
-  background: var(--blue-soft-2);
+.slc-table tbody tr.is-selected td {
+  background: var(--primary-soft);
+}
+.slc-table tfoot td,
+.slc-table tfoot th,
+.slc-table tr.total-row td {
+  border-top: 1px solid var(--total-row-border);
+  border-bottom: 0;
+  background: var(--total-row-bg);
+  color: var(--total-row-text);
+  font-weight: 700;
 }
 .slc-table__status {
   display: grid;
@@ -246,163 +571,283 @@
   padding: 16px;
 }
 
-/* ---- Empty state ---- */
+/* ── Empty state ────────────────────────────────────────────────────────── */
 .slc-empty {
   display: grid;
   gap: 6px;
   justify-items: center;
-  padding: 40px 20px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  padding: var(--space-10) var(--space-6);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   text-align: center;
 }
 .slc-empty--error {
-  border-color: var(--red);
-  background: var(--red-soft);
+  border-style: solid;
+  border-color: var(--status-error-border);
+  background: var(--status-error-soft);
 }
 .slc-empty__title {
   margin: 0;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: 650;
 }
 .slc-empty__detail {
   margin: 0;
-  color: var(--text-muted);
-  max-width: 60ch;
+  max-width: 46ch;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.slc-empty--error .slc-empty__detail {
+  color: var(--text-danger);
 }
 .slc-empty__action {
-  margin-top: 8px;
+  margin-top: var(--space-3);
 }
 
-/* ---- Field ---- */
+/* ── Field ──────────────────────────────────────────────────────────────── */
 .slc-field {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--text-sm);
 }
 .slc-field__label {
-  font-weight: 600;
-  color: var(--text-sub);
+  color: var(--text-secondary);
+  font-weight: 650;
+  letter-spacing: 0.01em;
 }
 .slc-field input,
 .slc-field select,
 .slc-field textarea {
-  height: var(--control-h);
-  padding: 0 9px;
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 6px 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  width: 100%;
+  color: var(--text-primary);
+  font-size: var(--text-md);
+  transition:
+    border-color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
+}
+.slc-field input::placeholder,
+.slc-field textarea::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+.slc-field input:hover:not(:disabled):not([readonly]),
+.slc-field select:hover:not(:disabled) {
+  border-color: var(--text-tertiary);
+}
+.slc-field input:focus,
+.slc-field select:focus,
+.slc-field textarea:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: inset 3px 0 0 var(--primary-blue), var(--focus-ring);
+}
+.slc-field input:disabled,
+.slc-field input[readonly],
+.slc-field select:disabled,
+.slc-field textarea:disabled {
+  border-color: var(--border);
+  background: var(--surface-readonly);
+  color: var(--text-secondary);
 }
 .slc-field textarea {
-  height: auto;
-  padding: 7px 9px;
+  min-height: 84px;
+  line-height: 1.5;
 }
 .slc-field--error input,
 .slc-field--error select,
 .slc-field--error textarea {
-  border-color: var(--red);
-  background: var(--red-soft);
+  border-color: var(--status-error);
+}
+.slc-field--error .slc-field__label {
+  color: var(--status-error);
 }
 .slc-field__hint {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 .slc-field__message {
   margin: 0;
-  color: var(--red);
-  font-weight: 600;
+  color: var(--text-danger);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.slc-field__message::before {
+  content: '!';
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--status-error);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: 1px;
 }
 
-/* ---- Dialog ---- */
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
 /* Scoped to [open]: a bare `.slc-dialog { display: grid }` overrides the UA stylesheet's
    `dialog:not([open]) { display: none }`, which renders every closed dialog inline in the
    page. Keep the display rule on the open state only. */
 .slc-dialog[open] {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  animation: slc-dialog-in 0.2s var(--ease);
 }
 .slc-dialog {
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-overlay);
-  max-height: calc(100vh - 64px);
+  border-radius: var(--radius-xl);
+  background: var(--canvas-inset);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  max-height: min(86vh, calc(100dvh - 32px));
   overflow: hidden;
 }
 .slc-dialog::backdrop {
-  background: rgba(23, 43, 61, 0.48);
+  background: var(--overlay);
 }
+@keyframes slc-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+/* The header: pale blue with two overlapping corner arches. */
 .slc-dialog__head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-4);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--dialog-head-border);
+  background: var(--dialog-head);
+  color: var(--dialog-head-ink);
+}
+.slc-dialog__head::before,
+.slc-dialog__head::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.slc-dialog__head::before {
+  width: 245px;
+  height: 245px;
+  right: -70px;
+  top: -150px;
+  border: 25px solid var(--dialog-arch);
+}
+.slc-dialog__head::after {
+  width: 205px;
+  height: 205px;
+  right: -35px;
+  top: -137px;
+  border: 1px solid var(--dialog-arch-line);
+  box-shadow: 0 0 0 16px var(--dialog-arch-halo);
 }
 .slc-dialog__title {
   margin: 0;
-  font-size: 15px;
+  color: var(--dialog-head-ink);
+  font-size: var(--text-xl);
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .slc-dialog__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
+  color: var(--dialog-head-ink);
   font-size: 22px;
   line-height: 1;
-  color: var(--text-muted);
-  padding: 0 4px;
 }
-.slc-dialog__close:hover {
-  color: var(--text);
+.slc-dialog__close:hover:not(:disabled) {
+  background: var(--dialog-head-hover);
 }
 .slc-dialog__body {
-  padding: 14px 16px;
+  padding: 10px 12px;
   overflow: auto;
 }
 .slc-dialog__footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding: 11px 16px;
+  padding: 6px 12px;
   border-top: 1px solid var(--border);
-  background: var(--surface-2);
+  background: var(--surface-elevated);
 }
 
-/* ---- Status pill ---- */
+/* ── Status pill (badge) ────────────────────────────────────────────────── */
 .slc-pill {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
+  --tone: var(--status-info);
+  --tone-soft: var(--status-info-soft);
+  --tone-border: var(--status-info-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid var(--tone-border);
+  border-radius: var(--radius-xs);
+  background: var(--tone-soft);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
   white-space: nowrap;
 }
+.slc-pill svg {
+  width: 12px;
+  height: 12px;
+  color: var(--tone);
+  flex-shrink: 0;
+}
 .slc-pill--open {
-  background: var(--green-soft);
-  color: var(--green);
+  --tone: var(--status-success);
+  --tone-soft: var(--status-success-soft);
+  --tone-border: var(--status-success-border);
 }
 .slc-pill--pending {
-  background: var(--orange-soft);
-  color: var(--orange);
+  --tone: var(--status-warning);
+  --tone-soft: var(--status-warning-soft);
+  --tone-border: var(--status-warning-border);
 }
 .slc-pill--done {
-  background: var(--blue-soft);
-  color: var(--blue);
+  --tone: var(--status-info);
+  --tone-soft: var(--status-info-soft);
+  --tone-border: var(--status-info-border);
 }
 .slc-pill--neutral {
-  background: var(--surface-2);
-  color: var(--text-sub);
+  --tone: var(--status-neutral);
+  --tone-soft: var(--status-neutral-soft);
+  --tone-border: var(--status-neutral-border);
 }
 
-/* ---- Amount input ---- */
+/* ── Amount input ───────────────────────────────────────────────────────── */
 .slc-amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .slc-amount--invalid {
-  border-color: var(--red);
-  background: var(--red-soft);
+  border-color: var(--status-error);
+  background: var(--status-error-soft);
 }

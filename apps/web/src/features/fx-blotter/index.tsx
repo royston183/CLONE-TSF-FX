@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react'
+import { Splash } from '@slc/ui'
 import { isAbort } from '../../shared/fx/mw.ts'
 import { useStatusPopup } from '../../shared/popup/Popup.tsx'
 import { installMasters, loadBlotterMasters } from './masters.ts'
@@ -1516,11 +1517,10 @@ export default function FxBlotter() {
   }, [attempt])
 
   if (state.phase === 'ready') return <FxBlotterScreen key={attempt} contracts={state.contracts} />
+  if (state.phase === 'loading') return <Splash title="FX Deal Blotter" step="Loading FX master data…" />
   return (
     <div className="fx-blotter" style={{ minHeight: '100vh', padding: 24 }}>
-      {state.phase === 'loading' ? (
-        <div role="status">Loading FX master data…</div>
-      ) : (
+      {(
         <div role="alert">
           <p>{state.message}</p>
           <p>The FX Deal Blotter needs these masters to open. Nothing has been substituted for them.</p>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { FS_LOGO, Spinner } from '@slc/ui'
+import { FS_LOGO, Loader, Splash } from '@slc/ui'
 import { useAuth } from './AuthContext.tsx'
 import './login.css'
 
@@ -59,7 +59,8 @@ function charSkew(index: number, code: string) {
 const LANDING = '/overview'
 
 export function LoginPage() {
-  const { status, signIn } = useAuth()
+  const auth = useAuth()
+  const { status, signIn } = auth
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -74,13 +75,8 @@ export function LoginPage() {
     setCaptchaInput('')
   }
 
-  if (status === 'checking') {
-    return (
-      <div className="slc-page-center">
-        <Spinner label="Checking your session" />
-      </div>
-    )
-  }
+  if (status === 'checking') return <Splash step="Checking your session…" />
+  if (auth.status === 'error') return <Splash error={auth.error} onRetry={auth.retry} />
   if (status === 'authenticated') return <Navigate to={LANDING} replace />
 
   async function onSubmit(event: FormEvent) {
@@ -284,7 +280,7 @@ export function LoginPage() {
 
           <button type="submit" className="login__submit" disabled={busy} aria-busy={busy || undefined}>
             {busy ? (
-              <span className="login__submitSpinner" aria-hidden="true" />
+              <Loader />
             ) : (
               <>
                 Login <ArrowIcon />

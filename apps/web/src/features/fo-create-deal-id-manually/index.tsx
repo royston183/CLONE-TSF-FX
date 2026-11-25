@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Splash } from '@slc/ui'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import './fo-create-deal-id-manually.legacy.css'
@@ -780,12 +781,13 @@ export default function FoCreateDealIdManually() {
       </>
     )
   }
+  if (state.phase === 'loading') {
+    return <Splash title="Create Deal ID" step="Loading Master Contracts, Deal IDs and transactions…" />
+  }
   return (
     <div className="dealanal" style={{ minHeight: '100vh', padding: 24 }}>
       {status.element}
-      {state.phase === 'loading' ? (
-        <div role="status">Loading Master Contracts, Deal IDs and transactions…</div>
-      ) : (
+      {(
         <div role="alert">
           <p>{state.message}</p>
           <p>The workbench needs these to open. Nothing has been substituted for them.</p>

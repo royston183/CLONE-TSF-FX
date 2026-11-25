@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Loader } from '@slc/ui'
 import { codeText, fmtNum } from '@slc/api-client'
 import { useAsync } from '@slc/api-client/react'
 import { BL_ASSIGNED_STATUS, loadBlDocuments, loadBlStatusText, loadBls, saveBlChanges } from './api.ts'
@@ -358,7 +359,7 @@ export function BlDetailsPanel({
               <tbody id="blDetailsTableBody">
                 {bls.loading && rows.length === 0 ? (
                   <tr>
-                    <td colSpan={11}>Loading BLs…</td>
+                    <td colSpan={11}><Loader /> Loading BLs…</td>
                   </tr>
                 ) : bls.error ? (
                   <tr>
@@ -517,7 +518,7 @@ export function BlDetailsPanel({
               <tbody id="blDocumentsTableBody">
                 {documents.loading && docRows.length === 0 && rows.length > 0 ? (
                   <tr>
-                    <td colSpan={6}>Loading documents…</td>
+                    <td colSpan={6}><Loader /> Loading documents…</td>
                   </tr>
                 ) : documents.error ? (
                   <tr>

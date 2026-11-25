@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Loader } from '@slc/ui'
 import { ArrowDown, ArrowUp, ArrowUpDown, CircleAlert, Download, RefreshCw } from 'lucide-react'
 import { runLimited } from '@slc/api-client'
 import { useConnectionState } from '@slc/api-client/react'
@@ -911,7 +912,7 @@ export default function TfUploadApp() {
                   </table>
                   {!viewBusy && !viewError && filteredViewRows.length === 0 &&
                     <div className="view-empty">No saved trade flows match these filters.</div>}
-                  {viewBusy && <div className="view-empty">Loading trade flows…</div>}
+                  {viewBusy && <div className="view-empty"><Loader /> Loading trade flows…</div>}
                 </div>
                 <div className="view-pagination">
                   <span>{filteredViewRows.length ? `${viewStart + 1}–${Math.min(viewStart + viewPageSize, filteredViewRows.length)} of ${filteredViewRows.length}` : '0 trade flows'}</span>

@@ -8,13 +8,10 @@ import {
   Layers,
   LayoutDashboard,
   LayoutGrid,
-  LogOut,
   Network,
   Settings,
   type LucideIcon,
 } from 'lucide-react'
-import { useAuth } from '../auth/AuthContext.tsx'
-import { SignOutButton } from '../auth/SignOutButton.tsx'
 
 type SidebarChild = { to: string; label: string }
 
@@ -82,9 +79,6 @@ const ITEMS: SidebarItem[] = [
  * identical lockups within 50px of each other.
  */
 export function Sidebar() {
-  const { user } = useAuth()
-  const initial = user?.displayName.trim().charAt(0).toUpperCase() || '?'
-
   return (
     <nav className="mp-side" aria-label="TSF sections">
       <div className="mp-side-eyebrow mp-side-label">Workspace</div>
@@ -124,30 +118,6 @@ export function Sidebar() {
         })}
       </div>
 
-      <div className="mp-side-foot">
-        {/* .status-dot is the generated stylesheet's own pulsing teal dot, moved here out of
-            the header so the connection state sits with the session it belongs to. */}
-        <div className="mp-side-status">
-          <span className="status-dot" />
-          <span className="mp-side-label">SAP TRM connected</span>
-        </div>
-        <p className="mp-side-blurb mp-side-label">
-          Trade &amp; Structured Finance operations on SAP TRM.
-        </p>
-        <div className="mp-side-user">
-          <span className="mp-side-avatar">{initial}</span>
-          <span className="mp-side-identity mp-side-label">
-            <b>{user?.displayName ?? 'Signed out'}</b>
-            <small>{user?.username ?? ''}</small>
-          </span>
-          {/* Icon-only by CSS rather than by dropping the label: the text stays in the
-              accessibility tree, so the control is still named for a screen reader. */}
-          <SignOutButton
-            className="mp-side-signout mp-side-label"
-            icon={<LogOut size={18} aria-hidden="true" />}
-          />
-        </div>
-      </div>
     </nav>
   )
 }

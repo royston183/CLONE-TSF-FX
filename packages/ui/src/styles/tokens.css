@@ -1,77 +1,313 @@
 /*
- * SLC design tokens — the single source of colour, spacing and elevation.
+ * Design tokens — the single source of colour, type, radius, shadow and spacing.
  *
- * Merged from the :root blocks of the seven legacy pages, which between them defined 74
- * custom properties under four naming conventions (--blue, --blueDark, --ds-blue,
- * --blue-dark) with 20 outright conflicts; two files disagreed with themselves across
- * their own duplicate :root blocks. Conflicts were resolved by majority, which is also
- * the SAP Fiori palette:
+ * This is the LAS Central design system (light + dark) applied to TSF. Everything else in the
+ * product reads these; a colour, radius or shadow literal belongs here and nowhere else (the only
+ * sanctioned exceptions are the login/dialog gradients and the #ffffcc total-row colour, which
+ * are tokens below too).
  *
- *   --blue    #0a6ed1 (6 files) over #1e88e5 (Menu Path only)
- *   --text    #1d2d3e (6) over #0d2a4a (Menu Path only)
- *   --bg      #f5f7f9 (5) over #f0f4f8 (Menu Path only)
- *   --radius  8px     (6) over 10px    (Menu Path only)
- *   --shadow  0 1px 3px rgba(34,53,72,.13) (6) over 0 2px 8px rgba(0,0,0,.10)
+ * Theme: data-theme="light" | "dark" on <html> (apps/web/src/shared/theme.ts sets it).
  *
- * Menu Path was the consistent outlier and is normalised here rather than preserved.
- * Add a token only when two apps need it; an app-specific value belongs in that app.
+ * The older TSF names (--bg, --text, --blue, --radius …) are kept at the bottom as aliases so
+ * existing components and screens keep resolving. Legacy feature sheets redefine some of those
+ * names (--surface, --border …) on their own root; the LAS overrides therefore read the
+ * --las-* mirrors, which no legacy sheet touches.
  */
 :root {
-  /* Surfaces */
-  --bg: #f4f7fb;
-  --surface: #ffffff;
-  --surface-2: #f3f7fc;
-  --surface-sunken: #eaf0f7;
+  /* Spacing — compact enterprise density */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 12px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-8: 20px;
+  --space-10: 24px;
+  --space-12: 28px;
 
-  /* Ink */
-  --text: #22354c;
-  --text-sub: #4a5e76;
-  --text-muted: #67768c;
+  /* Radius */
+  --radius-xs: 4px; /* status chips, small tiles */
+  --radius-sm: 6px; /* inputs, buttons */
+  --radius-md: 8px; /* menus, inner blocks, icon tiles */
+  --radius-lg: 10px; /* cards, tables */
+  --radius-xl: 12px; /* dialogs */
+  --radius-pill: 999px;
+  --las-radius-xs: 4px;
+  --las-radius-sm: 6px;
+  --las-radius-md: 8px;
+  --las-radius-lg: 10px;
+  --las-radius-xl: 12px;
 
-  /* Lines */
-  --border: #e6ebf2;
-  --border-strong: #8996a1;
-
-  /* Brand */
-  --blue: #1265c8;
-  --blue-hover: #0955b2;
-  --blue-active: #004b93;
-  --blue-soft: #eaf3ff;
-  --blue-soft-2: #dbe7f7;
-
-  /* Status */
-  --green: #107e3e;
-  --green-soft: #e4f5e9;
-  --red: #bb0000;
-  --red-soft: #fdeaea;
-  --orange: #e9730c;
-  --orange-soft: #fff3e8;
-  --teal: #00897b;
-  --teal-soft: #e0f7f4;
-
-  /* Shape and depth */
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 16px;
-  --shadow: 0 1px 3px rgba(34, 53, 72, 0.13);
-  --shadow-hover: 0 3px 10px rgba(34, 53, 72, 0.16);
-  --shadow-overlay: 0 10px 30px rgba(34, 53, 72, 0.22);
+  /* Type: Inter Variable only. 13px body, 12px controls/navigation, 11px captions. */
+  --font-sans: 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 14px;
+  --text-xl: 17px;
+  --text-2xl: 23px;
 
   /* Layout */
-  --header-h: 52px;
-  --sidebar-w: 355px;
-  --control-h: 32px;
+  --topbar-height: 52px;
+  --sidebar-width: 288px;
+  --sidebar-rail: 64px;
+  --control-height: 32px;
+  --control-height-sm: 28px;
 
-  /* Type. Inter, loaded by apps/web from @fontsource-variable/inter. It is what the hub's
-     generated menu-path.css has always asked for, and what the sibling DSA app is drawn in,
-     so naming it here puts the login screen and the application chrome on the same face.
-     The rest are the fallbacks the legacy pages used. */
-  --font: 'Inter Variable', Inter, "Segoe UI", Arial, sans-serif;
-  --font-mono: "72 Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --font-size: 13px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
 
-  /* Motion. Honoured by every component; overridden to 0 below for reduced-motion users. */
-  --transition: 140ms ease;
+  /* The four-dot loader: the same in both themes so the signature reads identically. */
+  --loader-yellow: #ffc400;
+  --loader-red: #ff3b3b;
+  --loader-green: #00d26a;
+  --loader-grey: #a7b4c8;
+}
+
+/* ── Light ─────────────────────────────────────────────────────────────── */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --background: #f4f7fb;
+  --canvas-inset: #f4f6f9; /* the grey inside a dialog, behind its white sections */
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-subtle: #f7fafd; /* table toolbars and footers */
+  --surface-head: #edf4fc; /* table header row, section header rows */
+  --surface-readonly: #edf0f4;
+  --surface-hover: #f0f6fd;
+
+  --primary-blue: #1265c8;
+  --primary-hover: #105bb5;
+  --primary-active: #0e50a1;
+  --primary-fill: #1265c8;
+  --bright-blue: #3fa9f5;
+  --dark-blue: #173a65;
+  --light-blue: #71afe7;
+  --primary-soft: #eaf3ff;
+  --primary-soft-border: #b7d4f5;
+
+  --band-bg: #1265c8;
+  --band-border: #105bb5;
+  --band-ring: rgb(255 255 255 / 0.14);
+
+  --border: #e6ebf2;
+  --border-strong: #c5d5e5;
+  --divider: #e9eff6;
+
+  --text-primary: #22354c;
+  --text-secondary: #637690;
+  --text-tertiary: #718096;
+  --text-disabled: #9aaabd;
+  --text-on-primary: #ffffff;
+  --text-on-warning: #000000;
+  --text-danger: #b42318; /* every error / warning text, >= 4.5:1 */
+
+  --status-success: #2e9b5b;
+  --status-success-soft: #e6f4ec;
+  --status-success-border: #b5ddc5;
+  --status-warning: #e5a900;
+  --status-warning-soft: #fff6db;
+  --status-warning-border: #efd583;
+  --status-error: #d64545;
+  --status-error-fill: #c53b3b;
+  --status-error-soft: #fcebeb;
+  --status-error-border: #f0bfbf;
+  --status-neutral: #8a94a6;
+  --status-neutral-soft: #edf0f4;
+  --status-neutral-border: #d3d9e2;
+  --status-info: #1265c8;
+  --status-info-soft: #eaf3ff;
+  --status-info-border: #b7d4f5;
+
+  --chart-1: #1265c8;
+  --chart-2: #2e9b5b;
+  --chart-3: #e5a900;
+  --chart-4: #d64545;
+  --chart-5: #8a94a6;
+  --chart-track: #e6ecf3;
+
+  --overlay: rgb(8 24 44 / 0.5);
+  --shadow-xs: 0 1px 2px rgb(11 55 104 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(11 55 104 / 0.06), 0 2px 6px rgb(11 55 104 / 0.05);
+  --shadow-md: 0 6px 18px rgb(11 55 104 / 0.12);
+  --shadow-lg: 0 24px 56px rgb(8 24 44 / 0.28);
+  --focus-ring: 0 0 0 3px rgb(18 101 200 / 0.2);
+
+  /* Dialog header (pale blue, with its two corner arches) and the sign-in surfaces */
+  --dialog-head: linear-gradient(110deg, #f0f8ff 0%, #deeffc 55%, #c7e3fa 100%);
+  --dialog-head-ink: #173e64;
+  --dialog-head-muted: #416886;
+  --dialog-head-border: #bed9ef;
+  --dialog-head-hover: #b6d9f3;
+  --dialog-arch: #8cc3ec55;
+  --dialog-arch-line: #ffffffb8;
+  --dialog-arch-halo: #eaf6ff50;
+  --arch: #3fa9f521;
+  --arch-outer: #3fa9f512;
+  --brand-panel: #0c4ba6;
+  --text-on-brand: #ffffff;
+  --brand-pitch:
+    radial-gradient(1200px 620px at 78% 108%, rgb(255 255 255 / 0.17), transparent 62%),
+    linear-gradient(152deg, #0c4ba6 0%, #1565d8 46%, #2f8ae0 100%);
+  --login-panel: linear-gradient(180deg, #f7fafd 0%, #eef4fb 100%);
+  --login-action: linear-gradient(90deg, #0c4ba6 0%, #1565d8 55%, #3fa9f5 100%);
+
+  --tooltip-bg: #000000;
+  --tooltip-text: #ffffff;
+
+  /* Total / subtotal rows: the whole row, in both themes */
+  --total-row-bg: #ffffcc;
+  --total-row-text: #1d2433;
+  --total-row-border: #e3d98a;
+
+  /* Buttons: an outline in the action's colour, filled with it on hover */
+  --btn-primary: #1265c8;
+  --btn-primary-fill: #1265c8;
+  --btn-neutral: #4a5d75;
+  --btn-neutral-fill: #4a5d75;
+  --btn-danger: #b42318;
+  --btn-danger-fill: #c53b3b;
+  --btn-warning: #8a5a00;
+  --btn-warning-fill: #e5a900;
+  --btn-on-fill: #ffffff;
+  --btn-on-warning: #000000;
+}
+
+/* ── Dark ──────────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --background: #0d1724;
+  --canvas-inset: #111a24;
+  --surface: #14212f;
+  --surface-elevated: #1b2c40;
+  --surface-subtle: #18222d;
+  --surface-head: #1b2633;
+  --surface-readonly: #1f2a37;
+  --surface-hover: #1a2531;
+
+  --primary-blue: #4fa9f0;
+  --primary-hover: #185fb9;
+  --primary-active: #14539f;
+  --primary-fill: #1c6fd4;
+  --bright-blue: #7cc0f8;
+  --dark-blue: #bcdcfa;
+  --light-blue: #17304a;
+  --primary-soft: #17304a;
+  --primary-soft-border: #2f6ea8;
+
+  --band-bg: #164a7d;
+  --band-border: #2f6ea8;
+  --band-ring: rgb(255 255 255 / 0.1);
+
+  --border: #2d3a48;
+  --border-strong: #3c4b5c;
+  --divider: #26323f;
+
+  --text-primary: #e6eef8;
+  --text-secondary: #a9c2dd;
+  --text-tertiary: #8da9c6;
+  --text-disabled: rgb(255 255 255 / 0.38);
+  --text-danger: #ff8f85;
+
+  --status-success: #3fb871;
+  --status-success-soft: #15301f;
+  --status-success-border: #24543a;
+  --status-warning: #f0b829;
+  --status-warning-soft: #30280f;
+  --status-warning-border: #5a4a17;
+  --status-error: #e46060;
+  --status-error-fill: #b83c3c;
+  --status-error-soft: #381b1f;
+  --status-error-border: #66313a;
+  --status-neutral: #8a94a6;
+  --status-neutral-soft: #212c39;
+  --status-neutral-border: #354354;
+  --status-info: #4fa9f0;
+  --status-info-soft: #17304a;
+  --status-info-border: #2f6ea8;
+
+  --chart-1: #4fa9f0;
+  --chart-2: #3fb871;
+  --chart-3: #f0b829;
+  --chart-4: #e46060;
+  --chart-5: #8a94a6;
+  --chart-track: #24303e;
+
+  --overlay: rgb(2 6 12 / 0.7);
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 22px rgb(0 0 0 / 0.38);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+  --focus-ring: 0 0 0 3px rgb(79 169 240 / 0.3);
+
+  --dialog-head: linear-gradient(110deg, #164a7d 0%, #123f6b 100%);
+  --dialog-head-ink: #e6eef8;
+  --dialog-head-muted: #a9c2dd;
+  --dialog-head-border: #2f6ea8;
+  --dialog-head-hover: rgb(255 255 255 / 0.12);
+  --dialog-arch: rgb(255 255 255 / 0.08);
+  --dialog-arch-line: rgb(255 255 255 / 0.18);
+  --dialog-arch-halo: rgb(255 255 255 / 0.04);
+  --arch: #4fa9f01f;
+  --arch-outer: #4fa9f010;
+  --brand-panel: #0b1d4a;
+  --login-panel: linear-gradient(180deg, #101c2b 0%, #0b1420 100%);
+
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #000000;
+
+  --btn-primary: #4fa9f0;
+  --btn-primary-fill: #1c6fd4;
+  --btn-neutral: #a9c2dd;
+  --btn-neutral-fill: #3c4b5c;
+  --btn-danger: #ff8f85;
+  --btn-danger-fill: #b83c3c;
+  --btn-warning: #f0b829;
+  --btn-warning-fill: #f0b829;
+}
+
+/* ── Mirrors for the LAS overrides (legacy sheets redefine --surface/--border on their root) ── */
+:root {
+  --las-surface: var(--surface);
+  --las-border: var(--border);
+  --las-border-strong: var(--border-strong);
+  --las-shadow-md: var(--shadow-md);
+}
+
+/* ── Aliases: the names TSF components and screens already use ─────────── */
+:root {
+  --bg: var(--background);
+  --surface-2: var(--surface-subtle);
+  --surface-sunken: var(--surface-head);
+  --text: var(--text-primary);
+  --text-sub: var(--text-secondary);
+  --text-muted: var(--text-tertiary);
+  --blue: var(--primary-blue);
+  --blue-hover: var(--primary-hover);
+  --blue-active: var(--primary-active);
+  --blue-soft: var(--primary-soft);
+  --blue-soft-2: var(--primary-soft-border);
+  --green: var(--status-success);
+  --green-soft: var(--status-success-soft);
+  --red: var(--status-error);
+  --red-soft: var(--status-error-soft);
+  --orange: var(--status-warning);
+  --orange-soft: var(--status-warning-soft);
+  --teal: var(--status-success);
+  --teal-soft: var(--status-success-soft);
+  --radius: var(--radius-md);
+  --shadow: var(--shadow-sm);
+  --shadow-hover: var(--shadow-md);
+  --shadow-overlay: var(--shadow-lg);
+  --header-h: var(--topbar-height);
+  --sidebar-w: var(--sidebar-width);
+  --control-h: var(--control-height);
+  --font: var(--font-sans);
+  --font-mono: var(--font-sans);
+  --font-size: var(--text-md);
+  --transition: 150ms var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -80,6 +316,7 @@
   }
 }
 
+/* ── Base: reset, typography, scrollbars ───────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -90,14 +327,15 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  font-family: var(--font);
-  font-size: var(--font-size);
-  color: var(--text);
-  background: var(--bg);
-  /* Inter ships every weight as a real variable axis, so letting the browser fake bold or
-     italic on top of it only smears the glyphs. */
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--background);
+  /* Inter ships every weight as a real variable axis; faking bold or italic only smears it. */
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -112,9 +350,58 @@ button {
   cursor: pointer;
 }
 
-/* A visible focus ring for keyboard users only — the legacy pages suppressed focus outlines
-   entirely, which made every console unusable without a mouse. */
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* A visible focus ring for keyboard users only. */
 :focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--primary-blue);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+/*
+ * Scrollbars, every one of them: a slim rounded thumb on a clear track, darker while pointed
+ * at, drawn from the theme tokens. Chrome / Edge / Safari use the ::-webkit-scrollbar rules,
+ * Firefox falls back to scrollbar-width / scrollbar-color.
+ */
+:root {
+  --scrollbar-thumb: var(--border-strong);
+  --scrollbar-thumb-hover: var(--status-neutral);
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* The clear border insets the thumb from the track's edges. */
+::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--scrollbar-thumb) padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--text-tertiary);
+}
+html::-webkit-scrollbar-track,
+html::-webkit-scrollbar-corner {
+  background: var(--background);
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
 }

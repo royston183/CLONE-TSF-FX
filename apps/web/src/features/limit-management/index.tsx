@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Loader } from '@slc/ui'
 import { BackButton } from '../../auth/BackButton.tsx'
 import { SignOutButton } from '../../auth/SignOutButton.tsx'
 import { FS_SHORT_LOGO } from '../../shared/fx/logo.ts'
@@ -432,7 +433,7 @@ export default function LimitManagement() {
                     </svg>
                   </div>
                   {loading ? (
-                    <div className="title">Loading limits…</div>
+                    <div className="title"><Loader /> Loading limits…</div>
                   ) : !rows ? (
                     <>
                       <div className="title">{yearTyping ? 'Enter the 4-digit limit year' : 'Select a currency pair and limit year'}</div>

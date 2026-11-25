@@ -8,10 +8,14 @@ type AuthState =
   | { status: 'checking'; user: undefined }
   | { status: 'authenticated'; user: User }
   | { status: 'anonymous'; user: undefined }
+  /** The session check itself failed (gateway down, network), as opposed to "not signed in". */
+  | { status: 'error'; user: undefined; error: string }
 
 type AuthApi = AuthState & {
   signIn: (username: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  /** Runs the session check again, after an `error`. */
+  retry: () => void
 }
 
 const AuthContext = createContext<AuthApi | undefined>(undefined)
@@ -29,6 +33,7 @@ export function useAuth(): AuthApi {
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'checking', user: undefined })
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -36,13 +41,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((data) => {
         if (!cancelled) setState({ status: 'authenticated', user: data.user })
       })
-      .catch(() => {
-        // A 401 here is the normal "not signed in yet" case, not an error worth surfacing.
-        if (!cancelled) setState({ status: 'anonymous', user: undefined })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        // A 401 is the normal "not signed in yet" case, not an error worth surfacing. Anything
+        // else (no answer, a 5xx) means the check never completed, and the loading screen says so.
+        if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+          setState({ status: 'anonymous', user: undefined })
+        } else {
+          setState({
+            status: 'error',
+            user: undefined,
+            error: 'Could not reach the TSF gateway. Check that it is running, then retry.',
+          })
+        }
       })
     return () => {
       cancelled = true
     }
+  }, [attempt])
+
+  const retry = useCallback(() => {
+    setState({ status: 'checking', user: undefined })
+    setAttempt((n) => n + 1)
   }, [])
 
   const signIn = useCallback(async (username: string, password: string) => {
@@ -67,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value = useMemo<AuthApi>(() => ({ ...state, signIn, signOut }), [state, signIn, signOut])
+  const value = useMemo<AuthApi>(
+    () => ({ ...state, signIn, signOut, retry }),
+    [state, signIn, signOut, retry],
+  )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

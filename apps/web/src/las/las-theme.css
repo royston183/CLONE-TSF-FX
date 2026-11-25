@@ -1,0 +1,766 @@
+/*
+ * LAS Central look, applied to every application screen.
+ *
+ * Each application keeps the legacy stylesheet it was converted from (features/<app>/*.legacy.css,
+ * scoped under its own class, with its own colours, fonts and table styling). Rather than edit 70
+ * of those, App.tsx mounts every screen inside <div id="las-ui"> and this sheet restyles, on top
+ * of them, the parts that must look identical to LAS Central:
+ *
+ *   fonts · header strip · buttons · tables (header, spacing, gridlines, hotspots, totals) ·
+ *   cards/panels · form controls · popups and dialogs · pagination · dropdowns
+ *
+ * Geometry that a screen's workflow depends on (grids, widths, sticky offsets, visibility
+ * classes) is left alone; only appearance is set. Values come from the tokens in
+ * packages/ui/src/styles/tokens.css, so light and dark follow the theme switch.
+ *
+ * Specificity: `:root #las-ui#las-ui` (two ID selectors) outranks the legacy sheets, the night
+ * sheets (`:root[data-theme='dark'] .app …`) and the earlier ALM adapter (`#alm-fx-ui …`,
+ * including its `:is(#mc-table, #fx-table)` rules). `!important` is used only where a legacy
+ * sheet itself forces the property.
+ */
+
+/* ── 1. Fonts: Inter Variable, the LAS sizes and ink ───────────────────── */
+:root #las-ui#las-ui {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+
+  & *:not(svg):not(svg *) {
+    font-family: var(--font-sans) !important;
+  }
+  & :is(code, .mono, kbd, samp, pre) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The screens' headings: LAS h1 / h2 / h3 */
+  & :is(.page-title, .page-header h1, .page-head h1, .header h1, .titleblock h1, .app-title) {
+    margin: 0 0 4px;
+    color: var(--text-primary) !important;
+    font-size: var(--text-2xl) !important;
+    font-weight: 700 !important;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+  & :is(.page-subtitle, .page-header p, .page-head p, .header .subtitle, .titles p, .app-subtitle) {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-sm) !important;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+  & :is(.panel-title, .panel-title-left, .section-title, .card-title, .card-head h2, .card-head h3) {
+    color: var(--text-primary) !important;
+    font-size: var(--text-lg) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+    text-transform: none !important;
+  }
+  /* Captions and meta lines */
+  & :is(.panel-meta, .muted, .hint, .note, .subtitle, small) {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+  }
+  & :is(a:not(.btn):not([class*='btn']):not([class*='button'])) {
+    color: var(--text-primary);
+  }
+}
+
+/* ── 2. Header strip: white, 52px, hairline, blue icon tile, title ─────── */
+:root #las-ui#las-ui {
+  & :is(.topbar, .app-header, .page-topbar) {
+    min-height: var(--topbar-height);
+    height: auto;
+    padding-block: 0;
+    padding-inline: 12px;
+    gap: var(--space-5);
+    background: var(--surface) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-radius: 0;
+    box-shadow: var(--shadow-xs) !important;
+    color: var(--text-primary);
+  }
+  /* The product mark: the blue icon tile of the LAS page header */
+  & :is(.topbar .mark, .topbar-logo, .app-header .mark, .topbar .logo-mark) {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md) !important;
+    background: var(--primary-fill) !important;
+    box-shadow: 0 4px 10px -4px var(--primary-blue) !important;
+    color: var(--text-on-primary);
+    flex-shrink: 0;
+  }
+  & :is(.topbar .title, .topbar h1, .topbar-title, .app-header h1, .app-header .title) {
+    margin: 0;
+    color: var(--text-primary) !important;
+    font-size: 15px !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  & :is(.topbar .title small, .topbar h1 small, .topbar-code, .topbar .subtitle) {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-xs) !important;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  /* The connection dot, as in the LAS top bar */
+  & .connection {
+    width: 8px;
+    height: 8px;
+    background: var(--status-success);
+    box-shadow: 0 0 0 3px var(--status-success-soft);
+  }
+  & .connection.offline {
+    background: var(--status-error);
+    box-shadow: 0 0 0 3px var(--status-error-soft);
+  }
+  /* Header icon buttons: 36×36, secondary ink, pale-blue hover */
+  & :is(.topbar, .app-header) :is(.icon-btn, .btn-icon, .hdr-icon) {
+    width: 36px;
+    height: 36px;
+    border: 0 !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+  }
+  & :is(.topbar, .app-header) :is(.icon-btn, .btn-icon, .hdr-icon):hover:not(:disabled) {
+    background: var(--surface-hover) !important;
+    color: var(--text-primary) !important;
+  }
+}
+
+/* The page's own header block: the LAS strip — a bordered band on a soft blue wash, with a
+   3px blue bar down its left edge. Only appearance is set; the screen keeps its layout. */
+:root #las-ui#las-ui {
+  & :is(header.page-header, .page-header, .page-head, .titleblock) {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: linear-gradient(90deg, var(--primary-soft) 0%, var(--surface) 42%) !important;
+    box-shadow: inset 3px 0 0 var(--primary-blue), var(--shadow-xs) !important;
+    padding: 9px var(--space-5) 9px calc(var(--space-5) + 3px) !important;
+    margin-bottom: var(--space-4);
+  }
+  & :is(.page-header h1, .page-head h1, .titleblock h1, .page-header .page-title, .page-head .page-title) {
+    font-size: 15px !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  & :is(.page-header p, .page-head p, .titleblock p, .page-header .page-subtitle) {
+    margin: 0;
+    font-size: var(--text-xs) !important;
+  }
+}
+
+/* ── 3. Buttons: an outline in the action's colour, filled on hover ─────── */
+:root #las-ui#las-ui {
+  & :is(
+      .btn, .btn-sm, .btn-outline, .btn-secondary, .btn-cancel, .btn-ghost, .btn-primary, .btn-confirm,
+      .btn-danger, .btn-warning, .common-btn, .tb-btn, .tbtn, .tool-btn, .hdr-btn, .header-btn, .action-btn,
+      .primary-btn, .secondary-btn, .refresh-btn, .rowaction-btn, .search-btn, .reset-btn, .filter-reset,
+      .view-deals-btn, .deal-action-btn, .back-btn, button.fx-back-btn
+    ) {
+    --btn: var(--btn-neutral);
+    --btn-fill: var(--btn-neutral-fill);
+    --btn-on: var(--btn-on-fill);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--control-height);
+    height: var(--control-height);
+    padding: 0 14px;
+    border: 1px solid var(--btn) !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    color: var(--btn) !important;
+    font-size: var(--text-md);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    box-shadow: none !important;
+    filter: none;
+    transform: none;
+    transition:
+      background-color 0.15s var(--ease),
+      border-color 0.15s var(--ease),
+      color 0.15s var(--ease),
+      box-shadow 0.15s var(--ease);
+  }
+  /* The action decides the colour: blue = save / create / approve / submit */
+  & :is(
+      .btn.primary, .btn-primary, .primary-btn, .btn-confirm, .rowaction-btn.primary, .tb-primary, .tbtn.primary,
+      .common-btn.primary, .action-btn.primary, .search-btn
+    ) {
+    --btn: var(--btn-primary);
+    --btn-fill: var(--btn-primary-fill);
+  }
+  /* red = reject / delete */
+  & :is(
+      .btn.danger, .btn.reject, .btn-danger, .btn-confirm.is-reject, .rowaction-btn.danger, .btn.danger-outline,
+      .common-btn.danger, .action-btn.danger
+    ) {
+    --btn: var(--btn-danger);
+    --btn-fill: var(--btn-danger-fill);
+  }
+  /* amber = push back / return / reverse */
+  & :is(.btn.warning, .btn-warning, .btn.pushback, .common-btn.warning, .action-btn.warning) {
+    --btn: var(--btn-warning);
+    --btn-fill: var(--btn-warning-fill);
+    --btn-on: var(--btn-on-warning);
+  }
+  /* … and filled on hover, keyboard focus and press */
+  & :is(
+      .btn, .btn-sm, .btn-outline, .btn-secondary, .btn-cancel, .btn-ghost, .btn-primary, .btn-confirm,
+      .btn-danger, .btn-warning, .common-btn, .tb-btn, .tbtn, .tool-btn, .hdr-btn, .header-btn, .action-btn,
+      .primary-btn, .secondary-btn, .refresh-btn, .rowaction-btn, .search-btn, .reset-btn, .filter-reset,
+      .view-deals-btn, .deal-action-btn, .back-btn, button.fx-back-btn
+    ):is(:hover, :focus-visible, :active):not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--btn-fill) !important;
+    background: var(--btn-fill) !important;
+    color: var(--btn-on) !important;
+  }
+  & :is(.btn, .btn-sm, .btn-confirm, .common-btn, .rowaction-btn, .action-btn):active:not(:disabled) {
+    filter: brightness(0.92);
+  }
+  & :is(.btn, .btn-primary, .btn-confirm, .common-btn, .rowaction-btn, .action-btn, .back-btn):focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring) !important;
+  }
+  & :is(.btn, .btn-sm, .btn-confirm, .common-btn, .rowaction-btn, .tb-btn, .action-btn):disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  & :is(.btn, .btn-primary, .btn-confirm, .common-btn, .rowaction-btn, .tb-btn, .action-btn, .back-btn) svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+  }
+  /* Toolbar / table buttons: the 28px size */
+  & :is(.btn-sm, .rowaction-btn, .tb-btn, .tbtn, .tool-btn, .filter-reset, .reset-btn, .refresh-btn,
+      .panel-tools .btn, .table-tools .btn, .toolbar .btn, td .btn) {
+    min-height: var(--control-height-sm);
+    height: var(--control-height-sm);
+    padding: 0 12px;
+    font-size: var(--text-sm);
+  }
+  /* Dialog footers: the 32px size, 16px side padding */
+  & :is(.modal-foot, .modal-footer, .modal-actions) :is(.btn, .btn-confirm, .btn-cancel, .common-btn) {
+    height: var(--control-height);
+    padding: 0 16px;
+    font-size: var(--text-md);
+  }
+}
+
+/* ── 4. Cards and panels ────────────────────────────────────────────────── */
+:root #las-ui#las-ui {
+  & :is(.card, .panel) {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-sm) !important;
+    color: var(--text-primary);
+  }
+  & :is(.panel-head, .card-head, .card-header, .panel-header, .section-head) {
+    border-bottom: 1px solid var(--divider) !important;
+    background: transparent !important;
+    color: var(--text-primary);
+  }
+  /* Toolbars and summary bars sit on the faint inset */
+  & :is(.table-tools, .table-toolbar, .toolbar, .filter-bar, .panel-tools) {
+    color: var(--text-secondary);
+  }
+  & :is(.kpi-card, .metric-card) {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  & :is(.kpi-label, .metric-lbl) {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-xs) !important;
+    font-weight: 600;
+  }
+  & :is(.kpi-value, .metric-val, .kpi-val) {
+    color: var(--text-primary) !important;
+    font-size: 24px !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── 5. Tables: header, spacing, gridlines, hotspots, totals ─────────────── */
+:root #las-ui#las-ui {
+  /* The grid: horizontal hairlines only — no vertical lines, no zebra */
+  & table:has(> thead) {
+    width: 100%;
+    border: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-size: var(--text-sm);
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Header row: pale blue, 11px / 700, 7px × 12px, Title Case */
+  & table:has(> thead) :is(thead th, thead td) {
+    padding: 7px var(--space-3) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--surface-head) !important;
+    color: var(--text-primary) !important;
+    font-size: var(--text-xs) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.4;
+    text-align: left !important;
+    text-transform: capitalize !important;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+  /* Body cells: 6px × 12px, a divider under every cell, nothing between columns */
+  & table:has(> thead) tbody :is(td, th) {
+    padding: 6px var(--space-3) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--divider) !important;
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    font-size: var(--text-sm);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+    vertical-align: middle;
+  }
+  & table:has(> thead) tbody tr:last-child :is(td, th) {
+    border-bottom: 0 !important;
+  }
+  /* The outer padding: 14px at the first and last column */
+  & table:has(> thead) :is(th, td):first-child {
+    padding-left: var(--space-6) !important;
+  }
+  & table:has(> thead) :is(th, td):last-child {
+    padding-right: var(--space-6) !important;
+  }
+  /* Figures line up on their last digit — header and cell both */
+  & table:has(> thead) :is(th, td):is(.num, .numeric, .right, .amount, .rate, .text-right, [data-align='end']) {
+    text-align: right !important;
+  }
+  & table:has(> thead) :is(th, td):is(.center, .text-center, [data-align='center']) {
+    text-align: center !important;
+  }
+  /* A sorted column: an inset blue underline on its header */
+  & table:has(> thead) thead th:is([aria-sort='ascending'], [aria-sort='descending'], .sorted, .sort-asc, .sort-desc) {
+    box-shadow: inset 0 -2px 0 var(--primary-blue);
+  }
+  & table:has(> thead) thead :is(.sort-ind, .sort-icon, .arrow) {
+    color: var(--primary-blue);
+  }
+  /* Row hover: pale blue with a blue marker on the leading edge */
+  & table:has(> thead) tbody tr {
+    transform: none;
+    box-shadow: none;
+    transition: background-color 0.12s var(--ease);
+  }
+  & table:has(> thead) tbody tr:hover :is(td, th) {
+    background: var(--surface-hover) !important;
+  }
+  & table:has(> thead) tbody tr:hover :is(td, th):first-child {
+    box-shadow: inset 3px 0 0 var(--primary-blue);
+  }
+  & table:has(> thead) tbody tr:is(.selected, .checked, .row-selected, .row-checked, .is-selected, .active, .sel) :is(td, th) {
+    background: var(--primary-soft) !important;
+  }
+  /* Total / subtotal rows: the whole row #ffffcc, in light and dark */
+  & :is(table tfoot tr :is(td, th), table tr:is(.total-row, .totals, .total, .subtotal, .grand-total) :is(td, th)) {
+    border-top: 1px solid var(--total-row-border) !important;
+    border-bottom: 0 !important;
+    background: var(--total-row-bg) !important;
+    color: var(--total-row-text) !important;
+    font-weight: 700 !important;
+  }
+  /* The hotspot: the cell that opens the record — dark text, a pale-blue underline that turns blue */
+  & table :is(.hotspot, .mc-link, .ref-link, .deal-link, .tbl-link, .table-link, a.link, td a:not([class*='btn']):not([class*='button']), td button[class*='link']:not([class*='btn']), td [class$='-link']:not([class*='btn'])) {
+    padding: 0;
+    color: var(--text-primary) !important;
+    font-size: inherit;
+    font-weight: 650 !important;
+    text-align: left;
+    text-decoration: underline !important;
+    text-decoration-color: var(--primary-soft-border) !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 4px !important;
+    background: transparent;
+    cursor: pointer;
+  }
+  & table :is(.hotspot, .mc-link, .ref-link, .deal-link, .tbl-link, .table-link, a.link, td a:not([class*='btn']):not([class*='button']), td button[class*='link']:not([class*='btn']), td [class$='-link']:not([class*='btn'])):hover {
+    text-decoration-color: var(--primary-blue) !important;
+  }
+  /* Scroll frames: a thin custom scroll, the header stays put */
+  & :is(.table-wrap, .table-scroll, .alv-wrap, .child-table-wrap, .popup-table-wrap) {
+    scrollbar-width: auto;
+    overscroll-behavior-x: contain;
+  }
+  & :is(.table-wrap, .table-scroll, .alv-wrap) thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  /* Pagination / table footer: the faint inset with a top hairline */
+  & :is(.pagination, .pagination-bar, .pager, .table-footer, .table-foot, .tbl-footer) {
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    border-top: 1px solid var(--divider) !important;
+    background: var(--surface-subtle) !important;
+    color: var(--text-secondary) !important;
+    font-size: var(--text-sm);
+  }
+  & :is(.page-btn, .pg-btn, .pager-btn, .pagination button) {
+    min-width: var(--control-height-sm);
+    min-height: var(--control-height-sm);
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+  & :is(.page-btn, .pg-btn, .pager-btn, .pagination button):hover:not(:disabled) {
+    border-color: var(--primary-blue) !important;
+    background: var(--surface-hover) !important;
+  }
+  & :is(.page-btn, .pg-btn, .pager-btn, .pagination button):is(.active, .current, [aria-current='page']) {
+    border-color: var(--primary-blue) !important;
+    background: var(--primary-soft) !important;
+  }
+  /* Record count chip */
+  & :is(.table-count, .record-count, .row-count, .count-chip) {
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    background: var(--primary-soft);
+    color: var(--text-primary);
+    font-size: var(--text-xs);
+    font-weight: 650;
+  }
+  /* Status chips: LAS badge shape (4px corners, 11px / 600) */
+  & :is(.badge, .pill, .status-pill, .chip, .tag) {
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+}
+
+/* ── 6. Form controls ───────────────────────────────────────────────────── */
+:root #las-ui#las-ui {
+  & :is(.field, .form-field, .filter-field, .fld) > label,
+  & label.lbl {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: 650;
+    letter-spacing: 0.01em;
+  }
+  & :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']), select, textarea) {
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    font-size: var(--text-md);
+    transition:
+      border-color 0.15s var(--ease),
+      box-shadow 0.15s var(--ease);
+  }
+  & :where(input, textarea)::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+  }
+  & :where(input:not([type='checkbox']):not([type='radio']):not([readonly]):not(:disabled), select:not(:disabled), textarea:not([readonly]):not(:disabled)):hover {
+    border-color: var(--text-tertiary) !important;
+  }
+  & :where(input:not([type='checkbox']):not([type='radio']), select, textarea):focus {
+    outline: none !important;
+    border-color: var(--primary-blue) !important;
+    box-shadow: var(--focus-ring) !important;
+  }
+  & :where(input, select, textarea):is(:disabled, [readonly]) {
+    border-color: var(--border) !important;
+    background-color: var(--surface-readonly) !important;
+    color: var(--text-secondary) !important;
+  }
+  & :where(input, select, textarea):is(.invalid, .error, .field-error, [aria-invalid='true']),
+  & :is(.field, .form-field):is(.invalid, .has-error) :where(input, select, textarea) {
+    border-color: var(--status-error) !important;
+    background-color: var(--status-error-soft) !important;
+  }
+  & :is(.field-error, .error-text, .error-msg, .inline-err, .field-note, .err) {
+    color: var(--text-danger) !important;
+    font-size: var(--text-xs);
+  }
+  & .req {
+    color: var(--text-secondary);
+  }
+  & :is(input[type='checkbox'], input[type='radio']) {
+    accent-color: var(--primary-blue);
+  }
+  & .amount, & input.amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── 7. Popups and dialogs (inside the screen) ──────────────────────────── */
+:root #las-ui#las-ui {
+  & :is(.modal-overlay, .overlay, .modal-backdrop, .modal-bg) {
+    background: var(--overlay) !important;
+    padding: 16px;
+  }
+  & :is(.modal, .modal-card, .modal-window, .correction-modal) {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-xl) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-lg) !important;
+    color: var(--text-primary);
+    overflow: hidden;
+  }
+  /* The header: pale blue, two overlapping corner arches, 17px / 700 ink */
+  & :is(.modal-head, .modal-header, .modal-head-row) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: 8px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--dialog-head-border) !important;
+    background: var(--dialog-head) !important;
+    color: var(--dialog-head-ink) !important;
+  }
+  & :is(.modal-head, .modal-header, .modal-head-row)::before,
+  & :is(.modal-head, .modal-header, .modal-head-row)::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  & :is(.modal-head, .modal-header, .modal-head-row)::before {
+    width: 245px;
+    height: 245px;
+    right: -70px;
+    top: -150px;
+    border: 25px solid var(--dialog-arch);
+  }
+  & :is(.modal-head, .modal-header, .modal-head-row)::after {
+    width: 205px;
+    height: 205px;
+    right: -35px;
+    top: -137px;
+    border: 1px solid var(--dialog-arch-line);
+    box-shadow: 0 0 0 16px var(--dialog-arch-halo);
+  }
+  & :is(.modal-title, .modal h2, .modal-head h2, .modal-head h3, .modal-header h2, .modal-header h3, .modal-heading, .modal-head-row h2) {
+    margin: 0;
+    color: var(--dialog-head-ink) !important;
+    font-size: var(--text-xl) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+  & :is(.modal-subtitle, .modal-head p, .modal-header p, .modal-head-row .mh-sub) {
+    color: var(--dialog-head-muted) !important;
+    font-size: var(--text-sm);
+  }
+  & :is(.modal-close, .modal-close-btn, .close-btn, .modal-head .icon-btn, .modal-header .icon-btn) {
+    border: 0 !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    color: var(--dialog-head-ink) !important;
+    box-shadow: none !important;
+  }
+  & :is(.modal-close, .modal-close-btn, .close-btn, .modal-head .icon-btn, .modal-header .icon-btn):hover {
+    background: var(--dialog-head-hover) !important;
+  }
+  & :is(.modal-body, .modal-body-scroll, .modal-content-grid) {
+    background: var(--surface) !important;
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+  }
+  /* The footer: elevated surface, top hairline, buttons right-aligned, 8px apart */
+  & :is(.modal-footer, .modal-foot, .modal-actions) {
+    gap: 8px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border) !important;
+    background: var(--surface-elevated) !important;
+  }
+  /* Detail pairs inside a dialog: label over value, a pale-blue rule at the left */
+  & :is(.detail-lbl, .detail-label, .dl) {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+  & :is(.detail-val, .detail-value, .dv) {
+    color: var(--text-primary) !important;
+    font-size: var(--text-md);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  /* Dropdowns, calendars, menus */
+  & :is(.dd-menu, .dropdown-panel, .sdd-pop, .calendar-pop, .dp-popup, .cal-popup, .combo-panel) {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--surface-elevated) !important;
+    box-shadow: var(--shadow-md) !important;
+    color: var(--text-primary);
+  }
+  & :is(.dd-item, .sdd-opt, .combo-opt):hover {
+    background: var(--surface-hover) !important;
+  }
+  & :is(.dd-item, .sdd-opt, .combo-opt):is(.selected, .active) {
+    background: var(--primary-soft) !important;
+    font-weight: 650;
+  }
+}
+
+/* ── 8. Popups drawn on <body> (results, confirmations, calendar, search lists) ─ */
+:root:root:root .std-pop-overlay {
+  --sp-font: var(--font-sans);
+  --sp-card: var(--surface-elevated);
+  --sp-text: var(--text-primary);
+  --sp-muted: var(--text-secondary);
+  --sp-faint: var(--text-tertiary);
+  --sp-border: var(--border);
+  --sp-border-strong: var(--border-strong);
+  --sp-card-border: var(--border);
+  --sp-box: var(--surface-subtle);
+  --sp-primary: var(--primary-blue);
+  --sp-primary-dark: var(--primary-blue);
+  --sp-primary-tint: var(--primary-soft);
+  --sp-success: var(--status-success);
+  --sp-success-tint: var(--status-success-soft);
+  --sp-error: var(--status-error);
+  --sp-error-tint: var(--status-error-soft);
+  --sp-error-border: var(--status-error-border);
+  --sp-warning: var(--status-warning);
+  --sp-warning-tint: var(--status-warning-soft);
+  --sp-shadow: var(--shadow-lg);
+  background: var(--overlay);
+  font-size: var(--text-md);
+}
+:root:root:root .std-result-overlay {
+  --sr-card: var(--surface-elevated);
+  --sr-text: var(--text-primary);
+  --sr-muted: var(--text-secondary);
+  --sr-border: var(--border);
+  --sr-ref-bg: var(--surface-subtle);
+  --sr-ref-border: var(--border);
+  --sr-ref-value: var(--primary-blue);
+  --sr-btn-border: var(--border-strong);
+  --sr-primary: var(--primary-blue);
+  --sr-primary-dark: var(--primary-blue);
+  --sr-primary-tint: var(--primary-soft);
+  --sr-success: var(--status-success);
+  --sr-success-tint: var(--status-success-soft);
+  --sr-error: var(--status-error);
+  --sr-error-tint: var(--status-error-soft);
+  --sr-warning: var(--status-warning);
+  --sr-warning-tint: var(--status-warning-soft);
+  background: var(--overlay);
+  font-family: var(--font-sans);
+}
+:root:root:root :is(.std-pop-overlay, .std-result-overlay) {
+  & :is(.std-pop, .std-result) {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+  & :is(.std-pop-title, .std-result-title) {
+    color: var(--text-primary);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  & :is(.std-pop-message, .std-result-message) {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+  & :is(.std-pop-ref, .std-result-ref) {
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-blue);
+  }
+  /* Their buttons follow the same outline-then-fill rule as every other button */
+  & :is(.std-pop-btn, .std-result-btn, .std-result-actions button) {
+    --btn: var(--btn-neutral);
+    --btn-fill: var(--btn-neutral-fill);
+    --btn-on: var(--btn-on-fill);
+    min-height: var(--control-height);
+    height: var(--control-height);
+    padding: 0 16px;
+    border: 1px solid var(--btn) !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    color: var(--btn) !important;
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: 600;
+    box-shadow: none !important;
+  }
+  & :is(.std-pop-btn, .std-result-btn, .std-result-actions button):is(.primary, .confirm, .ok) {
+    --btn: var(--btn-primary);
+    --btn-fill: var(--btn-primary-fill);
+  }
+  & :is(.std-pop-btn, .std-result-btn, .std-result-actions button):is(.danger, .reject) {
+    --btn: var(--btn-danger);
+    --btn-fill: var(--btn-danger-fill);
+  }
+  & :is(.std-pop-btn, .std-result-btn, .std-result-actions button):is(:hover, :focus-visible, :active):not(:disabled) {
+    border-color: var(--btn-fill) !important;
+    background: var(--btn-fill) !important;
+    color: var(--btn-on) !important;
+  }
+}
+/* Calendar, select-search and suggestion lists */
+:root:root:root .sdp {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+:root:root:root .slc-select-search {
+  --ss-bg: var(--surface-elevated);
+  --ss-text: var(--text-primary);
+  --ss-muted: var(--text-secondary);
+  --ss-border: var(--border);
+  --ss-hover: var(--surface-hover);
+  --ss-selected: var(--primary-blue);
+  --ss-focus: var(--primary-blue);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+:root:root:root .slc-dl-suggest {
+  --dl-bg: var(--surface-elevated);
+  --dl-text: var(--text-primary);
+  --dl-muted: var(--text-secondary);
+  --dl-line: var(--border);
+  --dl-active: var(--primary-soft);
+  --dl-id: var(--primary-blue);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+
+/* ── 9. Native dialogs (@slc/ui Dialog) and tooltips follow the same rules ── */
+@media (prefers-reduced-motion: reduce) {
+  :root #las-ui#las-ui *,
+  .std-pop {
+    animation: none !important;
+    transition: none !important;
+  }
+}

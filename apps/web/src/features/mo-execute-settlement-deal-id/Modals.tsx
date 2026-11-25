@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Loader } from '@slc/ui'
 import { CompanyField, HouseBankFields, PartnerBankField, useBankChoices } from './BankFields.tsx'
 import { FxAccountingTable, InvoiceAccountingTable, useFxEntries } from './AccountingPreview.tsx'
 import { bankSelectionError, type BankCompany } from './bankChoices.ts'
@@ -107,7 +108,7 @@ export function HeadsupModal({
           <tbody>
             {loading || items.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={7}>{loading ? 'Loading Heads Up…' : emptyText}</td>
+                <td colSpan={7}>{loading ? <><Loader /> Loading Heads Up…</> : emptyText}</td>
               </tr>
             ) : (
               items.map((h, index) => (
