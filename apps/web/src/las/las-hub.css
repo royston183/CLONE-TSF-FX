@@ -503,3 +503,40 @@
   transform: translateY(-2px);
   box-shadow: var(--las-shadow-md);
 }
+
+/* ── The hub's legacy reset (`.mp * { margin: 0; padding: 0 }`) outranks single-class rules,
+      so the shared bell and page strip restate their spacing here. ───────────────────── */
+.mp .slc-pageheader {
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: 9px var(--space-5) 9px calc(var(--space-5) + 3px);
+}
+.mp .slc-pageheader__text {
+  gap: 1px;
+}
+.mp .slc-pageheader__crumbs {
+  gap: 6px;
+}
+.mp .slc-bell__count {
+  padding: 0 4px;
+}
+.mp .slc-bell__head {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+.mp .slc-bell__body h4 {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+}
+.mp .slc-bell__body h4 span {
+  padding: 0 6px;
+}
+.mp .slc-bell__body ul {
+  padding: 0 var(--space-2) var(--space-2);
+}
+.mp .slc-bell__item {
+  padding: var(--space-2);
+}
+.mp .slc-bell__empty {
+  padding: var(--space-4);
+}
